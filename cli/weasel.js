@@ -25,7 +25,7 @@ globalThis.CSS = {
     return prop === 'color' && probe.fillStyle !== '#010203';
   },
 };
-for (const f of ['geom', 'lang', 'scene', 'gif', 'zip', 'export']) require(path.join(__dirname, '..', 'js', f + '.js'));
+for (const f of ['geom', 'lang', 'scene', 'svg', 'gif', 'zip', 'export']) require(path.join(__dirname, '..', 'js', f + '.js'));
 const W = globalThis.Weasel;
 const X = W.exporter;
 const VERSION = require(path.join(__dirname, '..', 'package.json')).version;
@@ -39,16 +39,19 @@ Uso:
 
 Entrada:
   -e, --eval <código>     código direto no comando; ";" ou "\\n" separam as linhas
+                          (include procura arquivos a partir do arquivo de entrada,
+                          ou da pasta atual com -e e stdin)
 
 Saída:
   -o, --out <arquivo>     arquivo de saída; a extensão escolhe o formato
-                          (.png .jpg .gif; .zip = sprite sheet em zip)
-  -f, --format <tipo>     png | jpg | gif | sheet | build (GIF da pintura passo a passo)
-  -a, --anim <nome>       animação usada (gif, sheet, png/jpg). Em sheet, "all" = todas
-      --frame <n>         quadro do png/jpg (o mesmo número usado em key; começa em 0)
-      --frames            png/jpg: salva todos os quadros da animação, um arquivo por quadro
+                          (.png .jpg .gif .svg .tres; .zip = sprite sheet em zip)
+  -f, --format <tipo>     png | jpg | gif | svg | sheet | godot | build (GIF da pintura)
+  -a, --anim <nome>       animação usada (gif, sheet, godot, png/jpg/svg). Em sheet, "all" = todas
+      --frame <n>         quadro do png/jpg/svg (o mesmo número usado em key; começa em 0)
+      --frames            png/jpg/svg: salva todos os quadros, um arquivo por quadro
+      --variant <nome>    variante de cores; "all" exporta todas (sufixo _variante)
   -s, --scale <n>         escala (padrão 1; ex.: 0.5, 2)
-  -t, --transparent       fundo transparente (png, gif, sheet)
+  -t, --transparent       fundo transparente (png, gif, svg, sheet, godot)
       --trim [margem]     recorta ao desenho (margem padrão 8)
   -q, --quality <1-100>   qualidade do jpg (padrão 92)
       --layout <grid|rows>  sprite sheet em grade ou uma linha por animação
@@ -58,8 +61,9 @@ Saída:
       --guides            inclui as camadas "guide"
 
 Outros:
+  -w, --watch             exporta de novo sempre que o arquivo (ou um include) mudar
       --check             só verifica o código e mostra erros
-      --info              mostra canvas, camadas, ossos e animações
+      --info              mostra canvas, camadas, componentes, ossos, animações e eventos
       --force             exporta mesmo com erros (ignora as linhas inválidas, como o editor)
       --quiet             não escreve nada além dos erros
   -h, --help              esta ajuda
@@ -69,21 +73,21 @@ Exemplos:
   weasel cavaleiro.weasel                        -> cavaleiro.png
   weasel cavaleiro.weasel -o out/jump.gif -a jump --trim
   weasel cavaleiro.weasel -f sheet -a all -s 0.5 --trim -t   -> PNG + JSON
+  weasel coruja.weasel -f godot -a all --trim -t -o godot/coruja.tres
+  weasel coruja.weasel -o coruja.svg --variant all
   weasel cavaleiro.weasel -f build -o pintura.gif
+  weasel coruja.weasel -a pia -o coruja.gif --watch
   weasel -e "canvas 200 200; ellipse sol 100,100 60 c=#ffb000" -o sol.png
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
 const paint = (code, s) => (tty ? `\x1b[${code}m${s}\x1b[0m` : s);
 
-function usage(msg) {
-  console.error(`weasel: ${msg}`);
-  console.error('Use "weasel --help" para ver as opções.');
-  process.exit(2);
-}
+class Fail extends Error { constructor(msg, code) { super(msg); this.code = code; } }
+const usage = (msg) => { throw new Fail(msg, 2); };
 
 function parseArgs(argv) {
-  const o = { input: null, code: null, out: null, format: null, anim: null, frame: 0, frames: false, scale: 1, transparent: false, trim: false, margin: 8, quality: 92, layout: 'grid', cols: 0, padding: 2, speed: 1, guides: false, check: false, info: false, force: false, quiet: false };
+  const o = { input: null, code: null, out: null, format: null, anim: null, frame: 0, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92, layout: 'grid', cols: 0, padding: 2, speed: 1, guides: false, watch: false, check: false, info: false, force: false, quiet: false };
   const num = (name, v, min, max) => {
     const n = Number(v);
     if (v === undefined || v === '' || !Number.isFinite(n)) usage(`${name} precisa de um número`);
@@ -107,6 +111,7 @@ function parseArgs(argv) {
       case '-a': case '--anim': o.anim = val(); break;
       case '--frame': o.frame = Math.round(num('--frame', val(), 0, 100000)); break;
       case '--frames': o.frames = true; break;
+      case '--variant': o.variant = val(); break;
       case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); break;
       case '-t': case '--transparent': o.transparent = true; break;
       case '--trim':
@@ -120,6 +125,7 @@ function parseArgs(argv) {
       case '--padding': o.padding = Math.round(num('--padding', val(), 0, 1000)); break;
       case '--speed': o.speed = num('--speed', val(), 0.05, 20); break;
       case '--guides': o.guides = true; break;
+      case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
       case '--force': o.force = true; break;
@@ -131,20 +137,39 @@ function parseArgs(argv) {
         } else usage(`opção desconhecida "${a}"`);
     }
   }
+  if (o.code !== null && o.input) usage('use um arquivo OU -e, não os dois');
+  if (o.code === null && !o.input && !process.stdin.isTTY) o.input = '-';
+  if (o.code === null && !o.input) { process.stdout.write(HELP); process.exit(2); }
+  if (o.watch && (o.code !== null || o.input === '-')) usage('--watch precisa de um arquivo de entrada');
   return o;
 }
 
+let stdinCache = null;
 function readSource(o) {
-  if (o.code !== null) {
-    if (o.input) usage('use um arquivo OU -e, não os dois');
-    return { src: o.code.replace(/\\n/g, '\n').replace(/;/g, '\n'), name: '<-e>', base: 'desenho' };
+  if (o.code !== null) return { src: o.code.replace(/\\n/g, '\n').replace(/;/g, '\n'), name: '<-e>', base: 'desenho', dir: process.cwd() };
+  if (o.input === '-') {
+    if (stdinCache === null) stdinCache = fs.readFileSync(0, 'utf8');
+    return { src: stdinCache, name: '<stdin>', base: 'desenho', dir: process.cwd() };
   }
-  if (!o.input && !process.stdin.isTTY) o.input = '-';
-  if (!o.input) { process.stdout.write(HELP); process.exit(2); }
-  if (o.input === '-') return { src: fs.readFileSync(0, 'utf8'), name: '<stdin>', base: 'desenho' };
   let src;
-  try { src = fs.readFileSync(o.input, 'utf8'); } catch (e) { usage(`não consegui ler "${o.input}" (${e.code || e.message})`); }
-  return { src: src.replace(/^﻿/, ''), name: o.input, base: path.basename(o.input).replace(/\.[^.]+$/, '') || 'desenho' };
+  try { src = fs.readFileSync(o.input, 'utf8'); } catch (e) { throw new Fail(`não consegui ler "${o.input}" (${e.code || e.message})`, 2); }
+  return { src: src.replace(/^﻿/, ''), name: o.input, base: path.basename(o.input).replace(/\.[^.]+$/, '') || 'desenho', dir: path.dirname(path.resolve(o.input)) };
+}
+
+// include: caminho relativo ao arquivo que inclui
+function makeResolver(source, watched) {
+  const dirs = new Map([[path.basename(source.name), source.dir]]);
+  return (name, from) => {
+    const p = path.resolve(dirs.get(from) || source.dir, name);
+    try {
+      const t = fs.readFileSync(p, 'utf8').replace(/^﻿/, '');
+      dirs.set(name, path.dirname(p));
+      watched.add(p);
+      return t;
+    } catch (e) {
+      return null;
+    }
+  };
 }
 
 function report(model, src, name) {
@@ -160,19 +185,33 @@ function report(model, src, name) {
 
 function info(m) {
   const c = m.canvas;
+  const bg = !c.bg ? 'transparente' : typeof c.bg === 'string' ? c.bg : `gradiente ${c.bg.name}`;
   const out = [];
-  out.push(`canvas   ${c.w} × ${c.h}, fundo ${c.bg || 'transparente'}${m.finish.style !== 'game' ? `, acabamento ${m.finish.style}` : ''}${m.finish.pixel > 1 ? `, pixel ${m.finish.pixel}` : ''}`);
+  out.push(`canvas   ${c.w} × ${c.h}, fundo ${bg}${m.finish.style !== 'game' ? `, acabamento ${m.finish.style}` : ''}${m.finish.pixel > 1 ? `, pixel ${m.finish.pixel}` : ''}`);
+  if (m.files.length) out.push(`include  ${m.files.join(', ')}`);
+  if (m.vars.size) out.push(`let      ${[...m.vars].map(([k, v]) => `${k}=${Math.round(v * 1000) / 1000}`).join(' ')}`);
+  if (m.gradients.size) out.push(`gradientes ${[...m.gradients.values()].map((g) => `${g.name} (${g.type}${g.box ? ', box' : ''})`).join(', ')}`);
+  if (m.variants.length) out.push(`variantes ${m.variants.join(', ')}`);
+  if (m.defs.size) out.push(`componentes ${[...m.defs.values()].map((d) => `${d.name} (${d.uses}×)`).join(', ')}`);
   out.push(`camadas  ${m.layers.length}`);
   for (const L of m.layers) {
-    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.clip && `clip=${L.clip}`, L.only && `only=${L.only.join(',')}`].filter(Boolean).join(' ');
+    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.only && `only=${L.only.join(',')}`].filter(Boolean).join(' ');
     out.push(`  ${L.name.padEnd(14)} ${String(L.items.length).padStart(3)} item(ns)${flags ? '  ' + flags : ''}`);
   }
-  out.push(`formas   ${m.elements.length}`);
-  if (m.bones.size) out.push(`ossos    ${[...m.bones.values()].map((b) => (b.parent ? `${b.name}←${b.parent}` : b.name)).join(', ')}`);
+  out.push(`formas   ${m.elements.length}${m.elements.some((e) => e.hidden) ? ` (${m.elements.filter((e) => e.hidden).length} ocultas)` : ''}`);
+  if (m.bones.size) {
+    out.push(`ossos    ${[...m.bones.values()].map((b) => {
+      const extra = [b.sway && 'sway', b.bob && 'bob', b.jitter && 'jitter', b.spring && 'spring'].filter(Boolean);
+      return (b.parent ? `${b.name}←${b.parent}` : b.name) + (extra.length ? ` (${extra.join(',')})` : '');
+    }).join(', ')}`);
+  }
   if (m.cloths.size) out.push(`tecidos  ${[...m.cloths.keys()].join(', ')}`);
   if (m.anims.length) {
     out.push(`animações ${m.anims.length}`);
-    for (const a of m.anims) out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}`);
+    for (const a of m.anims) {
+      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}`);
+      if (a.events.length) out.push(`  ${''.padEnd(14)} eventos: ${a.events.map((e) => `${e.name}@${e.frame}`).join(', ')}`);
+    }
   } else out.push('animações nenhuma');
   if (m.unity) out.push(`unity    ${m.unity.unit} px/unidade, raiz ${m.unity.root.join(',')}`);
   console.log(out.join('\n'));
@@ -180,7 +219,7 @@ function info(m) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.zip': 'sheet', '.json': 'sheet' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.zip': 'sheet', '.json': 'sheet' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -201,83 +240,131 @@ function pickAnim(m, name, required) {
   return name;
 }
 
-async function main() {
-  const o = parseArgs(process.argv.slice(2));
-  const { src, name, base } = readSource(o);
-  const model = W.lang.parse(src);
-  const nErr = model.errors.filter((e) => e.level === 'error').length;
-  report(model, src, name);
-
-  if (o.info) info(model);
-  if (o.check) {
-    if (!o.quiet) console.log(nErr ? `${nErr} erro(s).` : model.errors.length ? 'sem erros (só avisos).' : 'sem erros.');
-    process.exit(nErr ? 1 : 0);
-  }
-  if (o.info && !o.out && !o.format) process.exit(nErr ? 1 : 0);
-  if (nErr && !o.force) {
-    console.error(`weasel: ${nErr} erro(s); nada foi exportado (use --force para exportar ignorando as linhas com erro).`);
-    process.exit(1);
-  }
-
-  let format = o.format || formatFromOut(o.out) || 'png';
-  if (format === 'jpeg') format = 'jpg';
-  if (!['png', 'jpg', 'gif', 'sheet', 'build'].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, sheet ou build)`);
+// Exporta um modelo (uma variante). sfx vai no fim do nome dos arquivos.
+async function exportModel(model, o, format, base, sfx) {
   const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, guides: o.guides, format };
+  const named = (file) => (sfx ? withSuffix(file, sfx) : file);
 
-  if (format === 'png' || format === 'jpg') {
+  if (format === 'png' || format === 'jpg' || format === 'svg') {
     const anim = pickAnim(model, o.anim, o.frames);
     const a = anim ? model.animMap.get(anim) : null;
-    const encode = (cv) => (format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'));
+    const one = (f) => {
+      if (format === 'svg') { const s = X.svgText(model, anim, f, opts); return { buf: Buffer.from(s), what: 'SVG' }; }
+      const cv = X.imageCanvas(model, anim, f, opts);
+      return { buf: format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), what: `${cv.width}×${cv.height}` };
+    };
     if (o.frames) {
       opts.rect = o.trim ? X.contentRect(model, [anim], o.margin) : undefined;
-      const pattern = o.out || `${base}_${anim}.${format}`;
-      for (let f = 0; f < a.frames; f++) {
-        const cv = X.imageCanvas(model, anim, f, opts);
-        save(withSuffix(pattern, '_' + String(f).padStart(3, '0')), encode(cv), `${cv.width}×${cv.height}`, o.quiet);
-      }
+      const pattern = named(o.out || `${base}_${anim}.${format}`);
+      for (let f = 0; f < a.frames; f++) { const r = one(f); save(withSuffix(pattern, '_' + String(f).padStart(3, '0')), r.buf, r.what, o.quiet); }
       return;
     }
     if (a && o.frame >= a.frames) usage(`--frame ${o.frame} não existe em "${anim}" (quadros 0 a ${a.frames - 1})`);
     if (!a && o.frame) usage('--frame precisa de --anim');
-    const cv = X.imageCanvas(model, anim, o.frame, opts);
-    const file = o.out || (anim ? `${base}_${anim}_${o.frame}.${format}` : `${base}.${format}`);
-    save(file, encode(cv), `${cv.width}×${cv.height}`, o.quiet);
+    const r = one(o.frame);
+    save(named(o.out || (anim ? `${base}_${anim}_${o.frame}.${format}` : `${base}.${format}`)), r.buf, r.what, o.quiet);
     return;
   }
 
   if (format === 'gif' || format === 'build') {
     const source = format === 'build' ? X.BUILD : pickAnim(model, o.anim, true);
     const r = await X.gifBytes(model, source, opts);
-    const file = o.out || `${base}_${format === 'build' ? 'pintura' : source}.gif`;
-    save(file, Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros`, o.quiet);
+    save(named(o.out || `${base}_${format === 'build' ? 'pintura' : source}.gif`), Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros`, o.quiet);
     return;
   }
 
-  // sprite sheet
+  // sprite sheet (PNG + JSON) ou Godot (PNG + .tres)
   let names;
   if (!o.anim || o.anim === 'all') names = model.anims.length ? model.anims.map((a) => a.name) : [null];
   else names = [pickAnim(model, o.anim, true)];
   const tag = !o.anim || o.anim === 'all' ? (model.anims.length > 1 ? 'todas' : names[0] || 'pose') : o.anim;
-  const out = o.out || `${base}_${tag}.png`;
+  const out = named(o.out || `${base}_${tag}.png`);
   const zip = path.extname(out).toLowerCase() === '.zip';
-  const pngFile = out.replace(/\.(zip|json|png)$/i, '') + '.png';
+  const pngFile = out.replace(/\.(zip|json|png|tres)$/i, '') + '.png';
   opts.imageName = path.basename(pngFile);
   const r = X.sheetCanvas(model, names, opts);
   const png = r.canvas.toBuffer('image/png');
   const what = `${r.canvas.width}×${r.canvas.height}, ${r.frames} quadros de ${r.fw}×${r.fh}`;
+  const extra = format === 'godot'
+    ? { name: opts.imageName.replace(/\.png$/i, '.tres'), data: Buffer.from(X.godotText(model, r, opts.imageName)), what: 'SpriteFrames do Godot 4' }
+    : { name: opts.imageName.replace(/\.png$/i, '.json'), data: Buffer.from(r.json), what: 'JSON (TexturePacker/Phaser)' };
   if (zip) {
-    const blob = W.zip([
-      { name: opts.imageName, data: new Uint8Array(png) },
-      { name: opts.imageName.replace(/\.png$/i, '.json'), data: new TextEncoder().encode(r.json) },
-    ]);
+    const blob = W.zip([{ name: opts.imageName, data: new Uint8Array(png) }, { name: extra.name, data: new Uint8Array(extra.data) }]);
     save(out, Buffer.from(await blob.arrayBuffer()), what, o.quiet);
   } else {
     save(pngFile, png, what, o.quiet);
-    save(pngFile.replace(/\.png$/i, '.json'), Buffer.from(r.json), 'JSON (TexturePacker/Phaser)', o.quiet);
+    save(path.join(path.dirname(pngFile), extra.name), extra.data, extra.what, o.quiet);
   }
 }
 
-main().catch((e) => {
+// Uma rodada completa: lê, confere e exporta. Devolve o código de saída e os arquivos lidos.
+async function run(o) {
+  const watched = new Set();
+  const source = readSource(o);
+  if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
+  const resolve = makeResolver(source, watched);
+  const parse = (variant) => W.lang.parse(source.src, { file: path.basename(source.name), resolve, variant: variant || null });
+  const model = parse(o.variant && o.variant !== 'all' ? o.variant : null);
+  const nErr = model.errors.filter((e) => e.level === 'error').length;
+  report(model, source.src, source.name);
+
+  if (o.info) info(model);
+  if (o.check) {
+    if (!o.quiet) console.log(nErr ? `${nErr} erro(s).` : model.errors.length ? 'sem erros (só avisos).' : 'sem erros.');
+    return { code: nErr ? 1 : 0, watched };
+  }
+  if (o.info && !o.out && !o.format) return { code: nErr ? 1 : 0, watched };
+  if (nErr && !o.force) {
+    console.error(`weasel: ${nErr} erro(s); nada foi exportado (use --force para exportar ignorando as linhas com erro).`);
+    return { code: 1, watched };
+  }
+  if (o.variant && o.variant !== 'all' && !model.variants.includes(o.variant)) usage(`variante "${o.variant}" não existe${model.variants.length ? ` (tem: ${model.variants.join(', ')})` : ''}`);
+
+  let format = o.format || formatFromOut(o.out) || 'png';
+  if (format === 'jpeg') format = 'jpg';
+  if (!['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'build'].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot ou build)`);
+
+  if (o.variant === 'all') {
+    if (!model.variants.length) usage('o desenho não tem variantes (variant)');
+    await exportModel(model, o, format, source.base, '');
+    for (const v of model.variants) await exportModel(parse(v), o, format, source.base, '_' + v);
+  } else {
+    await exportModel(model, o, format, source.base, '');
+  }
+  return { code: 0, watched };
+}
+
+async function main() {
+  let o;
+  try { o = parseArgs(process.argv.slice(2)); } catch (e) { return fail(e); }
+  if (!o.watch) {
+    try { process.exit((await run(o)).code); } catch (e) { return fail(e); }
+  }
+  // --watch: exporta de novo quando o arquivo ou um include muda
+  let watchers = [], timer = null, busy = false;
+  const stamp = () => new Date().toLocaleTimeString('pt-BR');
+  const once = async () => {
+    busy = true;
+    let watched = new Set([path.resolve(o.input)]);
+    try { watched = (await run(o)).watched; } catch (e) { console.error(`weasel: ${e.message}`); }
+    busy = false;
+    for (const w of watchers) w.close();
+    watchers = [...watched].map((f) => {
+      try { return fs.watch(f, () => { clearTimeout(timer); timer = setTimeout(() => { if (!busy) { console.log(paint('2', `[${stamp()}] ${path.basename(f)} mudou`)); once(); } }, 150); }); } catch (e) { return { close() {} }; }
+    });
+    console.log(paint('2', `[${stamp()}] esperando mudanças em ${[...watched].map((f) => path.basename(f)).join(', ')} (Ctrl+C para sair)`));
+  };
+  await once();
+}
+
+function fail(e) {
+  if (e instanceof Fail) {
+    console.error(`weasel: ${e.message}`);
+    if (e.code === 2) console.error('Use "weasel --help" para ver as opções.');
+    process.exit(e.code);
+  }
   console.error(`weasel: ${e.message}`);
   process.exit(3);
-});
+}
+
+main();

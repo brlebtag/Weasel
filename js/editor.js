@@ -3,9 +3,11 @@
   'use strict';
   const L = W.lang;
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const FLAG_WORDS = new Set(['guide', 'hidden', 'once', 'loop', 'game', 'flat']);
+  const FLAG_WORDS = new Set(['guide', 'hidden', 'once', 'loop', 'game', 'flat', 'bold', 'italic', 'linear', 'radial', 'box']);
 
   function valueClass(v) {
+    if (v.includes('{')) return 'expr';
+    if (v[0] === '"') return 'str';
     if (L.HEX.test(v)) return 'col';
     if (v.split(',').every((p) => L.NUM.test(p))) return 'num';
     return 'val';
@@ -14,21 +16,29 @@
   function highlightLine(text) {
     const sp = L.splitLine(text);
     const spans = [];
+    const cmd = sp.words[0] && sp.words[0].text;
     sp.words.forEach((w, i) => {
       if (i === 0) { const g = L.KEYWORDS[w.text]; spans.push([w.from, w.to, g ? 'kw-' + g : 'bad']); return; }
-      const eq = w.text.indexOf('=');
+      const eq = w.text[0] === '"' ? -1 : w.text.indexOf('=');
       if (eq > 0) {
         const v = w.text.slice(eq + 1);
         spans.push([w.from, w.from + eq, 'attr'], [w.from + eq, w.from + eq + 1, 'op']);
         if (v) spans.push([w.from + eq + 1, w.to, valueClass(v), L.HEX.test(v) ? v : null]);
-      } else if (w.text.split(',').every((p) => L.NUM.test(p))) spans.push([w.from, w.to, 'num']);
+      } else if (w.text.includes('{')) spans.push([w.from, w.to, 'expr']);
+      else if (w.text[0] === '"') spans.push([w.from, w.to, 'str']);
+      else if (w.text.split(',').every((p) => L.NUM.test(p))) spans.push([w.from, w.to, 'num']);
       else if (FLAG_WORDS.has(w.text)) spans.push([w.from, w.to, 'flag']);
       else spans.push([w.from, w.to, i === 1 ? 'name' : 'val']);
     });
     if (sp.colon >= 0) spans.push([sp.colon, sp.colon + 1, 'op']);
     for (const p of sp.points) {
-      if (p.text.endsWith('!')) spans.push([p.from, p.to - 1, 'pt'], [p.to - 1, p.to, 'corner']);
-      else spans.push([p.from, p.to, 'pt']);
+      if (cmd === 'gradient') {
+        const at = p.text.lastIndexOf('@'), c = at > 0 ? p.text.slice(0, at) : p.text;
+        spans.push([p.from, p.from + c.length, L.HEX.test(c) ? 'col' : 'val', L.HEX.test(c) ? c : null]);
+        if (at > 0) spans.push([p.from + at, p.to, 'num']);
+      } else if (p.text.includes('{')) spans.push([p.from, p.to, 'expr']);
+      else if (p.text.endsWith('!')) spans.push([p.from, p.to - 1, 'pt'], [p.to - 1, p.to, 'corner']);
+      else if (p.text.includes('~')) { const t = p.text.indexOf('~'); spans.push([p.from, p.from + t, 'pt'], [p.from + t, p.to, 'tan']); } else spans.push([p.from, p.to, 'pt']);
     }
     if (sp.comment !== null) spans.push([sp.commentAt, text.length, 'com']);
     spans.sort((a, b) => a[0] - b[0]);
@@ -73,13 +83,155 @@
       this.curLine = -1;
       this.lines = [];
       const ta = this.ta;
-      ta.addEventListener('input', () => this._changed('type'));
-      ta.addEventListener('scroll', () => this._sync());
+      this.pop = document.createElement('div');
+      this.pop.className = 'ed-pop';
+      this.pop.hidden = true;
+      root.querySelector('.ed-body').appendChild(this.pop);
+      this.items = [];
+      this.sel = 0;
+      ta.addEventListener('input', (e) => {
+        this._changed('type');
+        if (e.inputType === 'insertText' && /[\w.=-]/.test(e.data || '')) this._suggest(false);
+        else if (e.inputType && e.inputType.startsWith('delete') && !this.pop.hidden) this._suggest(false);
+        else this._closePop();
+      });
+      ta.addEventListener('scroll', () => { this._sync(); this._closePop(); });
       ta.addEventListener('keydown', (e) => this._key(e));
+      ta.addEventListener('blur', () => setTimeout(() => this._closePop(), 150));
+      ta.addEventListener('mousedown', (e) => this._altDown(e));
       for (const ev of ['keyup', 'mouseup', 'focus', 'select']) ta.addEventListener(ev, () => this._caret());
       ta.addEventListener('mousedown', () => requestAnimationFrame(() => this._caret()));
       document.addEventListener('selectionchange', () => { if (document.activeElement === ta) this._caret(); });
+      this.pop.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const row = e.target.closest('[data-i]');
+        if (row) this._accept(+row.dataset.i);
+      });
     }
+
+    // ---------- medidas do texto (fonte monoespaçada) ----------
+    _metrics() {
+      const cs = getComputedStyle(this.ta);
+      const font = `${cs.fontSize} ${cs.fontFamily}`;
+      if (!this._m || this._m.font !== font) {
+        const c = (Editor._measure = Editor._measure || document.createElement('canvas').getContext('2d'));
+        c.font = font;
+        this._m = { font, cw: c.measureText('0').width, lh: parseFloat(cs.lineHeight) || 21, pl: parseFloat(cs.paddingLeft) || 12, pt: parseFloat(cs.paddingTop) || 10 };
+      }
+      return this._m;
+    }
+
+    _posFromMouse(e) {
+      const m = this._metrics(), r = this.ta.getBoundingClientRect();
+      const x = e.clientX - r.left + this.ta.scrollLeft - m.pl, y = e.clientY - r.top + this.ta.scrollTop - m.pt;
+      return { line: Math.floor(y / m.lh), col: Math.max(0, Math.round(x / m.cw - 0.25)) };
+    }
+
+    // Alt+arrastar num número muda o valor; Alt+clique numa cor #hex abre o seletor de cor.
+    _altDown(e) {
+      if (!e.altKey || e.button !== 0) return;
+      const { line, col } = this._posFromMouse(e);
+      const text = this.ta.value.split('\n')[line];
+      if (text === undefined) return;
+      let mm;
+      const hexRx = /#[0-9a-fA-F]{3,8}(?![0-9a-zA-Z])/g;
+      while ((mm = hexRx.exec(text))) {
+        if (col >= mm.index && col <= mm.index + mm[0].length && [4, 5, 7, 9].includes(mm[0].length)) { e.preventDefault(); this._pickColor(line, mm.index, mm[0], e); return; }
+      }
+      const numRx = /-?\d+(\.\d+)?/g;
+      while ((mm = numRx.exec(text))) {
+        if (mm.index > 0 && /[\w#.]/.test(text[mm.index - 1])) continue;
+        if (col >= mm.index && col <= mm.index + mm[0].length) { e.preventDefault(); this._scrub(line, mm.index, mm[0], e); return; }
+      }
+    }
+
+    _scrub(line, from, text, e) {
+      const start = parseFloat(text), dec = (text.split('.')[1] || '').length, step = Math.pow(10, -dec);
+      const off0 = this.lineStart(line) + from, x0 = e.clientX, key = 'scrub' + Date.now();
+      let len = text.length;
+      document.body.classList.add('scrubbing');
+      const move = (ev) => {
+        const d = Math.round((ev.clientX - x0) / 3) * step * (ev.shiftKey ? 10 : 1);
+        let s = (start + d).toFixed(dec);
+        if (Number(s) === 0) s = (0).toFixed(dec);
+        this.replaceRange(off0, off0 + len, s, { key, select: [off0 + s.length, off0 + s.length] });
+        len = s.length;
+      };
+      const up = () => {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        document.body.classList.remove('scrubbing');
+      };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    }
+
+    _pickColor(line, from, hex, e) {
+      if (!this.colorInput) {
+        this.colorInput = document.createElement('input');
+        this.colorInput.type = 'color';
+        Object.assign(this.colorInput.style, { position: 'fixed', width: '1px', height: '1px', opacity: '0', border: '0', padding: '0' });
+        document.body.appendChild(this.colorInput);
+      }
+      const inp = this.colorInput;
+      Object.assign(inp.style, { left: e.clientX + 'px', top: e.clientY + 'px' });
+      const h = hex.slice(1);
+      const full = h.length <= 4 ? h.slice(0, 3).split('').map((c) => c + c).join('') : h.slice(0, 6);
+      const alpha = h.length === 8 ? h.slice(6) : h.length === 4 ? h[3] + h[3] : '';
+      inp.value = '#' + full.toLowerCase();
+      const off0 = this.lineStart(line) + from, key = 'color' + Date.now();
+      let len = hex.length;
+      inp.oninput = () => {
+        const s = inp.value + alpha;
+        this.replaceRange(off0, off0 + len, s, { key, select: [off0 + s.length, off0 + s.length] });
+        len = s.length;
+      };
+      try { if (inp.showPicker) inp.showPicker(); else inp.click(); } catch (err) { inp.click(); }
+    }
+
+    // ---------- autocompletar ----------
+    _suggest(force) {
+      const ta = this.ta;
+      if (!this.opts.complete || ta.selectionStart !== ta.selectionEnd) return this._closePop();
+      const c = this.caret();
+      const lineText = ta.value.split('\n')[c.line] || '';
+      const before = lineText.slice(0, c.col);
+      const word = /[\w.-]*$/.exec(before)[0];
+      if (!force && !word) return this._closePop();
+      const low = word.toLowerCase();
+      const items = this.opts.complete({ text: lineText, before, word, line: c.line })
+        .filter((it) => it.label.toLowerCase().startsWith(low) && it.label !== word)
+        .slice(0, 40);
+      if (!items.length) return this._closePop();
+      this.items = items;
+      this.word = word;
+      this.sel = 0;
+      const m = this._metrics();
+      this.pop.style.left = Math.max(0, m.pl + (c.col - word.length) * m.cw - ta.scrollLeft) + 'px';
+      this.pop.style.top = m.pt + (c.line + 1) * m.lh - ta.scrollTop + 2 + 'px';
+      this._renderPop();
+      this.pop.hidden = false;
+    }
+
+    _renderPop() {
+      this.pop.innerHTML = this.items.map((it, i) => `<div data-i="${i}" class="${i === this.sel ? 'on' : ''}"><span>${esc(it.label)}</span>${it.detail ? `<small>${esc(it.detail)}</small>` : ''}</div>`).join('');
+      const on = this.pop.children[this.sel];
+      if (on) on.scrollIntoView({ block: 'nearest' });
+    }
+
+    _closePop() { this.pop.hidden = true; this.items = []; }
+
+    _accept(i) {
+      const it = this.items[i];
+      if (!it) return;
+      const off = this.ta.selectionStart;
+      const text = it.insert || it.label;
+      this.replaceRange(off - this.word.length, off, text, {});
+      this._closePop();
+      if (text.endsWith('=') || text.endsWith('.')) this._suggest(true);
+    }
+
+    get popOpen() { return !this.pop.hidden && this.items.length > 0; }
 
     get value() { return this.ta.value; }
 
@@ -204,6 +356,18 @@
 
     _key(e) {
       const ta = this.ta, mod = e.ctrlKey || e.metaKey;
+      if (this.popOpen) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          this.sel = (this.sel + (e.key === 'ArrowDown' ? 1 : -1) + this.items.length) % this.items.length;
+          this._renderPop();
+          return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); this._accept(this.sel); return; }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); this._closePop(); return; }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') this._closePop();
+      }
+      if (mod && e.code === 'Space') { e.preventDefault(); this._suggest(true); return; }
       if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
         this._restore(e.shiftKey ? this.hist.redo() : this.hist.undo());

@@ -1,7 +1,7 @@
 {
   "name": "weasel",
-  "version": "1.0.0",
-  "description": "Linguagem de desenho por código: editor web e linha de comando que exportam PNG, JPG, GIF animado e sprite sheet.",
+  "version": "1.1.0",
+  "description": "Linguagem de desenho por código: editor web e linha de comando que exportam PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot.",
   "license": "MIT",
   "private": true,
   "bin": {

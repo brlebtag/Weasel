@@ -23,7 +23,32 @@
     },
     scale(x, y) { return [x, 0, 0, y, 0, 0]; },
     isId(m) { return m[0] === 1 && m[1] === 0 && m[2] === 0 && m[3] === 1 && m[4] === 0 && m[5] === 0; },
+    det(m) { return m[0] * m[3] - m[1] * m[2]; },
+    invert(m) {
+      const d = m[0] * m[3] - m[1] * m[2];
+      if (!d) return M.id();
+      return [m[3] / d, -m[1] / d, -m[2] / d, m[0] / d, (m[2] * m[5] - m[3] * m[4]) / d, (m[1] * m[4] - m[0] * m[5]) / d];
+    },
   };
+
+  // Cores #rgb/#rgba/#rrggbb/#rrggbbaa → [r,g,b,a] (a de 0 a 1); qualquer outra coisa → null.
+  function parseHex(c) {
+    if (typeof c !== 'string' || c[0] !== '#') return null;
+    let h = c.slice(1);
+    if (h.length === 3 || h.length === 4) h = h.split('').map((x) => x + x).join('');
+    if (h.length !== 6 && h.length !== 8) return null;
+    const v = parseInt(h, 16);
+    if (isNaN(v)) return null;
+    return h.length === 6 ? [(v >> 16) & 255, (v >> 8) & 255, v & 255, 1] : [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), parseInt(h.slice(6, 8), 16) / 255];
+  }
+  const hex2 = (n) => Math.round(Math.min(255, Math.max(0, n))).toString(16).padStart(2, '0');
+  function toHex(c) { return '#' + hex2(c[0]) + hex2(c[1]) + hex2(c[2]) + (c[3] < 1 ? hex2(c[3] * 255) : ''); }
+  // Mistura duas cores; só cores hex dão para misturar, as outras trocam de uma vez.
+  function lerpColor(a, b, t) {
+    const p = parseHex(a), q = parseHex(b);
+    if (!p || !q) return t < 1 ? a : b;
+    return toHex(p.map((v, i) => v + (q[i] - v) * t));
+  }
 
   const EASE = {
     smooth: (t) => t * t * (3 - 2 * t),
@@ -34,14 +59,15 @@
     back: (t) => { const c = 1.70158, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; },
   };
 
-  // Curva suave que passa por todos os pontos. Pontos com corner=true viram cantos vivos.
+  // Curva suave que passa por todos os pontos. Pontos com corner=true viram cantos vivos e
+  // pontos com tan=[dx,dy] usam essa alça (a do outro lado é espelhada).
   // Cada segmento é uma cúbica [x0,y0, c1x,c1y, c2x,c2y, x1,y1].
   function smoothSegs(pts, closed, smooth) {
     const n = pts.length;
     if (n < 2) return [];
     const k = 0.36 * (smooth === undefined ? 1 : smooth);
     const dir = pts.map((p, i) => {
-      if (p.corner || k <= 0) return null;
+      if (p.corner || p.tan || k <= 0) return null;
       let a = pts[i - 1], b = pts[i + 1];
       if (closed) { a = pts[(i - 1 + n) % n]; b = pts[(i + 1) % n]; }
       if (!a || !b) return null;
@@ -54,8 +80,8 @@
       const p = pts[i], q = pts[(i + 1) % n];
       const len = Math.hypot(q.x - p.x, q.y - p.y);
       const dp = dir[i], dq = dir[(i + 1) % n];
-      const c1 = dp ? [p.x + dp[0] * len * k, p.y + dp[1] * len * k] : [p.x + (q.x - p.x) / 3, p.y + (q.y - p.y) / 3];
-      const c2 = dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
+      const c1 = p.tan ? [p.x + p.tan[0], p.y + p.tan[1]] : dp ? [p.x + dp[0] * len * k, p.y + dp[1] * len * k] : [p.x + (q.x - p.x) / 3, p.y + (q.y - p.y) / 3];
+      const c2 = q.tan ? [q.x - q.tan[0], q.y - q.tan[1]] : dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
       segs.push([p.x, p.y, c1[0], c1[1], c2[0], c2[1], q.x, q.y]);
     }
     return segs;
@@ -164,23 +190,28 @@
 
   // Traço com espessura variável. Trechos de espessura parecida viram um stroke só; as pontas
   // redondas de trechos vizinhos se sobrepõem, então não aparecem emendas claras entre eles.
-  function strokeVar(ctx, p, widths) {
-    const n = p.length / 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+  function varBatches(p, widths) {
+    const n = p.length / 2, out = [];
     let i = 0;
     while (i < n - 1) {
       const w = (widths[i] + widths[i + 1]) / 2;
       let j = i + 1;
       while (j < n - 1 && Math.abs((widths[j] + widths[j + 1]) / 2 - w) < 0.2) j++;
-      if (w > 0.05) {
-        ctx.beginPath();
-        ctx.moveTo(p[i * 2], p[i * 2 + 1]);
-        for (let k = i + 1; k <= j; k++) ctx.lineTo(p[k * 2], p[k * 2 + 1]);
-        ctx.lineWidth = w;
-        ctx.stroke();
-      }
+      if (w > 0.05) out.push({ i, j, w });
       i = j;
+    }
+    return out;
+  }
+
+  function strokeVar(ctx, p, widths) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const b of varBatches(p, widths)) {
+      ctx.beginPath();
+      ctx.moveTo(p[b.i * 2], p[b.i * 2 + 1]);
+      for (let k = b.i + 1; k <= b.j; k++) ctx.lineTo(p[k * 2], p[k * 2 + 1]);
+      ctx.lineWidth = b.w;
+      ctx.stroke();
     }
   }
 
@@ -244,5 +275,5 @@
     return out;
   }
 
-  W.geom = { M, EASE, smoothSegs, polySegs, ellipseSegs, rectSegs, mapSeg, toPath, flatten, polyLength, polyPrefix, strokeVar, drawVar, inkWidths, taperWidths };
+  W.geom = { M, EASE, parseHex, toHex, lerpColor, smoothSegs, polySegs, ellipseSegs, rectSegs, mapSeg, toPath, flatten, polyLength, polyPrefix, varBatches, strokeVar, drawVar, inkWidths, taperWidths };
 })(window.Weasel = window.Weasel || {});

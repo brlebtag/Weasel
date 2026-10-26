@@ -1,4 +1,4 @@
-/* Weasel — exportação: PNG, JPG, GIF animado e sprite sheet (PNG + JSON). */
+/* Weasel — exportação: PNG, JPG, GIF animado, SVG, sprite sheet (PNG + JSON) e SpriteFrames do Godot. */
 (function (W) {
   'use strict';
   const S = W.scene;
@@ -21,8 +21,10 @@
         for (let y = 0; y < img.height; y++) {
           for (let x = 0; x < img.width; x++) {
             if (d[(y * img.width + x) * 4 + 3] > 6) {
-              if (x < x0) x0 = x; if (x > x1) x1 = x;
-              if (y < y0) y0 = y; if (y > y1) y1 = y;
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
             }
           }
         }
@@ -37,11 +39,17 @@
 
   const fullRect = (model) => ({ x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
   const toBlob = (canvas, type, q) => new Promise((res) => canvas.toBlob(res, type, q));
+  const solidBg = (model) => { const bg = model.canvas.bg; return typeof bg === 'string' ? bg : bg && bg.stops ? bg.stops[0].c : '#ffffff'; };
 
-  // As funções *Canvas / *Bytes não dependem do navegador: a linha de comando usa as mesmas.
+  // As funções *Canvas / *Bytes / *Text não dependem do navegador: a linha de comando usa as mesmas.
   function imageCanvas(model, animName, frame, o) {
     const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
     return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides });
+  }
+
+  function svgText(model, animName, frame, o) {
+    const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
+    return W.svg.render(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
   }
 
   async function image(model, animName, frame, o) {
@@ -114,21 +122,21 @@
     if (o.layout === 'rows') {
       cols = Math.max(...list.map((n) => frameIdx(model, n).length));
       rows = list.length;
-      let k = 0;
-      list.forEach((name, r) => frameIdx(model, name).forEach((f, i) => { cells[k].col = i; cells[k].r = r; k++; }));
+      cells.forEach((c) => { c.col = c.i; c.r = c.row; });
     } else {
       cols = o.cols > 0 ? o.cols : Math.ceil(Math.sqrt(cells.length));
       rows = Math.ceil(cells.length / cols);
       cells.forEach((c, k) => { c.col = k % cols; c.r = Math.floor(k / cols); });
     }
+    for (const c of cells) { c.x = pad + c.col * (fw + pad); c.y = pad + c.r * (fh + pad); }
     const out = document.createElement('canvas');
     out.width = pad + cols * (fw + pad);
     out.height = pad + rows * (fh + pad);
-    if (out.width * out.height > 16384 * 16384 || out.width > 16384 || out.height > 16384) throw new Error('a folha ficaria grande demais: diminua a escala');
+    if (out.width > 16384 || out.height > 16384) throw new Error('a folha ficaria grande demais: diminua a escala');
     const ctx = out.getContext('2d');
-    if (!o.transparent) { ctx.fillStyle = model.canvas.bg || '#ffffff'; ctx.fillRect(0, 0, out.width, out.height); }
+    if (!o.transparent) { ctx.fillStyle = solidBg(model); ctx.fillRect(0, 0, out.width, out.height); }
     const json = { frames: {}, animations: {}, meta: {} };
-    const tags = [];
+    const tags = [], events = [];
     let flat = 0;
     for (const name of list) {
       const anim = name ? model.animMap.get(name) : null;
@@ -137,27 +145,30 @@
       json.animations[key] = [];
       for (const f of frameIdx(model, name)) {
         const c = cells[flat];
-        const x = pad + c.col * (fw + pad), y = pad + c.r * (fh + pad);
         const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
-        ctx.drawImage(cv, x, y);
+        ctx.drawImage(cv, c.x, c.y);
         const id = `${key}_${String(f).padStart(2, '0')}`;
         const root = model.unity ? model.unity.root : [rect.x + rect.w / 2, rect.y + rect.h];
+        const fe = anim ? anim.events.filter((e) => e.frame === f).map((e) => e.name) : [];
         json.frames[id] = {
-          frame: { x, y, w: fw, h: fh }, rotated: false, trimmed: false,
+          frame: { x: c.x, y: c.y, w: fw, h: fh }, rotated: false, trimmed: false,
           spriteSourceSize: { x: 0, y: 0, w: fw, h: fh }, sourceSize: { w: fw, h: fh },
           pivot: { x: round3((root[0] - rect.x) / rect.w), y: round3((root[1] - rect.y) / rect.h) },
           duration: Math.round(1000 / (anim ? anim.fps : 12)),
         };
+        if (fe.length) json.frames[id].events = fe;
+        for (const n of fe) events.push({ animation: key, frame: f, name: n });
         json.animations[key].push(id);
         flat++;
       }
       tags.push({ name: key, from, to: flat - 1, direction: 'forward', fps: anim ? anim.fps : 12, loop: anim ? anim.loop : false });
     }
     json.meta = {
-      app: 'Weasel', version: '1.0', image: o.imageName || 'sprites.png', format: 'RGBA8888',
+      app: 'Weasel', version: '1.1', image: o.imageName || 'sprites.png', format: 'RGBA8888',
       size: { w: out.width, h: out.height }, scale: String(o.scale), frameSize: { w: fw, h: fh }, padding: pad,
-      frameTags: tags, sourceRect: rect,
+      frameTags: tags, events, sourceRect: rect,
     };
+    if (model.variant) json.meta.variant = model.variant;
     if (model.unity) {
       json.meta.unity = {
         pixelsPerUnit: round3(model.unity.unit * o.scale),
@@ -165,9 +176,23 @@
         collider: model.unity.collider,
       };
     }
-    return { canvas: out, json: JSON.stringify(json, null, 2), frames: cells.length, fw, fh };
+    return { canvas: out, json: JSON.stringify(json, null, 2), frames: cells.length, fw, fh, cells, list };
   }
   const round3 = (v) => Math.round(v * 1000) / 1000;
+
+  // SpriteFrames do Godot 4 (.tres) apontando para a folha; deixe o .png e o .tres na mesma pasta.
+  function godotText(model, r, imagePath) {
+    const out = [`[gd_resource type="SpriteFrames" load_steps=${r.cells.length + 2} format=3]`, '', `[ext_resource type="Texture2D" path="${imagePath}" id="1_sheet"]`, ''];
+    r.cells.forEach((c, i) => out.push(`[sub_resource type="AtlasTexture" id="AtlasTexture_${i}"]`, 'atlas = ExtResource("1_sheet")', `region = Rect2(${c.x}, ${c.y}, ${r.fw}, ${r.fh})`, ''));
+    const anims = r.list.map((name) => {
+      const a = name ? model.animMap.get(name) : null;
+      const frames = [];
+      r.cells.forEach((c, i) => { if (c.name === name) frames.push(`{\n"duration": 1.0,\n"texture": SubResource("AtlasTexture_${i}")\n}`); });
+      return `{\n"frames": [${frames.join(', ')}],\n"loop": ${a ? a.loop : true},\n"name": &"${name || 'default'}",\n"speed": ${(a ? a.fps : 5).toFixed(1)}\n}`;
+    });
+    out.push('[resource]', `animations = [${anims.join(', ')}]`, '');
+    return out.join('\n');
+  }
 
   function download(blob, name) {
     const a = document.createElement('a');
@@ -179,6 +204,7 @@
   }
 
   const kb = (n) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+  const bytesOf = async (blob) => new Uint8Array(await blob.arrayBuffer());
 
   // ---------- janela de exportação ----------
   function setupDialog(app) {
@@ -187,11 +213,14 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed']) {
       $(id).addEventListener('change', () => refresh());
     }
     $('expDownload').addEventListener('click', () => save(false));
     $('expDownloadPng').addEventListener('click', () => save(true));
+
+    const isSheet = () => kind === 'sheet' || kind === 'godot';
+    const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg';
 
     function sync() {
       dlg.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
@@ -200,23 +229,58 @@
       const sel = $('expAnim');
       const prev = sel.value;
       sel.innerHTML = '';
-      const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
-      if (kind === 'png' || kind === 'jpg') {
+      const add = (s, v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; s.appendChild(o); };
+      if (isFrame()) {
         const st = app.state();
-        add('', st.anim ? `Quadro atual — ${st.anim}, quadro ${st.frame + 1}` : 'Pose parada (sem animação)');
+        add(sel, '', st.anim ? `Quadro atual — ${st.anim}, quadro ${st.frame + 1}` : 'Pose parada (sem animação)');
       } else {
-        for (const a of model.anims) add(a.name, `${a.name} — ${a.frames} quadros, ${a.fps} fps`);
-        if (kind === 'gif') add(BUILD, 'Pintura passo a passo (como no vídeo)');
-        if (kind === 'sheet' && model.anims.length > 1) add(ALL, 'Todas as animações');
-        if (!model.anims.length && kind === 'sheet') add('', 'Pose parada');
-        const want = [prev, app.state().anim].find((v) => v && [...sel.options].some((o) => o.value === v));
+        for (const a of model.anims) add(sel, a.name, `${a.name} — ${a.frames} quadros, ${a.fps} fps`);
+        if (kind === 'gif') add(sel, BUILD, 'Pintura passo a passo (como no vídeo)');
+        if (isSheet() && model.anims.length > 1) add(sel, ALL, 'Todas as animações');
+        if (!model.anims.length && isSheet()) add(sel, '', 'Pose parada');
+        const want = [prev, isSheet() && model.anims.length > 1 ? ALL : '', app.state().anim].find((v) => v && [...sel.options].some((o) => o.value === v));
         if (want) sel.value = want;
       }
+      const vs = $('expVariant'), vprev = vs.value;
+      vs.innerHTML = '';
+      const variants = app.variants();
+      add(vs, '', 'padrão');
+      for (const v of variants) add(vs, v, v);
+      if (variants.length) add(vs, ALL, 'todas (num .zip)');
+      vs.value = [vprev, app.variant()].find((v) => v !== undefined && [...vs.options].some((o) => o.value === v)) || '';
+      $('expVariantWrap').hidden = !variants.length;
       $('expTransparent').disabled = kind === 'jpg';
-      $('expDownloadPng').hidden = kind !== 'sheet';
-      $('expDownload').textContent = kind === 'sheet' ? 'Baixar .zip (PNG + JSON)' : `Baixar .${kind}`;
-      $('expSpeedWrap').hidden = !(kind === 'gif' && sel.value === BUILD);
+      $('expDownloadPng').hidden = !isSheet();
       refresh();
+    }
+
+    // Gera os arquivos de uma variante.
+    async function produce(model, o, suffix) {
+      const base = o.baseName + suffix;
+      const st = app.state();
+      if (kind === 'png' || kind === 'jpg') {
+        const x = await image(model, st.anim, st.frame, o);
+        return { files: [{ name: `${base}.${kind}`, blob: x.blob }], preview: x.canvas.toDataURL(), info: `${x.canvas.width} × ${x.canvas.height} px · ${kb(x.blob.size)}` };
+      }
+      if (kind === 'svg') {
+        const s = svgText(model, st.anim, st.frame, o);
+        const blob = new Blob([s], { type: 'image/svg+xml' });
+        return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: `SVG vetorial · ${kb(blob.size)}` };
+      }
+      if (kind === 'gif') {
+        const src = $('expAnim').value;
+        const x = await gif(model, src, o);
+        return { files: [{ name: `${base}_${src === BUILD ? 'pintura' : src}.gif`, blob: x.blob }], previewUrl: URL.createObjectURL(x.blob), info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
+      }
+      const v = $('expAnim').value;
+      const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
+      const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
+      o.imageName = `${o.baseName}_${tag}.png`;
+      const x = await sheet(model, names, o);
+      const files = [{ name: o.imageName, blob: x.png, png: true }];
+      if (kind === 'sheet') files.push({ name: `${o.baseName}_${tag}.json`, blob: new Blob([x.json], { type: 'application/json' }) });
+      else files.push({ name: `${o.baseName}_${tag}.tres`, blob: new Blob([godotText(model, x, o.imageName)], { type: 'text/plain' }) });
+      return { files, preview: x.canvas.toDataURL(), info: `${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}` };
     }
 
     async function refresh() {
@@ -227,47 +291,40 @@
       $('expDownload').disabled = $('expDownloadPng').disabled = true;
       await new Promise((r) => setTimeout(r, 30));
       if (my !== busy) return;
-      const model = app.model();
       const o = {
         scale: parseFloat($('expScale').value), transparent: $('expTransparent').checked && kind !== 'jpg',
         trim: $('expTrim').checked, margin: parseInt($('expMargin').value, 10) || 0, quality: parseInt($('expQuality').value, 10) / 100,
         layout: $('expLayout').value, cols: parseInt($('expCols').value, 10) || 0, padding: parseInt($('expPad').value, 10) || 0,
         speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind,
       };
+      const vsel = $('expVariant').value;
+      const variants = vsel === ALL ? ['', ...app.variants()] : [vsel];
       try {
-        let r;
-        if (kind === 'png' || kind === 'jpg') {
-          const st = app.state();
-          const x = await image(model, st.anim, st.frame, o);
-          r = { blob: x.blob, preview: x.canvas, name: `${o.baseName}.${kind}`, info: `${x.canvas.width} × ${x.canvas.height} px · ${kb(x.blob.size)}` };
-        } else if (kind === 'gif') {
-          const src = $('expAnim').value;
-          const x = await gif(model, src, o);
-          r = { blob: x.blob, previewUrl: URL.createObjectURL(x.blob), name: `${o.baseName}_${src === BUILD ? 'pintura' : src}.gif`, info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
-        } else {
-          const v = $('expAnim').value;
-          const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
-          const tag = v === ALL ? 'todas' : v || 'pose';
-          o.imageName = `${o.baseName}_${tag}.png`;
-          const x = await sheet(model, names, o);
-          r = {
-            blob: W.zip([
-              { name: o.imageName, data: new Uint8Array(await x.png.arrayBuffer()) },
-              { name: `${o.baseName}_${tag}.json`, data: new TextEncoder().encode(x.json) },
-            ]),
-            png: x.png, preview: x.canvas, name: `${o.baseName}_${tag}_sheet.zip`, pngName: `${o.baseName}_${tag}.png`,
-            info: `${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}`,
-          };
+        const all = [];
+        let first = null;
+        for (const v of variants) {
+          const r = await produce(app.parseFor(v), Object.assign({}, o), v ? '_' + v : '');
+          if (my !== busy) return;
+          if (!first) first = r;
+          all.push(...r.files);
+        }
+        let blob, name;
+        if (all.length === 1) { blob = all[0].blob; name = all[0].name; } else {
+          blob = W.zip(await Promise.all(all.map(async (f) => ({ name: f.name, data: await bytesOf(f.blob) }))));
+          name = `${o.baseName}_${kind === 'godot' ? 'godot' : kind === 'sheet' ? 'sheet' : kind}${vsel === ALL ? '_variantes' : ''}.zip`;
         }
         if (my !== busy) return;
-        result = r;
+        const png = all.find((f) => f.png);
+        result = { blob, name, png: png && vsel !== ALL ? png : null };
         const img = $('expImg');
         if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
-        img.dataset.url = r.previewUrl || '';
-        img.src = r.previewUrl || r.preview.toDataURL();
+        img.dataset.url = first.previewUrl || '';
+        img.src = first.previewUrl || first.preview;
         img.classList.toggle('checker', o.transparent);
-        $('expInfo').textContent = r.info;
-        $('expDownload').disabled = $('expDownloadPng').disabled = false;
+        $('expInfo').textContent = first.info + (all.length > 1 ? ` · ${all.length} arquivos no .zip` : '');
+        $('expDownload').textContent = all.length > 1 ? 'Baixar .zip' : `Baixar .${name.split('.').pop()}`;
+        $('expDownload').disabled = false;
+        $('expDownloadPng').disabled = !result.png;
       } catch (e) {
         if (my !== busy) return;
         $('expInfo').textContent = 'Não deu para exportar: ' + e.message;
@@ -276,7 +333,7 @@
 
     function save(pngOnly) {
       if (!result) return;
-      if (pngOnly && result.png) download(result.png, result.pngName);
+      if (pngOnly && result.png) download(result.png.blob, result.png.name);
       else download(result.blob, result.name);
     }
 
@@ -289,5 +346,5 @@
     };
   }
 
-  W.exporter = { imageCanvas, gifBytes, sheetCanvas, image, gif, sheet, contentRect, download, setupDialog, BUILD, ALL };
+  W.exporter = { imageCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, download, setupDialog, BUILD, ALL, solidBg };
 })(window.Weasel = window.Weasel || {});

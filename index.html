@@ -12,9 +12,9 @@
   <div class="tb">
     <select id="exampleSel" title="Abrir um exemplo"></select>
     <button id="btnNew" title="Começar um desenho novo">Novo</button>
-    <button id="btnOpen" title="Abrir um arquivo .weasel">Abrir…</button>
-    <button id="btnSave" title="Salvar o código (Ctrl+S)">Salvar</button>
-    <input type="file" id="fileIn" accept=".weasel,.txt" hidden>
+    <button id="btnOpen" title="Abrir arquivos .weasel (dá para escolher vários)">Abrir…</button>
+    <button id="btnSave" title="Baixar o arquivo atual (Ctrl+S)">Salvar</button>
+    <input type="file" id="fileIn" accept=".weasel,.txt" multiple hidden>
   </div>
   <div class="tb right">
     <button id="btnHelp" title="Referência da linguagem (F1)">Referência</button>
@@ -24,6 +24,13 @@
 
 <main id="main">
   <section class="code">
+    <div class="filebar">
+      <select id="fileSel" title="Arquivo aberto (include usa os outros pelo nome)"></select>
+      <button id="fileAdd" title="Novo arquivo">+ arquivo</button>
+      <button id="fileRen" title="Renomear este arquivo">Renomear</button>
+      <button id="fileDel" title="Excluir este arquivo do navegador">Excluir</button>
+      <button id="fileZip" title="Baixar todos os arquivos num .zip" hidden>Baixar todos</button>
+    </div>
     <div id="editor"></div>
     <div class="status">
       <button id="errBtn" class="errs ok" type="button">sem erros</button>
@@ -38,6 +45,7 @@
       <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <select id="variantSel" title="Variante de cores" hidden></select>
       <span class="grow"></span>
       <span id="coords" class="coords"></span>
       <div class="zoom">
@@ -73,54 +81,76 @@
     <pre class="ex"><b>comando</b> nome atributo=valor … <i>:</i> <u>x,y x,y x,y!</u></pre>
     <ul>
       <li><code>#</code> começa um comentário (no começo da linha ou depois de um espaço).</li>
-      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo.</li>
-      <li>Cores: <code>#rgb</code>, <code>#rrggbb</code>, <code>#rrggbbaa</code>, um nome da <code>palette</code> ou <code>none</code>.</li>
+      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo; <code>x,y~dx,dy</code> fixa a alça da curva naquele ponto.</li>
+      <li>Cores: <code>#rgb</code>, <code>#rrggbb</code>, <code>#rrggbbaa</code>, um nome da <code>palette</code>, um <code>gradient</code> ou <code>none</code>.</li>
       <li>Espessuras: um número ou um nome numérico da <code>palette</code> (ex.: <code>ink=line</code>).</li>
+      <li>Qualquer número pode ser uma conta: <code>{cx+20}</code>, <code>{r*1.6}</code>, <code>{sin(30)*r}</code>.</li>
     </ul>
 
     <h3>Configuração</h3>
     <table>
-      <tr><td><code>canvas L A bg= light=x,y</code></td><td>Tamanho do desenho, cor de fundo (<code>none</code> = transparente) e direção da luz, que engrossa o contorno do lado da sombra.</td></tr>
+      <tr><td><code>canvas L A bg= light=x,y</code></td><td>Tamanho, fundo (cor, gradiente ou <code>none</code>) e direção da luz, que engrossa o contorno do lado da sombra.</td></tr>
       <tr><td><code>finish game|flat inner= pixel=</code></td><td><code>flat</code> tira os contornos. <code>inner</code> = opacidade dos traços dentro de camadas com <code>clip</code>. <code>pixel=4</code> deixa pixelado.</td></tr>
       <tr><td><code>palette nome=valor …</code></td><td>Cores e espessuras com nome. <code>ink</code> é a cor padrão dos contornos.</td></tr>
-      <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Escala para a Unity (pixels por unidade), ponto raiz e colisor. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
+      <tr><td><code>let nome=valor …</code></td><td>Variáveis para as contas: <code>let cx=400 r={cx/8}</code>. Funções: sin, cos, tan (em graus), sqrt, abs, min, max, round, floor, ceil, pow, lerp, clamp, atan2; <code>pi</code>.</td></tr>
+      <tr><td><code>gradient nome linear x1,y1 x2,y2 [box] : cores</code></td><td>Gradiente. Cores com posição opcional: <code>: #fff@0 #889@1</code> ou <code>: pena penad</code>. Com <code>box</code>, as coordenadas vão de 0 a 1 dentro de cada forma.</td></tr>
+      <tr><td><code>gradient nome radial cx,cy r [fx,fy] [box] : cores</code></td><td>Gradiente circular (com foco opcional). Use o nome em <code>c=</code>, <code>inkc=</code> ou <code>bg=</code>.</td></tr>
+      <tr><td><code>variant nome chave=valor …</code></td><td>Outra versão das cores: troca valores da <code>palette</code>. Escolha no seletor da vista e exporte uma ou todas.</td></tr>
+      <tr><td><code>include "arquivo.weasel"</code></td><td>Usa outro arquivo (palette, componentes, ossos…). No navegador, o arquivo precisa estar na lista de arquivos.</td></tr>
+      <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Pixels por unidade, ponto raiz e colisor da Unity. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
     </table>
 
     <h3>Camadas e formas</h3>
     <table>
-      <tr><td><code>layer nome [guide] [hidden] clip= only= opacity= blend=</code></td><td>Tudo abaixo cai nesta camada. <code>guide</code> só aparece no editor. <code>clip=forma</code> recorta pela forma (ou camada). <code>only=dash,jump</code> só aparece nessas animações.</td></tr>
+      <tr><td><code>layer nome [guide] [hidden] clip= cut= only= opacity= blend=</code></td><td>Tudo abaixo cai nesta camada. <code>clip=forma</code> recorta por dentro da forma; <code>cut=forma</code> por fora. <code>only=dash,jump</code> só aparece nessas animações.</td></tr>
       <tr><td><code>shape nome c= ink= inkc= weight= inkon= smooth= : pontos</code></td><td>Forma fechada. <code>ink</code> = espessura do contorno, <code>weight</code> = variação do contorno com a luz, <code>inkon=camada</code> desenha o contorno em outra camada.</td></tr>
       <tr><td><code>stroke nome w= c= taper=a,b cap= : pontos</code></td><td>Traço aberto. <code>taper=0,0.8</code> afina o fim ao longo de 80% do comprimento.</td></tr>
-      <tr><td><code>stroke nome limb=w1,w2 hip=x,y on=osso foot=chão,x bend=1</code></td><td>Perna com IK: o quadril segue o osso e o pé fica apoiado na <code>line</code> chamada <i>chão</i>. Dobra o joelho ao agachar e pendura no pulo.</td></tr>
+      <tr><td><code>stroke nome limb=w1,w2 hip=x,y on=osso foot=chão,x bend=</code></td><td>Perna com IK: a raiz segue o osso e o pé fica na <code>line</code> chamada <i>chão</i>. Dobra ao agachar e pendura no pulo.</td></tr>
+      <tr><td><code>stroke nome limb=w1,w2 hip=x,y on=osso target=mão</code></td><td>Braço com IK: a ponta vai atrás do osso <i>mão</i> (anime a mão com <code>key</code>).</td></tr>
       <tr><td><code>line nome c= w= dash=a,b : pontos</code></td><td>Linha reta entre os pontos (boa para guias).</td></tr>
-      <tr><td><code>ellipse nome cx,cy rx,ry rot= c= ink=</code></td><td>Elipse (ou círculo com um raio só).</td></tr>
-      <tr><td><code>rect nome x,y l,a r= rot= c= ink=</code></td><td>Retângulo, com cantos arredondados por <code>r</code>.</td></tr>
+      <tr><td><code>ellipse nome cx,cy rx,ry rot=</code></td><td>Elipse (ou círculo com um raio só).</td></tr>
+      <tr><td><code>rect nome x,y l,a r= rot=</code></td><td>Retângulo, com cantos arredondados por <code>r</code>.</td></tr>
+      <tr><td><code>text nome x,y "texto" size= font= align= rot= [bold] [italic]</code></td><td>Texto. <code>ink=</code> faz contorno em volta das letras.</td></tr>
     </table>
-    <p>Todas as formas aceitam <code>bone=</code>, <code>cloth=</code> e <code>opacity=</code>.</p>
+    <p>Todas as formas aceitam <code>bone=</code>, <code>cloth=</code>, <code>opacity=</code>, <code>cut=forma</code> (abre um buraco com o formato da outra) e a opção <code>hidden</code> (não aparece, mas serve de molde para <code>clip</code>, <code>cut</code> e morph).</p>
+    <p><code>shape asaD mirror=asaE@400</code> copia <i>asaE</i> espelhada na linha x=400 (<code>@y300</code> espelha na horizontal). Atributos escritos na linha substituem os da original, como <code>bone=</code>.</p>
+
+    <h3>Componentes</h3>
+    <table>
+      <tr><td><code>def nome param=padrão …</code> … <code>end</code></td><td>Define um desenho reutilizável, com coordenadas em volta de 0,0. Parâmetros numéricos viram variáveis e espessuras; os outros, cores.</td></tr>
+      <tr><td><code>use nome x,y scale= rot= flip=x|y|xy bone= param=valor</code></td><td>Desenha o componente na camada atual. <code>flip=x</code> espelha. Formas dentro do componente seguem o <code>bone=</code> do use.</td></tr>
+    </table>
 
     <h3>Esqueleto e animação</h3>
     <table>
       <tr><td><code>bone nome parent= pivot=x,y</code></td><td>Osso. Formas com <code>bone=nome</code> seguem o osso.</td></tr>
-      <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados quando o osso se move. <code>tension</code> 0–1 (mole a duro).</td></tr>
+      <tr><td><code>bone … sway=graus,s bob=px,s jitter=px</code></td><td>Movimento sem keys: balanço, sobe-e-desce e tremor. O período se ajusta para o loop fechar.</td></tr>
+      <tr><td><code>bone … spring=0.4</code></td><td>Mola: o osso gira atrasado quando o pai se mexe (orelhas, antenas, cabelo).</td></tr>
+      <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados. <code>tension</code> 0–1 (mole a duro).</td></tr>
       <tr><td><code>anim nome frames= fps= [once]</code></td><td>Começa uma animação. Ela repete, a não ser com <code>once</code>.</td></tr>
-      <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose de um ou mais ossos naquele quadro. Os quadros do meio são interpolados. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
+      <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose dos ossos naquele quadro; o meio é interpolado. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
+      <tr><td><code>key quadro forma.prop=valor</code></td><td>Anima uma forma: <code>opacity</code>, <code>c</code>, <code>inkc</code>, <code>w</code>, <code>ink</code>, <code>show</code> (1/0) e <code>shape</code> (morph para outra forma com o mesmo número de pontos). Camadas: <code>camada.opacity</code> e <code>camada.show</code>.</td></tr>
+      <tr><td><code>event quadro nome</code></td><td>Marca um evento (passo, som, golpe). Aparece no player e vai no JSON da sprite sheet.</td></tr>
     </table>
 
     <h3>No editor</h3>
     <ul>
       <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
-      <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code>.</li>
+      <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code>. Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
       <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
-      <li>Roda do mouse aproxima; arrastar o fundo move a vista.</li>
+      <li><kbd>Alt</kbd>+arrastar sobre um número muda o valor (com <kbd>Shift</kbd>, 10× mais rápido). <kbd>Alt</kbd>+clique numa cor <code>#hex</code> abre o seletor de cor.</li>
+      <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
       <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha, <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
       <li><kbd>Espaço</kbd> toca/pausa, <kbd>←</kbd> <kbd>→</kbd> trocam de quadro (fora do editor).</li>
     </ul>
 
     <h3>Exportar</h3>
     <ul>
-      <li><b>PNG / JPG</b>: o quadro que está na tela.</li>
+      <li><b>PNG / JPG / SVG</b>: o quadro que está na tela (SVG é vetorial).</li>
       <li><b>GIF animado</b>: uma animação, ou a pintura passo a passo.</li>
-      <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code> e o pivô da Unity).</li>
+      <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
+      <li><b>Godot</b>: a folha e um <code>SpriteFrames</code> (.tres) pronto para um AnimatedSprite2D.</li>
+      <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
     </ul>
   </div>
 </aside>
@@ -131,11 +161,14 @@
     <button type="button" data-kind="png">PNG</button>
     <button type="button" data-kind="jpg">JPG</button>
     <button type="button" data-kind="gif">GIF animado</button>
+    <button type="button" data-kind="svg">SVG</button>
     <button type="button" data-kind="sheet">Sprite sheet</button>
+    <button type="button" data-kind="godot">Godot</button>
   </div>
   <div class="dlg-body">
     <div class="opts">
       <label>Origem <select id="expAnim"></select></label>
+      <label id="expVariantWrap" hidden>Variante <select id="expVariant"></select></label>
       <label id="expSpeedWrap" hidden>Velocidade da pintura
         <select id="expSpeed"><option value="0.5">devagar</option><option value="1" selected>normal</option><option value="2">rápida</option></select>
       </label>
@@ -146,11 +179,13 @@
       <label class="chk"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
       <label>Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
       <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
-      <label data-show="sheet">Arranjo
+      <label data-show="sheet godot">Arranjo
         <select id="expLayout"><option value="grid">grade</option><option value="rows">uma linha por animação</option></select>
       </label>
-      <label data-show="sheet">Colunas (0 = automático) <input type="number" id="expCols" value="0" min="0" max="64"></label>
-      <label data-show="sheet">Espaço entre quadros (px) <input type="number" id="expPad" value="2" min="0" max="64"></label>
+      <label data-show="sheet godot">Colunas (0 = automático) <input type="number" id="expCols" value="0" min="0" max="64"></label>
+      <label data-show="sheet godot">Espaço entre quadros (px) <input type="number" id="expPad" value="2" min="0" max="64"></label>
+      <p data-show="godot" class="opt-note">Sai um .zip com a folha (.png) e um SpriteFrames (.tres) do Godot 4. Deixe os dois na mesma pasta do projeto e use o .tres num AnimatedSprite2D.</p>
+      <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= não vale para SVG.</p>
     </div>
     <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
   </div>
@@ -164,6 +199,7 @@
 <script src="js/geom.js"></script>
 <script src="js/lang.js"></script>
 <script src="js/scene.js"></script>
+<script src="js/svg.js"></script>
 <script src="js/gif.js"></script>
 <script src="js/zip.js"></script>
 <script src="js/export.js"></script>

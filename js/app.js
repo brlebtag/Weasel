@@ -2,7 +2,7 @@
 (function (W) {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const S = W.scene, M = W.geom.M;
+  const S = W.scene, M = W.geom.M, L = W.lang;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sem armazenamento: segue sem salvar */ } },
@@ -10,6 +10,9 @@
 
   const st = {
     model: null,
+    files: new Map(), // nome do arquivo → código (include procura aqui)
+    current: '',
+    variant: '',
     anim: '',
     frame: 0,
     playing: false,
@@ -19,31 +22,46 @@
     view: { z: 1, x: 0, y: 0, auto: true },
     show: { guides: true, points: true, bones: false, onion: false },
     caret: { line: 0, col: 0 },
-    hover: null,
     drag: null,
     pan: null,
     build: null,
-    baseName: 'desenho',
   };
   let raf = 0, saveTimer = 0;
+  const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // ---------- editor ----------
   const editor = new W.Editor($('editor'), {
     onChange: () => reparse(),
     onCaret: (c) => { st.caret = c; updateCaretInfo(); draw(); },
+    complete: (c) => complete(c),
   });
 
+  const resolveFile = (name) => {
+    for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
+    return null;
+  };
+  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, variant: variant || null });
+
   function reparse() {
-    st.model = W.lang.parse(editor.value);
+    st.files.set(st.current, editor.value);
+    st.model = parseFor(st.variant);
     editor.setErrors(st.model.errors);
     if (st.anim && !st.model.animMap.has(st.anim)) st.anim = '';
+    if (st.variant && !st.model.variants.includes(st.variant)) st.variant = '';
     if (st.build) stopBuild();
     fillAnimSelect();
+    fillVariantSelect();
     updateErrors();
     updateCaretInfo();
     draw();
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => { store.set('weasel.src', editor.value); store.set('weasel.name', st.baseName); }, 400);
+    saveTimer = setTimeout(saveWorkspace, 400);
+  }
+
+  function saveWorkspace() {
+    store.set('weasel.files', JSON.stringify(Object.fromEntries(st.files)));
+    store.set('weasel.current', st.current);
   }
 
   function updateErrors() {
@@ -65,7 +83,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'quadril', root: 'raiz' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição' };
   function activeHandle(rec) {
     if (!rec) return -1;
     return rec.handles.findIndex((h) => st.caret.col >= h.from && st.caret.col <= h.to);
@@ -75,26 +93,107 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.use || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
-      if (rec.el && rec.el.layer && !rec.el.layer.implicit) s += ` na camada ${esc(rec.el.layer.name)}`;
+      if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
+      if (rec.st.inDef) s += ` · dentro de def ${esc(rec.st.inDef.name)}`;
+      if (rec.def && rec.st.cmd === 'def') s += ` · usado ${rec.def.uses}×`;
+      if (rec.el && rec.el.mirrorOf) s += ` · espelho de ${esc(rec.el.mirrorOf)}`;
       const hi = activeHandle(rec);
-      if (hi >= 0) { const h = rec.handles[hi]; s += ` · ${KIND[h.kind]}${h.kind === 'pt' ? ' ' + (h.idx + 1) : ''} (${h.x}, ${h.y})`; }
-      if (rec.st.cmd === 'key' && rec.anim) s += ' · clique para ver este quadro';
+      if (hi >= 0) { const h = rec.handles[hi]; s += ` · ${KIND[h.kind]}${h.kind === 'pt' ? ' ' + (h.idx + 1) : ''} (${h.x}, ${h.y})${h.fixed ? ' · calculado' : ''}`; }
     }
     const err = st.model && st.model.errors.find((e) => e.line === st.caret.line);
     if (err) s += ` · <span style="color:${err.level === 'error' ? 'var(--err)' : 'var(--warn)'}">${esc(err.msg)}</span>`;
     $('caretInfo').innerHTML = s;
-    // Cursor numa key: mostra aquele quadro
-    if (rec && rec.st.cmd === 'key' && rec.anim && !st.playing && (st.anim !== rec.anim.name || st.frame !== rec.frame % rec.anim.frames)) {
+    // Cursor numa key ou event: mostra aquele quadro
+    if (rec && (rec.st.cmd === 'key' || rec.st.cmd === 'event') && rec.anim && !st.playing && (st.anim !== rec.anim.name || st.frame !== rec.frame % rec.anim.frames)) {
       st.anim = rec.anim.name;
       st.frame = rec.frame % rec.anim.frames;
       fillAnimSelect();
     }
   }
-  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // ---------- autocompletar ----------
+  const KDESC = {
+    canvas: 'tamanho e fundo', finish: 'acabamento', unity: 'escala da Unity', palette: 'cores e espessuras', gradient: 'gradiente', let: 'variáveis',
+    variant: 'variação de cores', include: 'usar outro arquivo', layer: 'camada', shape: 'forma fechada', stroke: 'traço ou membro', line: 'linha reta',
+    ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
+    cloth: 'tecido', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
+  };
+  function complete({ before }) {
+    const m = st.model;
+    if (!m) return [];
+    const sp = L.splitLine(before);
+    if (sp.comment !== null || sp.colon >= 0) return [];
+    const ws = sp.words;
+    const typing = ws.length && !/\s$/.test(before);
+    const cur = typing ? ws[ws.length - 1].text : '';
+    const idx = typing ? ws.length - 1 : ws.length;
+    const names = (arr, detail) => arr.map((n) => ({ label: String(n), detail }));
+    if (idx === 0) return Object.keys(L.KEYWORDS).map((k) => ({ label: k, detail: KDESC[k] || '' }));
+    const cmd = ws[0].text;
+    const colors = [...m.palette].filter(([, v]) => typeof v === 'string').map(([k]) => k);
+    const widths = [...m.palette].filter(([, v]) => typeof v === 'number').map(([k]) => k);
+    const els = [...m.named.keys()];
+    const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), { label: 'none' }];
+    const eq = cur.indexOf('=');
+    if (eq > 0) {
+      const key = cur.slice(0, eq);
+      if (cmd === 'key' && key.includes('.')) {
+        const prop = key.slice(key.lastIndexOf('.') + 1);
+        if (prop === 'shape') return names(els, 'forma');
+        if (prop === 'c' || prop === 'inkc') return colorList();
+        if (prop === 'show') return names(['1', '0']);
+        if (prop === 'w' || prop === 'ink') return names(widths, 'espessura');
+        return [];
+      }
+      if (cmd === 'use') {
+        const def = m.defs.get(ws[1] && ws[1].text);
+        if (def && def.st.attrs.has(key)) return isNaN(Number(def.st.attrs.get(key).text)) ? colorList() : names(widths, 'espessura');
+      }
+      if (cmd === 'palette' || cmd === 'variant' || cmd === 'def') return colorList();
+      switch (key) {
+        case 'c': case 'inkc': case 'bg': return colorList();
+        case 'w': case 'ink': return names(widths, 'espessura');
+        case 'bone': case 'on': case 'parent': case 'target': return names([...m.bones.keys()], 'osso');
+        case 'cloth': return names([...m.cloths.keys()], 'tecido');
+        case 'inkon': return names([...m.layerMap.keys()], 'camada');
+        case 'clip': case 'cut': return [...names(els, 'forma'), ...names([...m.layerMap.keys()], 'camada')];
+        case 'only': return names(m.anims.map((a) => a.name), 'animação');
+        case 'mirror': return names(els, 'forma');
+        case 'ease': return names(Object.keys(W.geom.EASE), 'ease');
+        case 'flip': return names(['x', 'y', 'xy']);
+        case 'align': return names(['left', 'center', 'right']);
+        case 'cap': return names(['round', 'butt', 'square']);
+        case 'blend': return names(['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'soft-light', 'hard-light', 'difference']);
+        case 'foot': return names(els.filter((n) => m.named.get(n)[0].type === 'line').map((n) => n + ','), 'linha do chão');
+        default: return [];
+      }
+    }
+    if (cmd === 'key' && idx >= 2) {
+      return [
+        ...names([...m.bones.keys()].map((b) => b + '='), 'osso: dx,dy,rot,sx,sy'),
+        ...els.flatMap((n) => Object.keys(L.PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'forma' }))),
+        ...[...m.layerMap.keys()].flatMap((n) => ['opacity', 'show'].map((p) => ({ label: `${n}.${p}=`, detail: 'camada' }))),
+        { label: 'ease=' },
+      ];
+    }
+    if (cmd === 'use' && idx === 1) return names([...m.defs.keys()], 'componente');
+    if (cmd === 'use' && idx >= 2) {
+      const def = m.defs.get(ws[1] && ws[1].text);
+      return [...names(L.ATTRS.use.map((a) => a + '='), 'atributo'), ...(def ? names([...def.st.attrs.keys()].map((k) => k + '='), 'parâmetro') : [])];
+    }
+    if (cmd === 'include' && idx === 1) return names([...st.files.keys()].filter((f) => f !== st.current), 'arquivo');
+    if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
+    return [...names((L.ATTRS[cmd] || []).map((a) => a + '='), 'atributo'), ...names(L.FLAGS[cmd] || [], 'opção')];
+  }
 
   // ---------- player ----------
+  function frameText(anim, f) {
+    if (!anim) return '—';
+    const ev = anim.events.filter((e) => e.frame === f).map((e) => e.name);
+    return `${f + 1} / ${anim.frames} · ${anim.fps} fps${ev.length ? ` · ⚑ ${ev.join(', ')}` : ''}`;
+  }
   function fillAnimSelect() {
     const sel = $('animSel');
     const m = st.model;
@@ -113,10 +212,24 @@
     sl.max = anim ? anim.frames - 1 : 0;
     sl.value = anim ? st.frame : 0;
     sl.disabled = !anim;
-    $('frameLbl').textContent = anim ? `${st.frame + 1} / ${anim.frames} · ${anim.fps} fps` : '—';
+    const lbl = $('frameLbl');
+    lbl.textContent = frameText(anim, st.frame);
+    lbl.classList.toggle('event', !!anim && anim.events.some((e) => e.frame === st.frame));
     $('bPlay').classList.toggle('on', st.playing);
   }
   const currentAnim = () => (st.anim ? st.model.animMap.get(st.anim) : null);
+
+  function fillVariantSelect() {
+    const sel = $('variantSel');
+    const vs = st.model.variants;
+    sel.hidden = !vs.length;
+    const want = ['', ...vs];
+    if (want.join('\n') !== [...sel.options].map((o) => o.value).join('\n')) {
+      sel.innerHTML = '';
+      for (const v of want) { const o = document.createElement('option'); o.value = v; o.textContent = v ? `variante: ${v}` : 'variante: padrão'; sel.appendChild(o); }
+    }
+    sel.value = st.variant;
+  }
 
   function play(on) {
     if (on && !currentAnim()) {
@@ -168,7 +281,9 @@
         st.frame = (st.frame + Math.floor(st.acc)) % a.frames;
         st.acc -= Math.floor(st.acc);
         $('frameSl').value = st.frame;
-        $('frameLbl').textContent = `${st.frame + 1} / ${a.frames} · ${a.fps} fps`;
+        const lbl = $('frameLbl');
+        lbl.textContent = frameText(a, st.frame);
+        lbl.classList.toggle('event', a.events.some((e) => e.frame === st.frame));
       }
       again = true;
     }
@@ -199,8 +314,11 @@
       const c = document.createElement('canvas');
       c.width = c.height = 16;
       const x = c.getContext('2d');
-      x.fillStyle = '#ffffff'; x.fillRect(0, 0, 16, 16);
-      x.fillStyle = '#dcdcdc'; x.fillRect(0, 0, 8, 8); x.fillRect(8, 8, 8, 8);
+      x.fillStyle = '#ffffff';
+      x.fillRect(0, 0, 16, 16);
+      x.fillStyle = '#dcdcdc';
+      x.fillRect(0, 0, 8, 8);
+      x.fillRect(8, 8, 8, 8);
       checker = c;
     }
     return ctx.createPattern(checker, 'repeat');
@@ -218,16 +336,18 @@
     ctx.clearRect(0, 0, cw, ch);
     const T = () => ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * st.view.x, dpr * st.view.y);
     T();
+    const pose = currentPose();
 
     // papel
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.5)';
     ctx.shadowBlur = 26 * dpr;
     ctx.shadowOffsetY = 6 * dpr;
-    ctx.fillStyle = c.bg || '#ffffff';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, c.w, c.h);
     ctx.restore();
-    if (!c.bg) {
+    if (c.bg) S.fillBg(ctx, m, pose, { x: 0, y: 0, w: c.w, h: c.h });
+    else {
       ctx.save();
       ctx.setTransform(dpr, 0, 0, dpr, dpr * st.view.x, dpr * st.view.y);
       ctx.fillStyle = checkerPattern(ctx);
@@ -235,7 +355,6 @@
       ctx.restore();
     }
 
-    const pose = currentPose();
     let bf = null;
     if (st.build) bf = S.buildFilter(st.build.plan, (performance.now() - st.build.t0) / 1000);
 
@@ -284,8 +403,10 @@
     ctx.setLineDash([]);
     const r = 9 / z;
     ctx.beginPath();
-    ctx.moveTo(u.root[0] - r, u.root[1]); ctx.lineTo(u.root[0] + r, u.root[1]);
-    ctx.moveTo(u.root[0], u.root[1] - r); ctx.lineTo(u.root[0], u.root[1] + r);
+    ctx.moveTo(u.root[0] - r, u.root[1]);
+    ctx.lineTo(u.root[0] + r, u.root[1]);
+    ctx.moveTo(u.root[0], u.root[1] - r);
+    ctx.lineTo(u.root[0], u.root[1] + r);
     ctx.stroke();
     ctx.restore();
   }
@@ -299,12 +420,18 @@
         const q = M.apply(pose.bones.get(pb.name), pb.pivot[0], pb.pivot[1]);
         ctx.strokeStyle = 'rgba(227,145,214,.85)';
         ctx.lineWidth = 2 / z;
-        ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(q[0], q[1]);
+        ctx.lineTo(p[0], p[1]);
+        ctx.stroke();
       }
-      ctx.fillStyle = '#e391d6';
+      ctx.fillStyle = b.spring || b.sway || b.bob || b.jitter ? '#ffd166' : '#e391d6';
       ctx.strokeStyle = '#2a1028';
       ctx.lineWidth = 1.5 / z;
-      ctx.beginPath(); ctx.arc(p[0], p[1], 5 / z, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], 5 / z, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
       ctx.font = `${11 / z}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
       ctx.fillStyle = '#f6c8ef';
       ctx.fillText(b.name, p[0] + 8 / z, p[1] - 6 / z);
@@ -314,7 +441,13 @@
       const p = mm ? M.apply(mm, c.pivot[0], c.pivot[1]) : c.pivot;
       const r = 6 / z;
       ctx.fillStyle = '#5cc6d4';
-      ctx.beginPath(); ctx.moveTo(p[0], p[1] - r); ctx.lineTo(p[0] + r, p[1]); ctx.lineTo(p[0], p[1] + r); ctx.lineTo(p[0] - r, p[1]); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p[0], p[1] - r);
+      ctx.lineTo(p[0] + r, p[1]);
+      ctx.lineTo(p[0], p[1] + r);
+      ctx.lineTo(p[0] - r, p[1]);
+      ctx.closePath();
+      ctx.fill();
     }
     ctx.restore();
   }
@@ -331,26 +464,38 @@
     const { rec, pts } = hl;
     const active = st.drag ? st.drag.hi : activeHandle(rec);
     ctx.save();
-    const isPts = rec.handles.filter((h) => h.kind === 'pt');
-    if (isPts.length > 1) {
+    const ptIdx = rec.handles.map((h, i) => (h.kind === 'pt' ? i : -1)).filter((i) => i >= 0);
+    if (ptIdx.length > 1) {
       ctx.strokeStyle = 'rgba(255,138,31,.55)';
       ctx.lineWidth = 1 / z;
       ctx.setLineDash([4 / z, 3 / z]);
       ctx.beginPath();
-      let first = true;
-      rec.handles.forEach((h, i) => { if (h.kind !== 'pt') return; if (first) { ctx.moveTo(pts[i][0], pts[i][1]); first = false; } else ctx.lineTo(pts[i][0], pts[i][1]); });
+      ptIdx.forEach((i, k) => (k ? ctx.lineTo(pts[i][0], pts[i][1]) : ctx.moveTo(pts[i][0], pts[i][1])));
       if (rec.el && rec.el.closed) ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    // alças de curva: linha do ponto até a alça e o reflexo do outro lado
+    rec.handles.forEach((h, i) => {
+      if (h.kind !== 'tan') return;
+      const p = pts[rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === h.idx)];
+      if (!p) return;
+      const t = pts[i];
+      ctx.strokeStyle = 'rgba(92,198,212,.9)';
+      ctx.lineWidth = 1.2 / z;
+      ctx.beginPath();
+      ctx.moveTo(2 * p[0] - t[0], 2 * p[1] - t[1]);
+      ctx.lineTo(t[0], t[1]);
+      ctx.stroke();
+    });
     rec.handles.forEach((h, i) => {
       if (i === active) return;
       const [x, y] = pts[i];
       const r = 4.5 / z;
       ctx.beginPath();
-      if (h.corner) ctx.rect(x - r, y - r, r * 2, r * 2);
+      if (h.kind === 'tan') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); } else if (h.corner) ctx.rect(x - r, y - r, r * 2, r * 2);
       else ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = h.fixed ? '#9aa6b2' : h.kind === 'tan' ? '#5cc6d4' : '#ffffff';
       ctx.fill();
       ctx.lineWidth = 1.6 / z;
       ctx.strokeStyle = '#14141c';
@@ -375,7 +520,7 @@
     hl.pts.forEach((p, i) => { const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } });
     return best;
   }
-  const fmt = (v) => String(Math.round(v));
+  const fmtN = (v, dec) => String(Number(v.toFixed(dec)));
 
   function hint(msg, ms) {
     const h = $('hint');
@@ -391,17 +536,16 @@
       const [x, y] = toCanvas(e);
       const ta = editor.ta, s = ta.selectionStart;
       const before = ta.value[s - 1];
-      const txt = (before && !/\s/.test(before) ? ' ' : '') + `${fmt(x)},${fmt(y)}`;
+      const txt = (before && !/\s/.test(before) ? ' ' : '') + `${Math.round(x)},${Math.round(y)}`;
       editor.replaceRange(s, ta.selectionEnd, txt, {});
       ta.focus();
       return;
     }
     const hi = e.button === 0 ? hitHandle(e) : -1;
     if (hi >= 0) {
-      if (st.anim || st.playing) {
-        hint('Para arrastar pontos, escolha "pose parada" no player.', 2600);
-        return;
-      }
+      const rec = st.model.byLine.get(st.caret.line);
+      if (rec.handles[hi].fixed) { hint('Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
+      if (st.anim || st.playing) { hint('Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now() };
       return;
     }
@@ -413,7 +557,7 @@
 
   view.addEventListener('pointermove', (e) => {
     const [x, y] = toCanvas(e);
-    $('coords').textContent = `x ${fmt(x)}  y ${fmt(y)}`;
+    $('coords').textContent = `x ${Math.round(x)}  y ${Math.round(y)}`;
     if (st.drag) { moveHandle(st.drag, x, y); return; }
     if (st.pan) {
       st.view.auto = false;
@@ -435,17 +579,23 @@
     if (hi < 0 || st.anim) return;
     const rec = st.model.byLine.get(st.caret.line);
     const h = rec.handles[hi];
-    if (h.kind !== 'pt') return;
+    if (h.kind !== 'pt' || h.tan || h.fixed) return;
     const off = editor.lineStart(st.caret.line);
-    const txt = `${h.x},${h.y}${h.corner ? '' : '!'}`;
+    const txt = editor.value.slice(off + h.from, off + h.to).replace(/!$/, '') + (h.corner ? '' : '!');
     editor.replaceRange(off + h.from, off + h.to, txt, { select: [off + h.from + txt.length, off + h.from + txt.length] });
   });
 
+  // Arrastar: posição do mouse → coordenadas do código (dentro de um componente, as dele).
   function moveHandle(d, x, y) {
     const rec = st.model.byLine.get(d.line);
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
-    const txt = `${fmt(x)},${fmt(y)}${h.kind === 'pt' && h.corner ? '!' : ''}`;
+    let [lx, ly] = rec.xf ? M.apply(M.invert(rec.xf), x, y) : [x, y];
+    const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1;
+    const dec = k > 1.5 ? 1 : 0;
+    let txt;
+    if (h.kind === 'tan') txt = `${fmtN(lx - h.px, dec)},${fmtN(ly - h.py, dec)}`;
+    else txt = `${fmtN(lx, dec)},${fmtN(ly, dec)}${h.kind === 'pt' && h.corner ? '!' : ''}`;
     const off = editor.lineStart(d.line);
     if (editor.value.slice(off + h.from, off + h.to) === txt) return;
     const end = off + h.from + txt.length;
@@ -455,8 +605,7 @@
   view.addEventListener('wheel', (e) => {
     e.preventDefault();
     const r = view.getBoundingClientRect();
-    const mx = e.clientX - r.left, my = e.clientY - r.top;
-    zoomAt(mx, my, Math.exp(-e.deltaY * 0.0015));
+    zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015));
   }, { passive: false });
 
   function zoomAt(mx, my, f) {
@@ -479,6 +628,7 @@
   $('zFit').addEventListener('click', () => { st.view.auto = true; draw(); });
   $('zIn').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25));
   $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
+  $('variantSel').addEventListener('change', (e) => { st.variant = e.target.value; reparse(); });
 
   $('animSel').addEventListener('change', (e) => { st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
@@ -494,37 +644,77 @@
     list.hidden = !list.hidden;
   });
 
-  // exemplos e arquivos
+  // ---------- arquivos ----------
+  function fillFileSelect() {
+    const sel = $('fileSel');
+    sel.innerHTML = [...st.files.keys()].sort().map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+    sel.value = st.current;
+    $('fileZip').hidden = st.files.size < 2;
+  }
+  function openFile(name, src) {
+    if (src !== undefined) st.files.set(name, src);
+    st.current = name;
+    st.anim = '';
+    st.frame = 0;
+    st.playing = false;
+    st.view.auto = true;
+    stopBuild();
+    fillFileSelect();
+    editor.setValue(st.files.get(name) || '', true);
+    saveWorkspace();
+  }
+  function uniqueName(base) {
+    if (!st.files.has(base)) return base;
+    const stem = base.replace(/\.weasel$/, '');
+    for (let i = 2; ; i++) if (!st.files.has(`${stem}${i}.weasel`)) return `${stem}${i}.weasel`;
+  }
+  $('fileSel').addEventListener('change', (e) => openFile(e.target.value));
+  $('fileAdd').addEventListener('click', () => openFile(uniqueName('desenho.weasel'), W.blankProgram));
+  $('fileRen').addEventListener('click', () => {
+    let name = prompt('Novo nome do arquivo:', st.current);
+    if (!name || name === st.current) return;
+    if (!/\.\w+$/.test(name)) name += '.weasel';
+    if (st.files.has(name)) { hint(`Já existe um arquivo "${name}".`, 2600); return; }
+    const src = editor.value;
+    st.files.delete(st.current);
+    openFile(name, src);
+  });
+  $('fileDel').addEventListener('click', () => {
+    if (st.files.size < 2) { hint('Este é o único arquivo.', 2000); return; }
+    if (!confirm(`Excluir "${st.current}" deste navegador? (o arquivo baixado, se houver, continua no seu computador)`)) return;
+    st.files.delete(st.current);
+    openFile([...st.files.keys()].sort()[0]);
+  });
+  $('fileZip').addEventListener('click', () => {
+    const enc = new TextEncoder();
+    st.files.set(st.current, editor.value);
+    W.exporter.download(W.zip([...st.files].map(([n, s]) => ({ name: n, data: enc.encode(s) }))), 'weasel_arquivos.zip');
+  });
+
   const exSel = $('exampleSel');
   exSel.innerHTML = '<option value="">Exemplos…</option>' + W.examples.map((x) => `<option value="${x.id}">${esc(x.title)}</option>`).join('');
   exSel.addEventListener('change', () => {
     const x = W.examples.find((e) => e.id === exSel.value);
     exSel.value = '';
     if (!x) return;
-    loadProgram(x.src, x.file, false);
-    hint(`Exemplo "${x.title}" aberto — Ctrl+Z volta ao código anterior.`, 3200);
+    const name = x.file + '.weasel';
+    if (st.files.has(name) && st.files.get(name) !== x.src && !confirm(`Substituir "${name}" pelo exemplo original?`)) { openFile(name); return; }
+    openFile(name, x.src);
+    hint(`Exemplo "${x.title}" aberto em ${name}.`, 3000);
   });
-  $('btnNew').addEventListener('click', () => { loadProgram(W.blankProgram, 'desenho', false); hint('Desenho novo — Ctrl+Z volta ao anterior.', 2600); });
+  $('btnNew').addEventListener('click', () => { openFile(uniqueName('desenho.weasel'), W.blankProgram); hint('Arquivo novo criado.', 2000); });
   $('btnOpen').addEventListener('click', () => $('fileIn').click());
   $('fileIn').addEventListener('change', async (e) => {
-    const f = e.target.files[0];
+    const list = [...e.target.files];
     e.target.value = '';
-    if (!f) return;
-    loadProgram(await f.text(), f.name.replace(/\.[^.]+$/, ''), false);
+    if (!list.length) return;
+    for (const f of list) st.files.set(f.name, await f.text());
+    openFile(list[0].name);
+    if (list.length > 1) hint(`${list.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
   });
   $('btnSave').addEventListener('click', saveFile);
   function saveFile() {
-    W.exporter.download(new Blob([editor.value], { type: 'text/plain;charset=utf-8' }), `${st.baseName}.weasel`);
-  }
-
-  function loadProgram(src, name, fresh) {
-    st.baseName = name || 'desenho';
-    st.anim = '';
-    st.frame = 0;
-    st.playing = false;
-    st.view.auto = true;
-    stopBuild();
-    editor.setValue(src, fresh);
+    W.exporter.download(new Blob([editor.value], { type: 'text/plain;charset=utf-8' }), st.current);
   }
 
   // referência
@@ -536,8 +726,11 @@
   // exportar
   const exportUI = W.exporter.setupDialog({
     model: () => st.model,
+    parseFor: (v) => (v === st.variant ? st.model : parseFor(v)),
+    variants: () => st.model.variants,
+    variant: () => st.variant,
     state: () => ({ anim: st.anim, frame: st.frame }),
-    baseName: () => st.baseName,
+    baseName,
   });
   $('btnExport').addEventListener('click', () => { st.playing = false; fillAnimSelect(); exportUI.open(); });
 
@@ -567,16 +760,21 @@
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; return; }
     const t = e.target;
     if (t.closest && t.closest('textarea, input, select, dialog')) return;
-    if (e.key === ' ') { e.preventDefault(); play(!st.playing); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
-    else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); }
+    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); }
   });
 
   // ---------- início ----------
-  const saved = store.get('weasel.src');
-  if (saved && saved.trim()) loadProgram(saved, store.get('weasel.name') || 'desenho', true);
-  else loadProgram(W.examples[0].src, W.examples[0].file, true);
+  let files = null;
+  try { files = JSON.parse(store.get('weasel.files') || 'null'); } catch (e) { files = null; }
+  if (files && Object.keys(files).length) {
+    for (const [k, v] of Object.entries(files)) st.files.set(k, v);
+    const cur = store.get('weasel.current');
+    openFile(st.files.has(cur) ? cur : [...st.files.keys()][0]);
+  } else {
+    const old = store.get('weasel.src');
+    if (old && old.trim()) openFile((store.get('weasel.name') || 'desenho') + '.weasel', old);
+    else openFile(W.examples[0].file + '.weasel', W.examples[0].src);
+  }
 
-  W.app = { st, editor, draw, reparse };
+  W.app = { st, editor, draw, reparse, parseFor };
 })(window.Weasel = window.Weasel || {});

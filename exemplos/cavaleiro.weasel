@@ -27,8 +27,8 @@ bone body parent=root pivot=405,410
 bone head parent=body pivot=405,400
 # a capa, as faixas, as dobras e a aba balançam como um só tecido
 cloth cape pivot=430,408 tension=0.5
-# a espada vai junto com o corpo, mas pode girar sozinha
-bone nail parent=body pivot=368,445
+# a espada vai junto com o corpo, mas balança sozinha (mola)
+bone nail parent=body pivot=368,445 spring=0.35
 # fumaça do dash
 bone puff parent=root pivot=330,470
 
@@ -84,6 +84,9 @@ layer face clip=mask
 # Os olhos: um par inclinado em espelho
 ellipse eyeA 429,350 17,28 rot=-3 c=eye bone=head
 ellipse eyeB 495,347 17,28 rot=9 c=eye bone=head
+# olhos fechados: não aparecem, servem de molde para piscar (morph)
+ellipse eyeAshut 429,352 17,3 rot=-3 c=eye bone=head hidden
+ellipse eyeBshut 495,349 17,3 rot=9 c=eye bone=head hidden
 
 layer maskink
 # o contorno da máscara sobe para cá (inkon=), por cima dos olhos
@@ -91,28 +94,33 @@ layer maskink
 stroke hornroot w=inner c=ink taper=0,0.8 bone=head : 332,238 342,262 366,283
 
 # ---------- animações ----------
-# key quadro osso=dx,dy,rotação,escalaX,escalaY
+# key quadro osso=dx,dy,rotação,escalaX,escalaY   ou   forma.propriedade=valor
 
 anim stand frames=24 fps=12
-key 0 body=0,0 head=0,0,0 nail=0,0,0
-key 12 body=0,3,0,1.01,0.985 head=0,1,-1.5 nail=0,0,3
-key 24 body=0,0 head=0,0,0 nail=0,0,0
+key 0 body=0,0 head=0,0,0
+key 12 body=0,3,0,1.01,0.985 head=0,1,-1.5
+key 24 body=0,0 head=0,0,0
+# piscar: os olhos viram os moldes fechados e voltam
+key 16 eyeA.shape=eyeA eyeB.shape=eyeB
+key 18 eyeA.shape=eyeAshut eyeB.shape=eyeBshut
+key 20 eyeA.shape=eyeA eyeB.shape=eyeB
 
 anim jump frames=24 fps=15
-key 0 root=0,0 head=0,0,0 nail=0,0,0
+key 0 root=0,0 head=0,0,0
 key 3 root=0,0,0,1.1,0.86 ease=out
 key 6 root=0,-70,0,0.92,1.1 head=0,0,-5 ease=out
-key 7 nail=0,0,-14
 key 11 root=0,-120 ease=in
 key 14 head=0,0,4
-key 15 nail=0,0,10
 key 16 root=0,-50,0,0.96,1.05 ease=in
 key 18 root=0,0,0,1.12,0.86 ease=out
 key 20 head=0,0,0
-key 21 root=0,0,0,0.98,1.02 nail=0,0,0
+key 21 root=0,0,0,0.98,1.02
 key 24 root=0,0
+event 3 pulo
+event 18 pouso
 
 anim dash frames=12 fps=15
+event 0 dash
 key 0 body=0,0,0 head=0,0,0 puff=50,0,0,0.3
 key 2 body=16,6,14 head=4,0,-6 puff=12,0,0,1.25 ease=out
 key 7 puff=-50,-10,0,0.9
