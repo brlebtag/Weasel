@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weasel — desenho por código</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 18 L10 6 L14 13 L16 9 L20 18 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="9" r="2.4" fill="#ff8a1f"/></svg>Weasel<small>desenho por código</small></div>
+  <div class="tb">
+    <select id="exampleSel" title="Abrir um exemplo"></select>
+    <button id="btnNew" title="Começar um desenho novo">Novo</button>
+    <button id="btnOpen" title="Abrir um arquivo .weasel">Abrir…</button>
+    <button id="btnSave" title="Salvar o código (Ctrl+S)">Salvar</button>
+    <input type="file" id="fileIn" accept=".weasel,.txt" hidden>
+  </div>
+  <div class="tb right">
+    <button id="btnHelp" title="Referência da linguagem (F1)">Referência</button>
+    <button id="btnExport" class="primary" title="PNG, JPG, GIF ou sprite sheet (Ctrl+E)">Exportar</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="code">
+    <div id="editor"></div>
+    <div class="status">
+      <button id="errBtn" class="errs ok" type="button">sem erros</button>
+      <span id="caretInfo" class="caret-info"></span>
+    </div>
+    <div id="errList" class="errlist" hidden></div>
+  </section>
+  <div id="divider" class="divider" role="separator" aria-orientation="vertical" title="Arraste para redimensionar"></div>
+  <section class="viewp">
+    <div class="viewbar">
+      <label class="tog"><input type="checkbox" id="tGuides" checked> Guias</label>
+      <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
+      <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
+      <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <span class="grow"></span>
+      <span id="coords" class="coords"></span>
+      <div class="zoom">
+        <button id="zOut" title="Afastar">−</button>
+        <button id="zFit" title="Ajustar à tela (F)">Ajustar</button>
+        <button id="zIn" title="Aproximar">+</button>
+      </div>
+    </div>
+    <div id="stage" class="stage">
+      <canvas id="view"></canvas>
+      <div id="hint" class="hint" hidden></div>
+    </div>
+    <div class="player">
+      <button id="btnBuild" class="build" title="Pinta o desenho de novo, traço a traço">Pintar</button>
+      <span class="sep"></span>
+      <select id="animSel" title="Animação"></select>
+      <button id="bPrev" class="ico" title="Quadro anterior (←)"><svg viewBox="0 0 16 16"><path d="M3 3v10M13 3 5 8l8 5z"/></svg></button>
+      <button id="bPlay" class="ico play" title="Tocar / pausar (espaço)"><svg viewBox="0 0 16 16"><path class="i-play" d="M4 2.5v11L13.5 8z"/><path class="i-pause" d="M4 3h3v10H4zM9 3h3v10H9z"/></svg></button>
+      <button id="bNext" class="ico" title="Próximo quadro (→)"><svg viewBox="0 0 16 16"><path d="M13 3v10M3 3l8 5-8 5z"/></svg></button>
+      <input type="range" id="frameSl" min="0" max="0" value="0" aria-label="Quadro">
+      <span id="frameLbl" class="flbl">—</span>
+      <select id="speedSel" title="Velocidade">
+        <option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option>
+      </select>
+    </div>
+  </section>
+</main>
+
+<aside id="help" class="help" hidden>
+  <div class="help-head"><h2>Referência da linguagem</h2><button id="helpClose" class="x" title="Fechar">✕</button></div>
+  <div class="help-body">
+    <p>Uma instrução por linha. A forma geral é:</p>
+    <pre class="ex"><b>comando</b> nome atributo=valor … <i>:</i> <u>x,y x,y x,y!</u></pre>
+    <ul>
+      <li><code>#</code> começa um comentário (no começo da linha ou depois de um espaço).</li>
+      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo.</li>
+      <li>Cores: <code>#rgb</code>, <code>#rrggbb</code>, <code>#rrggbbaa</code>, um nome da <code>palette</code> ou <code>none</code>.</li>
+      <li>Espessuras: um número ou um nome numérico da <code>palette</code> (ex.: <code>ink=line</code>).</li>
+    </ul>
+
+    <h3>Configuração</h3>
+    <table>
+      <tr><td><code>canvas L A bg= light=x,y</code></td><td>Tamanho do desenho, cor de fundo (<code>none</code> = transparente) e direção da luz, que engrossa o contorno do lado da sombra.</td></tr>
+      <tr><td><code>finish game|flat inner= pixel=</code></td><td><code>flat</code> tira os contornos. <code>inner</code> = opacidade dos traços dentro de camadas com <code>clip</code>. <code>pixel=4</code> deixa pixelado.</td></tr>
+      <tr><td><code>palette nome=valor …</code></td><td>Cores e espessuras com nome. <code>ink</code> é a cor padrão dos contornos.</td></tr>
+      <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Escala para a Unity (pixels por unidade), ponto raiz e colisor. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
+    </table>
+
+    <h3>Camadas e formas</h3>
+    <table>
+      <tr><td><code>layer nome [guide] [hidden] clip= only= opacity= blend=</code></td><td>Tudo abaixo cai nesta camada. <code>guide</code> só aparece no editor. <code>clip=forma</code> recorta pela forma (ou camada). <code>only=dash,jump</code> só aparece nessas animações.</td></tr>
+      <tr><td><code>shape nome c= ink= inkc= weight= inkon= smooth= : pontos</code></td><td>Forma fechada. <code>ink</code> = espessura do contorno, <code>weight</code> = variação do contorno com a luz, <code>inkon=camada</code> desenha o contorno em outra camada.</td></tr>
+      <tr><td><code>stroke nome w= c= taper=a,b cap= : pontos</code></td><td>Traço aberto. <code>taper=0,0.8</code> afina o fim ao longo de 80% do comprimento.</td></tr>
+      <tr><td><code>stroke nome limb=w1,w2 hip=x,y on=osso foot=chão,x bend=1</code></td><td>Perna com IK: o quadril segue o osso e o pé fica apoiado na <code>line</code> chamada <i>chão</i>. Dobra o joelho ao agachar e pendura no pulo.</td></tr>
+      <tr><td><code>line nome c= w= dash=a,b : pontos</code></td><td>Linha reta entre os pontos (boa para guias).</td></tr>
+      <tr><td><code>ellipse nome cx,cy rx,ry rot= c= ink=</code></td><td>Elipse (ou círculo com um raio só).</td></tr>
+      <tr><td><code>rect nome x,y l,a r= rot= c= ink=</code></td><td>Retângulo, com cantos arredondados por <code>r</code>.</td></tr>
+    </table>
+    <p>Todas as formas aceitam <code>bone=</code>, <code>cloth=</code> e <code>opacity=</code>.</p>
+
+    <h3>Esqueleto e animação</h3>
+    <table>
+      <tr><td><code>bone nome parent= pivot=x,y</code></td><td>Osso. Formas com <code>bone=nome</code> seguem o osso.</td></tr>
+      <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados quando o osso se move. <code>tension</code> 0–1 (mole a duro).</td></tr>
+      <tr><td><code>anim nome frames= fps= [once]</code></td><td>Começa uma animação. Ela repete, a não ser com <code>once</code>.</td></tr>
+      <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose de um ou mais ossos naquele quadro. Os quadros do meio são interpolados. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
+    </table>
+
+    <h3>No editor</h3>
+    <ul>
+      <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
+      <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code>.</li>
+      <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
+      <li>Roda do mouse aproxima; arrastar o fundo move a vista.</li>
+      <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha, <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
+      <li><kbd>Espaço</kbd> toca/pausa, <kbd>←</kbd> <kbd>→</kbd> trocam de quadro (fora do editor).</li>
+    </ul>
+
+    <h3>Exportar</h3>
+    <ul>
+      <li><b>PNG / JPG</b>: o quadro que está na tela.</li>
+      <li><b>GIF animado</b>: uma animação, ou a pintura passo a passo.</li>
+      <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code> e o pivô da Unity).</li>
+    </ul>
+  </div>
+</aside>
+
+<dialog id="exportDlg" class="dlg">
+  <div class="dlg-head"><h2>Exportar</h2><button class="x" type="button" onclick="this.closest('dialog').close()" title="Fechar">✕</button></div>
+  <div class="seg" role="tablist">
+    <button type="button" data-kind="png">PNG</button>
+    <button type="button" data-kind="jpg">JPG</button>
+    <button type="button" data-kind="gif">GIF animado</button>
+    <button type="button" data-kind="sheet">Sprite sheet</button>
+  </div>
+  <div class="dlg-body">
+    <div class="opts">
+      <label>Origem <select id="expAnim"></select></label>
+      <label id="expSpeedWrap" hidden>Velocidade da pintura
+        <select id="expSpeed"><option value="0.5">devagar</option><option value="1" selected>normal</option><option value="2">rápida</option></select>
+      </label>
+      <label>Escala
+        <select id="expScale"><option value="0.25">25%</option><option value="0.5">50%</option><option value="1" selected>100%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option></select>
+      </label>
+      <label class="chk"><input type="checkbox" id="expTransparent"> Fundo transparente</label>
+      <label class="chk"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
+      <label>Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
+      <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
+      <label data-show="sheet">Arranjo
+        <select id="expLayout"><option value="grid">grade</option><option value="rows">uma linha por animação</option></select>
+      </label>
+      <label data-show="sheet">Colunas (0 = automático) <input type="number" id="expCols" value="0" min="0" max="64"></label>
+      <label data-show="sheet">Espaço entre quadros (px) <input type="number" id="expPad" value="2" min="0" max="64"></label>
+    </div>
+    <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
+  </div>
+  <div class="dlg-foot">
+    <span id="expInfo" class="exp-info"></span>
+    <button id="expDownloadPng" type="button">Só o PNG</button>
+    <button id="expDownload" type="button" class="primary">Baixar</button>
+  </div>
+</dialog>
+
+<script src="js/geom.js"></script>
+<script src="js/lang.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/gif.js"></script>
+<script src="js/zip.js"></script>
+<script src="js/export.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/examples.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

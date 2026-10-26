@@ -1,0 +1,27 @@
+# Bola quicando — squash & stretch com um osso só
+# O pivô do osso fica na base da bola, então ela amassa contra o chão.
+
+canvas 480 360 bg=#f4efe6 light=-0.5,-0.85
+palette ink=#1d1b26 line=6 ball=#ff6b4a hi=#ffc2ad shadow=#d9cfc0 floor=#c9bca8
+
+layer chao
+line piso c=floor w=4 : 40,300 440,300
+
+bone sombra pivot=240,302
+bone bola pivot=240,300
+
+layer sombra
+ellipse s 240,302 46,9 c=shadow bone=sombra
+
+layer bola
+ellipse b 240,256 44 c=ball ink=line weight=0.3 bone=bola
+
+layer brilho clip=b
+ellipse reflexo 222,236 18,12 rot=-30 c=hi bone=bola
+
+anim quica frames=24 fps=24
+key 0 bola=0,0,0,1.25,0.78 sombra=0,0,0,1.1 ease=out
+key 3 bola=0,-40,0,0.9,1.12 ease=out
+key 12 bola=0,-170,0,1,1 sombra=0,0,0,0.55 ease=in
+key 21 bola=0,-40,0,0.9,1.12 ease=in
+key 24 bola=0,0,0,1.25,0.78 sombra=0,0,0,1.1

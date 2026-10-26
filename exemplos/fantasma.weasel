@@ -1,0 +1,47 @@
+# Primeiros passos
+# Cada linha é uma instrução:
+#   comando nome atributo=valor ... : x,y x,y x,y!
+# - Pontos sem "!" viram curva suave; "x,y!" é um canto vivo.
+# - As camadas (layer) são pintadas na ordem em que aparecem.
+# - Ponha o cursor numa linha: os pontos dela aparecem no desenho.
+#   Arraste um ponto para mover; Ctrl+clique adiciona um ponto no cursor;
+#   duplo clique liga/desliga o canto vivo.
+
+canvas 480 400 bg=#26304d light=-0.6,-0.8
+palette ink=#141320 line=8 inner=4
+palette ghost=#f6f4ff ghostd=#d4cdf2 cheek=#ffb3c7 moon=#ffe7a3 star=#fff6d8 hill=#1b2238
+
+layer ceu
+ellipse lua 392,78 30 c=moon
+ellipse estrela1 70,60 3 c=star
+ellipse estrela2 140,112 2 c=star
+ellipse estrela3 300,40 2.5 c=star
+shape morro c=hill : 0,330! 120,300 260,322 400,296 480,312! 480,400! 0,400!
+
+# ossos: "corpo" flutua; o tecido "barra" balança atrasado
+bone corpo pivot=240,200
+bone sombra pivot=240,350
+cloth barra pivot=240,120 tension=0.3 drag=2
+
+layer chao
+ellipse sombra 240,350 60,10 c=#10162a opacity=0.6 bone=sombra
+
+layer fantasma
+shape fantasma c=ghost ink=line weight=0.25 bone=corpo cloth=barra : 240,104 296,128 312,200 318,286! 292,270 268,292! 242,270 216,292! 190,270 164,286! 170,200 186,128
+
+# clip= recorta esta camada pelo formato do fantasma
+layer sombreado clip=fantasma
+shape lado c=ghostd bone=corpo cloth=barra : 296,110! 340,300! 284,312! 296,240 300,170
+
+layer rosto
+ellipse olhoA 220,186 10,15 c=ink bone=corpo
+ellipse olhoB 262,186 10,15 c=ink bone=corpo
+ellipse bochechaA 206,214 9,5 c=cheek opacity=0.8 bone=corpo
+ellipse bochechaB 276,214 9,5 c=cheek opacity=0.8 bone=corpo
+stroke boca w=inner taper=0.2,0.2 bone=corpo : 232,222 241,229 250,222
+
+# key quadro osso=dx,dy,rotação,escalaX,escalaY
+anim flutua frames=32 fps=16
+key 0 corpo=0,0,-3 sombra=0,0,0,1
+key 16 corpo=0,-20,3 sombra=0,0,0,0.75
+key 32 corpo=0,0,-3 sombra=0,0,0,1

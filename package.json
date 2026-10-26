@@ -1,0 +1,20 @@
+{
+  "name": "weasel",
+  "version": "1.0.0",
+  "description": "Linguagem de desenho por código: editor web e linha de comando que exportam PNG, JPG, GIF animado e sprite sheet.",
+  "license": "MIT",
+  "private": true,
+  "bin": {
+    "weasel": "cli/weasel.js"
+  },
+  "scripts": {
+    "web": "python -m http.server 5317",
+    "weasel": "node cli/weasel.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "1.0.11"
+  }
+}
