@@ -29,6 +29,7 @@ end
 
 # ---------- ossos ----------
 # raiz: anda e quica; corpo: gira em volta do quadril para ficar de quatro
+# (a gravata não tem mola: nas passagens rápidas ela deitaria; o balanço vai nas keys)
 bone raiz pivot=180,256
 bone corpo parent=raiz pivot=176,224
 # forma: só o desenho do tronco (estica de quatro sem deformar a cabeça e os braços)
@@ -36,7 +37,8 @@ bone forma parent=corpo pivot=176,224
 bone pescoco parent=corpo pivot=178,120
 bone cabeca parent=pescoco pivot=178,120
 bone capim parent=cabeca pivot=206,116 spring=1
-bone gravata parent=pescoco pivot=192,132 spring=0.5
+bone colar parent=pescoco pivot=178,120
+bone gravata parent=pescoco pivot=192,132
 # braço de perto (à esquerda no desenho) e de longe (à direita)
 bone bracoP parent=corpo pivot=124,138
 bone bracoL parent=corpo pivot=236,144
@@ -46,11 +48,11 @@ bone pernaL parent=raiz pivot=210,228
 # ---------- o que fica atrás do corpo ----------
 layer atras
 rect pernaL 198,222 26,26 r=10 c=pelod ink=line bone=pernaL
-shape peL c=pata ink=thin bone=pernaL : 192,253 198,245 214,243 224,247 235,251! 227,253 231,256! 219,255 215,256! 206,255 195,256!
+shape peL c=pata ink=thin bone=pernaL : 194,256! 192,251 200,244 217,242 227,244 236,244 242,247 235,249! 243,252 234,253! 241,256! 215,256!
 shape bracoL c=pelod ink=line bone=bracoL : 230,136 244,146 251,168 250,188 239,190 234,168
-shape maoL c=pata ink=thin bone=bracoL : 238,184 250,183 255,194 253,206! 249,199 245,208! 241,199 237,205! 235,194
+shape maoL c=pata ink=thin bone=bracoL : 238,184 250,183 255,194 254,206! 249,199 244,208! 239,199 234,205! 233,194
 rect pernaP 133,220 26,26 r=10 c=pelod ink=line bone=pernaP
-shape peP c=pata ink=thin bone=pernaP : 127,253 133,245 149,243 159,247 170,251! 162,253 166,256! 154,255 150,256! 141,255 130,256!
+shape peP c=pata ink=thin bone=pernaP : 129,256! 127,251 135,244 152,242 162,244 171,244 177,247 170,249! 178,252 169,253! 176,256! 150,256!
 
 # ---------- corpo ----------
 layer corpo
@@ -71,10 +73,17 @@ use tufo 222,206 rot=25 bone=forma
 use tufo 150,186 rot=-15 bone=forma
 
 # ---------- cabeça ----------
+layer colar
+shape colar c=gravata ink=thin bone=colar : 136,108 180,121 217,113 217,122 180,131 136,118
+
+# a gravata fica atrás da cabeça: de quatro, o pescoço baixo quase a cobre
+layer gravata
+shape lamina c=gravata ink=thin bone=gravata : 187,140! 197,140! 206,176 197,191! 186,178
+shape no c=gravata ink=thin bone=gravata : 183,128 201,128 198,142 186,142
+
 layer cabeca
 ellipse orelhaP 142,63 9,8 c=orelha ink=thin bone=cabeca
 ellipse orelhaL 214,58 7,6 c=orelha ink=thin bone=cabeca
-shape colar c=gravata ink=thin bone=pescoco : 136,108 180,121 217,113 217,122 180,131 136,118
 shape cabeca c=pelo ink=line bone=cabeca : 150,60 178,52 206,56 218,74 216,110 198,124 162,125 144,112 139,86
 use tufo 152,100 rot=-20 bone=cabeca
 use tufo 160,110 rot=-10 bone=cabeca
@@ -110,15 +119,10 @@ layer chapeu_faixa clip=copa
 shape faixa c=faixa bone=cabeca : 140,41 182,38 226,35 226,57 140,57
 stroke vinco w=thin c=chapeud bone=cabeca : 171,17 182,23 194,16
 
-# ---------- gravata (balança sozinha) ----------
-layer gravata
-shape lamina c=gravata ink=thin bone=gravata : 187,140! 197,140! 206,176 197,191! 186,178
-shape no c=gravata ink=thin bone=gravata : 183,128 201,128 198,142 186,142
-
 # ---------- braço de perto ----------
 layer frente
 shape bracoP c=pelo ink=line bone=bracoP : 130,128 117,140 110,162 111,188 124,190 133,172 134,148
-shape maoP c=pata ink=thin bone=bracoP : 110,184 125,182 133,193 132,205! 128,198 126,208! 121,199 118,207! 114,198 109,203! 107,193
+shape maoP c=pata ink=thin bone=bracoP : 110,184 125,182 133,193 132,206! 127,199 122,208! 117,199 111,205! 107,193
 
 # ---------- caixas para o jogo ----------
 # em pé o corpo é alto e estreito; de quatro, baixo e comprido (cada um liga nas suas animações)
@@ -142,30 +146,30 @@ key 19 olhoP.shape=olhoP olhoL.shape=olhoL pupilaP.show=1 pupilaL.show=1
 
 # corrida em pé: passos curtos e rápidos, o corpo inclinado para a frente
 anim run frames=8 fps=14
-key 0 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=4,0,-30 pernaL=-4,0,28 bracoP=0,0,28 bracoL=0,0,-28
-key 2 raiz=0,-7 corpo=0,-1,9 cabeca=0,1,-6 pernaP=0,-2,0 pernaL=0,-9,-6 bracoP=0,0,0 bracoL=0,0,0
-key 4 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=-4,0,28 pernaL=4,0,-30 bracoP=0,0,-28 bracoL=0,0,28
-key 6 raiz=0,-7 corpo=0,-1,9 cabeca=0,1,-6 pernaP=0,-9,-6 pernaL=0,-2,0 bracoP=0,0,0 bracoL=0,0,0
-key 8 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=4,0,-30 pernaL=-4,0,28 bracoP=0,0,28 bracoL=0,0,-28
+key 0 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=4,0,-30 pernaL=-4,0,28 bracoP=0,0,28 bracoL=0,0,-28 gravata=0,0,4
+key 2 raiz=0,-7 corpo=0,-1,9 cabeca=0,1,-6 pernaP=0,-2,0 pernaL=0,-9,-6 bracoP=0,0,0 bracoL=0,0,0 gravata=0,0,10
+key 4 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=-4,0,28 pernaL=4,0,-30 bracoP=0,0,-28 bracoL=0,0,28 gravata=0,0,4
+key 6 raiz=0,-7 corpo=0,-1,9 cabeca=0,1,-6 pernaP=0,-9,-6 pernaL=0,-2,0 bracoP=0,0,0 bracoL=0,0,0 gravata=0,0,10
+key 8 raiz=0,0 corpo=0,0,8 cabeca=0,0,-5 pernaP=4,0,-30 pernaL=-4,0,28 bracoP=0,0,28 bracoL=0,0,-28 gravata=0,0,4
 event 0 passo
 event 4 passo
 
 # corrida de quatro: o corpo deita para a frente em volta do quadril e o tronco estica;
 # o pescoço, a cabeça e os braços giram de volta (os braços viram as patas da frente)
 anim run4 frames=8 fps=14
-key 0 raiz=-60,-8 corpo=0,-43,85 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 cabeca=0,0,-45 gravata=0,0,-10 pernaP=26,-6,35 pernaL=-24,-6,28 bracoP=73,-8,-115,1,0.88 bracoL=-40,-25,-108,1,0.88
-key 2 raiz=-60,-2 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 cabeca=0,0,-46 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
-key 4 raiz=-60,0 corpo=0,-43,82 forma=0,0,0,0.88,1.13 pescoco=0,-17,-28 cabeca=0,0,-44 pernaP=26,-6,-32 pernaL=-24,-6,-24 bracoP=73,-8,-55,1,0.88 bracoL=-40,-25,-62,1,0.88
-key 6 raiz=-60,-4 corpo=0,-43,84 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 cabeca=0,0,-45 pernaP=26,-6,10 pernaL=-24,-6,16 bracoP=73,-12,-100,1,0.88 bracoL=-40,-29,-96,1,0.88
-key 8 raiz=-60,-8 corpo=0,-43,85 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 cabeca=0,0,-45 gravata=0,0,-10 pernaP=26,-6,35 pernaL=-24,-6,28 bracoP=73,-8,-115,1,0.88 bracoL=-40,-25,-108,1,0.88
+key 0 raiz=-60,-8 corpo=0,-43,85 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,0,-45 gravata=0,0,-20 pernaP=26,-6,35 pernaL=-24,-6,28 bracoP=73,-8,-115,1,0.88 bracoL=-40,-25,-108,1,0.88
+key 2 raiz=-60,-2 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 colar=0,0,28,0.74,0.74 cabeca=0,0,-46 gravata=0,0,-26 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
+key 4 raiz=-60,0 corpo=0,-43,82 forma=0,0,0,0.88,1.13 pescoco=0,-17,-28 colar=0,0,28,0.74,0.74 cabeca=0,0,-44 gravata=0,0,-12 pernaP=26,-6,-32 pernaL=-24,-6,-24 bracoP=73,-8,-55,1,0.88 bracoL=-40,-25,-62,1,0.88
+key 6 raiz=-60,-4 corpo=0,-43,84 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,0,-45 gravata=0,0,-20 pernaP=26,-6,10 pernaL=-24,-6,16 bracoP=73,-12,-100,1,0.88 bracoL=-40,-29,-96,1,0.88
+key 8 raiz=-60,-8 corpo=0,-43,85 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,0,-45 gravata=0,0,-20 pernaP=26,-6,35 pernaL=-24,-6,28 bracoP=73,-8,-115,1,0.88 bracoL=-40,-25,-108,1,0.88
 event 2 passo
 event 6 passo
 
 # parado de quatro: respira e mexe o capim
 anim idle4 frames=24 fps=12
-key 0 raiz=-60,0 corpo=0,-43,86 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 cabeca=0,0,-46 gravata=0,0,-55 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
-key 12 raiz=-60,0 corpo=0,-42,86 forma=0,0,0,0.87,1.2 pescoco=0,-21,-30 cabeca=0,1,-47 gravata=0,0,-55 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
-key 24 raiz=-60,0 corpo=0,-43,86 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 cabeca=0,0,-46 gravata=0,0,-55 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
+key 0 raiz=-60,0 corpo=0,-43,86 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,0,-46 gravata=0,0,-21 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
+key 12 raiz=-60,0 corpo=0,-42,86 forma=0,0,0,0.87,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,1,-47 gravata=0,0,-21 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
+key 24 raiz=-60,0 corpo=0,-43,86 forma=0,0,0,0.85,1.2 pescoco=0,-21,-30 colar=0,0,28,0.74,0.74 cabeca=0,0,-46 gravata=0,0,-21 pernaP=26,-6,0 pernaL=-24,-6,0 bracoP=73,-8,-86,1,0.88 bracoL=-40,-25,-86,1,0.88
 key 6 capim=0,0,0
 key 12 capim=0,0,-8
 key 18 capim=0,0,4
@@ -176,16 +180,16 @@ key 11 olhoP.shape=olhoP olhoL.shape=olhoL pupilaP.show=1 pupilaL.show=1
 
 # de pé para quatro: recua um pouco, se joga para a frente e cai nas mãos
 anim to4 frames=6 fps=14 once
-key 0 raiz=0,0 corpo=0,0,0 forma=0,0,0 pescoco=0,0,0 cabeca=0,0,0 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,0 bracoL=0,0,0
-key 1 raiz=0,0 corpo=0,3,-6,1.04,0.96 forma=0,0,0 pescoco=0,0,0 cabeca=0,0,4 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,20 bracoL=0,0,20
-key 3 raiz=-30,-10 corpo=0,-30,55 forma=0,0,0,0.92,1.1 pescoco=0,-12,-20 cabeca=0,0,-30 gravata=0,0,-30 pernaP=14,-4,20 pernaL=-12,-4,20 bracoP=50,-6,-110,1,0.94 bracoL=-26,-16,-105,1,0.94 ease=out
-key 5 raiz=-60,0 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 cabeca=0,0,-46 gravata=0,0,-40 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
+key 0 raiz=0,0 corpo=0,0,0 forma=0,0,0 pescoco=0,0,0 colar=0,0,0 cabeca=0,0,0 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,0 bracoL=0,0,0
+key 1 raiz=0,0 corpo=0,3,-6,1.04,0.96 forma=0,0,0 pescoco=0,0,0 colar=0,0,0 cabeca=0,0,4 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,20 bracoL=0,0,20
+key 3 raiz=-30,-10 corpo=0,-30,55 forma=0,0,0,0.92,1.1 pescoco=0,-12,-20 colar=0,0,14,0.87,0.87 cabeca=0,0,-30 gravata=0,0,-15 pernaP=14,-4,20 pernaL=-12,-4,20 bracoP=50,-6,-110,1,0.94 bracoL=-26,-16,-105,1,0.94 ease=out
+key 5 raiz=-60,0 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 colar=0,0,28,0.74,0.74 cabeca=0,0,-46 gravata=0,0,-21 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
 event 5 passo
 
 # de quatro para de pé: empurra com as mãos e levanta o tronco
 anim to2 frames=6 fps=14 once
-key 0 raiz=-60,0 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 cabeca=0,0,-46 gravata=0,0,-40 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
-key 2 raiz=-36,-8 corpo=0,-26,45 forma=0,0,0,0.94,1.07 pescoco=0,-10,-16 cabeca=0,0,-22 gravata=0,0,-25 pernaP=12,-3,-10 pernaL=-10,-3,-10 bracoP=40,-4,-40,1,0.95 bracoL=-20,-12,-40,1,0.95 ease=out
-key 4 raiz=0,0 corpo=0,2,-4,0.97,1.03 forma=0,0,0 pescoco=0,0,0 cabeca=0,0,3 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,-10 bracoL=0,0,-10
-key 5 raiz=0,0 corpo=0,0,0 forma=0,0,0 pescoco=0,0,0 cabeca=0,0,0 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,0 bracoL=0,0,0
+key 0 raiz=-60,0 corpo=0,-43,88 forma=0,0,0,0.85,1.2 pescoco=0,-21,-32 colar=0,0,28,0.74,0.74 cabeca=0,0,-46 gravata=0,0,-21 pernaP=26,-6,0 pernaL=-24,-6,-6 bracoP=73,-8,-85,1,0.88 bracoL=-40,-25,-90,1,0.88
+key 2 raiz=-36,-8 corpo=0,-26,45 forma=0,0,0,0.94,1.07 pescoco=0,-10,-16 colar=0,0,14,0.87,0.87 cabeca=0,0,-22 gravata=0,0,-9 pernaP=12,-3,-10 pernaL=-10,-3,-10 bracoP=40,-4,-40,1,0.95 bracoL=-20,-12,-40,1,0.95 ease=out
+key 4 raiz=0,0 corpo=0,2,-4,0.97,1.03 forma=0,0,0 pescoco=0,0,0 colar=0,0,0 cabeca=0,0,3 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,-10 bracoL=0,0,-10
+key 5 raiz=0,0 corpo=0,0,0 forma=0,0,0 pescoco=0,0,0 colar=0,0,0 cabeca=0,0,0 gravata=0,0,0 pernaP=0,0,0 pernaL=0,0,0 bracoP=0,0,0 bracoL=0,0,0
 event 4 passo

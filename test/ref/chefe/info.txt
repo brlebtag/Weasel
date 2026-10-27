@@ -1,17 +1,18 @@
 canvas   360 × 270, fundo #e7e3da
 componentes tufo (13×)
-camadas  9
+camadas  10
   guia             2 item(ns)  guide
   atras            6 item(ns)
   corpo            1 item(ns)
   pelagem         12 item(ns)  clip=corpo
-  cabeca          24 item(ns)
+  colar            1 item(ns)
+  gravata          2 item(ns)
+  cabeca          23 item(ns)
   chapeu           2 item(ns)
   chapeu_faixa     2 item(ns)  clip=copa
-  gravata          2 item(ns)
   frente           2 item(ns)
 formas   53 (2 ocultas)
-ossos    raiz, corpo←raiz, forma←corpo, pescoco←corpo, cabeca←pescoco, capim←cabeca (spring), gravata←pescoco (spring), bracoP←corpo, bracoL←corpo, pernaP←raiz, pernaL←raiz
+ossos    raiz, corpo←raiz, forma←corpo, pescoco←corpo, cabeca←pescoco, capim←cabeca (spring), colar←pescoco, gravata←pescoco, bracoP←corpo, bracoL←corpo, pernaP←raiz, pernaL←raiz
 animações 6
   idle           24 quadros, 12 fps, anima olhoP.shape olhoL.shape pupilaP.show pupilaL.show
   run            8 quadros, 14 fps
