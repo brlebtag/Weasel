@@ -157,6 +157,7 @@
           duration: Math.round(1000 / (anim ? anim.fps : 12)),
         };
         if (fe.length) json.frames[id].events = fe;
+        if (model.boxes.size) json.frames[id].boxes = frameBoxes(model, S.makePose(model, name, f), rect, o.scale);
         for (const n of fe) events.push({ animation: key, frame: f, name: n });
         json.animations[key].push(id);
         flat++;
@@ -176,23 +177,25 @@
         collider: model.unity.collider,
       };
     }
-    return { canvas: out, json: JSON.stringify(json, null, 2), frames: cells.length, fw, fh, cells, list };
+    return { canvas: out, json: JSON.stringify(json, null, 2), frames: cells.length, fw, fh, cells, list, rect, scale: o.scale };
   }
   const round3 = (v) => Math.round(v * 1000) / 1000;
+  // caixas ligadas no quadro, em pixels do quadro (centro, tamanho e rotação), para outros motores
+  function frameBoxes(model, pose, rect, scale) {
+    const out = [];
+    for (const b of model.boxes.values()) {
+      const st = S.boxState(model, pose, b);
+      if (!st.on) continue;
+      const o = { name: b.name, kind: b.kind, shape: b.shape, x: round3((st.cx - rect.x) * scale), y: round3((st.cy - rect.y) * scale) };
+      if (b.shape === 'circle') o.r = round3(b.r * scale); else { o.w = round3(b.w * scale); o.h = round3(b.h * scale); }
+      if (st.rot) o.rot = round3(st.rot);
+      out.push(o);
+    }
+    return out;
+  }
 
   // SpriteFrames do Godot 4 (.tres) apontando para a folha; deixe o .png e o .tres na mesma pasta.
-  function godotText(model, r, imagePath) {
-    const out = [`[gd_resource type="SpriteFrames" load_steps=${r.cells.length + 2} format=3]`, '', `[ext_resource type="Texture2D" path="${imagePath}" id="1_sheet"]`, ''];
-    r.cells.forEach((c, i) => out.push(`[sub_resource type="AtlasTexture" id="AtlasTexture_${i}"]`, 'atlas = ExtResource("1_sheet")', `region = Rect2(${c.x}, ${c.y}, ${r.fw}, ${r.fh})`, ''));
-    const anims = r.list.map((name) => {
-      const a = name ? model.animMap.get(name) : null;
-      const frames = [];
-      r.cells.forEach((c, i) => { if (c.name === name) frames.push(`{\n"duration": 1.0,\n"texture": SubResource("AtlasTexture_${i}")\n}`); });
-      return `{\n"frames": [${frames.join(', ')}],\n"loop": ${a ? a.loop : true},\n"name": &"${name || 'default'}",\n"speed": ${(a ? a.fps : 5).toFixed(1)}\n}`;
-    });
-    out.push('[resource]', `animations = [${anims.join(', ')}]`, '');
-    return out.join('\n');
-  }
+  const godotText = (model, r, imagePath, normalPath) => W.godot.spriteFramesText(model, r, imagePath, normalPath);
 
   function download(blob, name) {
     const a = document.createElement('a');
@@ -213,7 +216,7 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror']) {
       $(id).addEventListener('change', () => refresh());
     }
     $('expDownload').addEventListener('click', () => save(false));
@@ -297,6 +300,15 @@
       const v = $('expAnim').value;
       const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
       const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
+      // Godot completo: cena, normal map, ajudante; ou o TileSet
+      const scene = $('expGodotScene').checked, normal = $('expNormal').checked;
+      if (kind === 'godot' && (model.tileset || scene || normal)) {
+        const pkg = W.godot.packageFiles(model, { base: model.tileset || scene ? o.baseName + suffix : `${o.baseName}_${tag}`, scale: o.scale, normal, scene, mirror: $('expMirror').checked, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin, trim: o.trim || scene, names: model.tileset ? null : names });
+        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
+        const main = pkg.files[0].canvas;
+        const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+        return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}` };
+      }
       o.imageName = `${o.baseName}_${tag}.png`;
       const x = await sheet(model, names, o);
       const files = [{ name: o.imageName, blob: x.png, png: true }];

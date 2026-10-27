@@ -163,6 +163,25 @@ async function drawingCases(file) {
   // um quadro do meio de cada animação em tamanho maior (pega detalhe que a folha pequena perde)
   for (const a of model.anims) await check(group, `${a.name}_meio.png`, 'png', X.imageCanvas(model, a.name, Math.floor(a.frames / 2), o));
 
+  // pacote do Godot (cena, TileSet, normal map) para quem tem caixas, unity, godot ou tileset
+  if (model.boxes.size || model.unity || model.godot || model.tileset) {
+    const pkg = W.godot.packageFiles(model, { base: group, scale: model.tileset ? 1 : 0.3, normal: true, mirror: true });
+    for (const f of pkg.files) {
+      if (f.name === 'weasel_anim.gd') await check('_godot', 'weasel_anim.gd', 'text', f.text);
+      else if (f.canvas && /_normal\.png$/.test(f.name)) {
+        // só o primeiro quadro (normal map não comprime bem); o tileset vai inteiro
+        let cv = f.canvas;
+        if (pkg.sheet) {
+          const c = pkg.sheet.cells[0];
+          cv = createCanvas(pkg.sheet.fw, pkg.sheet.fh);
+          cv.getContext('2d').drawImage(f.canvas, c.x, c.y, pkg.sheet.fw, pkg.sheet.fh, 0, 0, pkg.sheet.fw, pkg.sheet.fh);
+        }
+        await check(group, 'pacote_normal.png', 'png', cv);
+      }
+      else if (!f.canvas) await check(group, `pacote${path.extname(f.name)}`, 'text', f.text);
+    }
+  }
+
   // ordem da pintura passo a passo
   const plan = W.scene.buildPlan(model, { speed: 1 });
   await check(group, 'pintura.txt', 'text', plan.order.map((p) => `${p.el.type} ${p.el.name || '-'} @${p.start.toFixed(3)} +${p.dur.toFixed(3)}`).join('\n') + `\ntotal ${plan.total.toFixed(3)}\n`);

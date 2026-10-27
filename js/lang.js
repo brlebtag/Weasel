@@ -10,6 +10,7 @@
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
     light: 'fx', ambient: 'fx',
     film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film',
+    box: 'game', godot: 'game', tileset: 'game', tile: 'game',
   };
   const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at']);
   const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'emitter']);
@@ -39,11 +40,18 @@
     shot: ['dur'],
     actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide'],
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
+    box: ['bone', 'only'],
+    godot: ['body', 'root', 'normal', 'name'],
+    tileset: ['size'],
+    tile: ['collision'],
   };
   const FLAGS = {
     layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
     shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'], emitter: ['hidden'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
+    box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
+    tileset: ['auto'],
+    tile: ['solid', 'oneway'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
@@ -54,6 +62,10 @@
   const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant' };
   const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color' };
   const FILM_W = 1920, FILM_H = 1080;
+  // jogo: caixas (colisão do corpo, golpe, dano) e o tipo do nó raiz da cena do Godot
+  const BOX_PROPS = { show: 'step' };
+  const BOX_KINDS = ['body', 'hit', 'hurt'], BOX_SHAPES = ['rect', 'circle', 'capsule'];
+  const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
   const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'];
   const DEFAULT_PALETTE = { ink: '#14141c', line: 8, inner: 5, edge: 3 };
@@ -340,6 +352,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
+      boxes: new Map(), godot: null, tileset: null,
       byLine: new Map(),
       errors,
     };
@@ -1163,7 +1176,7 @@
       }
       if (Ly.only && st) {
         for (const n of Ly.only) {
-          if (m.animMap.has(n) || top.some((s) => s.cmd === 'shot' && s.pos[0] && s.pos[0].text === n)) continue;
+          if (n === 'pose' || m.animMap.has(n) || top.some((s) => s.cmd === 'shot' && s.pos[0] && s.pos[0].text === n)) continue;
           bad(st, st.attrs.get('only'), `animação "${n}" não existe`, 'warn');
         }
       }
@@ -1247,6 +1260,110 @@
       if (!b.tip || Math.hypot(b.tip[0] - b.pivot[0], b.tip[1] - b.pivot[1]) < 2) b.tip = [b.pivot[0], b.pivot[1] + 30];
     }
 
+    // ---- jogo: caixas de colisão, godot, tileset e tile ----
+    for (const st of top) {
+      const A = st.attrs;
+      if (st.cmd === 'box') readBox(st, A);
+      else if (st.cmd === 'godot') {
+        const g = { body: 'character', root: null, normal: 1, name: null, line: st.line };
+        const rec = info(st);
+        if (A.has('body')) { const a = A.get('body'); if (GODOT_BODIES.includes(a.text)) g.body = a.text; else bad(st, a, `body= aceita ${GODOT_BODIES.join(', ')}`); }
+        if (A.has('root')) {
+          const a = A.get('root');
+          g.root = pair(st, a, null);
+          if (g.root) rec.handles.push({ kind: 'root', x: g.root[0], y: g.root[1], from: a.vfrom, to: a.to, fixed: a.text.includes('{') });
+        }
+        if (A.has('normal')) g.normal = number(st, A.get('normal'), 1, 0, 10);
+        if (A.has('name')) {
+          const a = A.get('name'), v = unq(a.text);
+          if (/^[A-Za-z_]\w*$/.test(v)) g.name = v; else bad(st, a, 'name= precisa ser um nome simples (letras, números e _)');
+        }
+        for (const f of st.pos) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+        if (m.godot) err(st.line, 'godot repetido (vale o último)', st.cmdTok.from, st.cmdTok.to, 'warn');
+        m.godot = g;
+      } else if (st.cmd === 'tileset') {
+        if (m.tileset) { err(st.line, 'tileset repetido (só um por arquivo)', st.cmdTok.from, st.cmdTok.to); continue; }
+        const T = { size: [32, 32], auto: false, tiles: [], line: st.line, cols: 0, rows: 0 };
+        if (A.has('size')) { const v = list(st, A.get('size'), 1, 2, [32]); T.size = [Math.max(2, Math.round(v[0])), Math.max(2, Math.round(v.length > 1 ? v[1] : v[0]))]; }
+        for (const f of st.pos) { if (f.text === 'auto') T.auto = true; else err(st.line, `opção desconhecida "${f.text}" (use auto)`, f.from, f.to, 'warn'); }
+        T.cols = Math.floor(m.canvas.w / T.size[0]);
+        T.rows = Math.floor(m.canvas.h / T.size[1]);
+        if (!T.cols || !T.rows) err(st.line, `o canvas (${m.canvas.w}×${m.canvas.h}) é menor que um bloco`, st.cmdTok.from, st.cmdTok.to);
+        info(st, { tileset: T });
+        m.tileset = T;
+      }
+    }
+    for (const st of top) if (st.cmd === 'tile') readTile(st, st.attrs);
+
+    // box nome hit rect x,y l,a  |  circle cx,cy r  |  capsule cx,cy l,a   [off] bone= only=
+    function readBox(st, A) {
+      const name = ident(st, st.pos[0], 'da caixa');
+      if (!name) return;
+      if (m.boxes.has(name)) { err(st.line, `caixa "${name}" já existe`, st.pos[0].from, st.pos[0].to); return; }
+      const b = { name, line: st.line, kind: 'body', shape: 'rect', x: 0, y: 0, w: 10, h: 10, r: 5, bone: null, only: null, on: true };
+      const vals = [];
+      for (const t of st.pos.slice(1)) {
+        if (BOX_KINDS.includes(t.text)) b.kind = t.text;
+        else if (BOX_SHAPES.includes(t.text)) b.shape = t.text;
+        else if (t.text === 'off') b.on = false;
+        else vals.push(t);
+      }
+      const rec = info(st, { box: b });
+      const usage = { rect: 'box nome body|hit|hurt rect x,y largura,altura', circle: 'box nome body|hit|hurt circle cx,cy raio', capsule: 'box nome body|hit|hurt capsule cx,cy largura,altura' }[b.shape];
+      const where = (t) => (t ? [t.from, t.to] : [st.cmdTok.from, st.cmdTok.to]);
+      const p = vals[0] ? nums(vals[0].text) : [];
+      if (p.length !== 2 || p.some(isNaN)) { err(st.line, `use: ${usage}`, ...where(vals[0])); return; }
+      const q = vals[1] ? nums(vals[1].text) : [];
+      if (q.length !== (b.shape === 'circle' ? 1 : 2) || q.some((v) => isNaN(v) || v <= 0)) { err(st.line, `use: ${usage}`, ...where(vals[1])); return; }
+      for (const t of vals.slice(2)) err(st.line, `valor solto "${t.text}"`, t.from, t.to, 'warn');
+      b.x = p[0];
+      b.y = p[1];
+      if (b.shape === 'circle') b.r = q[0]; else { b.w = q[0]; b.h = q[1]; }
+      if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) b.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
+      if (A.has('only')) {
+        const a = A.get('only');
+        b.only = a.text.split(',').filter(Boolean);
+        for (const n of b.only) if (n !== 'pose' && !m.animMap.has(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
+      }
+      rec.handles.push({ kind: 'box', box: name, bone: b.bone, x: b.x, y: b.y, from: vals[0].from, to: vals[0].to, fixed: vals[0].text.includes('{') });
+      if (m.named.has(name)) err(st.line, `"${name}" também é o nome de uma forma; nas keys, vale a caixa`, st.pos[0].from, st.pos[0].to, 'warn');
+      m.boxes.set(name, b);
+    }
+
+    // tile nome coluna,linha [solid] [oneway] collision=forma
+    function readTile(st, A) {
+      const T = m.tileset;
+      if (!T) { err(st.line, 'tile precisa de um tileset antes (ex.: tileset size=32)', st.cmdTok.from, st.cmdTok.to); return; }
+      const name = ident(st, st.pos[0], 'do bloco');
+      if (!name) return;
+      const t = { name, col: 0, row: 0, solid: false, oneway: false, collision: null, line: st.line };
+      let cell = null;
+      for (const f of st.pos.slice(1)) {
+        if (f.text === 'solid') t.solid = true;
+        else if (f.text === 'oneway') t.oneway = true;
+        else if (!cell) cell = f;
+        else err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      }
+      const v = cell ? nums(cell.text) : [];
+      if (v.length !== 2 || v.some((x) => isNaN(x) || x < 0 || x % 1)) { err(st.line, 'use: tile nome coluna,linha [solid] [oneway] collision=forma', cell ? cell.from : st.cmdTok.from, cell ? cell.to : st.cmdTok.to); return; }
+      t.col = v[0];
+      t.row = v[1];
+      if (t.col >= T.cols || t.row >= T.rows) { err(st.line, `fora do tileset (colunas 0 a ${T.cols - 1}, linhas 0 a ${T.rows - 1})`, cell.from, cell.to); return; }
+      const same = T.tiles.find((o) => o.col === t.col && o.row === t.row);
+      if (same) { err(st.line, `a célula ${t.col},${t.row} já é do bloco "${same.name}"`, cell.from, cell.to); return; }
+      if (T.tiles.some((o) => o.name === name)) { err(st.line, `bloco "${name}" já existe`, st.pos[0].from, st.pos[0].to); return; }
+      if (A.has('collision')) {
+        const a = A.get('collision'), el = (m.named.get(a.text) || [])[0];
+        if (!el) bad(st, a, `forma "${a.text}" não existe`);
+        else if (!el.closed) bad(st, a, `"${a.text}" precisa ser uma forma fechada (shape, rect ou ellipse)`);
+        else t.collision = el;
+      }
+      if (t.collision && t.solid) err(st.line, 'solid e collision= juntos: vale o formato de collision=', st.cmdTok.from, st.cmdTok.to, 'warn');
+      if (t.oneway && !t.collision) t.solid = true;
+      info(st, { tile: t, tileset: T });
+      T.tiles.push(t);
+    }
+
     // propriedades animadas: forma.opacity / forma.c / forma.shape / camada.show ...
     for (const p of pendingProps) {
       const { anim, frame, ease, a, st } = p;
@@ -1254,13 +1371,14 @@
       const name = a.key.slice(0, dot), prop = a.key.slice(dot + 1);
       // quem é o alvo: forma, luz ou camada — o primeiro que tiver essa propriedade
       const cands = [
+        m.boxes.has(name) && { kind: 'box', table: BOX_PROPS, targets: null },
         m.named.has(name) && { kind: 'el', table: PROPS, targets: m.named.get(name) },
         m.lights.has(name) && { kind: 'light', table: LIGHT_PROPS, targets: null },
         m.layerMap.has(name) && { kind: 'layer', table: LAYER_PROPS, targets: null },
       ].filter(Boolean);
-      if (!cands.length) { bad(st, a, `"${name}" não é forma, luz nem camada`); continue; }
+      if (!cands.length) { bad(st, a, `"${name}" não é forma, caixa, luz nem camada`); continue; }
       const tgt = cands.find((c) => c.table[prop]);
-      if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
+      if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada', box: 'caixa' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
       const els = tgt.kind === 'el' ? tgt.targets : null;
       const type = tgt.table[prop];
       let v;
@@ -1647,5 +1765,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, FILM_CMDS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

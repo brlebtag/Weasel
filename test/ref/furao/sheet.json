@@ -1,0 +1,3284 @@
+{
+  "frames": {
+    "idle_down_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_01": {
+      "frame": {
+        "x": 46,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_02": {
+      "frame": {
+        "x": 90,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_03": {
+      "frame": {
+        "x": 134,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_04": {
+      "frame": {
+        "x": 178,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_05": {
+      "frame": {
+        "x": 222,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_06": {
+      "frame": {
+        "x": 266,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_down_07": {
+      "frame": {
+        "x": 310,
+        "y": 2,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_00": {
+      "frame": {
+        "x": 2,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_01": {
+      "frame": {
+        "x": 46,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_02": {
+      "frame": {
+        "x": 90,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_03": {
+      "frame": {
+        "x": 134,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_04": {
+      "frame": {
+        "x": 178,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_05": {
+      "frame": {
+        "x": 222,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_06": {
+      "frame": {
+        "x": 266,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_up_07": {
+      "frame": {
+        "x": 310,
+        "y": 42,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_01": {
+      "frame": {
+        "x": 46,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_02": {
+      "frame": {
+        "x": 90,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_03": {
+      "frame": {
+        "x": 134,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_04": {
+      "frame": {
+        "x": 178,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_05": {
+      "frame": {
+        "x": 222,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_06": {
+      "frame": {
+        "x": 266,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "idle_right_07": {
+      "frame": {
+        "x": 310,
+        "y": 82,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_00": {
+      "frame": {
+        "x": 2,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_01": {
+      "frame": {
+        "x": 46,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_02": {
+      "frame": {
+        "x": 90,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_03": {
+      "frame": {
+        "x": 134,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_04": {
+      "frame": {
+        "x": 178,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_05": {
+      "frame": {
+        "x": 222,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_06": {
+      "frame": {
+        "x": 266,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_down_07": {
+      "frame": {
+        "x": 310,
+        "y": 122,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_00": {
+      "frame": {
+        "x": 2,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_01": {
+      "frame": {
+        "x": 46,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_02": {
+      "frame": {
+        "x": 90,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_03": {
+      "frame": {
+        "x": 134,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_04": {
+      "frame": {
+        "x": 178,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_05": {
+      "frame": {
+        "x": 222,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_06": {
+      "frame": {
+        "x": 266,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_up_07": {
+      "frame": {
+        "x": 310,
+        "y": 162,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_01": {
+      "frame": {
+        "x": 46,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_02": {
+      "frame": {
+        "x": 90,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_03": {
+      "frame": {
+        "x": 134,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_04": {
+      "frame": {
+        "x": 178,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_05": {
+      "frame": {
+        "x": 222,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_06": {
+      "frame": {
+        "x": 266,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "walk_right_07": {
+      "frame": {
+        "x": 310,
+        "y": 202,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_down_00": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_down_01": {
+      "frame": {
+        "x": 46,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_down_02": {
+      "frame": {
+        "x": 90,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_down",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 33.9,
+          "w": 16.8,
+          "h": 8.4
+        }
+      ]
+    },
+    "attack_down_03": {
+      "frame": {
+        "x": 134,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_down",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 33.9,
+          "w": 16.8,
+          "h": 8.4
+        }
+      ]
+    },
+    "attack_down_04": {
+      "frame": {
+        "x": 178,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_down_05": {
+      "frame": {
+        "x": 222,
+        "y": 242,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_up_00": {
+      "frame": {
+        "x": 2,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_up_01": {
+      "frame": {
+        "x": 46,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_up_02": {
+      "frame": {
+        "x": 90,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_up",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 22.5,
+          "y": -1.8,
+          "w": 16.8,
+          "h": 9
+        }
+      ]
+    },
+    "attack_up_03": {
+      "frame": {
+        "x": 134,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_up",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 22.5,
+          "y": -1.8,
+          "w": 16.8,
+          "h": 9
+        }
+      ]
+    },
+    "attack_up_04": {
+      "frame": {
+        "x": 178,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_up_05": {
+      "frame": {
+        "x": 222,
+        "y": 282,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_right_01": {
+      "frame": {
+        "x": 46,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_right_02": {
+      "frame": {
+        "x": 90,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_right",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 36.3,
+          "y": 21.6,
+          "w": 12,
+          "h": 13.8
+        }
+      ]
+    },
+    "attack_right_03": {
+      "frame": {
+        "x": 134,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        },
+        {
+          "name": "golpe_right",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 36.3,
+          "y": 21.6,
+          "w": 12,
+          "h": 13.8
+        }
+      ]
+    },
+    "attack_right_04": {
+      "frame": {
+        "x": 178,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    },
+    "attack_right_05": {
+      "frame": {
+        "x": 222,
+        "y": 322,
+        "w": 42,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 42,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 42,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 28.2,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.5,
+          "y": 17.4,
+          "w": 15.6,
+          "h": 27
+        }
+      ]
+    }
+  },
+  "animations": {
+    "idle_down": [
+      "idle_down_00",
+      "idle_down_01",
+      "idle_down_02",
+      "idle_down_03",
+      "idle_down_04",
+      "idle_down_05",
+      "idle_down_06",
+      "idle_down_07"
+    ],
+    "idle_up": [
+      "idle_up_00",
+      "idle_up_01",
+      "idle_up_02",
+      "idle_up_03",
+      "idle_up_04",
+      "idle_up_05",
+      "idle_up_06",
+      "idle_up_07"
+    ],
+    "idle_right": [
+      "idle_right_00",
+      "idle_right_01",
+      "idle_right_02",
+      "idle_right_03",
+      "idle_right_04",
+      "idle_right_05",
+      "idle_right_06",
+      "idle_right_07"
+    ],
+    "walk_down": [
+      "walk_down_00",
+      "walk_down_01",
+      "walk_down_02",
+      "walk_down_03",
+      "walk_down_04",
+      "walk_down_05",
+      "walk_down_06",
+      "walk_down_07"
+    ],
+    "walk_up": [
+      "walk_up_00",
+      "walk_up_01",
+      "walk_up_02",
+      "walk_up_03",
+      "walk_up_04",
+      "walk_up_05",
+      "walk_up_06",
+      "walk_up_07"
+    ],
+    "walk_right": [
+      "walk_right_00",
+      "walk_right_01",
+      "walk_right_02",
+      "walk_right_03",
+      "walk_right_04",
+      "walk_right_05",
+      "walk_right_06",
+      "walk_right_07"
+    ],
+    "attack_down": [
+      "attack_down_00",
+      "attack_down_01",
+      "attack_down_02",
+      "attack_down_03",
+      "attack_down_04",
+      "attack_down_05"
+    ],
+    "attack_up": [
+      "attack_up_00",
+      "attack_up_01",
+      "attack_up_02",
+      "attack_up_03",
+      "attack_up_04",
+      "attack_up_05"
+    ],
+    "attack_right": [
+      "attack_right_00",
+      "attack_right_01",
+      "attack_right_02",
+      "attack_right_03",
+      "attack_right_04",
+      "attack_right_05"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "furao.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 354,
+      "h": 362
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 42,
+      "h": 38
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "idle_down",
+        "from": 0,
+        "to": 7,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      },
+      {
+        "name": "idle_up",
+        "from": 8,
+        "to": 15,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      },
+      {
+        "name": "idle_right",
+        "from": 16,
+        "to": 23,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      },
+      {
+        "name": "walk_down",
+        "from": 24,
+        "to": 31,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "walk_up",
+        "from": 32,
+        "to": 39,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "walk_right",
+        "from": 40,
+        "to": 47,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "attack_down",
+        "from": 48,
+        "to": 53,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      },
+      {
+        "name": "attack_up",
+        "from": 54,
+        "to": 59,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      },
+      {
+        "name": "attack_right",
+        "from": 60,
+        "to": 65,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      }
+    ],
+    "events": [
+      {
+        "animation": "walk_down",
+        "frame": 0,
+        "name": "passo"
+      },
+      {
+        "animation": "walk_down",
+        "frame": 4,
+        "name": "passo"
+      },
+      {
+        "animation": "walk_up",
+        "frame": 0,
+        "name": "passo"
+      },
+      {
+        "animation": "walk_up",
+        "frame": 4,
+        "name": "passo"
+      },
+      {
+        "animation": "walk_right",
+        "frame": 0,
+        "name": "passo"
+      },
+      {
+        "animation": "walk_right",
+        "frame": 4,
+        "name": "passo"
+      },
+      {
+        "animation": "attack_down",
+        "frame": 2,
+        "name": "golpe"
+      },
+      {
+        "animation": "attack_up",
+        "frame": 2,
+        "name": "golpe"
+      },
+      {
+        "animation": "attack_right",
+        "frame": 2,
+        "name": "golpe"
+      }
+    ],
+    "sourceRect": {
+      "x": 5,
+      "y": 29,
+      "w": 140,
+      "h": 126
+    }
+  }
+}

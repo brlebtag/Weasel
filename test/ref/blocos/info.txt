@@ -1,0 +1,18 @@
+canvas   192 × 64, fundo transparente
+padrões  pedras (hatch, cross)
+camadas  2
+  chao            26 item(ns)
+  ceu              3 item(ns)  unlit
+formas   29
+animações nenhuma
+godot    character, normal 0.8
+tileset  blocos de 32×32, 6 × 2 células, auto
+  grama          0,0 sólido
+  terra          1,0 sólido
+  pedra          2,0 sólido
+  plataforma     3,0 sólido só por cima
+  rampa          4,0 colisão rampa
+  espinhos       5,0
+  moeda          0,1
+  caixa          1,1 sólido
+  flor           2,1

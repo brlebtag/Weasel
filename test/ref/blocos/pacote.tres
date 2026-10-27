@@ -1,0 +1,50 @@
+[gd_resource type="TileSet" format=3]
+
+[ext_resource type="Texture2D" path="blocos.png" id="1_tiles"]
+[ext_resource type="Texture2D" path="blocos_normal.png" id="2_normal"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_tiles"]
+diffuse_texture = ExtResource("1_tiles")
+normal_texture = ExtResource("2_normal")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tiles"]
+texture = SubResource("CanvasTexture_tiles")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+0:0/0/custom_data_0 = "grama"
+1:0/0 = 0
+1:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+1:0/0/custom_data_0 = "terra"
+2:0/0 = 0
+2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+2:0/0/custom_data_0 = "pedra"
+3:0/0 = 0
+3:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+3:0/0/physics_layer_0/polygon_0/one_way = true
+3:0/0/custom_data_0 = "plataforma"
+4:0/0 = 0
+4:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, 16, 16, -16, 16, 16)
+4:0/0/custom_data_0 = "rampa"
+5:0/0 = 0
+5:0/0/custom_data_0 = "espinhos"
+0:1/0 = 0
+0:1/0/custom_data_0 = "moeda"
+1:1/0 = 0
+1:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+1:1/0/custom_data_0 = "caixa"
+2:1/0 = 0
+2:1/0/custom_data_0 = "flor"
+3:1/0 = 0
+3:1/0/custom_data_0 = "bloco_3_1"
+4:1/0 = 0
+4:1/0/custom_data_0 = "bloco_4_1"
+5:1/0 = 0
+5:1/0/custom_data_0 = "bloco_5_1"
+
+[resource]
+tile_size = Vector2i(32, 32)
+physics_layer_0/collision_layer = 1
+custom_data_layer_0/name = "nome"
+custom_data_layer_0/type = 4
+sources/0 = SubResource("TileSetAtlasSource_tiles")

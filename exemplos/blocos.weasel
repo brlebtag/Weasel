@@ -1,0 +1,62 @@
+# Blocos — tileset de plataforma para o Godot
+# O canvas é a folha: blocos de 32×32, em colunas e linhas. Cada tile diz qual célula
+# vira bloco e como ele colide: solid (o quadrado todo), oneway (só por cima) ou
+# collision=forma (o formato de uma forma, como a rampa). O nome vai junto (dado "nome").
+# auto cria também um bloco sem colisão para cada célula desenhada que não tem tile.
+# Exporte com:  weasel blocos.weasel -f godot -o godot/blocos.tres
+
+canvas 192 64 bg=none
+palette ink=#2a1d16 line=2
+palette grama=#6cbf4a gramad=#4f9a35 terra=#9a6b43 terrad=#7c5434 pedra=#8d93a0
+palette madeira=#c58a4c madeirad=#9a6533 ouro=#ffd04a metal=#cfd6e0 nuvem=#ffffff
+pattern pedras hatch cross angle=30 gap=7 w=1.2 c=#6f7480 bg=#9aa0ad
+
+tileset size=32 auto
+godot normal=0.8
+
+# linha 0
+layer chao
+rect terraA 0,6 32,26 c=terra
+shape gramaA c=grama ink=line smooth=0.6 : 0,0! 32,0! 32,10! 27,13 22,9 16,13 11,9 5,13 0,10!
+ellipse seixoA 9,24 3,2 c=terrad
+ellipse seixoB 23,20 2,1.5 c=terrad
+rect terraB 32,0 32,32 c=terra
+ellipse seixoC 40,8 3,2 c=terrad
+ellipse seixoD 54,22 3.5,2.5 c=terrad
+ellipse seixoE 44,26 2,1.5 c=terrad
+rect pedraA 64,0 32,32 c=pedras ink=line
+rect tabua 96,0 32,10 r=2 c=madeira ink=line
+stroke veio w=1 c=madeirad : 100,5 112,4 124,6
+rect apoioE 100,10 4,8 c=madeirad
+rect apoioD 120,10 4,8 c=madeirad
+shape rampa c=terra : 128,32! 160,0! 160,32!
+stroke gramaR w=4 c=grama cap=round : 129,31 159,1
+shape espinhos c=metal ink=line smooth=0 : 160,32! 164,16! 168,32! 172,16! 176,32! 180,16! 184,32! 188,16! 192,32!
+
+# linha 1
+rect caixa 34,34 28,28 r=2 c=madeira ink=line
+stroke tabuaX1 w=2 c=madeirad : 38,38 58,58
+stroke tabuaX2 w=2 c=madeirad : 58,38 38,58
+ellipse moeda 16,48 9,11 c=ouro ink=line emit=#ffd04a,0.5
+rect brilho 14,41 3,10 r=1.5 c=#fff3b0
+stroke caule w=2 c=gramad : 80,62 80,48
+ellipse petala1 80,44 4 c=#ff7aa8 ink=1
+ellipse petala2 75,48 4 c=#ff7aa8 ink=1
+ellipse petala3 85,48 4 c=#ff7aa8 ink=1
+ellipse miolo 80,47 2.5 c=ouro
+
+# nuvem decorativa em duas células (vira dois blocos pelo auto)
+layer ceu unlit
+ellipse nuvemA 112,50 14,9 c=nuvem
+ellipse nuvemB 128,44 16,12 c=nuvem
+ellipse nuvemC 144,50 14,9 c=nuvem
+
+tile grama 0,0 solid
+tile terra 1,0 solid
+tile pedra 2,0 solid
+tile plataforma 3,0 oneway
+tile rampa 4,0 collision=rampa
+tile espinhos 5,0
+tile moeda 0,1
+tile caixa 1,1 solid
+tile flor 2,1

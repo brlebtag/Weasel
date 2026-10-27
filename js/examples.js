@@ -523,6 +523,251 @@ at 3.4s camera.fade=0
 at 4.5s camera.fade=1 ease=linear
 `;
 
+  const topdown = `# Furão — personagem de jogo top-down, para o Godot
+# Três vistas (frente, costas e lado direito), cada uma em camadas com only=. As animações
+# terminam em _down, _up e _right; na cena do Godot, o lado esquerdo sai espelhado do direito
+# e o ajudante tocar("walk", velocity) escolhe a animação pela direção.
+# box: colisão do corpo (body), área que leva dano (hurt) e o golpe (hit), que só liga
+# nos quadros do ataque. Exporte com:  weasel furao.weasel -o godot/furao.tscn
+
+canvas 160 160 bg=#eef0e6 light=-0.6,-0.8
+palette ink=#2a1d16 line=4 thin=2
+palette pelo=#c98f5a pelod=#a8703f barriga=#f6e7cf mascara=#5b3a28 rosa=#e9a0a8
+palette olho=#1a1414 metal=#d9dee6 cabo=#7a5232
+
+# a raiz fica entre os pés: é a origem do nó no Godot
+godot body=character root=80,128
+
+# Construção: o chão e o centro (só aparecem no editor)
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,128 140,128
+line meio c=#b9bba8 w=1 dash=4,4 : 80,20 80,140
+
+# a espada é desenhada em volta da mão (0,0), com a lâmina para cima
+def espada
+rect lamina -3,-36 6,32 r=2 c=metal ink=thin
+rect guarda -8,-6 16,4 c=cabo ink=thin
+rect punho -2,-2 4,9 c=cabo ink=thin
+end
+
+# ---------- ossos (os mesmos para as três vistas) ----------
+bone corpo pivot=80,128
+bone cabeca parent=corpo pivot=80,92
+bone peE pivot=68,126
+bone peD pivot=92,126
+bone bracoE parent=corpo pivot=58,100
+bone bracoD parent=corpo pivot=102,100
+bone caudaC parent=corpo pivot=82,118 spring=0.4
+bone caudaL parent=corpo pivot=58,112 spring=0.4
+bone espadaF parent=corpo pivot=104,108
+bone espadaC parent=corpo pivot=104,108
+bone espadaL parent=corpo pivot=94,108
+
+# ---------- frente (virado para baixo) ----------
+layer frente only=pose,idle_down,walk_down,attack_down
+ellipse peE 68,126 9,6 c=pelod ink=line bone=peE
+ellipse peD 92,126 9,6 c=pelod ink=line bone=peD
+ellipse corpo 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse barriga 80,111 14,13 c=barriga bone=corpo
+ellipse bracoE 57,106 7,9 c=pelod ink=line bone=bracoE
+ellipse orelhaE 58,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaD 102,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaEi 58,49 5 c=rosa bone=cabeca
+ellipse orelhaDi 102,49 5 c=rosa bone=cabeca
+ellipse cabeca 80,72 30,26 c=pelo ink=line bone=cabeca
+shape mascara c=mascara bone=cabeca : 54,70 64,62 80,67 96,62 106,70 96,77 80,73 64,77
+ellipse focinho 80,84 13,9 c=barriga bone=cabeca
+ellipse olhoE 68,69 4,5 c=olho bone=cabeca
+ellipse olhoD 92,69 4,5 c=olho bone=cabeca
+ellipse brilhoE 69,67 1.5 c=#ffffff bone=cabeca
+ellipse brilhoD 93,67 1.5 c=#ffffff bone=cabeca
+ellipse nariz 80,80 4,3 c=rosa ink=thin bone=cabeca
+stroke boca w=thin c=ink bone=cabeca : 75,86 80,89 85,86
+layer frente_arma only=pose,idle_down,walk_down,attack_down
+use espada 104,108 rot=25 bone=espadaF
+ellipse bracoD 103,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- costas (virado para cima) ----------
+layer costas only=idle_up,walk_up,attack_up
+ellipse peEc 68,126 9,6 c=pelod ink=line bone=peE
+ellipse peDc 92,126 9,6 c=pelod ink=line bone=peD
+ellipse corpoC 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse bracoEc 57,104 7,9 c=pelod ink=line bone=bracoE
+ellipse bracoDc 103,104 7,9 c=pelod ink=line bone=bracoD
+shape caudaC c=pelod ink=line bone=caudaC : 80,116 92,124 110,120 124,104 126,92 120,92 114,106 98,114 84,110
+ellipse orelhaEc 58,48 10 c=pelod ink=line bone=cabeca
+ellipse orelhaDc 102,48 10 c=pelod ink=line bone=cabeca
+ellipse cabecaC 80,72 30,26 c=pelo ink=line bone=cabeca
+shape nuca c=pelod bone=cabeca : 70,52 80,49 90,52 86,76 80,80 74,76
+layer costas_arma only=idle_up,walk_up,attack_up
+use espada 104,108 rot=25 bone=espadaC
+
+# ---------- lado (virado para a direita; o esquerdo é espelhado) ----------
+layer lado_tras only=idle_right,walk_right,attack_right
+shape caudaL c=pelod ink=line bone=caudaL : 60,112 42,116 24,110 14,96 18,90 26,98 40,104 58,104
+ellipse peDl 72,126 9,6 c=pelod ink=line bone=peD
+layer lado only=idle_right,walk_right,attack_right
+ellipse corpoL 78,106 26,20 c=pelo ink=line bone=corpo
+ellipse barrigaL 88,112 12,9 c=barriga bone=corpo
+ellipse peEl 90,126 10,6 c=pelod ink=line bone=peE
+ellipse orelhaL 72,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaLi 72,49 5 c=rosa bone=cabeca
+ellipse focinhoL 106,78 14,10 c=barriga ink=line bone=cabeca
+ellipse cabecaL 84,70 26,24 c=pelo ink=line bone=cabeca
+shape mascaraL c=mascara bone=cabeca : 86,64 98,61 106,68 99,76 88,74
+ellipse olhoL 97,67 4,5 c=olho bone=cabeca
+ellipse brilhoL 98,65 1.5 c=#ffffff bone=cabeca
+ellipse narizL 119,76 4,3 c=rosa ink=thin bone=cabeca
+layer lado_arma only=idle_right,walk_right,attack_right
+use espada 94,108 rot=-35 bone=espadaL
+ellipse bracoL 94,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- caixas para o jogo ----------
+box corpo_pes body rect 66,116 28,14
+box dano hurt rect 54,42 52,90
+box golpe_down hit rect 52,128 56,28 only=attack_down off
+box golpe_up hit rect 52,8 56,30 only=attack_up off
+box golpe_right hit rect 106,78 40,46 only=attack_right off
+
+# ---------- animações ----------
+anim idle_down frames=8 fps=8
+key 0 corpo=0,0,0,1,1 cabeca=0,0
+key 4 corpo=0,1.5,0,1.03,0.97 cabeca=0,1
+key 8 corpo=0,0,0,1,1 cabeca=0,0
+
+anim idle_up frames=8 fps=8
+key 0 corpo=0,0,0,1,1
+key 4 corpo=0,1.5,0,1.03,0.97
+key 8 corpo=0,0,0,1,1
+
+anim idle_right frames=8 fps=8
+key 0 corpo=0,0,0,1,1 cabeca=0,0
+key 4 corpo=0,1.5,0,1.03,0.97 cabeca=0,1
+key 8 corpo=0,0,0,1,1 cabeca=0,0
+
+anim walk_down frames=8 fps=12
+key 0 corpo=0,0 peE=0,-5 peD=0,0 bracoE=0,2 bracoD=0,-2
+key 2 corpo=0,-2 peE=0,0 peD=0,0 bracoE=0,0 bracoD=0,0
+key 4 corpo=0,0 peE=0,0 peD=0,-5 bracoE=0,-2 bracoD=0,2
+key 6 corpo=0,-2 peE=0,0 peD=0,0 bracoE=0,0 bracoD=0,0
+key 8 corpo=0,0 peE=0,-5 peD=0,0 bracoE=0,2 bracoD=0,-2
+event 0 passo
+event 4 passo
+
+anim walk_up frames=8 fps=12
+key 0 corpo=0,0 peE=0,-5 peD=0,0 bracoE=0,-2 bracoD=0,2
+key 2 corpo=0,-2 peE=0,0 peD=0,0 bracoE=0,0 bracoD=0,0
+key 4 corpo=0,0 peE=0,0 peD=0,-5 bracoE=0,2 bracoD=0,-2
+key 6 corpo=0,-2 peE=0,0 peD=0,0 bracoE=0,0 bracoD=0,0
+key 8 corpo=0,0 peE=0,-5 peD=0,0 bracoE=0,-2 bracoD=0,2
+event 0 passo
+event 4 passo
+
+anim walk_right frames=8 fps=12
+key 0 corpo=0,0,4 peE=8,-3 peD=-8,0 bracoD=4,0,20
+key 2 corpo=0,-2,4 peE=0,0 peD=0,-4 bracoD=0,0,0
+key 4 corpo=0,0,4 peE=-8,0 peD=8,-3 bracoD=-4,0,-20
+key 6 corpo=0,-2,4 peE=0,-4 peD=0,0 bracoD=0,0,0
+key 8 corpo=0,0,4 peE=8,-3 peD=-8,0 bracoD=4,0,20
+event 0 passo
+event 4 passo
+
+# ataque: prepara, golpeia (o hitbox liga nos quadros 2 e 3) e volta
+anim attack_down frames=6 fps=12 once
+key 0 espadaF=0,0,0 corpo=0,0
+key 1 espadaF=0,-3,-45 corpo=0,-1 ease=out
+key 2 espadaF=0,6,125 corpo=0,2 ease=out
+key 4 espadaF=0,6,135 corpo=0,1
+key 6 espadaF=0,0,0 corpo=0,0
+key 2 golpe_down.show=1
+key 4 golpe_down.show=0
+event 2 golpe
+
+anim attack_up frames=6 fps=12 once
+key 0 espadaC=0,0,0 corpo=0,0
+key 1 espadaC=0,4,25 corpo=0,1 ease=out
+key 2 espadaC=-6,-16,-60 corpo=0,-2 ease=out
+key 4 espadaC=-6,-16,-66 corpo=0,-1
+key 6 espadaC=0,0,0 corpo=0,0
+key 2 golpe_up.show=1
+key 4 golpe_up.show=0
+event 2 golpe
+
+anim attack_right frames=6 fps=12 once
+key 0 espadaL=0,0,0 corpo=0,0,4
+key 1 espadaL=-3,0,-20 corpo=-2,0,0 ease=out
+key 2 espadaL=6,0,145 corpo=3,0,8 ease=out
+key 4 espadaL=6,0,152 corpo=2,0,6
+key 6 espadaL=0,0,0 corpo=0,0,4
+key 2 golpe_right.show=1
+key 4 golpe_right.show=0
+event 2 golpe
+`;
+
+  const tiles = `# Blocos — tileset de plataforma para o Godot
+# O canvas é a folha: blocos de 32×32, em colunas e linhas. Cada tile diz qual célula
+# vira bloco e como ele colide: solid (o quadrado todo), oneway (só por cima) ou
+# collision=forma (o formato de uma forma, como a rampa). O nome vai junto (dado "nome").
+# auto cria também um bloco sem colisão para cada célula desenhada que não tem tile.
+# Exporte com:  weasel blocos.weasel -f godot -o godot/blocos.tres
+
+canvas 192 64 bg=none
+palette ink=#2a1d16 line=2
+palette grama=#6cbf4a gramad=#4f9a35 terra=#9a6b43 terrad=#7c5434 pedra=#8d93a0
+palette madeira=#c58a4c madeirad=#9a6533 ouro=#ffd04a metal=#cfd6e0 nuvem=#ffffff
+pattern pedras hatch cross angle=30 gap=7 w=1.2 c=#6f7480 bg=#9aa0ad
+
+tileset size=32 auto
+godot normal=0.8
+
+# linha 0
+layer chao
+rect terraA 0,6 32,26 c=terra
+shape gramaA c=grama ink=line smooth=0.6 : 0,0! 32,0! 32,10! 27,13 22,9 16,13 11,9 5,13 0,10!
+ellipse seixoA 9,24 3,2 c=terrad
+ellipse seixoB 23,20 2,1.5 c=terrad
+rect terraB 32,0 32,32 c=terra
+ellipse seixoC 40,8 3,2 c=terrad
+ellipse seixoD 54,22 3.5,2.5 c=terrad
+ellipse seixoE 44,26 2,1.5 c=terrad
+rect pedraA 64,0 32,32 c=pedras ink=line
+rect tabua 96,0 32,10 r=2 c=madeira ink=line
+stroke veio w=1 c=madeirad : 100,5 112,4 124,6
+rect apoioE 100,10 4,8 c=madeirad
+rect apoioD 120,10 4,8 c=madeirad
+shape rampa c=terra : 128,32! 160,0! 160,32!
+stroke gramaR w=4 c=grama cap=round : 129,31 159,1
+shape espinhos c=metal ink=line smooth=0 : 160,32! 164,16! 168,32! 172,16! 176,32! 180,16! 184,32! 188,16! 192,32!
+
+# linha 1
+rect caixa 34,34 28,28 r=2 c=madeira ink=line
+stroke tabuaX1 w=2 c=madeirad : 38,38 58,58
+stroke tabuaX2 w=2 c=madeirad : 58,38 38,58
+ellipse moeda 16,48 9,11 c=ouro ink=line emit=#ffd04a,0.5
+rect brilho 14,41 3,10 r=1.5 c=#fff3b0
+stroke caule w=2 c=gramad : 80,62 80,48
+ellipse petala1 80,44 4 c=#ff7aa8 ink=1
+ellipse petala2 75,48 4 c=#ff7aa8 ink=1
+ellipse petala3 85,48 4 c=#ff7aa8 ink=1
+ellipse miolo 80,47 2.5 c=ouro
+
+# nuvem decorativa em duas células (vira dois blocos pelo auto)
+layer ceu unlit
+ellipse nuvemA 112,50 14,9 c=nuvem
+ellipse nuvemB 128,44 16,12 c=nuvem
+ellipse nuvemC 144,50 14,9 c=nuvem
+
+tile grama 0,0 solid
+tile terra 1,0 solid
+tile pedra 2,0 solid
+tile plataforma 3,0 oneway
+tile rampa 4,0 collision=rampa
+tile espinhos 5,0
+tile moeda 0,1
+tile caixa 1,1 solid
+tile flor 2,1
+`;
+
   const blank = `canvas 600 400 bg=#f2ede4 light=-0.6,-0.8
 palette ink=#1c1b22 line=6
 
@@ -539,6 +784,8 @@ shape forma c=#7cb7ff ink=line : 220,140 380,130 420,250 300,300! 190,250
     { id: 'ball', title: 'Bola quicando', file: 'bola', src: ball },
     { id: 'set', title: 'Cenário (camadas de profundidade)', file: 'cenario', src: set },
     { id: 'film', title: 'Filme (planos, atores, câmera)', file: 'filme', src: film, deps: ['set', 'knight', 'ghost'] },
+    { id: 'topdown', title: 'Furão (top-down, caixas, direções)', file: 'furao', src: topdown },
+    { id: 'tiles', title: 'Blocos (tileset para o Godot)', file: 'blocos', src: tiles },
   ];
   W.blankProgram = blank;
 })(window.Weasel = window.Weasel || {});

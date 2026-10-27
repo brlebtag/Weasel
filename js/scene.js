@@ -155,10 +155,10 @@
       }
     }
 
-    // Propriedades animadas (opacidade, cor, espessura, visibilidade, morph, efeitos, luzes).
-    const props = [], lprops = [], liprops = [];
+    // Propriedades animadas (opacidade, cor, espessura, visibilidade, morph, efeitos, luzes, caixas).
+    const props = [], lprops = [], liprops = [], bprops = [];
     for (let f = 0; f < N; f++) {
-      const pm = new Map(), lm = new Map(), li = new Map();
+      const pm = new Map(), lm = new Map(), li = new Map(), bm = new Map();
       for (const tr of anim.ptracks.values()) {
         const s = segment(tr.keys, f, N, anim.loop);
         if (!s) continue;
@@ -167,8 +167,10 @@
         else if (tr.type === 'color') v = typeof s.a.v === 'string' && typeof s.b.v === 'string' ? G.lerpColor(s.a.v, s.b.v, s.t) : s.t < 1 ? s.a.v : s.b.v;
         else if (tr.type === 'step') v = s.a.v;
         else v = { from: s.a.v, to: s.b.v, t: s.t };
-        if (tr.kind === 'layer' || tr.kind === 'light') {
-          const map = tr.kind === 'layer' ? lm : li;
+        // caixa numa animação sem loop: antes da primeira key vale o estado declarado (off = desligada)
+        if (tr.kind === 'box' && !anim.loop && f < tr.keys[0].frame) continue;
+        if (tr.kind === 'layer' || tr.kind === 'light' || tr.kind === 'box') {
+          const map = tr.kind === 'layer' ? lm : tr.kind === 'light' ? li : bm;
           const o = map.get(tr.name) || {};
           o[tr.prop] = v;
           map.set(tr.name, o);
@@ -184,22 +186,37 @@
       props.push(pm);
       lprops.push(lm);
       liprops.push(li);
+      bprops.push(bm);
     }
-    d = { mats, cloth, props, lprops, liprops };
+    d = { mats, cloth, props, lprops, liprops, bprops };
     model._anim.set(anim.name, d);
     return d;
   }
 
   function makePose(model, animName, frame) {
     const anim = animName ? model.animMap.get(animName) || null : null;
-    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, geo: new Map() };
+    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, geo: new Map() };
     const d = animData(model, anim);
     const f = ((Math.round(frame) % anim.frames) + anim.frames) % anim.frames;
-    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], geo: new Map() };
+    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], geo: new Map() };
   }
   // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
   function timePose(model, time) {
-    return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, geo: new Map() };
+    return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, geo: new Map() };
+  }
+
+  // ---------- caixas de colisão (jogo) ----------
+  // Onde a caixa está nesta pose e se está ligada: segue a posição e a rotação do osso (não a escala);
+  // only= liga só nessas animações; key caixa.show=0/1 liga e desliga quadro a quadro.
+  function boxState(model, pose, b) {
+    const bp = (pose.bprops && pose.bprops.get(b.name)) || NOPROPS;
+    let on = bp.show !== undefined ? bp.show !== 0 : b.on;
+    if (b.only && !(pose.anim ? b.only.includes(pose.anim.name) : b.only.includes('pose'))) on = false;
+    const cx = b.shape === 'rect' ? b.x + b.w / 2 : b.x, cy = b.shape === 'rect' ? b.y + b.h / 2 : b.y;
+    const m = b.bone ? pose.bones.get(b.bone) : null;
+    const c = m ? M.apply(m, cx, cy) : [cx, cy];
+    const rot = m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0;
+    return { box: b, on, cx: c[0], cy: c[1], rot, shape: b.shape, w: b.w, h: b.h, r: b.r, kind: b.kind };
   }
 
   // ---------- geometria de cada elemento numa pose ----------
@@ -899,7 +916,8 @@
   function layerVisible(layer, pose, opts) {
     if (layer.hidden) return false;
     if (layer.guide && !opts.guides) return false;
-    if (layer.only && !(pose.anim && layer.only.includes(pose.anim.name))) return false;
+    // only=: só nessas animações; o nome pose vale para a pose parada (sem animação)
+    if (layer.only && !(pose.anim ? layer.only.includes(pose.anim.name) : layer.only.includes('pose'))) return false;
     return true;
   }
 
@@ -1367,6 +1385,7 @@
   // Posição de uma alça (ponto editável) na pose atual.
   function handlePos(model, pose, rec, h) {
     if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return mapper(model, pose, rec.el)(h.x, h.y);
+    if (h.kind === 'box') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
       const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
       return m ? M.apply(m, h.x, h.y) : [h.x, h.y];
@@ -1383,7 +1402,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boxState, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

@@ -1,0 +1,36 @@
+canvas   160 × 160, fundo #eef0e6
+componentes espada (3×)
+camadas  8
+  guia             2 item(ns)  guide
+  frente          18 item(ns)  only=pose,idle_down,walk_down,attack_down
+  frente_arma      4 item(ns)  only=pose,idle_down,walk_down,attack_down
+  costas          10 item(ns)  only=idle_up,walk_up,attack_up
+  costas_arma      3 item(ns)  only=idle_up,walk_up,attack_up
+  lado_tras        2 item(ns)  only=idle_right,walk_right,attack_right
+  lado            11 item(ns)  only=idle_right,walk_right,attack_right
+  lado_arma        4 item(ns)  only=idle_right,walk_right,attack_right
+formas   54
+ossos    corpo, cabeca←corpo, peE, peD, bracoE←corpo, bracoD←corpo, caudaC←corpo (spring), caudaL←corpo (spring), espadaF←corpo, espadaC←corpo, espadaL←corpo
+animações 9
+  idle_down      8 quadros, 8 fps
+  idle_up        8 quadros, 8 fps
+  idle_right     8 quadros, 8 fps
+  walk_down      8 quadros, 12 fps
+                 eventos: passo@0, passo@4
+  walk_up        8 quadros, 12 fps
+                 eventos: passo@0, passo@4
+  walk_right     8 quadros, 12 fps
+                 eventos: passo@0, passo@4
+  attack_down    6 quadros, 12 fps, once, anima golpe_down.show
+                 eventos: golpe@2
+  attack_up      6 quadros, 12 fps, once, anima golpe_up.show
+                 eventos: golpe@2
+  attack_right   6 quadros, 12 fps, once, anima golpe_right.show
+                 eventos: golpe@2
+godot    character, raiz 80,128
+caixas   5
+  corpo_pes      body rect
+  dano           hurt rect
+  golpe_down     hit rect só em attack_down (começa desligada)
+  golpe_up       hit rect só em attack_up (começa desligada)
+  golpe_right    hit rect só em attack_right (começa desligada)

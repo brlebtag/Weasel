@@ -14,7 +14,7 @@ A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de um
 
 O Weasel atende a dois usos, sem um atrapalhar o outro:
 
-- **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…), exportado em sprite sheet ou SpriteFrames do Godot.
+- **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…). Sai como [cena pronta do Godot](#godot) — AnimatedSprite2D, colisão, hitbox e hurtbox que mudam a cada quadro, eventos, normal map para a luz 2D e direções espelhadas —, como TileSet, ou em sprite sheet para qualquer motor.
 - **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). Sai em vídeo ou sequência de PNG; som, vozes e montagem ficam com o editor de vídeo.
 
 Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
@@ -74,13 +74,15 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | GIF de uma animação | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --trim -t -o pulo.gif` |
 | GIF da pintura passo a passo | `node cli/weasel.js exemplos/cavaleiro.weasel -f build -o pintura.gif` |
 | Sprite sheet (PNG + JSON) | `node cli/weasel.js exemplos/cavaleiro.weasel -f sheet -a all -s 0.5 --trim -t -o sprites.png` |
+| Cena pronta do Godot (folha, normal map, .tres, .tscn e ajudante) | `node cli/weasel.js exemplos/furao.weasel -o godot/furao.tscn` |
 | SpriteFrames do Godot (PNG + .tres) | `node cli/weasel.js exemplos/coruja.weasel -f godot -a all --trim -t -o godot/coruja.tres` |
+| TileSet do Godot (com normal map) | `node cli/weasel.js exemplos/blocos.weasel -f godot -o godot/blocos.tres --normal` |
 | Todas as variantes de cor | `node cli/weasel.js exemplos/coruja.weasel -o coruja.png --variant all` |
 | Exportar de novo a cada mudança | `node cli/weasel.js exemplos/coruja.weasel -a pia -o coruja.gif --watch` |
 | Só verificar o código | `node cli/weasel.js meu.weasel --check` |
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 
-Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
+No `.tscn`, `--no-normal` tira o normal map e `--no-mirror` não gera o lado espelhado; no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
 
 ### Filmes na linha de comando
 
@@ -115,7 +117,7 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Arquivos** (acima do código) | Troca de arquivo, cria, renomeia e exclui. `include` encontra os outros arquivos da lista pelo nome. |
 | **Editor** (esquerda) | Código com cores, números de linha, erros na margem e sugestões enquanto você digita. A barra de baixo mostra os erros (clique para ver a lista) e o que está sob o cursor. |
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
-| **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide` e as luzes (ícone e alcance), os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
+| **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide`, as luzes (ícone e alcance), as caixas do jogo e a grade do tileset, os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
@@ -288,6 +290,32 @@ emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 
 
 `rate` (por segundo) ou `burst` (uma rajada a cada volta), `life`, `speed`, `angle` (−90 = para cima), `spread`, `gravity`, `wind`, `drag`, `size=início,fim`, `c=cor_início,cor_fim`, `shape` (dot, soft, square, streak, star), `area` (espalha a origem), `seed` e `bone=` (a origem anda com o osso). O sorteio é fixo, então a animação fecha o loop certinho e a exportação sai igual toda vez.
 
+### Jogo: caixas, Godot e tileset
+
+```
+godot body=character root=80,128                    # nó raiz da cena e o ponto que vira a origem
+box corpo_pes body rect 66,116 28,14                # colisão do corpo
+box dano hurt rect 54,42 52,90                      # onde o personagem leva dano
+box golpe_right hit rect 106,78 40,46 only=attack_right off   # o golpe, desligado...
+
+anim attack_right frames=6 fps=12 once
+key 2 golpe_right.show=1                            # ...liga no quadro 2
+key 4 golpe_right.show=0                            # ...e desliga no 4
+event 2 golpe
+```
+
+| Instrução | Para quê |
+|---|---|
+| `box nome body\|hit\|hurt rect x,y l,a` | Caixa do jogo: `body` é a colisão do corpo, `hit` é o golpe (hitbox), `hurt` é onde leva dano (hurtbox). Também `circle cx,cy raio` e `capsule cx,cy l,a`. |
+| `box … bone= only= [off]` | `bone=` faz a caixa seguir a posição e a rotação do osso; `only=` liga só nessas animações; `off` começa desligada. `key quadro caixa.show=1` (ou `0`) liga e desliga quadro a quadro. |
+| `godot body=character\|static\|area\|rigid\|node root=x,y name= normal=` | O nó raiz da cena (CharacterBody2D, StaticBody2D, Area2D, RigidBody2D ou Node2D), o ponto que vira a origem (padrão: `unity root=`, ou o meio da base do desenho), o nome do nó e a força do relevo do normal map (padrão 1). |
+| `tileset size=32 [auto]` | O canvas vira uma folha de blocos (`size=l,a` para blocos retangulares). `auto` cria também um bloco sem colisão para cada célula desenhada que não tem `tile`. |
+| `tile nome coluna,linha [solid] [oneway] collision=forma` | Um bloco: `solid` colide no quadrado todo, `oneway` só por cima (plataforma), `collision=` usa o formato de uma forma (rampa, meio-bloco). O nome vai junto no bloco (dado `nome`). |
+
+- No editor, com **Guias**, as caixas aparecem no desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas. O tileset mostra a grade, o nome de cada bloco e a colisão.
+- **Direções (top-down):** anime `walk_down`, `walk_up` e `walk_right` (e as diagonais `_down_right`, `_up_right`, se quiser). Na cena do Godot, o lado que falta (`walk_left`) sai espelhado, com as caixas espelhadas também. Camadas de cada vista usam `only=`; `only=pose,idle_down,…` também aparece na pose parada.
+- A sprite sheet em JSON também leva as caixas ligadas em cada quadro (`boxes`), para usar em outros motores.
+
 ### Filme
 
 Um arquivo com `film` é um filme. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo): o filme só os coloca em cena e diz o que muda com o tempo.
@@ -343,7 +371,7 @@ at 4.5s camera.fade=1 ease=linear
 | **SVG** | O quadro da tela em vetor, com gradientes, recortes e texto. Abre no navegador, no Inkscape ou no Figma. |
 | **GIF animado** | Uma animação (no fps dela) ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. A opção **pontilhado** troca as faixas de cor de brilhos e degradês por um padrão fino. |
 | **Sprite sheet** | Um `.zip` com todos os quadros num PNG e um `.json` no formato do TexturePacker/Phaser (`frames`, `animations`, `meta.frameTags`), com os eventos de cada quadro e o pivô e os pixels por unidade da Unity quando houver `unity`. Arranjo em grade ou uma linha por animação. |
-| **Godot** | A folha (.png) e um `SpriteFrames` do Godot 4 (.tres) com as animações, o fps e o loop. Deixe os dois na mesma pasta do projeto e use o .tres num `AnimatedSprite2D`. |
+| **Godot** | Um `.zip` para uma pasta do projeto: a folha (.png), o `SpriteFrames` (.tres) e, com as opções (ligadas por padrão), o normal map, a **cena pronta** (.tscn) e o `weasel_anim.gd` (veja [Godot](#godot)). Num arquivo com `tileset`, sai o **TileSet**. Com as opções desligadas, sai só a folha e o .tres, como antes. |
 | **Vídeo** (filme) | WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. MP4, ProRes e filmes longos saem pela linha de comando. |
 | **Sequência PNG** (filme) | Um `.zip` com um PNG por quadro, numerado pelo quadro do filme. |
 
@@ -355,6 +383,58 @@ Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre tod
 |---|---|---|
 | ![Coruja](docs/coruja.png) | ![Coruja neve](docs/coruja_neve.png) | ![Coruja fogo](docs/coruja_fogo.png) |
 
+## Godot
+
+A cena exportada (`-o personagem.tscn` ou a aba Godot com "Cena pronta") é um personagem pronto para instanciar:
+
+```
+Furao (CharacterBody2D)            ← godot body=; a origem é o ponto raiz (os pés)
+├── Sprite (AnimatedSprite2D)      ← o SpriteFrames, com o normal map
+├── corpo_pes (CollisionShape2D)   ← box … body
+├── Hitbox (Area2D)                ← box … hit: golpe_down, golpe_up, golpe_right
+├── Hurtbox (Area2D)               ← box … hurt: dano
+└── AnimationPlayer                ← weasel_anim.gd
+```
+
+- O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do Sprite, liga, desliga e move as caixas quadro a quadro e chama os `event` na hora certa. Toque pelo AnimationPlayer, não pelo Sprite.
+- Os **eventos** chegam pelo sinal `evento(nome)` do AnimationPlayer.
+- **Hitbox** e **Hurtbox** são Area2D: a Hitbox procura (`monitoring`) e a Hurtbox é encontrada (`monitorable`). As duas ficam na camada de colisão 1; num jogo com times, ajuste as camadas e máscaras, e ignore a própria Hurtbox (`area.owner != self`).
+- **`tocar(acao, direcao)`** escolhe a animação pela direção: `tocar("walk", velocity)` toca `walk_down`, `walk_up`, `walk_right` ou `walk_left` (e as diagonais, se existirem) e só recomeça quando a animação muda. Parado (`Vector2.ZERO`), vale a última direção.
+- O **normal map** é gerado das formas: cada forma vira um relevo arredondado, empilhado sobre o que está embaixo. Uma `PointLight2D` ilumina o personagem de lado; sem luzes, ele aparece normal.
+- O **TileSet** tem uma camada de física (blocos `solid`, `oneway` e `collision=`) e o dado `nome` em cada bloco: `tile_data.get_custom_data("nome")` diz se é `espinhos`, `moeda`… O `.png` e o `.tres` precisam ficar na mesma pasta (os caminhos são relativos).
+
+```gdscript
+extends CharacterBody2D   # script do jogo, na cena do furão
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+
+func _ready() -> void:
+	anim.evento.connect(_quando_evento)
+	$Hitbox.area_entered.connect(_quando_acerta)
+
+func _physics_process(_delta: float) -> void:
+	velocity = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down") * 120.0
+	move_and_slide()
+	if anim.current_animation.begins_with("attack") and anim.is_playing():
+		return
+	if Input.is_action_just_pressed("ui_accept"):
+		anim.tocar("attack", velocity)
+	else:
+		anim.tocar("walk" if velocity else "idle", velocity)
+
+func _quando_acerta(area: Area2D) -> void:
+	if area.owner != self:  # o golpe também encosta na própria Hurtbox
+		print("acertou ", area.owner.name)
+
+func _quando_evento(nome: StringName) -> void:
+	if nome == &"passo":
+		pass  # toque o som do passo aqui
+```
+
+Tudo foi conferido dentro do Godot 4.7.2: a cena carrega, as animações (inclusive as espelhadas) trocam os quadros, a hitbox liga só nos quadros do golpe, os eventos chegam no tempo certo, o personagem pisa nos blocos do TileSet e a luz 2D age pelo normal map.
+
+![No Godot: Cavaleiro e dois furões (um espelhado) iluminados por uma PointLight2D pelo normal map, sobre blocos do TileSet](docs/godot_luz.png)
+
 ## Exemplos incluídos
 
 - **Cavaleiro (do vídeo)**: a reconstrução do desenho, com as mesmas linhas-guia e camadas, e as animações `stand` (com piscada), `jump` e `dash`. A espada balança com mola.
@@ -365,6 +445,8 @@ Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre tod
 - **Bola quicando**: squash & stretch com um osso só, com rastro de movimento.
 - **Filme**: três planos com o Cavaleiro e o fantasma — os arquivos do jogo, sem mudar nada — num cenário de morros em camadas de profundidade: letreiro que aparece e some, câmera descendo da lua com paralaxe, câmera seguindo o fantasma com atraso, o lampião do cenário iluminando os dois, tranco da câmera no pouso do pulo e fade no fim.
 - **Cenário**: o cenário do filme, um desenho comum em camadas com `depth` (lua, serra, morros, chão, poste, vaga-lumes e moitas na frente).
+- **Furão**: personagem top-down para o Godot, com três vistas (frente, costas, lado), parado, andando e atacando com espada; caixas de corpo, dano e golpe (que liga só nos quadros do ataque), eventos `passo` e `golpe`; o lado esquerdo sai espelhado.
+- **Blocos**: tileset de plataforma — grama, terra, pedra em hachura, plataforma de uma via, rampa com colisão no formato da forma, espinhos, caixa, moeda que brilha, flor e uma nuvem que o `auto` vira três blocos.
 
 | Noite | Gravura |
 |---|---|
@@ -389,6 +471,8 @@ js/geom.js          matrizes, curvas suaves, traço de espessura variável, core
 js/lang.js          leitura da linguagem: linhas → modelo, com contas, componentes, include e mensagens de erro
 js/scene.js         ossos, molas, tecido, membros IK, morph, gradientes, luz, sombras, partículas, hachura,
                     efeitos de camada, acabamentos, desenho por camadas, pintura passo a passo
+js/normal.js        normal maps (relevo das formas) para a luz 2D do Godot
+js/godot.js         Godot 4: SpriteFrames, cena .tscn (caixas, eventos, direções), ajudante e TileSet
 js/film.js          filme: planos em sequência, atores, at, câmera com profundidade, luz do filme nos atores
 js/webm.js          vídeo no navegador (WebCodecs) e o arquivo .webm
 js/svg.js           exportação em SVG
@@ -425,3 +509,7 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
 - Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.
+- No Godot, a caixa segue a posição e a rotação do osso, mas não a escala (o formato da colisão é fixo). A cápsula deitada (`l` maior que `a`) vira uma cápsula em pé girada 90°.
+- O normal map é calculado a partir das formas (relevo arredondado), não desenhado à mão; camadas com `clip`, `unlit`, texto e partículas não fazem relevo. Força com `godot normal=`.
+- No tileset, o tamanho do bloco vezes a escala precisa dar um número inteiro de pixels (32 × 0,5 serve; 32 × 0,3 não).
+- A cena do Godot usa o formato do Godot 4 (testado no 4.7.2). O `.tscn` e o `.tres` apontam para os outros arquivos pelo nome: mantenha o pacote na mesma pasta.

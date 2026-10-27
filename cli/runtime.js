@@ -13,7 +13,7 @@ try {
 }
 const { createCanvas, Path2D, loadImage } = canvasLib;
 
-const MODULES = ['geom', 'lang', 'scene', 'film', 'svg', 'gif', 'zip', 'export'];
+const MODULES = ['geom', 'lang', 'scene', 'film', 'normal', 'svg', 'gif', 'zip', 'export', 'godot'];
 
 if (!globalThis.Weasel) {
   const probe = createCanvas(1, 1).getContext('2d');

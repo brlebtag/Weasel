@@ -102,7 +102,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa' };
   function activeHandle(rec) {
     if (!rec) return -1;
     return rec.handles.findIndex((h) => st.caret.col >= h.from && st.caret.col <= h.to);
@@ -112,11 +112,13 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.use || rec.scene || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.tile ? rec.tile.name : rec.use || rec.scene || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
       if (rec.actor) s += ` · ${esc(rec.actor.file)}${rec.actor.model ? '' : ' <span style="color:var(--err)">(não carregou)</span>'}`;
       if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s`;
       if (rec.at) s += ` · ${Math.round(rec.at.t * 1000) / 1000}s no shot ${esc(rec.at.shot.name)}`;
+      if (rec.box) s += ` · ${{ body: 'colisão do corpo', hit: 'golpe (hitbox)', hurt: 'leva dano (hurtbox)' }[rec.box.kind]}`;
+      if (rec.tile) s += ` · célula ${rec.tile.col},${rec.tile.row}${rec.tile.collision ? ` · colisão ${esc(rec.tile.collision.name)}` : rec.tile.solid ? ' · sólido' : ''}${rec.tile.oneway ? ' · só por cima' : ''}`;
       if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
       if (rec.st.inDef) s += ` · dentro de def ${esc(rec.st.inDef.name)}`;
       if (rec.def && rec.st.cmd === 'def') s += ` · usado ${rec.def.uses}×`;
@@ -154,6 +156,7 @@
     light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
     film: 'este arquivo é um filme', shot: 'plano do filme', actor: 'outro arquivo em cena', camera: 'câmera do plano',
     at: 'muda algo num tempo', scene: 'planos de outro filme',
+    box: 'colisão, golpe ou dano (jogo)', godot: 'cena do Godot', tileset: 'folha de blocos', tile: 'um bloco do tileset',
   };
   // o que dá para mudar com at, com o tipo de valor
   function atTargets(m) {
@@ -232,7 +235,9 @@
         case 'cloth': return names([...m.cloths.keys()], 'tecido');
         case 'inkon': return names([...m.layerMap.keys()], 'camada');
         case 'clip': case 'cut': return [...names(els, 'forma'), ...names([...m.layerMap.keys()], 'camada')];
-        case 'only': return names(m.anims.map((a) => a.name), 'animação');
+        case 'only': return [...names(m.anims.map((a) => a.name), 'animação'), { label: 'pose', detail: 'pose parada' }];
+        case 'body': return names(L.GODOT_BODIES, 'nó raiz do Godot');
+        case 'collision': return names(els.filter((n) => m.named.get(n)[0].closed), 'forma');
         case 'mirror': return names(els, 'forma');
         case 'ease': return names(Object.keys(W.geom.EASE), 'ease');
         case 'flip': return names(['x', 'y', 'xy']);
@@ -249,9 +254,12 @@
         ...els.flatMap((n) => Object.keys(L.PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'forma' }))),
         ...[...m.lights.keys()].flatMap((n) => Object.keys(L.LIGHT_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'luz' }))),
         ...[...m.layerMap.keys()].flatMap((n) => Object.keys(L.LAYER_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'camada' }))),
+        ...[...m.boxes.keys()].map((n) => ({ label: `${n}.show=`, detail: 'caixa: 1 liga, 0 desliga' })),
         { label: 'ease=' },
       ];
     }
+    if (cmd === 'box' && idx === 2) return names(['body', 'hit', 'hurt'], 'tipo');
+    if (cmd === 'box' && idx === 3) return names(['rect', 'circle', 'capsule'], 'formato');
     if (cmd === 'use' && idx === 1) return names([...m.defs.keys()], 'componente');
     if (cmd === 'use' && idx >= 2) {
       const def = m.defs.get(ws[1] && ws[1].text);
@@ -525,6 +533,8 @@
 
     T();
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
+    if (st.show.guides && m.tileset) drawTileset(ctx, m, z);
+    if (st.show.guides && m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
     if (st.show.bones) drawBones(ctx, m, pose, z);
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
@@ -587,6 +597,63 @@
       ctx.restore();
     }
     if (st.show.points) drawHandles(ctx, m, currentPose(), z);
+  }
+
+  // caixas do jogo: corpo em verde, golpe em vermelho, dano em amarelo; desligadas, tracejadas
+  const BOX_COLOR = { body: '#3fcf8e', hit: '#ff5a5a', hurt: '#ffd166' };
+  function drawBoxes(ctx, m, pose, z) {
+    ctx.save();
+    for (const b of m.boxes.values()) {
+      const s = S.boxState(m, pose, b);
+      ctx.save();
+      ctx.translate(s.cx, s.cy);
+      ctx.rotate((s.rot * Math.PI) / 180);
+      ctx.lineWidth = 2 / z;
+      ctx.strokeStyle = BOX_COLOR[b.kind];
+      ctx.fillStyle = BOX_COLOR[b.kind] + (s.on ? '26' : '00');
+      ctx.globalAlpha = s.on ? 1 : 0.45;
+      ctx.setLineDash(s.on ? [] : [5 / z, 4 / z]);
+      ctx.beginPath();
+      if (b.shape === 'rect') ctx.rect(-b.w / 2, -b.h / 2, b.w, b.h);
+      else if (b.shape === 'circle') ctx.arc(0, 0, b.r, 0, Math.PI * 2);
+      else {
+        const w = b.w / 2, h = b.h / 2, r = Math.min(w, h);
+        if (b.h >= b.w) { ctx.arc(0, -h + r, r, Math.PI, 0); ctx.arc(0, h - r, r, 0, Math.PI); } else { ctx.arc(-w + r, 0, r, Math.PI / 2, (Math.PI * 3) / 2); ctx.arc(w - r, 0, r, -Math.PI / 2, Math.PI / 2); }
+        ctx.closePath();
+      }
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  // tileset: a grade das células, o nome de cada bloco e a colisão dele
+  function drawTileset(ctx, m, z) {
+    const T = m.tileset, [tw, th] = T.size;
+    ctx.save();
+    ctx.lineWidth = 1 / z;
+    ctx.strokeStyle = 'rgba(120,140,170,.55)';
+    ctx.setLineDash([3 / z, 3 / z]);
+    ctx.beginPath();
+    for (let c = 0; c <= T.cols; c++) { ctx.moveTo(c * tw, 0); ctx.lineTo(c * tw, T.rows * th); }
+    for (let r = 0; r <= T.rows; r++) { ctx.moveTo(0, r * th); ctx.lineTo(T.cols * tw, r * th); }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `${10 / z}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
+    const pose = S.makePose(m, null, 0);
+    for (const t of T.tiles) {
+      const x = t.col * tw, y = t.row * th;
+      ctx.strokeStyle = '#3fcf8e';
+      ctx.lineWidth = 1.5 / z;
+      if (t.collision) ctx.stroke(S.pathOf(S.geometry(m, pose, t.collision)));
+      else if (t.solid) ctx.strokeRect(x + 1 / z, y + 1 / z, tw - 2 / z, th - 2 / z);
+      if (t.oneway) { ctx.lineWidth = 3 / z; ctx.beginPath(); ctx.moveTo(x, y + 1 / z); ctx.lineTo(x + tw, y + 1 / z); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(20,24,34,.75)';
+      ctx.fillRect(x, y + th - 12 / z, Math.min(tw, ctx.measureText(t.name).width + 6 / z), 12 / z);
+      ctx.fillStyle = '#e8edf5';
+      ctx.fillText(t.name, x + 3 / z, y + th - 3 / z);
+    }
+    ctx.restore();
   }
 
   function drawUnity(ctx, u, z) {
