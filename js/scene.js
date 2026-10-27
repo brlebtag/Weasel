@@ -145,19 +145,25 @@
       }
     }
 
-    // Propriedades animadas (opacidade, cor, espessura, visibilidade, morph).
-    const props = [], lprops = [];
+    // Propriedades animadas (opacidade, cor, espessura, visibilidade, morph, efeitos, luzes).
+    const props = [], lprops = [], liprops = [];
     for (let f = 0; f < N; f++) {
-      const pm = new Map(), lm = new Map();
+      const pm = new Map(), lm = new Map(), li = new Map();
       for (const tr of anim.ptracks.values()) {
         const s = segment(tr.keys, f, N, anim.loop);
         if (!s) continue;
         let v;
-        if (tr.type === 'num' || tr.type === 'width') v = lerp(s.a.v, s.b.v, s.t);
+        if (tr.type === 'num' || tr.type === 'width' || tr.type === 'free') v = lerp(s.a.v, s.b.v, s.t);
         else if (tr.type === 'color') v = typeof s.a.v === 'string' && typeof s.b.v === 'string' ? G.lerpColor(s.a.v, s.b.v, s.t) : s.t < 1 ? s.a.v : s.b.v;
         else if (tr.type === 'step') v = s.a.v;
         else v = { from: s.a.v, to: s.b.v, t: s.t };
-        if (tr.kind === 'layer') { const o = lm.get(tr.name) || {}; o[tr.prop] = v; lm.set(tr.name, o); continue; }
+        if (tr.kind === 'layer' || tr.kind === 'light') {
+          const map = tr.kind === 'layer' ? lm : li;
+          const o = map.get(tr.name) || {};
+          o[tr.prop] = v;
+          map.set(tr.name, o);
+          continue;
+        }
         for (const el of tr.targets) {
           const o = pm.get(el.id) || {};
           if (tr.type === 'shape') o.shape = { from: findNamed(model, v.from, el.inst), to: findNamed(model, v.to, el.inst), t: v.t };
@@ -167,18 +173,19 @@
       }
       props.push(pm);
       lprops.push(lm);
+      liprops.push(li);
     }
-    d = { mats, cloth, props, lprops };
+    d = { mats, cloth, props, lprops, liprops };
     model._anim.set(anim.name, d);
     return d;
   }
 
   function makePose(model, animName, frame) {
     const anim = animName ? model.animMap.get(animName) || null : null;
-    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, geo: new Map() };
+    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, geo: new Map() };
     const d = animData(model, anim);
     const f = ((Math.round(frame) % anim.frames) + anim.frames) % anim.frames;
-    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], geo: new Map() };
+    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], geo: new Map() };
   }
 
   // ---------- geometria de cada elemento numa pose ----------
@@ -264,7 +271,8 @@
     let pts;
     if (el.type === 'ellipse') pts = [[el.center[0] - el.radius[0], el.center[1] - el.radius[1]], [el.center[0] + el.radius[0], el.center[1] + el.radius[1]]];
     else if (el.type === 'rect') pts = [el.xy, [el.xy[0] + el.size[0], el.xy[1] + el.size[1]]];
-    else if (el.type === 'text') { const b = textBox(el); pts = [[el.at[0] + b.x, el.at[1] + b.y], [el.at[0] + b.x + b.w, el.at[1] + b.y + b.h]]; } else if (el.limb) pts = [el.hip, el.foot];
+    else if (el.type === 'text') { const b = textBox(el); pts = [[el.at[0] + b.x, el.at[1] + b.y], [el.at[0] + b.x + b.w, el.at[1] + b.y + b.h]]; } else if (el.type === 'emitter') pts = [[el.at[0] - el.area[0] / 2, el.at[1] - el.area[1] / 2], [el.at[0] + el.area[0] / 2, el.at[1] + el.area[1] / 2]];
+    else if (el.limb) pts = [el.hip, el.foot];
     else pts = el.pts.map((p) => [p.x, p.y]);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const p of pts) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
@@ -302,6 +310,9 @@
     } else if (el.type === 'text') {
       const b = textBox(el), m = textMatrix(pose, el);
       segs = G.rectSegs(b.x, b.y, b.w, b.h, 0, 0).map((s) => G.mapSeg(s, (x, y) => M.apply(m, x, y)));
+    } else if (el.type === 'emitter') {
+      const f = mapper(model, pose, el);
+      segs = G.ellipseSegs(el.at[0], el.at[1], 4, 4, 0).map((s) => G.mapSeg(s, f));
     } else if (el.limb) {
       segs = G.smoothSegs(limbPoints(model, pose, el), false, 1);
     } else {
@@ -365,6 +376,7 @@
   }
   function paint(ctx, model, pose, el, spec) {
     if (!spec || typeof spec === 'string') return spec;
+    if (spec.kind === 'pat') return spec.c;
     return makeGradient(ctx, gradGeom(model, pose, el, spec), spec.stops);
   }
   // dentro do texto o contexto já está transformado: o gradiente vai para as coordenadas locais do texto
@@ -382,6 +394,7 @@
   }
   function paintText(ctx, el, spec) {
     if (!spec || typeof spec === 'string') return spec;
+    if (spec.kind === 'pat') return spec.c;
     return makeGradient(ctx, textGradGeom(el, spec), spec.stops);
   }
 
@@ -392,6 +405,481 @@
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
   }
 
+  // ---------- telas de rascunho e utilidades ----------
+  const pool = new Map();
+  function scratch(name, w, h) {
+    let c = pool.get(name);
+    if (!c) { c = document.createElement('canvas'); pool.set(name, c); }
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const x = c.getContext('2d');
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalAlpha = 1;
+    x.globalCompositeOperation = 'source-over';
+    if (canFilter()) x.filter = 'none';
+    x.shadowColor = 'rgba(0,0,0,0)';
+    x.shadowBlur = 0;
+    x.clearRect(0, 0, w, h);
+    return { canvas: c, ctx: x };
+  }
+  const matOf = (ctx) => { const t = ctx.getTransform(); return [t.a, t.b, t.c, t.d, t.e, t.f]; };
+  const setMat = (ctx, m) => ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+  const scaleOf = (m) => Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2])) || 1;
+  const c255 = (v) => Math.max(0, Math.min(255, Math.round(v)));
+  const rgbStr = (rgb, k) => `rgb(${c255(rgb[0] * k)},${c255(rgb[1] * k)},${c255(rgb[2] * k)})`;
+  const rgbaStr = (rgb, a) => `rgba(${c255(rgb[0])},${c255(rgb[1])},${c255(rgb[2])},${Math.max(0, Math.min(1, a))})`;
+  let filterOk = null;
+  function canFilter() {
+    if (filterOk === null) {
+      try { const c = document.createElement('canvas').getContext('2d'); c.filter = 'blur(2px)'; filterOk = c.filter === 'blur(2px)'; } catch (e) { filterOk = false; }
+    }
+    return filterOk;
+  }
+  function segsBox(segs) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const s of segs) for (let i = 0; i < 8; i += 2) { x0 = Math.min(x0, s[i]); x1 = Math.max(x1, s[i]); y0 = Math.min(y0, s[i + 1]); y1 = Math.max(y1, s[i + 1]); }
+    return x0 === Infinity ? { x: 0, y: 0, w: 0, h: 0 } : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
+  function inverseShift(segs, dx, dy) {
+    return G.toPath(segs.map((s) => s.map((v, i) => v + (i % 2 ? dy : dx))), true);
+  }
+
+  // ---------- luz ----------
+  // Luzes desta pose: posição (com osso), propriedades animadas e tremulação.
+  function sceneLights(model, pose) {
+    if (!model.lights.size && !model.ambient) return null;
+    const amb = model.ambient || { c: '#ffffff', power: 0.6 };
+    const lights = [];
+    for (const L of model.lights.values()) {
+      const lp = pose.liprops.get(L.name) || NOPROPS;
+      let power = lp.power !== undefined ? lp.power : L.power;
+      if (L.flicker && pose.anim) power *= Math.max(0, 1 + L.flicker * hash(L.name, pose.frame));
+      const c = typeof lp.c === 'string' ? lp.c : L.c;
+      const o = {
+        name: L.name, type: L.type, c, rgb: G.parseHex(c) || [255, 255, 255, 1], power,
+        radius: Math.max(1, lp.radius !== undefined ? lp.radius : L.radius), glow: lp.glow !== undefined ? lp.glow : L.glow,
+        aim: lp.aim !== undefined ? lp.aim : L.aim, cone: lp.cone !== undefined ? lp.cone : L.cone, x: L.x, y: L.y, dx: L.dx, dy: L.dy,
+      };
+      if (L.bone) {
+        const m = pose.bones.get(L.bone);
+        if (m) { const p = M.apply(m, L.x, L.y); o.x = p[0]; o.y = p[1]; o.aim += (Math.atan2(m[1], m[0]) * 180) / Math.PI; }
+      }
+      o.rim = L.rim || 0;
+      if (power > 0) lights.push(o);
+    }
+    const rimW = Math.max(0, ...lights.map((l) => l.rim));
+    return { amb: { rgb: G.parseHex(amb.c) || [255, 255, 255, 1], power: amb.power }, lights, rim: rimW > 0 ? { c: null, w: rimW } : null };
+  }
+  // quanto a luz chega num ponto (v = direção da luz até o ponto, só para o spot)
+  function spotFactor(L, vx, vy) {
+    const a = (L.aim * Math.PI) / 180;
+    const ang = (Math.acos(Math.max(-1, Math.min(1, vx * Math.cos(a) + vy * Math.sin(a)))) * 180) / Math.PI;
+    return ang <= L.cone ? 1 : ang <= L.cone * 1.25 ? 0.35 : 0;
+  }
+  function lightWeight(L, x, y) {
+    if (L.type === 'dir') return L.power * 0.6;
+    const dx = x - L.x, dy = y - L.y, d = Math.hypot(dx, dy);
+    if (d >= L.radius) return 0;
+    const f = 1 - d / L.radius;
+    let w = L.power * f * f;
+    if (L.type === 'spot' && d > 1e-6) w *= spotFactor(L, dx / d, dy / d);
+    return w;
+  }
+  // de onde vem a luz num ponto: direção dominante, intensidade e cor
+  function lightAt(lighting, x, y) {
+    let sx = 0, sy = 0, I = 0, r = 0, g = 0, b = 0;
+    for (const L of lighting.lights) {
+      const w = lightWeight(L, x, y);
+      if (w <= 0) continue;
+      let ux, uy;
+      if (L.type === 'dir') { const l = Math.hypot(L.dx, L.dy) || 1; ux = L.dx / l; uy = L.dy / l; } else { const l = Math.hypot(L.x - x, L.y - y) || 1; ux = (L.x - x) / l; uy = (L.y - y) / l; }
+      sx += ux * w; sy += uy * w; I += w;
+      r += L.rgb[0] * w; g += L.rgb[1] * w; b += L.rgb[2] * w;
+    }
+    if (I <= 0) return null;
+    const l = Math.hypot(sx, sy);
+    return { I, ux: l > 1e-9 ? sx / l : 0, uy: l > 1e-9 ? sy / l : 0, dir: l / I, rgb: [r / I, g / I, b / I] };
+  }
+  // overlay: escurece o escuro e clareia o claro; 0.5 não muda nada
+  const overlay = (b, s) => (b < 0.5 ? 2 * b * s : 1 - 2 * (1 - b) * (1 - s));
+  const ADD = 0.6; // força do brilho perto das luzes (passo em overlay)
+  // cor de algo pequeno (traço, contorno, texto, partícula): a luz daquele ponto, igual ao mapa de luz
+  function litColor(spec, lighting, x, y, noAdd) {
+    if (typeof spec !== 'string') return spec;
+    const c = G.parseHex(spec);
+    if (!c) return spec;
+    const a = lighting.amb;
+    let r = a.rgb[0] * a.power, g = a.rgb[1] * a.power, b = a.rgb[2] * a.power, ar = 0, ag = 0, ab = 0;
+    for (const L of lighting.lights) {
+      const w = lightWeight(L, x, y);
+      if (w <= 0) continue;
+      r += L.rgb[0] * w; g += L.rgb[1] * w; b += L.rgb[2] * w;
+      ar += L.rgb[0] * w; ag += L.rgb[1] * w; ab += L.rgb[2] * w;
+    }
+    const out = [c[0] * Math.min(255, r) / 255, c[1] * Math.min(255, g) / 255, c[2] * Math.min(255, b) / 255].map((v, i) => {
+      if (noAdd) return v;
+      const s = 0.5 + 0.5 * Math.min(255, [ar, ag, ab][i] * 0.5) / 255;
+      const o = overlay(v / 255, s) * 255;
+      return v + (o - v) * ADD;
+    });
+    return G.toHex([out[0], out[1], out[2], c[3]]);
+  }
+
+  const FALL = [[0, 1], [0.25, 0.5625], [0.5, 0.25], [0.75, 0.0625], [1, 0]];
+  function paintLight(x, L) {
+    if (L.type === 'dir') {
+      x.save();
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.fillStyle = rgbStr(L.rgb, L.power * 0.6);
+      x.fillRect(0, 0, x.canvas.width, x.canvas.height);
+      x.restore();
+      return;
+    }
+    const grad = (k) => {
+      const g = x.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.radius);
+      for (const [t, f] of FALL) g.addColorStop(t, rgbStr(L.rgb, L.power * f * k));
+      return g;
+    };
+    if (L.type === 'point') { x.fillStyle = grad(1); x.fillRect(L.x - L.radius, L.y - L.radius, 2 * L.radius, 2 * L.radius); return; }
+    const a = (L.aim * Math.PI) / 180;
+    for (const [w, k] of [[1.25, 0.35], [1, 0.65]]) {
+      const half = Math.min(Math.PI, (L.cone * w * Math.PI) / 180);
+      x.save();
+      x.beginPath();
+      x.moveTo(L.x, L.y);
+      x.arc(L.x, L.y, L.radius, a - half, a + half);
+      x.closePath();
+      x.clip();
+      x.fillStyle = grad(k);
+      x.fillRect(L.x - L.radius, L.y - L.radius, 2 * L.radius, 2 * L.radius);
+      x.restore();
+    }
+  }
+  // Mapa de luz (ambiente + luzes) e mapa só das luzes, no tamanho e na transformação da tela de destino.
+  function lightMaps(R, ctx) {
+    const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx);
+    const key = `${W}x${H}:${m.join(',')}`;
+    if (R.maps && R.maps.key === key) return R.maps;
+    const lm = scratch('lm', W, H), add = scratch('lmadd', W, H);
+    lm.ctx.fillStyle = rgbStr(R.lighting.amb.rgb, R.lighting.amb.power);
+    lm.ctx.fillRect(0, 0, W, H);
+    // mapa do brilho: cinza 50% (neutro no overlay) + metade da luz
+    add.ctx.fillStyle = 'rgb(128,128,128)';
+    add.ctx.fillRect(0, 0, W, H);
+    for (const [x, k] of [[lm.ctx, 1], [add.ctx, 0.5]]) {
+      setMat(x, m);
+      x.globalCompositeOperation = 'lighter';
+      for (const L of R.lighting.lights) paintLight(x, k === 1 ? L : Object.assign({}, L, { power: L.power * k }));
+    }
+    R.maps = { key, lm: lm.canvas, add: add.canvas };
+    return R.maps;
+  }
+  // Ilumina o que já foi pintado dentro do contorno de uma forma (só na caixa dela, para ser rápido).
+  function lightRaster(ctx, R, path, bb, alpha) {
+    const maps = lightMaps(R, ctx), m = matOf(ctx);
+    const pts = [M.apply(m, bb.x, bb.y), M.apply(m, bb.x + bb.w, bb.y), M.apply(m, bb.x, bb.y + bb.h), M.apply(m, bb.x + bb.w, bb.y + bb.h)];
+    const W = ctx.canvas.width, H = ctx.canvas.height;
+    const x0 = Math.max(0, Math.floor(Math.min(...pts.map((p) => p[0]))) - 2), x1 = Math.min(W, Math.ceil(Math.max(...pts.map((p) => p[0]))) + 2);
+    const y0 = Math.max(0, Math.floor(Math.min(...pts.map((p) => p[1]))) - 2), y1 = Math.min(H, Math.ceil(Math.max(...pts.map((p) => p[1]))) + 2);
+    if (x1 <= x0 || y1 <= y0) return;
+    ctx.save();
+    ctx.clip(path);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(maps.lm, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.globalAlpha = alpha * ADD;
+    ctx.drawImage(maps.add, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.restore();
+  }
+  // Lado da forma virado para a luz mais claro, lado oposto mais escuro.
+  function shadeShape(ctx, R, path, bb, layer, alpha) {
+    const cx = bb.x + bb.w / 2, cy = bb.y + bb.h / 2;
+    const la = lightAt(R.lighting, cx, cy);
+    if (!la) return;
+    const k = layer.shade * Math.min(1, la.I) * la.dir;
+    if (k < 0.01) return;
+    const half = Math.abs(la.ux) * bb.w / 2 + Math.abs(la.uy) * bb.h / 2 || 1;
+    const p0 = [cx - la.ux * half, cy - la.uy * half], p1 = [cx + la.ux * half, cy + la.uy * half];
+    // lado longe da luz: multiplica por escuro; lado da luz: overlay com a cor da luz (o escuro continua escuro)
+    const dark = ctx.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
+    dark.addColorStop(0, `rgba(0,0,0,${Math.min(0.85, 0.55 * k)})`);
+    dark.addColorStop(0.55, 'rgba(0,0,0,0)');
+    const lite = ctx.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
+    lite.addColorStop(0.45, rgbaStr(la.rgb, 0));
+    lite.addColorStop(1, rgbaStr(la.rgb, Math.min(0.9, 0.6 * k)));
+    ctx.save();
+    ctx.clip(path);
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = dark;
+    ctx.fillRect(bb.x, bb.y, bb.w, bb.h);
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = lite;
+    ctx.fillRect(bb.x, bb.y, bb.w, bb.h);
+    ctx.restore();
+  }
+  // Fio de luz na borda virada para a luz (a forma menos ela mesma deslocada para longe da luz).
+  // Vem do rim= da camada ou das luzes com rim= (aí na cor da própria luz).
+  function rimShape(ctx, R, el, g, path, bb, rim, alpha) {
+    const la = lightAt(R.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2);
+    if (!la || la.dir < 0.05) return;
+    const w = rim.w * (el.ws || 1);
+    ctx.save();
+    ctx.clip(path);
+    ctx.clip(inverse(inverseShift(g.segs, -la.ux * w, -la.uy * w)), 'evenodd');
+    ctx.globalAlpha = alpha * Math.min(1, la.I) * Math.min(1, la.dir * 1.3);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = rim.c || rgbaStr(la.rgb.map((v) => Math.min(255, v * 1.15 + 30)), 1);
+    ctx.fillRect(bb.x - w, bb.y - w, bb.w + 2 * w, bb.h + 2 * w);
+    ctx.restore();
+  }
+  // halo visível das lâmpadas (glow=)
+  function drawLightGlows(ctx, lighting) {
+    for (const L of lighting.lights) {
+      if (L.type === 'dir' || !(L.glow > 0)) continue;
+      const g = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.glow);
+      g.addColorStop(0, rgbaStr(L.rgb, 0.75 * Math.min(1.3, L.power)));
+      g.addColorStop(0.3, rgbaStr(L.rgb, 0.28 * Math.min(1.3, L.power)));
+      g.addColorStop(1, rgbaStr(L.rgb, 0));
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = g;
+      ctx.fillRect(L.x - L.glow, L.y - L.glow, 2 * L.glow, 2 * L.glow);
+      ctx.restore();
+    }
+  }
+
+  // ---------- sombra projetada ----------
+  function groundY(model, pose, ground, x) {
+    const p = flatOf(geometry(model, pose, ground));
+    let best = null, bd = Infinity;
+    for (let i = 0; i < p.length - 2; i += 2) {
+      const ax = p[i], ay = p[i + 1], bx = p[i + 2], by = p[i + 3];
+      if ((x >= ax && x <= bx) || (x >= bx && x <= ax)) return ax === bx ? ay : ay + ((by - ay) * (x - ax)) / (bx - ax);
+      const d = Math.min(Math.abs(ax - x), Math.abs(bx - x));
+      if (d < bd) { bd = d; best = Math.abs(ax - x) < Math.abs(bx - x) ? ay : by; }
+    }
+    return best === null ? model.canvas.h : best;
+  }
+  function itemsBox(model, pose, items) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const it of items) {
+      if (it.el.hidden) continue;
+      const b = segsBox(geometry(model, pose, it.el).segs);
+      if (!b.w && !b.h) continue;
+      x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h);
+    }
+    return x0 === Infinity ? null : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
+  // de quem é a silhueta: a própria camada ou as camadas de from=
+  const castSources = (layer, items) => (layer.cast.from ? layer.cast.from.map((L) => ({ layer: L, items: L.items })) : [{ layer, items }]);
+  // Para cada luz: matriz que achata a silhueta no chão, inclinada para longe da luz, e a força da sombra.
+  function castShadows(model, pose, lighting, layer, items) {
+    const bb = itemsBox(model, pose, castSources(layer, items).flatMap((s) => s.items));
+    if (!bb) return [];
+    const cx = bb.x + bb.w / 2, cy = bb.y + bb.h / 2;
+    const y0 = groundY(model, pose, layer.cast.ground, cx);
+    const out = [];
+    for (const L of lighting.lights) {
+      let sx, I;
+      if (L.type === 'dir') {
+        if (L.dy >= -0.05) continue;
+        sx = Math.max(-3, Math.min(3, L.dx / L.dy));
+        I = L.power * 0.6;
+      } else {
+        const H0 = y0 - L.y;
+        if (H0 <= 10) continue;
+        sx = Math.max(-3, Math.min(3, (cx - L.x) / H0));
+        I = lightWeight(L, cx, cy);
+      }
+      if (I < 0.02) continue;
+      // x' = x + sx·(chão − y): inclina para longe da luz;  y' = chão + k·(chão − y): deita no chão, para a frente
+      const k = 0.28;
+      // a sombra continua visível enquanto a luz é perceptível (queda mais suave que a da luz)
+      out.push({ A: [1, 0, -sx, -k, sx * y0, (1 + k) * y0], opacity: layer.cast.opacity * Math.min(1, Math.sqrt(I / 0.35)) });
+    }
+    return out;
+  }
+  function drawCast(ctx, R, layer, items, alpha) {
+    const casts = castShadows(R.model, R.pose, R.lighting, layer, items);
+    if (!casts.length) return;
+    const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
+    const T = scratch('cast', W, H);
+    setMat(T.ctx, m);
+    for (const s of castSources(layer, items)) {
+      if (layerVisible(s.layer, R.pose, R.opts)) drawLayer(T.ctx, R, s.layer, s.items, 1, false, R.pose, true, true);
+    }
+    T.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    T.ctx.globalCompositeOperation = 'source-in';
+    T.ctx.fillStyle = '#000';
+    T.ctx.fillRect(0, 0, W, H);
+    const inv = M.invert(m);
+    for (const c of casts) {
+      ctx.save();
+      setMat(ctx, M.mul(m, M.mul(c.A, inv)));
+      ctx.globalAlpha = alpha * c.opacity;
+      ctx.globalCompositeOperation = 'source-over';
+      if (layer.cast.blur > 0 && canFilter()) ctx.filter = `blur(${(layer.cast.blur * s).toFixed(1)}px)`;
+      ctx.drawImage(T.canvas, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  // ---------- partículas ----------
+  const hash01 = (seed, i, k) => (hash(`${seed}:${k}`, i) + 1) / 2;
+  // Estado das partículas num quadro. O sorteio depende só do número da partícula: o loop fecha
+  // certinho e a exportação sai igual toda vez.
+  function particles(model, pose, el) {
+    const anim = pose.anim;
+    const fps = anim ? anim.fps : 12;
+    const loopD = anim && anim.loop ? anim.frames / anim.fps : 0;
+    const t = anim ? pose.frame / anim.fps : el.rate > 0 ? el.life * 1.25 : el.life * 0.35;
+    const data = anim ? animData(model, anim) : null;
+    const out = [];
+    const origin = (ts, k) => {
+      let x = el.at[0] + (hash01(el.seed, k, 4) - 0.5) * el.area[0], y = el.at[1] + (hash01(el.seed, k, 5) - 0.5) * el.area[1];
+      if (el.xf) { const q = M.apply(el.xf, x, y); x = q[0]; y = q[1]; }
+      let bm = null;
+      if (el.bone) {
+        if (data) {
+          let f = Math.floor(ts * fps + 1e-6);
+          f = anim.loop ? ((f % anim.frames) + anim.frames) % anim.frames : Math.max(0, Math.min(anim.frames - 1, f));
+          bm = data.mats[f].get(el.bone);
+        } else bm = pose.bones.get(el.bone);
+      }
+      return bm ? M.apply(bm, x, y) : [x, y];
+    };
+    const spawn = (k, ts) => {
+      const age = t - ts;
+      const life = el.life * (0.75 + 0.5 * hash01(el.seed, k, 1));
+      if (age < 0 || age > life) return;
+      const ang = ((el.angle + (hash01(el.seed, k, 2) - 0.5) * el.spread) * Math.PI) / 180;
+      const sp = el.speed * (0.7 + 0.6 * hash01(el.seed, k, 3));
+      const vx = Math.cos(ang) * sp, vy = Math.sin(ang) * sp;
+      const o = origin(ts, k);
+      const d = el.drag, fd = d > 0 ? (1 - Math.exp(-d * age)) / d : age, e = d > 0 ? Math.exp(-d * age) : 1;
+      const u = age / life;
+      out.push({
+        x: o[0] + vx * fd + 0.5 * el.wind * age * age, y: o[1] + vy * fd + 0.5 * el.gravity * age * age,
+        vx: vx * e + el.wind * age, vy: vy * e + el.gravity * age, u, size: lerp(el.size[0], el.size[1], u),
+        color: G.lerpColor(el.colors[0], el.colors[1], u), spin: hash01(el.seed, k, 6) * Math.PI,
+      });
+    };
+    if (el.rate > 0) {
+      let rate = el.rate, N = 0;
+      if (loopD) { N = Math.max(1, Math.round(rate * loopD)); rate = N / loopD; }
+      const i0 = Math.ceil((t - el.life * 1.25) * rate), i1 = Math.floor(t * rate + 1e-9);
+      for (let i = i0; i <= i1; i++) spawn(N ? ((i % N) + N) % N : i, i / rate);
+    }
+    if (el.burst > 0) {
+      const tb = loopD ? t % loopD : t;
+      for (let j = 0; j < el.burst; j++) spawn(100000 + j, t - tb);
+    }
+    return out;
+  }
+  function drawParticles(ctx, model, pose, el, alpha, R) {
+    const base = ctx.globalAlpha;
+    for (const p of particles(model, pose, el)) {
+      if (p.size <= 0.05) continue;
+      let col = p.color;
+      if (R) col = litColor(col, R.lighting, p.x, p.y);
+      const c = G.parseHex(col);
+      if (!c || c[3] <= 0.004) continue;
+      const rgb = `rgb(${c255(c[0])},${c255(c[1])},${c255(c[2])})`;
+      ctx.globalAlpha = alpha * c[3];
+      const r = p.size / 2;
+      switch (el.pshape) {
+        case 'soft': {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2);
+          g.addColorStop(0, rgb);
+          g.addColorStop(1, `rgba(${c255(c[0])},${c255(c[1])},${c255(c[2])},0)`);
+          ctx.fillStyle = g;
+          ctx.fillRect(p.x - r * 2, p.y - r * 2, r * 4, r * 4);
+          break;
+        }
+        case 'square':
+          ctx.fillStyle = rgb;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.spin); ctx.fillRect(-r, -r, r * 2, r * 2); ctx.restore();
+          break;
+        case 'streak': {
+          const v = Math.hypot(p.vx, p.vy) || 1, len = p.size * 4;
+          ctx.strokeStyle = rgb;
+          ctx.lineWidth = Math.max(0.6, p.size * 0.35);
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(p.x - (p.vx / v) * len, p.y - (p.vy / v) * len);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+          break;
+        }
+        case 'star':
+          ctx.fillStyle = rgb;
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const a = p.spin + (i * Math.PI) / 4, rr = i % 2 ? r * 0.35 : r * 1.2;
+            if (i) ctx.lineTo(p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr); else ctx.moveTo(p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr);
+          }
+          ctx.closePath();
+          ctx.fill();
+          break;
+        default:
+          ctx.fillStyle = rgb;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.fill();
+      }
+    }
+    ctx.globalAlpha = base;
+  }
+
+  // ---------- hachura e pontos ----------
+  // Linhas geradas no espaço da própria forma, então acompanham osso, componente e tecido.
+  function patternLines(model, pose, el, pat) {
+    const f = mapper(model, pose, el), b = localBox(el);
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, R0 = Math.hypot(b.w, b.h) / 2 + pat.gap;
+    const lines = [], dots = [];
+    if (pat.type === 'hatch') {
+      for (const ang of pat.cross ? [pat.angle, pat.angle + 90] : [pat.angle]) {
+        const a = (ang * Math.PI) / 180, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx;
+        for (let k = -R0; k <= R0; k += pat.gap) lines.push([f(cx + nx * k - dx * R0, cy + ny * k - dy * R0), f(cx + nx * k + dx * R0, cy + ny * k + dy * R0)]);
+      }
+    } else {
+      const a = (pat.angle * Math.PI) / 180, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx;
+      let row = 0;
+      for (let j = -R0; j <= R0; j += pat.gap * 0.866, row++) {
+        for (let i = -R0 + (row % 2 ? pat.gap / 2 : 0); i <= R0; i += pat.gap) dots.push(f(cx + dx * i + nx * j, cy + dy * i + ny * j));
+      }
+    }
+    return { lines, dots };
+  }
+  function drawPattern(ctx, model, pose, el, g, pat) {
+    const path = pathOf(g);
+    ctx.save();
+    ctx.clip(path);
+    if (pat.bg) { ctx.fillStyle = pat.bg; ctx.fill(path); }
+    const { lines, dots } = patternLines(model, pose, el, pat);
+    ctx.strokeStyle = ctx.fillStyle = pat.c;
+    if (lines.length) {
+      ctx.lineWidth = pat.w * (el.ws || 1);
+      ctx.lineCap = 'butt';
+      ctx.beginPath();
+      for (const [a, b] of lines) { ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+      ctx.stroke();
+    }
+    if (dots.length) {
+      // em lotes pequenos: um caminho só com milhares de círculos fica lento demais no terminal
+      const r = pat.r * (el.ws || 1);
+      for (let i = 0; i < dots.length; i += 48) {
+        ctx.beginPath();
+        for (const d of dots.slice(i, i + 48)) { ctx.moveTo(d[0] + r, d[1]); ctx.arc(d[0], d[1], r, 0, Math.PI * 2); }
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   // ---------- desenho ----------
   function layerVisible(layer, pose, opts) {
     if (layer.hidden) return false;
@@ -400,54 +888,191 @@
     return true;
   }
 
-  function drawScene(ctx, model, pose, opts) {
-    opts = opts || {};
-    const filter = opts.filter;
-    if (opts.background !== false) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
-    for (const layer of model.layers) {
-      if (!layerVisible(layer, pose, opts)) continue;
-      const lp = pose.lprops.get(layer.name);
-      if (lp && lp.show === 0) continue;
-      const alpha = layer.opacity * (lp && lp.opacity !== undefined ? lp.opacity : 1);
-      if (alpha <= 0.001) continue;
-      const items = filter ? layer.items.filter((it) => filter(it.el)) : layer.items;
-      if (!items.length) continue;
-      ctx.save();
-      ctx.globalCompositeOperation = layer.blend;
-      if (layer.clip) ctx.clip(clipPath(model, pose, layer.clip));
-      if (layer.cut) ctx.clip(inverse(clipPath(model, pose, layer.cut)), 'evenodd');
-      for (const it of items) drawItem(ctx, model, pose, it.el, it.part, layer, alpha);
-      ctx.restore();
-    }
+  const FX_KEYS = ['blur', 'glow', 'tint', 'brightness', 'saturate', 'contrast', 'hue'];
+  // efeitos da camada nesta pose (os animados por key substituem os do código)
+  function layerFx(layer, lp) {
+    let fx = layer.fx;
+    for (const k of FX_KEYS) if (lp[k] !== undefined) { if (fx === layer.fx) fx = Object.assign({}, layer.fx); fx[k] = lp[k]; }
+    if (!fx) return null;
+    const on = (k) => fx[k] !== undefined && fx[k] !== 1;
+    return fx.blur > 0 || fx.glow > 0 || fx.tint > 0 || fx.shadow || on('brightness') || on('saturate') || on('contrast') || fx.hue ? fx : null;
+  }
+  function filterString(fx, s) {
+    const f = [];
+    if (fx.blur > 0) f.push(`blur(${(fx.blur * s).toFixed(2)}px)`);
+    if (fx.brightness !== undefined && fx.brightness !== 1) f.push(`brightness(${fx.brightness})`);
+    if (fx.contrast !== undefined && fx.contrast !== 1) f.push(`contrast(${fx.contrast})`);
+    if (fx.saturate !== undefined && fx.saturate !== 1) f.push(`saturate(${fx.saturate})`);
+    if (fx.hue) f.push(`hue-rotate(${fx.hue}deg)`);
+    return f.join(' ');
+  }
+  // desfoque sem ctx.filter: diminui e aumenta de novo
+  function softBlur(src, px) {
+    const k = Math.max(1, Math.min(24, px / 1.5));
+    const w = Math.max(1, Math.round(src.width / k)), h = Math.max(1, Math.round(src.height / k));
+    const a = scratch('blurA', w, h);
+    a.ctx.imageSmoothingEnabled = true;
+    a.ctx.drawImage(src, 0, 0, w, h);
+    const b = scratch('blurB', src.width, src.height);
+    b.ctx.imageSmoothingEnabled = true;
+    b.ctx.drawImage(a.canvas, 0, 0, src.width, src.height);
+    return b.canvas;
   }
 
-  function drawItem(ctx, model, pose, el, part, layer, base) {
+  function drawScene(ctx, model, pose, opts) {
+    opts = opts || {};
+    if (opts.background !== false) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
+    const lighting = sceneLights(model, pose);
+    const R = { model, pose, opts, lighting, maps: null };
+    for (const layer of model.layers) {
+      if (!layerVisible(layer, pose, opts)) continue;
+      const lp = pose.lprops.get(layer.name) || NOPROPS;
+      if (lp.show === 0) continue;
+      const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
+      if (alpha <= 0.001) continue;
+      const items = opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items;
+      if (layer.cast && lighting) drawCast(ctx, R, layer, items, alpha);
+      if (!items.length) continue;
+      const lit = !!lighting && !layer.unlit && !layer.guide;
+      const fx = layerFx(layer, lp);
+      if (fx || (layer.trail && pose.anim)) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
+      else drawLayer(ctx, R, layer, items, alpha, lit, pose, false);
+    }
+    if (lighting) drawLightGlows(ctx, lighting);
+  }
+
+  function drawLayer(ctx, R, layer, items, alpha, lit, pose, solo, flat) {
+    ctx.save();
+    if (!solo) ctx.globalCompositeOperation = layer.blend;
+    if (layer.clip) ctx.clip(clipPath(R.model, pose, layer.clip));
+    if (layer.cut) ctx.clip(inverse(clipPath(R.model, pose, layer.cut)), 'evenodd');
+    for (const it of items) drawItem(ctx, R.model, pose, it.el, it.part, layer, alpha, lit ? R : null, flat);
+    ctx.restore();
+  }
+
+  // Camada com efeitos: desenhada à parte e aplicada de uma vez (sombra, brilho, cor, desfoque, rastro).
+  function drawFxLayer(ctx, R, layer, items, alpha, lit, fx) {
+    const { model, pose } = R;
+    const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
+    const T = scratch('fx', W, H);
+    if (layer.trail && pose.anim) {
+      for (let k = layer.trail.n; k >= 1; k--) {
+        const U = scratch('trail', W, H);
+        setMat(U.ctx, m);
+        drawLayer(U.ctx, R, layer, items, 1, lit, makePose(model, pose.anim.name, pose.frame - k), true);
+        if (layer.trail.c) {
+          U.ctx.setTransform(1, 0, 0, 1, 0, 0);
+          U.ctx.globalCompositeOperation = 'source-atop';
+          U.ctx.globalAlpha = 0.65;
+          U.ctx.fillStyle = layer.trail.c;
+          U.ctx.fillRect(0, 0, W, H);
+        }
+        T.ctx.globalAlpha = Math.pow(layer.trail.decay, k);
+        T.ctx.drawImage(U.canvas, 0, 0);
+        T.ctx.globalAlpha = 1;
+      }
+    }
+    setMat(T.ctx, m);
+    drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
+    T.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (fx.tint > 0 && fx.tintc) {
+      T.ctx.globalCompositeOperation = 'source-atop';
+      T.ctx.globalAlpha = Math.min(1, fx.tint);
+      T.ctx.fillStyle = fx.tintc;
+      T.ctx.fillRect(0, 0, W, H);
+      T.ctx.globalCompositeOperation = 'source-over';
+      T.ctx.globalAlpha = 1;
+    }
+    let img = T.canvas;
+    const filt = filterString(fx, s);
+    if (!canFilter() && fx.blur > 0) img = softBlur(img, fx.blur * s);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = layer.blend;
+    const big = W + H + 100;
+    // só a sombra/brilho: a imagem vai para fora da tela e o deslocamento traz a sombra de volta
+    if (fx.shadow) {
+      ctx.shadowColor = fx.shadow.c;
+      ctx.shadowBlur = fx.shadow.b * s;
+      ctx.shadowOffsetX = big + fx.shadow.dx * s;
+      ctx.shadowOffsetY = fx.shadow.dy * s;
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, -big, 0);
+    }
+    if (fx.glow > 0) {
+      const strength = fx.glows !== undefined ? fx.glows : 1;
+      for (let i = 0; i < Math.ceil(strength); i++) {
+        ctx.shadowColor = fx.glowc || '#ffffff';
+        ctx.shadowBlur = fx.glow * s;
+        ctx.shadowOffsetX = big;
+        ctx.shadowOffsetY = 0;
+        ctx.globalAlpha = alpha * Math.min(1, strength - i);
+        ctx.drawImage(img, -big, 0);
+      }
+    }
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
+    if (filt && canFilter()) ctx.filter = filt;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  function glowOn(ctx, emit) {
+    ctx.shadowColor = emit.c;
+    ctx.shadowBlur = 16 * emit.s * scaleOf(matOf(ctx));
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+  function glowOff(ctx) { ctx.shadowColor = 'rgba(0,0,0,0)'; ctx.shadowBlur = 0; }
+
+  // R: iluminação da camada (null = sem luz). flat: só a silhueta (sombra projetada), sem brilho próprio.
+  function drawItem(ctx, model, pose, el, part, layer, base, R, flat) {
     if (el.hidden) return;
     const pr = pose.props.get(el.id) || NOPROPS;
     if (pr.show === 0) return;
     const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001) return;
     const fin = model.finish;
+    const L = R && !el.emit ? R : null; // o que emite luz não recebe luz
     ctx.globalAlpha = alpha;
     ctx.setLineDash([]);
-    if (el.type === 'text') { drawText(ctx, model, pose, el, pr); return; }
+    const emit = el.emit && !flat;
+    if (emit) glowOn(ctx, el.emit);
+    if (el.type === 'text') { drawText(ctx, model, pose, el, pr, L); glowOff(ctx); return; }
+    if (el.type === 'emitter') { drawParticles(ctx, model, pose, el, alpha, L); glowOff(ctx); return; }
     const g = geometry(model, pose, el);
-    if (!g.segs.length) return;
+    if (!g.segs.length) { glowOff(ctx); return; }
     if (el.closed) {
       const fill = pr.c !== undefined ? pr.c : el.fill;
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
-      const inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
+      let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
       const withInk = part !== 'fill' && ink > 0 && fin.style !== 'flat' && inkc;
       const cut = el.cuts ? cutPath(model, pose, el) : null;
+      const path = pathOf(g);
+      const bb = L ? segsBox(g.segs) : null;
+      if (L && withInk) inkc = litColor(inkc, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2, true);
       if (cut) { ctx.save(); ctx.clip(inverse(cut), 'evenodd'); }
-      if (part !== 'ink' && fill) { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(pathOf(g)); }
+      if (part !== 'ink' && fill) {
+        if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
+        else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
+        glowOff(ctx);
+        if (L) {
+          shadeShape(ctx, L, path, bb, layer, alpha);
+          lightRaster(ctx, L, path, bb, alpha);
+          const rim = layer.rim || L.lighting.rim;
+          if (rim) rimShape(ctx, L, el, g, path, bb, rim, alpha);
+        }
+      }
+      glowOff(ctx);
       if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
       if (cut) {
         ctx.restore();
         if (withInk) {
           // contorno dos buracos, só por dentro da forma
           ctx.save();
-          ctx.clip(pathOf(g));
+          ctx.clip(path);
           ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
           ctx.lineWidth = ink;
           ctx.lineJoin = 'round';
@@ -457,8 +1082,9 @@
       }
       return;
     }
-    const color = pr.c !== undefined ? pr.c : el.color;
-    if (!color) return;
+    let color = pr.c !== undefined ? pr.c : el.color;
+    if (!color) { glowOff(ctx); return; }
+    if (L) { const bb = segsBox(g.segs); color = litColor(color, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2); }
     const w = pr.w !== undefined ? pr.w : el.w;
     ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, color);
     if (el.type === 'line') {
@@ -467,6 +1093,7 @@
       ctx.lineJoin = 'round';
       if (el.dash) ctx.setLineDash(el.dash);
       ctx.stroke(pathOf(g));
+      glowOff(ctx);
       return;
     }
     if (layer.clip && !el.limb) ctx.globalAlpha *= fin.inner;
@@ -483,6 +1110,7 @@
       ctx.lineJoin = 'round';
       ctx.stroke(pathOf(g));
     }
+    glowOff(ctx);
   }
 
   function drawInk(ctx, model, pose, g, el, ink, inkc) {
@@ -498,13 +1126,14 @@
     G.drawVar(ctx, p, G.inkWidths(p, ink, el.weight, model.canvas.light));
   }
 
-  function drawText(ctx, model, pose, el, pr) {
+  function drawText(ctx, model, pose, el, pr, R) {
     if (!el.str) return;
-    const fill = pr.c !== undefined ? pr.c : el.fill;
+    let fill = pr.c !== undefined ? pr.c : el.fill;
     const ink = pr.ink !== undefined ? pr.ink : el.ink;
-    const inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-    ctx.save();
+    let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
     const m = textMatrix(pose, el);
+    if (R) { fill = litColor(fill, R.lighting, m[4], m[5]); inkc = litColor(inkc, R.lighting, m[4], m[5]); }
+    ctx.save();
     ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
     ctx.font = textFont(el);
     ctx.textAlign = el.align;
@@ -519,7 +1148,91 @@
     ctx.restore();
   }
 
-  // Imagem pronta de um quadro: escala, recorte e acabamento pixelado.
+  // ---------- acabamentos da imagem inteira ----------
+  const hasPost = (model) => { const f = model.finish; return !!(f.bloom || f.vignette || f.grain || f.posterize); };
+  const noiseCache = new Map();
+  function noiseTile(seed) {
+    const k = ((seed % 8) + 8) % 8;
+    if (noiseCache.has(k)) return noiseCache.get(k);
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d'), img = x.createImageData(128, 128);
+    let s = (1234567 + k * 7919) >>> 0;
+    for (let i = 0; i < img.data.length; i += 4) {
+      s = (Math.imul(s, 1103515245) + 12345) >>> 0;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = (s >>> 16) & 255;
+      img.data[i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    noiseCache.set(k, c);
+    return c;
+  }
+  function posterize(x, W, H, model) {
+    const p = model.finish.posterize;
+    const img = x.getImageData(0, 0, W, H), d = img.data;
+    if (p === 'palette') {
+      const pal = [...model.palette.values()].filter((v) => typeof v === 'string').map(G.parseHex).filter(Boolean);
+      if (!pal.length) return;
+      const cache = new Map();
+      for (let i = 0; i < d.length; i += 4) {
+        if (!d[i + 3]) continue;
+        const key = ((d[i] >> 2) << 12) | ((d[i + 1] >> 2) << 6) | (d[i + 2] >> 2);
+        let c = cache.get(key);
+        if (!c) {
+          let bd = Infinity;
+          for (const q of pal) {
+            const dr = q[0] - d[i], dg = q[1] - d[i + 1], db = q[2] - d[i + 2], dd = dr * dr * 3 + dg * dg * 4 + db * db * 2;
+            if (dd < bd) { bd = dd; c = q; }
+          }
+          cache.set(key, c);
+        }
+        d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+      }
+    } else {
+      const n = p - 1;
+      for (let i = 0; i < d.length; i += 4) for (let j = 0; j < 3; j++) d[i + j] = (Math.round((d[i + j] / 255) * n) * 255) / n;
+    }
+    x.putImageData(img, 0, 0);
+  }
+  // bloom, vinheta, granulado e posterização, aplicados na imagem pronta
+  function postFx(cv, model, seed) {
+    if (!hasPost(model)) return;
+    const f = model.finish, W = cv.width, H = cv.height, x = cv.getContext('2d');
+    x.save();
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalAlpha = 1;
+    if (f.bloom > 0 && canFilter()) {
+      const B = scratch('bloom', W, H), r = Math.max(2, Math.round(Math.max(W, H) * 0.025));
+      B.ctx.filter = `brightness(0.85) contrast(2.2) blur(${r}px)`;
+      B.ctx.drawImage(cv, 0, 0);
+      B.ctx.filter = 'none';
+      x.globalCompositeOperation = 'screen';
+      for (let a = f.bloom; a > 0; a -= 1) { x.globalAlpha = Math.min(1, a); x.drawImage(B.canvas, 0, 0); }
+    }
+    if (f.vignette > 0) {
+      const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) / 2);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, `rgba(0,0,0,${Math.min(1, f.vignette)})`);
+      x.globalAlpha = 1;
+      x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = g;
+      x.fillRect(0, 0, W, H);
+    }
+    if (f.grain > 0) {
+      const N = scratch('grain', W, H);
+      N.ctx.fillStyle = N.ctx.createPattern(noiseTile(seed || 0), 'repeat');
+      N.ctx.fillRect(0, 0, W, H);
+      N.ctx.globalCompositeOperation = 'destination-in';
+      N.ctx.drawImage(cv, 0, 0);
+      x.globalCompositeOperation = 'overlay';
+      x.globalAlpha = Math.min(1, f.grain * 3);
+      x.drawImage(N.canvas, 0, 0);
+    }
+    x.restore();
+    if (f.posterize) posterize(x, W, H, model);
+  }
+
+  // Imagem pronta de um quadro: escala, recorte, acabamentos e pixelado.
   function renderImage(model, pose, opts) {
     opts = opts || {};
     const scale = opts.scale || 1;
@@ -546,10 +1259,12 @@
       small.width = Math.max(1, Math.round(W2 / px));
       small.height = Math.max(1, Math.round(H2 / px));
       draw(small.getContext('2d'), scale / px);
+      if (!opts.noPost) postFx(small, model, pose.frame);
       octx.imageSmoothingEnabled = false;
       octx.drawImage(small, 0, 0, W2, H2);
     } else {
       draw(octx, scale);
+      if (!opts.noPost) postFx(out, model, pose.frame);
     }
     return out;
   }
@@ -566,7 +1281,7 @@
         seen.add(it.el.id);
         const g = geometry(model, pose, it.el);
         if (!g.segs.length) continue;
-        order.push({ el: it.el, len: it.el.type === 'text' ? 60 : G.polyLength(flatOf(g)) });
+        order.push({ el: it.el, len: it.el.type === 'text' || it.el.type === 'emitter' ? 60 : G.polyLength(flatOf(g)) });
       }
     }
     const speed = opts.speed || 1;
@@ -598,7 +1313,7 @@
     if (st.k >= plan.order.length) return;
     const el = plan.order[st.k].el;
     const g = geometry(model, pose, el);
-    if (el.type === 'text') { const p = flatOf(g); drawPen(ctx, p[0], p[1], zoom || 1); return; }
+    if (el.type === 'text' || el.type === 'emitter') { const p = flatOf(g); drawPen(ctx, p[0], p[1], zoom || 1); return; }
     const p = G.polyPrefix(flatOf(g), st.t);
     if (p.length < 4) return;
     let w = 2, col = '#14141c';
@@ -634,6 +1349,10 @@
   // Posição de uma alça (ponto editável) na pose atual.
   function handlePos(model, pose, rec, h) {
     if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return mapper(model, pose, rec.el)(h.x, h.y);
+    if (h.kind === 'light') {
+      const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
+      return m ? M.apply(m, h.x, h.y) : [h.x, h.y];
+    }
     let p = rec.xf ? M.apply(rec.xf, h.x, h.y) : [h.x, h.y];
     if (h.kind === 'pivot' && h.bone) { const m = pose.bones.get(h.bone); if (m) p = M.apply(m, p[0], p[1]); } else if (h.kind === 'pivot' && h.cloth) {
       const c = model.cloths.get(h.cloth), m = c && c.bone ? pose.bones.get(c.bone) : null;
@@ -648,5 +1367,6 @@
   W.scene = {
     makePose, boneMatrices, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
+    sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };
 })(window.Weasel = window.Weasel || {});

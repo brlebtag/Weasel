@@ -97,7 +97,7 @@
       d = delays(frames.length, fps);
     }
     await new Promise((r) => setTimeout(r, 0));
-    const bytes = W.gif.encode(frames, { delay: d, loop: 0, transparent: o.transparent });
+    const bytes = W.gif.encode(frames, { delay: d, loop: 0, transparent: o.transparent, dither: o.dither });
     return { bytes, width: frames[0].width, height: frames[0].height, frames: frames.length, preview };
   }
 
@@ -213,7 +213,7 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither']) {
       $(id).addEventListener('change', () => refresh());
     }
     $('expDownload').addEventListener('click', () => save(false));
@@ -295,7 +295,7 @@
         scale: parseFloat($('expScale').value), transparent: $('expTransparent').checked && kind !== 'jpg',
         trim: $('expTrim').checked, margin: parseInt($('expMargin').value, 10) || 0, quality: parseInt($('expQuality').value, 10) / 100,
         layout: $('expLayout').value, cols: parseInt($('expCols').value, 10) || 0, padding: parseInt($('expPad').value, 10) || 0,
-        speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind,
+        speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind, dither: $('expDither').checked,
       };
       const vsel = $('expVariant').value;
       const variants = vsel === ALL ? ['', ...app.variants()] : [vsel];

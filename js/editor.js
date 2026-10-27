@@ -3,7 +3,7 @@
   'use strict';
   const L = W.lang;
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const FLAG_WORDS = new Set(['guide', 'hidden', 'once', 'loop', 'game', 'flat', 'bold', 'italic', 'linear', 'radial', 'box']);
+  const FLAG_WORDS = new Set(['guide', 'hidden', 'once', 'loop', 'game', 'flat', 'bold', 'italic', 'linear', 'radial', 'box', 'lit', 'unlit', 'point', 'spot', 'dir', 'hatch', 'dots', 'cross']);
 
   function valueClass(v) {
     if (v.includes('{')) return 'expr';
@@ -197,7 +197,7 @@
       const lineText = ta.value.split('\n')[c.line] || '';
       const before = lineText.slice(0, c.col);
       const word = /[\w.-]*$/.exec(before)[0];
-      if (!force && !word) return this._closePop();
+      if (!force && !word && !before.endsWith('=')) return this._closePop();
       const low = word.toLowerCase();
       const items = this.opts.complete({ text: lineText, before, word, line: c.line })
         .filter((it) => it.label.toLowerCase().startsWith(low) && it.label !== word)

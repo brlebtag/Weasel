@@ -4,35 +4,45 @@
   const M = W.geom.M;
 
   const KEYWORDS = {
-    canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', let: 'setup', variant: 'setup', include: 'setup',
-    layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw',
+    canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup',
+    layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
     def: 'comp', end: 'comp', use: 'comp',
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
+    light: 'fx', ambient: 'fx',
   };
-  const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text']);
+  const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'emitter']);
   const CLOSED = new Set(['shape', 'ellipse', 'rect']);
-  const COMMON = ['c', 'bone', 'cloth', 'opacity', 'mirror', 'cut'];
+  const COMMON = ['c', 'bone', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
   const OUTLINE = ['ink', 'inkc', 'weight', 'inkon'];
   const ATTRS = {
     canvas: ['bg', 'light'],
-    finish: ['inner', 'pixel'],
+    finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
     unity: ['unit', 'root', 'collider'],
-    layer: ['clip', 'cut', 'only', 'opacity', 'blend'],
+    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     anim: ['frames', 'fps'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity'],
+    light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
+    ambient: ['c', 'power'],
+    pattern: ['c', 'bg', 'gap', 'w', 'r', 'angle'],
     shape: [...COMMON, ...OUTLINE, 'smooth'],
     ellipse: [...COMMON, ...OUTLINE, 'rot'],
     rect: [...COMMON, ...OUTLINE, 'r', 'rot'],
     stroke: [...COMMON, 'w', 'taper', 'cap', 'smooth', 'limb', 'hip', 'on', 'foot', 'target', 'bend'],
     line: [...COMMON, 'w', 'dash'],
     text: [...COMMON, 'ink', 'inkc', 'size', 'font', 'align', 'rot'],
+    emitter: ['c', 'bone', 'opacity', 'emit', 'rate', 'burst', 'life', 'speed', 'angle', 'spread', 'gravity', 'wind', 'drag', 'size', 'shape', 'area', 'seed'],
   };
-  const FLAGS = { layer: ['guide', 'hidden'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'] };
+  const FLAGS = {
+    layer: ['guide', 'hidden', 'lit', 'unlit'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
+    shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'], emitter: ['hidden'],
+  };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
+  const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
   const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape' };
-  const LAYER_PROPS = ['opacity', 'show'];
+  const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free' };
+  const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   const FINISHES = ['game', 'flat'];
   const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'];
   const DEFAULT_PALETTE = { ink: '#14141c', line: 8, inner: 5, edge: 3 };
@@ -311,7 +321,8 @@
       finish: { style: 'game', inner: 1, pixel: 1 },
       unity: null,
       palette: new Map(Object.entries(DEFAULT_PALETTE)),
-      gradients: new Map(),
+      gradients: new Map(), patterns: new Map(),
+      lights: new Map(), ambient: null,
       layers: [], layerMap: new Map(),
       bones: new Map(), cloths: new Map(),
       anims: [], animMap: new Map(),
@@ -360,11 +371,19 @@
       const p = pal(v, ctx);
       if (typeof p === 'string' || (p && p.kind === 'grad')) return p;
       if (typeof p === 'number') { bad(st, a, `"${v}" na palette é número, não cor`); return null; }
-      const g = m.gradients.get(v);
+      const g = m.gradients.get(v) || m.patterns.get(v);
       if (g) return g;
       if (isCssColor(v)) return v;
       bad(st, a, `cor desconhecida "${v}"`);
       return null;
+    }
+    // só cor simples (#hex, palette): luzes, partículas, efeitos
+    function plainColor(st, a, text) {
+      const sub = text === undefined ? a : Object.assign({}, a, { text });
+      const c = color(st, sub, ROOT);
+      if (c && typeof c !== 'string') { bad(st, a, 'aqui só vale cor simples (sem gradiente ou padrão)'); return null; }
+      if (c && !W.geom.parseHex(c)) { bad(st, a, `use uma cor #hex aqui ("${c}")`, 'warn'); return null; }
+      return c;
     }
     function width(st, a, ctx) {
       const n = num(a.text);
@@ -458,7 +477,7 @@
     const top = stmts.filter((s) => !s.inDef && s.cmd !== 'def' && s.cmd !== 'end');
 
     // ---- passo 1: configuração, palette, camadas, ossos, tecidos ----
-    const variantStmts = [], gradientStmts = [];
+    const variantStmts = [], gradientStmts = [], lateStmts = [], layerFx = [];
     let bgTok = null;
     for (const st of top) {
       const A = st.attrs;
@@ -479,6 +498,12 @@
           else if (s) m.finish.style = s;
           if (A.has('inner')) m.finish.inner = number(st, A.get('inner'), 1, 0, 1);
           if (A.has('pixel')) m.finish.pixel = Math.round(number(st, A.get('pixel'), 1, 1, 32));
+          for (const k of ['bloom', 'vignette', 'grain']) if (A.has(k)) m.finish[k] = number(st, A.get(k), 0, 0, 3);
+          if (A.has('posterize')) {
+            const a = A.get('posterize');
+            if (a.text === 'palette') m.finish.posterize = 'palette';
+            else m.finish.posterize = Math.round(number(st, a, 0, 2, 64));
+          }
           info(st);
           break;
         }
@@ -506,15 +531,17 @@
           break;
         }
         case 'gradient': gradientStmts.push(st); break;
+        case 'pattern': case 'light': case 'ambient': lateStmts.push(st); break;
         case 'layer': {
           const name = ident(st, st.pos[0], 'da camada');
           if (!name) break;
           if (m.layerMap.has(name)) { err(st.line, `camada "${name}" já existe`, st.pos[0].from, st.pos[0].to); break; }
-          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over' };
+          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5 };
           for (const f of st.pos.slice(1)) {
             if (FLAGS.layer.includes(f.text)) Ly[f.text] = true;
-            else err(st.line, `opção desconhecida "${f.text}" (use guide ou hidden)`, f.from, f.to, 'warn');
+            else err(st.line, `opção desconhecida "${f.text}" (use ${FLAGS.layer.join(', ')})`, f.from, f.to, 'warn');
           }
+          layerFx.push({ st, Ly });
           if (A.has('clip')) Ly.clip = A.get('clip').text;
           if (A.has('cut')) Ly.cut = A.get('cut').text;
           if (A.has('only')) Ly.only = A.get('only').text.split(',').filter(Boolean);
@@ -649,9 +676,110 @@
       m.gradients.set(name, g);
       info(st, { grad: g });
     }
+    // padrões de preenchimento: hachura e pontos
+    for (const st of lateStmts.filter((s) => s.cmd === 'pattern')) {
+      const name = ident(st, st.pos[0], 'do padrão');
+      if (!name) continue;
+      const A = st.attrs, flags = st.pos.slice(1).map((t) => t.text);
+      for (const t of st.pos.slice(1)) if (!FLAGS.pattern.includes(t.text)) err(st.line, `opção desconhecida "${t.text}" (use hatch, dots ou cross)`, t.from, t.to, 'warn');
+      const inkc = m.palette.get('ink');
+      const p = { kind: 'pat', name, type: flags.includes('dots') ? 'dots' : 'hatch', cross: flags.includes('cross'), c: typeof inkc === 'string' ? inkc : '#14141c', bg: null, gap: 6, w: 1.2, r: 1.4, angle: 45 };
+      if (A.has('c')) p.c = plainColor(st, A.get('c')) || p.c;
+      if (A.has('bg')) p.bg = plainColor(st, A.get('bg'));
+      if (A.has('gap')) p.gap = number(st, A.get('gap'), 6, 1.5, 500);
+      if (A.has('w')) p.w = number(st, A.get('w'), 1.2, 0.1, 50);
+      if (A.has('r')) p.r = number(st, A.get('r'), 1.4, 0.1, 50);
+      if (A.has('angle')) p.angle = number(st, A.get('angle'), 45);
+      if (m.patterns.has(name) || m.gradients.has(name)) err(st.line, `"${name}" já existe`, st.pos[0].from, st.pos[0].to);
+      m.patterns.set(name, p);
+      info(st, { pat: p });
+    }
+
     if (bgTok) {
       const c = color(bgTok.st, bgTok.a, ROOT);
-      m.canvas.bg = c;
+      if (c && c.kind === 'pat') bad(bgTok.st, bgTok.a, 'o fundo não aceita padrão (use cor ou gradiente)');
+      else m.canvas.bg = c;
+    }
+
+    // efeitos das camadas
+    for (const { st, Ly } of layerFx) {
+      const A = st.attrs, fx = {};
+      const parts = (a) => splitTop(a.text, ',');
+      const nAt = (p, i, def) => (p[i] === undefined || p[i] === '' ? def : num(p[i]));
+      if (A.has('blur')) fx.blur = number(st, A.get('blur'), 0, 0, 500);
+      if (A.has('glow')) {
+        const a = A.get('glow'), p = parts(a), c = plainColor(st, a, p[0]), r = nAt(p, 1, 12), s = nAt(p, 2, 1);
+        if (isNaN(r) || isNaN(s)) bad(st, a, 'use glow=cor,raio[,força]');
+        else if (c) { fx.glowc = c; fx.glow = r; fx.glows = Math.max(0.1, Math.min(5, s)); }
+      }
+      if (A.has('shadow')) {
+        const a = A.get('shadow'), p = parts(a), c = plainColor(st, a, p[0]);
+        const v = [nAt(p, 1, 4), nAt(p, 2, 6), nAt(p, 3, 8)];
+        if (v.some(isNaN)) bad(st, a, 'use shadow=cor,dx,dy,desfoque');
+        else if (c) fx.shadow = { c, dx: v[0], dy: v[1], b: v[2] };
+      }
+      if (A.has('tint')) {
+        const a = A.get('tint'), p = parts(a), c = plainColor(st, a, p[0]), t = nAt(p, 1, 0.5);
+        if (isNaN(t)) bad(st, a, 'use tint=cor,quanto (0 a 1)');
+        else if (c) { fx.tintc = c; fx.tint = Math.min(1, Math.max(0, t)); }
+      }
+      for (const k of ['brightness', 'saturate', 'contrast']) if (A.has(k)) fx[k] = number(st, A.get(k), 1, 0, 10);
+      if (A.has('hue')) fx.hue = number(st, A.get('hue'), 0);
+      if (Object.keys(fx).length) Ly.fx = fx;
+      if (A.has('trail')) {
+        const a = A.get('trail'), p = parts(a), n = Math.round(nAt(p, 0, NaN)), d = nAt(p, 1, 0.5);
+        const c = p[2] ? plainColor(st, a, p[2]) : null;
+        if (isNaN(n) || n < 1 || n > 30 || isNaN(d)) bad(st, a, 'use trail=quadros,queda[,cor] (ex.: trail=4,0.5)');
+        else Ly.trail = { n, decay: Math.min(0.95, Math.max(0.05, d)), c };
+      }
+      if (A.has('cast')) {
+        const a = A.get('cast'), p = parts(a), op = nAt(p, 1, 0.45), b = nAt(p, 2, 6);
+        if (!IDENT.test(p[0]) || isNaN(op) || isNaN(b)) bad(st, a, 'use cast=chão[,opacidade[,desfoque]] (chão = nome de uma line)');
+        else Ly.castSpec = { line: p[0], opacity: Math.min(1, Math.max(0, op)), blur: Math.max(0, b), a };
+      }
+      if (A.has('from')) {
+        if (!A.has('cast')) bad(st, A.get('from'), 'from= só vale junto com cast=', 'warn');
+        else Ly.castFromSpec = { names: A.get('from').text.split(',').filter(Boolean), a: A.get('from') };
+      }
+      if (A.has('rim')) {
+        const a = A.get('rim'), p = parts(a), c = plainColor(st, a, p[0]), w = nAt(p, 1, 4);
+        if (isNaN(w)) bad(st, a, 'use rim=cor[,largura]');
+        else if (c) Ly.rim = { c, w };
+      }
+      if (A.has('shade')) Ly.shade = number(st, A.get('shade'), 0.5, 0, 2);
+    }
+
+    // luzes
+    for (const st of lateStmts.filter((s) => s.cmd !== 'pattern')) {
+      const A = st.attrs;
+      if (st.cmd === 'ambient') {
+        m.ambient = { c: '#ffffff', power: 0.6, line: st.line };
+        if (A.has('c')) m.ambient.c = plainColor(st, A.get('c')) || '#ffffff';
+        if (A.has('power')) m.ambient.power = number(st, A.get('power'), 0.6, 0, 5);
+        info(st);
+        continue;
+      }
+      const name = ident(st, st.pos[0], 'da luz');
+      if (!name) continue;
+      const tt = st.pos[1];
+      const type = tt && FLAGS.light.includes(tt.text) ? tt.text : null;
+      if (!type) { err(st.line, 'use: light nome point x,y  |  light nome spot x,y aim= cone=  |  light nome dir dx,dy', tt ? tt.from : st.cmdTok.from, tt ? tt.to : st.cmdTok.to); continue; }
+      const Lt = { name, line: st.line, type, x: 0, y: 0, dx: -0.6, dy: -0.8, c: '#ffffff', power: 1, radius: 300, glow: 0, bone: null, flicker: 0, aim: 90, cone: 30 };
+      const v = posPair(st, st.pos[2], type === 'dir' ? 'a direção (dx,dy)' : 'a posição', null);
+      if (v && type === 'dir') { Lt.dx = v[0]; Lt.dy = v[1]; } else if (v) { Lt.x = v[0]; Lt.y = v[1]; }
+      const rec = info(st, { light: Lt });
+      if (v && type !== 'dir') rec.handles.push({ kind: 'light', light: name, x: Lt.x, y: Lt.y, from: st.pos[2].from, to: st.pos[2].to, fixed: st.pos[2].text.includes('{') });
+      if (A.has('c')) Lt.c = plainColor(st, A.get('c')) || '#ffffff';
+      if (A.has('power')) Lt.power = number(st, A.get('power'), 1, 0, 20);
+      if (A.has('radius')) Lt.radius = number(st, A.get('radius'), 300, 1, 100000);
+      if (A.has('glow')) Lt.glow = number(st, A.get('glow'), 0, 0, 100000);
+      if (A.has('flicker')) Lt.flicker = number(st, A.get('flicker'), 0, 0, 1);
+      if (A.has('aim')) Lt.aim = number(st, A.get('aim'), 90);
+      if (A.has('cone')) Lt.cone = number(st, A.get('cone'), 30, 1, 180);
+      Lt.rim = A.has('rim') ? number(st, A.get('rim'), 0, 0, 100) : 0;
+      if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) Lt.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
+      if (m.lights.has(name)) err(st.line, `luz "${name}" já existe`, st.pos[0].from, st.pos[0].to);
+      m.lights.set(name, Lt);
     }
 
     // ---- passo 2: desenhos, componentes, animações ----
@@ -698,6 +826,12 @@
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) el.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
       if (A.has('opacity')) el.opacity *= number(st, A.get('opacity'), 1, 0, 1);
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
+      if (A.has('emit')) {
+        const a = A.get('emit'), p = splitTop(a.text, ','), c = plainColor(st, a, p[0]);
+        const s = p[1] === undefined ? 1 : num(p[1]);
+        if (isNaN(s)) bad(st, a, 'use emit=cor[,força]');
+        else if (c) el.emit = { c, s: Math.max(0, Math.min(10, s)) };
+      }
       const inkColor = pal('ink', ctx);
       const defInk = typeof inkColor === 'string' ? inkColor : '#14141c';
 
@@ -767,6 +901,33 @@
           if (A.has('target')) { const a = A.get('target'); if (m.bones.has(a.text)) el.target = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
           if (!el.footSpec && !el.target && !A.has('target')) err(st.line, 'membro precisa de foot=chão,x, foot=x,y ou target=osso', st.cmdTok.from, st.cmdTok.to);
         } else if (st.pts.length < 2) err(st.line, 'stroke precisa de pelo menos 2 pontos depois do ":"', st.cmdTok.from, st.cmdTok.to);
+      } else if (st.cmd === 'emitter') {
+        el.at = posPair(st, pos[0], 'a origem', [0, 0]);
+        const N = (k, def, min, max) => (A.has(k) ? number(st, A.get(k), def, min, max) : def);
+        el.rate = N('rate', 20, 0, 2000);
+        el.burst = Math.round(N('burst', 0, 0, 5000));
+        el.life = N('life', 1, 0.02, 60);
+        el.speed = N('speed', 80, 0, 100000);
+        el.angle = N('angle', -90);
+        el.spread = N('spread', 40, 0, 360);
+        el.gravity = N('gravity', 0);
+        el.wind = N('wind', 0);
+        el.drag = N('drag', 0, 0, 100);
+        el.seed = N('seed', 1);
+        const sz = A.has('size') ? list(st, A.get('size'), 1, 2, [4]) : [4];
+        el.size = [sz[0] * ws, (sz.length > 1 ? sz[1] : sz[0]) * ws];
+        const ar = A.has('area') ? list(st, A.get('area'), 1, 2, [0]) : [0];
+        el.area = [ar[0], ar.length > 1 ? ar[1] : ar[0]];
+        el.pshape = A.has('shape') ? A.get('shape').text : 'dot';
+        if (!PARTICLE_SHAPES.includes(el.pshape)) { bad(st, A.get('shape'), `shape= aceita ${PARTICLE_SHAPES.join(', ')}`, 'warn'); el.pshape = 'dot'; }
+        el.colors = [defInk, defInk];
+        if (A.has('c')) {
+          const a = A.get('c'), p = splitTop(a.text, ',');
+          const c0 = plainColor(st, a, p[0]) || defInk;
+          el.colors = [c0, p[1] ? plainColor(st, a, p[1]) || c0 : c0];
+        }
+        if (el.rate <= 0 && el.burst <= 0) err(st.line, 'o emissor precisa de rate= ou burst=', st.cmdTok.from, st.cmdTok.to, 'warn');
+        if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
       } else if (st.cmd === 'line') {
         el.color = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
         el.w = (A.has('w') ? width(st, A.get('w'), ctx) : 1) * ws;
@@ -781,7 +942,7 @@
         });
       }
       const loose = pos.filter((t) => !t.inherited);
-      if (loose.length && !['ellipse', 'rect', 'text'].includes(st.cmd)) err(st.line, `valor solto "${loose[0].text}" (atributos usam nome=valor)`, loose[0].from, loose[0].to, 'warn');
+      if (loose.length && !['ellipse', 'rect', 'text', 'emitter'].includes(st.cmd)) err(st.line, `valor solto "${loose[0].text}" (atributos usam nome=valor)`, loose[0].from, loose[0].to, 'warn');
       return el;
     }
 
@@ -986,6 +1147,19 @@
         }
       }
       if (Ly.only && st) for (const n of Ly.only) if (!m.animMap.has(n)) bad(st, st.attrs.get('only'), `animação "${n}" não existe`, 'warn');
+      if (Ly.castSpec) {
+        const g = (m.named.get(Ly.castSpec.line) || []).find((e) => e.type === 'line' && e.pts.length >= 2);
+        if (!g) bad(st, Ly.castSpec.a, `cast: não achei a line "${Ly.castSpec.line}" (o chão onde a sombra cai)`);
+        else Ly.cast = { ground: g, opacity: Ly.castSpec.opacity, blur: Ly.castSpec.blur, from: null };
+        if (Ly.cast && Ly.castFromSpec) {
+          Ly.cast.from = [];
+          for (const n of Ly.castFromSpec.names) {
+            const src = m.layerMap.get(n);
+            if (!src) bad(st, Ly.castFromSpec.a, `from: camada "${n}" não existe`);
+            else if (src !== Ly) Ly.cast.from.push(src);
+          }
+        }
+      }
     }
     for (const el of m.elements) {
       if (el.cutNames) {
@@ -1058,19 +1232,25 @@
       const { anim, frame, ease, a, st } = p;
       const dot = a.key.lastIndexOf('.');
       const name = a.key.slice(0, dot), prop = a.key.slice(dot + 1);
-      const els = m.named.get(name) || null;
-      const layer = !els ? m.layerMap.get(name) : null;
-      if (!els && !layer) { bad(st, a, `"${name}" não é forma nem camada`); continue; }
-      const type = PROPS[prop];
-      if (!type) { bad(st, a, `propriedade desconhecida "${prop}" (use ${Object.keys(PROPS).join(', ')})`); continue; }
-      if (layer && !LAYER_PROPS.includes(prop)) { bad(st, a, `camadas só animam ${LAYER_PROPS.join(' e ')}`); continue; }
+      // quem é o alvo: forma, luz ou camada — o primeiro que tiver essa propriedade
+      const cands = [
+        m.named.has(name) && { kind: 'el', table: PROPS, targets: m.named.get(name) },
+        m.lights.has(name) && { kind: 'light', table: LIGHT_PROPS, targets: null },
+        m.layerMap.has(name) && { kind: 'layer', table: LAYER_PROPS, targets: null },
+      ].filter(Boolean);
+      if (!cands.length) { bad(st, a, `"${name}" não é forma, luz nem camada`); continue; }
+      const tgt = cands.find((c) => c.table[prop]);
+      if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
+      const els = tgt.kind === 'el' ? tgt.targets : null;
+      const type = tgt.table[prop];
       let v;
       if (type === 'num') v = number(st, a, 1, 0, 1);
+      else if (type === 'free') v = number(st, a, 0);
       else if (type === 'step') {
         const t = a.text.toLowerCase();
         v = ['1', 'on', 'true', 'sim'].includes(t) ? 1 : ['0', 'off', 'false', 'nao', 'não'].includes(t) ? 0 : null;
         if (v === null) { bad(st, a, 'show= aceita 1 ou 0'); continue; }
-      } else if (type === 'color') v = color(st, a, ROOT);
+      } else if (type === 'color') v = tgt.kind === 'light' ? plainColor(st, a) : color(st, a, ROOT);
       else if (type === 'width') v = width(st, a, ROOT);
       else {
         const t = m.named.get(a.text);
@@ -1078,7 +1258,8 @@
         if (!els.every((e) => compatible(e, t[0]))) { bad(st, a, `"${a.text}" não combina com "${name}": precisa ser do mesmo tipo e ter o mesmo número de pontos`); continue; }
         v = a.text;
       }
-      if (!anim.ptracks.has(a.key)) anim.ptracks.set(a.key, { name, prop, kind: els ? 'el' : 'layer', type, keys: [], targets: els });
+      if (tgt.kind === 'light' && type === 'color' && !v) continue;
+      if (!anim.ptracks.has(a.key)) anim.ptracks.set(a.key, { name, prop, kind: tgt.kind, type, keys: [], targets: els });
       const tr = anim.ptracks.get(a.key);
       const k = { frame, v, ease };
       const same = tr.keys.findIndex((x) => x.frame === frame);
@@ -1132,11 +1313,11 @@
     let pts;
     if (el.type === 'ellipse') pts = [[el.center[0] - el.radius[0], el.center[1]], [el.center[0] + el.radius[0], el.center[1]], [el.center[0], el.center[1] - el.radius[1]], [el.center[0], el.center[1] + el.radius[1]]];
     else if (el.type === 'rect') pts = [[el.xy[0], el.xy[1]], [el.xy[0] + el.size[0], el.xy[1] + el.size[1]]];
-    else if (el.type === 'text') pts = [el.at];
+    else if (el.type === 'text' || el.type === 'emitter') pts = [el.at];
     else if (el.limb) pts = [el.hip, el.foot];
     else pts = el.pts.map((p) => [p.x, p.y]);
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

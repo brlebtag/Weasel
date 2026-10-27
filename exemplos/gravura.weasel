@@ -1,0 +1,25 @@
+# Gravura — hachura, hachura cruzada e pontos (estilo nanquim)
+canvas 480 360 bg=#f4efe4 light=-0.6,-0.8
+palette ink=#1a1712 line=3 papel=#f4efe4
+
+pattern leve hatch angle=45 gap=6 w=0.9 c=ink
+pattern media hatch angle=45 gap=4.5 w=1 c=ink cross
+pattern escura hatch angle=-30 gap=3 w=1.1 c=ink cross
+pattern pontos dots gap=6 r=0.9 c=ink
+
+layer mesa
+rect tampo 0,250 480,110 c=leve
+line borda w=2 : 0,250 480,250
+
+layer sombra
+ellipse sombraMaca 262,262 96,15 c=escura
+
+layer maca
+ellipse maca 240,186 82,78 c=papel ink=line weight=0.4
+layer volume clip=maca
+shape lado c=media : 262,96! 370,120 370,300! 190,300! 282,240 312,170
+ellipse reflexo 206,148 16,11 rot=-30 c=papel
+layer detalhes
+stroke cabo w=4 taper=0,0.5 : 240,116 246,96 258,80
+shape folha c=pontos ink=2 : 258,94 300,72 324,90 290,108!
+text legenda 240,342 "Maçã — hachura e pontos" size=15 align=center c=ink italic

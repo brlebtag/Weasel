@@ -13,7 +13,8 @@ bone bola pivot=240,300
 layer sombra
 ellipse s 240,302 46,9 c=shadow bone=sombra
 
-layer bola
+# trail= desenha os quadros anteriores, cada vez mais fracos (rastro de movimento)
+layer bola trail=3,0.45
 ellipse b 240,256 44 c=ball ink=line weight=0.3 bone=bola
 
 layer brilho clip=b

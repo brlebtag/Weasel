@@ -58,6 +58,7 @@ Saída:
       --cols <n>          colunas da grade (0 = automático)
       --padding <n>       espaço entre quadros da sprite sheet (padrão 2)
       --speed <n>         velocidade da pintura no GIF "build" (padrão 1)
+      --dither            GIF com pontilhado (menos faixas em brilhos e degradês)
       --guides            inclui as camadas "guide"
 
 Outros:
@@ -87,7 +88,7 @@ class Fail extends Error { constructor(msg, code) { super(msg); this.code = code
 const usage = (msg) => { throw new Fail(msg, 2); };
 
 function parseArgs(argv) {
-  const o = { input: null, code: null, out: null, format: null, anim: null, frame: 0, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92, layout: 'grid', cols: 0, padding: 2, speed: 1, guides: false, watch: false, check: false, info: false, force: false, quiet: false };
+  const o = { input: null, code: null, out: null, format: null, anim: null, frame: 0, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92, layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false };
   const num = (name, v, min, max) => {
     const n = Number(v);
     if (v === undefined || v === '' || !Number.isFinite(n)) usage(`${name} precisa de um número`);
@@ -124,6 +125,7 @@ function parseArgs(argv) {
       case '--cols': o.cols = Math.round(num('--cols', val(), 0, 1000)); break;
       case '--padding': o.padding = Math.round(num('--padding', val(), 0, 1000)); break;
       case '--speed': o.speed = num('--speed', val(), 0.05, 20); break;
+      case '--dither': o.dither = true; break;
       case '--guides': o.guides = true; break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
@@ -192,13 +194,22 @@ function info(m) {
   if (m.vars.size) out.push(`let      ${[...m.vars].map(([k, v]) => `${k}=${Math.round(v * 1000) / 1000}`).join(' ')}`);
   if (m.gradients.size) out.push(`gradientes ${[...m.gradients.values()].map((g) => `${g.name} (${g.type}${g.box ? ', box' : ''})`).join(', ')}`);
   if (m.variants.length) out.push(`variantes ${m.variants.join(', ')}`);
+  if (m.patterns.size) out.push(`padrões  ${[...m.patterns.values()].map((p) => `${p.name} (${p.type}${p.cross ? ', cross' : ''})`).join(', ')}`);
   if (m.defs.size) out.push(`componentes ${[...m.defs.values()].map((d) => `${d.name} (${d.uses}×)`).join(', ')}`);
+  if (m.ambient) out.push(`ambiente ${m.ambient.c} × ${m.ambient.power}`);
+  if (m.lights.size) out.push(`luzes    ${[...m.lights.values()].map((l) => `${l.name} (${l.type}, ${l.c} × ${l.power}${l.bone ? `, osso ${l.bone}` : ''}${l.flicker ? ', tremula' : ''})`).join(', ')}`);
+  const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
+  if (fin.length) out.push(`acabamento ${fin.join(' ')}`);
   out.push(`camadas  ${m.layers.length}`);
   for (const L of m.layers) {
-    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.only && `only=${L.only.join(',')}`].filter(Boolean).join(' ');
+    const fx = L.fx ? Object.keys(L.fx).filter((k) => !['glowc', 'glows', 'tintc'].includes(k)) : [];
+    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.unlit && 'unlit', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.only && `only=${L.only.join(',')}`,
+      fx.length && `efeitos: ${fx.join(',')}`, L.trail && 'trail', L.cast && 'cast', L.rim && 'rim'].filter(Boolean).join(' ');
     out.push(`  ${L.name.padEnd(14)} ${String(L.items.length).padStart(3)} item(ns)${flags ? '  ' + flags : ''}`);
   }
   out.push(`formas   ${m.elements.length}${m.elements.some((e) => e.hidden) ? ` (${m.elements.filter((e) => e.hidden).length} ocultas)` : ''}`);
+  const em = m.elements.filter((e) => e.type === 'emitter');
+  if (em.length) out.push(`partículas ${em.map((e) => `${e.name || '?'} (${e.pshape}${e.rate ? `, ${e.rate}/s` : ''}${e.burst ? `, rajada ${e.burst}` : ''})`).join(', ')}`);
   if (m.bones.size) {
     out.push(`ossos    ${[...m.bones.values()].map((b) => {
       const extra = [b.sway && 'sway', b.bob && 'bob', b.jitter && 'jitter', b.spring && 'spring'].filter(Boolean);
@@ -242,7 +253,7 @@ function pickAnim(m, name, required) {
 
 // Exporta um modelo (uma variante). sfx vai no fim do nome dos arquivos.
 async function exportModel(model, o, format, base, sfx) {
-  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, guides: o.guides, format };
+  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
 
   if (format === 'png' || format === 'jpg' || format === 'svg') {

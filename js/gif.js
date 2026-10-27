@@ -131,11 +131,20 @@
       out.byte(3); out.byte(1); out.word(opts.loop || 0); out.byte(0);
     }
     const idx = new Uint8Array(w * h);
+    // pontilhado ordenado (Bayer 4×4): troca faixas de cor por um padrão fino
+    const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    const amp = opts.dither ? 34 * Math.min(1, Math.max(0, opts.dither === true ? 1 : opts.dither)) : 0;
+    const cl = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
     frames.forEach((img, fi) => {
       const d = img.data;
       for (let i = 0, j = 0; j < idx.length; i += 4, j++) {
         if (transparent && d[i + 3] < 128) { idx[j] = tIndex; continue; }
-        const k = ((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3);
+        let r = d[i], g = d[i + 1], b = d[i + 2];
+        if (amp) {
+          const o = (BAYER[((((j / w) | 0) & 3) << 2) | (j % w & 3)] / 16 - 0.47) * amp;
+          r = cl(r + o); g = cl(g + o); b = cl(b + o);
+        }
+        const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
         const c = cache[k];
         idx[j] = c >= 0 ? c : nearest(k, (k >> 10) * 8 + 4, ((k >> 5) & 31) * 8 + 4, (k & 31) * 8 + 4);
       }

@@ -83,7 +83,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz' };
   function activeHandle(rec) {
     if (!rec) return -1;
     return rec.handles.findIndex((h) => st.caret.col >= h.from && st.caret.col <= h.to);
@@ -93,7 +93,7 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.use || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.use || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
       if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
       if (rec.st.inDef) s += ` · dentro de def ${esc(rec.st.inDef.name)}`;
@@ -119,6 +119,7 @@
     variant: 'variação de cores', include: 'usar outro arquivo', layer: 'camada', shape: 'forma fechada', stroke: 'traço ou membro', line: 'linha reta',
     ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
     cloth: 'tecido', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
+    light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
   };
   function complete({ before }) {
     const m = st.model;
@@ -135,18 +136,24 @@
     const colors = [...m.palette].filter(([, v]) => typeof v === 'string').map(([k]) => k);
     const widths = [...m.palette].filter(([, v]) => typeof v === 'number').map(([k]) => k);
     const els = [...m.named.keys()];
-    const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), { label: 'none' }];
+    const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), ...names([...m.patterns.keys()], 'padrão'), { label: 'none' }];
     const eq = cur.indexOf('=');
     if (eq > 0) {
       const key = cur.slice(0, eq);
       if (cmd === 'key' && key.includes('.')) {
         const prop = key.slice(key.lastIndexOf('.') + 1);
         if (prop === 'shape') return names(els, 'forma');
-        if (prop === 'c' || prop === 'inkc') return colorList();
+        if (prop === 'c' || prop === 'inkc') return m.lights.has(key.slice(0, key.lastIndexOf('.'))) ? names(colors, 'cor') : colorList();
         if (prop === 'show') return names(['1', '0']);
         if (prop === 'w' || prop === 'ink') return names(widths, 'espessura');
         return [];
       }
+      if (cmd === 'emitter' && key === 'shape') return names(L.PARTICLE_SHAPES, 'forma da partícula');
+      if (cmd === 'emitter' && key === 'c') return names(colors, 'cor (pode ser cor1,cor2)');
+      if (['glow', 'shadow', 'tint', 'rim', 'emit'].includes(key)) return names(colors, 'cor,…');
+      if (cmd === 'light' || cmd === 'ambient' || cmd === 'pattern') { if (key === 'c' || key === 'bg') return names(colors, 'cor'); }
+      if (key === 'cast') return names(els.filter((n) => m.named.get(n)[0].type === 'line'), 'linha do chão');
+      if (key === 'posterize') return names(['palette', '4', '8'], 'cores');
       if (cmd === 'use') {
         const def = m.defs.get(ws[1] && ws[1].text);
         if (def && def.st.attrs.has(key)) return isNaN(Number(def.st.attrs.get(key).text)) ? colorList() : names(widths, 'espessura');
@@ -174,7 +181,8 @@
       return [
         ...names([...m.bones.keys()].map((b) => b + '='), 'osso: dx,dy,rot,sx,sy'),
         ...els.flatMap((n) => Object.keys(L.PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'forma' }))),
-        ...[...m.layerMap.keys()].flatMap((n) => ['opacity', 'show'].map((p) => ({ label: `${n}.${p}=`, detail: 'camada' }))),
+        ...[...m.lights.keys()].flatMap((n) => Object.keys(L.LIGHT_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'luz' }))),
+        ...[...m.layerMap.keys()].flatMap((n) => Object.keys(L.LAYER_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'camada' }))),
         { label: 'ease=' },
       ];
     }
@@ -185,6 +193,8 @@
     }
     if (cmd === 'include' && idx === 1) return names([...st.files.keys()].filter((f) => f !== st.current), 'arquivo');
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
+    if (cmd === 'light' && idx === 2) return names(['point', 'spot', 'dir']);
+    if (cmd === 'pattern' && idx === 2) return names(['hatch', 'dots']);
     return [...names((L.ATTRS[cmd] || []).map((a) => a + '='), 'atributo'), ...names(L.FLAGS[cmd] || [], 'opção')];
   }
 
@@ -372,8 +382,10 @@
       }
       ctx.globalAlpha = 1;
     }
-    if (m.finish.pixel > 1) {
-      const img = S.renderImage(m, pose, { scale: Math.min(4, z * dpr), transparent: true, guides: st.show.guides, filter: bf && bf.filter });
+    if (m.finish.pixel > 1 || S.hasPost(m)) {
+      // acabamentos de imagem (pixel, bloom, vinheta, granulado) precisam da imagem pronta
+      const cap = m.finish.posterize ? 2 : 4;
+      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter });
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, c.w, c.h);
       ctx.imageSmoothingEnabled = true;
@@ -384,6 +396,7 @@
 
     T();
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
+    if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
     if (st.show.bones) drawBones(ctx, m, pose, z);
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (st.show.points) drawHandles(ctx, m, pose, z);
@@ -408,6 +421,44 @@
     ctx.moveTo(u.root[0], u.root[1] - r);
     ctx.lineTo(u.root[0], u.root[1] + r);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  // ícone de cada luz: sol com raios, círculo tracejado do alcance, cone do spot
+  function drawLights(ctx, m, pose, z) {
+    const lighting = S.sceneLights(m, pose);
+    if (!lighting) return;
+    ctx.save();
+    ctx.lineWidth = 1.2 / z;
+    for (const L of lighting.lights) {
+      if (L.type === 'dir') continue;
+      ctx.strokeStyle = 'rgba(255,209,102,.55)';
+      ctx.setLineDash([5 / z, 5 / z]);
+      ctx.beginPath();
+      if (L.type === 'spot') {
+        const a = (L.aim * Math.PI) / 180, h = (L.cone * Math.PI) / 180;
+        ctx.moveTo(L.x, L.y);
+        ctx.arc(L.x, L.y, L.radius, a - h, a + h);
+        ctx.closePath();
+      } else ctx.arc(L.x, L.y, L.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const r = 6 / z;
+      ctx.strokeStyle = '#ffd166';
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        ctx.moveTo(L.x + Math.cos(a) * r * 1.5, L.y + Math.sin(a) * r * 1.5);
+        ctx.lineTo(L.x + Math.cos(a) * r * 2.3, L.y + Math.sin(a) * r * 2.3);
+      }
+      ctx.stroke();
+      ctx.fillStyle = L.c;
+      ctx.beginPath();
+      ctx.arc(L.x, L.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#2a1f05';
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -698,6 +749,11 @@
     exSel.value = '';
     if (!x) return;
     const name = x.file + '.weasel';
+    // exemplos que usam include trazem junto os arquivos de que precisam (sem apagar versões editadas)
+    for (const depId of x.deps || []) {
+      const dep = W.examples.find((e) => e.id === depId);
+      if (dep && !st.files.has(dep.file + '.weasel')) st.files.set(dep.file + '.weasel', dep.src);
+    }
     if (st.files.has(name) && st.files.get(name) !== x.src && !confirm(`Substituir "${name}" pelo exemplo original?`)) { openFile(name); return; }
     openFile(name, x.src);
     hint(`Exemplo "${x.title}" aberto em ${name}.`, 3000);

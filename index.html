@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=1.2.0">
 </head>
 <body>
 <header class="top">
@@ -90,11 +90,12 @@
     <h3>Configuração</h3>
     <table>
       <tr><td><code>canvas L A bg= light=x,y</code></td><td>Tamanho, fundo (cor, gradiente ou <code>none</code>) e direção da luz, que engrossa o contorno do lado da sombra.</td></tr>
-      <tr><td><code>finish game|flat inner= pixel=</code></td><td><code>flat</code> tira os contornos. <code>inner</code> = opacidade dos traços dentro de camadas com <code>clip</code>. <code>pixel=4</code> deixa pixelado.</td></tr>
+      <tr><td><code>finish game|flat inner= pixel= bloom= vignette= grain= posterize=</code></td><td><code>flat</code> tira os contornos. <code>inner</code> = opacidade dos traços dentro de camadas com <code>clip</code>. <code>pixel=4</code> deixa pixelado. <code>bloom</code> faz o claro vazar em brilho, <code>vignette</code> escurece as bordas, <code>grain</code> põe granulado, <code>posterize=palette</code> (ou um número) reduz às cores da palette.</td></tr>
       <tr><td><code>palette nome=valor …</code></td><td>Cores e espessuras com nome. <code>ink</code> é a cor padrão dos contornos.</td></tr>
       <tr><td><code>let nome=valor …</code></td><td>Variáveis para as contas: <code>let cx=400 r={cx/8}</code>. Funções: sin, cos, tan (em graus), sqrt, abs, min, max, round, floor, ceil, pow, lerp, clamp, atan2; <code>pi</code>.</td></tr>
       <tr><td><code>gradient nome linear x1,y1 x2,y2 [box] : cores</code></td><td>Gradiente. Cores com posição opcional: <code>: #fff@0 #889@1</code> ou <code>: pena penad</code>. Com <code>box</code>, as coordenadas vão de 0 a 1 dentro de cada forma.</td></tr>
       <tr><td><code>gradient nome radial cx,cy r [fx,fy] [box] : cores</code></td><td>Gradiente circular (com foco opcional). Use o nome em <code>c=</code>, <code>inkc=</code> ou <code>bg=</code>.</td></tr>
+      <tr><td><code>pattern nome hatch|dots [cross] c= bg= gap= w= r= angle=</code></td><td>Preenchimento de hachura (linhas; <code>cross</code> cruza) ou pontos. Use o nome em <code>c=</code> de formas fechadas; o padrão acompanha a forma quando ela se mexe.</td></tr>
       <tr><td><code>variant nome chave=valor …</code></td><td>Outra versão das cores: troca valores da <code>palette</code>. Escolha no seletor da vista e exporte uma ou todas.</td></tr>
       <tr><td><code>include "arquivo.weasel"</code></td><td>Usa outro arquivo (palette, componentes, ossos…). No navegador, o arquivo precisa estar na lista de arquivos.</td></tr>
       <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Pixels por unidade, ponto raiz e colisor da Unity. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
@@ -133,6 +134,33 @@
       <tr><td><code>event quadro nome</code></td><td>Marca um evento (passo, som, golpe). Aparece no player e vai no JSON da sprite sheet.</td></tr>
     </table>
 
+    <h3>Luz</h3>
+    <table>
+      <tr><td><code>ambient c= power=</code></td><td>Luz geral da cena (a "noite azulada"). Sem <code>ambient</code>, vale branco × 0.6 quando há luzes.</td></tr>
+      <tr><td><code>light nome point x,y c= power= radius= glow= flicker= rim= bone=</code></td><td>Lâmpada. Ilumina e tinge o que estiver perto. <code>glow</code> desenha o halo, <code>flicker</code> faz tremular, <code>rim</code> põe um fio de luz na borda das formas, <code>bone=</code> faz a luz andar junto com um osso.</td></tr>
+      <tr><td><code>light nome spot x,y aim=graus cone=graus …</code></td><td>Lanterna/holofote: só ilumina dentro do cone (<code>aim</code> 0 = direita, 90 = para baixo).</td></tr>
+      <tr><td><code>light nome dir dx,dy c= power=</code></td><td>Sol/lua: luz que vem de uma direção, igual em tudo.</td></tr>
+    </table>
+    <p>Com luz na cena, toda camada é iluminada, a não ser com <code>unlit</code> (céu, interface, efeitos). Cada forma fica mais clara e com a cor da luz do lado dela, e mais escura do outro. Tudo isso é refeito a cada quadro, então personagem e luz podem se mexer. Também anima: <code>key 6 lampada.power=0.8</code> (power, radius, c, glow, aim, cone).</p>
+    <p><code>emit=cor[,força]</code> numa forma faz ela brilhar e não receber luz (olhos, janelas, vidro da lâmpada).</p>
+
+    <h3>Efeitos de camada</h3>
+    <table>
+      <tr><td><code>layer … blur=px</code></td><td>Desfoque.</td></tr>
+      <tr><td><code>layer … glow=cor,raio[,força]</code></td><td>Brilho em volta de tudo da camada.</td></tr>
+      <tr><td><code>layer … shadow=cor,dx,dy,desfoque</code></td><td>Sombra deslocada.</td></tr>
+      <tr><td><code>layer … tint=cor,quanto brightness= saturate= contrast= hue=</code></td><td>Cor: tingir, brilho, saturação, contraste e girar o matiz.</td></tr>
+      <tr><td><code>layer … trail=quadros,queda[,cor]</code></td><td>Rastro: desenha os quadros anteriores cada vez mais fracos.</td></tr>
+      <tr><td><code>layer … cast=chão[,opacidade[,desfoque]] [from=camadas]</code></td><td>Sombra projetada no chão (uma <code>line</code>), inclinada para longe de cada luz. <code>from=</code> usa a silhueta de outras camadas.</td></tr>
+      <tr><td><code>layer … rim=cor[,largura] shade=</code></td><td>Fio de luz na borda virada para a luz; <code>shade</code> = força do lado claro/escuro (padrão 0.5).</td></tr>
+    </table>
+    <p>Animam com <code>key</code>: <code>camada.blur</code>, <code>.glow</code>, <code>.tint</code>, <code>.brightness</code>, <code>.saturate</code>, <code>.contrast</code>, <code>.hue</code>.</p>
+
+    <h3>Partículas</h3>
+    <table>
+      <tr><td><code>emitter nome x,y rate= burst= life= speed= angle= spread= gravity= wind= drag= size=a,b c=cor1,cor2 shape= area=l,a seed= bone=</code></td><td>Fagulhas, fumaça, chuva, neve, vaga-lumes. <code>angle</code> em graus (−90 = para cima), <code>size</code> e <code>c</code> mudam do começo ao fim da vida, <code>shape</code>: dot, soft, square, streak, star. O sorteio é fixo, então o loop fecha certinho.</td></tr>
+    </table>
+
     <h3>No editor</h3>
     <ul>
       <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
@@ -147,7 +175,7 @@
     <h3>Exportar</h3>
     <ul>
       <li><b>PNG / JPG / SVG</b>: o quadro que está na tela (SVG é vetorial).</li>
-      <li><b>GIF animado</b>: uma animação, ou a pintura passo a passo.</li>
+      <li><b>GIF animado</b>: uma animação, ou a pintura passo a passo. "Pontilhado" troca faixas de cor por um padrão fino (bom com brilhos e luz).</li>
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e um <code>SpriteFrames</code> (.tres) pronto para um AnimatedSprite2D.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
@@ -179,6 +207,7 @@
       <label class="chk"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
       <label>Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
       <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
+      <label data-show="gif" class="chk" title="Troca as faixas de cor de brilhos e degradês por um pontilhado fino"><input type="checkbox" id="expDither"> Pontilhado (menos faixas)</label>
       <label data-show="sheet godot">Arranjo
         <select id="expLayout"><option value="grid">grade</option><option value="rows">uma linha por animação</option></select>
       </label>
@@ -196,15 +225,15 @@
   </div>
 </dialog>
 
-<script src="js/geom.js"></script>
-<script src="js/lang.js"></script>
-<script src="js/scene.js"></script>
-<script src="js/svg.js"></script>
-<script src="js/gif.js"></script>
-<script src="js/zip.js"></script>
-<script src="js/export.js"></script>
-<script src="js/editor.js"></script>
-<script src="js/examples.js"></script>
-<script src="js/app.js"></script>
+<script src="js/geom.js?v=1.2.0"></script>
+<script src="js/lang.js?v=1.2.0"></script>
+<script src="js/scene.js?v=1.2.0"></script>
+<script src="js/svg.js?v=1.2.0"></script>
+<script src="js/gif.js?v=1.2.0"></script>
+<script src="js/zip.js?v=1.2.0"></script>
+<script src="js/export.js?v=1.2.0"></script>
+<script src="js/editor.js?v=1.2.0"></script>
+<script src="js/examples.js?v=1.2.0"></script>
+<script src="js/app.js?v=1.2.0"></script>
 </body>
 </html>

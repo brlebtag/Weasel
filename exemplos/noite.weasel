@@ -1,0 +1,51 @@
+# Noite — luz, sombra projetada, partículas e efeitos
+# O Cavaleiro vem do arquivo cavaleiro.weasel (include). Toque "stand": a lanterna
+# balança, a luz dela passeia pelo Cavaleiro e a sombra no chão acompanha.
+
+# ---------- atrás do Cavaleiro (camadas antes do include) ----------
+layer cidade
+shape predios c=#151a2c smooth=0 : 0,560! 0,330! 70,330! 70,280! 150,280! 150,360! 210,360! 210,250! 280,250! 280,400! 330,400! 330,560!
+rect janela1 92,300 12,16 c=#ffd27a emit=#ffb860,0.7
+rect janela2 120,330 12,16 c=#ffd27a emit=#ffb860,0.7
+rect janela3 232,280 12,16 c=#ffe9b0 emit=#ffb860,0.5
+ellipse lua 130,110 34 c=#e9eefc emit=#bcd2ff,1
+
+layer calcada
+rect pedras 0,560 800,80 c=pedra
+line meiofio c=#2b2a36 w=4 : 0,561 800,561
+
+# a sombra do Cavaleiro: silhueta das camadas dele, deitada no chão
+layer sombra cast=ground,0.6,8 from=nail,legs,torso,cloak,cloakshade,flap,mask
+
+# o poste e a lanterna, que balança num osso (e a luz vai junto)
+bone lanterna pivot=644,154 sway=7,2.4
+layer poste
+rect haste 692,150 16,412 c=ferro ink=4
+rect braco 640,146 60,8 c=ferro ink=3
+stroke gancho w=3 c=ferro bone=lanterna : 644,154 644,168
+shape tampa c=ferro ink=3 bone=lanterna smooth=0 : 630,168 658,168 652,177 636,177
+rect vidro 634,177 20,34 r=3 c=vidro ink=3 emit=#ffb860,1.4 bone=lanterna
+shape base c=ferro ink=3 bone=lanterna smooth=0 : 632,211 656,211 650,219 638,219
+
+include "cavaleiro.weasel"
+
+# ---------- a cena (depois do include, para valer por cima do cavaleiro.weasel) ----------
+canvas 800 640 bg=ceuNoite
+finish game inner=0.6 bloom=0.35 vignette=0.5 grain=0.035
+gradient ceuNoite linear 0,0 0,640 : #0b1022@0 #1b2142@0.65 #2a2940@1
+palette ferro=#24242e vidro=#ffe2a8
+pattern pedra hatch angle=-25 gap=18 w=1.4 c=#6a6578 bg=#a39daf cross
+
+ambient c=#5866a0 power=0.5
+light lampiao point 644,194 c=#ffb860 power=1.7 radius=560 glow=110 flicker=0.12 bone=lanterna rim=5
+light lua dir -0.45,-0.85 c=#9fb4ff power=0.22
+
+layer neblina unlit blur=14 opacity=0.22
+ellipse nevoa1 300,566 260,24 c=#8fa0d8
+ellipse nevoa2 650,580 220,20 c=#8fa0d8
+
+layer chuva unlit
+emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 c=#a8b8ff60 size=4 shape=streak seed=3
+
+layer mariposas unlit
+emitter mariposa 644,194 rate=5 life=2.2 speed=40 spread=360 drag=1.2 c=#fff1c4,#fff1c400 size=5,2 shape=soft emit=#ffd27a,0.6 bone=lanterna seed=7

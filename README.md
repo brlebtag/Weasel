@@ -1,12 +1,14 @@
 # Weasel — desenho por código
 
-Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK e animação com morph e eventos. Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, tanto no navegador quanto pela **linha de comando**.
+Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, tanto no navegador quanto pela **linha de comando**.
 
 A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de uma hora*](https://www.youtube.com/watch?v=X2cFbpQCZec&t=517s) (trecho de 8:37 a 8:42), que mostra uma ferramenta assim desenhando o Cavaleiro. O vídeo não documenta a linguagem: ela foi reconstruída a partir dos quadros. As capturas e a transcrição do código que aparece na tela estão em [`referencia/`](referencia/).
 
 | Do vídeo | Feito no Weasel |
 |---|---|
 | ![Quadro do vídeo](referencia/08m37s_quadro_completo.jpg) | ![Cavaleiro pulando](docs/cavaleiro_pulo.gif) ![Coruja](docs/coruja.gif) |
+
+![Cavaleiro à noite: a lanterna balança e a luz dela muda a cor dele](docs/noite.gif)
 
 ## Como rodar
 
@@ -67,7 +69,7 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | Só verificar o código | `node cli/weasel.js meu.weasel --check` |
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 
-Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
+Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
 
 Erros aparecem como num compilador, com arquivo, linha e coluna:
 
@@ -87,7 +89,7 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Arquivos** (acima do código) | Troca de arquivo, cria, renomeia e exclui. `include` encontra os outros arquivos da lista pelo nome. |
 | **Editor** (esquerda) | Código com cores, números de linha, erros na margem e sugestões enquanto você digita. A barra de baixo mostra os erros (clique para ver a lista) e o que está sob o cursor. |
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
-| **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide`, os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
+| **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide` e as luzes (ícone e alcance), os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
 | **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. |
@@ -135,8 +137,9 @@ ellipse reflexo 218,156 22,14 rot=-30 c=#ffc2ad
 | Instrução | Para quê |
 |---|---|
 | `canvas L A bg= light=x,y` | Tamanho, fundo (cor, gradiente ou `none` = transparente) e direção da luz (engrossa o contorno do lado da sombra). |
-| `finish game\|flat inner= pixel=` | `flat` tira os contornos; `inner` é a opacidade dos traços dentro de camadas com `clip`; `pixel=4` deixa pixelado. |
+| `finish game\|flat inner= pixel= bloom= vignette= grain= posterize=` | `flat` tira os contornos; `inner` é a opacidade dos traços dentro de camadas com `clip`; `pixel=4` deixa pixelado; `bloom` faz o claro vazar em brilho; `vignette` escurece as bordas; `grain` põe granulado; `posterize=palette` (ou um número de níveis) reduz às cores da palette. |
 | `palette nome=valor ...` | Cores e espessuras com nome. `ink` é a cor padrão dos contornos. |
+| `pattern nome hatch\|dots [cross] c= bg= gap= w= r= angle=` | Preenchimento de hachura (linhas paralelas; `cross` cruza) ou de pontos, para usar em `c=` de formas fechadas. O padrão acompanha a forma quando ela se mexe. |
 | `let nome=valor ...` | Variáveis para as contas: `let cx=400 r={cx/8}`. Funções: `sin`, `cos`, `tan` (em graus), `atan2`, `sqrt`, `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `lerp`, `clamp`; constante `pi`. |
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | Gradiente linear. Cores com posição opcional: `: #fff@0 #889@1`, ou só `: pena penad`. Com `box`, as coordenadas vão de 0 a 1 dentro de cada forma que usa o gradiente. |
 | `gradient nome radial cx,cy r [fx,fy] [box] : cores` | Gradiente circular, com foco opcional. Use o nome em `c=`, `inkc=` ou `bg=`. Os gradientes seguem os ossos da forma. |
@@ -214,6 +217,50 @@ key 18 olho.shape=fechado
 key 20 olho.shape=olho
 ```
 
+### Luz
+
+```
+ambient c=#5866a0 power=0.5                                   # luz geral: noite azulada
+light lampiao point 644,194 c=#ffb860 power=1.7 radius=560 glow=110 flicker=0.12 rim=5 bone=lanterna
+light lanterna spot 120,80 aim=60 cone=30 c=#ffffff
+light lua dir -0.45,-0.85 c=#9fb4ff power=0.22
+rect vidro 634,177 20,34 c=#ffe2a8 emit=#ffb860,1.4          # brilha e não recebe luz
+```
+
+| Instrução | Para quê |
+|---|---|
+| `ambient c= power=` | Luz geral da cena. Sem `ambient`, vale branco × 0.6 quando há luzes. |
+| `light nome point x,y c= power= radius= glow= flicker= rim= bone=` | Lâmpada. Ilumina e tinge o que está perto; `glow` desenha o halo, `flicker` faz tremular, `rim` põe um fio de luz na borda das formas (na cor da luz), `bone=` faz a luz andar com um osso. |
+| `light nome spot x,y aim= cone= ...` | Lanterna/holofote: só ilumina dentro do cone (`aim` em graus: 0 = direita, 90 = para baixo). |
+| `light nome dir dx,dy c= power=` | Sol/lua: luz que vem de uma direção, igual em tudo. |
+| `emit=cor[,força]` (em qualquer forma) | A forma brilha e não recebe luz: olhos, janelas, vidro da lâmpada, fagulhas. |
+
+Com luz na cena, **toda camada é iluminada**, a não ser as marcadas com `unlit` (céu, interface, efeitos). Cada forma fica com a cor da luz que chega nela, mais clara do lado da luz e mais escura do outro. **Tudo é recalculado a cada quadro**: se o personagem anda até a lâmpada, ou se a lâmpada balança num osso, a cor e a sombra mudam junto. As luzes também animam com `key` (`lampiao.power`, `radius`, `c`, `glow`, `aim`, `cone`).
+
+### Efeitos de camada
+
+| Atributo da camada | Efeito |
+|---|---|
+| `blur=px` | Desfoque (neblina, fundo fora de foco). |
+| `glow=cor,raio[,força]` | Brilho em volta de tudo da camada. |
+| `shadow=cor,dx,dy,desfoque` | Sombra deslocada. |
+| `tint=cor,quanto` `brightness=` `saturate=` `contrast=` `hue=` | Tingir, brilho, saturação, contraste e girar o matiz. |
+| `trail=quadros,queda[,cor]` | Rastro de movimento: os quadros anteriores aparecem cada vez mais fracos. |
+| `cast=chão[,opacidade[,desfoque]]` `from=camadas` | Sombra projetada no chão (uma `line`), inclinada para longe de cada luz. `from=` usa a silhueta de outras camadas — útil para dar sombra a um personagem que vem de um `include`. |
+| `rim=cor[,largura]` `shade=` | Fio de luz na borda virada para a luz; `shade` controla o claro/escuro (padrão 0.5). |
+| `lit` / `unlit` | Recebe ou não a luz. |
+
+Os efeitos animam com `key`: `neblina.blur=8`, `aura.glow=40`, `fantasma.tint=0.5`...
+
+### Partículas
+
+```
+emitter fagulha 380,90 rate=25 life=1.2 speed=60 spread=120 angle=-90 gravity=-20 drag=0.5 c=#ffd27a,#ff600000 size=5,0 shape=soft emit=#ffb054,0.6
+emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 c=#a8b8ff60 size=4 shape=streak
+```
+
+`rate` (por segundo) ou `burst` (uma rajada a cada volta), `life`, `speed`, `angle` (−90 = para cima), `spread`, `gravity`, `wind`, `drag`, `size=início,fim`, `c=cor_início,cor_fim`, `shape` (dot, soft, square, streak, star), `area` (espalha a origem), `seed` e `bone=` (a origem anda com o osso). O sorteio é fixo, então a animação fecha o loop certinho e a exportação sai igual toda vez.
+
 ## Exportar
 
 | Formato | O que sai |
@@ -221,7 +268,7 @@ key 20 olho.shape=olho
 | **PNG** | O quadro da tela, com fundo transparente opcional. |
 | **JPG** | O quadro da tela, com qualidade ajustável. |
 | **SVG** | O quadro da tela em vetor, com gradientes, recortes e texto. Abre no navegador, no Inkscape ou no Figma. |
-| **GIF animado** | Uma animação (no fps dela) ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. |
+| **GIF animado** | Uma animação (no fps dela) ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. A opção **pontilhado** troca as faixas de cor de brilhos e degradês por um padrão fino. |
 | **Sprite sheet** | Um `.zip` com todos os quadros num PNG e um `.json` no formato do TexturePacker/Phaser (`frames`, `animations`, `meta.frameTags`), com os eventos de cada quadro e o pivô e os pixels por unidade da Unity quando houver `unity`. Arranjo em grade ou uma linha por animação. |
 | **Godot** | A folha (.png) e um `SpriteFrames` do Godot 4 (.tres) com as animações, o fps e o loop. Deixe os dois na mesma pasta do projeto e use o .tres num `AnimatedSprite2D`. |
 
@@ -235,8 +282,14 @@ Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre tod
 
 - **Cavaleiro (do vídeo)**: a reconstrução do desenho, com as mesmas linhas-guia e camadas, e as animações `stand` (com piscada), `jump` e `dash`. A espada balança com mola.
 - **Coruja**: mostra os recursos novos — `let`, componentes com parâmetros, `mirror`, gradientes `box`, morph do bico e das pálpebras, texto que aparece no pio, eventos, `sway`, molas nos tufos e duas variantes de cor.
+- **Noite**: o Cavaleiro (por `include`) numa rua à noite. A lanterna balança num osso e a luz dela vai junto, mudando a cor dele e a sombra no chão; tem chuva, mariposas que brilham, neblina com desfoque, janelas acesas, calçada em hachura e bloom/vinheta/granulado.
+- **Gravura**: maçã em estilo nanquim, só com hachura, hachura cruzada e pontos.
 - **Primeiros passos (fantasma)**: comentado, bom para aprender a sintaxe.
-- **Bola quicando**: squash & stretch com um osso só.
+- **Bola quicando**: squash & stretch com um osso só, com rastro de movimento.
+
+| Noite | Gravura |
+|---|---|
+| ![Noite](docs/noite.png) | ![Gravura](docs/gravura.png) |
 
 Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
 
@@ -247,7 +300,8 @@ index.html          página, painel de referência e janela de exportação
 css/style.css       visual (tema escuro, como no vídeo)
 js/geom.js          matrizes, curvas suaves, traço de espessura variável, cores
 js/lang.js          leitura da linguagem: linhas → modelo, com contas, componentes, include e mensagens de erro
-js/scene.js         ossos, molas, tecido, membros IK, morph, gradientes, desenho por camadas, pintura passo a passo
+js/scene.js         ossos, molas, tecido, membros IK, morph, gradientes, luz, sombras, partículas, hachura,
+                    efeitos de camada, acabamentos, desenho por camadas, pintura passo a passo
 js/svg.js           exportação em SVG
 js/editor.js        editor com cores, sugestões, Alt+arrastar números, seletor de cor e desfazer
 js/gif.js           codificador de GIF animado (median cut + LZW)
@@ -267,6 +321,10 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - A linha de comando precisa do `npm install` (a biblioteca `@napi-rs/canvas` desenha fora do navegador); o editor web não precisa de nada.
 - No navegador, `include` só encontra arquivos que estão na lista de arquivos do editor (abra-os com **Abrir…**).
 - O `.tres` do Godot aponta para a folha pelo nome do arquivo, então os dois precisam ficar na mesma pasta.
-- O SVG ignora o acabamento `pixel=`. Texto usa as fontes instaladas: o resultado pode variar de uma máquina para outra.
+- A luz é 2D: não há volume de verdade nem sombra de uma forma sobre outra; o "lado claro/escuro" vem de um degradê orientado para a luz em cada forma. A sombra projetada é a silhueta achatada no chão.
+- No SVG, a luz vira uma cor por forma (mais o degradê do lado iluminado) em vez do mapa de luz contínuo; efeitos viram filtros do SVG (programas como o Inkscape podem mostrar alguns de forma diferente). O SVG ignora `pixel=` e `posterize=`.
+- Desfoque e ajustes de cor usam `ctx.filter` do navegador. Onde ele não existe, o desfoque vira uma aproximação (diminui e aumenta a imagem) e os ajustes de cor são ignorados.
+- Texto usa as fontes instaladas: o resultado pode variar de uma máquina para outra.
+- Granulado e pontilhado deixam GIFs bem maiores (ruído não comprime).
 - Os arquivos de `exemplos/` são cópias dos exemplos embutidos em `js/examples.js` (que ficam no código para o editor funcionar abrindo o `index.html` direto).
 - O GIF tem no máximo 256 cores e transparência de 1 bit (as bordas ficam serrilhadas em fundo transparente).
