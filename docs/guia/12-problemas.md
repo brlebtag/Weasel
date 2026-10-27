@@ -12,6 +12,10 @@ O que costuma dar errado, por que acontece e como resolver.
 - Outra forma, escrita depois, está por cima dela. O que vem depois no arquivo é pintado por cima.
 - Ela está fora do canvas (lembre: y cresce para baixo).
 
+**A forma ficou atrás (ou na frente) da outra.** O que vem depois no arquivo é pintado por cima, camada por camada. Mude a linha de lugar, ou a forma de camada. Um componente é pintado na linha do `use`, não na do `def`. Veja a [ordem de pintura](04-camadas.md#a-ordem-de-pintura).
+
+**Quero que uma forma passe para a frente no meio da animação.** A animação não muda a ordem de pintura. Use duas cópias, uma antes e outra depois, presas ao mesmo osso, e ligue uma de cada vez com `.show` ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação)).
+
 **O contorno não aparece.** Formas não têm contorno se você não pedir: ponha `ink=` (por exemplo `ink=line`). Se mesmo assim não aparece, veja se há `finish flat`, que tira todos os contornos.
 
 **O contorno ficou fino de um lado.** Uma camada com `clip=` foi pintada por cima da metade de dentro dele. Mande o contorno para uma camada por cima com `inkon=` ([capítulo 4](04-camadas.md#o-contorno-por-cima-inkon)).

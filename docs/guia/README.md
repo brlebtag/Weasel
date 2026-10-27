@@ -11,7 +11,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 1 | [Primeiros passos](01-primeiros-passos.md) | a ideia, as coordenadas (y para baixo!), o formato de uma linha, como ler os erros e como rodar os exemplos |
 | 2 | [Formas](02-formas.md) | elipse, retângulo, formas com pontos (lisos, cantos e alças), traços, linhas, texto e contornos |
 | 3 | [Cores e estilos](03-cores.md) | cores com transparência, a `palette`, variantes, gradientes e hachuras |
-| 4 | [Camadas, recortes e acabamento](04-camadas.md) | `layer`, recortar por dentro e por fora, contorno por cima, buracos e o estilo do desenho inteiro |
+| 4 | [Camadas, recortes e acabamento](04-camadas.md) | `layer`, a ordem de pintura, recortar por dentro e por fora, contorno por cima, buracos e o estilo do desenho inteiro |
 | 5 | [Contas, componentes e arquivos](05-componentes.md) | `let` e `{contas}`, componentes com `def`/`use`, espelho e `include` |
 | 6 | [Ossos](06-ossos.md) | o que é um osso, o pivô, pai e filho, movimentos automáticos, molas, tecido e pernas com IK |
 | 7 | [Animação](07-animacao.md) | `anim` e `key`, como os quadros do meio são calculados (`ease`), loop, animar cores e formas, morph e eventos |

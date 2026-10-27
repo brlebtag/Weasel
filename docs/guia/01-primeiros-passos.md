@@ -9,7 +9,7 @@ No Weasel você **descreve o desenho em texto**, uma instrução por linha, e o 
 Três regras explicam quase tudo:
 
 1. **Cada linha é uma instrução.** A primeira palavra diz o que fazer (`canvas`, `ellipse`, `shape`…).
-2. **As linhas são pintadas de cima para baixo.** O que vem depois fica por cima do que veio antes, como camadas de tinta.
+2. **As linhas são pintadas de cima para baixo.** O que vem depois fica por cima do que veio antes, como camadas de tinta. (Há poucas exceções; estão no [capítulo 4](04-camadas.md#a-ordem-de-pintura).)
 3. **Tudo é número.** Posições, tamanhos, espessuras e cores são valores que você escreve. Por isso dá para mexer neles depois, até com animação.
 
 ## O primeiro desenho

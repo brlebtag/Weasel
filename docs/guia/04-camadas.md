@@ -18,10 +18,98 @@ ellipse olho …
 
 Duas coisas importantes:
 
-- **As camadas não mudam a ordem de pintura.** Elas são pintadas na ordem em que aparecem, e cada uma pinta suas formas na ordem das linhas, então o resultado é o mesmo do arquivo lido de cima para baixo. Uma camada não pode ser aberta de novo mais adiante (dá erro "camada já existe").
+- **As camadas não mudam a ordem de pintura.** Elas são pintadas na ordem em que aparecem, e cada uma pinta suas formas na ordem das linhas, então o resultado é o mesmo do arquivo lido de cima para baixo ([a ordem completa, com as exceções](#a-ordem-de-pintura)). Uma camada não pode ser aberta de novo mais adiante (dá erro "camada já existe").
 - Formas escritas **antes** do primeiro `layer` caem numa camada automática chamada `base`, pintada primeiro.
 
 Então para que servem? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: no editor, os nomes das camadas ajudam a achar as coisas.
+
+## A ordem de pintura
+
+O Weasel não pinta enquanto lê. Ele lê o arquivo **inteiro** primeiro, monta o desenho e só então pinta, nesta ordem:
+
+1. as camadas, na ordem em que aparecem no arquivo (a `base` primeiro);
+2. dentro de cada camada, as formas na ordem das linhas.
+
+Como uma camada não pode ser aberta de novo, isso dá o mesmo que ler o arquivo de cima para baixo: **o que vem depois fica por cima**.
+
+<!-- gerar: img/04_ordem.png -->
+```weasel
+canvas 460 240 bg=#f4efe6
+palette ink=#2b2a33 line=6
+
+# o def está no começo, mas não pinta nada aqui:
+# o selo só é pintado na linha do use, a última do arquivo
+def selo
+ellipse fundo 0,0 34 c=#ffd34d ink=line
+text n 0,10 "5" size=28 align=center bold
+end
+
+ellipse um 90,96 62 c=#ff6b4a ink=line
+text n1 58,92 "1" size=28 align=center bold
+ellipse dois 160,96 62 c=#4a9eff ink=line
+text n2 192,92 "2" size=28 align=center bold
+ellipse tres 125,156 62 c=#7bd36b ink=line
+text n3 125,196 "3" size=28 align=center bold
+
+rect cartao 270,40 150,150 r=12 c=#ffffff ink=line
+text n4 345,125 "4" size=28 align=center bold
+
+use selo 410,50
+```
+
+![Três círculos numerados de 1 a 3, cada um por cima do anterior, e um cartão branco (4) com um selo amarelo (5) por cima do canto](img/04_ordem.png)
+
+Os números mostram a ordem em que cada coisa foi pintada. O verde (3) cobre o vermelho e o azul porque veio depois deles. O selo (5) é o mais curioso: o `def` dele está no começo do arquivo, mas um `def` sozinho não pinta nada. O selo só é pintado na linha do `use`, a última, e por isso fica por cima do cartão.
+
+### Linhas que não pintam
+
+Só as linhas que desenham entram nessa fila: `shape`, `ellipse`, `rect`, `stroke`, `line`, `text`, `use` e os emissores de partículas (`emitter`). As outras (`canvas`, `palette`, `let`, `bone`, `light`, `anim`, `key`, `box`…) não mudam quem fica na frente, seja qual for a posição delas no arquivo. É por isso que um `let` vale no arquivo inteiro e as `key` podem vir fora de ordem: tudo é lido antes de qualquer coisa ser pintada.
+
+### As exceções
+
+Algumas coisas não são pintadas na linha em que estão escritas:
+
+| O quê | Onde é pintado |
+|---|---|
+| `use` | na linha do `use`, não na do `def` (o selo acima) |
+| `include "arquivo"` | o arquivo inteiro entra na linha do `include`: o que vem antes fica atrás dele, o que vem depois fica na frente ([capítulo 5](05-componentes.md#vários-arquivos-include)) |
+| `mirror=` | a cópia espelhada é pintada na linha dela, não na da forma original ([capítulo 5](05-componentes.md#espelho-mirror)) |
+| `inkon=camada` | o preenchimento fica na camada da forma, mas o **contorno** é pintado junto com a outra camada ([mais abaixo](#o-contorno-por-cima-inkon)) |
+| `cast=` (sombra no chão) | no lugar da camada que tem o `cast=`, logo **antes** das formas dela, para a sombra ficar por baixo ([capítulo 8](08-luz-efeitos.md#sombra-projetada-no-chão)) |
+| o halo das lâmpadas (`light … glow=`) | depois de todas as camadas, por cima do desenho inteiro ([capítulo 8](08-luz-efeitos.md#os-três-tipos-de-luz-e-o-ambiente)) |
+| atores e camadas num filme | pela distância: o mais longe (`depth=` maior) primeiro, `front` na frente dos outros da mesma distância e `screen` por cima de tudo. Só quando a distância empata vale a ordem do arquivo ([capítulo 10](10-filme.md#profundidade-e-paralaxe)) |
+
+### Trocar quem fica na frente durante uma animação
+
+Uma animação não muda a ordem de pintura: ela move, gira, estica, troca cores e liga e desliga formas, mas não troca a posição das linhas. Quando algo precisa passar **por trás** e depois **pela frente** de outra coisa (uma bola dando a volta num poste, um braço que passa atrás do corpo), faça **duas cópias**: uma escrita antes e outra depois, presas ao mesmo osso, e deixe só uma ligada de cada vez com `.show`:
+
+<!-- gerar: img/04_volta.gif -a volta -->
+```weasel
+canvas 320 200 bg=#f4efe6
+palette ink=#2b2a33 line=5 bola=#ff6b4a madeira=#a8794f
+
+bone bola pivot=160,110
+
+# a cópia de trás vem antes do poste…
+ellipse atras 160,110 28 c=bola ink=line bone=bola
+rect poste 154,16 12,176 r=4 c=madeira ink=line
+# …e a da frente, depois dele
+ellipse frente 160,110 28 c=bola ink=line bone=bola
+
+anim volta frames=24 fps=12
+key 0 bola=-110,0,0,1,1 atras.show=1 frente.show=0
+key 6 bola=0,-18,0,0.85,0.85
+key 12 bola=110,0,0,1,1 atras.show=0 frente.show=1
+key 18 bola=0,18,0,1.15,1.15
+key 24 bola=-110,0,0,1,1 atras.show=1 frente.show=0
+```
+
+![Uma bola vermelha dá a volta num poste: na ida passa por trás dele, na volta passa pela frente](img/04_volta.gif)
+
+- `atras` é escrita antes do poste e `frente` depois dele. As duas seguem o osso `bola`, então estão sempre no mesmo lugar.
+- Na ida (quadros 0 a 12) só `atras` está ligada, e o poste a cobre. Na volta (quadros 12 a 24) só `frente` está ligada, e ela cobre o poste.
+- A troca acontece nos quadros 0 e 12, quando a bola está longe do poste, para ninguém ver o salto.
+- Na ida a bola sobe e encolhe um pouco (`0.85`), e na volta desce e cresce (`1.15`): isso dá a impressão de longe e perto.
 
 ## Recortar por dentro: `clip=`
 
