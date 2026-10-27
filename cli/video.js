@@ -32,7 +32,9 @@ function findFfmpeg(custom) {
 
 // Os sons de um trecho como entradas do ffmpeg e o filtro que os mistura: cada som cortado (from=, dur=),
 // com volume, atrasado até o lugar dele e somado aos outros. first = número da primeira entrada de som.
-function audioMix(clips, first) {
+// O silêncio do fim vai só até dur: um apad sem fim deixa o ffmpeg produzir som à frente do vídeo
+// enquanto o x264 segura quadros (preset slow), e a memória e o arquivo crescem sem parar.
+function audioMix(clips, first, dur) {
   const inputs = [], parts = [];
   clips.forEach((c, i) => {
     if (c.loop) inputs.push('-stream_loop', '-1');
@@ -40,7 +42,8 @@ function audioMix(clips, first) {
     const ms = Math.round(c.at * 1000);
     parts.push(`[${first + i}:a]atrim=start=${c.offset.toFixed(4)}:duration=${c.dur.toFixed(4)},asetpts=PTS-STARTPTS,volume=${c.vol},aformat=sample_rates=48000:channel_layouts=stereo,adelay=${ms}:all=1[s${i}]`);
   });
-  const mix = clips.length > 1 ? `${clips.map((_, i) => `[s${i}]`).join('')}amix=inputs=${clips.length}:normalize=0:dropout_transition=0,apad[aout]` : '[s0]apad[aout]';
+  const pad = `apad=whole_dur=${dur.toFixed(4)}`;
+  const mix = clips.length > 1 ? `${clips.map((_, i) => `[s${i}]`).join('')}amix=inputs=${clips.length}:normalize=0:dropout_transition=0,${pad}[aout]` : `[s0]${pad}[aout]`;
   return { inputs, filter: [...parts, mix].join(';') };
 }
 
@@ -58,20 +61,23 @@ function ffmpegArgs(fmt, w, h, fps, o, out) {
     args.push('-vf', vf.join(','), '-c:v', 'prores_ks', '-profile:v', alpha ? '4' : '3', '-vendor', 'apl0', ...bt709);
   } else if (fmt === 'webm') {
     vf.push(alpha ? 'format=yuva420p' : 'scale=out_color_matrix=bt709:out_range=tv,format=yuv420p');
-    args.push('-vf', vf.join(','), '-c:v', 'libvpx-vp9', '-crf', String(o.crf === null ? 30 : o.crf), '-b:v', '0', '-row-mt', '1', ...(alpha ? [] : bt709));
+    args.push('-vf', vf.join(','), '-c:v', 'libvpx-vp9', '-crf', String(o.crf === null ? (o.small ? 36 : 30) : o.crf), '-b:v', '0', '-row-mt', '1', ...(alpha ? [] : bt709));
   } else {
-    // mp4 e mkv: H.264, o que qualquer player e editor aceitam
+    // mp4 e mkv: H.264, o que qualquer player e editor aceitam. --small (para mandar) troca tempo
+    // de codificação por tamanho: slow + tune animation comprime bem as cores lisas do desenho,
+    // e o ffmpeg continua mais rápido que o render
     vf.push('scale=out_color_matrix=bt709:out_range=tv,format=yuv420p');
-    args.push('-vf', vf.join(','), '-c:v', 'libx264', '-preset', 'medium', '-crf', String(o.crf === null ? 18 : o.crf), ...bt709);
+    const speed = o.small ? ['-preset', 'slow', '-tune', 'animation'] : ['-preset', 'medium'];
+    args.push('-vf', vf.join(','), '-c:v', 'libx264', ...speed, '-crf', String(o.crf === null ? (o.small ? 23 : 18) : o.crf), ...bt709);
     if (fmt === 'mp4') args.push('-movflags', '+faststart');
   }
   if (o.audio && o.audio.clips.length) {
     // com som, o filtro do vídeo vai para o -filter_complex junto com a mistura
     const i = args.indexOf('-vf'), vchain = args[i + 1];
     args.splice(i, 2);
-    const mix = audioMix(o.audio.clips, 1);
+    const mix = audioMix(o.audio.clips, 1, o.audio.dur);
     args.splice(args.indexOf('-i') + 2, 0, ...mix.inputs);
-    const codec = fmt === 'mov' ? ['-c:a', 'pcm_s16le'] : fmt === 'webm' ? ['-c:a', 'libopus', '-b:a', '160k'] : ['-c:a', 'aac', '-b:a', '192k'];
+    const codec = fmt === 'mov' ? ['-c:a', 'pcm_s16le'] : fmt === 'webm' ? ['-c:a', 'libopus', '-b:a', o.small ? '96k' : '160k'] : ['-c:a', 'aac', '-b:a', o.small ? '128k' : '192k'];
     args.push('-filter_complex', `[0:v]${vchain}[vout];${mix.filter}`, '-map', '[vout]', '-map', '[aout]', ...codec, '-t', o.audio.dur.toFixed(4));
   }
   args.push(out);
@@ -253,7 +259,7 @@ async function exportFilm(model, o, format, source, h) {
       const out = h.withSuffix(o.out || `${source.base}.wav`, p.suffix);
       const clips = clipsOf(p), dur = p.frames.length / fps;
       if (!clips.length) h.usage('o trecho não tem som (audio)');
-      const mix = audioMix(clips, 0);
+      const mix = audioMix(clips, 0, dur);
       fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
       const r = spawnSync(bin, ['-y', '-hide_banner', '-loglevel', 'error', ...mix.inputs, '-filter_complex', mix.filter, '-map', '[aout]', '-t', dur.toFixed(4), '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
       if (r.status !== 0) throw new h.Fail(`o ffmpeg falhou: ${(r.stderr || '').trim()}`, 3);
@@ -297,7 +303,7 @@ async function exportFilm(model, o, format, source, h) {
           if (!proc) {
             size = [r.w, r.h];
             const audio = clips.length ? { clips, dur: p.frames.length / fps } : null;
-            proc = spawn(bin, ffmpegArgs(format, r.w, r.h, fps, { transparent: ctx.transparent, crf: o.crf, audio }, out), { stdio: ['pipe', 'ignore', 'pipe'] });
+            proc = spawn(bin, ffmpegArgs(format, r.w, r.h, fps, { transparent: ctx.transparent, crf: o.crf, small: o.small, audio }, out), { stdio: ['pipe', 'ignore', 'pipe'] });
             proc.stderr.on('data', (d) => { errText += d; });
             proc.stdin.on('error', () => {});
             closed = new Promise((res) => proc.on('close', res));

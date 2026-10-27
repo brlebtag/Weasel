@@ -60,6 +60,8 @@ Filme (arquivo com a linha film):
       --time <t>          png/jpg: o quadro nesse tempo (--frame <n> também vale)
   -j, --jobs <n>          threads de render (padrão: núcleos − 1, até 8)
       --crf <n>           qualidade do mp4/webm (menor = melhor; padrão 18 no mp4, 30 no webm)
+      --small             vídeo menor, para mandar (WhatsApp, e-mail): H.264 mais lento e ajustado
+                          para desenho, CRF 23 e som a 128k (webm: CRF 36 e som a 96k)
       --ffmpeg <caminho>  onde está o ffmpeg (ou a variável WEASEL_FFMPEG)
   -o mix.wav              só o som do filme (os audio misturados), para o editor de vídeo
       --edl --fcpxml      junto com o vídeo, a linha do tempo para o editor de vídeo (DaVinci
@@ -97,6 +99,7 @@ Exemplos:
   weasel filme.weasel --frames -o quadros/q.png --from 10s --to 20s
   weasel filme.weasel -o capa.png --time 4s
   weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
+  weasel filme.weasel -o para_mandar.mp4 --small --burn-subs
   weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
 `;
 
@@ -110,7 +113,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, ffmpeg: null,
+    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -142,6 +145,7 @@ function parseArgs(argv) {
       case '--to': o.to = val(); break;
       case '-j': case '--jobs': o.jobs = Math.round(num('--jobs', val(), 1, 64)); break;
       case '--crf': o.crf = Math.round(num('--crf', val(), 0, 63)); break;
+      case '--small': o.small = true; break;
       case '--ffmpeg': o.ffmpeg = val(); break;
       case '--normal': o.normal = true; break;
       case '--no-normal': o.normal = false; break;
@@ -417,6 +421,7 @@ async function run(o) {
   if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
     if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
+    if (o.small && format === 'mov') usage('--small vale para mp4, mkv e webm; o .mov é ProRes, feito para editar');
     await V.exportFilm(model, o, format, source, { save, usage, Fail, paint, withSuffix, kb });
     return { code: 0, watched };
   }
