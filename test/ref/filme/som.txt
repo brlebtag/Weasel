@@ -1,0 +1,11 @@
+som fala 11.400-15.600 boca de coruja: X@0 F@0.25 A@0.63 F@0.72 D@0.9 A@1.08 F@1.17 B@1.38 F@1.43 A@1.51 D@1.61 E@2.1 A@2.4 F@2.47 D@2.62 E@2.79 A@2.99 E@3.08 A@3.24 E@3.31 A@3.5 D@3.61 B@3.83 D@3.89
+som grilos 0.000-20.500
+legendas (pt)
+1
+00:00:11,650 --> 00:00:13,650
+Uh-uuh! Boa noite, Cavaleiro.
+
+2
+00:00:13,850 --> 00:00:15,450
+Cuidado com o fantasma…
+

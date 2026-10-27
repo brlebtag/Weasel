@@ -306,6 +306,8 @@ use olho 198,232 bone=cabeca
 use olho 282,232 flip=x bone=cabeca
 shape bico c=bico ink=line bone=cabeca : {cx},256 252,270 {cx},292! 228,270
 shape bicoAberto c=bico ink=line bone=cabeca hidden : {cx},254 255,270 {cx},304! 225,270
+# bocas do lip sync (num filme: audio … lips=coruja): o bico abre por morph, pouco ou muito
+mouth bico A=bico B=bicoAberto@0.3 C=bicoAberto@0.6 D=bicoAberto E=bicoAberto@0.45 F=bicoAberto@0.2
 
 # só aparece durante a animação "pia"
 layer fala only=pia
@@ -468,10 +470,11 @@ shape moita3 c=grama : 2500,1100! 2620,950 2820,930 2960,990 3060,1100!
 shape moita4 c=folha : 3600,1100! 3700,980 3880,960 4020,1100!
 `;
 
-  const film = `# Filme — planos, atores, câmera com profundidade e luz da cena
-# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel):
-# o filme só diz onde eles ficam, o que fazem e para onde a câmera olha.
+  const film = `# Filme — planos, atores, câmera com profundidade, luz da cena, fala e legendas
+# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel, coruja.weasel):
+# o filme só diz onde eles ficam, o que fazem, para onde a câmera olha e quem fala.
 # Exporte em vídeo pela linha de comando:  weasel filme.weasel -o filme.mp4
+# (sai com o som de referência misturado e as legendas em filme.srt)
 
 film fps=24
 canvas 1920 1080 bg=ceu
@@ -481,6 +484,9 @@ finish game bloom=0.3 vignette=0.45
 # a luz do lampião (o desenho do poste está no cenário) ilumina o cenário e os atores
 ambient c=#5866a0 power=0.5
 light lampiao point 2000,566 c=#ffb860 power=1.6 radius=720 glow=130 flicker=0.1
+
+# som de fundo em loop, o filme inteiro (som e legendas de referência; a mixagem final é no editor de vídeo)
+audio grilos "som/grilos.wav" loop vol=0.35
 
 # atores declarados antes do primeiro shot valem para todos os planos
 actor cenario "cenario.weasel" 0,0
@@ -508,7 +514,16 @@ at 4.2s fantasma.pos=2200,880 ease=out
 at 4.6s heroi.flip=x
 at 5s heroi.flip=none
 
-# 3. de perto: o pulo, o tranco no pouso e a saída de cena
+# 3. a coruja no lampião avisa o Cavaleiro: o bico segue a fala (lip sync) e as legendas vão para o .srt
+shot conversa dur=5s
+actor coruja "coruja.weasel" 2059,512 origin=240,404 scale=0.5 hide=ceu,galho,fala
+camera 1930,660 zoom=1.3
+at 0s fantasma.pos=2200,880
+audio fala "som/coruja_fala.wav" at=0.4s lips=coruja
+sub 0.65s "Uh-uuh! Boa noite, Cavaleiro." dur=2s
+sub +0.2s "Cuidado com o fantasma…" dur=1.6s
+
+# 4. de perto: o pulo, o tranco no pouso e a saída de cena
 shot pulo dur=4.5s
 camera 1800,690 zoom=1.6
 at 0s fantasma.pos=2200,880
@@ -775,6 +790,98 @@ layer desenho
 shape forma c=#7cb7ff ink=line : 220,140 380,130 420,250 300,300! 190,250
 `;
 
+  // ---------- sons dos exemplos ----------
+  // Gerados por código (sem arquivo de áudio no repositório do editor): a fala é de brincadeira, sílabas
+  // sem sentido com as vogais certas e entonação (como a fala dos Sims); os grilos fazem um loop de 3 s.
+  const RATE = 16000;
+  function noise(seed) {
+    let s = seed >>> 0;
+    return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return (s / 4294967296) * 2 - 1; };
+  }
+  const FORMANTS = { a: [800, 1250], e: [480, 1900], i: [320, 2300], o: [520, 900], u: [360, 720] };
+  const PLOSIVE = 'bpdtgkcq', FRICATIVE = 'sfvzxjç', NASAL = 'mn';
+  // frases: [{ at: segundos, text: 'u-uu bo-a noi-te', f0, end: '.'|'?'|'!' }]
+  function voice(phrases, total) {
+    const n = Math.round(total * RATE), out = new Float32Array(n), rnd = noise(7);
+    const segs = [];
+    for (const ph of phrases) {
+      const words = ph.text.split(' ');
+      const sylls = words.flatMap((w, wi) => w.split('-').map((s, si, arr) => ({ s, last: si === arr.length - 1, lastWord: wi === words.length - 1 })));
+      let t = ph.at;
+      sylls.forEach((sy, k) => {
+        const lead = /^[^aeiou]*/.exec(sy.s)[0], vow = sy.s.slice(lead.length).replace(/[^aeiou]/g, '') || 'a';
+        const dur = 0.13 + (sy.s.length % 3) * 0.02 + (sy.last ? 0.05 : 0) + (sy.lastWord && sy.last ? 0.1 : 0);
+        const u = k / Math.max(1, sylls.length - 1);
+        const shape = ph.end === '?' ? 1 - 0.1 * u + 0.35 * u * u : ph.end === '!' ? 1.12 - 0.25 * u : 1.04 - 0.2 * u;
+        segs.push({ t, lead, vow, dur, f0: ph.f0 * shape });
+        t += dur + (sy.last ? 0.07 : 0.01);
+      });
+    }
+    let phase = 0, f1 = 500, f2 = 1500;
+    for (let i = 0; i < n; i++) {
+      const t = i / RATE;
+      const sg = segs.find((g) => t >= g.t && t < g.t + g.dur);
+      if (!sg) { phase = 0; continue; }
+      const local = t - sg.t;
+      const cons = sg.lead ? 0.045 : 0;
+      let v = 0;
+      // consoante: estalo, chiado ou zumbido no começo da sílaba
+      if (local < cons) {
+        const c = sg.lead[0];
+        if (FRICATIVE.includes(c)) v = rnd() * 0.04;
+        else if (PLOSIVE.includes(c)) v = local > cons * 0.6 ? rnd() * 0.05 : 0;
+        else if (NASAL.includes(c)) v = Math.sin(2 * Math.PI * 180 * t) * 0.05;
+        else v = rnd() * 0.02;
+      }
+      // vogal: harmônicos da voz pesados pelos formantes da vogal (que deslizam de uma sílaba para a outra)
+      const vk = sg.vow.length > 1 && local > sg.dur * 0.55 ? sg.vow[1] : sg.vow[0];
+      f1 += (FORMANTS[vk][0] - f1) * 0.004;
+      f2 += (FORMANTS[vk][1] - f2) * 0.004;
+      const f0 = sg.f0 * (1 + 0.012 * Math.sin(2 * Math.PI * 5.5 * t));
+      phase += (2 * Math.PI * f0) / RATE;
+      const env = Math.min(1, (local - cons * 0.5) / 0.03) * Math.min(1, (sg.dur - local) / 0.05);
+      if (env > 0) {
+        let s = 0, norm = 0;
+        const K = Math.min(36, Math.floor(RATE / 2 / f0));
+        for (let k = 1; k <= K; k++) {
+          const f = k * f0;
+          const a = (1 / (1 + ((f - f1) / 90) ** 2) + 0.7 / (1 + ((f - f2) / 130) ** 2) + 0.2 / (1 + ((f - 2700) / 220) ** 2)) / Math.pow(k, 0.7);
+          s += a * Math.sin(k * phase);
+          norm += a * a;
+        }
+        v += (s / Math.sqrt(norm)) * 0.3 * env; // todas as vogais com a mesma força
+      }
+      out[i] = v;
+    }
+    let peak = 0;
+    for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(out[i]));
+    for (let i = 0; i < n; i++) out[i] *= 0.8 / (peak || 1);
+    return out;
+  }
+  // dois grilos (cri-cri-cri) e um chiado baixinho; os períodos cabem nos 3 s, então o loop não emenda
+  function crickets() {
+    const n = 3 * RATE, out = new Float32Array(n), rnd = noise(11);
+    const bugs = [{ f: 4300, per: 1, at: 0.1, a: 0.16 }, { f: 4800, per: 0.75, at: 0.42, a: 0.1 }];
+    for (let i = 0; i < n; i++) {
+      const t = i / RATE;
+      let v = rnd() * 0.006;
+      for (const b of bugs) {
+        const local = (((t - b.at) % b.per) + b.per) % b.per;
+        const k = Math.floor(local / 0.07), u = (local - k * 0.07) / 0.04;
+        if (k < 3 && u < 1) v += b.a * Math.sin(Math.PI * u) ** 2 * Math.sin(2 * Math.PI * b.f * t);
+      }
+      out[i] = v;
+    }
+    return out;
+  }
+  W.exampleMedia = {
+    'som/coruja_fala.wav': () => W.audio.encodeWav(voice([
+      { at: 0.25, text: 'u-uu bo-a noi-te ca-va-lei-ro', f0: 340, end: '!' },
+      { at: 2.45, text: 'cui-da-do com o fan-tas-ma', f0: 320, end: '.' },
+    ], 4.2), RATE),
+    'som/grilos.wav': () => W.audio.encodeWav(crickets(), RATE),
+  };
+
   W.examples = [
     { id: 'knight', title: 'Cavaleiro (do vídeo)', file: 'cavaleiro', src: knight },
     { id: 'owl', title: 'Coruja (componentes, gradientes, morph)', file: 'coruja', src: owl },
@@ -783,7 +890,7 @@ shape forma c=#7cb7ff ink=line : 220,140 380,130 420,250 300,300! 190,250
     { id: 'ghost', title: 'Primeiros passos (fantasma)', file: 'fantasma', src: ghost },
     { id: 'ball', title: 'Bola quicando', file: 'bola', src: ball },
     { id: 'set', title: 'Cenário (camadas de profundidade)', file: 'cenario', src: set },
-    { id: 'film', title: 'Filme (planos, atores, câmera)', file: 'filme', src: film, deps: ['set', 'knight', 'ghost'] },
+    { id: 'film', title: 'Filme (planos, atores, câmera, fala)', file: 'filme', src: film, deps: ['set', 'knight', 'ghost', 'owl'] },
     { id: 'topdown', title: 'Furão (top-down, caixas, direções)', file: 'furao', src: topdown },
     { id: 'tiles', title: 'Blocos (tileset para o Godot)', file: 'blocos', src: tiles },
   ];

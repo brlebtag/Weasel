@@ -8,24 +8,136 @@
 
   // ---------- linha do tempo ----------
   // Os planos do arquivo e os das cenas (scene) em sequência, em quadros do filme.
+  // Também os sons (audio) e as legendas (sub e text= dos sons), em segundos do filme.
   function timeline(model) {
     if (model._timeline) return model._timeline;
-    const fps = model.film.fps, entries = [];
+    const fps = model.film.fps, entries = [], audios = [], subs = [];
+    const lang = model.film.lang;
     let start = 0;
+    // um som no tempo: começa em base + at e dura dur=, o resto do arquivo, ou (loop, ou duração
+    // desconhecida) até o fim do bloco (o shot, ou a cena inteira para sons fora de shot)
+    const clip = (a, owner, base, blockEnd) => {
+      const t0 = base + a.at;
+      const fileDur = a.media && a.media.duration ? Math.max(0, a.media.duration - a.from) : null;
+      let dur = a.dur !== null ? a.dur : !a.loop && fileDur !== null ? fileDur : blockEnd - t0;
+      if (a.dur === null && fileDur === null && a.cues && a.cues.length && !a.loop) dur = a.cues[a.cues.length - 1].end - a.from;
+      const c = { a, owner, start: t0, end: t0 + Math.max(0, dur), fileDur };
+      audios.push(c);
+      if (a.text) subs.push({ start: c.start, end: c.end, text: a.text, lang: a.lang || owner.film.lang || lang, src: a });
+    };
+    const sub = (s, owner, base) => subs.push({ start: base + s.t, end: base + s.t + s.dur, text: s.text, lang: s.lang || owner.film.lang || lang, src: s });
     const walk = (owner, prefix, fit, depth) => {
+      const first = start;
       for (const s of owner.film.seq) {
         if (s.kind === 'shot') {
           const frames = Math.max(1, Math.round(s.shot.dur * fps));
           // o plano sem nome de uma cena (arquivo sem shot) leva só o nome do arquivo
           const name = s.shot.implicit && prefix ? prefix.slice(0, -1) : prefix + s.shot.name;
           entries.push({ owner, shot: s.shot, name, start, frames, fit, index: entries.length });
+          for (const a of s.shot.audios) clip(a, owner, start / fps, (start + frames) / fps);
+          for (const sb of s.shot.subs) sub(sb, owner, start / fps);
           start += frames;
         } else if (depth < 8) walk(s.model, prefix + s.file.replace(/\.[^.]+$/, '') + '/', fitOf(owner, s.model, fit), depth + 1);
       }
+      for (const a of owner.film.audios) clip(a, owner, first / fps, start / fps);
+      for (const sb of owner.film.subs) sub(sb, owner, first / fps);
     };
     walk(model, '', null, 0);
-    model._timeline = { fps, entries, frames: start, duration: start / fps };
+    subs.sort((p, q) => p.start - q.start || p.end - q.end);
+    model._timeline = { fps, entries, frames: start, duration: start / fps, audios, subs };
     return model._timeline;
+  }
+
+  // ---------- lip sync ----------
+  // Quando a boca não existe no personagem, a próxima da lista (a última opção é a boca parada).
+  const LIP_CHAIN = { A: ['A', 'X'], B: ['B', 'C', 'A'], C: ['C', 'B', 'D'], D: ['D', 'C', 'B'], E: ['E', 'C', 'B'], F: ['F', 'A', 'B'], G: ['G', 'B', 'A'], H: ['H', 'C', 'B'], X: ['X'] };
+  // as bocas de um som: do Rhubarb (cues=) ou calculadas do .wav (uma vez só)
+  function cuesOf(a) {
+    if (a.cues) return a.cues;
+    if (a._auto === undefined) a._auto = a.media && a.media.mono ? W.audio.lipCues(a.media.mono, a.media.sampleRate) : null;
+    return a._auto;
+  }
+  // a boca que o ator faz no segundo T do filme (null = sem fala agora)
+  function lipAt(model, entry, name, T) {
+    let v = null;
+    for (const c of timeline(model).audios) {
+      if (c.owner !== entry.owner || c.a.lips !== name || T < c.start || T >= c.end) continue;
+      const cues = cuesOf(c.a);
+      if (!cues) continue;
+      const local = T - c.start;
+      v = W.audio.cueAt(cues, c.a.from + (c.a.loop && c.fileDur ? local % c.fileDur : local));
+    }
+    return v;
+  }
+  // troca a forma da boca (mouth) pela da letra, por morph, numa cópia da pose
+  function applyLips(s, letter) {
+    const mo = s.model && s.model.mouth;
+    if (!mo || !s.pose) return;
+    let v = null;
+    for (const k of LIP_CHAIN[letter] || [letter]) if (mo.map[k]) { v = mo.map[k]; break; }
+    if (!v) return;
+    const props = new Map(s.pose.props);
+    for (const el of s.model.named.get(mo.name) || []) {
+      const to = S.findNamed(s.model, v.shape, el.inst);
+      if (!to) continue;
+      props.set(el.id, Object.assign({}, props.get(el.id) || {}, { shape: { from: el, to, t: v.t } }));
+    }
+    s.pose = Object.assign({}, s.pose, { props, geo: new Map() });
+    s.lips = letter;
+  }
+
+  // ---------- legendas ----------
+  // as legendas de um trecho [from, to) em segundos, com o tempo contado do começo do trecho
+  function subtitles(model, from, to, lang) {
+    const tl = timeline(model), want = lang || model.film.lang;
+    return tl.subs.filter((s) => s.lang === want && s.end > from && s.start < to)
+      .map((s) => ({ start: Math.max(0, s.start - from), end: Math.min(to, s.end) - from, text: s.text }));
+  }
+  const langs = (model) => [...new Set(timeline(model).subs.map((s) => s.lang))];
+  // legenda desenhada no quadro: letras claras com contorno escuro, centralizadas embaixo
+  function drawSubs(ctx, model, frame, lang) {
+    const tl = timeline(model), T = frame / tl.fps, want = lang || model.film.lang;
+    const now = tl.subs.filter((s) => s.lang === want && T >= s.start && T < s.end);
+    if (!now.length) return;
+    const Wd = model.canvas.w, Hd = model.canvas.h, size = model.film.subsize || Math.round(Hd * 0.05);
+    ctx.save();
+    ctx.font = `600 ${size}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    const lines = [];
+    for (const s of now) {
+      for (const par of s.text.split('\n')) {
+        let line = '';
+        for (const w of par.split(' ')) {
+          const tryLine = line ? line + ' ' + w : w;
+          if (line && ctx.measureText(tryLine).width > Wd * 0.82) { lines.push(line); line = w; } else line = tryLine;
+        }
+        lines.push(line);
+      }
+    }
+    const lh = size * 1.22;
+    let y = Hd - Hd * 0.065 - (lines.length - 1) * lh;
+    for (const l of lines) {
+      ctx.lineWidth = size * 0.2;
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.strokeText(l, Wd / 2, y);
+      ctx.fillStyle = model.film.subc || '#ffffff';
+      ctx.fillText(l, Wd / 2, y);
+      y += lh;
+    }
+    ctx.restore();
+  }
+
+  // os sons de um trecho [from, to) para misturar (o ffmpeg na linha de comando, o editor ao tocar)
+  function audioClips(model, from, to) {
+    const out = [];
+    for (const c of timeline(model).audios) {
+      if (c.end <= from || c.start >= to || !(c.a.vol > 0)) continue;
+      const cut = Math.max(0, from - c.start);
+      out.push({ a: c.a, media: c.a.media, at: Math.max(0, c.start - from), offset: c.a.from + cut, dur: Math.min(c.end, to) - Math.max(c.start, from), vol: c.a.vol, loop: c.a.loop, fileDur: c.fileDur, start: c.start });
+    }
+    return out;
   }
   // cena com outro tamanho de quadro: cabe inteira no quadro de quem a usa, centralizada
   function fitOf(parent, sub, parentFit) {
@@ -257,10 +369,13 @@
     const cam = opts.view === 'world' ? Object.assign({}, STILL) : cameraAt(entry, local, fps);
     const spose = stagePose(entry, t);
     const who = [{ stage: true, ac: { name: '', depth: 1, screen: false, front: false, unlit: false }, model: owner, pose: spose, mat: M.id(), depth: 1, opacity: 1, show: 1, order: -1 }];
+    const T = loc.frame / fps;
     for (const ac of [...owner.film.actors, ...shot.actors]) {
       const s = actorState(shot, ac, t);
       s.order = ac.order;
       s.mat = actorMatrix(s);
+      const lip = lipAt(model, entry, ac.name, T);
+      if (lip) applyLips(s, lip);
       who.push(s);
     }
     return { loc, entry, owner, shot, t, cam, who, W: owner.canvas.w, H: owner.canvas.h, fit: entry.fit };
@@ -357,6 +472,7 @@
       ctx.fillRect(0, 0, fs.W, fs.H);
     }
     ctx.restore();
+    if (opts.subs) { ctx.save(); setMat(ctx, base); drawSubs(ctx, model, fs.loc.frame, opts.lang); ctx.restore(); }
     return fs;
   }
 
@@ -373,7 +489,7 @@
     const loc = locate(model, frame);
     const post = S.hasPost(model) || !loc ? model : loc.entry.owner;
     const px = model.finish.pixel || 1;
-    const o = { transparent: opts.transparent, view: opts.view, guides: opts.guides };
+    const o = { transparent: opts.transparent, view: opts.view, guides: opts.guides, subs: opts.subs, lang: opts.lang };
     if (px > 1) {
       const small = document.createElement('canvas');
       small.width = Math.max(1, Math.round(W2 / px));
@@ -422,5 +538,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt };
+  W.film = { timeline, locate, timecode, frameState, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

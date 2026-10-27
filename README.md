@@ -15,11 +15,11 @@ A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de um
 O Weasel atende a dois usos, sem um atrapalhar o outro:
 
 - **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…). Sai como [cena pronta do Godot](#godot) — AnimatedSprite2D, colisão, hitbox e hurtbox que mudam a cada quadro, eventos, normal map para a luz 2D e direções espelhadas —, como TileSet, ou em sprite sheet para qualquer motor.
-- **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). Sai em vídeo ou sequência de PNG; som, vozes e montagem ficam com o editor de vídeo.
+- **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). A fala de referência (`audio`) mexe a boca dos personagens (lip sync) e vira legenda. Sai em vídeo (com o som de referência) ou sequência de PNG, mais as legendas em `.srt`; a mixagem final e a montagem ficam com o editor de vídeo.
 
 Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
 
-![Quadros do filme de exemplo: letreiro, câmera descendo da lua, o fantasma chegando, o pulo e a saída de cena](docs/filme.jpg)
+![Quadros do filme de exemplo: letreiro, câmera descendo da lua, o fantasma chegando, a coruja falando com legendas e o pulo](docs/filme.jpg)
 
 ## Como rodar
 
@@ -95,9 +95,14 @@ No `.tscn`, `--no-normal` tira o normal map e `--no-mirror` não gera o lado esp
 | Só um plano, ou só um trecho | `--shot pulo` · `--from 10s --to 20s` (também `48f`, `1m30s` ou `00:01:12`) |
 | Sequência de PNG | `node cli/weasel.js exemplos/filme.weasel --frames -o quadros/q.png` |
 | Um quadro (capa, miniatura) | `node cli/weasel.js exemplos/filme.weasel -o capa.png --time 4s` |
-| Planos, tempos e atores | `node cli/weasel.js exemplos/filme.weasel --info` |
+| Planos, tempos, atores, sons e legendas | `node cli/weasel.js exemplos/filme.weasel --info` |
+| Só o som de referência (a mistura dos `audio`) | `node cli/weasel.js exemplos/filme.weasel -o som.wav` |
+| Revisão com as legendas desenhadas | `node cli/weasel.js exemplos/filme.weasel -o revisao.mp4 -s 0.5 --burn-subs` |
+| Vídeo sem som, legendas em .vtt | `node cli/weasel.js exemplos/filme.weasel -o filme.mp4 --no-audio --subs vtt` |
 
 Vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado (no Windows: `winget install ffmpeg`; ou `--ffmpeg <caminho>`). Os quadros são renderizados em paralelo (`-j`, padrão: núcleos − 1, até 8) e entram no ffmpeg em ordem; o vídeo sai idêntico ao render numa thread só. MP4 sai em H.264 BT.709 (qualidade `--crf`, padrão 18), `.mov` em ProRes 422 HQ (ou 4444 com `-t`), o que os editores de vídeo abrem com mais facilidade, e `.webm` em VP9. A sequência de imagens leva o número do quadro do filme no nome (`q_00264.png`), então um trecho exportado depois se encaixa no lugar certo.
+
+Os `audio` do filme entram misturados no vídeo (AAC no MP4/MKV, PCM no MOV, Opus no WebM), no lugar e no volume certos, para conferir o tempo; `--no-audio` tira. As legendas saem ao lado do vídeo, com o mesmo nome (`filme.srt`; outras línguas como `filme.en.srt`), contadas do começo do trecho exportado; `--subs vtt` troca o formato, `--subs none` não grava, `--burn-subs` (ou `film subs=burn`) desenha na imagem e `--lang` escolhe a língua desenhada.
 
 Erros aparecem como num compilador, com arquivo, linha e coluna:
 
@@ -119,6 +124,7 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
 | **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide`, as luzes (ícone e alcance), as caixas do jogo e a grade do tileset, os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
+| **♪ e CC** (filmes) | Tocam o som dos `audio` junto com o player e mostram as legendas na tela. O botão **♪ N** na barra de arquivos lista os sons guardados no navegador. |
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
 | **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. Num filme: quadro atual, GIF, vídeo WebM ou sequência PNG. |
@@ -362,6 +368,35 @@ at 4.5s camera.fade=1 ease=linear
 - **Onde o ator fica:** `x,y` é onde vai o `root=` do `unity` do arquivo (o ponto entre os pés, o mesmo do jogo); sem `unity`, o canto 0,0 do desenho. `origin=` escolhe outro ponto.
 - **Filmes longos:** um arquivo por cena (`cena01.weasel`, `cena02.weasel`…, cada um com seus planos), um arquivo principal que só junta as cenas com `scene`, e personagens e cenários em arquivos próprios, compartilhados com o jogo. Exporte o filme todo (os planos saem na ordem, com o mesmo código de tempo do player) ou cada plano com `--shots`, e monte com o som no editor de vídeo.
 
+### Fala: som, lip sync e legendas
+
+```
+# no arquivo do personagem (coruja.weasel): as bocas, por morph de uma forma
+shape bico c=bico ink=line bone=cabeca : 240,256 252,270 240,292! 228,270
+shape bicoAberto c=bico ink=line bone=cabeca hidden : 240,254 255,270 240,304! 225,270
+mouth bico A=bico B=bicoAberto@0.3 C=bicoAberto@0.6 D=bicoAberto E=bicoAberto@0.45 F=bicoAberto@0.2
+
+# no filme
+audio grilos "som/grilos.wav" loop vol=0.35                 # fora de shot: o filme inteiro
+shot conversa dur=5s
+actor coruja "coruja.weasel" 2059,512 origin=240,404 scale=0.5
+audio fala "som/coruja_fala.wav" at=0.4s lips=coruja        # o bico segue a fala
+sub 0.65s "Uh-uuh! Boa noite, Cavaleiro." dur=2s
+sub +0.2s "Cuidado com o fantasma…" dur=1.6s
+```
+
+| Instrução | Para quê |
+|---|---|
+| `audio nome "arquivo" at= from= dur= vol= lips=ator cues="arquivo" text="…" lang= [loop]` | Som de referência (fala, música, efeito). Dentro de um `shot`, `at=` conta do começo dele; fora, do começo do filme. `from=` pula o começo do arquivo, `dur=` corta, `vol=` é o volume, `loop` repete o arquivo. `lips=` faz a boca do ator seguir a fala; `cues=` usa as bocas calculadas pelo [Rhubarb Lip Sync](https://github.com/DanielSWolf/rhubarb-lip-sync) (`.json` ou `.tsv`). `text=` vira a legenda durante o som. |
+| `sub tempo "texto" dur= lang=` | Legenda. `+0.3s` começa 0,3 s depois do fim da anterior; sem `dur=`, dura o tempo de ler. `\n` quebra a linha. |
+| `mouth boca A=forma B=forma@0.4 … X=forma` | No arquivo do personagem: qual forma é a boca e a forma de cada boca do lip sync, por morph (mesmo tipo e mesmo número de pontos). `@0.4` é quanto do morph. Sem uma letra, vale a mais parecida; sem nenhuma, a boca fica parada. Num jogo, não muda nada. |
+| `film … lang= subs=burn subsize= subc=` | Língua das legendas (padrão `pt`), legendas desenhadas no vídeo por padrão, tamanho e cor. |
+
+- **As bocas** seguem o padrão do Rhubarb (os desenhos de boca clássicos da animação): **A** fechada (M, B, P), **B** pouco aberta, **C** aberta, **D** bem aberta, **E** arredondada (O), **F** biquinho (U), **G** dentes no lábio (F, V), **H** língua (L), **X** descanso.
+- **Lip sync automático:** sem `cues=`, o Weasel ouve o `.wav`: o volume diz o quanto a boca abre e o timbre (os formantes) diz qual vogal soa — a → D, e → C, i → B, o → E, u → F —; pausas curtas fecham a boca (A). É bom para rascunho e para vozes de brincadeira; para voz de verdade, rode o Rhubarb (`rhubarb -f json fala.wav -o fala.json`) e use `cues="fala.json"`, que acerta as consoantes.
+- **Sons no editor:** abra os arquivos com **Abrir…** (`.wav`, `.mp3`, `.ogg`, `.m4a`, `.flac`); eles ficam guardados no navegador e aparecem no **♪ N**. O `audio` acha o som pelo nome do arquivo, com ou sem a pasta. O lip sync automático precisa do `.wav`; os outros formatos servem para ouvir.
+- O som e as legendas são de **referência**: servem para animar no tempo certo. A mixagem final (música, efeitos, vozes) continua no editor de vídeo — exporte o vídeo (ou `-o som.wav`) e o `.srt` e monte lá.
+
 ## Exportar
 
 | Formato | O que sai |
@@ -374,6 +409,7 @@ at 4.5s camera.fade=1 ease=linear
 | **Godot** | Um `.zip` para uma pasta do projeto: a folha (.png), o `SpriteFrames` (.tres) e, com as opções (ligadas por padrão), o normal map, a **cena pronta** (.tscn) e o `weasel_anim.gd` (veja [Godot](#godot)). Num arquivo com `tileset`, sai o **TileSet**. Com as opções desligadas, sai só a folha e o .tres, como antes. |
 | **Vídeo** (filme) | WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. MP4, ProRes e filmes longos saem pela linha de comando. |
 | **Sequência PNG** (filme) | Um `.zip` com um PNG por quadro, numerado pelo quadro do filme. |
+| **Legendas** (filme) | `.srt` e `.vtt` do filme inteiro ou de um plano, uma língua por arquivo. Nas outras abas do filme, **Legendas na imagem** desenha as legendas no quadro. |
 
 Num filme, PNG e JPG exportam o quadro que está no player; GIF, vídeo e sequência exportam o filme inteiro ou um plano e só são gerados ao clicar (fechar a janela cancela).
 
@@ -443,7 +479,7 @@ Tudo foi conferido dentro do Godot 4.7.2: a cena carrega, as animações (inclus
 - **Gravura**: maçã em estilo nanquim, só com hachura, hachura cruzada e pontos.
 - **Primeiros passos (fantasma)**: comentado, bom para aprender a sintaxe.
 - **Bola quicando**: squash & stretch com um osso só, com rastro de movimento.
-- **Filme**: três planos com o Cavaleiro e o fantasma — os arquivos do jogo, sem mudar nada — num cenário de morros em camadas de profundidade: letreiro que aparece e some, câmera descendo da lua com paralaxe, câmera seguindo o fantasma com atraso, o lampião do cenário iluminando os dois, tranco da câmera no pouso do pulo e fade no fim.
+- **Filme**: quatro planos com o Cavaleiro, o fantasma e a coruja — os arquivos do jogo — num cenário de morros em camadas de profundidade: letreiro que aparece e some, câmera descendo da lua com paralaxe, câmera seguindo o fantasma com atraso, o lampião iluminando todo mundo, a coruja pousada no poste falando (o bico segue a fala, com legendas), grilos o filme inteiro, tranco da câmera no pouso do pulo e fade no fim. Os sons são gerados por código (uma fala de brincadeira e os grilos), em [`exemplos/som/`](exemplos/som/).
 - **Cenário**: o cenário do filme, um desenho comum em camadas com `depth` (lua, serra, morros, chão, poste, vaga-lumes e moitas na frente).
 - **Furão**: personagem top-down para o Godot, com três vistas (frente, costas, lado), parado, andando e atacando com espada; caixas de corpo, dano e golpe (que liga só nos quadros do ataque), eventos `passo` e `golpe`; o lado esquerdo sai espelhado.
 - **Blocos**: tileset de plataforma — grama, terra, pedra em hachura, plataforma de uma via, rampa com colisão no formato da forma, espinhos, caixa, moeda que brilha, flor e uma nuvem que o `auto` vira três blocos.
@@ -473,6 +509,7 @@ js/scene.js         ossos, molas, tecido, membros IK, morph, gradientes, luz, so
                     efeitos de camada, acabamentos, desenho por camadas, pintura passo a passo
 js/normal.js        normal maps (relevo das formas) para a luz 2D do Godot
 js/godot.js         Godot 4: SpriteFrames, cena .tscn (caixas, eventos, direções), ajudante e TileSet
+js/audio.js         som: lê e escreve WAV, lip sync (automático e do Rhubarb), legendas .srt e .vtt
 js/film.js          filme: planos em sequência, atores, at, câmera com profundidade, luz do filme nos atores
 js/webm.js          vídeo no navegador (WebCodecs) e o arquivo .webm
 js/svg.js           exportação em SVG
@@ -486,6 +523,7 @@ cli/weasel.js       linha de comando (usa os mesmos arquivos de js/)
 cli/runtime.js      carrega os arquivos de js/ no Node (para a linha de comando e os testes)
 cli/video.js        filme na linha de comando: ffmpeg, sequência, GIF, render em paralelo
 cli/film-worker.js  thread que renderiza quadros de um filme
+cli/media.js        acha e lê os sons (audio) para a linha de comando
 test/regress.js     testes de regressão; test/ref/ guarda as referências
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
@@ -505,7 +543,10 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - Granulado e pontilhado deixam GIFs bem maiores (ruído não comprime).
 - Os arquivos de `exemplos/` são cópias dos exemplos embutidos em `js/examples.js` (que ficam no código para o editor funcionar abrindo o `index.html` direto).
 - O GIF tem no máximo 256 cores e transparência de 1 bit (as bordas ficam serrilhadas em fundo transparente).
-- Filme não tem som: trilha, vozes e efeitos sonoros entram no editor de vídeo (ainda sem sincronia labial nem legendas).
+- O som do filme é de referência: o Weasel posiciona e mistura os `audio` para conferir o tempo, mas não edita som (sem fades de áudio, equalização ou efeitos). A mixagem final é no editor de vídeo.
+- O lip sync automático é uma estimativa pelo volume e pelo timbre (não reconhece fonemas); para voz de verdade, as bocas do Rhubarb (`cues=`) acertam mais. Ele precisa do `.wav`.
+- `loop` repete o arquivo inteiro (o `from=` vale só para a primeira vez).
+- No navegador, os sons ficam guardados no próprio navegador (não vão no **Baixar todos**) e o vídeo WebM sai sem som; para vídeo com som, use a linha de comando.
 - Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
 - Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.

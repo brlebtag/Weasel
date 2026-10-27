@@ -30,7 +30,22 @@ function findFfmpeg(custom) {
   return null;
 }
 
-// Argumentos do ffmpeg para cada formato. Os quadros chegam crus (RGBA) pela entrada padrão.
+// Os sons de um trecho como entradas do ffmpeg e o filtro que os mistura: cada som cortado (from=, dur=),
+// com volume, atrasado até o lugar dele e somado aos outros. first = número da primeira entrada de som.
+function audioMix(clips, first) {
+  const inputs = [], parts = [];
+  clips.forEach((c, i) => {
+    if (c.loop) inputs.push('-stream_loop', '-1');
+    inputs.push('-i', c.media.path);
+    const ms = Math.round(c.at * 1000);
+    parts.push(`[${first + i}:a]atrim=start=${c.offset.toFixed(4)}:duration=${c.dur.toFixed(4)},asetpts=PTS-STARTPTS,volume=${c.vol},aformat=sample_rates=48000:channel_layouts=stereo,adelay=${ms}:all=1[s${i}]`);
+  });
+  const mix = clips.length > 1 ? `${clips.map((_, i) => `[s${i}]`).join('')}amix=inputs=${clips.length}:normalize=0:dropout_transition=0,apad[aout]` : '[s0]apad[aout]';
+  return { inputs, filter: [...parts, mix].join(';') };
+}
+
+// Argumentos do ffmpeg para cada formato. Os quadros chegam crus (RGBA) pela entrada padrão;
+// o.audio = { clips, dur } mistura os sons de referência junto.
 function ffmpegArgs(fmt, w, h, fps, o, out) {
   const args = ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${w}x${h}`, '-r', String(fps), '-i', '-'];
   const vf = [];
@@ -49,6 +64,15 @@ function ffmpegArgs(fmt, w, h, fps, o, out) {
     vf.push('scale=out_color_matrix=bt709:out_range=tv,format=yuv420p');
     args.push('-vf', vf.join(','), '-c:v', 'libx264', '-preset', 'medium', '-crf', String(o.crf === null ? 18 : o.crf), ...bt709);
     if (fmt === 'mp4') args.push('-movflags', '+faststart');
+  }
+  if (o.audio && o.audio.clips.length) {
+    // com som, o filtro do vídeo vai para o -filter_complex junto com a mistura
+    const i = args.indexOf('-vf'), vchain = args[i + 1];
+    args.splice(i, 2);
+    const mix = audioMix(o.audio.clips, 1);
+    args.splice(args.indexOf('-i') + 2, 0, ...mix.inputs);
+    const codec = fmt === 'mov' ? ['-c:a', 'pcm_s16le'] : fmt === 'webm' ? ['-c:a', 'libopus', '-b:a', '160k'] : ['-c:a', 'aac', '-b:a', '192k'];
+    args.push('-filter_complex', `[0:v]${vchain}[vout];${mix.filter}`, '-map', '[vout]', '-map', '[aout]', ...codec, '-t', o.audio.dur.toFixed(4));
   }
   args.push(out);
   return args;
@@ -100,7 +124,7 @@ class Pool {
 async function eachFrame(frames, ctx, kind, onFrame) {
   if (!ctx.pool) {
     for (const f of frames) {
-      const cv = W.film.renderFrame(ctx.model, f, { scale: ctx.scale, transparent: ctx.transparent });
+      const cv = W.film.renderFrame(ctx.model, f, { scale: ctx.scale, transparent: ctx.transparent, subs: ctx.subs, lang: ctx.lang });
       if (kind === 'raw') {
         const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
         await onFrame(f, { w: cv.width, h: cv.height, buf: Buffer.from(d.buffer, d.byteOffset, d.byteLength) });
@@ -173,6 +197,44 @@ async function exportFilm(model, o, format, source, h) {
   const parts = o.shots ? entries.map((e) => ({ suffix: '_' + tag(e), frames: range([e]) })) : [{ suffix: o.shot ? '_' + tag(entries[0]) : '', frames: range(entries) }];
   for (const p of parts) if (!p.frames.length) h.usage(`nenhum quadro no trecho pedido${p.suffix ? ` (${p.suffix.slice(1)})` : ''}`);
   const total = parts.reduce((n, p) => n + p.frames.length, 0);
+  const span = (p) => [p.frames[0] / fps, (p.frames[p.frames.length - 1] + 1) / fps];
+  const burn = !!(o.burnSubs || model.film.burn);
+  // legendas ao lado (filme.srt, e filme.en.srt para outras línguas)
+  const writeSubs = (out, p) => {
+    if (o.subs === 'none' || format === 'gif') return;
+    const [a, b] = span(p);
+    for (const lang of W.film.langs(model)) {
+      const list = W.film.subtitles(model, a, b, lang);
+      if (!list.length) continue;
+      const file = out.replace(/(_\d{5})?\.[^./\\]+$/, '') + (lang === model.film.lang ? '' : '.' + lang) + '.' + o.subs;
+      h.save(file, Buffer.from(o.subs === 'vtt' ? W.audio.vtt(list) : W.audio.srt(list)), `${list.length} legenda${list.length > 1 ? 's' : ''}${lang === model.film.lang ? '' : ` (${lang})`}`, o.quiet);
+    }
+  };
+  const clipsOf = (p) => {
+    if (!o.audio) return [];
+    const [a, b] = span(p);
+    const all = W.film.audioClips(model, a, b), ok = all.filter((c) => c.media && c.media.path);
+    if (ok.length < all.length && !o.quiet) console.error(h.paint('33', 'aviso') + `: som não encontrado: ${all.filter((c) => !(c.media && c.media.path)).map((c) => c.a.file).join(', ')}`);
+    return ok;
+  };
+
+  // só o som (a mistura dos audio), para o editor de vídeo
+  if (format === 'wav') {
+    const bin = findFfmpeg(o.ffmpeg);
+    if (!bin) throw new h.Fail('não achei o ffmpeg (precisa dele para misturar o som)', 2);
+    for (const p of parts) {
+      const out = h.withSuffix(o.out || `${source.base}.wav`, p.suffix);
+      const clips = clipsOf(p), dur = p.frames.length / fps;
+      if (!clips.length) h.usage('o trecho não tem som (audio)');
+      const mix = audioMix(clips, 0);
+      fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+      const r = spawnSync(bin, ['-y', '-hide_banner', '-loglevel', 'error', ...mix.inputs, '-filter_complex', mix.filter, '-map', '[aout]', '-t', dur.toFixed(4), '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
+      if (r.status !== 0) throw new h.Fail(`o ffmpeg falhou: ${(r.stderr || '').trim()}`, 3);
+      if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `48 kHz estéreo, ${W.film.timecode(p.frames.length, fps)}, ${clips.length} ${clips.length > 1 ? 'sons' : 'som'} · ${h.kb(fs.statSync(out).size)}`)}`);
+      writeSubs(out, p);
+    }
+    return;
+  }
 
   // um quadro só
   const single = (format === 'png' || format === 'jpg') && !o.frames;
@@ -180,7 +242,7 @@ async function exportFilm(model, o, format, source, h) {
     let f = o.time !== null ? t2f(o.time, '--time') : o.frame;
     if (o.shot && o.time === null && !o.frameSet) f = entries[0].start;
     if (f >= tl.frames) h.usage(`o filme vai do quadro 0 ao ${tl.frames - 1} (${W.film.timecode(tl.frames - 1, fps)})`);
-    const cv = W.film.renderFrame(model, f, { scale: o.scale, transparent: o.transparent && format !== 'jpg' });
+    const cv = W.film.renderFrame(model, f, { scale: o.scale, transparent: o.transparent && format !== 'jpg', subs: burn, lang: o.lang });
     const buf = format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png');
     const loc = W.film.locate(model, f);
     h.save(o.out || `${source.base}_${String(f).padStart(5, '0')}.${format}`, buf, `${cv.width}×${cv.height}, quadro ${f} (${W.film.timecode(f, fps)}, shot ${loc.entry.name})`, o.quiet);
@@ -189,9 +251,9 @@ async function exportFilm(model, o, format, source, h) {
 
   let jobs = o.jobs === null ? (total >= 48 ? Math.max(1, Math.min(8, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1)) : 1) : o.jobs;
   jobs = Math.max(1, Math.min(jobs, total));
-  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null };
+  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang };
   if (o.transparent && (format === 'mp4' || format === 'mkv') && !o.quiet) console.error(h.paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou --frames (PNG)`);
-  if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent });
+  if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang });
   const summary = (secs) => `${total} quadros em ${secs.toFixed(1)}s (${(total / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`;
 
   try {
@@ -203,10 +265,12 @@ async function exportFilm(model, o, format, source, h) {
         fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
         const bar = progress(path.basename(out), p.frames.length, o.quiet);
         let proc = null, errText = '', closed = null, size = null, n = 0;
+        const clips = clipsOf(p);
         await eachFrame(p.frames, ctx, 'raw', async (f, r) => {
           if (!proc) {
             size = [r.w, r.h];
-            proc = spawn(bin, ffmpegArgs(format, r.w, r.h, fps, { transparent: ctx.transparent, crf: o.crf }, out), { stdio: ['pipe', 'ignore', 'pipe'] });
+            const audio = clips.length ? { clips, dur: p.frames.length / fps } : null;
+            proc = spawn(bin, ffmpegArgs(format, r.w, r.h, fps, { transparent: ctx.transparent, crf: o.crf, audio }, out), { stdio: ['pipe', 'ignore', 'pipe'] });
             proc.stderr.on('data', (d) => { errText += d; });
             proc.stdin.on('error', () => {});
             closed = new Promise((res) => proc.on('close', res));
@@ -226,7 +290,8 @@ async function exportFilm(model, o, format, source, h) {
         const secs = bar.end();
         if (code !== 0) throw new h.Fail(`o ffmpeg falhou (${code}): ${errText.trim()}`, 3);
         const bytes = fs.statSync(out).size;
-        if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `${size[0]}×${size[1]}, ${fps} fps, ${W.film.timecode(p.frames.length, fps)} · ${h.kb(bytes)} · ${summary(secs)}`)}`);
+        if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `${size[0]}×${size[1]}, ${fps} fps, ${W.film.timecode(p.frames.length, fps)}${clips.length ? `, com ${clips.length} ${clips.length > 1 ? 'sons' : 'som'}` : ''} · ${h.kb(bytes)} · ${summary(secs)}`)}`);
+        writeSubs(out, p);
       }
       return;
     }
@@ -254,6 +319,7 @@ async function exportFilm(model, o, format, source, h) {
       let n = 0, bytes = 0, size = null;
       await eachFrame(p.frames, ctx, format, async (f, r) => { n++; bytes += r.bytes; size = size || [r.w, r.h]; bar.tick(n); });
       const secs = bar.end();
+      writeSubs(pattern, p);
       if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${ctx.nameOf(p.frames[0])} … ${path.basename(ctx.nameOf(p.frames[p.frames.length - 1]))}  ${h.paint('2', `${size[0]}×${size[1]}, ${fps} fps · ${h.kb(bytes)} · ${summary(secs)}`)}`);
     }
   } finally {
@@ -278,6 +344,18 @@ function filmInfo(m) {
   if (F.actors.length) out.push(`atores   ${F.actors.map(actor).join(', ')}`);
   const own = m.layers.filter((L) => L.items.length);
   if (own.length) out.push(`camadas  ${own.map((L) => L.name + (L.depth !== 1 ? ` (depth ${L.depth})` : '') + (L.screen ? ' (screen)' : '') + (L.only ? ` (only ${L.only.join(',')})` : '')).join(', ')}`);
+  if (tl.audios.length) {
+    out.push(`sons     ${tl.audios.length}`);
+    for (const c of tl.audios) {
+      const a = c.a, notes = [a.file];
+      if (!a.media) notes.push('NÃO ACHEI');
+      if (a.lips) notes.push(`boca de ${a.lips}${a.cues ? ' (Rhubarb)' : ''}`);
+      if (a.loop) notes.push('loop');
+      if (a.vol !== 1) notes.push(`vol ${a.vol}`);
+      out.push(`  ${a.name.padEnd(16)} ${W.film.timecode(Math.round(c.start * F.fps), F.fps)}  ${secs(c.end - c.start).padStart(6)}  ${notes.join(' · ')}`);
+    }
+  }
+  if (tl.subs.length) out.push(`legendas ${tl.subs.length} (${W.film.langs(m).join(', ')})${F.burn ? ', desenhadas no vídeo' : ''}`);
   out.push(`planos   ${tl.entries.length}`);
   for (const e of tl.entries) {
     const s = e.shot, c = s.cam, notes = [];

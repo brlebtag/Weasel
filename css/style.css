@@ -131,6 +131,12 @@ main {
 .kw-comp { color: #a6d96a; }
 .kw-fx { color: #ffd166; }
 .kw-film { color: #ff9e6d; }
+.player .tg { min-width: 30px; padding: 4px 6px; opacity: 0.5; }
+.player .tg.on { opacity: 1; color: #ffd166; }
+.media-list { position: absolute; z-index: 20; top: 42px; left: 8px; right: 8px; margin-top: 2px; background: var(--panel, #1b1e27); border: 1px solid var(--line); border-radius: 6px; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.media-row { display: flex; gap: 8px; align-items: center; font: 12px var(--mono); padding: 3px 4px; }
+.media-row .mn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-row .md { color: var(--dim); }
 .expr { color: #c6a6ff; }
 .str { color: #a6e3a1; }
 .tan { color: #5cc6d4; }

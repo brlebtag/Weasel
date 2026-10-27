@@ -92,6 +92,8 @@ use olho 198,232 bone=cabeca
 use olho 282,232 flip=x bone=cabeca
 shape bico c=bico ink=line bone=cabeca : {cx},256 252,270 {cx},292! 228,270
 shape bicoAberto c=bico ink=line bone=cabeca hidden : {cx},254 255,270 {cx},304! 225,270
+# bocas do lip sync (num filme: audio … lips=coruja): o bico abre por morph, pouco ou muito
+mouth bico A=bico B=bicoAberto@0.3 C=bicoAberto@0.6 D=bicoAberto E=bicoAberto@0.45 F=bicoAberto@0.2
 
 # só aparece durante a animação "pia"
 layer fala only=pia

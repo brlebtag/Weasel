@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css?v=1.4.0">
+<link rel="stylesheet" href="css/style.css?v=1.5.0">
 </head>
 <body>
 <header class="top">
@@ -14,7 +14,7 @@
     <button id="btnNew" title="Começar um desenho novo">Novo</button>
     <button id="btnOpen" title="Abrir arquivos .weasel (dá para escolher vários)">Abrir…</button>
     <button id="btnSave" title="Baixar o arquivo atual (Ctrl+S)">Salvar</button>
-    <input type="file" id="fileIn" accept=".weasel,.txt" multiple hidden>
+    <input type="file" id="fileIn" accept=".weasel,.txt,.json,.tsv,.wav,.mp3,.ogg,.opus,.m4a,.flac,audio/*" multiple hidden>
   </div>
   <div class="tb right">
     <button id="btnHelp" title="Referência da linguagem (F1)">Referência</button>
@@ -30,7 +30,9 @@
       <button id="fileRen" title="Renomear este arquivo">Renomear</button>
       <button id="fileDel" title="Excluir este arquivo do navegador">Excluir</button>
       <button id="fileZip" title="Baixar todos os arquivos num .zip" hidden>Baixar todos</button>
+      <button id="mediaBtn" title="Sons guardados neste navegador (para o audio dos filmes)" hidden>♪</button>
     </div>
+    <div id="mediaList" class="media-list" hidden></div>
     <div id="editor"></div>
     <div class="status">
       <button id="errBtn" class="errs ok" type="button">sem erros</button>
@@ -68,6 +70,8 @@
       <button id="bNext" class="ico" title="Próximo quadro (→)"><svg viewBox="0 0 16 16"><path d="M13 3v10M3 3l8 5-8 5z"/></svg></button>
       <input type="range" id="frameSl" min="0" max="0" value="0" aria-label="Quadro">
       <span id="frameLbl" class="flbl">—</span>
+      <button id="bSound" class="tg on" title="Som do filme no player" hidden>♪</button>
+      <button id="bSubs" class="tg on" title="Legendas na tela" hidden>CC</button>
       <select id="speedSel" title="Velocidade">
         <option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option>
       </select>
@@ -188,10 +192,13 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <tr><td><code>camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=</code></td><td>Para onde a câmera olha (centro do quadro). <code>follow=ator</code> segue um ator; <code>lag=</code> (segundos) atrasa e suaviza; <code>shake=</code> treme; <code>fade=1</code> escurece.</td></tr>
       <tr><td><code>at tempo alvo.prop=valor … ease=</code></td><td>Muda algo naquele momento do plano. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também.</td></tr>
       <tr><td><code>scene "arquivo"</code></td><td>Acrescenta os planos de outro arquivo de filme (um arquivo por cena).</td></tr>
+      <tr><td><code>audio nome "arquivo" at= from= dur= vol= lips=ator cues= text= [loop]</code></td><td>Som de referência (fala, música). Num <code>shot</code>, <code>at=</code> conta do começo dele; fora, do começo do filme. <code>lips=</code> faz a boca do ator seguir a fala (pelo .wav, ou pelas bocas do Rhubarb em <code>cues=</code>); <code>text=</code> vira legenda. Abra os sons com <b>Abrir…</b>.</td></tr>
+      <tr><td><code>sub tempo "texto" dur= lang=</code></td><td>Legenda (<code>+0.3s</code> = depois da anterior). Sai em .srt/.vtt; <code>film subs=burn</code> desenha no vídeo.</td></tr>
+      <tr><td><code>mouth boca A=forma C=forma@0.6 …</code></td><td>No arquivo do personagem: as bocas do lip sync por morph (A fechada, B pouco aberta, C aberta, D bem aberta, E arredondada, F biquinho, G F/V, H L, X descanso).</td></tr>
       <tr><td><code>layer … depth= [screen] [front]</code></td><td>Profundidade: 2 = duas vezes mais longe (anda menos quando a câmera anda), 0.5 = perto. <code>screen</code> fica preso na tela; <code>front</code> fica na frente dos atores da mesma profundidade. No filme, <code>only=</code> aceita nomes de plano.</td></tr>
     </table>
     <p>Tempo: <code>2s</code>, <code>1.5</code>, <code>500ms</code>, <code>48f</code> (quadros), <code>1m30s</code>; <code>+1s</code> conta do <code>at</code> anterior. O valor declarado vale como <code>at 0s</code>; entre um <code>at</code> e o seguinte a mudança é gradual, e <code>ease=</code> diz como ela chega. <code>anim</code>, <code>flip</code>, <code>show</code>, <code>follow</code> e <code>variant</code> trocam de uma vez (<code>anim</code> recomeça do quadro 0).</p>
-    <p>As luzes do filme iluminam o cenário e os atores. Na câmera parada (centro, zoom 1) tudo fica como foi desenhado; a profundidade só aparece quando a câmera anda. A chave <b>Câmera</b> alterna entre o que a câmera filma e o mundo inteiro com a moldura da câmera. Para vídeo longo, MP4 ou ProRes: <code>weasel filme.weasel -o filme.mp4</code>.</p>
+    <p>As luzes do filme iluminam o cenário e os atores. Na câmera parada (centro, zoom 1) tudo fica como foi desenhado; a profundidade só aparece quando a câmera anda. A chave <b>Câmera</b> alterna entre o que a câmera filma e o mundo inteiro com a moldura da câmera; no player, <b>♪</b> toca o som e <b>CC</b> mostra as legendas. Para vídeo longo, MP4 ou ProRes: <code>weasel filme.weasel -o filme.mp4</code>.</p>
 
     <h3>No editor</h3>
     <ul>
@@ -212,7 +219,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e o <code>SpriteFrames</code> (.tres) e, com as opções, o normal map para a luz 2D e a cena pronta (.tscn) com AnimatedSprite2D, colisão, hitbox e hurtbox por quadro, eventos e direções espelhadas. Num arquivo com <code>tileset</code>, sai o TileSet.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
-      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM ou <b>sequência PNG</b> (num .zip).</li>
+      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt). Vídeo com som: linha de comando.</li>
     </ul>
   </div>
 </aside>
@@ -228,6 +235,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <button type="button" data-kind="godot" data-for="draw">Godot</button>
     <button type="button" data-kind="video" data-for="film">Vídeo</button>
     <button type="button" data-kind="seq" data-for="film">Sequência PNG</button>
+    <button type="button" data-kind="subs" data-for="film">Legendas</button>
   </div>
   <div class="dlg-body">
     <div class="opts">
@@ -244,6 +252,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <label data-hide="film">Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
       <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
       <label data-show="gif" class="chk" title="Troca as faixas de cor de brilhos e degradês por um pontilhado fino"><input type="checkbox" id="expDither"> Pontilhado (menos faixas)</label>
+      <label data-show="png jpg gif video seq" data-only="film" class="chk" title="Desenha as legendas (sub, text= dos audio) no quadro"><input type="checkbox" id="expBurn"> Legendas na imagem</label>
       <label data-show="sheet godot">Arranjo
         <select id="expLayout"><option value="grid">grade</option><option value="rows">uma linha por animação</option></select>
       </label>
@@ -255,6 +264,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <p data-show="godot" class="opt-note">Sai um .zip para pôr numa pasta do projeto do Godot: a folha (.png), o SpriteFrames (.tres) e, com as opções, o normal map, a cena (.tscn) e o weasel_anim.gd. Use a cena como personagem e toque com $AnimationPlayer.tocar("walk", velocity). Num arquivo com tileset, sai o TileSet.</p>
       <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= não vale para SVG.</p>
       <p data-show="video" class="opt-note">WebM (VP9) gravado pelo próprio navegador, sem som. Para filmes longos, MP4 ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
+      <p data-show="subs" class="opt-note">As legendas (sub e o text= dos audio) em .srt e .vtt, com o tempo contado do começo do trecho. O YouTube e os editores de vídeo abrem os dois. Cada língua (lang=) sai num arquivo.</p>
       <p data-show="seq" class="opt-note">Um PNG por quadro num .zip, numerado pelo quadro do filme (filme_00000.png …). Todo editor de vídeo importa sequência de imagens.</p>
     </div>
     <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
@@ -266,19 +276,20 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.4.0"></script>
-<script src="js/lang.js?v=1.4.0"></script>
-<script src="js/scene.js?v=1.4.0"></script>
-<script src="js/film.js?v=1.4.0"></script>
-<script src="js/webm.js?v=1.4.0"></script>
-<script src="js/svg.js?v=1.4.0"></script>
-<script src="js/gif.js?v=1.4.0"></script>
-<script src="js/zip.js?v=1.4.0"></script>
-<script src="js/normal.js?v=1.4.0"></script>
-<script src="js/export.js?v=1.4.0"></script>
-<script src="js/godot.js?v=1.4.0"></script>
-<script src="js/editor.js?v=1.4.0"></script>
-<script src="js/examples.js?v=1.4.0"></script>
-<script src="js/app.js?v=1.4.0"></script>
+<script src="js/geom.js?v=1.5.0"></script>
+<script src="js/lang.js?v=1.5.0"></script>
+<script src="js/scene.js?v=1.5.0"></script>
+<script src="js/film.js?v=1.5.0"></script>
+<script src="js/audio.js?v=1.5.0"></script>
+<script src="js/webm.js?v=1.5.0"></script>
+<script src="js/svg.js?v=1.5.0"></script>
+<script src="js/gif.js?v=1.5.0"></script>
+<script src="js/zip.js?v=1.5.0"></script>
+<script src="js/normal.js?v=1.5.0"></script>
+<script src="js/export.js?v=1.5.0"></script>
+<script src="js/godot.js?v=1.5.0"></script>
+<script src="js/editor.js?v=1.5.0"></script>
+<script src="js/examples.js?v=1.5.0"></script>
+<script src="js/app.js?v=1.5.0"></script>
 </body>
 </html>

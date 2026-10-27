@@ -27,6 +27,9 @@
     drag: null,
     pan: null,
     build: null,
+    media: new Map(), // sons (audio): nome → { buf, duração, amostras do .wav, áudio decodificado para tocar }
+    sound: true, // tocar o som do filme no player
+    subs: true, // mostrar as legendas do filme na tela
   };
   let raf = 0, saveTimer = 0;
   const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
@@ -54,7 +57,112 @@
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
     return null;
   };
-  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, variant: variant || null });
+  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, variant: variant || null });
+
+  // ---------- sons (audio) ----------
+  // Guardados no navegador (IndexedDB, que aguenta arquivos grandes), pelo nome. O .wav é lido aqui (o lip
+  // sync automático precisa das amostras); todos são decodificados pelo navegador para tocar no player.
+  const idb = {
+    db: undefined,
+    open() {
+      if (this.db !== undefined) return Promise.resolve(this.db);
+      return new Promise((res) => {
+        try {
+          const r = indexedDB.open('weasel', 1);
+          r.onupgradeneeded = () => r.result.createObjectStore('media');
+          r.onsuccess = () => res((this.db = r.result));
+          r.onerror = () => res((this.db = null));
+        } catch (e) { res((this.db = null)); }
+      });
+    },
+    async run(mode, fn) {
+      const db = await this.open();
+      if (!db) return null;
+      return new Promise((res) => {
+        try { const rq = fn(db.transaction('media', mode).objectStore('media')); rq.onsuccess = () => res(rq.result); rq.onerror = () => res(null); } catch (e) { res(null); }
+      });
+    },
+    put(name, buf) { return this.run('readwrite', (s) => s.put(buf, name)); },
+    del(name) { return this.run('readwrite', (s) => s.delete(name)); },
+    async all() {
+      const keys = (await this.run('readonly', (s) => s.getAllKeys())) || [];
+      const out = [];
+      for (const k of keys) { const v = await this.run('readonly', (s) => s.get(k)); if (v) out.push([k, v]); }
+      return out;
+    },
+  };
+  let audioCtx = null;
+  const actx = () => {
+    if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; audioCtx = AC ? new AC() : null; }
+    return audioCtx;
+  };
+  const AUDIO_EXT = /\.(wav|mp3|ogg|oga|opus|m4a|aac|flac|webm)$/i;
+  async function addMedia(name, buf, persist) {
+    const info = { name, buf, kind: 'other', duration: null, sampleRate: null, mono: null, audio: null };
+    try { Object.assign(info, W.audio.parseWav(buf)); } catch (e) { /* não é .wav: só para ouvir */ }
+    st.media.set(name, info);
+    if (persist) idb.put(name, buf);
+    try {
+      const ac = actx();
+      if (ac) { info.audio = await ac.decodeAudioData(buf.slice(0)); if (!info.duration) info.duration = info.audio.duration; }
+    } catch (e) { if (info.kind !== 'wav') hint(`O navegador não conseguiu ler o som "${name}".`, 3000); }
+  }
+  // o som pelo nome escrito no audio (também só pelo nome do arquivo, sem a pasta)
+  function mediaInfo(name) {
+    if (st.media.has(name)) return st.media.get(name);
+    const base = name.split(/[\\/]/).pop();
+    for (const [k, v] of st.media) if (k.split(/[\\/]/).pop() === base) return v;
+    return null;
+  }
+  function fillMediaList() {
+    const b = $('mediaBtn'), list = $('mediaList');
+    b.hidden = !st.media.size;
+    b.textContent = `♪ ${st.media.size}`;
+    list.innerHTML = '';
+    for (const [name, m] of st.media) {
+      const row = document.createElement('div');
+      row.className = 'media-row';
+      row.innerHTML = `<span class="mn"></span><span class="md">${m.duration ? m.duration.toFixed(1) + 's' : '?'}${m.kind === 'wav' ? ` · ${m.sampleRate} Hz` : ''}</span><button type="button" class="x" title="Tirar este som do navegador">✕</button>`;
+      row.querySelector('.mn').textContent = name;
+      row.querySelector('button').addEventListener('click', async () => {
+        st.media.delete(name);
+        await idb.del(name);
+        fillMediaList();
+        reparse();
+      });
+      list.appendChild(row);
+    }
+    if (!st.media.size) list.hidden = true;
+  }
+
+  // ---------- tocar o som do filme ----------
+  const voices = [];
+  function stopSound() {
+    for (const n of voices) { try { n.stop(); } catch (e) { /* já parou */ } }
+    voices.length = 0;
+  }
+  // toca, a partir do quadro atual, os sons do trecho que o player está tocando
+  function startSound() {
+    stopSound();
+    if (!isFilm() || !st.playing || !st.sound) return;
+    const ac = actx();
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    const fps = tline().fps, hi = filmRange()[1], when = ac.currentTime + 0.04;
+    for (const c of W.film.audioClips(st.model, st.frame / fps, hi / fps)) {
+      const buf = c.media && c.media.audio;
+      if (!buf) continue;
+      const src = ac.createBufferSource(), gain = ac.createGain();
+      src.buffer = buf;
+      src.loop = c.loop;
+      src.playbackRate.value = st.speed;
+      gain.gain.value = c.vol;
+      src.connect(gain).connect(ac.destination);
+      const t0 = when + c.at / st.speed;
+      if (c.loop) { src.start(t0, c.offset % buf.duration); src.stop(t0 + c.dur / st.speed); } else src.start(t0, c.offset, c.dur);
+      voices.push(src);
+    }
+  }
 
   function reparse() {
     st.files.set(st.current, editor.value);
@@ -67,6 +175,8 @@
       if (st.frame >= tl.frames) st.frame = 0;
     } else st.shot = '';
     $('tCameraWrap').hidden = !isFilm();
+    $('bSound').hidden = !(isFilm() && tline().audios.length);
+    $('bSubs').hidden = !(isFilm() && tline().subs.length);
     if (st.variant && !st.model.variants.includes(st.variant)) st.variant = '';
     if (st.build) stopBuild();
     fillAnimSelect();
@@ -112,11 +222,17 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.tile ? rec.tile.name : rec.use || rec.scene || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.tile ? rec.tile.name : rec.audio ? rec.audio.name : rec.mouth ? rec.mouth.name : rec.use || rec.scene || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
       if (rec.actor) s += ` · ${esc(rec.actor.file)}${rec.actor.model ? '' : ' <span style="color:var(--err)">(não carregou)</span>'}`;
       if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s`;
       if (rec.at) s += ` · ${Math.round(rec.at.t * 1000) / 1000}s no shot ${esc(rec.at.shot.name)}`;
+      if (rec.audio) {
+        const a = rec.audio;
+        s += ` · ${esc(a.file)}${a.media ? ` · ${a.media.duration ? a.media.duration.toFixed(1) + 's' : ''}` : ' <span style="color:var(--warn)">(abra o arquivo de som com Abrir…)</span>'}${a.lips ? ` · boca de ${esc(a.lips)}${a.cues ? ' (Rhubarb)' : ''}` : ''}`;
+      }
+      if (rec.sub) s += ` · legenda de ${rec.sub.dur.toFixed(1)}s`;
+      if (rec.mouth) s += ` · bocas ${Object.keys(rec.mouth.map).join(' ')}`;
       if (rec.box) s += ` · ${{ body: 'colisão do corpo', hit: 'golpe (hitbox)', hurt: 'leva dano (hurtbox)' }[rec.box.kind]}`;
       if (rec.tile) s += ` · célula ${rec.tile.col},${rec.tile.row}${rec.tile.collision ? ` · colisão ${esc(rec.tile.collision.name)}` : rec.tile.solid ? ' · sólido' : ''}${rec.tile.oneway ? ' · só por cima' : ''}`;
       if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
@@ -130,6 +246,11 @@
     if (err) s += ` · <span style="color:${err.level === 'error' ? 'var(--err)' : 'var(--warn)'}">${esc(err.msg)}</span>`;
     $('caretInfo').innerHTML = s;
     // Cursor num at ou shot do filme: vai para aquele momento
+    if (rec && (rec.audio || rec.sub) && isFilm() && !st.playing) {
+      const tl = tline();
+      const c = rec.audio ? tl.audios.find((x) => x.a === rec.audio) : tl.subs.find((x) => x.src === rec.sub);
+      if (c) { st.frame = Math.min(tl.frames - 1, Math.round(c.start * tl.fps)); const [a, b] = filmRange(); if (st.frame < a || st.frame >= b) st.shot = ''; fillAnimSelect(); }
+    }
     if (rec && (rec.at || rec.shot) && isFilm() && !st.playing) {
       const f = rec.at ? W.film.frameOfShot(st.model, rec.at.shot, rec.at.t) : W.film.frameOfShot(st.model, rec.shot, 0);
       if (f !== null && f !== st.frame) {
@@ -156,6 +277,7 @@
     light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
     film: 'este arquivo é um filme', shot: 'plano do filme', actor: 'outro arquivo em cena', camera: 'câmera do plano',
     at: 'muda algo num tempo', scene: 'planos de outro filme',
+    audio: 'som de referência (fala, música)', sub: 'legenda', mouth: 'bocas do lip sync',
     box: 'colisão, golpe ou dano (jogo)', godot: 'cena do Godot', tileset: 'folha de blocos', tile: 'um bloco do tileset',
   };
   // o que dá para mudar com at, com o tipo de valor
@@ -238,6 +360,12 @@
         case 'only': return [...names(m.anims.map((a) => a.name), 'animação'), { label: 'pose', detail: 'pose parada' }];
         case 'body': return names(L.GODOT_BODIES, 'nó raiz do Godot');
         case 'collision': return names(els.filter((n) => m.named.get(n)[0].closed), 'forma');
+        case 'lips': return names(filmActors().filter((a) => a.model && a.model.mouth).map((a) => a.name), 'ator com boca');
+        case 'cues': return names([...st.files.keys()].filter((f) => /\.(json|tsv|txt)$/i.test(f)).map((f) => `"${f}"`), 'bocas do Rhubarb');
+        case 'subs': return names(['burn', 'file']);
+        case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'X':
+          if (cmd === 'mouth') return names(els.filter((n) => n !== (ws[1] && ws[1].text)), 'forma (nome@0.5 = metade do morph)');
+          return [];
         case 'mirror': return names(els, 'forma');
         case 'ease': return names(Object.keys(W.geom.EASE), 'ease');
         case 'flip': return names(['x', 'y', 'xy']);
@@ -267,6 +395,13 @@
     }
     if (cmd === 'include' && idx === 1) return names([...st.files.keys()].filter((f) => f !== st.current), 'arquivo');
     if ((cmd === 'actor' && idx === 2) || (cmd === 'scene' && idx === 1)) return fileList();
+    if (cmd === 'audio' && idx === 2) return names([...st.media.keys()].map((f) => `"${f}"`), 'som aberto');
+    if (cmd === 'sub' && idx === 1) return names(['0s', '1s', '+0.3s'], 'tempo');
+    if (cmd === 'mouth' && idx === 1) return names(els, 'forma da boca');
+    if (cmd === 'mouth' && idx >= 2) {
+      const what = { A: 'fechada (M, B, P)', B: 'pouco aberta', C: 'aberta', D: 'bem aberta', E: 'arredondada (O)', F: 'biquinho (U)', G: 'dentes no lábio (F, V)', H: 'língua (L)', X: 'descanso' };
+      return L.VISEMES.map((v) => ({ label: v + '=', detail: what[v] }));
+    }
     if (cmd === 'at' && idx === 1) return names(['0s', '1s', '+1s', '+0.5s'], 'tempo');
     if (cmd === 'at' && idx >= 2) return atTargets(m);
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
@@ -353,6 +488,7 @@
       if (on && st.frame >= b - 1) st.frame = a;
       st.playing = on;
       if (on) { stopBuild(); st.lastT = performance.now(); st.acc = 0; }
+      if (on) startSound(); else stopSound();
       fillAnimSelect();
       kick();
       return;
@@ -372,6 +508,7 @@
     if (isFilm()) {
       const [a, b] = filmRange();
       st.playing = false;
+      stopSound();
       st.frame = a + ((st.frame - a + d) % (b - a) + (b - a)) % (b - a);
       fillAnimSelect();
       draw();
@@ -415,7 +552,9 @@
       if (st.acc >= 1) {
         const n = Math.floor(st.acc);
         st.acc -= n;
+        const before = st.frame;
         st.frame = lo + ((st.frame - lo + n) % (hi - lo));
+        if (st.frame < before) startSound(); // deu a volta: o som recomeça junto
         $('frameSl').value = st.frame;
         $('frameLbl').textContent = filmText();
       }
@@ -559,11 +698,11 @@
       ctx.rect(0, 0, c.w, c.h);
       ctx.clip();
       if (m.finish.pixel > 1 || S.hasPost(m)) {
-        const img = W.film.renderFrame(m, st.frame, { scale: Math.min(m.finish.posterize ? 1 : 2, z * dpr) });
+        const img = W.film.renderFrame(m, st.frame, { scale: Math.min(m.finish.posterize ? 1 : 2, z * dpr), subs: st.subs });
         ctx.imageSmoothingEnabled = m.finish.pixel <= 1;
         ctx.drawImage(img, 0, 0, c.w, c.h);
         ctx.imageSmoothingEnabled = true;
-      } else W.film.drawFrame(ctx, m, st.frame, {});
+      } else W.film.drawFrame(ctx, m, st.frame, { subs: st.subs });
       ctx.restore();
     } else {
       W.film.drawFrame(ctx, m, st.frame, { view: 'world', guides: st.show.guides });
@@ -967,15 +1106,18 @@
   $('variantSel').addEventListener('change', (e) => { st.variant = e.target.value; reparse(); });
 
   $('animSel').addEventListener('change', (e) => {
-    if (isFilm()) { st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
+    if (isFilm()) { stopSound(); st.playing = false; st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
     st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
   });
   $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
   $('bPrev').addEventListener('click', () => step(-1));
   $('bNext').addEventListener('click', () => step(1));
-  $('frameSl').addEventListener('input', (e) => { st.playing = false; st.frame = +e.target.value; fillAnimSelect(); draw(); });
-  $('speedSel').addEventListener('change', (e) => { st.speed = parseFloat(e.target.value); });
+  $('frameSl').addEventListener('input', (e) => { st.playing = false; stopSound(); st.frame = +e.target.value; fillAnimSelect(); draw(); });
+  $('speedSel').addEventListener('change', (e) => { st.speed = parseFloat(e.target.value); if (st.playing) startSound(); });
+  $('bSound').addEventListener('click', () => { st.sound = !st.sound; $('bSound').classList.toggle('on', st.sound); if (st.playing) startSound(); else stopSound(); });
+  $('bSubs').addEventListener('click', () => { st.subs = !st.subs; $('bSubs').classList.toggle('on', st.subs); draw(); });
+  $('mediaBtn').addEventListener('click', () => { const l = $('mediaList'); l.hidden = !l.hidden; });
   $('btnBuild').addEventListener('click', startBuild);
 
   $('errBtn').addEventListener('click', () => {
@@ -1044,6 +1186,8 @@
       const dep = W.examples.find((e) => e.id === depId);
       if (dep && !st.files.has(dep.file + '.weasel')) st.files.set(dep.file + '.weasel', dep.src);
     }
+    const want = (W.exampleMedia ? Object.keys(W.exampleMedia) : []).filter((k) => x.src.includes(`"${k}"`) && !st.media.has(k));
+    for (const k of want) addMedia(k, W.exampleMedia[k]().buffer, true).then(() => { fillMediaList(); reparse(); });
     if (st.files.has(name) && st.files.get(name) !== x.src && !confirm(`Substituir "${name}" pelo exemplo original?`)) { openFile(name); return; }
     openFile(name, x.src);
     hint(`Exemplo "${x.title}" aberto em ${name}.`, 3000);
@@ -1054,9 +1198,13 @@
     const list = [...e.target.files];
     e.target.value = '';
     if (!list.length) return;
-    for (const f of list) st.files.set(f.name, await f.text());
-    openFile(list[0].name);
-    if (list.length > 1) hint(`${list.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
+    const sounds = list.filter((f) => AUDIO_EXT.test(f.name)), texts = list.filter((f) => !AUDIO_EXT.test(f.name));
+    for (const f of sounds) await addMedia(f.name, await f.arrayBuffer(), true);
+    for (const f of texts) st.files.set(f.name, await f.text());
+    fillMediaList();
+    if (texts.length) openFile(texts[0].name); else reparse();
+    if (sounds.length) hint(`${sounds.length} som${sounds.length > 1 ? 's' : ''} aberto${sounds.length > 1 ? 's' : ''}: ficam guardados neste navegador (♪ na barra de arquivos).`, 3600);
+    else if (texts.length > 1) hint(`${texts.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
   });
   $('btnSave').addEventListener('click', saveFile);
   function saveFile() {
@@ -1121,6 +1269,11 @@
     if (old && old.trim()) openFile((store.get('weasel.name') || 'desenho') + '.weasel', old);
     else openFile(W.examples[0].file + '.weasel', W.examples[0].src);
   }
+
+  idb.all().then(async (list) => {
+    for (const [k, v] of list) await addMedia(k, v, false);
+    if (list.length) { fillMediaList(); reparse(); }
+  });
 
   W.app = { st, editor, draw, reparse, parseFor };
 })(window.Weasel = window.Weasel || {});

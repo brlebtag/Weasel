@@ -1,7 +1,8 @@
-# Filme — planos, atores, câmera com profundidade e luz da cena
-# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel):
-# o filme só diz onde eles ficam, o que fazem e para onde a câmera olha.
+# Filme — planos, atores, câmera com profundidade, luz da cena, fala e legendas
+# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel, coruja.weasel):
+# o filme só diz onde eles ficam, o que fazem, para onde a câmera olha e quem fala.
 # Exporte em vídeo pela linha de comando:  weasel filme.weasel -o filme.mp4
+# (sai com o som de referência misturado e as legendas em filme.srt)
 
 film fps=24
 canvas 1920 1080 bg=ceu
@@ -11,6 +12,9 @@ finish game bloom=0.3 vignette=0.45
 # a luz do lampião (o desenho do poste está no cenário) ilumina o cenário e os atores
 ambient c=#5866a0 power=0.5
 light lampiao point 2000,566 c=#ffb860 power=1.6 radius=720 glow=130 flicker=0.1
+
+# som de fundo em loop, o filme inteiro (som e legendas de referência; a mixagem final é no editor de vídeo)
+audio grilos "som/grilos.wav" loop vol=0.35
 
 # atores declarados antes do primeiro shot valem para todos os planos
 actor cenario "cenario.weasel" 0,0
@@ -38,7 +42,16 @@ at 4.2s fantasma.pos=2200,880 ease=out
 at 4.6s heroi.flip=x
 at 5s heroi.flip=none
 
-# 3. de perto: o pulo, o tranco no pouso e a saída de cena
+# 3. a coruja no lampião avisa o Cavaleiro: o bico segue a fala (lip sync) e as legendas vão para o .srt
+shot conversa dur=5s
+actor coruja "coruja.weasel" 2059,512 origin=240,404 scale=0.5 hide=ceu,galho,fala
+camera 1930,660 zoom=1.3
+at 0s fantasma.pos=2200,880
+audio fala "som/coruja_fala.wav" at=0.4s lips=coruja
+sub 0.65s "Uh-uuh! Boa noite, Cavaleiro." dur=2s
+sub +0.2s "Cuidado com o fantasma…" dur=1.6s
+
+# 4. de perto: o pulo, o tranco no pouso e a saída de cena
 shot pulo dur=4.5s
 camera 1800,690 zoom=1.6
 at 0s fantasma.pos=2200,880

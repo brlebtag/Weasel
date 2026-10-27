@@ -7,6 +7,7 @@ const path = require('path');
 const { W } = require('./runtime');
 const X = W.exporter;
 const V = require('./video');
+const { makeMediaResolver } = require('./media');
 const VERSION = require(path.join(__dirname, '..', 'package.json')).version;
 
 const HELP = `weasel ${VERSION} — desenho por código na linha de comando
@@ -60,6 +61,11 @@ Filme (arquivo com a linha film):
   -j, --jobs <n>          threads de render (padrão: núcleos − 1, até 8)
       --crf <n>           qualidade do mp4/webm (menor = melhor; padrão 18 no mp4, 30 no webm)
       --ffmpeg <caminho>  onde está o ffmpeg (ou a variável WEASEL_FFMPEG)
+  -o mix.wav              só o som do filme (os audio misturados), para o editor de vídeo
+      --no-audio          vídeo sem o som de referência (por padrão os audio vão misturados)
+      --subs <srt|vtt|none>  legendas ao lado do vídeo (padrão srt: filme.srt, filme.en.srt…)
+      --burn-subs         legendas desenhadas na imagem (ou film subs=burn)
+      --lang <código>     língua das legendas desenhadas (padrão: a do film lang=)
 
 Outros:
   -w, --watch             exporta de novo sempre que o arquivo (ou um include) mudar
@@ -85,6 +91,7 @@ Exemplos:
   weasel filme.weasel -o render/filme.mov --shots -s 0.5
   weasel filme.weasel --frames -o quadros/q.png --from 10s --to 20s
   weasel filme.weasel -o capa.png --time 4s
+  weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -98,7 +105,7 @@ function parseArgs(argv) {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
     time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, ffmpeg: null,
-    normal: null, mirror: true,
+    normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null,
   };
   const num = (name, v, min, max) => {
     const n = Number(v);
@@ -133,6 +140,10 @@ function parseArgs(argv) {
       case '--normal': o.normal = true; break;
       case '--no-normal': o.normal = false; break;
       case '--no-mirror': o.mirror = false; break;
+      case '--no-audio': o.audio = false; break;
+      case '--subs': o.subs = val(); if (!['srt', 'vtt', 'none'].includes(o.subs)) usage('--subs aceita srt, vtt ou none'); break;
+      case '--burn-subs': o.burnSubs = true; break;
+      case '--lang': o.lang = val(); break;
       case '--frames': o.frames = true; break;
       case '--variant': o.variant = val(); break;
       case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); break;
@@ -183,7 +194,7 @@ function readSource(o) {
 // include: caminho relativo ao arquivo que inclui
 function makeResolver(source, watched) {
   const dirs = new Map([[path.basename(source.name), source.dir]]);
-  return (name, from) => {
+  const resolve = (name, from) => {
     const p = path.resolve(dirs.get(from) || source.dir, name);
     try {
       const t = fs.readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -194,6 +205,9 @@ function makeResolver(source, watched) {
       return null;
     }
   };
+  // sons (audio): relativos ao arquivo que os usa, como os includes
+  resolve.media = makeMediaResolver((from) => dirs.get(from) || source.dir, (p) => watched.add(p));
+  return resolve;
 }
 
 function report(model, src, name) {
@@ -248,6 +262,7 @@ function info(m) {
     }
   } else out.push('animações nenhuma');
   if (m.unity) out.push(`unity    ${m.unity.unit} px/unidade, raiz ${m.unity.root.join(',')}`);
+  if (m.mouth) out.push(`boca     ${m.mouth.name} (lip sync: ${Object.entries(m.mouth.map).map(([k, v]) => `${k}=${v.shape}${v.t < 1 ? '@' + v.t : ''}`).join(' ')})`);
   if (m.godot) out.push(`godot    ${m.godot.body}${m.godot.root ? `, raiz ${m.godot.root.join(',')}` : ''}${m.godot.name ? `, nó ${m.godot.name}` : ''}${m.godot.normal !== 1 ? `, normal ${m.godot.normal}` : ''}`);
   if (m.boxes.size) {
     out.push(`caixas   ${m.boxes.size}`);
@@ -263,7 +278,7 @@ function info(m) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -371,7 +386,7 @@ async function run(o) {
   const source = readSource(o);
   if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
   const resolve = makeResolver(source, watched);
-  const parse = (variant) => W.lang.parse(source.src, { file: path.basename(source.name), resolve, variant: variant || null });
+  const parse = (variant) => W.lang.parse(source.src, { file: path.basename(source.name), resolve, media: resolve.media, variant: variant || null });
   const model = parse(o.variant && o.variant !== 'all' ? o.variant : null);
   const nErr = model.errors.filter((e) => e.level === 'error').length;
   report(model, source.src, source.name);
@@ -390,13 +405,13 @@ async function run(o) {
 
   let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
-  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
+  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build', 'wav'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
     if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
     await V.exportFilm(model, o, format, source, { save, usage, Fail, paint, withSuffix, kb });
     return { code: 0, watched };
   }
-  if (V.VIDEO.includes(format)) usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
+  if (V.VIDEO.includes(format) || format === 'wav') usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
   for (const [k, flag] of [['shot', '--shot'], ['from', '--from'], ['to', '--to'], ['time', '--time']]) if (o[k] !== null) usage(`${flag} só vale para filmes`);
 
   if (o.variant === 'all') {

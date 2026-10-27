@@ -216,7 +216,7 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expBurn']) {
       $(id).addEventListener('change', () => refresh());
     }
     $('expDownload').addEventListener('click', () => save(false));
@@ -235,6 +235,7 @@
       dlg.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
       dlg.querySelectorAll('[data-show]').forEach((el) => { el.hidden = !el.dataset.show.split(' ').includes(kind); });
       dlg.querySelectorAll('[data-hide="film"]').forEach((el) => { el.hidden = film; });
+      dlg.querySelectorAll('[data-only="film"]').forEach((el) => { if (!film) el.hidden = true; });
       const model = app.model();
       const sel = $('expAnim');
       const prev = sel.value;
@@ -278,8 +279,27 @@
     async function produce(model, o, suffix) {
       const base = o.baseName + suffix;
       const st = app.state();
+      if (model.film && kind === 'subs') {
+        // legendas do trecho escolhido, em .srt e .vtt (uma língua por arquivo)
+        const tl = W.film.timeline(model), v = $('expAnim').value, e = v !== '' ? tl.entries[+v] : null;
+        const from = e ? e.start / tl.fps : 0, to = e ? (e.start + e.frames) / tl.fps : tl.duration;
+        const tag = e ? '_' + e.name.replace(/[\\/]+/g, '-') : '';
+        const files = [];
+        let count = 0;
+        for (const lang of W.film.langs(model)) {
+          const list = W.film.subtitles(model, from, to, lang);
+          if (!list.length) continue;
+          count += list.length;
+          const name = `${base}${tag}${lang === model.film.lang ? '' : '.' + lang}`;
+          files.push({ name: name + '.srt', blob: new Blob([W.audio.srt(list)], { type: 'text/plain' }) }, { name: name + '.vtt', blob: new Blob([W.audio.vtt(list)], { type: 'text/vtt' }) });
+        }
+        if (!files.length) throw new Error('não há legendas nesse trecho (use sub ou text= num audio)');
+        const first = tl.subs.find((s) => s.end > from && s.start < to);
+        const cv = W.film.renderFrame(model, Math.round(Math.max(first.start, from) * tl.fps), { scale: Math.min(0.5, o.scale), subs: true, lang: first.lang });
+        return { files, preview: cv.toDataURL(), info: `${count} legenda${count > 1 ? 's' : ''} · ${W.film.langs(model).join(', ')}` };
+      }
       if (model.film) {
-        const cv = W.film.renderFrame(model, st.frame, { scale: o.scale, transparent: o.transparent });
+        const cv = W.film.renderFrame(model, st.frame, { scale: o.scale, transparent: o.transparent, subs: o.burn });
         const blob = await toBlob(cv, kind === 'jpg' ? 'image/jpeg' : 'image/png', kind === 'jpg' ? o.quality : undefined);
         return { files: [{ name: `${base}_${String(st.frame).padStart(5, '0')}.${kind}`, blob }], preview: cv.toDataURL(), info: `${cv.width} × ${cv.height} px · quadro ${st.frame} · ${kb(blob.size)}` };
       }
@@ -329,13 +349,13 @@
         scale: parseFloat($('expScale').value), transparent: $('expTransparent').checked && kind !== 'jpg',
         trim: $('expTrim').checked, margin: parseInt($('expMargin').value, 10) || 0, quality: parseInt($('expQuality').value, 10) / 100,
         layout: $('expLayout').value, cols: parseInt($('expCols').value, 10) || 0, padding: parseInt($('expPad').value, 10) || 0,
-        speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind, dither: $('expDither').checked,
+        speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind, dither: $('expDither').checked, burn: $('expBurn').checked,
       };
       if (heavy()) {
         // prévia do primeiro quadro; o resto só quando clicar
         try {
           const model = app.model(), tl = W.film.timeline(model), frames = filmFrames(model, $('expAnim').value);
-          const cv = W.film.renderFrame(model, frames[0], { scale: o.scale, transparent: o.transparent && kind !== 'video' });
+          const cv = W.film.renderFrame(model, frames[0], { scale: o.scale, transparent: o.transparent && kind !== 'video', subs: o.burn });
           const img = $('expImg');
           if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
           img.dataset.url = '';
@@ -412,7 +432,7 @@
           const out = await W.webm.record(n, tl.fps, w, h, (i) => {
             px.fillStyle = '#000';
             px.fillRect(0, 0, w, h);
-            px.drawImage(W.film.renderFrame(model, r.frames[i], { scale: o.scale }), 0, 0);
+            px.drawImage(W.film.renderFrame(model, r.frames[i], { scale: o.scale, subs: o.burn }), 0, 0);
             return pad;
           }, prog, cancelled);
           if (!out) return;
@@ -422,7 +442,7 @@
           const files = [];
           for (let i = 0; i < n; i++) {
             if (cancelled()) return;
-            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent });
+            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent, subs: o.burn });
             files.push({ name: `${o.baseName}_${String(r.frames[i]).padStart(5, '0')}.png`, data: await bytesOf(await toBlob(cv, 'image/png')) });
             prog(i + 1);
             if (i % 4 === 3) await W.webm.yieldTask();
@@ -433,7 +453,7 @@
           const frames = [];
           for (let i = 0; i < n; i++) {
             if (cancelled()) return;
-            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent });
+            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent, subs: o.burn });
             frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
             prog(i + 1);
             if (i % 4 === 3) await W.webm.yieldTask();
@@ -462,6 +482,8 @@
     return {
       open(k) {
         kind = k || kind;
+        const m = app.model();
+        if (m.film) $('expBurn').checked = !!m.film.burn;
         dlg.showModal();
         sync();
       },

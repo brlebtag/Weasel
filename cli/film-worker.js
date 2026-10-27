@@ -6,8 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const { parentPort, workerData } = require('worker_threads');
 const { W } = require('./runtime');
+const { makeMediaResolver } = require('./media');
 
-const { src, name, dir, scale, transparent } = workerData;
+const { src, name, dir, scale, transparent, subs, lang } = workerData;
 const dirs = new Map([[name, dir]]);
 const resolve = (file, from) => {
   const p = path.resolve(dirs.get(from) || dir, file);
@@ -19,11 +20,12 @@ const resolve = (file, from) => {
     return null;
   }
 };
-const model = W.lang.parse(src, { file: name, resolve });
+const media = makeMediaResolver((from) => dirs.get(from) || dir);
+const model = W.lang.parse(src, { file: name, resolve, media });
 
 parentPort.on('message', (job) => {
   try {
-    const cv = W.film.renderFrame(model, job.f, { scale, transparent });
+    const cv = W.film.renderFrame(model, job.f, { scale, transparent, subs, lang });
     if (job.kind === 'raw') {
       const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
       const buf = d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength);

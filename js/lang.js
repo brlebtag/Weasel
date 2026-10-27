@@ -9,10 +9,12 @@
     def: 'comp', end: 'comp', use: 'comp',
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
     light: 'fx', ambient: 'fx',
-    film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film',
+    film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mouth: 'rig',
     box: 'game', godot: 'game', tileset: 'game', tile: 'game',
   };
-  const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at']);
+  const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at', 'audio', 'sub']);
+  // bocas do lip sync (padrão do Rhubarb Lip Sync): A fechada … F biquinho, G F/V, H L, X descanso
+  const VISEMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'X'];
   const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'emitter']);
   const CLOSED = new Set(['shape', 'ellipse', 'rect']);
   const COMMON = ['c', 'bone', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
@@ -36,7 +38,10 @@
     line: [...COMMON, 'w', 'dash'],
     text: [...COMMON, 'ink', 'inkc', 'size', 'font', 'align', 'rot'],
     emitter: ['c', 'bone', 'opacity', 'emit', 'rate', 'burst', 'life', 'speed', 'angle', 'spread', 'gravity', 'wind', 'drag', 'size', 'shape', 'area', 'seed'],
-    film: ['fps', 'dur'],
+    film: ['fps', 'dur', 'lang', 'subs', 'subsize', 'subc'],
+    audio: ['at', 'from', 'dur', 'vol', 'lips', 'cues', 'text', 'lang'],
+    sub: ['dur', 'lang'],
+    mouth: VISEMES,
     shot: ['dur'],
     actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide'],
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
@@ -49,6 +54,7 @@
     layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
     shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'], emitter: ['hidden'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
+    audio: ['loop'],
     box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
     tileset: ['auto'],
     tile: ['solid', 'oneway'],
@@ -352,7 +358,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), godot: null, tileset: null,
+      boxes: new Map(), godot: null, tileset: null, mouth: null,
       byLine: new Map(),
       errors,
     };
@@ -1264,6 +1270,7 @@
     for (const st of top) {
       const A = st.attrs;
       if (st.cmd === 'box') readBox(st, A);
+      else if (st.cmd === 'mouth') readMouth(st, A);
       else if (st.cmd === 'godot') {
         const g = { body: 'character', root: null, normal: 1, name: null, line: st.line };
         const rec = info(st);
@@ -1294,6 +1301,31 @@
       }
     }
     for (const st of top) if (st.cmd === 'tile') readTile(st, st.attrs);
+
+    // mouth boca A=fechada B=aberta@0.4 C=aberta@0.7 D=aberta … : as bocas do lip sync, por morph da forma
+    // (as formas precisam ter o mesmo tipo e o mesmo número de pontos que a boca; @ é o quanto do morph)
+    function readMouth(st, A) {
+      const name = ident(st, st.pos[0], 'da boca (a forma que mexe)');
+      if (!name) return;
+      const els = m.named.get(name);
+      if (!els) { err(st.line, `forma "${name}" não existe`, st.pos[0].from, st.pos[0].to); return; }
+      if (m.mouth) err(st.line, 'mouth repetido (vale o último)', st.cmdTok.from, st.cmdTok.to, 'warn');
+      const mo = { name, line: st.line, map: {} };
+      for (const a of A.values()) {
+        if (!VISEMES.includes(a.key)) continue;
+        const at = a.text.lastIndexOf('@');
+        const shape = at > 0 ? a.text.slice(0, at) : a.text, t = at > 0 ? num(a.text.slice(at + 1)) : 1;
+        const target = (m.named.get(shape) || [])[0];
+        if (!target) bad(st, a, `forma "${shape}" não existe`);
+        else if (!compatible(els[0], target)) bad(st, a, `"${shape}" não combina com "${name}": precisa ser do mesmo tipo e ter o mesmo número de pontos`);
+        else if (isNaN(t) || t < 0 || t > 1) bad(st, a, 'use forma@0.5 (o quanto do morph, de 0 a 1)');
+        else mo.map[a.key] = { shape, t };
+      }
+      for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use A=forma, C=forma@0.7 …)`, f.from, f.to, 'warn');
+      if (!Object.keys(mo.map).length) err(st.line, 'use: mouth boca A=fechada C=aberta@0.7 D=aberta (as bocas A a H e X)', st.cmdTok.from, st.cmdTok.to);
+      info(st, { mouth: mo });
+      m.mouth = mo;
+    }
 
     // box nome hit rect x,y l,a  |  circle cx,cy r  |  capsule cx,cy l,a   [off] bone= only=
     function readBox(st, A) {
@@ -1553,17 +1585,25 @@
       const F = {
         fps: 24, dur: null, line: fst.line, names: new Set(),
         actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000' },
-        shots: [], seq: [],
+        shots: [], seq: [], audios: [], subs: [],
+        lang: 'pt', burn: false, subsize: null, subc: '#ffffff',
       };
       m.film = F;
       if (fst.attrs.has('fps')) F.fps = number(fst, fst.attrs.get('fps'), 24, 1, 120);
+      if (fst.attrs.has('lang')) F.lang = fst.attrs.get('lang').text;
+      if (fst.attrs.has('subs')) {
+        const a = fst.attrs.get('subs');
+        if (a.text === 'burn') F.burn = true; else if (a.text !== 'file') bad(fst, a, 'subs= aceita burn (legenda desenhada no vídeo) ou file (só o .srt)');
+      }
+      if (fst.attrs.has('subsize')) F.subsize = number(fst, fst.attrs.get('subsize'), 48, 6, 400);
+      if (fst.attrs.has('subc')) F.subc = plainColor(fst, fst.attrs.get('subc')) || F.subc;
       if (fst.attrs.has('dur')) { const t = timeOf(fst, fst.attrs.get('dur'), F.fps, 'a duração'); if (t) F.dur = t.v; }
       for (const f of fst.pos) err(fst.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
       info(fst, { filmSt: F });
 
       const sequenced = top.some((s) => s.cmd === 'shot' || s.cmd === 'scene');
       const base = (X.mainFile || 'filme').replace(/\.[^.]+$/, '');
-      let shot = sequenced ? null : { name: base, line: fst.line, dur: F.dur, implicit: true, actors: [], cam: null, ats: [], tracks: new Map() };
+      let shot = sequenced ? null : { name: base, line: fst.line, dur: F.dur, implicit: true, actors: [], cam: null, ats: [], tracks: new Map(), audios: [], subs: [] };
       if (shot) { F.shots.push(shot); F.seq.push({ kind: 'shot', shot }); }
       let order = 0, seen = false;
       const shotNames = new Set();
@@ -1571,7 +1611,7 @@
         if (st.cmd === 'shot') {
           seen = true;
           const name = ident(st, st.pos[0], 'do plano');
-          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names) };
+          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names), audios: [], subs: [] };
           if (name && shotNames.has(name)) err(st.line, `shot "${name}" já existe`, st.pos[0].from, st.pos[0].to);
           shotNames.add(shot.name);
           shot.cam = Object.assign({}, F.camera, { offset: F.camera.offset.slice() });
@@ -1595,7 +1635,7 @@
           if (sub) F.seq.push({ kind: 'scene', file, model: sub, line: st.line });
           continue;
         }
-        if ((st.cmd === 'actor' || st.cmd === 'camera') && !shot && seen) {
+        if ((st.cmd === 'actor' || st.cmd === 'camera' || st.cmd === 'audio' || st.cmd === 'sub') && !shot && seen) {
           err(st.line, `${st.cmd} depois de scene precisa de um shot antes (ou suba para antes do primeiro shot, valendo para todos)`, st.cmdTok.from, st.cmdTok.to);
           continue;
         }
@@ -1610,6 +1650,17 @@
         }
         if (st.cmd === 'camera') {
           readCamera(st, shot && !shot.implicit ? shot.cam : F.camera);
+          continue;
+        }
+        // som e legenda: dentro de um shot, o tempo conta do começo dele; antes dos shots, do começo do filme
+        if (st.cmd === 'audio') {
+          const local = shot && !shot.implicit;
+          const a = readAudio(st, F);
+          if (a) (local ? shot : F).audios.push(a);
+          continue;
+        }
+        if (st.cmd === 'sub') {
+          readSub(st, F, shot && !shot.implicit ? shot : F);
           continue;
         }
         if (st.cmd === 'at') {
@@ -1638,11 +1689,71 @@
         }
         // câmera seguindo um ator que não existe
         if (s.cam.follow && !actors.has(s.cam.follow) && s.cam.followAt) bad(s.cam.followAt.st, s.cam.followAt.a, `ator "${s.cam.follow}" não existe aqui`);
+        for (const a of s.audios) checkLips(a, actors);
       }
+      const everyone = new Map([...F.actors, ...F.shots.flatMap((s) => s.actors)].map((a) => [a.name, a]));
+      for (const a of F.audios) checkLips(a, everyone);
       if (sequenced && F.dur !== null) err(fst.line, 'dur= do film só vale sem shot (a duração vem dos shots)', fst.attrs.get('dur').from, fst.attrs.get('dur').to, 'warn');
       if (!F.seq.length) err(fst.line, 'o filme não tem nenhum shot', fst.cmdTok.from, fst.cmdTok.to, 'warn');
       delete F.names;
       for (const s of F.shots) delete s.names;
+    }
+
+    // audio fala1 "voz/fala01.wav" at=1.2s from= dur= vol= lips=ator cues="fala01.json" text="legenda" lang= [loop]
+    function readAudio(st, F) {
+      const A = st.attrs;
+      const name = ident(st, st.pos[0], 'do som');
+      if (!name) return null;
+      const ft = st.pos[1];
+      if (!ft || /^[\d+{]/.test(ft.text)) { err(st.line, 'use: audio nome "arquivo.wav" at=2s', ft ? ft.from : st.cmdTok.from, ft ? ft.to : st.cmdTok.to); return null; }
+      const a = { name, file: unq(ft.text), line: st.line, at: 0, from: 0, dur: null, vol: 1, loop: false, lips: null, lipsAt: null, cues: null, cuesFile: null, text: null, lang: null, media: null };
+      for (const f of st.pos.slice(2)) { if (f.text === 'loop') a.loop = true; else err(st.line, `opção desconhecida "${f.text}" (use loop)`, f.from, f.to, 'warn'); }
+      for (const k of ['at', 'from', 'dur']) {
+        if (!A.has(k)) continue;
+        const t = timeOf(st, A.get(k), F.fps, k);
+        if (t) a[k] = t.v;
+      }
+      if (A.has('vol')) a.vol = number(st, A.get('vol'), 1, 0, 4);
+      if (A.has('lips')) { a.lips = A.get('lips').text; a.lipsAt = { st, a: A.get('lips') }; }
+      if (A.has('text')) a.text = unq(A.get('text').text).replace(/\\n/g, '\n');
+      if (A.has('lang')) a.lang = A.get('lang').text;
+      if (opts.media) {
+        a.media = opts.media(a.file, L[st.line].file);
+        if (!a.media) err(st.line, `não achei o som "${a.file}"`, ft.from, ft.to, 'warn');
+      }
+      if (A.has('cues')) {
+        const c = A.get('cues');
+        a.cuesFile = unq(c.text);
+        const txt = opts.resolve ? opts.resolve(a.cuesFile, L[st.line].file) : null;
+        if (txt === null || txt === undefined) bad(st, c, `não achei o arquivo de bocas "${a.cuesFile}"`);
+        else { try { a.cues = W.audio.parseCues(txt); } catch (e) { bad(st, c, `${a.cuesFile}: ${e.message}`); } }
+      }
+      info(st, { audio: a });
+      return a;
+    }
+    // lips= aponta para um ator com boca (mouth); sem cues=, o lip sync automático precisa do .wav
+    function checkLips(a, actors) {
+      if (!a.lips) return;
+      const ac = actors.get(a.lips);
+      if (!ac) { bad(a.lipsAt.st, a.lipsAt.a, `ator "${a.lips}" não existe aqui`); return; }
+      if (ac.model && !ac.model.mouth) bad(a.lipsAt.st, a.lipsAt.a, `o ator "${a.lips}" não tem boca para o lip sync (falta mouth no arquivo dele)`, 'warn');
+      if (!a.cues && a.media && !a.media.mono) bad(a.lipsAt.st, a.lipsAt.a, 'o lip sync automático precisa de um .wav (ou das bocas do Rhubarb em cues=)', 'warn');
+    }
+    // sub 2s "texto" dur= lang=   (+0.5s = meio segundo depois do fim da legenda anterior)
+    function readSub(st, F, block) {
+      const A = st.attrs;
+      const t = timeOf(st, st.pos[0], F.fps, 'o tempo (ex.: sub 2s "Olá!")');
+      if (!t) return;
+      const tx = st.pos[1];
+      if (!tx || tx.text[0] !== '"') { err(st.line, 'use: sub 2s "texto" dur=2s', tx ? tx.from : st.cmdTok.from, tx ? tx.to : st.cmdTok.to); return; }
+      for (const f of st.pos.slice(2)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      const text = unq(tx.text).replace(/\\n/g, '\n');
+      const prev = block.subs[block.subs.length - 1];
+      const s = { t: t.rel ? (prev ? prev.t + prev.dur : 0) + t.v : t.v, dur: Math.min(7, Math.max(1.2, 0.5 + text.length / 15)), text, lang: null, line: st.line };
+      if (A.has('dur')) { const d = timeOf(st, A.get('dur'), F.fps, 'a duração'); if (d) s.dur = Math.max(1 / F.fps, d.v); }
+      if (A.has('lang')) s.lang = A.get('lang').text;
+      block.subs.push(s);
+      info(st, { sub: s, block });
     }
 
     // at 2s heroi.pos=900,560 heroi.anim=walk camera.zoom=1.4 ease=out
@@ -1765,5 +1876,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

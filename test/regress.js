@@ -13,6 +13,8 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const { W, createCanvas, loadImage } = require('../cli/runtime');
+const { makeMediaResolver } = require('../cli/media');
+require('../js/examples.js');
 const X = W.exporter;
 
 const ROOT = path.join(__dirname, '..');
@@ -51,7 +53,8 @@ function resolver(dir) {
 }
 function load(file, variant) {
   const src = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
-  return W.lang.parse(src, { file: path.basename(file), resolve: resolver(path.dirname(file)), variant: variant || null });
+  const dir = path.dirname(file);
+  return W.lang.parse(src, { file: path.basename(file), resolve: resolver(dir), media: makeMediaResolver(() => dir), variant: variant || null });
 }
 
 const norm = (s) => String(s).replace(/\r\n/g, '\n');
@@ -209,12 +212,63 @@ async function filmCases(file) {
   }
   await check(group, 'linha_do_tempo.txt', 'text', lines.join('\n') + '\n');
 
+  // sons, bocas e legendas
+  const som = [];
+  for (const c of tl.audios) som.push(`som ${c.a.name} ${c.start.toFixed(3)}-${c.end.toFixed(3)}${c.a.lips ? ` boca de ${c.a.lips}: ${(W.film.cuesOf(c.a) || []).map((q) => q.value + '@' + q.start).join(' ')}` : ''}`);
+  for (const lang of W.film.langs(model)) som.push(`legendas (${lang})`, W.audio.srt(W.film.subtitles(model, 0, tl.duration, lang)));
+  await check(group, 'som.txt', 'text', som.join('\n') + '\n');
+
   const picks = [0.08, 0.2, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95].map((k) => Math.floor(tl.frames * k));
-  const imgs = picks.map((f) => W.film.renderFrame(model, f, { scale: 0.2 }));
+  const imgs = picks.map((f) => W.film.renderFrame(model, f, { scale: 0.2, subs: true }));
   const w = imgs[0].width, h = imgs[0].height;
   const sheet = createCanvas(w * 3, h * 3), x = sheet.getContext('2d');
   imgs.forEach((c, i) => x.drawImage(c, (i % 3) * w, Math.floor(i / 3) * h));
   await check(group, 'quadros.png', 'png', sheet);
+}
+
+// som: os .wav dos exemplos são os do gerador, a leitura de WAV (8/16/24 bits, float, estéreo), o lip sync
+// automático, as bocas do Rhubarb (.json e .tsv) e as legendas
+async function audioCase() {
+  console.log(paint('1', '_audio'));
+  const lines = [];
+  for (const [name, gen] of Object.entries(W.exampleMedia)) {
+    const disk = fs.readFileSync(path.join(EX, name));
+    const made = Buffer.from(gen());
+    record(disk.equals(made), `_audio/${name}`, 'o arquivo em exemplos/ não é o que o gerador (js/examples.js) faz: gere de novo');
+    lines.push(`${name}: ${made.length} bytes, sha ${crypto.createHash('sha256').update(made).digest('hex').slice(0, 16)}`);
+  }
+  // o mesmo som em vários formatos de WAV dá (quase) as mesmas amostras
+  const rate = 8000, n = 400, sig = Float32Array.from({ length: n }, (_, i) => 0.6 * Math.sin(i / 7) * Math.min(1, i / 50));
+  const wav = (bits, fmt, ch) => {
+    const bps = bits / 8, buf = Buffer.alloc(44 + n * bps * ch);
+    buf.write('RIFF', 0); buf.writeUInt32LE(36 + n * bps * ch, 4); buf.write('WAVEfmt ', 8); buf.writeUInt32LE(16, 16);
+    buf.writeUInt16LE(fmt, 20); buf.writeUInt16LE(ch, 22); buf.writeUInt32LE(rate, 24); buf.writeUInt32LE(rate * bps * ch, 28); buf.writeUInt16LE(bps * ch, 32); buf.writeUInt16LE(bits, 34);
+    buf.write('data', 36); buf.writeUInt32LE(n * bps * ch, 40);
+    for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++) {
+      const o = 44 + (i * ch + c) * bps, v = sig[i];
+      if (fmt === 3) buf.writeFloatLE(v, o);
+      else if (bits === 8) buf.writeUInt8(Math.round(v * 127 + 128), o);
+      else if (bits === 16) buf.writeInt16LE(Math.round(v * 32767), o);
+      else buf.writeIntLE(Math.round(v * 8388607), o, 3);
+    }
+    return buf;
+  };
+  for (const [bits, fmt, ch] of [[8, 1, 1], [16, 1, 2], [24, 1, 1], [32, 3, 2]]) {
+    const w = W.audio.parseWav(wav(bits, fmt, ch));
+    let err = 0;
+    for (let i = 0; i < n; i++) err = Math.max(err, Math.abs(w.mono[i] - sig[i]));
+    record(err < 0.02 && w.frames === n && w.sampleRate === rate, `_audio/wav${bits}${fmt === 3 ? 'f' : ''}x${ch}`, `erro máximo ${err.toFixed(4)}, ${w.frames} amostras`);
+  }
+  const fala = W.audio.parseWav(fs.readFileSync(path.join(EX, 'som/coruja_fala.wav')));
+  lines.push('lip sync automático: ' + W.audio.lipCues(fala.mono, fala.sampleRate).map((c) => `${c.value}@${c.start}-${c.end}`).join(' '));
+  const json = '{"metadata":{"duration":1.2},"mouthCues":[{"start":0.00,"end":0.2,"value":"X"},{"start":0.2,"end":0.5,"value":"D"},{"start":0.5,"end":0.7,"value":"g"},{"start":0.7,"end":1.2,"value":"X"}]}';
+  const tsv = '0.00\tX\n0.20\tD\n0.50\tG\n0.70\tX\n';
+  const fromJson = W.audio.parseCues(json), fromTsv = W.audio.parseCues(tsv);
+  lines.push('rhubarb json: ' + fromJson.map((c) => `${c.value}@${c.start}-${c.end}`).join(' '), 'rhubarb tsv: ' + fromTsv.map((c) => `${c.value}@${c.start}-${c.end}`).join(' '));
+  lines.push('boca em 0.3s / 0.6s / 2s: ' + [0.3, 0.6, 2].map((t) => W.audio.cueAt(fromJson, t)).join(' '));
+  const subs = [{ start: 0.5, end: 2.25, text: 'Olá' }, { start: 3661.2, end: 3662, text: 'linha 1\nlinha 2' }];
+  lines.push(W.audio.srt(subs), W.audio.vtt(subs));
+  await check('_audio', 'audio.txt', 'text', lines.join('\n') + '\n');
 }
 
 // codificador de GIF com quadros sintéticos: o mesmo resultado em qualquer máquina
@@ -252,6 +306,7 @@ async function main() {
     else await drawingCases(f);
   }
   if (!only.length || only.some((o) => '_gif'.includes(o))) await gifCase();
+  if (!only.length || only.some((o) => '_audio'.includes(o))) await audioCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);
