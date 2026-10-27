@@ -1,0 +1,31 @@
+canvas   360 × 270, fundo #e7e3da
+componentes tufo (13×)
+camadas  9
+  guia             2 item(ns)  guide
+  atras            6 item(ns)
+  corpo            1 item(ns)
+  pelagem         12 item(ns)  clip=corpo
+  cabeca          24 item(ns)
+  chapeu           2 item(ns)
+  chapeu_faixa     2 item(ns)  clip=copa
+  gravata          2 item(ns)
+  frente           2 item(ns)
+formas   53 (2 ocultas)
+ossos    raiz, corpo←raiz, forma←corpo, pescoco←corpo, cabeca←pescoco, capim←cabeca (spring), gravata←pescoco (spring), bracoP←corpo, bracoL←corpo, pernaP←raiz, pernaL←raiz
+animações 6
+  idle           24 quadros, 12 fps, anima olhoP.shape olhoL.shape pupilaP.show pupilaL.show
+  run            8 quadros, 14 fps
+                 eventos: passo@0, passo@4
+  run4           8 quadros, 14 fps
+                 eventos: passo@2, passo@6
+  idle4          24 quadros, 12 fps, anima olhoP.shape olhoL.shape pupilaP.show pupilaL.show
+  to4            6 quadros, 14 fps, once
+                 eventos: passo@5
+  to2            6 quadros, 14 fps, once
+                 eventos: passo@4
+godot    character, raiz 180,256
+caixas   4
+  corpo_em_pe    body rect só em pose,idle,run,to2
+  corpo_de4      body rect só em run4,idle4,to4
+  dano_em_pe     hurt rect só em pose,idle,run,to2
+  dano_de4       hurt rect só em run4,idle4,to4
