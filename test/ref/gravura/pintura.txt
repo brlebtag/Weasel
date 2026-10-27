@@ -1,0 +1,10 @@
+rect tampo @0.000 +1.400
+line borda @1.400 +0.996
+ellipse sombraMaca @2.396 +0.906
+ellipse maca @3.301 +1.019
+shape lado @4.321 +1.252
+ellipse reflexo @5.573 +0.420
+stroke cabo @5.993 +0.291
+shape folha @6.284 +0.581
+text legenda @6.865 +0.352
+total 7.217

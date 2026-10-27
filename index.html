@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css?v=1.2.0">
+<link rel="stylesheet" href="css/style.css?v=1.3.0">
 </head>
 <body>
 <header class="top">
@@ -18,7 +18,7 @@
   </div>
   <div class="tb right">
     <button id="btnHelp" title="Referência da linguagem (F1)">Referência</button>
-    <button id="btnExport" class="primary" title="PNG, JPG, GIF ou sprite sheet (Ctrl+E)">Exportar</button>
+    <button id="btnExport" class="primary" title="PNG, JPG, GIF, sprite sheet, Godot ou vídeo (Ctrl+E)">Exportar</button>
   </div>
 </header>
 
@@ -45,6 +45,7 @@
       <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <label class="tog" id="tCameraWrap" title="Ligado: o que a câmera filma. Desligado: o mundo inteiro como foi desenhado, com a moldura da câmera" hidden><input type="checkbox" id="tCamera" checked> Câmera</label>
       <select id="variantSel" title="Variante de cores" hidden></select>
       <span class="grow"></span>
       <span id="coords" class="coords"></span>
@@ -161,6 +162,27 @@
       <tr><td><code>emitter nome x,y rate= burst= life= speed= angle= spread= gravity= wind= drag= size=a,b c=cor1,cor2 shape= area=l,a seed= bone=</code></td><td>Fagulhas, fumaça, chuva, neve, vaga-lumes. <code>angle</code> em graus (−90 = para cima), <code>size</code> e <code>c</code> mudam do começo ao fim da vida, <code>shape</code>: dot, soft, square, streak, star. O sorteio é fixo, então o loop fecha certinho.</td></tr>
     </table>
 
+    <h3>Filme</h3>
+    <p>Um arquivo com <code>film</code> vira um filme e sai em vídeo. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo), postos em cena com <code>actor</code>.</p>
+    <pre class="ex">film fps=24
+canvas 1920 1080 bg=#0b1020
+actor heroi "cavaleiro.weasel" 400,900 anim=stand
+
+shot entrada dur=4s
+camera 960,540 zoom=1.2
+at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
+    <table>
+      <tr><td><code>film fps= dur=</code></td><td>Marca o arquivo como filme. <code>canvas</code> é o tamanho do quadro (padrão 1920×1080) e o fundo. <code>dur=</code> só vale sem <code>shot</code>.</td></tr>
+      <tr><td><code>actor nome "arquivo" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= [screen] [bg] [hidden] [unlit] [front]</code></td><td>Põe outro arquivo em cena. <code>x,y</code> é onde vai o <code>root=</code> do <code>unity</code> dele (os pés), ou o canto 0,0; <code>origin=</code> escolhe outro ponto. <code>hide=</code> esconde camadas do arquivo, <code>bg</code> desenha o fundo dele, <code>screen</code> prende na tela. Antes do primeiro <code>shot</code>, vale para todos.</td></tr>
+      <tr><td><code>shot nome dur=</code></td><td>Um plano. Os planos tocam em sequência; o que vem abaixo vale só para ele.</td></tr>
+      <tr><td><code>camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=</code></td><td>Para onde a câmera olha (centro do quadro). <code>follow=ator</code> segue um ator; <code>lag=</code> (segundos) atrasa e suaviza; <code>shake=</code> treme; <code>fade=1</code> escurece.</td></tr>
+      <tr><td><code>at tempo alvo.prop=valor … ease=</code></td><td>Muda algo naquele momento do plano. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também.</td></tr>
+      <tr><td><code>scene "arquivo"</code></td><td>Acrescenta os planos de outro arquivo de filme (um arquivo por cena).</td></tr>
+      <tr><td><code>layer … depth= [screen] [front]</code></td><td>Profundidade: 2 = duas vezes mais longe (anda menos quando a câmera anda), 0.5 = perto. <code>screen</code> fica preso na tela; <code>front</code> fica na frente dos atores da mesma profundidade. No filme, <code>only=</code> aceita nomes de plano.</td></tr>
+    </table>
+    <p>Tempo: <code>2s</code>, <code>1.5</code>, <code>500ms</code>, <code>48f</code> (quadros), <code>1m30s</code>; <code>+1s</code> conta do <code>at</code> anterior. O valor declarado vale como <code>at 0s</code>; entre um <code>at</code> e o seguinte a mudança é gradual, e <code>ease=</code> diz como ela chega. <code>anim</code>, <code>flip</code>, <code>show</code>, <code>follow</code> e <code>variant</code> trocam de uma vez (<code>anim</code> recomeça do quadro 0).</p>
+    <p>As luzes do filme iluminam o cenário e os atores. Na câmera parada (centro, zoom 1) tudo fica como foi desenhado; a profundidade só aparece quando a câmera anda. A chave <b>Câmera</b> alterna entre o que a câmera filma e o mundo inteiro com a moldura da câmera. Para vídeo longo, MP4 ou ProRes: <code>weasel filme.weasel -o filme.mp4</code>.</p>
+
     <h3>No editor</h3>
     <ul>
       <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
@@ -170,6 +192,7 @@
       <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
       <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha, <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
       <li><kbd>Espaço</kbd> toca/pausa, <kbd>←</kbd> <kbd>→</kbd> trocam de quadro (fora do editor).</li>
+      <li>Num filme, o cursor numa linha <code>at</code> ou <code>shot</code> leva o player para aquele momento, e a posição dos atores arrasta também na vista da câmera.</li>
     </ul>
 
     <h3>Exportar</h3>
@@ -179,6 +202,7 @@
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e um <code>SpriteFrames</code> (.tres) pronto para um AnimatedSprite2D.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
+      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM ou <b>sequência PNG</b> (num .zip).</li>
     </ul>
   </div>
 </aside>
@@ -189,9 +213,11 @@
     <button type="button" data-kind="png">PNG</button>
     <button type="button" data-kind="jpg">JPG</button>
     <button type="button" data-kind="gif">GIF animado</button>
-    <button type="button" data-kind="svg">SVG</button>
-    <button type="button" data-kind="sheet">Sprite sheet</button>
-    <button type="button" data-kind="godot">Godot</button>
+    <button type="button" data-kind="svg" data-for="draw">SVG</button>
+    <button type="button" data-kind="sheet" data-for="draw">Sprite sheet</button>
+    <button type="button" data-kind="godot" data-for="draw">Godot</button>
+    <button type="button" data-kind="video" data-for="film">Vídeo</button>
+    <button type="button" data-kind="seq" data-for="film">Sequência PNG</button>
   </div>
   <div class="dlg-body">
     <div class="opts">
@@ -204,8 +230,8 @@
         <select id="expScale"><option value="0.25">25%</option><option value="0.5">50%</option><option value="1" selected>100%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option></select>
       </label>
       <label class="chk"><input type="checkbox" id="expTransparent"> Fundo transparente</label>
-      <label class="chk"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
-      <label>Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
+      <label class="chk" data-hide="film"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
+      <label data-hide="film">Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
       <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
       <label data-show="gif" class="chk" title="Troca as faixas de cor de brilhos e degradês por um pontilhado fino"><input type="checkbox" id="expDither"> Pontilhado (menos faixas)</label>
       <label data-show="sheet godot">Arranjo
@@ -215,6 +241,8 @@
       <label data-show="sheet godot">Espaço entre quadros (px) <input type="number" id="expPad" value="2" min="0" max="64"></label>
       <p data-show="godot" class="opt-note">Sai um .zip com a folha (.png) e um SpriteFrames (.tres) do Godot 4. Deixe os dois na mesma pasta do projeto e use o .tres num AnimatedSprite2D.</p>
       <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= não vale para SVG.</p>
+      <p data-show="video" class="opt-note">WebM (VP9) gravado pelo próprio navegador, sem som. Para filmes longos, MP4 ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
+      <p data-show="seq" class="opt-note">Um PNG por quadro num .zip, numerado pelo quadro do filme (filme_00000.png …). Todo editor de vídeo importa sequência de imagens.</p>
     </div>
     <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
   </div>
@@ -225,15 +253,17 @@
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.2.0"></script>
-<script src="js/lang.js?v=1.2.0"></script>
-<script src="js/scene.js?v=1.2.0"></script>
-<script src="js/svg.js?v=1.2.0"></script>
-<script src="js/gif.js?v=1.2.0"></script>
-<script src="js/zip.js?v=1.2.0"></script>
-<script src="js/export.js?v=1.2.0"></script>
-<script src="js/editor.js?v=1.2.0"></script>
-<script src="js/examples.js?v=1.2.0"></script>
-<script src="js/app.js?v=1.2.0"></script>
+<script src="js/geom.js?v=1.3.0"></script>
+<script src="js/lang.js?v=1.3.0"></script>
+<script src="js/scene.js?v=1.3.0"></script>
+<script src="js/film.js?v=1.3.0"></script>
+<script src="js/webm.js?v=1.3.0"></script>
+<script src="js/svg.js?v=1.3.0"></script>
+<script src="js/gif.js?v=1.3.0"></script>
+<script src="js/zip.js?v=1.3.0"></script>
+<script src="js/export.js?v=1.3.0"></script>
+<script src="js/editor.js?v=1.3.0"></script>
+<script src="js/examples.js?v=1.3.0"></script>
+<script src="js/app.js?v=1.3.0"></script>
 </body>
 </html>

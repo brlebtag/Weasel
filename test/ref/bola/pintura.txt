@@ -1,0 +1,5 @@
+line piso @0.000 +0.909
+ellipse s @0.909 +0.631
+ellipse b @1.540 +0.756
+ellipse reflexo @2.296 +0.443
+total 2.740

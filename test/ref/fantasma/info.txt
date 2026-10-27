@@ -1,0 +1,12 @@
+canvas   480 × 400, fundo #26304d
+camadas  5
+  ceu              5 item(ns)
+  chao             1 item(ns)
+  fantasma         1 item(ns)
+  sombreado        1 item(ns)  clip=fantasma
+  rosto            5 item(ns)
+formas   13
+ossos    corpo, sombra
+tecidos  barra
+animações 1
+  flutua         32 quadros, 16 fps

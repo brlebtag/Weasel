@@ -150,3 +150,6 @@ vite.config.ts.timestamp-*
 
 # Configuração local do Claude Code
 .claude/
+
+# testes de regressão: saídas que diferem das referências
+test/out/

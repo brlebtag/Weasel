@@ -14,6 +14,8 @@
     current: '',
     variant: '',
     anim: '',
+    shot: '', // filme: '' = o filme inteiro; senão o número do plano na linha do tempo
+    camView: true, // filme: o que a câmera filma (ou o mundo inteiro como foi desenhado)
     frame: 0,
     playing: false,
     speed: 1,
@@ -28,6 +30,17 @@
   };
   let raf = 0, saveTimer = 0;
   const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
+  // ---------- filme ----------
+  const isFilm = () => !!(st.model && st.model.film);
+  const tline = () => W.film.timeline(st.model);
+  // trecho que o player toca: o filme inteiro ou um plano
+  function filmRange() {
+    const tl = tline(), e = st.shot !== '' ? tl.entries[+st.shot] : null;
+    return e ? [e.start, e.start + e.frames] : [0, Math.max(1, tl.frames)];
+  }
+  const filmActors = () => (isFilm() ? [...st.model.film.actors, ...st.model.film.shots.flatMap((s) => s.actors)] : []);
+  // mundo → quadro (na tela) para a profundidade d: na vista da câmera, o que a câmera faz; no mundo, nada
+  const filmView = (d) => W.film.viewAt(st.model, st.frame, d, st.camView ? 'camera' : 'world');
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // ---------- editor ----------
@@ -48,6 +61,12 @@
     st.model = parseFor(st.variant);
     editor.setErrors(st.model.errors);
     if (st.anim && !st.model.animMap.has(st.anim)) st.anim = '';
+    if (isFilm()) {
+      const tl = tline();
+      if (st.shot !== '' && !tl.entries[+st.shot]) st.shot = '';
+      if (st.frame >= tl.frames) st.frame = 0;
+    } else st.shot = '';
+    $('tCameraWrap').hidden = !isFilm();
     if (st.variant && !st.model.variants.includes(st.variant)) st.variant = '';
     if (st.build) stopBuild();
     fillAnimSelect();
@@ -93,8 +112,11 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.use || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.use || rec.scene || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
+      if (rec.actor) s += ` · ${esc(rec.actor.file)}${rec.actor.model ? '' : ' <span style="color:var(--err)">(não carregou)</span>'}`;
+      if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s`;
+      if (rec.at) s += ` · ${Math.round(rec.at.t * 1000) / 1000}s no shot ${esc(rec.at.shot.name)}`;
       if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
       if (rec.st.inDef) s += ` · dentro de def ${esc(rec.st.inDef.name)}`;
       if (rec.def && rec.st.cmd === 'def') s += ` · usado ${rec.def.uses}×`;
@@ -105,6 +127,16 @@
     const err = st.model && st.model.errors.find((e) => e.line === st.caret.line);
     if (err) s += ` · <span style="color:${err.level === 'error' ? 'var(--err)' : 'var(--warn)'}">${esc(err.msg)}</span>`;
     $('caretInfo').innerHTML = s;
+    // Cursor num at ou shot do filme: vai para aquele momento
+    if (rec && (rec.at || rec.shot) && isFilm() && !st.playing) {
+      const f = rec.at ? W.film.frameOfShot(st.model, rec.at.shot, rec.at.t) : W.film.frameOfShot(st.model, rec.shot, 0);
+      if (f !== null && f !== st.frame) {
+        st.frame = f;
+        const [a, b] = filmRange();
+        if (f < a || f >= b) st.shot = '';
+        fillAnimSelect();
+      }
+    }
     // Cursor numa key ou event: mostra aquele quadro
     if (rec && (rec.st.cmd === 'key' || rec.st.cmd === 'event') && rec.anim && !st.playing && (st.anim !== rec.anim.name || st.frame !== rec.frame % rec.anim.frames)) {
       st.anim = rec.anim.name;
@@ -120,7 +152,19 @@
     ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
     cloth: 'tecido', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
     light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
+    film: 'este arquivo é um filme', shot: 'plano do filme', actor: 'outro arquivo em cena', camera: 'câmera do plano',
+    at: 'muda algo num tempo', scene: 'planos de outro filme',
   };
+  // o que dá para mudar com at, com o tipo de valor
+  function atTargets(m) {
+    const out = [];
+    for (const a of filmActors()) for (const p of Object.keys(L.ACTOR_PROPS)) out.push({ label: `${a.name}.${p}=`, detail: 'ator' });
+    for (const p of Object.keys(L.CAMERA_PROPS)) out.push({ label: `camera.${p}=`, detail: 'câmera' });
+    for (const n of m.lights.keys()) for (const p of Object.keys(L.LIGHT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'luz' });
+    for (const n of m.layerMap.keys()) for (const p of ['opacity', 'show']) out.push({ label: `${n}.${p}=`, detail: 'camada' });
+    out.push({ label: 'ease=' });
+    return out;
+  }
   function complete({ before }) {
     const m = st.model;
     if (!m) return [];
@@ -138,8 +182,30 @@
     const els = [...m.named.keys()];
     const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), ...names([...m.patterns.keys()], 'padrão'), { label: 'none' }];
     const eq = cur.indexOf('=');
+    const actorOf = (name) => filmActors().find((a) => a.name === name);
+    const fileList = () => names([...st.files.keys()].filter((f) => f !== st.current).map((f) => `"${f}"`), 'arquivo');
     if (eq > 0) {
       const key = cur.slice(0, eq);
+      if (cmd === 'at' && key.includes('.')) {
+        const target = key.slice(0, key.lastIndexOf('.')), prop = key.slice(key.lastIndexOf('.') + 1);
+        const ac = actorOf(target);
+        if (prop === 'anim') return ac && ac.model ? [...names(ac.model.anims.map((a) => a.name), 'animação'), { label: 'none' }] : [];
+        if (prop === 'variant') return ac && ac.model ? [...names(ac.model.variants, 'variante'), { label: 'none' }] : [];
+        if (prop === 'follow') return [...names(filmActors().map((a) => a.name), 'ator'), { label: 'none' }];
+        if (prop === 'flip') return names(['x', 'y', 'xy', 'none']);
+        if (prop === 'show') return names(['1', '0']);
+        if (prop === 'c' || prop === 'fadec') return names(colors, 'cor');
+        return [];
+      }
+      if (cmd === 'actor') {
+        const rec = m.byLine.get(st.caret.line), ac = rec && rec.actor;
+        if (key === 'anim') return ac && ac.model ? names(ac.model.anims.map((a) => a.name), 'animação') : [];
+        if (key === 'variant') return ac && ac.model ? names(ac.model.variants, 'variante') : [];
+        if (key === 'hide') return ac && ac.model ? names([...ac.model.layerMap.keys()], 'camada') : [];
+        if (key === 'flip') return names(['x', 'y', 'xy', 'none']);
+      }
+      if (cmd === 'camera' && key === 'follow') return names(filmActors().map((a) => a.name), 'ator');
+      if (cmd === 'camera' && key === 'fadec') return names(colors, 'cor');
       if (cmd === 'key' && key.includes('.')) {
         const prop = key.slice(key.lastIndexOf('.') + 1);
         if (prop === 'shape') return names(els, 'forma');
@@ -192,6 +258,9 @@
       return [...names(L.ATTRS.use.map((a) => a + '='), 'atributo'), ...(def ? names([...def.st.attrs.keys()].map((k) => k + '='), 'parâmetro') : [])];
     }
     if (cmd === 'include' && idx === 1) return names([...st.files.keys()].filter((f) => f !== st.current), 'arquivo');
+    if ((cmd === 'actor' && idx === 2) || (cmd === 'scene' && idx === 1)) return fileList();
+    if (cmd === 'at' && idx === 1) return names(['0s', '1s', '+1s', '+0.5s'], 'tempo');
+    if (cmd === 'at' && idx >= 2) return atTargets(m);
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
     if (cmd === 'light' && idx === 2) return names(['point', 'spot', 'dir']);
     if (cmd === 'pattern' && idx === 2) return names(['hatch', 'dots']);
@@ -204,7 +273,35 @@
     const ev = anim.events.filter((e) => e.frame === f).map((e) => e.name);
     return `${f + 1} / ${anim.frames} · ${anim.fps} fps${ev.length ? ` · ⚑ ${ev.join(', ')}` : ''}`;
   }
+  // filme: código de tempo, plano e o tempo dentro dele
+  function filmText() {
+    const tl = tline(), loc = W.film.locate(st.model, st.frame);
+    if (!loc) return 'filme sem planos';
+    return `${W.film.timecode(st.frame, tl.fps)} · ${loc.entry.name} +${loc.t.toFixed(2)}s`;
+  }
+  function fillFilmSelect() {
+    const sel = $('animSel'), tl = tline();
+    const secs = (n) => `${Math.round((n / tl.fps) * 10) / 10}s`;
+    const want = [['', `filme inteiro · ${secs(tl.frames)}`], ...tl.entries.map((e, i) => [String(i), `${i + 1}. ${e.name} · ${secs(e.frames)}`])];
+    if (want.map((w) => w.join('=')).join('\n') !== [...sel.options].map((o) => `${o.value}=${o.textContent}`).join('\n')) {
+      sel.innerHTML = '';
+      for (const [v, t] of want) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); }
+    }
+    sel.value = st.shot;
+    const [a, b] = filmRange();
+    if (st.frame < a || st.frame >= b) st.frame = a;
+    const sl = $('frameSl');
+    sl.min = a;
+    sl.max = b - 1;
+    sl.value = st.frame;
+    sl.disabled = b - a < 2;
+    const lbl = $('frameLbl');
+    lbl.textContent = filmText();
+    lbl.classList.remove('event');
+    $('bPlay').classList.toggle('on', st.playing);
+  }
   function fillAnimSelect() {
+    if (isFilm()) { fillFilmSelect(); return; }
     const sel = $('animSel');
     const m = st.model;
     const want = ['', ...m.anims.map((a) => a.name)];
@@ -219,6 +316,7 @@
     const anim = currentAnim();
     if (anim && st.frame >= anim.frames) st.frame = 0;
     const sl = $('frameSl');
+    sl.min = 0;
     sl.max = anim ? anim.frames - 1 : 0;
     sl.value = anim ? st.frame : 0;
     sl.disabled = !anim;
@@ -242,6 +340,15 @@
   }
 
   function play(on) {
+    if (isFilm()) {
+      const [a, b] = filmRange();
+      if (on && st.frame >= b - 1) st.frame = a;
+      st.playing = on;
+      if (on) { stopBuild(); st.lastT = performance.now(); st.acc = 0; }
+      fillAnimSelect();
+      kick();
+      return;
+    }
     if (on && !currentAnim()) {
       if (!st.model.anims.length) return hint('Este desenho não tem animações (use anim e key).', 2500);
       st.anim = st.model.anims[0].name;
@@ -254,6 +361,14 @@
   }
 
   function step(d) {
+    if (isFilm()) {
+      const [a, b] = filmRange();
+      st.playing = false;
+      st.frame = a + ((st.frame - a + d) % (b - a) + (b - a)) % (b - a);
+      fillAnimSelect();
+      draw();
+      return;
+    }
     const a = currentAnim();
     if (!a) return;
     st.playing = false;
@@ -265,6 +380,7 @@
   // ---------- pintura passo a passo ----------
   function startBuild() {
     if (st.build) { stopBuild(); draw(); return; }
+    if (isFilm()) { hint('A pintura passo a passo é para desenhos; num filme, use o player.', 2600); return; }
     st.playing = false;
     const plan = S.buildPlan(st.model, { guides: false, speed: st.speed });
     if (!plan.order.length) return;
@@ -284,7 +400,19 @@
     raf = 0;
     let again = false;
     const a = currentAnim();
-    if (st.playing && a) {
+    if (st.playing && isFilm()) {
+      const fps = tline().fps, [lo, hi] = filmRange();
+      st.acc += ((t - st.lastT) / 1000) * fps * st.speed;
+      st.lastT = t;
+      if (st.acc >= 1) {
+        const n = Math.floor(st.acc);
+        st.acc -= n;
+        st.frame = lo + ((st.frame - lo + n) % (hi - lo));
+        $('frameSl').value = st.frame;
+        $('frameLbl').textContent = filmText();
+      }
+      again = true;
+    } else if (st.playing && a) {
       st.acc += ((t - st.lastT) / 1000) * a.fps * st.speed;
       st.lastT = t;
       if (st.acc >= 1) {
@@ -346,6 +474,7 @@
     ctx.clearRect(0, 0, cw, ch);
     const T = () => ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * st.view.x, dpr * st.view.y);
     T();
+    if (isFilm()) { drawFilm(ctx, dpr, T); return; }
     const pose = currentPose();
 
     // papel
@@ -400,6 +529,64 @@
     if (st.show.bones) drawBones(ctx, m, pose, z);
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (st.show.points) drawHandles(ctx, m, pose, z);
+  }
+
+  // Filme: na vista da câmera, o quadro como vai sair no vídeo; no mundo, tudo como foi desenhado
+  // (sem câmera, sem recorte), com a moldura do quadro parado e a da câmera neste momento.
+  function drawFilm(ctx, dpr, T) {
+    const m = st.model, c = m.canvas, z = st.view.z;
+    if (!tline().frames) return;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.5)';
+    ctx.shadowBlur = 26 * dpr;
+    ctx.shadowOffsetY = 6 * dpr;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, c.w, c.h);
+    ctx.restore();
+    if (st.camView) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, c.w, c.h);
+      ctx.clip();
+      if (m.finish.pixel > 1 || S.hasPost(m)) {
+        const img = W.film.renderFrame(m, st.frame, { scale: Math.min(m.finish.posterize ? 1 : 2, z * dpr) });
+        ctx.imageSmoothingEnabled = m.finish.pixel <= 1;
+        ctx.drawImage(img, 0, 0, c.w, c.h);
+        ctx.imageSmoothingEnabled = true;
+      } else W.film.drawFrame(ctx, m, st.frame, {});
+      ctx.restore();
+    } else {
+      W.film.drawFrame(ctx, m, st.frame, { view: 'world', guides: st.show.guides });
+      T();
+      ctx.save();
+      ctx.lineWidth = 1.5 / z;
+      ctx.setLineDash([8 / z, 6 / z]);
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.strokeRect(0, 0, c.w, c.h);
+      const q = W.film.cameraQuad(m, st.frame);
+      if (q) {
+        ctx.setLineDash([]);
+        ctx.lineWidth = 2.5 / z;
+        ctx.strokeStyle = '#ff8a1f';
+        ctx.beginPath();
+        q.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = '#ff8a1f';
+        ctx.font = `${12 / z}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
+        ctx.fillText('câmera', q[0][0] + 6 / z, q[0][1] + 16 / z);
+      }
+      ctx.restore();
+    }
+    T();
+    if (st.show.guides && m.lights.size) {
+      ctx.save();
+      const v = filmView(1);
+      ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
+      drawLights(ctx, m, W.film.frameState(m, st.frame).who[0].pose, z * Math.sqrt(Math.abs(W.geom.M.det(v))));
+      ctx.restore();
+    }
+    if (st.show.points) drawHandles(ctx, m, currentPose(), z);
   }
 
   function drawUnity(ctx, u, z) {
@@ -503,9 +690,29 @@
     ctx.restore();
   }
 
+  // filme: em que profundidade está a alça (null = não aparece nesta vista)
+  function handleDepth(rec, h) {
+    if (h.camera) return st.camView ? null : 1;
+    const ac = h.actor ? filmActors().find((a) => a.name === h.actor) : rec.actor;
+    if (ac) return ac.screen ? Infinity : ac.depth;
+    const Ly = rec.el && rec.el.layer;
+    if (Ly) return Ly.screen ? Infinity : Ly.depth || 1;
+    return 1;
+  }
   function handleList(m, pose) {
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
+    if (isFilm()) {
+      return {
+        rec,
+        pts: rec.handles.map((h) => {
+          const d = handleDepth(rec, h);
+          if (d === null) return null;
+          const p = S.handlePos(m, pose, rec, h);
+          return M.apply(filmView(d), p[0], p[1]);
+        }),
+      };
+    }
     return { rec, pts: rec.handles.map((h) => S.handlePos(m, pose, rec, h)) };
   }
 
@@ -515,7 +722,7 @@
     const { rec, pts } = hl;
     const active = st.drag ? st.drag.hi : activeHandle(rec);
     ctx.save();
-    const ptIdx = rec.handles.map((h, i) => (h.kind === 'pt' ? i : -1)).filter((i) => i >= 0);
+    const ptIdx = rec.handles.map((h, i) => (h.kind === 'pt' && pts[i] ? i : -1)).filter((i) => i >= 0);
     if (ptIdx.length > 1) {
       ctx.strokeStyle = 'rgba(255,138,31,.55)';
       ctx.lineWidth = 1 / z;
@@ -528,7 +735,7 @@
     }
     // alças de curva: linha do ponto até a alça e o reflexo do outro lado
     rec.handles.forEach((h, i) => {
-      if (h.kind !== 'tan') return;
+      if (h.kind !== 'tan' || !pts[i]) return;
       const p = pts[rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === h.idx)];
       if (!p) return;
       const t = pts[i];
@@ -540,7 +747,7 @@
       ctx.stroke();
     });
     rec.handles.forEach((h, i) => {
-      if (i === active) return;
+      if (i === active || !pts[i]) return;
       const [x, y] = pts[i];
       const r = 4.5 / z;
       ctx.beginPath();
@@ -562,13 +769,18 @@
     const r = view.getBoundingClientRect();
     return [(e.clientX - r.left - st.view.x) / st.view.z, (e.clientY - r.top - st.view.y) / st.view.z];
   };
+  // no filme, o ponto do mundo (no plano da ação) que está sob o mouse
+  const toWorld = (e) => {
+    const p = toCanvas(e);
+    return isFilm() ? M.apply(M.invert(filmView(1)), p[0], p[1]) : p;
+  };
   function hitHandle(e) {
     if (!st.show.points || st.build) return -1;
     const hl = handleList(st.model, currentPose());
     if (!hl) return -1;
     const [x, y] = toCanvas(e);
     let best = -1, bd = 10 / st.view.z;
-    hl.pts.forEach((p, i) => { const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } });
+    hl.pts.forEach((p, i) => { if (!p) return; const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } });
     return best;
   }
   const fmtN = (v, dec) => String(Number(v.toFixed(dec)));
@@ -584,7 +796,7 @@
   view.addEventListener('pointerdown', (e) => {
     view.setPointerCapture(e.pointerId);
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
-      const [x, y] = toCanvas(e);
+      const [x, y] = toWorld(e);
       const ta = editor.ta, s = ta.selectionStart;
       const before = ta.value[s - 1];
       const txt = (before && !/\s/.test(before) ? ' ' : '') + `${Math.round(x)},${Math.round(y)}`;
@@ -596,7 +808,7 @@
     if (hi >= 0) {
       const rec = st.model.byLine.get(st.caret.line);
       if (rec.handles[hi].fixed) { hint('Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
-      if (st.anim || st.playing) { hint('Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
+      if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now() };
       return;
     }
@@ -608,7 +820,8 @@
 
   view.addEventListener('pointermove', (e) => {
     const [x, y] = toCanvas(e);
-    $('coords').textContent = `x ${Math.round(x)}  y ${Math.round(y)}`;
+    const wp = toWorld(e);
+    $('coords').textContent = `x ${Math.round(wp[0])}  y ${Math.round(wp[1])}`;
     if (st.drag) { moveHandle(st.drag, x, y); return; }
     if (st.pan) {
       st.view.auto = false;
@@ -627,7 +840,7 @@
 
   view.addEventListener('dblclick', (e) => {
     const hi = hitHandle(e);
-    if (hi < 0 || st.anim) return;
+    if (hi < 0 || (st.anim && !isFilm())) return;
     const rec = st.model.byLine.get(st.caret.line);
     const h = rec.handles[hi];
     if (h.kind !== 'pt' || h.tan || h.fixed) return;
@@ -641,6 +854,11 @@
     const rec = st.model.byLine.get(d.line);
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
+    if (isFilm()) {
+      const dep = handleDepth(rec, h);
+      if (dep === null) return;
+      [x, y] = M.apply(M.invert(filmView(dep)), x, y);
+    }
     let [lx, ly] = rec.xf ? M.apply(M.invert(rec.xf), x, y) : [x, y];
     const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1;
     const dec = k > 1.5 ? 1 : 0;
@@ -681,7 +899,11 @@
   $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
   $('variantSel').addEventListener('change', (e) => { st.variant = e.target.value; reparse(); });
 
-  $('animSel').addEventListener('change', (e) => { st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw(); });
+  $('animSel').addEventListener('change', (e) => {
+    if (isFilm()) { st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
+    st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
+  });
+  $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
   $('bPrev').addEventListener('click', () => step(-1));
   $('bNext').addEventListener('click', () => step(1));
@@ -706,6 +928,7 @@
     if (src !== undefined) st.files.set(name, src);
     st.current = name;
     st.anim = '';
+    st.shot = '';
     st.frame = 0;
     st.playing = false;
     st.view.auto = true;
@@ -785,7 +1008,7 @@
     parseFor: (v) => (v === st.variant ? st.model : parseFor(v)),
     variants: () => st.model.variants,
     variant: () => st.variant,
-    state: () => ({ anim: st.anim, frame: st.frame }),
+    state: () => ({ anim: st.anim, frame: st.frame, shot: st.shot }),
     baseName,
   });
   $('btnExport').addEventListener('click', () => { st.playing = false; fillAnimSelect(); exportUI.open(); });

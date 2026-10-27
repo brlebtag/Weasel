@@ -1,0 +1,10 @@
+canvas   480 × 360, fundo #f4efe4
+padrões  leve (hatch), media (hatch, cross), escura (hatch, cross), pontos (dots)
+camadas  5
+  mesa             2 item(ns)
+  sombra           1 item(ns)
+  maca             1 item(ns)
+  volume           2 item(ns)  clip=maca
+  detalhes         3 item(ns)
+formas   9
+animações nenhuma

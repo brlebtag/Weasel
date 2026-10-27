@@ -9,7 +9,9 @@
     def: 'comp', end: 'comp', use: 'comp',
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
     light: 'fx', ambient: 'fx',
+    film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film',
   };
+  const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at']);
   const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'emitter']);
   const CLOSED = new Set(['shape', 'ellipse', 'rect']);
   const COMMON = ['c', 'bone', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
@@ -18,7 +20,7 @@
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
     unity: ['unit', 'root', 'collider'],
-    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade'],
+    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     anim: ['frames', 'fps'],
@@ -33,16 +35,25 @@
     line: [...COMMON, 'w', 'dash'],
     text: [...COMMON, 'ink', 'inkc', 'size', 'font', 'align', 'rot'],
     emitter: ['c', 'bone', 'opacity', 'emit', 'rate', 'burst', 'life', 'speed', 'angle', 'spread', 'gravity', 'wind', 'drag', 'size', 'shape', 'area', 'seed'],
+    film: ['fps', 'dur'],
+    shot: ['dur'],
+    actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide'],
+    camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
   };
   const FLAGS = {
-    layer: ['guide', 'hidden', 'lit', 'unlit'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
+    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
     shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'], emitter: ['hidden'],
+    actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
   const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape' };
   const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free' };
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
+  // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
+  const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant' };
+  const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color' };
+  const FILM_W = 1920, FILM_H = 1080;
   const FINISHES = ['game', 'flat'];
   const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'];
   const DEFAULT_PALETTE = { ink: '#14141c', line: 8, inner: 5, edge: 3 };
@@ -328,6 +339,7 @@
       anims: [], animMap: new Map(),
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
+      film: null,
       byLine: new Map(),
       errors,
     };
@@ -356,6 +368,8 @@
       const s = readStatement(ln.text, i, err);
       if (s) stmts.push(s);
     });
+    // num filme, o quadro padrão é Full HD
+    if (stmts.some((s) => s.cmd === 'film') && !stmts.some((s) => s.cmd === 'canvas')) { m.canvas.w = FILM_W; m.canvas.h = FILM_H; }
 
     // ---- leitura de valores ----
     const ROOT = { xf: null, over: null, vars: globals, bone: null, cloth: null, opacity: 1, inst: 0 };
@@ -536,7 +550,7 @@
           const name = ident(st, st.pos[0], 'da camada');
           if (!name) break;
           if (m.layerMap.has(name)) { err(st.line, `camada "${name}" já existe`, st.pos[0].from, st.pos[0].to); break; }
-          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5 };
+          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false };
           for (const f of st.pos.slice(1)) {
             if (FLAGS.layer.includes(f.text)) Ly[f.text] = true;
             else err(st.line, `opção desconhecida "${f.text}" (use ${FLAGS.layer.join(', ')})`, f.from, f.to, 'warn');
@@ -546,6 +560,7 @@
           if (A.has('cut')) Ly.cut = A.get('cut').text;
           if (A.has('only')) Ly.only = A.get('only').text.split(',').filter(Boolean);
           if (A.has('opacity')) Ly.opacity = number(st, A.get('opacity'), 1, 0, 1);
+          if (A.has('depth')) Ly.depth = number(st, A.get('depth'), 1, 0.05, 1000);
           if (A.has('blend')) {
             const b = A.get('blend').text;
             if (BLENDS.includes(b)) Ly.blend = b === 'normal' ? 'source-over' : b;
@@ -1146,7 +1161,12 @@
           Ly[k] = null;
         }
       }
-      if (Ly.only && st) for (const n of Ly.only) if (!m.animMap.has(n)) bad(st, st.attrs.get('only'), `animação "${n}" não existe`, 'warn');
+      if (Ly.only && st) {
+        for (const n of Ly.only) {
+          if (m.animMap.has(n) || top.some((s) => s.cmd === 'shot' && s.pos[0] && s.pos[0].text === n)) continue;
+          bad(st, st.attrs.get('only'), `animação "${n}" não existe`, 'warn');
+        }
+      }
       if (Ly.castSpec) {
         const g = (m.named.get(Ly.castSpec.line) || []).find((e) => e.type === 'line' && e.pts.length >= 2);
         if (!g) bad(st, Ly.castSpec.a, `cast: não achei a line "${Ly.castSpec.line}" (o chão onde a sombra cai)`);
@@ -1271,6 +1291,314 @@
       an.events.sort((p, q) => p.frame - q.frame);
     }
 
+    // ---- filme: planos (shot), atores, câmera e o que muda com o tempo (at) ----
+    const filmSts = top.filter((s) => s.cmd === 'film');
+    const subCache = new Map();
+    const round3 = (v) => Math.round(v * 1000) / 1000;
+    if (filmSts.length) readFilm(filmSts[0]);
+    else for (const st of top) if (FILM_CMDS.has(st.cmd)) err(st.line, `${st.cmd} só vale num filme (comece o arquivo com: film fps=24)`, st.cmdTok.from, st.cmdTok.to);
+
+    // tempo: 2s, 1.5, 500ms, 48f (quadros do filme), 1m30s; com + na frente, conta a partir do at anterior
+    function timeOf(st, tok, fps, what) {
+      if (!tok) { err(st.line, `falta ${what}`, st.cmdTok.from, st.cmdTok.to); return null; }
+      const a = tok.key ? tok : null;
+      let t = a ? a.text : tok.text, rel = false;
+      if (t[0] === '+') { rel = true; t = t.slice(1); }
+      let v;
+      const mm = /^(\d+(?:\.\d+)?)m(?:(\d+(?:\.\d+)?)s?)?$/.exec(t);
+      if (/ms$/.test(t)) v = num(t.slice(0, -2)) / 1000;
+      else if (mm) v = parseFloat(mm[1]) * 60 + (mm[2] ? parseFloat(mm[2]) : 0);
+      else if (/f$/.test(t)) v = num(t.slice(0, -1)) / fps;
+      else if (/s$/.test(t)) v = num(t.slice(0, -1));
+      else v = num(t);
+      if (isNaN(v) || v < 0) {
+        err(st.line, `tempo inválido "${t}" (use 2s, 1.5s, 48f, 1m30s${a ? '' : ' ou +1s'})`, a ? a.vfrom : tok.from, tok.to);
+        return null;
+      }
+      return { v, rel };
+    }
+
+    // Arquivo usado como ator (ou cena): lido como um desenho à parte, com o próprio canvas e ossos.
+    function loadSub(st, tok, file, variant, asFilm) {
+      const key = `${file}\n${variant || ''}\n${asFilm ? 'cena' : 'ator'}`;
+      if (subCache.has(key)) return subCache.get(key);
+      let res = null;
+      const chain = opts.chain || [X.mainFile];
+      if (!opts.resolve) err(st.line, 'aqui não dá para abrir outros arquivos', tok.from, tok.to);
+      else if (chain.includes(file)) err(st.line, `arquivos em ciclo: ${[...chain, file].join(' → ')}`, tok.from, tok.to);
+      else if (chain.length > 8) err(st.line, 'arquivos demais um dentro do outro', tok.from, tok.to);
+      else {
+        const src = opts.resolve(file, L[st.line].file);
+        if (src === null || src === undefined) err(st.line, `não achei o arquivo "${file}"`, tok.from, tok.to);
+        else {
+          const saved = scope;
+          res = parse(src, { file, resolve: opts.resolve, variant: variant || null, chain: [...chain, file] });
+          scope = saved;
+          const es = res.errors.filter((e) => e.level === 'error');
+          if (es.length) err(st.line, `${file}:${es[0].line + 1}: ${es[0].msg}${es.length > 1 ? ` (e mais ${es.length - 1} erro${es.length > 2 ? 's' : ''})` : ''}`, tok.from, tok.to);
+          if (asFilm && !res.film) { err(st.line, `"${file}" não é um filme (falta a linha film)`, tok.from, tok.to); res = null; } else if (!asFilm && res.film) { err(st.line, `"${file}" é um filme: para juntar filmes use scene "${file}"`, tok.from, tok.to); res = null; }
+        }
+      }
+      subCache.set(key, res);
+      return res;
+    }
+
+    function readActor(st, F) {
+      const A = st.attrs;
+      const name = ident(st, st.pos[0], 'do ator');
+      if (!name) return null;
+      if (name === 'camera') { err(st.line, '"camera" é reservado; escolha outro nome', st.pos[0].from, st.pos[0].to); return null; }
+      const ft = st.pos[1];
+      if (!ft || ft.text === '""' || (ft.text[0] !== '"' && /[,{]/.test(ft.text))) { err(st.line, 'use: actor nome "arquivo.weasel" x,y', ft ? ft.from : st.cmdTok.from, ft ? ft.to : st.cmdTok.to); return null; }
+      let file = unq(ft.text);
+      if (!/\.\w+$/.test(file)) file += '.weasel';
+      const model = loadSub(st, ft, file, null, false);
+      const ac = {
+        name, file, line: st.line, model, models: new Map([['', model]]),
+        x: 0, y: 0, sx: 1, sy: 1, rot: 0, flip: [1, 1], depth: 1, anim: null, speed: 1, opacity: 1, variant: '',
+        origin: model && model.unity ? model.unity.root.slice() : [0, 0], order: 0, hide: null,
+        screen: false, bg: false, show: true, unlit: false, front: false,
+      };
+      const rec = info(st, { actor: ac });
+      let posTok = null;
+      for (const t of st.pos.slice(2)) {
+        if (FLAGS.actor.includes(t.text)) { if (t.text === 'hidden') ac.show = false; else ac[t.text] = true; } else if (!posTok && (t.text.includes(',') || t.text.includes('{'))) posTok = t;
+        else err(st.line, `opção desconhecida "${t.text}" (use ${FLAGS.actor.join(', ')})`, t.from, t.to, 'warn');
+      }
+      if (posTok) {
+        const v = posPair(st, posTok, 'a posição', [0, 0]);
+        ac.x = v[0]; ac.y = v[1];
+        rec.handles.push({ kind: 'pos', actor: name, x: ac.x, y: ac.y, from: posTok.from, to: posTok.to, fixed: posTok.text.includes('{') });
+      }
+      if (A.has('scale')) { const v = list(st, A.get('scale'), 1, 2, [1]); ac.sx = v[0]; ac.sy = v.length > 1 ? v[1] : v[0]; }
+      if (A.has('rot')) ac.rot = number(st, A.get('rot'), 0);
+      if (A.has('flip')) { const f = flipOf(st, A.get('flip')); if (f) ac.flip = f; }
+      if (A.has('depth')) ac.depth = number(st, A.get('depth'), 1, 0.05, 1000);
+      if (A.has('speed')) ac.speed = number(st, A.get('speed'), 1, 0, 100);
+      if (A.has('opacity')) ac.opacity = number(st, A.get('opacity'), 1, 0, 1);
+      if (A.has('origin')) ac.origin = pair(st, A.get('origin'), ac.origin);
+      if (A.has('variant')) { const v = variantOf(st, A.get('variant'), ac); if (v !== null) ac.variant = v; }
+      if (A.has('anim')) { const v = animOf(st, A.get('anim'), ac); if (v !== undefined) ac.anim = v; }
+      if (A.has('hide')) {
+        const a = A.get('hide');
+        ac.hide = new Set(a.text.split(',').filter(Boolean));
+        if (model) for (const n of ac.hide) if (!model.layerMap.has(n)) bad(st, a, `o ator "${name}" não tem a camada "${n}"`, 'warn');
+      }
+      if (F.names.has(name)) err(st.line, `ator "${name}" já existe`, st.pos[0].from, st.pos[0].to);
+      return ac;
+    }
+    function flipOf(st, a) {
+      const f = a.text;
+      if (f === 'x') return [-1, 1];
+      if (f === 'y') return [1, -1];
+      if (f === 'xy') return [-1, -1];
+      if (f === 'none' || f === '0') return [1, 1];
+      bad(st, a, 'flip= aceita x, y, xy ou none');
+      return null;
+    }
+    function animOf(st, a, ac) {
+      if (a.text === 'none') return null;
+      if (!ac.model) return undefined;
+      if (ac.model.animMap.has(a.text)) return a.text;
+      bad(st, a, `o ator "${ac.name}" não tem a animação "${a.text}"${ac.model.anims.length ? ` (tem: ${ac.model.anims.map((x) => x.name).join(', ')})` : ''}`);
+      return undefined;
+    }
+    function variantOf(st, a, ac) {
+      const v = a.text === 'none' ? '' : a.text;
+      if (!ac.model) return null;
+      if (v && !ac.model.variants.includes(v)) { bad(st, a, `o ator "${ac.name}" não tem a variante "${v}"${ac.model.variants.length ? ` (tem: ${ac.model.variants.join(', ')})` : ''}`); return null; }
+      if (!ac.models.has(v)) ac.models.set(v, loadSub(st, { from: a.vfrom, to: a.to }, ac.file, v, false));
+      return v;
+    }
+
+    function readCamera(st, cam) {
+      const A = st.attrs;
+      const rec = info(st, { camera: cam });
+      const t = st.pos[0];
+      if (t) {
+        const v = posPair(st, t, 'a posição da câmera (centro do quadro)', null);
+        if (v) { cam.x = v[0]; cam.y = v[1]; rec.handles.push({ kind: 'pos', camera: true, x: v[0], y: v[1], from: t.from, to: t.to, fixed: t.text.includes('{') }); }
+        for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      }
+      if (A.has('zoom')) cam.zoom = number(st, A.get('zoom'), 1, 0.01, 100);
+      if (A.has('rot')) cam.rot = number(st, A.get('rot'), 0);
+      if (A.has('shake')) cam.shake = number(st, A.get('shake'), 0, 0, 1000);
+      if (A.has('offset')) cam.offset = pair(st, A.get('offset'), cam.offset);
+      if (A.has('lag')) cam.lag = number(st, A.get('lag'), 0, 0, 10);
+      if (A.has('fade')) cam.fade = number(st, A.get('fade'), 0, 0, 1);
+      if (A.has('fadec')) cam.fadec = plainColor(st, A.get('fadec')) || cam.fadec;
+      if (A.has('follow')) { const a = A.get('follow'); cam.follow = a.text === 'none' ? null : a.text; cam.followAt = { st, a }; }
+    }
+
+    function readFilm(fst) {
+      for (const st of filmSts.slice(1)) err(st.line, 'film repetido (só um por arquivo)', st.cmdTok.from, st.cmdTok.to);
+      const F = {
+        fps: 24, dur: null, line: fst.line, names: new Set(),
+        actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000' },
+        shots: [], seq: [],
+      };
+      m.film = F;
+      if (fst.attrs.has('fps')) F.fps = number(fst, fst.attrs.get('fps'), 24, 1, 120);
+      if (fst.attrs.has('dur')) { const t = timeOf(fst, fst.attrs.get('dur'), F.fps, 'a duração'); if (t) F.dur = t.v; }
+      for (const f of fst.pos) err(fst.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      info(fst, { filmSt: F });
+
+      const sequenced = top.some((s) => s.cmd === 'shot' || s.cmd === 'scene');
+      const base = (X.mainFile || 'filme').replace(/\.[^.]+$/, '');
+      let shot = sequenced ? null : { name: base, line: fst.line, dur: F.dur, implicit: true, actors: [], cam: null, ats: [], tracks: new Map() };
+      if (shot) { F.shots.push(shot); F.seq.push({ kind: 'shot', shot }); }
+      let order = 0, seen = false;
+      const shotNames = new Set();
+      for (const st of top) {
+        if (st.cmd === 'shot') {
+          seen = true;
+          const name = ident(st, st.pos[0], 'do plano');
+          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names) };
+          if (name && shotNames.has(name)) err(st.line, `shot "${name}" já existe`, st.pos[0].from, st.pos[0].to);
+          shotNames.add(shot.name);
+          shot.cam = Object.assign({}, F.camera, { offset: F.camera.offset.slice() });
+          if (st.attrs.has('dur')) { const t = timeOf(st, st.attrs.get('dur'), F.fps, 'a duração'); if (t) shot.dur = Math.max(1 / F.fps, t.v); } else err(st.line, 'falta dur= (ex.: shot abertura dur=4s)', st.cmdTok.from, st.cmdTok.to);
+          if (shot.dur === null) shot.dur = 3;
+          for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+          F.shots.push(shot);
+          F.seq.push({ kind: 'shot', shot });
+          info(st, { shot });
+          continue;
+        }
+        if (st.cmd === 'scene') {
+          const ft = st.pos[0];
+          if (!ft) { err(st.line, 'use: scene "arquivo.weasel"', st.cmdTok.from, st.cmdTok.to); continue; }
+          let file = unq(ft.text);
+          if (!/\.\w+$/.test(file)) file += '.weasel';
+          const sub = loadSub(st, ft, file, null, true);
+          info(st, { scene: file });
+          shot = null;
+          seen = true;
+          if (sub) F.seq.push({ kind: 'scene', file, model: sub, line: st.line });
+          continue;
+        }
+        if ((st.cmd === 'actor' || st.cmd === 'camera') && !shot && seen) {
+          err(st.line, `${st.cmd} depois de scene precisa de um shot antes (ou suba para antes do primeiro shot, valendo para todos)`, st.cmdTok.from, st.cmdTok.to);
+          continue;
+        }
+        if (st.cmd === 'actor') {
+          const local = shot && !shot.implicit;
+          const ac = readActor(st, local ? shot : F);
+          if (!ac) continue;
+          ac.order = order++;
+          (local ? shot : F).names.add(ac.name);
+          (local ? shot.actors : F.actors).push(ac);
+          continue;
+        }
+        if (st.cmd === 'camera') {
+          readCamera(st, shot && !shot.implicit ? shot.cam : F.camera);
+          continue;
+        }
+        if (st.cmd === 'at') {
+          if (!shot) { err(st.line, sequenced ? 'at precisa ficar dentro de um shot' : 'at precisa vir depois do film', st.cmdTok.from, st.cmdTok.to); continue; }
+          const t = timeOf(st, st.pos[0], F.fps, 'o tempo (ex.: at 2s heroi.pos=400,560)');
+          if (!t) continue;
+          const prev = shot.ats.length ? shot.ats[shot.ats.length - 1].t : 0;
+          shot.ats.push({ st, t: t.rel ? prev + t.v : t.v });
+          for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
+        }
+      }
+      for (const s of F.shots) {
+        if (s.implicit) s.cam = F.camera;
+        const actors = new Map([...F.actors, ...s.actors].map((a) => [a.name, a]));
+        s.actorMap = actors;
+        for (const { st, t } of s.ats) readAt(st, t, s, actors, F.fps);
+        if (s.implicit && s.dur === null) {
+          const last = Math.max(0, ...s.ats.map((x) => x.t));
+          s.dur = last > 0 ? last : 3;
+          if (!(last > 0)) err(fst.line, 'falta dur= (ex.: film fps=24 dur=10s) ou shot … dur=; o filme ficou com 3s', fst.cmdTok.from, fst.cmdTok.to, 'warn');
+        }
+        for (const tr of s.tracks.values()) {
+          tr.keys.sort((p, q) => p.t - q.t);
+          const over = tr.keys.find((k) => k.t > s.dur + 1e-9);
+          if (over) err(over.line, `at ${round3(over.t)}s passa do fim do shot "${s.name}" (dur=${round3(s.dur)}s)`, 0, 2, 'warn');
+        }
+        // câmera seguindo um ator que não existe
+        if (s.cam.follow && !actors.has(s.cam.follow) && s.cam.followAt) bad(s.cam.followAt.st, s.cam.followAt.a, `ator "${s.cam.follow}" não existe aqui`);
+      }
+      if (sequenced && F.dur !== null) err(fst.line, 'dur= do film só vale sem shot (a duração vem dos shots)', fst.attrs.get('dur').from, fst.attrs.get('dur').to, 'warn');
+      if (!F.seq.length) err(fst.line, 'o filme não tem nenhum shot', fst.cmdTok.from, fst.cmdTok.to, 'warn');
+      delete F.names;
+      for (const s of F.shots) delete s.names;
+    }
+
+    // at 2s heroi.pos=900,560 heroi.anim=walk camera.zoom=1.4 ease=out
+    function readAt(st, t, shot, actors, fps) {
+      let ease = 'smooth';
+      if (st.attrs.has('ease')) {
+        const a = st.attrs.get('ease');
+        if (W.geom.EASE[a.text]) ease = a.text;
+        else bad(st, a, `ease desconhecido "${a.text}" (use ${Object.keys(W.geom.EASE).join(', ')})`);
+      }
+      const rec = info(st, { at: { shot, t } });
+      const key = (kind, name, prop, interp, v, a) => {
+        const id = `${kind}:${name}.${prop}`;
+        if (!shot.tracks.has(id)) shot.tracks.set(id, { kind, name, prop, interp, keys: [] });
+        const tr = shot.tracks.get(id);
+        const k = { t, v, ease, line: st.line };
+        const same = tr.keys.findIndex((x) => Math.abs(x.t - t) < 1e-9);
+        if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
+        return a;
+      };
+      let n = 0;
+      for (const a of st.attrs.values()) {
+        if (a.key === 'ease') continue;
+        n++;
+        const dot = a.key.lastIndexOf('.');
+        if (dot <= 0) { bad(st, a, 'use alvo.propriedade=valor (ex.: heroi.pos=400,560 ou camera.zoom=1.5)'); continue; }
+        const name = a.key.slice(0, dot), prop = a.key.slice(dot + 1);
+        const ac = actors.get(name);
+        let kind, table;
+        if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz nem camada deste filme`); continue; }
+        const type = table[prop];
+        if (!type) { bad(st, a, `"${prop}" não muda com at em ${{ camera: 'camera', actor: 'ator', light: 'luz', layer: 'camada' }[kind]} (use ${Object.keys(table).join(', ')})`); continue; }
+        switch (type) {
+          case 'xy': {
+            const v = pair(st, a, null);
+            if (!v) break;
+            const [px, py] = prop === 'offset' ? ['ox', 'oy'] : ['x', 'y'];
+            key(kind, name, px, 'lerp', v[0]);
+            key(kind, name, py, 'lerp', v[1]);
+            if (prop === 'pos') rec.handles.push({ kind: 'pos', actor: kind === 'actor' ? name : null, camera: kind === 'camera', x: v[0], y: v[1], from: a.vfrom, to: a.to, fixed: a.text.includes('{') });
+            break;
+          }
+          case 'scale': {
+            const v = list(st, a, 1, 2, null);
+            if (!v) break;
+            key(kind, name, 'sx', 'lerp', v[0]);
+            key(kind, name, 'sy', 'lerp', v.length > 1 ? v[1] : v[0]);
+            break;
+          }
+          case 'free': key(kind, name, prop, 'lerp', number(st, a, 0)); break;
+          case 'num': key(kind, name, prop, 'lerp', number(st, a, 1, 0, 1)); break;
+          case 'pos': key(kind, name, prop, 'lerp', number(st, a, 1, 0.01, 1000)); break;
+          case 'stepnum': key(kind, name, prop, 'step', number(st, a, 1, 0, 100)); break;
+          case 'px': key(kind, name, prop, 'lerp', number(st, a, 0, 0, 1000)); break;
+          case 'step': {
+            const s = a.text.toLowerCase();
+            const v = ['1', 'on', 'true', 'sim'].includes(s) ? 1 : ['0', 'off', 'false', 'nao', 'não'].includes(s) ? 0 : null;
+            if (v === null) bad(st, a, `${prop}= aceita 1 ou 0`);
+            else key(kind, name, prop, 'step', v);
+            break;
+          }
+          case 'color': { const c = plainColor(st, a); if (c) key(kind, name, prop, 'color', c); break; }
+          case 'flip': { const f = flipOf(st, a); if (f) key(kind, name, prop, 'step', f); break; }
+          case 'anim': { const v = animOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'step', v); break; }
+          case 'variant': { const v = variantOf(st, a, ac); if (v !== null) key(kind, name, prop, 'step', v); break; }
+          case 'actor':
+            if (a.text !== 'none' && !actors.has(a.text)) bad(st, a, `ator "${a.text}" não existe aqui`);
+            else key(kind, name, prop, 'step', a.text === 'none' ? null : a.text);
+            break;
+        }
+      }
+      if (!n) err(st.line, 'at sem mudança (ex.: at 2s heroi.pos=400,560 camera.zoom=1.4)', st.cmdTok.from, st.cmdTok.to);
+    }
+
     // ---- linhas de arquivos incluídos: erros e alças voltam para a linha do include ----
     if (X.files.length) {
       const mainLines = src.split(/\r?\n/);
@@ -1319,5 +1647,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, FILM_CMDS, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

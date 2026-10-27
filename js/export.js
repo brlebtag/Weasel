@@ -221,16 +221,33 @@
 
     const isSheet = () => kind === 'sheet' || kind === 'godot';
     const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg';
+    const isFilm = () => !!app.model().film;
+    // filme: GIF, vídeo e sequência só são gerados quando a pessoa pede (podem ser muitos quadros)
+    const heavy = () => isFilm() && (kind === 'gif' || kind === 'video' || kind === 'seq');
 
     function sync() {
+      const film = isFilm();
+      dlg.querySelectorAll('[data-kind]').forEach((b) => { b.hidden = b.dataset.for === (film ? 'draw' : 'film'); });
+      if (dlg.querySelector(`[data-kind="${kind}"]`).hidden) kind = 'png';
       dlg.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
       dlg.querySelectorAll('[data-show]').forEach((el) => { el.hidden = !el.dataset.show.split(' ').includes(kind); });
+      dlg.querySelectorAll('[data-hide="film"]').forEach((el) => { el.hidden = film; });
       const model = app.model();
       const sel = $('expAnim');
       const prev = sel.value;
       sel.innerHTML = '';
       const add = (s, v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; s.appendChild(o); };
-      if (isFrame()) {
+      if (film) {
+        const tl = W.film.timeline(model), st = app.state();
+        if (kind === 'png' || kind === 'jpg') {
+          const loc = W.film.locate(model, st.frame);
+          add(sel, '', `Quadro atual — ${W.film.timecode(st.frame, tl.fps)}${loc ? ` (${loc.entry.name})` : ''}`);
+        } else {
+          add(sel, '', `Filme inteiro — ${tl.frames} quadros`);
+          tl.entries.forEach((e, i) => add(sel, String(i), `${i + 1}. ${e.name} — ${e.frames} quadros`));
+          sel.value = [prev, st.shot].find((v) => v !== undefined && [...sel.options].some((o) => o.value === v)) || '';
+        }
+      } else if (isFrame()) {
         const st = app.state();
         add(sel, '', st.anim ? `Quadro atual — ${st.anim}, quadro ${st.frame + 1}` : 'Pose parada (sem animação)');
       } else {
@@ -258,6 +275,11 @@
     async function produce(model, o, suffix) {
       const base = o.baseName + suffix;
       const st = app.state();
+      if (model.film) {
+        const cv = W.film.renderFrame(model, st.frame, { scale: o.scale, transparent: o.transparent });
+        const blob = await toBlob(cv, kind === 'jpg' ? 'image/jpeg' : 'image/png', kind === 'jpg' ? o.quality : undefined);
+        return { files: [{ name: `${base}_${String(st.frame).padStart(5, '0')}.${kind}`, blob }], preview: cv.toDataURL(), info: `${cv.width} × ${cv.height} px · quadro ${st.frame} · ${kb(blob.size)}` };
+      }
       if (kind === 'png' || kind === 'jpg') {
         const x = await image(model, st.anim, st.frame, o);
         return { files: [{ name: `${base}.${kind}`, blob: x.blob }], preview: x.canvas.toDataURL(), info: `${x.canvas.width} × ${x.canvas.height} px · ${kb(x.blob.size)}` };
@@ -297,6 +319,25 @@
         layout: $('expLayout').value, cols: parseInt($('expCols').value, 10) || 0, padding: parseInt($('expPad').value, 10) || 0,
         speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind, dither: $('expDither').checked,
       };
+      if (heavy()) {
+        // prévia do primeiro quadro; o resto só quando clicar
+        try {
+          const model = app.model(), tl = W.film.timeline(model), frames = filmFrames(model, $('expAnim').value);
+          const cv = W.film.renderFrame(model, frames[0], { scale: o.scale, transparent: o.transparent && kind !== 'video' });
+          const img = $('expImg');
+          if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+          img.dataset.url = '';
+          img.src = cv.toDataURL();
+          img.classList.toggle('checker', o.transparent && kind !== 'video');
+          $('expInfo').textContent = `${cv.width} × ${cv.height} px · ${frames.length} quadros · ${W.film.timecode(frames.length, tl.fps)} (min:seg:quadro)`;
+          $('expDownload').textContent = { gif: 'Gerar GIF', video: 'Gravar vídeo .webm', seq: 'Gerar .zip' }[kind];
+          $('expDownload').disabled = false;
+          result = { lazy: true, o, frames, sel: $('expAnim').value };
+        } catch (e) {
+          $('expInfo').textContent = 'Não deu para exportar: ' + e.message;
+        }
+        return;
+      }
       const vsel = $('expVariant').value;
       const variants = vsel === ALL ? ['', ...app.variants()] : [vsel];
       try {
@@ -331,12 +372,81 @@
       }
     }
 
+    function filmFrames(model, v) {
+      const tl = W.film.timeline(model), e = v !== '' ? tl.entries[+v] : null;
+      const a = e ? e.start : 0, n = e ? e.frames : tl.frames;
+      return Array.from({ length: n }, (_, i) => a + i);
+    }
+    // GIF, vídeo ou sequência de um filme, com progresso; fechar a janela cancela
+    async function generate(r) {
+      const my = ++busy;
+      const model = app.model(), tl = W.film.timeline(model), o = r.o, n = r.frames.length;
+      const e = r.sel !== '' ? tl.entries[+r.sel] : null;
+      const base = o.baseName + (e ? '_' + e.name.replace(/[\\/]+/g, '-') : '');
+      const cancelled = () => my !== busy || !dlg.open;
+      const prog = (i) => { $('expInfo').textContent = `Gerando quadro ${i} de ${n}…`; };
+      const btn = $('expDownload');
+      btn.disabled = true;
+      const t0 = performance.now();
+      try {
+        let blob, name;
+        if (kind === 'video') {
+          const first = W.film.renderFrame(model, r.frames[0], { scale: o.scale });
+          const w = first.width + (first.width % 2), h = first.height + (first.height % 2);
+          const pad = document.createElement('canvas');
+          pad.width = w;
+          pad.height = h;
+          const px = pad.getContext('2d');
+          const out = await W.webm.record(n, tl.fps, w, h, (i) => {
+            px.fillStyle = '#000';
+            px.fillRect(0, 0, w, h);
+            px.drawImage(W.film.renderFrame(model, r.frames[i], { scale: o.scale }), 0, 0);
+            return pad;
+          }, prog, cancelled);
+          if (!out) return;
+          blob = out.blob;
+          name = `${base}.webm`;
+        } else if (kind === 'seq') {
+          const files = [];
+          for (let i = 0; i < n; i++) {
+            if (cancelled()) return;
+            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent });
+            files.push({ name: `${o.baseName}_${String(r.frames[i]).padStart(5, '0')}.png`, data: await bytesOf(await toBlob(cv, 'image/png')) });
+            prog(i + 1);
+            if (i % 4 === 3) await W.webm.yieldTask();
+          }
+          blob = W.zip(files);
+          name = `${base}_png.zip`;
+        } else {
+          const frames = [];
+          for (let i = 0; i < n; i++) {
+            if (cancelled()) return;
+            const cv = W.film.renderFrame(model, r.frames[i], { scale: o.scale, transparent: o.transparent });
+            frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
+            prog(i + 1);
+            if (i % 4 === 3) await W.webm.yieldTask();
+          }
+          blob = new Blob([W.gif.encode(frames, { delay: delays(n, tl.fps), loop: 0, transparent: o.transparent, dither: o.dither })], { type: 'image/gif' });
+          name = `${base}.gif`;
+        }
+        if (cancelled()) return;
+        download(blob, name);
+        $('expInfo').textContent = `${name} · ${kb(blob.size)} · ${n} quadros em ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+      } catch (err) {
+        if (my === busy) $('expInfo').textContent = 'Não deu para exportar: ' + err.message;
+      } finally {
+        if (my === busy) btn.disabled = false;
+      }
+    }
+
     function save(pngOnly) {
       if (!result) return;
+      if (result.lazy) { generate(result); return; }
       if (pngOnly && result.png) download(result.png.blob, result.png.name);
       else download(result.blob, result.name);
     }
 
+    dlg.addEventListener('close', () => { busy++; });
     return {
       open(k) {
         kind = k || kind;

@@ -1,0 +1,39 @@
+canvas   800 × 640, fundo gradiente ceuNoite
+include  cavaleiro.weasel
+gradientes ceuNoite (linear)
+padrões  pedra (hatch, cross)
+ambiente #5866a0 × 0.5
+luzes    lampiao (point, #ffb860 × 1.7, osso lanterna, tremula), lua (dir, #9fb4ff × 0.22)
+acabamento bloom=0.35 vignette=0.5 grain=0.035
+camadas  20
+  cidade           5 item(ns)
+  calcada          2 item(ns)
+  sombra           0 item(ns)  cast
+  poste            6 item(ns)
+  construct        6 item(ns)  guide
+  smoke            3 item(ns)  only=dash
+  nail             1 item(ns)
+  legs             2 item(ns)
+  torso            1 item(ns)
+  cloak            1 item(ns)
+  cloakshade       6 item(ns)  clip=cloak
+  cloakink         1 item(ns)
+  flap             1 item(ns)
+  mask             1 item(ns)
+  maskshade        1 item(ns)  clip=mask
+  face             4 item(ns)  clip=mask
+  maskink          2 item(ns)
+  neblina          2 item(ns)  unlit efeitos: blur
+  chuva            1 item(ns)  unlit
+  mariposas        1 item(ns)  unlit
+formas   45 (2 ocultas)
+partículas gotas (streak, 70/s), mariposa (soft, 5/s)
+ossos    lanterna (sway), root, body←root, head←body, nail←body (spring), puff←root
+tecidos  cape
+animações 3
+  stand          24 quadros, 12 fps, anima eyeA.shape eyeB.shape
+  jump           24 quadros, 15 fps
+                 eventos: pulo@3, pouso@18
+  dash           12 quadros, 15 fps
+                 eventos: dash@0
+unity    250 px/unidade, raiz 400,560

@@ -1,6 +1,6 @@
 # Weasel — desenho por código
 
-Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, tanto no navegador quanto pela **linha de comando**.
+Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, tanto no navegador quanto pela **linha de comando**.
 
 A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de uma hora*](https://www.youtube.com/watch?v=X2cFbpQCZec&t=517s) (trecho de 8:37 a 8:42), que mostra uma ferramenta assim desenhando o Cavaleiro. O vídeo não documenta a linguagem: ela foi reconstruída a partir dos quadros. As capturas e a transcrição do código que aparece na tela estão em [`referencia/`](referencia/).
 
@@ -9,6 +9,17 @@ A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de um
 | ![Quadro do vídeo](referencia/08m37s_quadro_completo.jpg) | ![Cavaleiro pulando](docs/cavaleiro_pulo.gif) ![Coruja](docs/coruja.gif) |
 
 ![Cavaleiro à noite: a lanterna balança e a luz dela muda a cor dele](docs/noite.gif)
+
+## Jogo e filme
+
+O Weasel atende a dois usos, sem um atrapalhar o outro:
+
+- **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…), exportado em sprite sheet ou SpriteFrames do Godot.
+- **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). Sai em vídeo ou sequência de PNG; som, vozes e montagem ficam com o editor de vídeo.
+
+Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
+
+![Quadros do filme de exemplo: letreiro, câmera descendo da lua, o fantasma chegando, o pulo e a saída de cena](docs/filme.jpg)
 
 ## Como rodar
 
@@ -52,7 +63,7 @@ node cli/weasel.js -e "canvas 200 200; ellipse sol 100,100 60 c=#ffb000 ink=4" -
 cat desenho.weasel | node cli/weasel.js - -o desenho.png
 ```
 
-O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.zip`) ou de `-f`:
+O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.zip`; num filme também `.mp4`, `.mov`, `.webm`, `.mkv`) ou de `-f`:
 
 | Quero… | Comando |
 |---|---|
@@ -70,6 +81,21 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 
 Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
+
+### Filmes na linha de comando
+
+| Quero… | Comando |
+|---|---|
+| Vídeo MP4 (H.264) do filme todo | `node cli/weasel.js exemplos/filme.weasel -o filme.mp4` |
+| ProRes para o editor de vídeo, um arquivo por plano | `node cli/weasel.js exemplos/filme.weasel -o render/filme.mov --shots` |
+| ProRes 4444 com fundo transparente | `node cli/weasel.js titulo.weasel -o titulo.mov -t` |
+| Prévia rápida em meia resolução | `node cli/weasel.js exemplos/filme.weasel -o previa.mp4 -s 0.5` |
+| Só um plano, ou só um trecho | `--shot pulo` · `--from 10s --to 20s` (também `48f`, `1m30s` ou `00:01:12`) |
+| Sequência de PNG | `node cli/weasel.js exemplos/filme.weasel --frames -o quadros/q.png` |
+| Um quadro (capa, miniatura) | `node cli/weasel.js exemplos/filme.weasel -o capa.png --time 4s` |
+| Planos, tempos e atores | `node cli/weasel.js exemplos/filme.weasel --info` |
+
+Vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado (no Windows: `winget install ffmpeg`; ou `--ffmpeg <caminho>`). Os quadros são renderizados em paralelo (`-j`, padrão: núcleos − 1, até 8) e entram no ffmpeg em ordem; o vídeo sai idêntico ao render numa thread só. MP4 sai em H.264 BT.709 (qualidade `--crf`, padrão 18), `.mov` em ProRes 422 HQ (ou 4444 com `-t`), o que os editores de vídeo abrem com mais facilidade, e `.webm` em VP9. A sequência de imagens leva o número do quadro do filme no nome (`q_00264.png`), então um trecho exportado depois se encaixa no lugar certo.
 
 Erros aparecem como num compilador, com arquivo, linha e coluna:
 
@@ -90,9 +116,10 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Editor** (esquerda) | Código com cores, números de linha, erros na margem e sugestões enquanto você digita. A barra de baixo mostra os erros (clique para ver a lista) e o que está sob o cursor. |
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
 | **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide` e as luzes (ícone e alcance), os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. |
-| **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. |
+| **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
+| **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
-| **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. |
+| **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. Num filme: quadro atual, GIF, vídeo WebM ou sequência PNG. |
 | **Referência** | A referência completa da linguagem, dentro do app (F1). |
 
 Editando pelo desenho e pelo teclado:
@@ -103,7 +130,7 @@ Editando pelo desenho e pelo teclado:
 - **Ctrl+clique** no desenho escreve a coordenada na posição do cursor.
 - **Alt+arrastar** sobre um número no código muda o valor (Shift deixa 10× mais rápido). **Alt+clique** numa cor `#hex` abre o seletor de cor.
 - Sugestões de comandos, atributos, cores, ossos, camadas, componentes e propriedades aparecem enquanto você digita; **Ctrl+Espaço** abre na hora, **Enter** ou **Tab** aceitam.
-- Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro.
+- Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro; numa linha `at` ou `shot` de um filme, pula para aquele momento. A posição dos atores e a de cada `at … .pos=` aparecem como alças que arrastam, nas duas vistas (as coordenadas do mundo são calculadas de volta pela câmera).
 
 Atalhos: `Ctrl+Z` / `Ctrl+Y` desfazer/refazer, `Ctrl+/` comentar, `Ctrl+D` duplicar linha, `Ctrl+S` salvar, `Ctrl+E` exportar, `Espaço` tocar/pausar e `←` `→` quadro anterior/próximo (com o foco fora do editor).
 
@@ -261,6 +288,52 @@ emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 
 
 `rate` (por segundo) ou `burst` (uma rajada a cada volta), `life`, `speed`, `angle` (−90 = para cima), `spread`, `gravity`, `wind`, `drag`, `size=início,fim`, `c=cor_início,cor_fim`, `shape` (dot, soft, square, streak, star), `area` (espalha a origem), `seed` e `bone=` (a origem anda com o osso). O sorteio é fixo, então a animação fecha o loop certinho e a exportação sai igual toda vez.
 
+### Filme
+
+Um arquivo com `film` é um filme. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo): o filme só os coloca em cena e diz o que muda com o tempo.
+
+```
+film fps=24
+canvas 1920 1080 bg=ceu                       # tamanho do quadro e fundo
+ambient c=#5866a0 power=0.5
+light lampiao point 2000,566 c=#ffb860 power=1.6 radius=720   # ilumina os atores também
+
+actor cenario "cenario.weasel" 0,0
+actor heroi "cavaleiro.weasel" 1720,900 scale=0.9 anim=stand
+actor fantasma "fantasma.weasel" 3400,880 origin=240,350 anim=flutua hide=ceu
+
+shot encontro dur=5s
+camera follow=fantasma offset=-260,-300 lag=0.5 zoom=1.15
+at 4.2s fantasma.pos=2200,880 ease=out
+
+shot pulo dur=4.5s
+camera 1800,690 zoom=1.6
+at 0.4s heroi.anim=jump
+at 2s heroi.anim=stand
+at 2.6s heroi.anim=dash heroi.flip=x heroi.pos=1720,900
+at 3.2s heroi.pos=1050,900 ease=out
+at 3.4s camera.fade=0
+at 4.5s camera.fade=1 ease=linear
+```
+
+| Instrução | Para quê |
+|---|---|
+| `film fps= dur=` | Marca o arquivo como filme. `canvas L A bg=` é o tamanho do quadro (padrão 1920 × 1080) e o fundo. `dur=` só vale sem `shot`. |
+| `actor nome "arquivo.weasel" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= [screen] [bg] [hidden] [unlit] [front]` | Põe outro arquivo em cena. `anim=` é a animação que começa tocando, `hide=` esconde camadas do arquivo (o céu que só faz sentido no jogo), `hidden` começa invisível, `bg` desenha o fundo do arquivo. Declarado antes do primeiro `shot`, vale para todos os planos. |
+| `shot nome dur=` | Um plano. Os planos tocam em sequência; atores, `camera` e `at` abaixo dele valem só para ele, e cada plano começa com tudo como foi declarado. |
+| `camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=` | Para onde a câmera olha (o centro do quadro). `follow=ator` segue um ator (mais `offset=`), `lag=` (segundos) faz a câmera chegar atrasada e macia, `shake=` treme (px), `fade=1` escurece tudo (`fadec=` muda a cor). |
+| `at tempo alvo.prop=valor … ease=` | Muda algo num momento do plano. Ator: `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`. Câmera: `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`. Luzes do filme: `power`, `radius`, `c`, `glow`, `aim`, `cone`. Camadas do filme: `opacity`, `show` e os efeitos. |
+| `scene "arquivo.weasel"` | Acrescenta, nesse ponto da sequência, os planos de outro arquivo de filme. |
+| `layer … depth= [screen] [front]` | Profundidade da camada (em qualquer arquivo; só vale num filme). `only=` no arquivo do filme também aceita nomes de plano. |
+
+- **Tempo:** `2s`, `1.5` (segundos), `500ms`, `48f` (quadros do filme), `1m30s`; `at +1s` conta a partir do `at` anterior. O tempo do `at` conta do começo do plano.
+- **Como o `at` muda as coisas:** o valor declarado no `actor` ou na `camera` vale como um `at 0s`; de um `at` para o seguinte a mudança é gradual, e o `ease=` diz como ela **chega** naquele `at` (padrão `smooth`; `linear` para andar em velocidade constante; `step` troca de uma vez). Para algo ficar parado e só depois andar, repita a posição num `at` anterior. `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam de uma vez. Trocar `anim` sempre recomeça a animação do quadro 0; animações com loop repetem até a próxima troca.
+- **Animação no tempo do filme:** cada ator toca a animação no fps dela (um ciclo de 12 fps num filme de 24 fps fica "em dois", como no desenho animado). Sem animação, partículas, `sway`, `bob`, `jitter` e `flicker` andam com o relógio do filme.
+- **Profundidade:** `depth=1` é o plano da ação. Com `depth=2` (no ator ou na camada) a coisa está duas vezes mais longe: quando a câmera anda ou dá zoom, ela anda e cresce menos; `depth=0.5` está perto da câmera e passa mais rápido. Na câmera parada (centro do quadro, zoom 1) tudo fica exatamente como foi desenhado, então dá para compor a cena sem pensar na paralaxe. `screen` prende na tela (títulos, legendas) e `front` põe a camada na frente dos atores da mesma profundidade (a moita na frente do personagem).
+- **Luz:** `light` e `ambient` do arquivo do filme iluminam o cenário e todos os atores — o lampião esquenta a cor do personagem quando ele chega perto. As luzes do próprio ator continuam valendo para ele; `unlit` no ator ignora a luz do filme.
+- **Onde o ator fica:** `x,y` é onde vai o `root=` do `unity` do arquivo (o ponto entre os pés, o mesmo do jogo); sem `unity`, o canto 0,0 do desenho. `origin=` escolhe outro ponto.
+- **Filmes longos:** um arquivo por cena (`cena01.weasel`, `cena02.weasel`…, cada um com seus planos), um arquivo principal que só junta as cenas com `scene`, e personagens e cenários em arquivos próprios, compartilhados com o jogo. Exporte o filme todo (os planos saem na ordem, com o mesmo código de tempo do player) ou cada plano com `--shots`, e monte com o som no editor de vídeo.
+
 ## Exportar
 
 | Formato | O que sai |
@@ -271,6 +344,10 @@ emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 
 | **GIF animado** | Uma animação (no fps dela) ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. A opção **pontilhado** troca as faixas de cor de brilhos e degradês por um padrão fino. |
 | **Sprite sheet** | Um `.zip` com todos os quadros num PNG e um `.json` no formato do TexturePacker/Phaser (`frames`, `animations`, `meta.frameTags`), com os eventos de cada quadro e o pivô e os pixels por unidade da Unity quando houver `unity`. Arranjo em grade ou uma linha por animação. |
 | **Godot** | A folha (.png) e um `SpriteFrames` do Godot 4 (.tres) com as animações, o fps e o loop. Deixe os dois na mesma pasta do projeto e use o .tres num `AnimatedSprite2D`. |
+| **Vídeo** (filme) | WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. MP4, ProRes e filmes longos saem pela linha de comando. |
+| **Sequência PNG** (filme) | Um `.zip` com um PNG por quadro, numerado pelo quadro do filme. |
+
+Num filme, PNG e JPG exportam o quadro que está no player; GIF, vídeo e sequência exportam o filme inteiro ou um plano e só são gerados ao clicar (fechar a janela cancela).
 
 Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre todos os quadros da animação, então os quadros ficam alinhados. Com variantes, dá para exportar uma ou todas de uma vez (num `.zip`).
 
@@ -286,12 +363,22 @@ Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre tod
 - **Gravura**: maçã em estilo nanquim, só com hachura, hachura cruzada e pontos.
 - **Primeiros passos (fantasma)**: comentado, bom para aprender a sintaxe.
 - **Bola quicando**: squash & stretch com um osso só, com rastro de movimento.
+- **Filme**: três planos com o Cavaleiro e o fantasma — os arquivos do jogo, sem mudar nada — num cenário de morros em camadas de profundidade: letreiro que aparece e some, câmera descendo da lua com paralaxe, câmera seguindo o fantasma com atraso, o lampião do cenário iluminando os dois, tranco da câmera no pouso do pulo e fade no fim.
+- **Cenário**: o cenário do filme, um desenho comum em camadas com `depth` (lua, serra, morros, chão, poste, vaga-lumes e moitas na frente).
 
 | Noite | Gravura |
 |---|---|
 | ![Noite](docs/noite.png) | ![Gravura](docs/gravura.png) |
 
 Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
+
+## Testes
+
+`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha) e alguns quadros prontos.
+
+As referências dos desenhos foram gravadas antes de o filme existir, então o teste mostra que os desenhos e as exportações de jogo continuam iguais. Quando algo muda, o teste diz o que foi e grava a saída nova em `test/out/`, com uma imagem dos pixels diferentes em vermelho. Se a mudança foi de propósito, `npm run test:update` regrava as referências; `node test/regress.js coruja` roda só os casos com esse nome.
+
+A comparação tolera diferenças mínimas de antialiasing, para os testes passarem em outras máquinas; `node test/regress.js --strict` exige pixels idênticos. As referências foram geradas no Windows; em outro sistema, textos podem sair um pouco diferentes por causa das fontes.
 
 ## Estrutura do projeto
 
@@ -302,14 +389,20 @@ js/geom.js          matrizes, curvas suaves, traço de espessura variável, core
 js/lang.js          leitura da linguagem: linhas → modelo, com contas, componentes, include e mensagens de erro
 js/scene.js         ossos, molas, tecido, membros IK, morph, gradientes, luz, sombras, partículas, hachura,
                     efeitos de camada, acabamentos, desenho por camadas, pintura passo a passo
+js/film.js          filme: planos em sequência, atores, at, câmera com profundidade, luz do filme nos atores
+js/webm.js          vídeo no navegador (WebCodecs) e o arquivo .webm
 js/svg.js           exportação em SVG
 js/editor.js        editor com cores, sugestões, Alt+arrastar números, seletor de cor e desfazer
 js/gif.js           codificador de GIF animado (median cut + LZW)
 js/zip.js           .zip simples para a sprite sheet
-js/export.js        PNG, JPG, GIF, SVG, sprite sheet, Godot e a janela de exportação
+js/export.js        PNG, JPG, GIF, SVG, sprite sheet, Godot, vídeo e a janela de exportação
 js/examples.js      exemplos do menu
 js/app.js           a interface: arquivos, editor, desenho ao vivo, arrastar pontos, player
 cli/weasel.js       linha de comando (usa os mesmos arquivos de js/)
+cli/runtime.js      carrega os arquivos de js/ no Node (para a linha de comando e os testes)
+cli/video.js        filme na linha de comando: ffmpeg, sequência, GIF, render em paralelo
+cli/film-worker.js  thread que renderiza quadros de um filme
+test/regress.js     testes de regressão; test/ref/ guarda as referências
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
 referencia/         capturas do vídeo e transcrição do código mostrado
@@ -328,3 +421,7 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - Granulado e pontilhado deixam GIFs bem maiores (ruído não comprime).
 - Os arquivos de `exemplos/` são cópias dos exemplos embutidos em `js/examples.js` (que ficam no código para o editor funcionar abrindo o `index.html` direto).
 - O GIF tem no máximo 256 cores e transparência de 1 bit (as bordas ficam serrilhadas em fundo transparente).
+- Filme não tem som: trilha, vozes e efeitos sonoros entram no editor de vídeo (ainda sem sincronia labial nem legendas).
+- Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
+- A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
+- Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.

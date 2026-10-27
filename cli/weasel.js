@@ -4,30 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 
-let canvasLib;
-try {
-  canvasLib = require('@napi-rs/canvas');
-} catch (e) {
-  console.error('weasel: falta a biblioteca de desenho. Rode "npm install" na pasta do projeto.');
-  process.exit(3);
-}
-const { createCanvas, Path2D } = canvasLib;
-
-// Os módulos do editor web são scripts de navegador; damos a eles só o que usam.
-const probe = createCanvas(1, 1).getContext('2d');
-globalThis.window = globalThis;
-globalThis.Path2D = Path2D;
-globalThis.document = { createElement: () => createCanvas(1, 1) };
-globalThis.CSS = {
-  supports(prop, v) {
-    probe.fillStyle = '#010203';
-    probe.fillStyle = v;
-    return prop === 'color' && probe.fillStyle !== '#010203';
-  },
-};
-for (const f of ['geom', 'lang', 'scene', 'svg', 'gif', 'zip', 'export']) require(path.join(__dirname, '..', 'js', f + '.js'));
-const W = globalThis.Weasel;
+const { W } = require('./runtime');
 const X = W.exporter;
+const V = require('./video');
 const VERSION = require(path.join(__dirname, '..', 'package.json')).version;
 
 const HELP = `weasel ${VERSION} — desenho por código na linha de comando
@@ -44,8 +23,10 @@ Entrada:
 
 Saída:
   -o, --out <arquivo>     arquivo de saída; a extensão escolhe o formato
-                          (.png .jpg .gif .svg .tres; .zip = sprite sheet em zip)
+                          (.png .jpg .gif .svg .tres; .zip = sprite sheet em zip;
+                          filme: .mp4 .mov .webm .mkv)
   -f, --format <tipo>     png | jpg | gif | svg | sheet | godot | build (GIF da pintura)
+                          | mp4 | mov | webm | mkv (filme)
   -a, --anim <nome>       animação usada (gif, sheet, godot, png/jpg/svg). Em sheet, "all" = todas
       --frame <n>         quadro do png/jpg/svg (o mesmo número usado em key; começa em 0)
       --frames            png/jpg/svg: salva todos os quadros, um arquivo por quadro
@@ -60,6 +41,17 @@ Saída:
       --speed <n>         velocidade da pintura no GIF "build" (padrão 1)
       --dither            GIF com pontilhado (menos faixas em brilhos e degradês)
       --guides            inclui as camadas "guide"
+
+Filme (arquivo com a linha film):
+  -o filme.mp4            vídeo H.264 (padrão); .mov = ProRes (bom para editar; com -t,
+                          ProRes 4444 com transparência); .webm = VP9; precisa do ffmpeg
+      --frames            sequência de imagens (filme_00000.png …), numeradas pelo quadro
+      --shot <nome>       só um plano (shot); --shots: um arquivo por plano
+      --from <t> --to <t> só um trecho (2s, 48f, 1m30s ou 00:01:12 = min:seg:quadro)
+      --time <t>          png/jpg: o quadro nesse tempo (--frame <n> também vale)
+  -j, --jobs <n>          threads de render (padrão: núcleos − 1, até 8)
+      --crf <n>           qualidade do mp4/webm (menor = melhor; padrão 18 no mp4, 30 no webm)
+      --ffmpeg <caminho>  onde está o ffmpeg (ou a variável WEASEL_FFMPEG)
 
 Outros:
   -w, --watch             exporta de novo sempre que o arquivo (ou um include) mudar
@@ -79,6 +71,10 @@ Exemplos:
   weasel cavaleiro.weasel -f build -o pintura.gif
   weasel coruja.weasel -a pia -o coruja.gif --watch
   weasel -e "canvas 200 200; ellipse sol 100,100 60 c=#ffb000" -o sol.png
+  weasel filme.weasel -o filme.mp4
+  weasel filme.weasel -o render/filme.mov --shots -s 0.5
+  weasel filme.weasel --frames -o quadros/q.png --from 10s --to 20s
+  weasel filme.weasel -o capa.png --time 4s
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -88,7 +84,11 @@ class Fail extends Error { constructor(msg, code) { super(msg); this.code = code
 const usage = (msg) => { throw new Fail(msg, 2); };
 
 function parseArgs(argv) {
-  const o = { input: null, code: null, out: null, format: null, anim: null, frame: 0, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92, layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false };
+  const o = {
+    input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
+    layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
+    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, ffmpeg: null,
+  };
   const num = (name, v, min, max) => {
     const n = Number(v);
     if (v === undefined || v === '' || !Number.isFinite(n)) usage(`${name} precisa de um número`);
@@ -110,7 +110,15 @@ function parseArgs(argv) {
       case '-o': case '--out': o.out = val(); break;
       case '-f': case '--format': o.format = val().toLowerCase(); break;
       case '-a': case '--anim': o.anim = val(); break;
-      case '--frame': o.frame = Math.round(num('--frame', val(), 0, 100000)); break;
+      case '--frame': o.frame = Math.round(num('--frame', val(), 0, 10000000)); o.frameSet = true; break;
+      case '--time': o.time = val(); break;
+      case '--shot': o.shot = val(); break;
+      case '--shots': o.shots = true; break;
+      case '--from': o.from = val(); break;
+      case '--to': o.to = val(); break;
+      case '-j': case '--jobs': o.jobs = Math.round(num('--jobs', val(), 1, 64)); break;
+      case '--crf': o.crf = Math.round(num('--crf', val(), 0, 63)); break;
+      case '--ffmpeg': o.ffmpeg = val(); break;
       case '--frames': o.frames = true; break;
       case '--variant': o.variant = val(); break;
       case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); break;
@@ -186,6 +194,7 @@ function report(model, src, name) {
 }
 
 function info(m) {
+  if (m.film) { console.log(V.filmInfo(m)); return; }
   const c = m.canvas;
   const bg = !c.bg ? 'transparente' : typeof c.bg === 'string' ? c.bg : `gradiente ${c.bg.name}`;
   const out = [];
@@ -230,7 +239,7 @@ function info(m) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.zip': 'sheet', '.json': 'sheet' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -331,9 +340,16 @@ async function run(o) {
   }
   if (o.variant && o.variant !== 'all' && !model.variants.includes(o.variant)) usage(`variante "${o.variant}" não existe${model.variants.length ? ` (tem: ${model.variants.join(', ')})` : ''}`);
 
-  let format = o.format || formatFromOut(o.out) || 'png';
+  let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
-  if (!['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'build'].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot ou build)`);
+  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'build'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, build, mp4, mov, webm ou mkv)`);
+  if (model.film) {
+    if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
+    await V.exportFilm(model, o, format, source, { save, usage, Fail, paint, withSuffix, kb });
+    return { code: 0, watched };
+  }
+  if (V.VIDEO.includes(format)) usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
+  for (const [k, flag] of [['shot', '--shot'], ['from', '--from'], ['to', '--to'], ['time', '--time']]) if (o[k] !== null) usage(`${flag} só vale para filmes`);
 
   if (o.variant === 'all') {
     if (!model.variants.length) usage('o desenho não tem variantes (variant)');

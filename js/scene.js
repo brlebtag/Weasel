@@ -37,8 +37,8 @@
     return (((h ^ (h >>> 16)) >>> 0) / 4294967295) * 2 - 1;
   }
 
-  function boneValues(anim, b, f, springs) {
-    if (!anim) return REST;
+  function boneValues(anim, b, f, springs, time) {
+    if (!anim) return time === undefined ? REST : freeValues(b, time);
     const s = segment(anim.tracks.get(b.name), f, anim.frames, anim.loop);
     const v = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : REST.slice();
     const dur = anim.frames / anim.fps, t = f / anim.fps;
@@ -53,14 +53,24 @@
     if (springs && springs.has(b.name)) v[2] += springs.get(b.name)[f];
     return v;
   }
+  // Sem animação mas com relógio (filme): balanço, sobe-e-desce e tremor continuam, sem precisar fechar loop.
+  function freeValues(b, t) {
+    if (!b.sway && !b.bob && !b.jitter) return REST;
+    const v = REST.slice();
+    const wave = (w) => w[0] * Math.sin((2 * Math.PI * t) / w[1] + (w[2] * Math.PI) / 180);
+    if (b.sway) v[2] += wave(b.sway);
+    if (b.bob) v[1] += wave(b.bob);
+    if (b.jitter) { const f = Math.floor(t * 12 + 1e-6); v[0] += b.jitter * hash(b.name + 'x', f); v[1] += b.jitter * hash(b.name + 'y', f); }
+    return v;
+  }
 
-  function boneMatrices(model, anim, f, springs) {
+  function boneMatrices(model, anim, f, springs, time) {
     const out = new Map();
     const get = (name, depth) => {
       if (out.has(name)) return out.get(name);
       const b = model.bones.get(name);
       if (!b) return M.id();
-      const v = boneValues(anim, b, f, springs);
+      const v = boneValues(anim, b, f, springs, time);
       const [px, py] = b.pivot;
       let local = M.translate(px + v[0], py + v[1]);
       local = M.mul(local, M.rotate(v[2]));
@@ -186,6 +196,10 @@
     const d = animData(model, anim);
     const f = ((Math.round(frame) % anim.frames) + anim.frames) % anim.frames;
     return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], geo: new Map() };
+  }
+  // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
+  function timePose(model, time) {
+    return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, geo: new Map() };
   }
 
   // ---------- geometria de cada elemento numa pose ----------
@@ -453,6 +467,7 @@
       const lp = pose.liprops.get(L.name) || NOPROPS;
       let power = lp.power !== undefined ? lp.power : L.power;
       if (L.flicker && pose.anim) power *= Math.max(0, 1 + L.flicker * hash(L.name, pose.frame));
+      else if (L.flicker && pose.time !== undefined) power *= Math.max(0, 1 + L.flicker * hash(L.name, Math.floor(pose.time * 12 + 1e-6)));
       const c = typeof lp.c === 'string' ? lp.c : L.c;
       const o = {
         name: L.name, type: L.type, c, rgb: G.parseHex(c) || [255, 255, 255, 1], power,
@@ -735,7 +750,7 @@
     const anim = pose.anim;
     const fps = anim ? anim.fps : 12;
     const loopD = anim && anim.loop ? anim.frames / anim.fps : 0;
-    const t = anim ? pose.frame / anim.fps : el.rate > 0 ? el.life * 1.25 : el.life * 0.35;
+    const t = anim ? pose.frame / anim.fps : pose.time !== undefined ? pose.time : el.rate > 0 ? el.life * 1.25 : el.life * 0.35;
     const data = anim ? animData(model, anim) : null;
     const out = [];
     const origin = (ts, k) => {
@@ -919,13 +934,16 @@
     return b.canvas;
   }
 
+  // opts.layers: só essas camadas (filme: cada profundidade é desenhada à parte);
+  // opts.lighting: luz pronta (filme: a do ator mais a da cena); opts.glows=false: sem os halos das lâmpadas.
   function drawScene(ctx, model, pose, opts) {
     opts = opts || {};
     if (opts.background !== false) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
-    const lighting = sceneLights(model, pose);
+    const lighting = opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
     const R = { model, pose, opts, lighting, maps: null };
     for (const layer of model.layers) {
-      if (!layerVisible(layer, pose, opts)) continue;
+      // com opts.layers, quem chama já decidiu o que aparece (no filme, only= também aceita shots)
+      if (opts.layers ? !opts.layers.has(layer) : !layerVisible(layer, pose, opts)) continue;
       const lp = pose.lprops.get(layer.name) || NOPROPS;
       if (lp.show === 0) continue;
       const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
@@ -938,7 +956,7 @@
       if (fx || (layer.trail && pose.anim)) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
       else drawLayer(ctx, R, layer, items, alpha, lit, pose, false);
     }
-    if (lighting) drawLightGlows(ctx, lighting);
+    if (lighting && opts.glows !== false) drawLightGlows(ctx, lighting);
   }
 
   function drawLayer(ctx, R, layer, items, alpha, lit, pose, solo, flat) {
@@ -1365,7 +1383,7 @@
   }
 
   W.scene = {
-    makePose, boneMatrices, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

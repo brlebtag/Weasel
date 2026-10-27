@@ -1,0 +1,665 @@
+{
+  "frames": {
+    "quica_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_01": {
+      "frame": {
+        "x": 126,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_02": {
+      "frame": {
+        "x": 250,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_03": {
+      "frame": {
+        "x": 374,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_04": {
+      "frame": {
+        "x": 498,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_05": {
+      "frame": {
+        "x": 622,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_06": {
+      "frame": {
+        "x": 746,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_07": {
+      "frame": {
+        "x": 870,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_08": {
+      "frame": {
+        "x": 994,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_09": {
+      "frame": {
+        "x": 1118,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_10": {
+      "frame": {
+        "x": 1242,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_11": {
+      "frame": {
+        "x": 1366,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_12": {
+      "frame": {
+        "x": 1490,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_13": {
+      "frame": {
+        "x": 1614,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_14": {
+      "frame": {
+        "x": 1738,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_15": {
+      "frame": {
+        "x": 1862,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_16": {
+      "frame": {
+        "x": 1986,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_17": {
+      "frame": {
+        "x": 2110,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_18": {
+      "frame": {
+        "x": 2234,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_19": {
+      "frame": {
+        "x": 2358,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_20": {
+      "frame": {
+        "x": 2482,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_21": {
+      "frame": {
+        "x": 2606,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_22": {
+      "frame": {
+        "x": 2730,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    },
+    "quica_23": {
+      "frame": {
+        "x": 2854,
+        "y": 2,
+        "w": 122,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 122,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 122,
+        "h": 84
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 42
+    }
+  },
+  "animations": {
+    "quica": [
+      "quica_00",
+      "quica_01",
+      "quica_02",
+      "quica_03",
+      "quica_04",
+      "quica_05",
+      "quica_06",
+      "quica_07",
+      "quica_08",
+      "quica_09",
+      "quica_10",
+      "quica_11",
+      "quica_12",
+      "quica_13",
+      "quica_14",
+      "quica_15",
+      "quica_16",
+      "quica_17",
+      "quica_18",
+      "quica_19",
+      "quica_20",
+      "quica_21",
+      "quica_22",
+      "quica_23"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "bola.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 2978,
+      "h": 88
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 122,
+      "h": 84
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "quica",
+        "from": 0,
+        "to": 23,
+        "direction": "forward",
+        "fps": 24,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 36,
+      "y": 36,
+      "w": 408,
+      "h": 280
+    }
+  }
+}

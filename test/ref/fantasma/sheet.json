@@ -1,0 +1,873 @@
+{
+  "frames": {
+    "flutua_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_01": {
+      "frame": {
+        "x": 148,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_02": {
+      "frame": {
+        "x": 294,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_03": {
+      "frame": {
+        "x": 440,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_04": {
+      "frame": {
+        "x": 586,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_05": {
+      "frame": {
+        "x": 732,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_06": {
+      "frame": {
+        "x": 878,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_07": {
+      "frame": {
+        "x": 1024,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_08": {
+      "frame": {
+        "x": 1170,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_09": {
+      "frame": {
+        "x": 1316,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_10": {
+      "frame": {
+        "x": 1462,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_11": {
+      "frame": {
+        "x": 1608,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_12": {
+      "frame": {
+        "x": 1754,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_13": {
+      "frame": {
+        "x": 1900,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_14": {
+      "frame": {
+        "x": 2046,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_15": {
+      "frame": {
+        "x": 2192,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_16": {
+      "frame": {
+        "x": 2338,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_17": {
+      "frame": {
+        "x": 2484,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_18": {
+      "frame": {
+        "x": 2630,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_19": {
+      "frame": {
+        "x": 2776,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_20": {
+      "frame": {
+        "x": 2922,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_21": {
+      "frame": {
+        "x": 3068,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_22": {
+      "frame": {
+        "x": 3214,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_23": {
+      "frame": {
+        "x": 3360,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_24": {
+      "frame": {
+        "x": 3506,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_25": {
+      "frame": {
+        "x": 3652,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_26": {
+      "frame": {
+        "x": 3798,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_27": {
+      "frame": {
+        "x": 3944,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_28": {
+      "frame": {
+        "x": 4090,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_29": {
+      "frame": {
+        "x": 4236,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_30": {
+      "frame": {
+        "x": 4382,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    },
+    "flutua_31": {
+      "frame": {
+        "x": 4528,
+        "y": 2,
+        "w": 144,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 110
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 63
+    }
+  },
+  "animations": {
+    "flutua": [
+      "flutua_00",
+      "flutua_01",
+      "flutua_02",
+      "flutua_03",
+      "flutua_04",
+      "flutua_05",
+      "flutua_06",
+      "flutua_07",
+      "flutua_08",
+      "flutua_09",
+      "flutua_10",
+      "flutua_11",
+      "flutua_12",
+      "flutua_13",
+      "flutua_14",
+      "flutua_15",
+      "flutua_16",
+      "flutua_17",
+      "flutua_18",
+      "flutua_19",
+      "flutua_20",
+      "flutua_21",
+      "flutua_22",
+      "flutua_23",
+      "flutua_24",
+      "flutua_25",
+      "flutua_26",
+      "flutua_27",
+      "flutua_28",
+      "flutua_29",
+      "flutua_30",
+      "flutua_31"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "fantasma.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 4674,
+      "h": 114
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 144,
+      "h": 110
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "flutua",
+        "from": 0,
+        "to": 31,
+        "direction": "forward",
+        "fps": 16,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 0,
+      "y": 33,
+      "w": 480,
+      "h": 367
+    }
+  }
+}

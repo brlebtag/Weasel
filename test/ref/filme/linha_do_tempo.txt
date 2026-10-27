@@ -1,0 +1,63 @@
+quadros 372 fps 24
+   0 00:00:00 abertura cam=900,380 z0.9 fade1 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=3400,880 flutua#0
+   6 00:00:06 abertura cam=904.35,381.32 z0.9 fade0.83 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=3400,880 flutua#4
+  12 00:00:12 abertura cam=916.92,385.12 z0.9 fade0.67 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=3400,880 flutua#8
+  18 00:00:18 abertura cam=936.95,391.17 z0.91 fade0.5 | cenario=0,0 | heroi=1720,900 stand#9 | fantasma=3400,880 flutua#12
+  24 00:01:00 abertura cam=963.7,399.26 z0.91 fade0.33 | cenario=0,0 | heroi=1720,900 stand#12 | fantasma=3400,880 flutua#16
+  30 00:01:06 abertura cam=996.43,409.15 z0.92 fade0.17 | cenario=0,0 | heroi=1720,900 stand#15 | fantasma=3400,880 flutua#20
+  36 00:01:12 abertura cam=1034.38,420.63 z0.93 | cenario=0,0 | heroi=1720,900 stand#18 | fantasma=3400,880 flutua#24
+  42 00:01:18 abertura cam=1076.8,433.45 z0.94 | cenario=0,0 | heroi=1720,900 stand#21 | fantasma=3400,880 flutua#28
+  48 00:02:00 abertura cam=1122.96,447.41 z0.95 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=3400,880 flutua#0
+  54 00:02:06 abertura cam=1172.11,462.27 z0.96 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=3400,880 flutua#4
+  60 00:02:12 abertura cam=1223.5,477.8 z0.98 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=3400,880 flutua#8
+  66 00:02:18 abertura cam=1276.37,493.79 z0.99 | cenario=0,0 | heroi=1720,900 stand#9 | fantasma=3400,880 flutua#12
+  72 00:03:00 abertura cam=1330,510 z1 | cenario=0,0 | heroi=1720,900 stand#12 | fantasma=3400,880 flutua#16
+  78 00:03:06 abertura cam=1383.63,526.21 z1.01 | cenario=0,0 | heroi=1720,900 stand#15 | fantasma=3400,880 flutua#20
+  84 00:03:12 abertura cam=1436.5,542.2 z1.02 | cenario=0,0 | heroi=1720,900 stand#18 | fantasma=3400,880 flutua#24
+  90 00:03:18 abertura cam=1487.89,557.73 z1.04 | cenario=0,0 | heroi=1720,900 stand#21 | fantasma=3400,880 flutua#28
+  96 00:04:00 abertura cam=1537.04,572.59 z1.05 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=3400,880 flutua#0
+ 102 00:04:06 abertura cam=1583.2,586.55 z1.06 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=3400,880 flutua#4
+ 108 00:04:12 abertura cam=1625.63,599.38 z1.07 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=3400,880 flutua#8
+ 114 00:04:18 abertura cam=1663.57,610.85 z1.08 | cenario=0,0 | heroi=1720,900 stand#9 | fantasma=3400,880 flutua#12
+ 120 00:05:00 abertura cam=1696.3,620.74 z1.09 | cenario=0,0 | heroi=1720,900 stand#12 | fantasma=3400,880 flutua#16
+ 126 00:05:06 abertura cam=1723.05,628.83 z1.09 | cenario=0,0 | heroi=1720,900 stand#15 | fantasma=3400,880 flutua#20
+ 132 00:05:12 abertura cam=1743.08,634.88 z1.1 | cenario=0,0 | heroi=1720,900 stand#18 | fantasma=3400,880 flutua#24
+ 138 00:05:18 abertura cam=1755.65,638.68 z1.1 | cenario=0,0 | heroi=1720,900 stand#21 | fantasma=3400,880 flutua#28
+ 144 00:06:00 encontro cam=3140,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=3400,880 flutua#0
+ 150 00:06:06 encontro cam=3105.73,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=3261.39,880 flutua#4
+ 156 00:06:12 encontro cam=3032.49,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=3131.29,880 flutua#8
+ 162 00:06:18 encontro cam=2938.97,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#9 | fantasma=3009.69,880 flutua#12
+ 168 00:07:00 encontro cam=2836.48,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#12 | fantasma=2896.6,880 flutua#16
+ 174 00:07:06 encontro cam=2731.91,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#15 | fantasma=2792.01,880 flutua#20
+ 180 00:07:12 encontro cam=2629.41,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#18 | fantasma=2695.92,880 flutua#24
+ 186 00:07:18 encontro cam=2531.53,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#21 | fantasma=2608.33,880 flutua#28
+ 192 00:08:00 encontro cam=2439.78,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=2529.25,880 flutua#0
+ 198 00:08:06 encontro cam=2355.1,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=2458.67,880 flutua#4
+ 204 00:08:12 encontro cam=2278.06,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=2396.6,880 flutua#8
+ 210 00:08:18 encontro cam=2209,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#9 | fantasma=2343.03,880 flutua#12
+ 216 00:09:00 encontro cam=2148.11,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#12 | fantasma=2297.96,880 flutua#16
+ 222 00:09:06 encontro cam=2095.54,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#15 | fantasma=2261.39,880 flutua#20
+ 228 00:09:12 encontro cam=2051.35,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#18 | fantasma=2233.33,880 flutua#24
+ 234 00:09:18 encontro cam=2015.6,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#21 | fantasma=2213.78,880 flutua#28
+ 240 00:10:00 encontro cam=1988.3,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=2202.72,880 flutua#0
+ 246 00:10:06 encontro cam=1969.47,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=2200,880 flutua#4
+ 252 00:10:12 encontro cam=1957.87,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=2200,880 flutua#8
+ 258 00:10:18 encontro cam=1950.84,580 z1.15 | cenario=0,0 | heroi=1720,900 stand#9 flip | fantasma=2200,880 flutua#12
+ 264 00:11:00 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=2200,880 flutua#0
+ 270 00:11:06 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=2200,880 flutua#4
+ 276 00:11:12 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 jump#1 | fantasma=2200,880 flutua#8
+ 282 00:11:18 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 jump#5 | fantasma=2200,880 flutua#12
+ 288 00:12:00 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 jump#9 | fantasma=2200,880 flutua#16
+ 294 00:12:06 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 jump#12 | fantasma=2200,880 flutua#20
+ 300 00:12:12 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 jump#16 | fantasma=2200,880 flutua#24
+ 306 00:12:18 pulo cam=1800,690 z1.6 tremor 2.02,-8.33 | cenario=0,0 | heroi=1720,900 jump#20 | fantasma=2200,880 flutua#28
+ 312 00:13:00 pulo cam=1800,690 z1.6 tremor -0.18,-1.28 | cenario=0,0 | heroi=1720,900 stand#0 | fantasma=2200,880 flutua#0
+ 318 00:13:06 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 stand#3 | fantasma=2200,880 flutua#4
+ 324 00:13:12 pulo cam=1800,690 z1.6 | cenario=0,0 | heroi=1720,900 stand#6 | fantasma=2200,880 flutua#8
+ 330 00:13:18 pulo cam=1668.75,690 z1.6 | cenario=0,0 | heroi=1426.88,900 dash#2 flip | fantasma=2200,880 flutua#12
+ 336 00:14:00 pulo cam=1533.33,690 z1.6 | cenario=0,0 | heroi=1124.44,900 dash#6 flip | fantasma=2200,880 flutua#16
+ 342 00:14:06 pulo cam=1500,690 z1.6 | cenario=0,0 | heroi=1050,900 dash#9 flip | fantasma=2200,880 flutua#20
+ 348 00:14:12 pulo cam=1500,690 z1.6 fade0.09 | cenario=0,0 | heroi=1050,900 dash#1 flip | fantasma=2200,880 flutua#24
+ 354 00:14:18 pulo cam=1500,690 z1.6 fade0.32 | cenario=0,0 | heroi=1050,900 dash#5 flip | fantasma=2200,880 flutua#28
+ 360 00:15:00 pulo cam=1500,690 z1.6 fade0.55 | cenario=0,0 | heroi=1050,900 dash#9 flip | fantasma=2200,880 flutua#0
+ 366 00:15:06 pulo cam=1500,690 z1.6 fade0.77 | cenario=0,0 | heroi=1050,900 dash#0 flip | fantasma=2200,880 flutua#4

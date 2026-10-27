@@ -1,0 +1,14 @@
+ellipse lua @0.000 +0.624
+ellipse estrela1 @0.624 +0.196
+ellipse estrela2 @0.820 +0.180
+ellipse estrela3 @1.000 +0.180
+shape morro @1.180 +1.400
+ellipse sombra @2.580 +0.717
+shape fantasma @3.298 +1.157
+shape lado @4.455 +0.970
+ellipse olhoA @5.425 +0.405
+ellipse olhoB @5.830 +0.405
+ellipse bochechaA @6.234 +0.304
+ellipse bochechaB @6.538 +0.304
+stroke boca @6.842 +0.220
+total 7.062

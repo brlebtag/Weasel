@@ -1,0 +1,10 @@
+canvas   480 × 360, fundo #f4efe6
+camadas  4
+  chao             1 item(ns)
+  sombra           1 item(ns)
+  bola             1 item(ns)  trail
+  brilho           1 item(ns)  clip=b
+formas   4
+ossos    sombra, bola
+animações 1
+  quica          24 quadros, 24 fps

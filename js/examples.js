@@ -408,6 +408,121 @@ shape folha c=pontos ink=2 : 258,94 300,72 324,90 290,108!
 text legenda 240,342 "Maçã — hachura e pontos" size=15 align=center c=ink italic
 `;
 
+  const set = `# Cenário — morros à noite, para o filme.weasel
+# É um desenho comum; o filme coloca ele em cena com: actor cenario "cenario.weasel" 0,0
+# depth= só vale dentro de um filme: quanto maior, mais longe. Quando a câmera anda,
+# o que está longe anda menos (paralaxe). Na câmera parada tudo fica como foi desenhado.
+# O mundo é mais largo que o quadro: vai de x=-600 até x=4200.
+
+canvas 1920 1080 bg=none
+palette ink=#0d0f1c line=6
+palette serra=#1e2750 morro=#273260 terra=#2b2c42 grama=#0f1526 folha=#17213c
+palette ferro=#24242e vidro=#ffe2a8 estrela=#fff6d8
+
+# bem longe: a lua e as estrelas quase não saem do lugar
+layer ceu depth=12 unlit
+ellipse lua 1460,230 70 c=#eef2ff emit=#bcd2ff,1.2
+ellipse e1 180,120 3 c=estrela
+ellipse e2 420,260 2 c=estrela
+ellipse e3 760,90 2.5 c=estrela
+ellipse e4 980,300 2 c=estrela
+ellipse e5 1210,150 3 c=estrela
+ellipse e6 1720,90 2 c=estrela
+ellipse e7 1900,280 2.5 c=estrela
+ellipse e8 2200,160 2 c=estrela
+ellipse e9 2480,70 3 c=estrela
+ellipse e10 2760,240 2 c=estrela
+ellipse e11 3100,130 2.5 c=estrela
+ellipse e12 3400,280 2 c=estrela
+
+layer serra depth=5
+shape serra c=serra : -900,720! -500,540 -150,620 220,480 600,610 980,440 1380,600 1760,460 2160,610 2560,490 2960,630 3360,510 3800,640 4300,530 4900,700! 4900,1100! -900,1100!
+
+layer morros depth=2.5
+shape morros c=morro : -900,830! -380,700 260,770 880,670 1560,790 2260,690 2960,780 3660,690 4500,810! 4500,1100! -900,1100!
+
+# plano da ação (depth 1): o chão onde os personagens pisam fica em y=900
+layer chao
+shape terra c=terra : -1300,912! -200,898 900,906 2000,896 3100,904 4400,898! 4400,1120! -1300,1120!
+stroke borda c=#3a3b56 w=4 : -1300,912 -200,898 900,906 2000,896 3100,904 4400,898
+
+# o poste com o lampião (a luz dele está no filme.weasel, para iluminar os atores também)
+bone lanterna pivot=2000,520 sway=5,2.6
+layer poste
+rect haste 2050,510 18,392 c=ferro ink=4
+rect braco 1994,506 70,9 c=ferro ink=3
+stroke gancho w=3 c=ferro bone=lanterna : 2000,520 2000,536
+shape tampa c=ferro ink=3 bone=lanterna smooth=0 : 1984,536 2016,536 2009,546 1991,546
+rect vidro 1988,546 24,40 r=3 c=vidro ink=3 emit=#ffb860,1.4 bone=lanterna
+shape base c=ferro ink=3 bone=lanterna smooth=0 : 1986,586 2014,586 2007,595 1993,595
+
+# vaga-lumes: o sorteio é fixo e anda com o relógio do filme
+layer vagalumes depth=1.4 unlit
+emitter vagalumes 1700,640 rate=7 life=5 speed=14 spread=360 area=2600,320 size=6,2 c=#fff3a0,#ffd23f00 shape=soft emit=#ffd23f,0.6 seed=4
+
+# perto da câmera: moitas na frente de tudo (passam rápido quando a câmera anda)
+layer frente depth=0.6 front
+shape moita1 c=grama : -400,1100! -300,960 -120,930 60,980 180,1100!
+shape moita2 c=folha : 900,1100! 1000,990 1180,960 1330,1010 1420,1100!
+shape moita3 c=grama : 2500,1100! 2620,950 2820,930 2960,990 3060,1100!
+shape moita4 c=folha : 3600,1100! 3700,980 3880,960 4020,1100!
+`;
+
+  const film = `# Filme — planos, atores, câmera com profundidade e luz da cena
+# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel):
+# o filme só diz onde eles ficam, o que fazem e para onde a câmera olha.
+# Exporte em vídeo pela linha de comando:  weasel filme.weasel -o filme.mp4
+
+film fps=24
+canvas 1920 1080 bg=ceu
+gradient ceu linear 0,0 0,1080 : #060916@0 #131a3a@0.62 #26284a@1
+finish game bloom=0.3 vignette=0.45
+
+# a luz do lampião (o desenho do poste está no cenário) ilumina o cenário e os atores
+ambient c=#5866a0 power=0.5
+light lampiao point 2000,566 c=#ffb860 power=1.6 radius=720 glow=130 flicker=0.1
+
+# atores declarados antes do primeiro shot valem para todos os planos
+actor cenario "cenario.weasel" 0,0
+actor heroi "cavaleiro.weasel" 1720,900 scale=0.9 anim=stand
+actor fantasma "fantasma.weasel" 3400,880 origin=240,350 scale=1.1 anim=flutua hide=ceu
+
+# letreiro preso na tela, só no primeiro plano
+layer titulo screen unlit only=abertura
+text nome 960,360 "Weasel" size=130 c=#f4efe6 align=center font=serif bold
+text sub 960,440 "um filme feito com código" size=40 c=#c9c3d8 align=center
+
+# 1. a câmera desce da lua até o Cavaleiro (as camadas longe andam menos)
+shot abertura dur=6s
+camera 900,380 zoom=0.9 fade=1
+at 0s titulo.opacity=0
+at 1.5s camera.fade=0 titulo.opacity=1 ease=linear
+at 3.5s titulo.opacity=1
+at 4.5s titulo.opacity=0
+at 6s camera.pos=1760,640 camera.zoom=1.1
+
+# 2. o fantasma chega; a câmera vai atrás dele, um pouco atrasada
+shot encontro dur=5s
+camera follow=fantasma offset=-260,-300 lag=0.5 zoom=1.15
+at 4.2s fantasma.pos=2200,880 ease=out
+at 4.6s heroi.flip=x
+at 5s heroi.flip=none
+
+# 3. de perto: o pulo, o tranco no pouso e a saída de cena
+shot pulo dur=4.5s
+camera 1800,690 zoom=1.6
+at 0s fantasma.pos=2200,880
+at 0.4s heroi.anim=jump
+at 1.55s camera.shake=0
+at 1.65s camera.shake=16 ease=linear
+at 2s heroi.anim=stand
+at 2.2s camera.shake=0
+at 2.6s heroi.anim=dash heroi.flip=x heroi.pos=1720,900 camera.pos=1800,690
+at 3.2s heroi.pos=1050,900 camera.pos=1500,690 ease=out
+at 3.4s camera.fade=0
+at 4.5s camera.fade=1 ease=linear
+`;
+
   const blank = `canvas 600 400 bg=#f2ede4 light=-0.6,-0.8
 palette ink=#1c1b22 line=6
 
@@ -422,6 +537,8 @@ shape forma c=#7cb7ff ink=line : 220,140 380,130 420,250 300,300! 190,250
     { id: 'engraving', title: 'Gravura (hachura)', file: 'gravura', src: engraving },
     { id: 'ghost', title: 'Primeiros passos (fantasma)', file: 'fantasma', src: ghost },
     { id: 'ball', title: 'Bola quicando', file: 'bola', src: ball },
+    { id: 'set', title: 'Cenário (camadas de profundidade)', file: 'cenario', src: set },
+    { id: 'film', title: 'Filme (planos, atores, câmera)', file: 'filme', src: film, deps: ['set', 'knight', 'ghost'] },
   ];
   W.blankProgram = blank;
 })(window.Weasel = window.Weasel || {});

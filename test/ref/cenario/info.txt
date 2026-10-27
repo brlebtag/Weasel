@@ -1,0 +1,13 @@
+canvas   1920 × 1080, fundo transparente
+camadas  7
+  ceu             13 item(ns)  unlit
+  serra            1 item(ns)
+  morros           1 item(ns)
+  chao             2 item(ns)
+  poste            6 item(ns)
+  vagalumes        1 item(ns)  unlit
+  frente           4 item(ns)
+formas   28
+partículas vagalumes (soft, 7/s)
+ossos    lanterna (sway)
+animações nenhuma

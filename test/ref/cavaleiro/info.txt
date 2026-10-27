@@ -1,0 +1,25 @@
+canvas   800 × 640, fundo #e4ded3
+camadas  13
+  construct        6 item(ns)  guide
+  smoke            3 item(ns)  only=dash
+  nail             1 item(ns)
+  legs             2 item(ns)
+  torso            1 item(ns)
+  cloak            1 item(ns)
+  cloakshade       6 item(ns)  clip=cloak
+  cloakink         1 item(ns)
+  flap             1 item(ns)
+  mask             1 item(ns)
+  maskshade        1 item(ns)  clip=mask
+  face             4 item(ns)  clip=mask
+  maskink          2 item(ns)
+formas   28 (2 ocultas)
+ossos    root, body←root, head←body, nail←body (spring), puff←root
+tecidos  cape
+animações 3
+  stand          24 quadros, 12 fps, anima eyeA.shape eyeB.shape
+  jump           24 quadros, 15 fps
+                 eventos: pulo@3, pouso@18
+  dash           12 quadros, 15 fps
+                 eventos: dash@0
+unity    250 px/unidade, raiz 400,560

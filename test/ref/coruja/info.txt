@@ -1,0 +1,20 @@
+canvas   480 × 480, fundo gradiente noite
+let      cx=240 chao=404
+gradientes noite (linear), luz (radial), corpoG (linear, box), barrigaG (radial, box)
+variantes neve, fogo
+componentes estrela (5×), olho (2×), pena (6×)
+camadas  9
+  ceu              7 item(ns)
+  galho            2 item(ns)
+  orelhas          2 item(ns)
+  pes              2 item(ns)
+  tronco           1 item(ns)
+  barriga          7 item(ns)  clip=corpo
+  asas             2 item(ns)
+  rosto           14 item(ns)
+  fala             1 item(ns)  only=pia
+formas   38 (3 ocultas)
+ossos    corpo, cabeca←corpo (sway), asaE←corpo, asaD←corpo, tufoE←cabeca (spring), tufoD←cabeca (spring)
+animações 1
+  pia            48 quadros, 16 fps, anima bico.shape balao.opacity palpebra.shape s.opacity
+                 eventos: pio@12, pisca@36

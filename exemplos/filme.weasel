@@ -1,0 +1,53 @@
+# Filme — planos, atores, câmera com profundidade e luz da cena
+# Os personagens são os mesmos arquivos do jogo (cavaleiro.weasel, fantasma.weasel):
+# o filme só diz onde eles ficam, o que fazem e para onde a câmera olha.
+# Exporte em vídeo pela linha de comando:  weasel filme.weasel -o filme.mp4
+
+film fps=24
+canvas 1920 1080 bg=ceu
+gradient ceu linear 0,0 0,1080 : #060916@0 #131a3a@0.62 #26284a@1
+finish game bloom=0.3 vignette=0.45
+
+# a luz do lampião (o desenho do poste está no cenário) ilumina o cenário e os atores
+ambient c=#5866a0 power=0.5
+light lampiao point 2000,566 c=#ffb860 power=1.6 radius=720 glow=130 flicker=0.1
+
+# atores declarados antes do primeiro shot valem para todos os planos
+actor cenario "cenario.weasel" 0,0
+actor heroi "cavaleiro.weasel" 1720,900 scale=0.9 anim=stand
+actor fantasma "fantasma.weasel" 3400,880 origin=240,350 scale=1.1 anim=flutua hide=ceu
+
+# letreiro preso na tela, só no primeiro plano
+layer titulo screen unlit only=abertura
+text nome 960,360 "Weasel" size=130 c=#f4efe6 align=center font=serif bold
+text sub 960,440 "um filme feito com código" size=40 c=#c9c3d8 align=center
+
+# 1. a câmera desce da lua até o Cavaleiro (as camadas longe andam menos)
+shot abertura dur=6s
+camera 900,380 zoom=0.9 fade=1
+at 0s titulo.opacity=0
+at 1.5s camera.fade=0 titulo.opacity=1 ease=linear
+at 3.5s titulo.opacity=1
+at 4.5s titulo.opacity=0
+at 6s camera.pos=1760,640 camera.zoom=1.1
+
+# 2. o fantasma chega; a câmera vai atrás dele, um pouco atrasada
+shot encontro dur=5s
+camera follow=fantasma offset=-260,-300 lag=0.5 zoom=1.15
+at 4.2s fantasma.pos=2200,880 ease=out
+at 4.6s heroi.flip=x
+at 5s heroi.flip=none
+
+# 3. de perto: o pulo, o tranco no pouso e a saída de cena
+shot pulo dur=4.5s
+camera 1800,690 zoom=1.6
+at 0s fantasma.pos=2200,880
+at 0.4s heroi.anim=jump
+at 1.55s camera.shake=0
+at 1.65s camera.shake=16 ease=linear
+at 2s heroi.anim=stand
+at 2.2s camera.shake=0
+at 2.6s heroi.anim=dash heroi.flip=x heroi.pos=1720,900 camera.pos=1800,690
+at 3.2s heroi.pos=1050,900 camera.pos=1500,690 ease=out
+at 3.4s camera.fade=0
+at 4.5s camera.fade=1 ease=linear
