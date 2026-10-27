@@ -460,7 +460,7 @@ Furao (CharacterBody2D)            ← godot body=; a origem é o ponto raiz (os
 - Os **eventos** chegam pelo sinal `evento(nome)` do AnimationPlayer.
 - **Hitbox** e **Hurtbox** são Area2D: a Hitbox procura (`monitoring`) e a Hurtbox é encontrada (`monitorable`). As duas ficam na camada de colisão 1; num jogo com times, ajuste as camadas e máscaras, e ignore a própria Hurtbox (`area.owner != self`).
 - **`tocar(acao, direcao)`** escolhe a animação pela direção: `tocar("walk", velocity)` toca `walk_down`, `walk_up`, `walk_right` ou `walk_left` (e as diagonais, se existirem) e só recomeça quando a animação muda. Parado (`Vector2.ZERO`), vale a última direção.
-- O **normal map** é gerado das formas: cada forma vira um relevo arredondado, empilhado sobre o que está embaixo. Uma `PointLight2D` ilumina o personagem de lado; sem luzes, ele aparece normal.
+- O **normal map** é gerado das formas: cada forma vira um relevo arredondado, apoiado no que ela cobre; como na cor, a forma de cima esconde a de baixo, então a borda do que ficou atrás (o tronco atrás da máscara, a orelha atrás da cabeça) não aparece na luz. Uma `PointLight2D` ilumina o personagem de lado; sem luzes, ele aparece normal.
 - O **TileSet** tem uma camada de física (blocos `solid`, `oneway` e `collision=`) e o dado `nome` em cada bloco: `tile_data.get_custom_data("nome")` diz se é `espinhos`, `moeda`… O `.png` e o `.tres` precisam ficar na mesma pasta (os caminhos são relativos).
 
 ```gdscript

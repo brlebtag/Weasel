@@ -1,6 +1,7 @@
 /* Weasel — normal maps para a luz 2D do Godot. Cada forma vira um relevo: alta no meio, caindo em curva
-   até a borda, empilhada sobre o que já estava embaixo (o olho fica em cima da cabeça). A inclinação
-   desse relevo vira a cor da normal (convenção OpenGL, Y para cima, que é a que o Godot usa). */
+   até a borda, apoiada no que ela cobre (o olho fica em cima da cabeça). Como na cor, a forma
+   de cima cobre a de baixo: a borda do que ficou escondido não deixa marca. A inclinação desse relevo
+   vira a cor da normal (convenção OpenGL, Y para cima, que é a que o Godot usa). */
 (function (W) {
   'use strict';
   const S = W.scene;
@@ -80,12 +81,66 @@
     }
   }
 
+  // Preenche os pontos sem valor (peso 0) com valores suaves vindos dos que têm (push-pull: média em
+  // pirâmide e volta interpolando), para a forma de cima se apoiar no que ela cobre.
+  function fillHoles(v, wt, w, h) {
+    const levels = [{ v, wt, w, h }];
+    for (let L = levels[0]; L.w > 1 || L.h > 1; L = levels[levels.length - 1]) {
+      const w2 = Math.ceil(L.w / 2), h2 = Math.ceil(L.h / 2);
+      const v2 = new Float32Array(w2 * h2), t2 = new Float32Array(w2 * h2);
+      for (let y = 0; y < L.h; y++) {
+        for (let x = 0; x < L.w; x++) {
+          const i = y * L.w + x, j = (y >> 1) * w2 + (x >> 1);
+          v2[j] += L.v[i] * L.wt[i];
+          t2[j] += L.wt[i];
+        }
+      }
+      for (let j = 0; j < v2.length; j++) {
+        if (t2[j] > 0) v2[j] /= t2[j];
+        t2[j] = Math.min(1, t2[j]);
+      }
+      levels.push({ v: v2, wt: t2, w: w2, h: h2 });
+    }
+    for (let k = levels.length - 2; k >= 0; k--) {
+      const F = levels[k], C = levels[k + 1];
+      for (let y = 0; y < F.h; y++) {
+        const cy = Math.min(C.h - 1, Math.max(0, (y + 0.5) / 2 - 0.5)), y0 = Math.floor(cy), y1 = Math.min(C.h - 1, y0 + 1), fy = cy - y0;
+        for (let x = 0; x < F.w; x++) {
+          const i = y * F.w + x;
+          if (F.wt[i] >= 1) continue;
+          const cx = Math.min(C.w - 1, Math.max(0, (x + 0.5) / 2 - 0.5)), x0 = Math.floor(cx), x1 = Math.min(C.w - 1, x0 + 1), fx = cx - x0;
+          const c = (C.v[y0 * C.w + x0] * (1 - fx) + C.v[y0 * C.w + x1] * fx) * (1 - fy) + (C.v[y1 * C.w + x0] * (1 - fx) + C.v[y1 * C.w + x1] * fx) * fy;
+          F.v[i] = F.v[i] * F.wt[i] + c * (1 - F.wt[i]);
+          F.wt[i] = 1;
+        }
+      }
+    }
+    return v;
+  }
+
   // Altura (em pixels da imagem) de cada ponto do quadro.
   function heights(model, pose, rect, s, strength) {
     const Wd = Math.max(1, Math.round(rect.w * s)), Hd = Math.max(1, Math.round(rect.h * s));
     const H = new Float32Array(Wd * Hd);
     const x = maskCtx(Wd, Hd);
     const flatInk = model.finish.style === 'flat';
+    x.fillStyle = x.strokeStyle = '#ffffff';
+    x.lineJoin = 'round';
+    x.lineCap = 'round';
+    // o relevo de cada forma, guardado para o contorno que vem em outra camada (inkon=) usar o mesmo
+    const surfaces = new Map();
+    // o que o caminho pinta na caixa (b): o preenchimento, o contorno ou os dois, como transparência 0..1
+    const paint = (path, b, fill, lw) => {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.clearRect(b.x0, b.y0, b.bw, b.bh);
+      x.setTransform(s, 0, 0, s, -rect.x * s, -rect.y * s);
+      if (fill) x.fill(path);
+      if (lw > 0) { x.lineWidth = lw; x.stroke(path); }
+      const img = x.getImageData(b.x0, b.y0, b.bw, b.bh).data;
+      const a = new Float32Array(b.bw * b.bh);
+      for (let i = 0; i < a.length; i++) a[i] = img[i * 4 + 3] / 255;
+      return a;
+    };
     for (const layer of model.layers) {
       // camadas de sombreado (clip, dentro de outra forma) e o que não recebe luz (unlit) não fazem relevo
       if (layer.clip || layer.unlit || !S.layerVisible(layer, pose, { guides: false })) continue;
@@ -98,45 +153,67 @@
         if (pr.show === 0 || el.opacity * (pr.opacity !== undefined ? pr.opacity : 1) <= 0.02) continue;
         const g = S.geometry(model, pose, el);
         if (!g.segs.length) continue;
+        // o contorno é parte da forma, também quando vem em outra camada (inkon=)
         let lw = 0;
-        if (el.closed) { const ink = pr.ink !== undefined ? pr.ink : el.ink; if (it.part !== 'fill' && ink > 0 && !flatInk) lw = ink; } else lw = el.limb ? Math.max(el.limb[0], el.limb[1]) : pr.w !== undefined ? pr.w : el.w;
+        if (el.closed) { const ink = pr.ink !== undefined ? pr.ink : el.ink; if (ink > 0 && !flatInk) lw = ink; } else lw = el.limb ? Math.max(el.limb[0], el.limb[1]) : pr.w !== undefined ? pr.w : el.w;
         if (!el.closed && !(lw > 0)) continue;
-        const bb = S.segsBox(g.segs);
-        const x0 = Math.max(0, Math.floor((bb.x - lw - rect.x) * s) - 3), y0 = Math.max(0, Math.floor((bb.y - lw - rect.y) * s) - 3);
-        const x1 = Math.min(Wd, Math.ceil((bb.x + bb.w + lw - rect.x) * s) + 3), y1 = Math.min(Hd, Math.ceil((bb.y + bb.h + lw - rect.y) * s) + 3);
-        if (x1 - x0 < 1 || y1 - y0 < 1) continue;
-        const bw = x1 - x0, bh = y1 - y0;
-        x.setTransform(1, 0, 0, 1, 0, 0);
-        x.clearRect(x0, y0, bw, bh);
-        x.setTransform(s, 0, 0, s, -rect.x * s, -rect.y * s);
-        x.fillStyle = x.strokeStyle = '#ffffff';
-        x.lineJoin = 'round';
-        x.lineCap = 'round';
         const path = S.pathOf(g);
-        if (el.closed && it.part !== 'ink') x.fill(path);
-        if (lw > 0) { x.lineWidth = lw; x.stroke(path); }
-        const img = x.getImageData(x0, y0, bw, bh).data;
-        const inside = new Uint8Array(bw * bh), a = new Float32Array(bw * bh);
-        for (let i = 0; i < bw * bh; i++) { a[i] = img[i * 4 + 3] / 255; inside[i] = a[i] > 0.5 ? 1 : 0; }
-        const d = distance(inside, bw, bh);
-        let R = 0;
-        for (let i = 0; i < d.length; i++) if (d[i] > R) R = d[i];
-        if (R < 0.5) continue;
-        // perfil de meio círculo (sobe rápido na borda e achata no meio), suavizado e recortado pela forma
-        const hb = new Float32Array(bw * bh);
-        for (let q = 0; q < hb.length; q++) { const t = Math.min(1, d[q] / R); hb[q] = R * Math.sqrt(1 - (1 - t) * (1 - t)); }
-        const rb = Math.round(R * 0.18);
-        boxBlur(hb, bw, bh, rb);
-        boxBlur(hb, bw, bh, rb);
-        for (let j = 0; j < bh; j++) {
-          for (let i = 0; i < bw; i++) {
-            const q = j * bw + i;
-            if (a[q]) H[(y0 + j) * Wd + x0 + i] += hb[q] * a[q] * strength;
+        let sf = surfaces.get(el);
+        if (sf === undefined) {
+          sf = surface(path, el.closed, lw, S.segsBox(g.segs));
+          surfaces.set(el, sf);
+        }
+        if (!sf) continue;
+        // a parte desta camada (preenchimento, contorno ou os dois) cobre o que está embaixo
+        const a = it.part === 'fill' ? paint(path, sf, true, 0) : it.part === 'ink' ? paint(path, sf, false, lw) : sf.whole;
+        for (let j = 0; j < sf.bh; j++) {
+          for (let i = 0; i < sf.bw; i++) {
+            const q = j * sf.bw + i;
+            if (!a[q]) continue;
+            const p = (sf.y0 + j) * Wd + sf.x0 + i;
+            H[p] += (sf.z[q] - H[p]) * a[q];
           }
         }
       }
     }
     return { H, Wd, Hd };
+
+    // o relevo da forma inteira: a superfície em que ela se apoia, sem as bordas escondidas, mais um
+    // meio círculo que sobe da borda (null = pequena demais para ter relevo)
+    function surface(path, fill, lw, bb) {
+      const x0 = Math.max(0, Math.floor((bb.x - lw - rect.x) * s) - 3), y0 = Math.max(0, Math.floor((bb.y - lw - rect.y) * s) - 3);
+      const x1 = Math.min(Wd, Math.ceil((bb.x + bb.w + lw - rect.x) * s) + 3), y1 = Math.min(Hd, Math.ceil((bb.y + bb.h + lw - rect.y) * s) + 3);
+      if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+      const b = { x0, y0, bw: x1 - x0, bh: y1 - y0 }, n = b.bw * b.bh;
+      const whole = paint(path, b, fill, lw);
+      const inside = new Uint8Array(n);
+      for (let q = 0; q < n; q++) inside[q] = whole[q] > 0.5 ? 1 : 0;
+      const d = distance(inside, b.bw, b.bh);
+      let R = 0;
+      for (let q = 0; q < n; q++) if (d[q] > R) R = d[q];
+      if (R < 0.5) return null;
+      // perfil de meio círculo (sobe rápido na borda e achata no meio), suavizado
+      const hb = new Float32Array(n);
+      for (let q = 0; q < n; q++) { const t = Math.min(1, d[q] / R); hb[q] = R * Math.sqrt(1 - (1 - t) * (1 - t)); }
+      const rb = Math.round(R * 0.18);
+      boxBlur(hb, b.bw, b.bh, rb);
+      boxBlur(hb, b.bw, b.bh, rb);
+      // a base: o que a forma cobre bem junto da borda dela, continuado para o miolo (o que fica
+      // escondido no meio, como a borda de outra forma, não conta; o que está ao lado também não)
+      const base = new Float32Array(n), wt = new Float32Array(n);
+      for (let j = 0; j < b.bh; j++) {
+        for (let i = 0; i < b.bw; i++) {
+          const q = j * b.bw + i;
+          if (inside[q] && d[q] <= 1.5) { base[q] = H[(y0 + j) * Wd + x0 + i]; wt[q] = 1; }
+        }
+      }
+      fillHoles(base, wt, b.bw, b.bh);
+      boxBlur(base, b.bw, b.bh, Math.max(1, rb));
+      boxBlur(base, b.bw, b.bh, Math.max(1, rb));
+      const z = new Float32Array(n);
+      for (let q = 0; q < n; q++) z[q] = base[q] + hb[q] * strength;
+      return Object.assign(b, { whole, z });
+    }
   }
 
   // Normal map de um quadro. alpha: os pixels do quadro colorido (a transparência é copiada dele).
