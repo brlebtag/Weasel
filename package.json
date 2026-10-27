@@ -1,6 +1,6 @@
 {
   "name": "weasel",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Linguagem de desenho por código: editor web e linha de comando que exportam PNG, JPG, SVG, GIF animado, sprite sheet, SpriteFrames do Godot e filmes em vídeo.",
   "license": "MIT",
   "private": true,
@@ -10,8 +10,9 @@
   "scripts": {
     "web": "python -m http.server 5317",
     "weasel": "node cli/weasel.js",
-    "test": "node test/regress.js",
-    "test:update": "node test/regress.js --update"
+    "test": "node test/regress.js && node docs/guia/gerar.js --check",
+    "test:update": "node test/regress.js --update",
+    "docs": "node docs/guia/gerar.js"
   },
   "engines": {
     "node": ">=18"

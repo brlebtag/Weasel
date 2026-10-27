@@ -386,7 +386,13 @@
       if (ln.incErr) { const sp = splitLine(ln.text); const t = sp.words[1] || sp.words[0]; err(i, ln.incErr, t.from, t.to); }
       const s = readStatement(ln.text, i, err);
       if (s) stmts.push(s);
+      // dentro de def … end, os parâmetros numéricos do def também valem nas {contas}
+      if (s && s.cmd === 'def') {
+        scope = new Map(globals);
+        for (const a of s.attrs.values()) { const n = num(a.text); if (!isNaN(n)) scope.set(a.key, n); }
+      } else if (s && s.cmd === 'end') scope = globals;
     });
+    scope = globals;
     // num filme, o quadro padrão é Full HD
     if (stmts.some((s) => s.cmd === 'film') && !stmts.some((s) => s.cmd === 'canvas')) { m.canvas.w = FILM_W; m.canvas.h = FILM_H; }
 

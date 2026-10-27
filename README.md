@@ -17,6 +17,8 @@ O Weasel atende a dois usos, sem um atrapalhar o outro:
 - **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…). Sai como [cena pronta do Godot](#godot) — AnimatedSprite2D, colisão, hitbox e hurtbox que mudam a cada quadro, eventos, normal map para a luz 2D e direções espelhadas —, como TileSet, ou em sprite sheet para qualquer motor.
 - **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). A fala de referência (`audio`) mexe a boca dos personagens (lip sync) e vira legenda. No editor, a **linha do tempo** mostra planos, sons (com a forma de onda) e legendas, e arrastar um bloco muda o tempo no código. Sai em vídeo (com o som de referência) ou sequência de PNG, mais as legendas em `.srt` e a [linha do tempo para o editor de vídeo](#do-weasel-para-o-editor-de-vídeo) (FCPXML/EDL), onde ficam a mixagem final e a montagem.
 
+**Aprendendo a linguagem?** Comece pelo [Guia da linguagem](docs/guia/README.md): doze capítulos, do primeiro círculo até ossos, animação, luz, Godot e filme, com um exemplo em cada passo e a imagem que ele gera.
+
 Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
 
 ![Quadros do filme de exemplo: letreiro, câmera descendo da lua, o fantasma chegando, a coruja falando com legendas e o pulo](docs/filme.jpg)
@@ -167,6 +169,8 @@ Editando pelo desenho e pelo teclado:
 Atalhos: `Ctrl+Z` / `Ctrl+Y` desfazer/refazer, `Ctrl+/` comentar, `Ctrl+D` duplicar linha, `Ctrl+S` salvar, `Ctrl+E` exportar, `Espaço` tocar/pausar e `←` `→` quadro anterior/próximo (com o foco fora do editor).
 
 ## A linguagem
+
+Esta seção é a lista de referência. Para aprender com calma, com exemplos e imagens, veja o [Guia da linguagem](docs/guia/README.md).
 
 Uma instrução por linha:
 
@@ -521,6 +525,8 @@ Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
 
 As referências dos desenhos foram gravadas antes de o filme existir, então o teste mostra que os desenhos e as exportações de jogo continuam iguais. Quando algo muda, o teste diz o que foi e grava a saída nova em `test/out/`, com uma imagem dos pixels diferentes em vermelho. Se a mudança foi de propósito, `npm run test:update` regrava as referências; `node test/regress.js coruja` roda só os casos com esse nome.
 
+O `npm test` também lê todos os exemplos do [guia](docs/guia/README.md) e falha se algum der erro ou aviso; `npm run docs` gera as imagens do guia de novo.
+
 A comparação tolera diferenças mínimas de antialiasing, para os testes passarem em outras máquinas; `node test/regress.js --strict` exige pixels idênticos. As referências foram geradas no Windows; em outro sistema, textos podem sair um pouco diferentes por causa das fontes.
 
 ## Estrutura do projeto
@@ -554,6 +560,7 @@ cli/media.js        acha e lê os sons (audio) para a linha de comando
 test/regress.js     testes de regressão; test/ref/ guarda as referências
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
+docs/guia/          guia da linguagem: capítulos com exemplos; gerar.js faz as imagens (npm run docs)
 referencia/         capturas do vídeo e transcrição do código mostrado
 ```
 
