@@ -62,6 +62,11 @@ Filme (arquivo com a linha film):
       --crf <n>           qualidade do mp4/webm (menor = melhor; padrão 18 no mp4, 30 no webm)
       --ffmpeg <caminho>  onde está o ffmpeg (ou a variável WEASEL_FFMPEG)
   -o mix.wav              só o som do filme (os audio misturados), para o editor de vídeo
+      --edl --fcpxml      junto com o vídeo, a linha do tempo para o editor de vídeo (DaVinci
+                          Resolve, Final Cut, Premiere): o vídeo (ou um por plano, com --shots)
+                          e cada som numa trilha; o vídeo sai sem o som misturado
+  -o filme.fcpxml|.edl    só a linha do tempo, para vídeos já renderizados com o mesmo nome
+      --ext <mp4|mov|…>   extensão desses vídeos (padrão mp4)
       --no-audio          vídeo sem o som de referência (por padrão os audio vão misturados)
       --subs <srt|vtt|none>  legendas ao lado do vídeo (padrão srt: filme.srt, filme.en.srt…)
       --burn-subs         legendas desenhadas na imagem (ou film subs=burn)
@@ -92,6 +97,7 @@ Exemplos:
   weasel filme.weasel --frames -o quadros/q.png --from 10s --to 20s
   weasel filme.weasel -o capa.png --time 4s
   weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
+  weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -105,7 +111,7 @@ function parseArgs(argv) {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
     time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, ffmpeg: null,
-    normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null,
+    normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
     const n = Number(v);
@@ -144,6 +150,9 @@ function parseArgs(argv) {
       case '--subs': o.subs = val(); if (!['srt', 'vtt', 'none'].includes(o.subs)) usage('--subs aceita srt, vtt ou none'); break;
       case '--burn-subs': o.burnSubs = true; break;
       case '--lang': o.lang = val(); break;
+      case '--edl': o.edl = true; break;
+      case '--fcpxml': o.fcpxml = true; break;
+      case '--ext': o.ext = val().replace(/^\./, ''); break;
       case '--frames': o.frames = true; break;
       case '--variant': o.variant = val(); break;
       case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); break;
@@ -278,7 +287,7 @@ function info(m) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -405,13 +414,13 @@ async function run(o) {
 
   let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
-  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build', 'wav'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
+  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
     if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
     await V.exportFilm(model, o, format, source, { save, usage, Fail, paint, withSuffix, kb });
     return { code: 0, watched };
   }
-  if (V.VIDEO.includes(format) || format === 'wav') usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
+  if (V.VIDEO.includes(format) || ['wav', 'edl', 'fcpxml'].includes(format)) usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
   for (const [k, flag] of [['shot', '--shot'], ['from', '--from'], ['to', '--to'], ['time', '--time']]) if (o[k] !== null) usage(`${flag} só vale para filmes`);
 
   if (o.variant === 'all') {

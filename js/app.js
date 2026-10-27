@@ -30,6 +30,7 @@
     media: new Map(), // sons (audio): nome → { buf, duração, amostras do .wav, áudio decodificado para tocar }
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
+    timeline: true, // mostrar a linha do tempo do filme
   };
   let raf = 0, saveTimer = 0;
   const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
@@ -135,6 +136,58 @@
     if (!st.media.size) list.hidden = true;
   }
 
+  // ---------- linha do tempo do filme ----------
+  // a linha do arquivo onde está um shot, audio ou sub (para o cursor e para reescrever o tempo)
+  let srcLines = null;
+  function srcLine(src) {
+    if (!srcLines || srcLines.model !== st.model) {
+      srcLines = { model: st.model, map: new Map() };
+      for (const [line, rec] of st.model.byLine) {
+        const s = rec.audio || rec.sub || rec.shot;
+        if (s) srcLines.map.set(s, line);
+      }
+    }
+    return srcLines.map.has(src) ? srcLines.map.get(src) : -1;
+  }
+  // arrastou na linha do tempo: o novo tempo vai para o código (at= e dur= do audio, tempo e dur= do sub, dur= do shot)
+  function timeEdit(kind, item, field, sec) {
+    const src = kind === 'shot' ? item.shot : kind === 'audio' ? item.a : item.src;
+    const line = srcLine(src);
+    if (line < 0) return;
+    const sst = st.model.byLine.get(line).st, off = editor.lineStart(line);
+    const fmt = (s) => `${+Math.max(0, s).toFixed(3)}s`;
+    const setAttr = (key, val, after) => {
+      const a = sst.attrs.get(key);
+      if (a) editor.replaceRange(off + a.vfrom, off + a.to, val, {});
+      else editor.replaceRange(off + after.to, off + after.to, ` ${key}=${val}`, {});
+    };
+    const isAudio = kind === 'audio' || item.fromAudio;
+    if (kind === 'shot') setAttr('dur', fmt(sec), sst.pos[0]);
+    else if (isAudio) setAttr(field === 'start' ? 'at' : 'dur', fmt(field === 'start' ? sec - item.base : sec), sst.pos[1]);
+    else if (field === 'start') editor.replaceRange(off + sst.pos[0].from, off + sst.pos[0].to, fmt(sec - item.base), {});
+    else setAttr('dur', fmt(sec), sst.pos[1]);
+  }
+  const tlView = W.timelineView($('tlCanvas'), {
+    model: () => st.model,
+    frame: () => st.frame,
+    setFrame: (f) => {
+      st.playing = false;
+      stopSound();
+      st.frame = f;
+      const [a, b] = filmRange();
+      if (f < a || f >= b) st.shot = '';
+      fillAnimSelect();
+      draw();
+    },
+    range: () => filmRange(),
+    editable: (owner) => owner === st.model,
+    lineOf: srcLine,
+    gotoLine: (line) => editor.goto(line, 0),
+    edit: timeEdit,
+    open: (file) => { if (file && st.files.has(file)) openFile(file); else hint(file ? `Abra "${file}" com Abrir… para editar.` : 'Este bloco é deste arquivo.', 2600); },
+    hint: (msg) => hint(msg, 2400),
+  });
+
   // ---------- tocar o som do filme ----------
   const voices = [];
   function stopSound() {
@@ -175,6 +228,8 @@
       if (st.frame >= tl.frames) st.frame = 0;
     } else st.shot = '';
     $('tCameraWrap').hidden = !isFilm();
+    $('tTimelineWrap').hidden = !isFilm();
+    $('timeline').hidden = !(isFilm() && st.timeline);
     $('bSound').hidden = !(isFilm() && tline().audios.length);
     $('bSubs').hidden = !(isFilm() && tline().subs.length);
     if (st.variant && !st.model.variants.includes(st.variant)) st.variant = '';
@@ -621,7 +676,7 @@
     ctx.clearRect(0, 0, cw, ch);
     const T = () => ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * st.view.x, dpr * st.view.y);
     T();
-    if (isFilm()) { drawFilm(ctx, dpr, T); return; }
+    if (isFilm()) { drawFilm(ctx, dpr, T); if (st.timeline) tlView.draw(); return; }
     const pose = currentPose();
 
     // papel
@@ -1116,6 +1171,7 @@
   $('frameSl').addEventListener('input', (e) => { st.playing = false; stopSound(); st.frame = +e.target.value; fillAnimSelect(); draw(); });
   $('speedSel').addEventListener('change', (e) => { st.speed = parseFloat(e.target.value); if (st.playing) startSound(); });
   $('bSound').addEventListener('click', () => { st.sound = !st.sound; $('bSound').classList.toggle('on', st.sound); if (st.playing) startSound(); else stopSound(); });
+  $('tTimeline').addEventListener('change', (e) => { st.timeline = e.target.checked; $('timeline').hidden = !(isFilm() && st.timeline); draw(); });
   $('bSubs').addEventListener('click', () => { st.subs = !st.subs; $('bSubs').classList.toggle('on', st.subs); draw(); });
   $('mediaBtn').addEventListener('click', () => { const l = $('mediaList'); l.hidden = !l.hidden; });
   $('btnBuild').addEventListener('click', startBuild);

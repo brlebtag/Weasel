@@ -210,6 +210,33 @@ async function exportFilm(model, o, format, source, h) {
       h.save(file, Buffer.from(o.subs === 'vtt' ? W.audio.vtt(list) : W.audio.srt(list)), `${list.length} legenda${list.length > 1 ? 's' : ''}${lang === model.film.lang ? '' : ` (${lang})`}`, o.quiet);
     }
   };
+  // linha do tempo para o editor de vídeo (EDL, FCPXML) apontando para os vídeos e os sons
+  const writeTimelines = (outBase, parts2, kinds) => {
+    if (!kinds.length) return;
+    const from = parts2[0].frames[0], last = parts2[parts2.length - 1].frames, to = last[last.length - 1] + 1;
+    const videos = parts2.map((p) => ({ file: path.resolve(p.file), start: p.frames[0], frames: p.frames.length }));
+    const pl = W.nle.plan(model, { from, to, videos, scale: o.scale, audioPath: (c) => (c.media && c.media.path) || null });
+    const title = path.basename(outBase);
+    for (const k of kinds) {
+      const text = k === 'edl' ? W.nle.edl(pl, title) : W.nle.fcpxml(pl, title);
+      h.save(`${outBase}.${k}`, Buffer.from(text), `${k === 'edl' ? 'EDL (CMX3600)' : 'FCPXML 1.9'}: ${videos.length} vídeo${videos.length > 1 ? 's' : ''}, ${pl.audio.length} ${pl.audio.length === 1 ? 'som' : 'sons'} em ${pl.lanes} trilha${pl.lanes === 1 ? '' : 's'}, ${pl.markers.length} marcador${pl.markers.length === 1 ? '' : 'es'}`, o.quiet);
+    }
+  };
+  const timelineKinds = [o.edl && 'edl', o.fcpxml && 'fcpxml'].filter(Boolean);
+
+  // só a linha do tempo: os vídeos já foram (ou vão ser) renderizados com o mesmo nome
+  if (format === 'edl' || format === 'fcpxml') {
+    const outBase = (o.out || `${source.base}.${format}`).replace(/\.[^./\\]+$/, '');
+    const parts2 = parts.map((p) => ({ file: h.withSuffix(`${outBase}.${o.ext}`, p.suffix), frames: p.frames }));
+    writeTimelines(outBase, parts2, [...new Set([format, ...timelineKinds])]);
+    writeSubs(`${outBase}.${o.ext}`, { frames: parts.flatMap((p) => p.frames) });
+    return;
+  }
+  if (timelineKinds.length && VIDEO.includes(format) && o.audio) {
+    o.audio = false; // os sons vão em trilhas separadas na linha do tempo
+    if (!o.quiet) console.error(h.paint('2', 'com --edl/--fcpxml o vídeo sai sem o som misturado: cada som vai numa trilha da linha do tempo'));
+  }
+
   const clipsOf = (p) => {
     if (!o.audio) return [];
     const [a, b] = span(p);
@@ -254,7 +281,7 @@ async function exportFilm(model, o, format, source, h) {
   const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang };
   if (o.transparent && (format === 'mp4' || format === 'mkv') && !o.quiet) console.error(h.paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou --frames (PNG)`);
   if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang });
-  const summary = (secs) => `${total} quadros em ${secs.toFixed(1)}s (${(total / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`;
+  const summary = (secs, n) => { n = n || total; return `${n} quadros em ${secs.toFixed(1)}s (${(n / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`; };
 
   try {
     if (VIDEO.includes(format)) {
@@ -290,8 +317,15 @@ async function exportFilm(model, o, format, source, h) {
         const secs = bar.end();
         if (code !== 0) throw new h.Fail(`o ffmpeg falhou (${code}): ${errText.trim()}`, 3);
         const bytes = fs.statSync(out).size;
-        if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `${size[0]}×${size[1]}, ${fps} fps, ${W.film.timecode(p.frames.length, fps)}${clips.length ? `, com ${clips.length} ${clips.length > 1 ? 'sons' : 'som'}` : ''} · ${h.kb(bytes)} · ${summary(secs)}`)}`);
+        if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `${size[0]}×${size[1]}, ${fps} fps, ${W.film.timecode(p.frames.length, fps)}${clips.length ? `, com ${clips.length} ${clips.length > 1 ? 'sons' : 'som'}` : ''} · ${h.kb(bytes)} · ${summary(secs, p.frames.length)}`)}`);
         writeSubs(out, p);
+        p.file = out;
+      }
+      if (timelineKinds.length) {
+        const outBase = (o.out || `${source.base}.${format}`).replace(/\.[^./\\]+$/, '') + (o.shot && !o.shots ? parts[0].suffix : '');
+        writeTimelines(outBase, parts, timelineKinds);
+        // legendas do trecho inteiro, alinhadas com a linha do tempo
+        if (parts.length > 1) writeSubs(`${outBase}.${format}`, { frames: parts.flatMap((q) => q.frames) });
       }
       return;
     }

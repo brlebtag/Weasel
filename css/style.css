@@ -208,7 +208,9 @@ body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: no
 .errlist .warn .msg { color: #ffe39a; }
 
 /* ---------- vista do desenho ---------- */
-.viewp { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; background: var(--bg); }
+.viewp { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-width: 0; min-height: 0; background: var(--bg); }
+.timeline { border-top: 1px solid var(--line); background: #10131a; max-height: 230px; overflow-y: auto; overflow-x: hidden; }
+.timeline canvas { display: block; width: 100%; touch-action: none; }
 .viewbar, .player {
   display: flex;
   align-items: center;
@@ -322,7 +324,7 @@ pre.ex u { color: var(--num); text-decoration: none; }
 .opts { display: flex; flex-direction: column; gap: 10px; }
 .opts label { display: flex; flex-direction: column; gap: 4px; color: var(--dim); font-size: 12px; }
 .opts label.chk { flex-direction: row; align-items: center; gap: 8px; color: var(--text); font-size: 13px; }
-.opts select, .opts input[type=number] { width: 100%; }
+.opts select, .opts input[type=number], .opts input[type=text] { width: 100%; }
 .opt-note { margin: 0; color: var(--dim); font-size: 12px; line-height: 1.45; }
 .opts [hidden] { display: none; }
 .prev {

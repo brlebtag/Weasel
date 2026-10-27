@@ -16,31 +16,32 @@
     let start = 0;
     // um som no tempo: começa em base + at e dura dur=, o resto do arquivo, ou (loop, ou duração
     // desconhecida) até o fim do bloco (o shot, ou a cena inteira para sons fora de shot)
-    const clip = (a, owner, base, blockEnd) => {
+    const clip = (a, owner, base, blockEnd, file) => {
       const t0 = base + a.at;
       const fileDur = a.media && a.media.duration ? Math.max(0, a.media.duration - a.from) : null;
       let dur = a.dur !== null ? a.dur : !a.loop && fileDur !== null ? fileDur : blockEnd - t0;
       if (a.dur === null && fileDur === null && a.cues && a.cues.length && !a.loop) dur = a.cues[a.cues.length - 1].end - a.from;
-      const c = { a, owner, start: t0, end: t0 + Math.max(0, dur), fileDur };
+      const c = { a, owner, start: t0, end: t0 + Math.max(0, dur), fileDur, base, file };
       audios.push(c);
-      if (a.text) subs.push({ start: c.start, end: c.end, text: a.text, lang: a.lang || owner.film.lang || lang, src: a });
+      if (a.text) subs.push({ start: c.start, end: c.end, text: a.text, lang: a.lang || owner.film.lang || lang, src: a, owner, base, file, fromAudio: true });
     };
-    const sub = (s, owner, base) => subs.push({ start: base + s.t, end: base + s.t + s.dur, text: s.text, lang: s.lang || owner.film.lang || lang, src: s });
-    const walk = (owner, prefix, fit, depth) => {
+    const sub = (s, owner, base, file) => subs.push({ start: base + s.t, end: base + s.t + s.dur, text: s.text, lang: s.lang || owner.film.lang || lang, src: s, owner, base, file });
+    // file: o arquivo de onde vêm os blocos (undefined = o arquivo principal)
+    const walk = (owner, prefix, fit, depth, file) => {
       const first = start;
       for (const s of owner.film.seq) {
         if (s.kind === 'shot') {
           const frames = Math.max(1, Math.round(s.shot.dur * fps));
           // o plano sem nome de uma cena (arquivo sem shot) leva só o nome do arquivo
           const name = s.shot.implicit && prefix ? prefix.slice(0, -1) : prefix + s.shot.name;
-          entries.push({ owner, shot: s.shot, name, start, frames, fit, index: entries.length });
-          for (const a of s.shot.audios) clip(a, owner, start / fps, (start + frames) / fps);
-          for (const sb of s.shot.subs) sub(sb, owner, start / fps);
+          entries.push({ owner, shot: s.shot, name, start, frames, fit, index: entries.length, file });
+          for (const a of s.shot.audios) clip(a, owner, start / fps, (start + frames) / fps, file);
+          for (const sb of s.shot.subs) sub(sb, owner, start / fps, file);
           start += frames;
-        } else if (depth < 8) walk(s.model, prefix + s.file.replace(/\.[^.]+$/, '') + '/', fitOf(owner, s.model, fit), depth + 1);
+        } else if (depth < 8) walk(s.model, prefix + s.file.replace(/\.[^.]+$/, '') + '/', fitOf(owner, s.model, fit), depth + 1, s.file);
       }
-      for (const a of owner.film.audios) clip(a, owner, first / fps, start / fps);
-      for (const sb of owner.film.subs) sub(sb, owner, first / fps);
+      for (const a of owner.film.audios) clip(a, owner, first / fps, start / fps, file);
+      for (const sb of owner.film.subs) sub(sb, owner, first / fps, file);
     };
     walk(model, '', null, 0);
     subs.sort((p, q) => p.start - q.start || p.end - q.end);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css?v=1.5.0">
+<link rel="stylesheet" href="css/style.css?v=1.6.0">
 </head>
 <body>
 <header class="top">
@@ -47,6 +47,7 @@
       <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <label class="tog" id="tTimelineWrap" title="Planos, sons e legendas no tempo; arraste para mudar os tempos no código" hidden><input type="checkbox" id="tTimeline" checked> Linha do tempo</label>
       <label class="tog" id="tCameraWrap" title="Ligado: o que a câmera filma. Desligado: o mundo inteiro como foi desenhado, com a moldura da câmera" hidden><input type="checkbox" id="tCamera" checked> Câmera</label>
       <select id="variantSel" title="Variante de cores" hidden></select>
       <span class="grow"></span>
@@ -61,6 +62,7 @@
       <canvas id="view"></canvas>
       <div id="hint" class="hint" hidden></div>
     </div>
+    <div id="timeline" class="timeline" hidden><canvas id="tlCanvas"></canvas></div>
     <div class="player">
       <button id="btnBuild" class="build" title="Pinta o desenho de novo, traço a traço">Pintar</button>
       <span class="sep"></span>
@@ -199,6 +201,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     </table>
     <p>Tempo: <code>2s</code>, <code>1.5</code>, <code>500ms</code>, <code>48f</code> (quadros), <code>1m30s</code>; <code>+1s</code> conta do <code>at</code> anterior. O valor declarado vale como <code>at 0s</code>; entre um <code>at</code> e o seguinte a mudança é gradual, e <code>ease=</code> diz como ela chega. <code>anim</code>, <code>flip</code>, <code>show</code>, <code>follow</code> e <code>variant</code> trocam de uma vez (<code>anim</code> recomeça do quadro 0).</p>
     <p>As luzes do filme iluminam o cenário e os atores. Na câmera parada (centro, zoom 1) tudo fica como foi desenhado; a profundidade só aparece quando a câmera anda. A chave <b>Câmera</b> alterna entre o que a câmera filma e o mundo inteiro com a moldura da câmera; no player, <b>♪</b> toca o som e <b>CC</b> mostra as legendas. Para vídeo longo, MP4 ou ProRes: <code>weasel filme.weasel -o filme.mp4</code>.</p>
+    <p>A <b>linha do tempo</b> embaixo do desenho mostra os planos, os sons (com a forma de onda e as bocas do lip sync) e as legendas. Clique na régua para ir a um momento e num bloco para ir à linha dele. Arraste um som ou uma legenda para mudar quando começa (<code>at=</code>, o tempo do <code>sub</code>); a borda direita muda o <code>dur=</code>. Alt arrasta sem grudar; Ctrl+roda dá zoom; duplo clique no vazio mostra tudo.</p>
 
     <h3>No editor</h3>
     <ul>
@@ -219,7 +222,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e o <code>SpriteFrames</code> (.tres) e, com as opções, o normal map para a luz 2D e a cena pronta (.tscn) com AnimatedSprite2D, colisão, hitbox e hurtbox por quadro, eventos e direções espelhadas. Num arquivo com <code>tileset</code>, sai o TileSet.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
-      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt). Vídeo com som: linha de comando.</li>
+      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt); em <b>Editor de vídeo</b>, a linha do tempo para o DaVinci Resolve, Final Cut ou Premiere (.fcpxml, .edl e .srt). Vídeo com som: linha de comando; <code>weasel filme.weasel -o filme.mov --shots --fcpxml --edl</code> faz um vídeo por plano e a linha do tempo com cada som na sua trilha.</li>
     </ul>
   </div>
 </aside>
@@ -236,6 +239,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <button type="button" data-kind="video" data-for="film">Vídeo</button>
     <button type="button" data-kind="seq" data-for="film">Sequência PNG</button>
     <button type="button" data-kind="subs" data-for="film">Legendas</button>
+    <button type="button" data-kind="nle" data-for="film">Editor de vídeo</button>
   </div>
   <div class="dlg-body">
     <div class="opts">
@@ -261,6 +265,14 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <label data-show="godot" class="chk" title="AnimatedSprite2D, colisão (box body), hitbox e hurtbox que mudam a cada quadro e eventos chamados pelo AnimationPlayer"><input type="checkbox" id="expGodotScene" checked> Cena pronta (.tscn)</label>
       <label data-show="godot" class="chk" title="Relevo das formas para a luz 2D do Godot (PointLight2D)"><input type="checkbox" id="expNormal" checked> Normal map (luz 2D)</label>
       <label data-show="godot" class="chk" title="Animações terminadas em _right ganham a _left espelhada (e vice-versa) no AnimationPlayer"><input type="checkbox" id="expMirror" checked> Espelhar direções</label>
+      <label data-show="nle">Vídeos
+        <select id="expNleSplit"><option value="one">um arquivo do trecho</option><option value="shots">um arquivo por plano (--shots)</option></select>
+      </label>
+      <label data-show="nle">Formato dos vídeos
+        <select id="expNleExt"><option value="mp4">.mp4</option><option value="mov">.mov (ProRes)</option><option value="webm">.webm (gravado aqui)</option></select>
+      </label>
+      <label data-show="nle" title="A pasta onde ficam os vídeos renderizados e o .weasel (com a pasta dos sons). Vazio: só os nomes, e o editor pede para achar os arquivos.">Pasta do projeto <input type="text" id="expNleDir" placeholder="C:\Filmes\meu_filme" spellcheck="false"></label>
+      <p data-show="nle" class="opt-note">Um .zip com a linha do tempo para o editor de vídeo: .fcpxml (DaVinci Resolve, Final Cut), .edl (Premiere, Resolve e quase todos) e as legendas .srt. O vídeo vai na trilha de vídeo, cada audio numa trilha de som, no lugar e no volume certos, e os planos viram marcadores. Grave os vídeos sem o som misturado e com os mesmos nomes: <code>weasel filme.weasel --shots --edl --fcpxml</code> faz tudo de uma vez.</p>
       <p data-show="godot" class="opt-note">Sai um .zip para pôr numa pasta do projeto do Godot: a folha (.png), o SpriteFrames (.tres) e, com as opções, o normal map, a cena (.tscn) e o weasel_anim.gd. Use a cena como personagem e toque com $AnimationPlayer.tocar("walk", velocity). Num arquivo com tileset, sai o TileSet.</p>
       <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= não vale para SVG.</p>
       <p data-show="video" class="opt-note">WebM (VP9) gravado pelo próprio navegador, sem som. Para filmes longos, MP4 ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
@@ -276,20 +288,22 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.5.0"></script>
-<script src="js/lang.js?v=1.5.0"></script>
-<script src="js/scene.js?v=1.5.0"></script>
-<script src="js/film.js?v=1.5.0"></script>
-<script src="js/audio.js?v=1.5.0"></script>
-<script src="js/webm.js?v=1.5.0"></script>
-<script src="js/svg.js?v=1.5.0"></script>
-<script src="js/gif.js?v=1.5.0"></script>
-<script src="js/zip.js?v=1.5.0"></script>
-<script src="js/normal.js?v=1.5.0"></script>
-<script src="js/export.js?v=1.5.0"></script>
-<script src="js/godot.js?v=1.5.0"></script>
-<script src="js/editor.js?v=1.5.0"></script>
-<script src="js/examples.js?v=1.5.0"></script>
-<script src="js/app.js?v=1.5.0"></script>
+<script src="js/geom.js?v=1.6.0"></script>
+<script src="js/lang.js?v=1.6.0"></script>
+<script src="js/scene.js?v=1.6.0"></script>
+<script src="js/film.js?v=1.6.0"></script>
+<script src="js/audio.js?v=1.6.0"></script>
+<script src="js/nle.js?v=1.6.0"></script>
+<script src="js/webm.js?v=1.6.0"></script>
+<script src="js/svg.js?v=1.6.0"></script>
+<script src="js/gif.js?v=1.6.0"></script>
+<script src="js/zip.js?v=1.6.0"></script>
+<script src="js/normal.js?v=1.6.0"></script>
+<script src="js/export.js?v=1.6.0"></script>
+<script src="js/godot.js?v=1.6.0"></script>
+<script src="js/editor.js?v=1.6.0"></script>
+<script src="js/examples.js?v=1.6.0"></script>
+<script src="js/timeline.js?v=1.6.0"></script>
+<script src="js/app.js?v=1.6.0"></script>
 </body>
 </html>

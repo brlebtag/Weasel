@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/24s" width="960" height="540" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="filme_abertura" start="0s" duration="144/24s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="filme_abertura.mov"/>
+    </asset>
+    <asset id="r3" name="filme_encontro" start="0s" duration="120/24s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="filme_encontro.mov"/>
+    </asset>
+    <asset id="r4" name="filme_conversa" start="0s" duration="120/24s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="filme_conversa.mov"/>
+    </asset>
+    <asset id="r5" name="filme_pulo" start="0s" duration="108/24s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="filme_pulo.mov"/>
+    </asset>
+    <asset id="r6" name="grilos" start="0s" duration="48000/16000s" hasAudio="1" audioSources="1" audioChannels="1" audioRate="16000">
+      <media-rep kind="original-media" src="som/grilos.wav"/>
+    </asset>
+    <asset id="r7" name="coruja_fala" start="0s" duration="67200/16000s" hasAudio="1" audioSources="1" audioChannels="1" audioRate="16000">
+      <media-rep kind="original-media" src="som/coruja_fala.wav"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="filme">
+      <project name="filme">
+        <sequence format="r1" duration="492/24s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="filme_abertura" offset="0s" start="0s" duration="144/24s" format="r1" tcFormat="NDF">
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="0s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="72/24s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <marker start="0s" duration="1/24s" value="abertura"/>
+            </asset-clip>
+            <asset-clip ref="r3" name="filme_encontro" offset="144/24s" start="0s" duration="120/24s" format="r1" tcFormat="NDF">
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="0s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="72/24s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <marker start="0s" duration="1/24s" value="encontro"/>
+            </asset-clip>
+            <asset-clip ref="r4" name="filme_conversa" offset="264/24s" start="0s" duration="120/24s" format="r1" tcFormat="NDF">
+              <asset-clip ref="r7" lane="-2" name="fala" offset="10/24s" start="0s" duration="101/24s"/>
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="24/24s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="96/24s" start="0s" duration="72/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <marker start="0s" duration="1/24s" value="conversa"/>
+            </asset-clip>
+            <asset-clip ref="r5" name="filme_pulo" offset="384/24s" start="0s" duration="108/24s" format="r1" tcFormat="NDF">
+              <asset-clip ref="r6" lane="-1" name="grilos" offset="48/24s" start="0s" duration="60/24s">
+                <adjust-volume amount="-9.1dB"/>
+              </asset-clip>
+              <marker start="0s" duration="1/24s" value="pulo"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

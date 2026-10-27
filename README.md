@@ -1,6 +1,6 @@
 # Weasel — desenho por código
 
-Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, tanto no navegador quanto pela **linha de comando**.
+Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, com a **linha do tempo pronta para o editor de vídeo** (FCPXML e EDL), tanto no navegador quanto pela **linha de comando**.
 
 A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de uma hora*](https://www.youtube.com/watch?v=X2cFbpQCZec&t=517s) (trecho de 8:37 a 8:42), que mostra uma ferramenta assim desenhando o Cavaleiro. O vídeo não documenta a linguagem: ela foi reconstruída a partir dos quadros. As capturas e a transcrição do código que aparece na tela estão em [`referencia/`](referencia/).
 
@@ -15,7 +15,7 @@ A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de um
 O Weasel atende a dois usos, sem um atrapalhar o outro:
 
 - **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…). Sai como [cena pronta do Godot](#godot) — AnimatedSprite2D, colisão, hitbox e hurtbox que mudam a cada quadro, eventos, normal map para a luz 2D e direções espelhadas —, como TileSet, ou em sprite sheet para qualquer motor.
-- **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). A fala de referência (`audio`) mexe a boca dos personagens (lip sync) e vira legenda. Sai em vídeo (com o som de referência) ou sequência de PNG, mais as legendas em `.srt`; a mixagem final e a montagem ficam com o editor de vídeo.
+- **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). A fala de referência (`audio`) mexe a boca dos personagens (lip sync) e vira legenda. No editor, a **linha do tempo** mostra planos, sons (com a forma de onda) e legendas, e arrastar um bloco muda o tempo no código. Sai em vídeo (com o som de referência) ou sequência de PNG, mais as legendas em `.srt` e a [linha do tempo para o editor de vídeo](#do-weasel-para-o-editor-de-vídeo) (FCPXML/EDL), onde ficam a mixagem final e a montagem.
 
 Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
 
@@ -99,10 +99,32 @@ No `.tscn`, `--no-normal` tira o normal map e `--no-mirror` não gera o lado esp
 | Só o som de referência (a mistura dos `audio`) | `node cli/weasel.js exemplos/filme.weasel -o som.wav` |
 | Revisão com as legendas desenhadas | `node cli/weasel.js exemplos/filme.weasel -o revisao.mp4 -s 0.5 --burn-subs` |
 | Vídeo sem som, legendas em .vtt | `node cli/weasel.js exemplos/filme.weasel -o filme.mp4 --no-audio --subs vtt` |
+| Um vídeo por plano e a linha do tempo para o editor de vídeo | `node cli/weasel.js exemplos/filme.weasel -o render/filme.mov --shots --fcpxml --edl` |
+| Só a linha do tempo (os vídeos já foram renderizados) | `node cli/weasel.js exemplos/filme.weasel -o render/filme.fcpxml --shots --ext mov` |
 
 Vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado (no Windows: `winget install ffmpeg`; ou `--ffmpeg <caminho>`). Os quadros são renderizados em paralelo (`-j`, padrão: núcleos − 1, até 8) e entram no ffmpeg em ordem; o vídeo sai idêntico ao render numa thread só. MP4 sai em H.264 BT.709 (qualidade `--crf`, padrão 18), `.mov` em ProRes 422 HQ (ou 4444 com `-t`), o que os editores de vídeo abrem com mais facilidade, e `.webm` em VP9. A sequência de imagens leva o número do quadro do filme no nome (`q_00264.png`), então um trecho exportado depois se encaixa no lugar certo.
 
 Os `audio` do filme entram misturados no vídeo (AAC no MP4/MKV, PCM no MOV, Opus no WebM), no lugar e no volume certos, para conferir o tempo; `--no-audio` tira. As legendas saem ao lado do vídeo, com o mesmo nome (`filme.srt`; outras línguas como `filme.en.srt`), contadas do começo do trecho exportado; `--subs vtt` troca o formato, `--subs none` não grava, `--burn-subs` (ou `film subs=burn`) desenha na imagem e `--lang` escolhe a língua desenhada.
+
+### Do Weasel para o editor de vídeo
+
+```
+node cli/weasel.js exemplos/filme.weasel -o render/filme.mov --shots --fcpxml --edl
+```
+
+Sai um vídeo por plano (`filme_abertura.mov`, `filme_encontro.mov`…), as legendas e a linha do tempo em dois formatos:
+
+| Arquivo | Abre em | O que tem |
+|---|---|---|
+| `filme.fcpxml` | DaVinci Resolve (**Arquivo → Importar → Linha do tempo**) e Final Cut Pro (**Arquivo → Importar → XML**) | Os vídeos em sequência na trilha de vídeo; cada `audio` numa trilha de som, no lugar certo e com o volume (`vol=`) aplicado; um marcador no começo de cada plano. Aponta para os arquivos pelo caminho completo. |
+| `filme.edl` | Premiere (**Arquivo → Importar**), Resolve e quase todos os editores | Os mesmos cortes, no formato CMX3600. O EDL acha cada arquivo pelo nome (`* FROM CLIP NAME`): ponha os vídeos e os sons no projeto antes de importar. O volume vai só como comentário. |
+| `filme.srt` | Todos (e o YouTube) | As legendas do trecho, alinhadas com a linha do tempo. |
+
+- Com `--fcpxml`/`--edl` o vídeo sai **sem o som misturado**: cada som vai na sua trilha, para a mixagem ser feita no editor. Os sons são os arquivos originais dos `audio` (`som/coruja_fala.wav`); um `loop` vira um clipe por volta.
+- Sem `--shots` sai um vídeo só, com os planos como marcadores. Com `--shot pulo`, a linha do tempo é só daquele plano.
+- Já renderizou os vídeos? `-o render/filme.fcpxml` (ou `.edl`) grava só a linha do tempo, apontando para os vídeos com os nomes que a linha de comando dá; `--ext mov` diz a extensão deles (padrão `mp4`).
+- O EDL começa em 01:00:00:00, como as linhas do tempo dos editores; o FCPXML começa em 0.
+- No editor web, **Exportar → Editor de vídeo** faz o mesmo `.zip` (FCPXML, EDL e `.srt`). Escolha se os vídeos estão num arquivo só ou num por plano, o formato deles e a pasta do projeto (onde ficam os vídeos e o `.weasel` com a pasta dos sons); a pasta fica guardada no navegador.
 
 Erros aparecem como num compilador, com arquivo, linha e coluna:
 
@@ -126,8 +148,9 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
 | **♪ e CC** (filmes) | Tocam o som dos `audio` junto com o player e mostram as legendas na tela. O botão **♪ N** na barra de arquivos lista os sons guardados no navegador. |
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
+| **Linha do tempo** (filmes) | Embaixo do desenho: os planos, os sons (com a forma de onda e as letras das bocas do lip sync) e as legendas no tempo. Clique ou arraste na régua para ir a um momento; clique num bloco para ir à linha dele no código. Arraste um som ou uma legenda para mudar quando começa (`at=` ou o tempo do `sub`); a borda direita muda o `dur=` (num plano, só a borda). Gruda nos quadros, na cabeça de leitura e no começo dos planos (Alt solta). A roda anda, Ctrl+roda dá zoom, duplo clique no vazio mostra tudo e, num bloco de outro arquivo (`scene`), abre esse arquivo. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
-| **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. Num filme: quadro atual, GIF, vídeo WebM ou sequência PNG. |
+| **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. Num filme: quadro atual, GIF, vídeo WebM, sequência PNG, legendas ou a linha do tempo para o editor de vídeo. |
 | **Referência** | A referência completa da linguagem, dentro do app (F1). |
 
 Editando pelo desenho e pelo teclado:
@@ -395,7 +418,7 @@ sub +0.2s "Cuidado com o fantasma…" dur=1.6s
 - **As bocas** seguem o padrão do Rhubarb (os desenhos de boca clássicos da animação): **A** fechada (M, B, P), **B** pouco aberta, **C** aberta, **D** bem aberta, **E** arredondada (O), **F** biquinho (U), **G** dentes no lábio (F, V), **H** língua (L), **X** descanso.
 - **Lip sync automático:** sem `cues=`, o Weasel ouve o `.wav`: o volume diz o quanto a boca abre e o timbre (os formantes) diz qual vogal soa — a → D, e → C, i → B, o → E, u → F —; pausas curtas fecham a boca (A). É bom para rascunho e para vozes de brincadeira; para voz de verdade, rode o Rhubarb (`rhubarb -f json fala.wav -o fala.json`) e use `cues="fala.json"`, que acerta as consoantes.
 - **Sons no editor:** abra os arquivos com **Abrir…** (`.wav`, `.mp3`, `.ogg`, `.m4a`, `.flac`); eles ficam guardados no navegador e aparecem no **♪ N**. O `audio` acha o som pelo nome do arquivo, com ou sem a pasta. O lip sync automático precisa do `.wav`; os outros formatos servem para ouvir.
-- O som e as legendas são de **referência**: servem para animar no tempo certo. A mixagem final (música, efeitos, vozes) continua no editor de vídeo — exporte o vídeo (ou `-o som.wav`) e o `.srt` e monte lá.
+- O som e as legendas são de **referência**: servem para animar no tempo certo. A mixagem final (música, efeitos, vozes) continua no editor de vídeo — exporte o vídeo com a [linha do tempo](#do-weasel-para-o-editor-de-vídeo) (`--fcpxml`/`--edl`), que já leva cada som na sua trilha, e monte lá.
 
 ## Exportar
 
@@ -410,6 +433,7 @@ sub +0.2s "Cuidado com o fantasma…" dur=1.6s
 | **Vídeo** (filme) | WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. MP4, ProRes e filmes longos saem pela linha de comando. |
 | **Sequência PNG** (filme) | Um `.zip` com um PNG por quadro, numerado pelo quadro do filme. |
 | **Legendas** (filme) | `.srt` e `.vtt` do filme inteiro ou de um plano, uma língua por arquivo. Nas outras abas do filme, **Legendas na imagem** desenha as legendas no quadro. |
+| **Editor de vídeo** (filme) | Um `.zip` com a linha do tempo do filme inteiro ou de um plano em `.fcpxml` e `.edl`, mais as legendas `.srt` (veja [Do Weasel para o editor de vídeo](#do-weasel-para-o-editor-de-vídeo)). A prévia é a linha do tempo. |
 
 Num filme, PNG e JPG exportam o quadro que está no player; GIF, vídeo e sequência exportam o filme inteiro ou um plano e só são gerados ao clicar (fechar a janela cancela).
 
@@ -492,7 +516,7 @@ Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
 
 ## Testes
 
-`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha) e alguns quadros prontos.
+`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha), alguns quadros prontos, os sons, bocas e legendas, o EDL e o FCPXML para o editor de vídeo e o desenho da linha do tempo do editor.
 
 As referências dos desenhos foram gravadas antes de o filme existir, então o teste mostra que os desenhos e as exportações de jogo continuam iguais. Quando algo muda, o teste diz o que foi e grava a saída nova em `test/out/`, com uma imagem dos pixels diferentes em vermelho. Se a mudança foi de propósito, `npm run test:update` regrava as referências; `node test/regress.js coruja` roda só os casos com esse nome.
 
@@ -511,6 +535,8 @@ js/normal.js        normal maps (relevo das formas) para a luz 2D do Godot
 js/godot.js         Godot 4: SpriteFrames, cena .tscn (caixas, eventos, direções), ajudante e TileSet
 js/audio.js         som: lê e escreve WAV, lip sync (automático e do Rhubarb), legendas .srt e .vtt
 js/film.js          filme: planos em sequência, atores, at, câmera com profundidade, luz do filme nos atores
+js/nle.js           linha do tempo para o editor de vídeo: EDL (CMX3600) e FCPXML 1.9
+js/timeline.js      a linha do tempo do editor: planos, sons com forma de onda, legendas, arrastar para mudar o tempo
 js/webm.js          vídeo no navegador (WebCodecs) e o arquivo .webm
 js/svg.js           exportação em SVG
 js/editor.js        editor com cores, sugestões, Alt+arrastar números, seletor de cor e desfazer
@@ -546,6 +572,8 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - O som do filme é de referência: o Weasel posiciona e mistura os `audio` para conferir o tempo, mas não edita som (sem fades de áudio, equalização ou efeitos). A mixagem final é no editor de vídeo.
 - O lip sync automático é uma estimativa pelo volume e pelo timbre (não reconhece fonemas); para voz de verdade, as bocas do Rhubarb (`cues=`) acertam mais. Ele precisa do `.wav`.
 - `loop` repete o arquivo inteiro (o `from=` vale só para a primeira vez).
+- A linha do tempo para o editor de vídeo leva cortes, trilhas, volumes e marcadores; não leva fades nem efeitos. Os arquivos foram conferidos lendo com o [OpenTimelineIO](https://opentimeline.io); cada editor tem suas manias na importação (no EDL, o volume vai só como comentário e os arquivos são achados pelo nome).
+- Na linha do tempo do editor, arrastar muda só o que está no arquivo aberto; os blocos de um `scene` se editam no arquivo deles (duplo clique abre). Arrastar uma legenda escrita com `+0.3s` troca o tempo dela por um tempo fixo dentro do plano.
 - No navegador, os sons ficam guardados no próprio navegador (não vão no **Baixar todos**) e o vídeo WebM sai sem som; para vídeo com som, use a linha de comando.
 - Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.

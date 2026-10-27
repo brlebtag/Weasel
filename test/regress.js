@@ -15,6 +15,7 @@ const { spawnSync } = require('child_process');
 const { W, createCanvas, loadImage } = require('../cli/runtime');
 const { makeMediaResolver } = require('../cli/media');
 require('../js/examples.js');
+require('../js/timeline.js');
 const X = W.exporter;
 
 const ROOT = path.join(__dirname, '..');
@@ -217,6 +218,23 @@ async function filmCases(file) {
   for (const c of tl.audios) som.push(`som ${c.a.name} ${c.start.toFixed(3)}-${c.end.toFixed(3)}${c.a.lips ? ` boca de ${c.a.lips}: ${(W.film.cuesOf(c.a) || []).map((q) => q.value + '@' + q.start).join(' ')}` : ''}`);
   for (const lang of W.film.langs(model)) som.push(`legendas (${lang})`, W.audio.srt(W.film.subtitles(model, 0, tl.duration, lang)));
   await check(group, 'som.txt', 'text', som.join('\n') + '\n');
+
+  // linha do tempo para o editor de vídeo: um vídeo por plano e os sons, com caminhos relativos
+  const dir = path.dirname(file);
+  const pl = W.nle.plan(model, {
+    videos: tl.entries.map((e) => ({ file: `${group}_${e.name.replace(/[^\w.-]+/g, '_')}.mov`, start: e.start, frames: e.frames })),
+    audioPath: (c) => (c.media && c.media.path ? path.relative(dir, c.media.path).split(path.sep).join('/') : null),
+    scale: 0.5,
+  });
+  await check(group, 'editor.edl', 'text', W.nle.edl(pl, group));
+  await check(group, 'editor.fcpxml', 'text', W.nle.fcpxml(pl, group));
+
+  // a linha do tempo do editor (planos, forma de onda dos sons, bocas e legendas)
+  const tcv = createCanvas(10, 10);
+  Object.assign(tcv, { clientWidth: 900, style: {}, addEventListener() {} });
+  const noop = () => {};
+  W.timelineView(tcv, { model: () => model, frame: () => Math.floor(tl.frames / 2), setFrame: noop, range: () => [0, tl.frames], editable: (ow) => ow === model, lineOf: () => -1, gotoLine: noop, edit: noop, open: noop, hint: noop }).draw();
+  await check(group, 'linha_do_tempo.png', 'png', tcv);
 
   const picks = [0.08, 0.2, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95].map((k) => Math.floor(tl.frames * k));
   const imgs = picks.map((f) => W.film.renderFrame(model, f, { scale: 0.2, subs: true }));

@@ -216,9 +216,12 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expBurn']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expBurn', 'expNleSplit', 'expNleExt', 'expNleDir']) {
       $(id).addEventListener('change', () => refresh());
     }
+    // a pasta do projeto (para o editor de vídeo achar os arquivos) fica guardada neste navegador
+    try { $('expNleDir').value = localStorage.getItem('weasel.nleDir') || ''; } catch (e) { /* sem armazenamento */ }
+    $('expNleDir').addEventListener('change', () => { try { localStorage.setItem('weasel.nleDir', $('expNleDir').value.trim()); } catch (e) { /* sem armazenamento */ } });
     $('expDownload').addEventListener('click', () => save(false));
     $('expDownloadPng').addEventListener('click', () => save(true));
 
@@ -236,6 +239,7 @@
       dlg.querySelectorAll('[data-show]').forEach((el) => { el.hidden = !el.dataset.show.split(' ').includes(kind); });
       dlg.querySelectorAll('[data-hide="film"]').forEach((el) => { el.hidden = film; });
       dlg.querySelectorAll('[data-only="film"]').forEach((el) => { if (!film) el.hidden = true; });
+      $('expTransparent').closest('label').hidden = kind === 'nle' || kind === 'subs';
       const model = app.model();
       const sel = $('expAnim');
       const prev = sel.value;
@@ -279,6 +283,36 @@
     async function produce(model, o, suffix) {
       const base = o.baseName + suffix;
       const st = app.state();
+      if (model.film && kind === 'nle') {
+        // linha do tempo para o editor de vídeo (EDL, FCPXML) e as legendas, apontando para os vídeos
+        // renderizados (com os nomes que a linha de comando dá) e para os sons na pasta do projeto
+        const tl = W.film.timeline(model), v = $('expAnim').value, e = v !== '' ? tl.entries[+v] : null;
+        const from = e ? e.start : 0, to = e ? e.start + e.frames : tl.frames;
+        const ext = $('expNleExt').value, dir = $('expNleDir').value.trim().replace(/[\\/]+$/, '');
+        const sep = dir.includes('\\') ? '\\' : '/';
+        const at = (f) => (dir ? dir + sep + f.replace(/[\\/]+/g, sep) : f);
+        const tag = (x) => '_' + x.name.replace(/[\\/]+/g, '-');
+        const name = base + (e ? tag(e) : '');
+        const videos = $('expNleSplit').value === 'shots'
+          ? (e ? [e] : tl.entries).map((x) => ({ file: at(`${base}${tag(x)}.${ext}`), start: x.start, frames: x.frames }))
+          : [{ file: at(`${name}.${ext}`), start: from, frames: to - from }];
+        const pl = W.nle.plan(model, { from, to, videos, scale: o.scale, audioPath: (c) => at(c.a.file) });
+        const files = [
+          { name: name + '.fcpxml', blob: new Blob([W.nle.fcpxml(pl, name)], { type: 'application/xml' }) },
+          { name: name + '.edl', blob: new Blob([W.nle.edl(pl, name)], { type: 'text/plain' }) },
+        ];
+        for (const lang of W.film.langs(model)) {
+          const list = W.film.subtitles(model, from / tl.fps, to / tl.fps, lang);
+          if (list.length) files.push({ name: `${name}${lang === model.film.lang ? '' : '.' + lang}.srt`, blob: new Blob([W.audio.srt(list)], { type: 'text/plain' }) });
+        }
+        // prévia: a própria linha do tempo, só do trecho
+        const cv = document.createElement('canvas');
+        Object.defineProperty(cv, 'clientWidth', { value: 720 });
+        const none = () => {};
+        W.timelineView(cv, { model: () => model, frame: () => from, setFrame: none, range: () => [from, to], editable: () => false, lineOf: () => -1, gotoLine: none, edit: none, open: none, hint: none }).draw();
+        const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+        return { files, preview: cv.toDataURL(), info: `${n(videos.length, 'vídeo', 'vídeos')} · ${n(pl.audio.length, 'som', 'sons')} em ${n(pl.lanes, 'trilha', 'trilhas')} · ${n(pl.markers.length, 'marcador', 'marcadores')}` };
+      }
       if (model.film && kind === 'subs') {
         // legendas do trecho escolhido, em .srt e .vtt (uma língua por arquivo)
         const tl = W.film.timeline(model), v = $('expAnim').value, e = v !== '' ? tl.entries[+v] : null;
@@ -384,7 +418,7 @@
         let blob, name;
         if (all.length === 1) { blob = all[0].blob; name = all[0].name; } else {
           blob = W.zip(await Promise.all(all.map(async (f) => ({ name: f.name, data: await bytesOf(f.blob) }))));
-          name = `${o.baseName}_${kind === 'godot' ? 'godot' : kind === 'sheet' ? 'sheet' : kind}${vsel === ALL ? '_variantes' : ''}.zip`;
+          name = `${o.baseName}_${kind === 'godot' ? 'godot' : kind === 'sheet' ? 'sheet' : kind === 'nle' ? 'editor' : kind}${vsel === ALL ? '_variantes' : ''}.zip`;
         }
         if (my !== busy) return;
         const png = all.find((f) => f.png);

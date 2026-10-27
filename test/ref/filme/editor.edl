@@ -1,0 +1,45 @@
+TITLE: filme
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:06:00 01:00:00:00 01:00:06:00
+* FROM CLIP NAME: filme_abertura.mov
+
+002  AX       A     C        00:00:00:00 00:00:03:00 01:00:00:00 01:00:03:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+003  AX       A     C        00:00:00:00 00:00:03:00 01:00:03:00 01:00:06:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+004  AX       V     C        00:00:00:00 00:00:05:00 01:00:06:00 01:00:11:00
+* FROM CLIP NAME: filme_encontro.mov
+
+005  AX       A     C        00:00:00:00 00:00:03:00 01:00:06:00 01:00:09:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+006  AX       A     C        00:00:00:00 00:00:03:00 01:00:09:00 01:00:12:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+007  AX       V     C        00:00:00:00 00:00:05:00 01:00:11:00 01:00:16:00
+* FROM CLIP NAME: filme_conversa.mov
+
+008  AX       A2    C        00:00:00:00 00:00:04:05 01:00:11:10 01:00:15:15
+* FROM CLIP NAME: coruja_fala.wav
+
+009  AX       A     C        00:00:00:00 00:00:03:00 01:00:12:00 01:00:15:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+010  AX       A     C        00:00:00:00 00:00:03:00 01:00:15:00 01:00:18:00
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
+
+011  AX       V     C        00:00:00:00 00:00:04:12 01:00:16:00 01:00:20:12
+* FROM CLIP NAME: filme_pulo.mov
+
+012  AX       A     C        00:00:00:00 00:00:02:12 01:00:18:00 01:00:20:12
+* FROM CLIP NAME: grilos.wav
+* COMMENT: volume 0.35 (-9.1dB)
