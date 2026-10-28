@@ -115,7 +115,7 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 | Instrução | Atributos (padrão) |
 |---|---|
 | `box nome body\|hit\|hurt rect x,y l,a` | também `circle cx,cy r` e `capsule cx,cy l,a` · `bone=` · `only=` · `[off]` (padrão: `body`, `rect`, ligada) |
-| `godot` | `body=character\|static\|area\|rigid\|node` (character) · `root=x,y` · `name=` · `normal=` 0–10 (1) |
+| `godot` | `body=character\|static\|area\|rigid\|node` (character) · `root=x,y` · `name=` · `normal=` 0–10 (1) · `rig=frames\|bones` (frames; `bones` = esqueleto de verdade, experimental) |
 | `tileset` | `size=l` ou `l,a` (32) · `[auto]` |
 | `tile nome coluna,linha` | `[solid]` · `[oneway]` · `collision=forma` |
 | `point nome x,y` | `bone=` · vira `Marker2D` no Godot e `points` no JSON da sprite sheet |
@@ -146,6 +146,7 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 | `--frame n` · `--frames` | um quadro · um arquivo por quadro |
 | `--variant nome` | variante (`all` = todas) |
 | `-s n` · `-t` · `--trim` | escala · fundo transparente · recortar ao desenho |
+| `--rig` · `--no-rig` | `.tscn` com esqueleto de verdade · por quadros, mesmo com `rig=bones` |
 | `--guides` | inclui as camadas `guide` |
 | `--check` · `--info` | só procurar erros · mostrar camadas, ossos, animações e eventos |
 | `--watch` | exportar de novo a cada mudança |

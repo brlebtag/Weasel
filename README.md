@@ -84,7 +84,7 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | Só verificar o código | `node cli/weasel.js meu.weasel --check` |
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 
-No `.tscn`, `--no-normal` tira o normal map e `--no-mirror` não gera o lado espelhado; no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
+No `.tscn`, `--no-normal` tira o normal map, `--no-mirror` não gera o lado espelhado e `--rig` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (`--no-rig` volta para os quadros); no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
 
 ### Filmes na linha de comando
 
@@ -343,7 +343,7 @@ event 2 golpe
 |---|---|
 | `box nome body\|hit\|hurt rect x,y l,a` | Caixa do jogo: `body` é a colisão do corpo, `hit` é o golpe (hitbox), `hurt` é onde leva dano (hurtbox). Também `circle cx,cy raio` e `capsule cx,cy l,a`. |
 | `box … bone= only= [off]` | `bone=` faz a caixa seguir a posição e a rotação do osso; `only=` liga só nessas animações; `off` começa desligada. `key quadro caixa.show=1` (ou `0`) liga e desliga quadro a quadro. |
-| `godot body=character\|static\|area\|rigid\|node root=x,y name= normal=` | O nó raiz da cena (CharacterBody2D, StaticBody2D, Area2D, RigidBody2D ou Node2D), o ponto que vira a origem (padrão: `unity root=`, ou o meio da base do desenho), o nome do nó e a força do relevo do normal map (padrão 1). |
+| `godot body=character\|static\|area\|rigid\|node root=x,y name= normal= rig=frames\|bones` | O nó raiz da cena (CharacterBody2D, StaticBody2D, Area2D, RigidBody2D ou Node2D), o ponto que vira a origem (padrão: `unity root=`, ou o meio da base do desenho), o nome do nó e a força do relevo do normal map (padrão 1). `rig=bones` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (experimental). |
 | `tileset size=32 [auto]` | O canvas vira uma folha de blocos (`size=l,a` para blocos retangulares). `auto` cria também um bloco sem colisão para cada célula desenhada que não tem `tile`. |
 | `tile nome coluna,linha [solid] [oneway] collision=forma` | Um bloco: `solid` colide no quadrado todo, `oneway` só por cima (plataforma), `collision=` usa o formato de uma forma (rampa, meio-bloco). O nome vai junto no bloco (dado `nome`). |
 | `point nome x,y bone=` | Ponto de encaixe que segue a posição e a rotação do osso: de onde sai o tiro, onde a mão segura a arma, onde nasce a poeira do passo. Na cena do Godot vira um `Marker2D` movido quadro a quadro; na sprite sheet, vai no JSON de cada quadro (`points`). |
@@ -500,6 +500,35 @@ func _quando_evento(nome: StringName) -> void:
 		pass  # toque o som do passo aqui
 ```
 
+### Esqueleto de verdade (experimental)
+
+Com `godot … rig=bones` no arquivo (ou `--rig` na linha de comando, ou **Esqueleto (Bone2D)** na aba Godot), a cena sai de outro jeito: cada `bone` vira um **`Bone2D`** e cada pedaço do desenho, uma imagem presa a ele. O AnimationPlayer anima os ossos, e o Godot calcula o movimento entre um momento e outro. A cena por quadros continua sendo o padrão; os dois saem do mesmo arquivo.
+
+![No Godot, o mesmo personagem andando e golpeando: à esquerda por quadros, aos saltos; à direita com esqueleto, liso](docs/godot_esqueleto.gif)
+
+```
+Lagarto (CharacterBody2D)
+├── Visual (Node2D)                  ← vira de lado nas animações espelhadas (_left)
+│   ├── Esqueleto (Skeleton2D)
+│   │   └── corpo (Bone2D)           ← um Bone2D para cada bone, na mesma hierarquia
+│   │       ├── tronco_2 (RemoteTransform2D)   → leva a peça junto com o osso
+│   │       └── braco (Bone2D) …
+│   └── Pecas (Node2D)
+│       ├── pernaE_0 (Sprite2D)      ← as peças, na ordem de pintura, todas da mesma folha
+│       └── …
+├── corpo_caixa · Hitbox · Hurtbox · ponta   ← caixas e pontos, como na cena por quadros
+└── AnimationPlayer                  ← weasel_anim.gd
+```
+
+- **Movimento liso:** os ossos são amostrados pelo menos 30 vezes por segundo, e o Godot interpola entre as amostras, também em câmera lenta.
+- **Arquivos menores:** uma imagem por peça em vez de uma por quadro. A folha do Furão caiu de 344 KB para 24 KB, a do Chefe de 1,3 MB para 32 KB.
+- **Mistura de animações e ossos pelo código:** dá para misturar animações no AnimationTree, e um osso que nenhuma animação mexe pode ser girado pelo script do jogo (a cabeça olhando para o mouse, o braço mirando).
+- **O que muda de forma continua quadro a quadro:** pernas e braços com IK, tecido, partículas, rastro e sombra no chão viram uma imagem trocada a cada quadro. Morph, `draw` e cores animadas também, mas presos ao osso: a imagem só troca quando a forma muda. A capa do Cavaleiro (tecido) é o que deixa a folha dele em 656 KB.
+- **Ainda não vão:** o normal map, a troca de ordem com `above=` e `below=` e as luzes animadas (as peças levam a luz da pose parada).
+- Caixas, pontos de encaixe, eventos, `tocar()` e as animações espelhadas funcionam como na cena por quadros.
+
+O Furão, o Chefe, o Cavaleiro e um lagarto de teste ([`test/casos/esqueleto.weasel`](test/casos/esqueleto.weasel)) foram abertos no Godot 4.7.2 e comparados quadro a quadro com o Weasel: ficam iguais, em todas as direções.
+
 Tudo foi conferido dentro do Godot 4.7.2: a cena carrega, as animações (inclusive as espelhadas) trocam os quadros, a hitbox liga só nos quadros do golpe, os eventos chegam no tempo certo, o personagem pisa nos blocos do TileSet e a luz 2D age pelo normal map.
 
 ![No Godot: Cavaleiro e dois furões (um espelhado) iluminados por uma PointLight2D pelo normal map, sobre blocos do TileSet](docs/godot_luz.png)
@@ -525,7 +554,7 @@ Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
 
 ## Testes
 
-`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. Os arquivos de [`test/casos/`](test/casos/) testam uma função nova cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos e transições), com o SVG do meio de cada animação. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha), alguns quadros prontos, os sons, bocas e legendas, o EDL e o FCPXML para o editor de vídeo e o desenho da linha do tempo do editor.
+`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. Os arquivos de [`test/casos/`](test/casos/) testam uma função nova cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos, transições e o esqueleto do Godot), com o SVG do meio de cada animação. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha), alguns quadros prontos, os sons, bocas e legendas, o EDL e o FCPXML para o editor de vídeo e o desenho da linha do tempo do editor.
 
 As referências dos desenhos foram gravadas antes de o filme existir, então o teste mostra que os desenhos e as exportações de jogo continuam iguais. Quando algo muda, o teste diz o que foi e grava a saída nova em `test/out/`, com uma imagem dos pixels diferentes em vermelho. Se a mudança foi de propósito, `npm run test:update` regrava as referências; `node test/regress.js coruja` roda só os casos com esse nome.
 

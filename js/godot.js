@@ -416,5 +416,5 @@ func _weasel_evento(nome: StringName) -> void:
     return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length, points: model.points.size };
   }
 
-  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf };
+  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, changes };
 })(window.Weasel = window.Weasel || {});

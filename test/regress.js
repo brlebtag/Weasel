@@ -190,6 +190,15 @@ async function drawingCases(file, prefix, svg) {
     }
   }
 
+  // Godot com esqueleto de verdade (godot rig=bones): a folha de peças e a cena
+  if (model.godot && model.godot.rig === 'bones') {
+    const pkg = W.rig.packageFiles(model, { base: group, scale: 0.5, mirror: true });
+    for (const f of pkg.files) {
+      if (f.name.endsWith('.png')) await check(group, 'esqueleto.png', 'png', f.canvas);
+      else if (f.name.endsWith('.tscn')) await check(group, 'esqueleto.tscn', 'text', f.text);
+    }
+  }
+
   // ordem da pintura passo a passo
   const plan = W.scene.buildPlan(model, { speed: 1 });
   await check(group, 'pintura.txt', 'text', plan.order.map((p) => `${p.el.type} ${p.el.name || '-'} @${p.start.toFixed(3)} +${p.dur.toFixed(3)}`).join('\n') + `\ntotal ${plan.total.toFixed(3)}\n`);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css?v=1.7.0">
+<link rel="stylesheet" href="css/style.css?v=1.8.0">
 </head>
 <body>
 <header class="top">
@@ -173,7 +173,7 @@
     <table>
       <tr><td><code>box nome body|hit|hurt rect x,y l,a</code></td><td>Caixa do jogo: <code>body</code> = colisão do corpo, <code>hit</code> = golpe (hitbox), <code>hurt</code> = onde leva dano (hurtbox). Também <code>circle cx,cy raio</code> e <code>capsule cx,cy l,a</code>.</td></tr>
       <tr><td><code>box … bone= only= [off]</code></td><td><code>bone=</code> segue o osso (posição e rotação); <code>only=</code> liga só nessas animações; <code>off</code> começa desligada. <code>key 2 golpe.show=1</code> liga num quadro, <code>key 4 golpe.show=0</code> desliga.</td></tr>
-      <tr><td><code>godot body= root=x,y name= normal=</code></td><td>Nó raiz da cena (<code>character</code>, <code>static</code>, <code>area</code>, <code>rigid</code> ou <code>node</code>), o ponto que vira a origem (os pés), o nome do nó e a força do normal map.</td></tr>
+      <tr><td><code>godot body= root=x,y name= normal= rig=</code></td><td>Nó raiz da cena (<code>character</code>, <code>static</code>, <code>area</code>, <code>rigid</code> ou <code>node</code>), o ponto que vira a origem (os pés), o nome do nó e a força do normal map. <code>rig=bones</code> (experimental) exporta com esqueleto de verdade: cada osso vira um <code>Bone2D</code> e cada peça uma imagem presa a ele (movimento liso, mistura de animações); o que muda de forma (IK, tecido, morph) continua quadro a quadro.</td></tr>
       <tr><td><code>tileset size=32 [auto]</code></td><td>O canvas vira uma folha de blocos. <code>auto</code> cria um bloco para cada célula desenhada sem <code>tile</code>.</td></tr>
       <tr><td><code>tile nome coluna,linha [solid] [oneway] collision=forma</code></td><td>Um bloco: <code>solid</code> colide no quadrado todo, <code>oneway</code> só por cima, <code>collision=</code> usa o formato de uma forma (rampa). O nome vai como dado do bloco.</td></tr>
       <tr><td><code>point nome x,y bone=</code></td><td>Ponto de encaixe que segue o osso (posição e rotação): de onde sai o tiro, onde a mão segura, onde nasce a poeira. No Godot vira um <code>Marker2D</code> que o AnimationPlayer move; na sprite sheet, vai no JSON de cada quadro.</td></tr>
@@ -267,6 +267,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <label data-show="godot" class="chk" title="AnimatedSprite2D, colisão (box body), hitbox e hurtbox que mudam a cada quadro e eventos chamados pelo AnimationPlayer"><input type="checkbox" id="expGodotScene" checked> Cena pronta (.tscn)</label>
       <label data-show="godot" class="chk" title="Relevo das formas para a luz 2D do Godot (PointLight2D)"><input type="checkbox" id="expNormal" checked> Normal map (luz 2D)</label>
       <label data-show="godot" class="chk" title="Animações terminadas em _right ganham a _left espelhada (e vice-versa) no AnimationPlayer"><input type="checkbox" id="expMirror" checked> Espelhar direções</label>
+      <label data-show="godot" class="chk" title="Experimental: cada osso vira um Bone2D e cada peça uma imagem presa a ele (movimento liso, mistura de animações); o que muda de forma continua quadro a quadro. Com godot rig=bones no arquivo, fica sempre ligado"><input type="checkbox" id="expRig"> Esqueleto (Bone2D)</label>
       <label data-show="nle">Vídeos
         <select id="expNleSplit"><option value="one">um arquivo do trecho</option><option value="shots">um arquivo por plano (--shots)</option></select>
       </label>
@@ -290,22 +291,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.7.0"></script>
-<script src="js/lang.js?v=1.7.0"></script>
-<script src="js/scene.js?v=1.7.0"></script>
-<script src="js/film.js?v=1.7.0"></script>
-<script src="js/audio.js?v=1.7.0"></script>
-<script src="js/nle.js?v=1.7.0"></script>
-<script src="js/webm.js?v=1.7.0"></script>
-<script src="js/svg.js?v=1.7.0"></script>
-<script src="js/gif.js?v=1.7.0"></script>
-<script src="js/zip.js?v=1.7.0"></script>
-<script src="js/normal.js?v=1.7.0"></script>
-<script src="js/export.js?v=1.7.0"></script>
-<script src="js/godot.js?v=1.7.0"></script>
-<script src="js/editor.js?v=1.7.0"></script>
-<script src="js/examples.js?v=1.7.0"></script>
-<script src="js/timeline.js?v=1.7.0"></script>
-<script src="js/app.js?v=1.7.0"></script>
+<script src="js/geom.js?v=1.8.0"></script>
+<script src="js/lang.js?v=1.8.0"></script>
+<script src="js/scene.js?v=1.8.0"></script>
+<script src="js/film.js?v=1.8.0"></script>
+<script src="js/audio.js?v=1.8.0"></script>
+<script src="js/nle.js?v=1.8.0"></script>
+<script src="js/webm.js?v=1.8.0"></script>
+<script src="js/svg.js?v=1.8.0"></script>
+<script src="js/gif.js?v=1.8.0"></script>
+<script src="js/zip.js?v=1.8.0"></script>
+<script src="js/normal.js?v=1.8.0"></script>
+<script src="js/export.js?v=1.8.0"></script>
+<script src="js/godot.js?v=1.8.0"></script>
+<script src="js/rig.js?v=1.8.0"></script>
+<script src="js/editor.js?v=1.8.0"></script>
+<script src="js/examples.js?v=1.8.0"></script>
+<script src="js/timeline.js?v=1.8.0"></script>
+<script src="js/app.js?v=1.8.0"></script>
 </body>
 </html>

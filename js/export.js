@@ -227,7 +227,7 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expBurn', 'expNleSplit', 'expNleExt', 'expNleDir']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expRig', 'expBurn', 'expNleSplit', 'expNleExt', 'expNleDir']) {
       $(id).addEventListener('change', () => refresh());
     }
     // a pasta do projeto (para o editor de vídeo achar os arquivos) fica guardada neste navegador
@@ -365,6 +365,15 @@
       const v = $('expAnim').value;
       const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
       const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
+      // Godot com esqueleto de verdade (Bone2D): a folha de peças, a cena e o ajudante
+      const rig = !model.tileset && ($('expRig').checked || (model.godot && model.godot.rig === 'bones'));
+      if (kind === 'godot' && rig) {
+        const pkg = W.rig.packageFiles(model, { base: o.baseName + suffix, scale: o.scale, mirror: $('expMirror').checked, names });
+        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas })));
+        const main = pkg.files[0].canvas;
+        const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+        return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}` };
+      }
       // Godot completo: cena, normal map, ajudante; ou o TileSet
       const scene = $('expGodotScene').checked, normal = $('expNormal').checked;
       if (kind === 'godot' && (model.tileset || scene || normal)) {

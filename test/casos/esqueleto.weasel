@@ -1,0 +1,62 @@
+# teste: esqueleto de verdade no Godot (godot rig=bones): ossos viram Bone2D e as peças seguem os ossos;
+# as pernas com IK e o olho que pisca (morph) mudam de forma e saem quadro a quadro
+canvas 200 200 bg=none
+palette ink=#25212e line=4 pele=#8fd18a pele2=#5ea860 roupa=#4a6fd8 roupa2=#3553b0 aco=#d9dde3 cabo=#8a5a2b
+
+godot body=character root=100,190 name=Lagarto rig=bones
+
+bone corpo pivot=100,150
+bone cabeca pivot=100,108 parent=corpo
+bone antena pivot=94,64 parent=cabeca spring=0.3
+bone braco pivot=120,122 parent=corpo
+bone peE pivot=88,188
+bone peD pivot=112,188
+
+layer guia guide
+line chao : 0,190 200,190
+
+layer pernas
+stroke pernaE limb=12,9 hip=90,152 on=corpo target=peE c=pele2 bend=-1
+stroke pernaD limb=12,9 hip=110,152 on=corpo target=peD c=pele bend=-1
+
+layer corpo
+ellipse tronco 100,130 26,30 c=roupa ink=line bone=corpo
+layer sombra clip=tronco
+ellipse dobra 114,142 26,30 c=roupa2 bone=corpo
+layer cabeca
+stroke fio w=3 c=ink bone=antena : 94,64 90,50 96,40
+ellipse bolinha 96,38 5 c=#ffd34d ink=3 bone=antena
+ellipse cara 100,86 30,26 c=pele ink=line bone=cabeca
+ellipse olho 110,82 4,6 c=ink bone=cabeca
+ellipse fechado 110,84 5,1 hidden bone=cabeca
+layer braco
+rect lamina 126,64 7,48 r=2 c=aco ink=3 bone=braco
+rect guarda 120,110 19,6 r=2 c=cabo ink=3 bone=braco
+ellipse mao 124,122 8 c=pele ink=3 bone=braco
+
+point ponta 129,62 bone=braco
+box corpo_caixa body rect 78,96 44,94
+box golpe hit rect 120,50 30,70 bone=braco only=attack_right off
+
+anim idle_right frames=24 fps=12
+key 0 corpo=0,0,0,1,1 cabeca=0,0,0 olho.shape=olho
+key 12 corpo=0,3,0,1.04,0.96 cabeca=0,1,-4
+key 18 olho.shape=olho
+key 20 olho.shape=fechado
+key 22 olho.shape=olho
+key 24 corpo=0,0,0,1,1 cabeca=0,0,0
+
+anim walk_right frames=16 fps=12
+key 0 corpo=0,0,0 braco=0,0,-20 peE=-14,0 peD=14,0
+key 4 corpo=0,-6,3 peE=0,-10 peD=0,0
+key 8 corpo=0,0,0 braco=0,0,20 peE=14,0 peD=-14,0
+key 12 corpo=0,-6,3 peE=0,0 peD=0,-10
+key 16 corpo=0,0,0 braco=0,0,-20 peE=-14,0 peD=14,0
+
+anim attack_right frames=10 fps=12 once
+key 0 braco=0,0,0 golpe.show=0
+key 3 braco=0,0,-70 corpo=0,0,-6
+key 5 braco=0,0,80 corpo=4,0,6 golpe.show=1
+key 7 golpe.show=0
+key 10 braco=0,0,0 corpo=0,0,0
+event 5 golpe

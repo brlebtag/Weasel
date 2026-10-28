@@ -49,7 +49,7 @@
     };
     if (b.sway) v[2] += wave(b.sway);
     if (b.bob) v[1] += wave(b.bob);
-    if (b.jitter) { v[0] += b.jitter * hash(b.name + 'x', f); v[1] += b.jitter * hash(b.name + 'y', f); }
+    if (b.jitter) { const q = Math.floor(f); v[0] += b.jitter * hash(b.name + 'x', q); v[1] += b.jitter * hash(b.name + 'y', q); }
     if (springs && springs.has(b.name)) v[2] += springs.get(b.name)[f];
     return v;
   }
@@ -188,9 +188,23 @@
       liprops.push(li);
       bprops.push(bm);
     }
-    d = { mats, cloth, props, lprops, liprops, bprops };
+    d = { mats, cloth, props, lprops, liprops, bprops, springs };
     model._anim.set(anim.name, d);
     return d;
+  }
+
+  // Valores de cada osso (dx, dy, rot, sx, sy) num quadro que pode ser fracionário: o esqueleto do Godot
+  // amostra entre os quadros. As molas, calculadas quadro a quadro, são interpoladas.
+  function boneLocal(model, anim, f) {
+    const d = animData(model, anim), N = anim.frames, out = new Map();
+    const at = (i) => (anim.loop ? ((i % N) + N) % N : Math.max(0, Math.min(N - 1, i)));
+    for (const b of model.bones.values()) {
+      const v = boneValues(anim, b, f, null);
+      const sp = d.springs.get(b.name);
+      if (sp) { const i = Math.floor(f), t = f - i; v[2] += sp[at(i)] + (sp[at(i + 1)] - sp[at(i)]) * t; }
+      out.set(b.name, v);
+    }
+    return out;
   }
 
   function makePose(model, animName, frame) {
@@ -996,6 +1010,7 @@
     return out;
   }
 
+  // opts.items: só esses itens das camadas (o esqueleto do Godot desenha cada peça à parte);
   // opts.layers: só essas camadas (filme: cada profundidade é desenhada à parte);
   // opts.lighting: luz pronta (filme: a do ator mais a da cena); opts.glows=false: sem os halos das lâmpadas.
   function drawScene(ctx, model, pose, opts) {
@@ -1010,7 +1025,7 @@
       if (lp.show === 0) continue;
       const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
       if (alpha <= 0.001) continue;
-      const items = orderItems(opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items, pose);
+      const items = orderItems(opts.items ? layer.items.filter((it) => opts.items.has(it)) : opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items, pose);
       if (layer.cast && lighting) drawCast(ctx, R, layer, items, alpha);
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
@@ -1502,7 +1517,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boneLocal, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

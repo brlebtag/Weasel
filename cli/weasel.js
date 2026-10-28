@@ -50,6 +50,8 @@ Godot:
       --normal            gera o normal map também no -f godot (no .tscn já vem)
       --no-normal         .tscn sem normal map
       --no-mirror         .tscn sem gerar o lado espelhado (walk_right → walk_left)
+      --rig               .tscn com esqueleto de verdade (Bone2D e peças; experimental)
+      --no-rig            .tscn por quadros, mesmo com godot rig=bones no arquivo
 
 Filme (arquivo com a linha film):
   -o filme.mp4            vídeo H.264 (padrão); .mov = ProRes (bom para editar; com -t,
@@ -150,6 +152,8 @@ function parseArgs(argv) {
       case '--normal': o.normal = true; break;
       case '--no-normal': o.normal = false; break;
       case '--no-mirror': o.mirror = false; break;
+      case '--rig': o.rig = true; break;
+      case '--no-rig': o.rig = false; break;
       case '--no-audio': o.audio = false; break;
       case '--subs': o.subs = val(); if (!['srt', 'vtt', 'none'].includes(o.subs)) usage('--subs aceita srt, vtt ou none'); break;
       case '--burn-subs': o.burnSubs = true; break;
@@ -276,7 +280,7 @@ function info(m) {
   } else out.push('animações nenhuma');
   if (m.unity) out.push(`unity    ${m.unity.unit} px/unidade, raiz ${m.unity.root.join(',')}`);
   if (m.mouth) out.push(`boca     ${m.mouth.name} (lip sync: ${Object.entries(m.mouth.map).map(([k, v]) => `${k}=${v.shape}${v.t < 1 ? '@' + v.t : ''}`).join(' ')})`);
-  if (m.godot) out.push(`godot    ${m.godot.body}${m.godot.root ? `, raiz ${m.godot.root.join(',')}` : ''}${m.godot.name ? `, nó ${m.godot.name}` : ''}${m.godot.normal !== 1 ? `, normal ${m.godot.normal}` : ''}`);
+  if (m.godot) out.push(`godot    ${m.godot.body}${m.godot.root ? `, raiz ${m.godot.root.join(',')}` : ''}${m.godot.name ? `, nó ${m.godot.name}` : ''}${m.godot.normal !== 1 ? `, normal ${m.godot.normal}` : ''}${m.godot.rig === 'bones' ? ', esqueleto (Bone2D)' : ''}`);
   if (m.boxes.size) {
     out.push(`caixas   ${m.boxes.size}`);
     for (const b of m.boxes.values()) out.push(`  ${b.name.padEnd(14)} ${b.kind} ${b.shape}${b.bone ? ` osso ${b.bone}` : ''}${b.only ? ` só em ${b.only.join(',')}` : ''}${b.on ? '' : ' (começa desligada)'}`);
@@ -354,6 +358,22 @@ async function exportModel(model, o, format, base, sfx) {
     const out = named(o.out || `${base}.${format === 'tscn' && !model.tileset ? 'tscn' : 'tres'}`);
     const dir = path.dirname(out), b = path.basename(out).replace(/\.[^.]+$/, '');
     const normal = o.normal === null ? format === 'tscn' : o.normal;
+    // esqueleto de verdade: --rig, ou godot rig=bones no arquivo (--no-rig volta para os quadros)
+    const rig = format === 'tscn' && !model.tileset && (o.rig === true || (o.rig !== false && model.godot && model.godot.rig === 'bones'));
+    if (rig) {
+      let pr;
+      try {
+        pr = W.rig.packageFiles(model, { base: b, scale: o.scale, mirror: o.mirror });
+      } catch (e) { usage(e.message); }
+      const say = (f) => {
+        if (f.canvas) return `${f.canvas.width}×${f.canvas.height}, ${pr.images} imagens de peças`;
+        if (f.name.endsWith('.tscn')) return `cena do Godot 4 com esqueleto (${pr.bones} osso${pr.bones === 1 ? '' : 's'}, ${pr.rigid} peça${pr.rigid === 1 ? '' : 's'} presas aos ossos${pr.framed ? `, ${pr.framed} quadro a quadro` : ''}${pr.boxes ? `, ${pr.boxes} caixa${pr.boxes === 1 ? '' : 's'}` : ''}${pr.points ? `, ${pr.points} ponto${pr.points === 1 ? '' : 's'}` : ''}${pr.mirrored.length ? `, espelhadas: ${pr.mirrored.join(', ')}` : ''})`;
+        return 'ajudante do AnimationPlayer';
+      };
+      for (const f of pr.files) save(path.join(dir, f.name), f.canvas ? f.canvas.toBuffer('image/png') : Buffer.from(f.text), say(f), o.quiet);
+      if (!o.quiet) for (const n of pr.notes) console.log(paint('33', `aviso: ${n}`));
+      return;
+    }
     let pkg;
     try {
       pkg = W.godot.packageFiles(model, { base: b, scale: o.scale, normal, mirror: o.mirror, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin });

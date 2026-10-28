@@ -177,7 +177,7 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 - O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do sprite, liga, desliga e move as caixas e os pontos quadro a quadro e chama os eventos na hora certa. **Toque as animações pelo AnimationPlayer**, não pelo sprite.
 - `tocar("attack", velocity)` escolhe a direção sozinho: toca `attack_right` ou `attack_left` (ou `_up`, `_down` e as diagonais, se existirem), e só recomeça quando a animação muda.
 - Os eventos chegam pelo sinal `evento(nome)`.
-- `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado.
+- `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado; `--rig` exporta com esqueleto de verdade ([abaixo](#esqueleto-de-verdade-rigbones-experimental)).
 
 Um script de jogo usando a cena:
 
@@ -208,6 +208,51 @@ func _quando_evento(nome: StringName) -> void:
 	if nome == &"golpe":
 		pass  # toque o som do golpe aqui
 ```
+
+## Esqueleto de verdade: `rig=bones` (experimental)
+
+A cena por quadros guarda **imagens prontas**: o Godot troca de uma para a outra 12 vezes por segundo (ou no `fps` da animação). Com esqueleto, o Godot recebe os **ossos** e as **peças** do desenho, e calcula o movimento sozinho:
+
+```
+godot body=character root=100,190 name=Lagarto rig=bones
+```
+
+Ou, sem mudar o arquivo, `node cli/weasel.js lagarto.weasel --rig -o godot/lagarto.tscn` (e `--no-rig` exporta por quadros mesmo com `rig=bones`). No editor, é a caixa **Esqueleto (Bone2D)** na aba Godot.
+
+![No Godot, o mesmo personagem andando e golpeando: à esquerda por quadros, aos saltos; à direita com esqueleto, liso](../godot_esqueleto.gif)
+
+Qual escolher:
+
+| | Por quadros (padrão) | Com esqueleto |
+|---|---|---|
+| Movimento | pula de quadro em quadro | liso, também em câmera lenta |
+| Tamanho | uma imagem por quadro | uma imagem por peça (o Furão cai de 344 KB para 24 KB) |
+| No Godot | o AnimationPlayer troca os quadros | dá para misturar animações no AnimationTree e girar ossos pelo código |
+| Bom para | pixel art, inimigos pequenos, personagens que mudam muito de forma | o herói, chefes, personagens grandes e macios |
+
+Como fica a cena:
+
+```
+Lagarto (CharacterBody2D)
+├── Visual (Node2D)                  ← vira de lado nas animações espelhadas (_left)
+│   ├── Esqueleto (Skeleton2D)
+│   │   └── corpo (Bone2D)           ← um Bone2D para cada bone, na mesma hierarquia
+│   │       ├── tronco_2 (RemoteTransform2D)   → leva a peça junto com o osso
+│   │       └── braco (Bone2D) …
+│   └── Pecas (Node2D)
+│       ├── pernaE_0 (Sprite2D)      ← as peças, na ordem de pintura, todas da mesma folha
+│       └── …
+├── corpo_caixa · Hitbox · Hurtbox · ponta   ← caixas e pontos, como na cena por quadros
+└── AnimationPlayer                  ← weasel_anim.gd
+```
+
+- Cada `bone` vira um `Bone2D`; a origem dele é o pivô. Cada sequência de formas presas ao mesmo osso vira **uma imagem**, e um `RemoteTransform2D` faz ela seguir o osso.
+- O que **muda de forma** não cabe numa imagem só: pernas e braços com IK, tecido, partículas, rastro e sombra no chão viram uma imagem **trocada a cada quadro**. Morph, `draw` e cores animadas também, mas presos ao osso: a imagem só troca quando a forma muda (o olho que pisca tem três imagens).
+- Um osso que nenhuma animação mexe fica livre para o código do jogo: `$Visual/Esqueleto/corpo/cabeca.rotation = …` faz a cabeça olhar para o mouse.
+- Caixas, pontos de encaixe, eventos, `tocar()` e as animações espelhadas funcionam como na cena por quadros.
+- **Ainda não vão:** o normal map, a troca de ordem com `above=` e `below=` (vale a ordem do arquivo) e as luzes animadas (as peças levam a luz da pose parada).
+
+O lagarto de teste ([`test/casos/esqueleto.weasel`](../../test/casos/esqueleto.weasel)) tem um pouco de tudo: corpo e cabeça que respiram, antena com mola, espada, pernas com IK, olho que pisca e sombra recortada. Ele, o Furão, o Chefe e o Cavaleiro foram abertos no Godot 4.7.2 e comparados quadro a quadro com o Weasel.
 
 ## Direções (jogos vistos de cima)
 

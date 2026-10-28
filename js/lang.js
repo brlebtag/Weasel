@@ -47,7 +47,7 @@
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
     box: ['bone', 'only'],
     point: ['bone'],
-    godot: ['body', 'root', 'normal', 'name'],
+    godot: ['body', 'root', 'normal', 'name', 'rig'],
     tileset: ['size'],
     tile: ['collision'],
   };
@@ -1304,7 +1304,7 @@
       else if (st.cmd === 'point') readPoint(st, A);
       else if (st.cmd === 'mouth') readMouth(st, A);
       else if (st.cmd === 'godot') {
-        const g = { body: 'character', root: null, normal: 1, name: null, line: st.line };
+        const g = { body: 'character', root: null, normal: 1, name: null, rig: 'frames', line: st.line };
         const rec = info(st);
         if (A.has('body')) { const a = A.get('body'); if (GODOT_BODIES.includes(a.text)) g.body = a.text; else bad(st, a, `body= aceita ${GODOT_BODIES.join(', ')}`); }
         if (A.has('root')) {
@@ -1313,6 +1313,8 @@
           if (g.root) rec.handles.push({ kind: 'root', x: g.root[0], y: g.root[1], from: a.vfrom, to: a.to, fixed: a.text.includes('{') });
         }
         if (A.has('normal')) g.normal = number(st, A.get('normal'), 1, 0, 10);
+        // rig=bones: a cena sai com esqueleto de verdade (Bone2D); rig=frames (padrão): quadros prontos
+        if (A.has('rig')) { const a = A.get('rig'); if (a.text === 'bones' || a.text === 'frames') g.rig = a.text; else bad(st, a, 'rig= aceita frames (quadros prontos) ou bones (esqueleto de verdade)'); }
         if (A.has('name')) {
           const a = A.get('name'), v = unq(a.text);
           if (/^[A-Za-z_]\w*$/.test(v)) g.name = v; else bad(st, a, 'name= precisa ser um nome simples (letras, números e _)');

@@ -1,0 +1,12 @@
+stroke pernaE @0.000 +0.273
+stroke pernaD @0.273 +0.273
+ellipse tronco @0.546 +0.603
+ellipse dobra @1.149 +0.603
+stroke fio @1.752 +0.234
+ellipse bolinha @1.986 +0.254
+ellipse cara @2.240 +0.603
+ellipse olho @2.844 +0.255
+rect lamina @3.099 +0.469
+rect guarda @3.567 +0.309
+ellipse mao @3.877 +0.322
+total 4.198

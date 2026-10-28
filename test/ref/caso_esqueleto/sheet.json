@@ -1,0 +1,2316 @@
+{
+  "frames": {
+    "idle_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.6,
+          "y": 12.3
+        }
+      ]
+    },
+    "idle_right_01": {
+      "frame": {
+        "x": 44,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.607,
+          "y": 12.338
+        }
+      ]
+    },
+    "idle_right_02": {
+      "frame": {
+        "x": 86,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.626,
+          "y": 12.445
+        }
+      ]
+    },
+    "idle_right_03": {
+      "frame": {
+        "x": 128,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.654,
+          "y": 12.606
+        }
+      ]
+    },
+    "idle_right_04": {
+      "frame": {
+        "x": 170,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.69,
+          "y": 12.807
+        }
+      ]
+    },
+    "idle_right_05": {
+      "frame": {
+        "x": 212,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.731,
+          "y": 13.036
+        }
+      ]
+    },
+    "idle_right_06": {
+      "frame": {
+        "x": 254,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.774,
+          "y": 13.278
+        }
+      ]
+    },
+    "idle_right_07": {
+      "frame": {
+        "x": 296,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.817,
+          "y": 13.52
+        }
+      ]
+    },
+    "idle_right_08": {
+      "frame": {
+        "x": 338,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.858,
+          "y": 13.749
+        }
+      ]
+    },
+    "idle_right_09": {
+      "frame": {
+        "x": 380,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.894,
+          "y": 13.95
+        }
+      ]
+    },
+    "idle_right_10": {
+      "frame": {
+        "x": 422,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.922,
+          "y": 14.111
+        }
+      ]
+    },
+    "idle_right_11": {
+      "frame": {
+        "x": 464,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.941,
+          "y": 14.218
+        }
+      ]
+    },
+    "idle_right_12": {
+      "frame": {
+        "x": 506,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.948,
+          "y": 14.256
+        }
+      ]
+    },
+    "idle_right_13": {
+      "frame": {
+        "x": 548,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.941,
+          "y": 14.218
+        }
+      ]
+    },
+    "idle_right_14": {
+      "frame": {
+        "x": 590,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.922,
+          "y": 14.111
+        }
+      ]
+    },
+    "idle_right_15": {
+      "frame": {
+        "x": 632,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.894,
+          "y": 13.95
+        }
+      ]
+    },
+    "idle_right_16": {
+      "frame": {
+        "x": 674,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.858,
+          "y": 13.749
+        }
+      ]
+    },
+    "idle_right_17": {
+      "frame": {
+        "x": 716,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.817,
+          "y": 13.52
+        }
+      ]
+    },
+    "idle_right_18": {
+      "frame": {
+        "x": 758,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.774,
+          "y": 13.278
+        }
+      ]
+    },
+    "idle_right_19": {
+      "frame": {
+        "x": 800,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.731,
+          "y": 13.036
+        }
+      ]
+    },
+    "idle_right_20": {
+      "frame": {
+        "x": 842,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.69,
+          "y": 12.807
+        }
+      ]
+    },
+    "idle_right_21": {
+      "frame": {
+        "x": 884,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.654,
+          "y": 12.606
+        }
+      ]
+    },
+    "idle_right_22": {
+      "frame": {
+        "x": 926,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.626,
+          "y": 12.445
+        }
+      ]
+    },
+    "idle_right_23": {
+      "frame": {
+        "x": 968,
+        "y": 2,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 21.607,
+          "y": 12.338
+        }
+      ]
+    },
+    "walk_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 15.281,
+          "y": 12.462,
+          "rot": -20
+        }
+      ]
+    },
+    "walk_right_01": {
+      "frame": {
+        "x": 44,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 16.033,
+          "y": 12.105,
+          "rot": -17.813
+        }
+      ]
+    },
+    "walk_right_02": {
+      "frame": {
+        "x": 86,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 17.937,
+          "y": 11.397,
+          "rot": -12.25
+        }
+      ]
+    },
+    "walk_right_03": {
+      "frame": {
+        "x": 128,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 20.445,
+          "y": 10.891,
+          "rot": -4.813
+        }
+      ]
+    },
+    "walk_right_04": {
+      "frame": {
+        "x": 170,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 22.97,
+          "y": 10.992,
+          "rot": 3
+        }
+      ]
+    },
+    "walk_right_05": {
+      "frame": {
+        "x": 212,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 25.012,
+          "y": 11.784,
+          "rot": 9.875
+        }
+      ]
+    },
+    "walk_right_06": {
+      "frame": {
+        "x": 254,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 26.457,
+          "y": 12.904,
+          "rot": 15.25
+        }
+      ]
+    },
+    "walk_right_07": {
+      "frame": {
+        "x": 296,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 27.311,
+          "y": 13.891,
+          "rot": 18.75
+        }
+      ]
+    },
+    "walk_right_08": {
+      "frame": {
+        "x": 338,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 27.594,
+          "y": 14.309,
+          "rot": 20
+        }
+      ]
+    },
+    "walk_right_09": {
+      "frame": {
+        "x": 380,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 27.311,
+          "y": 13.891,
+          "rot": 18.75
+        }
+      ]
+    },
+    "walk_right_10": {
+      "frame": {
+        "x": 422,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 26.457,
+          "y": 12.904,
+          "rot": 15.25
+        }
+      ]
+    },
+    "walk_right_11": {
+      "frame": {
+        "x": 464,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 25.012,
+          "y": 11.784,
+          "rot": 9.875
+        }
+      ]
+    },
+    "walk_right_12": {
+      "frame": {
+        "x": 506,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 22.97,
+          "y": 10.992,
+          "rot": 3
+        }
+      ]
+    },
+    "walk_right_13": {
+      "frame": {
+        "x": 548,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 20.445,
+          "y": 10.891,
+          "rot": -4.813
+        }
+      ]
+    },
+    "walk_right_14": {
+      "frame": {
+        "x": 590,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 17.937,
+          "y": 11.397,
+          "rot": -12.25
+        }
+      ]
+    },
+    "walk_right_15": {
+      "frame": {
+        "x": 632,
+        "y": 57,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 16.033,
+          "y": 12.105,
+          "rot": -17.813
+        }
+      ]
+    },
+    "attack_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 18.793,
+          "y": 11.535,
+          "rot": -6
+        }
+      ]
+    },
+    "attack_right_01": {
+      "frame": {
+        "x": 44,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 13.089,
+          "y": 12.189,
+          "rot": -24.148
+        }
+      ]
+    },
+    "attack_right_02": {
+      "frame": {
+        "x": 86,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 4.186,
+          "y": 17.855,
+          "rot": -57.852
+        }
+      ]
+    },
+    "attack_right_03": {
+      "frame": {
+        "x": 128,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 1.177,
+          "y": 22.744,
+          "rot": -76
+        }
+      ]
+    },
+    "attack_right_04": {
+      "frame": {
+        "x": 170,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 23.759,
+          "y": 12.604,
+          "rot": 5
+        }
+      ]
+    },
+    "attack_right_05": {
+      "frame": {
+        "x": 212,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        },
+        {
+          "name": "golpe",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 32.332,
+          "y": 34.688,
+          "w": 9,
+          "h": 21,
+          "rot": 86
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 39.09,
+          "y": 32.411,
+          "rot": 86
+        }
+      ]
+    },
+    "attack_right_06": {
+      "frame": {
+        "x": 254,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        },
+        {
+          "name": "golpe",
+          "kind": "hit",
+          "shape": "rect",
+          "x": 32.562,
+          "y": 32.798,
+          "w": 9,
+          "h": 21,
+          "rot": 77.056
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 38.883,
+          "y": 29.499,
+          "rot": 77.056
+        }
+      ]
+    },
+    "attack_right_07": {
+      "frame": {
+        "x": 296,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 36.629,
+          "y": 22.821,
+          "rot": 55.728
+        }
+      ]
+    },
+    "attack_right_08": {
+      "frame": {
+        "x": 338,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 31.034,
+          "y": 16.342,
+          "rot": 30.272
+        }
+      ]
+    },
+    "attack_right_09": {
+      "frame": {
+        "x": 380,
+        "y": 112,
+        "w": 40,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 53
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 12.9,
+          "y": 36.6,
+          "w": 13.2,
+          "h": 28.2
+        }
+      ],
+      "points": [
+        {
+          "name": "ponta",
+          "x": 24.582,
+          "y": 13.004,
+          "rot": 8.944
+        }
+      ]
+    }
+  },
+  "animations": {
+    "idle_right": [
+      "idle_right_00",
+      "idle_right_01",
+      "idle_right_02",
+      "idle_right_03",
+      "idle_right_04",
+      "idle_right_05",
+      "idle_right_06",
+      "idle_right_07",
+      "idle_right_08",
+      "idle_right_09",
+      "idle_right_10",
+      "idle_right_11",
+      "idle_right_12",
+      "idle_right_13",
+      "idle_right_14",
+      "idle_right_15",
+      "idle_right_16",
+      "idle_right_17",
+      "idle_right_18",
+      "idle_right_19",
+      "idle_right_20",
+      "idle_right_21",
+      "idle_right_22",
+      "idle_right_23"
+    ],
+    "walk_right": [
+      "walk_right_00",
+      "walk_right_01",
+      "walk_right_02",
+      "walk_right_03",
+      "walk_right_04",
+      "walk_right_05",
+      "walk_right_06",
+      "walk_right_07",
+      "walk_right_08",
+      "walk_right_09",
+      "walk_right_10",
+      "walk_right_11",
+      "walk_right_12",
+      "walk_right_13",
+      "walk_right_14",
+      "walk_right_15"
+    ],
+    "attack_right": [
+      "attack_right_00",
+      "attack_right_01",
+      "attack_right_02",
+      "attack_right_03",
+      "attack_right_04",
+      "attack_right_05",
+      "attack_right_06",
+      "attack_right_07",
+      "attack_right_08",
+      "attack_right_09"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_esqueleto.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1010,
+      "h": 167
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 40,
+      "h": 53
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "idle_right",
+        "from": 0,
+        "to": 23,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "walk_right",
+        "from": 24,
+        "to": 39,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "attack_right",
+        "from": 40,
+        "to": 49,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      }
+    ],
+    "events": [
+      {
+        "animation": "attack_right",
+        "frame": 5,
+        "name": "golpe"
+      }
+    ],
+    "sourceRect": {
+      "x": 57,
+      "y": 21,
+      "w": 134,
+      "h": 176
+    }
+  }
+}

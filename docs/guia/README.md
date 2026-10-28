@@ -16,7 +16,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 6 | [Ossos](06-ossos.md) | o que é um osso, o pivô, pai e filho, movimentos automáticos, molas, tecido e pernas com IK |
 | 7 | [Animação](07-animacao.md) | `anim` e `key`, como os quadros do meio são calculados (`ease`), loop, animar cores e formas, desenhar aos poucos, morph e eventos |
 | 8 | [Luz, efeitos e partículas](08-luz-efeitos.md) | lâmpadas, holofotes, sol e lua, brilho, sombra no chão, efeitos de camada, rastro e partículas |
-| 9 | [Jogo e Godot](09-jogo-godot.md) | caixas de colisão, golpe e dano por quadro, pontos de encaixe, a cena pronta do Godot, direções, tileset e sprite sheet |
+| 9 | [Jogo e Godot](09-jogo-godot.md) | caixas de colisão, golpe e dano por quadro, pontos de encaixe, a cena pronta do Godot, o esqueleto de verdade, direções, tileset e sprite sheet |
 | 10 | [Filme](10-filme.md) | atores, planos e transições, câmera, mudanças no tempo, profundidade, som, legendas e lip sync |
 | 11 | [Referência rápida](11-referencia.md) | todas as instruções e atributos, com os valores padrão |
 | 12 | [Problemas comuns](12-problemas.md) | o que costuma dar errado e como resolver |

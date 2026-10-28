@@ -1,0 +1,21 @@
+canvas   200 × 200, fundo transparente
+camadas  6
+  guia             1 item(ns)  guide
+  pernas           2 item(ns)
+  corpo            1 item(ns)
+  sombra           1 item(ns)  clip=tronco
+  cabeca           5 item(ns)
+  braco            3 item(ns)
+formas   13 (1 ocultas)
+ossos    corpo, cabeca←corpo, antena←cabeca (spring), braco←corpo, peE, peD
+animações 3
+  idle_right     24 quadros, 12 fps, anima olho.shape
+  walk_right     16 quadros, 12 fps
+  attack_right   10 quadros, 12 fps, once, anima golpe.show
+                 eventos: golpe@5
+godot    character, raiz 100,190, nó Lagarto, esqueleto (Bone2D)
+caixas   2
+  corpo_caixa    body rect
+  golpe          hit rect osso braco só em attack_right (começa desligada)
+pontos   1
+  ponta          129,62 osso braco
