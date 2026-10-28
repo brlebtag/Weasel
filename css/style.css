@@ -64,7 +64,7 @@ input[type=range] { accent-color: var(--accent); }
   background: var(--panel);
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: .2px; }
-.brand svg { color: var(--kw); }
+.brand img { display: block; }
 .brand small { font-weight: 400; color: var(--dim); font-size: 12px; margin-left: 4px; }
 .tb { display: flex; gap: 6px; align-items: center; }
 .tb.right { margin-left: auto; }

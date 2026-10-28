@@ -1,0 +1,34 @@
+# logo do Weasel: uma doninha de frente num selo, com uma pincelada laranja (a cor de destaque do editor)
+# gerar de novo:  node cli/weasel.js docs/logo.weasel -o docs/logo.svg
+#                 node cli/weasel.js docs/logo.weasel -o docs/logo.png -t
+canvas 512 512 bg=none light=-0.6,-0.8
+palette ink=#1c1f2b line=12 pelo=#b8733a pelo2=#8f5326 creme=#fbeedd rosa=#e9938c
+gradient selo linear 0,0 0,1 box : #2a3d52 #121a24
+gradient pelog linear 0,0 0,1 box : #9a5a2a #c27f40@0.45 #b8733a
+gradient pinta linear 0,0 1,0 box : #ffb45c #ff8a1f@0.6 #ff6a1f
+
+layer fundo
+rect placa 16,16 480,480 r=112 c=selo
+stroke pincel w=54 c=pinta cap=round taper=0.12,0.6 : 64,420 170,448 296,436 448,372
+
+layer orelhas
+ellipse orelhaE 176,150 38,34 rot=-20 c=pelo ink=line
+ellipse orelhaD 336,150 38,34 rot=20 c=pelo ink=line
+ellipse dentroE 178,154 18,16 rot=-20 c=rosa
+ellipse dentroD 334,154 18,16 rot=20 c=rosa
+
+layer cabeca
+shape cara c=pelog ink=line weight=0.4 : 256,112 314,122 356,160 368,218 354,280 320,340 286,388 256,404 226,388 192,340 158,280 144,218 156,160 198,122
+layer queixo clip=cara
+shape claro c=creme : 256,292 300,300 336,326 330,372 290,412 256,422 222,412 182,372 176,326 212,300
+layer rosto
+ellipse olhoE 212,222 18,23 rot=-12 c=ink
+ellipse olhoD 300,222 18,23 rot=12 c=ink
+ellipse brilhoE 218,212 7 c=#ffffff
+ellipse brilhoD 306,212 7 c=#ffffff
+ellipse nariz 256,306 18,12 c=#3a2024
+stroke boca w=6 c=ink : 236,338 248,346 256,336 264,346 276,338
+stroke bigodeE1 w=4 c=ink taper=0,0.6 : 214,318 166,304 122,302
+stroke bigodeE2 w=4 c=ink taper=0,0.6 : 214,332 168,334 128,344
+stroke bigodeD1 w=4 c=ink taper=0,0.6 : 298,318 346,304 390,302
+stroke bigodeD2 w=4 c=ink taper=0,0.6 : 298,332 344,334 384,344

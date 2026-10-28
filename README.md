@@ -1,4 +1,8 @@
+<p align="center"><img src="docs/logo.svg" width="140" alt="Logo do Weasel: uma doninha de frente num selo escuro, com uma pincelada laranja"></p>
+
 # Weasel — desenho por código
+
+**[Guia da linguagem →](docs/guia/README.md)** Aprenda passo a passo, com um exemplo e a imagem que ele gera em cada capítulo.
 
 Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, com a **linha do tempo pronta para o editor de vídeo** (FCPXML e EDL), tanto no navegador quanto pela **linha de comando**.
 
@@ -602,6 +606,7 @@ cli/media.js        acha e lê os sons (audio) para a linha de comando
 test/regress.js     testes de regressão; test/ref/ guarda as referências; test/casos/ tem um arquivo por função
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
+docs/logo.weasel    o logo, desenhado no próprio Weasel (logo.svg, logo.png e icone.png saem dele)
 docs/guia/          guia da linguagem: capítulos com exemplos; gerar.js faz as imagens (npm run docs)
 referencia/         capturas do vídeo e transcrição do código mostrado
 ```

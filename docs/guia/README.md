@@ -1,3 +1,5 @@
+<p align="center"><img src="../logo.svg" width="120" alt="Logo do Weasel: uma doninha de frente num selo escuro, com uma pincelada laranja"></p>
+
 # Guia da linguagem Weasel
 
 Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo e a imagem que ele gera logo abaixo. Se o [README](../../README.md) é a lista de tudo o que existe, este guia é o **porquê** e o **como**: o que cada coisa faz, em que ordem aprender e onde estão as armadilhas.
