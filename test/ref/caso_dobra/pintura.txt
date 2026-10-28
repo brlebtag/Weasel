@@ -1,0 +1,11 @@
+ellipse ponto @0.000 +0.227
+ellipse ponto @0.227 +0.227
+ellipse ponto @0.453 +0.227
+ellipse ponto @0.680 +0.227
+ellipse ponto @0.906 +0.227
+ellipse ponto @1.133 +0.227
+ellipse tronco @1.360 +0.625
+shape cauda @1.985 +0.639
+ellipse olho @2.624 +0.254
+ellipse bolinha @2.878 +0.322
+total 3.200

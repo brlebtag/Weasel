@@ -1,0 +1,559 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="caso_dobra.png" id="1_pecas"]
+[ext_resource type="Script" path="weasel_anim.gd" id="2_script"]
+[ext_resource type="Texture2D" path="caso_dobra_normal.png" id="3_normal"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_pecas"]
+diffuse_texture = ExtResource("1_pecas")
+normal_texture = ExtResource("3_normal")
+
+[sub_resource type="Animation" id="Animation_RESET"]
+resource_name = "RESET"
+length = 0.001
+step = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Esqueleto/corpo:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, -20)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Esqueleto/corpo/r1:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Esqueleto/corpo/r1/r2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/Esqueleto/bola:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-45, -65)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Visual/Esqueleto/bola:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Visual/Pecas/tronco_1:z_index")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Visual/Pecas/cauda_2:z_index")
+tracks/6/interp = 0
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Visual/Pecas/olho_3:region_rect")
+tracks/7/interp = 0
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [Rect2(2, 50, 8, 8)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Visual/Pecas/olho_3:z_index")
+tracks/8/interp = 0
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_0"]
+resource_name = "balanca"
+length = 1
+loop_mode = 1
+step = 0.0833
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Esqueleto/corpo:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.9722),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, -20), Vector2(0, -20)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Esqueleto/corpo/r1:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.0278, 0.0556, 0.0833, 0.1111, 0.1389, 0.1667, 0.1944, 0.2222, 0.2778, 0.3056, 0.3333, 0.3611, 0.3889, 0.4167, 0.4444, 0.4722, 0.5, 0.5278, 0.5556, 0.5833, 0.6111, 0.6389, 0.6667, 0.6944, 0.7222, 0.7778, 0.8056, 0.8333, 0.8611, 0.8889, 0.9167, 0.9444, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.3491, -0.3428, -0.3251, -0.2974, -0.261, -0.2174, -0.1681, -0.1144, -0.0579, 0.0579, 0.1144, 0.1681, 0.2174, 0.261, 0.2974, 0.3251, 0.3428, 0.3491, 0.3428, 0.3251, 0.2974, 0.261, 0.2174, 0.1681, 0.1144, 0.0579, -0.0579, -0.1144, -0.1681, -0.2174, -0.261, -0.2974, -0.3251, -0.3428]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Esqueleto/corpo/r1/r2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.0278, 0.0556, 0.0833, 0.1111, 0.1389, 0.1667, 0.1944, 0.2222, 0.2778, 0.3056, 0.3333, 0.3611, 0.3889, 0.4167, 0.4444, 0.4722, 0.5, 0.5278, 0.5556, 0.5833, 0.6111, 0.6389, 0.6667, 0.6944, 0.7222, 0.7778, 0.8056, 0.8333, 0.8611, 0.8889, 0.9167, 0.9444, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.5236, -0.5143, -0.4877, -0.446, -0.3914, -0.3261, -0.2521, -0.1717, -0.0869, 0.0869, 0.1717, 0.2521, 0.3261, 0.3914, 0.446, 0.4877, 0.5143, 0.5236, 0.5143, 0.4877, 0.446, 0.3914, 0.3261, 0.2521, 0.1717, 0.0869, -0.0869, -0.1717, -0.2521, -0.3261, -0.3914, -0.446, -0.4877, -0.5143]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/Esqueleto/bola:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.0278, 0.0556, 0.0833, 0.1111, 0.1389, 0.1667, 0.1944, 0.2222, 0.2778, 0.3056, 0.3333, 0.3611, 0.3889, 0.4167, 0.4444, 0.4722, 0.5, 0.5278, 0.5556, 0.5833, 0.6111, 0.6389, 0.6667, 0.6944, 0.7222, 0.7778, 0.8056, 0.8333, 0.8611, 0.8889, 0.9167, 0.9444, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(-55, -65), Vector2(-54.1975, -65.4012), Vector2(-51.9136, -66.5432), Vector2(-48.3333, -68.3333), Vector2(-43.642, -70.679), Vector2(-38.0247, -73.4877), Vector2(-31.6667, -76.6667), Vector2(-24.7531, -79.8765), Vector2(-17.4691, -76.2346), Vector2(-2.5309, -68.7654), Vector2(4.7531, -65.1235), Vector2(11.6667, -68.3333), Vector2(18.0247, -71.5123), Vector2(23.642, -74.321), Vector2(28.3333, -76.6667), Vector2(31.9136, -78.4568), Vector2(34.1975, -79.5988), Vector2(35, -80), Vector2(34.1975, -79.5988), Vector2(31.9136, -78.4568), Vector2(28.3333, -76.6667), Vector2(23.642, -74.321), Vector2(18.0247, -71.5123), Vector2(11.6667, -68.3333), Vector2(4.7531, -65.1235), Vector2(-2.5309, -68.7654), Vector2(-17.4691, -76.2346), Vector2(-24.7531, -79.8765), Vector2(-31.6667, -76.6667), Vector2(-38.0247, -73.4877), Vector2(-43.642, -70.679), Vector2(-48.3333, -68.3333), Vector2(-51.9136, -66.5432), Vector2(-54.1975, -65.4012)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Visual/Esqueleto/bola:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.1667, 0.1944, 0.3056, 0.3333, 0.6667, 0.6944, 0.8056, 0.8333, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.4636, -0.4636, 0.4636, 0.4636, -0.4636, -0.4636, 0.4636, 0.4636, -0.4636, -0.4636]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Visual/Pecas/tronco_1:z_index")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [1, 0]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Visual/Pecas/cauda_2:z_index")
+tracks/6/interp = 0
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Visual/Pecas/olho_3:region_rect")
+tracks/7/interp = 0
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.75, 0.8333, 0.9167),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [Rect2(2, 50, 8, 8), Rect2(12, 50, 8, 8), Rect2(22, 50, 8, 8), Rect2(32, 50, 8, 8), Rect2(42, 50, 8, 8), Rect2(52, 50, 8, 8), Rect2(62, 50, 8, 8), Rect2(52, 50, 8, 8), Rect2(42, 50, 8, 8), Rect2(32, 50, 8, 8), Rect2(22, 50, 8, 8), Rect2(12, 50, 8, 8)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Visual/Pecas/olho_3:z_index")
+tracks/8/interp = 0
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+
+[sub_resource type="Animation" id="Animation_1"]
+resource_name = "pula"
+length = 0.6667
+step = 0.0833
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Esqueleto/corpo:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0278, 0.0556, 0.0833, 0.1111, 0.1389, 0.1944, 0.2222, 0.25, 0.2778, 0.3056, 0.3333, 0.3611, 0.3889, 0.4167, 0.4444, 0.4722, 0.5278, 0.5556, 0.5833, 0.6111, 0.6389),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, -20), Vector2(0, -20.1968), Vector2(0, -20.7407), Vector2(0, -21.5625), Vector2(0, -22.5926), Vector2(0, -23.7616), Vector2(0, -26.2384), Vector2(0, -27.4074), Vector2(0, -28.4375), Vector2(0, -29.2593), Vector2(0, -29.8032), Vector2(0, -30), Vector2(0, -29.8032), Vector2(0, -29.2593), Vector2(0, -28.4375), Vector2(0, -27.4074), Vector2(0, -26.2384), Vector2(0, -23.7616), Vector2(0, -22.5926), Vector2(0, -21.5625), Vector2(0, -20.7407), Vector2(0, -20.1968)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Esqueleto/corpo/r1:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.6389),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 0.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Esqueleto/corpo/r1/r2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.6389),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 0.0]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/Esqueleto/bola:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.6389),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(-45, -65), Vector2(-45, -65)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Visual/Esqueleto/bola:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.6389),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 0.0]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Visual/Pecas/tronco_1:z_index")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Visual/Pecas/cauda_2:z_index")
+tracks/6/interp = 0
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Visual/Pecas/olho_3:region_rect")
+tracks/7/interp = 0
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [Rect2(72, 50, 8, 8)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Visual/Pecas/olho_3:z_index")
+tracks/8/interp = 0
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_2"]
+resource_name = "pula_balanca"
+length = 1
+loop_mode = 1
+step = 0.0833
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Esqueleto/corpo:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.3333, 0.4167, 0.5833, 0.6667, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, -20), Vector2(0, -21.5625), Vector2(0, -28.4375), Vector2(0, -30), Vector2(0, -28.4375), Vector2(0, -21.5625), Vector2(0, -20), Vector2(0, -20)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Esqueleto/corpo/r1:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.8333, 0.9167, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.3491, -0.2974, -0.1681, 0.1681, 0.2974, 0.3491, 0.2974, 0.1681, -0.1681, -0.2974, -0.3318]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Esqueleto/corpo/r1/r2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.8333, 0.9167, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.5236, -0.446, -0.2521, 0.2521, 0.446, 0.5236, 0.446, 0.2521, -0.2521, -0.446, -0.4977]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/Esqueleto/bola:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.1944, 0.3056, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.6944, 0.8056, 0.8333, 0.9167, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(-55, -65), Vector2(-48.3333, -68.3333), Vector2(-31.6667, -76.6667), Vector2(-24.4444, -79.7222), Vector2(4.4444, -65.2778), Vector2(11.6667, -68.3333), Vector2(28.3333, -76.6667), Vector2(35, -80), Vector2(28.3333, -76.6667), Vector2(11.6667, -68.3333), Vector2(4.4444, -65.2778), Vector2(-24.4444, -79.7222), Vector2(-31.6667, -76.6667), Vector2(-48.3333, -68.3333), Vector2(-52.7778, -66.1111)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Visual/Esqueleto/bola:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.1667, 0.1944, 0.3056, 0.3333, 0.6667, 0.6944, 0.8056, 0.8333, 0.9722),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.4636, -0.4636, 0.4636, 0.4636, -0.4636, -0.4636, 0.4636, 0.4636, -0.4636, -0.4636]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Visual/Pecas/tronco_1:z_index")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [1, 0]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Visual/Pecas/cauda_2:z_index")
+tracks/6/interp = 0
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Visual/Pecas/olho_3:region_rect")
+tracks/7/interp = 0
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.75, 0.8333, 0.9167),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [Rect2(2, 50, 8, 8), Rect2(12, 50, 8, 8), Rect2(22, 50, 8, 8), Rect2(32, 50, 8, 8), Rect2(42, 50, 8, 8), Rect2(52, 50, 8, 8), Rect2(62, 50, 8, 8), Rect2(52, 50, 8, 8), Rect2(42, 50, 8, 8), Rect2(32, 50, 8, 8), Rect2(22, 50, 8, 8), Rect2(12, 50, 8, 8)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Visual/Pecas/olho_3:z_index")
+tracks/8/interp = 0
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_weasel"]
+_data = {
+&"RESET": SubResource("Animation_RESET"),
+&"balanca": SubResource("Animation_0"),
+&"pula": SubResource("Animation_1"),
+&"pula_balanca": SubResource("Animation_2")
+}
+
+[node name="CasoDobra" type="CharacterBody2D"]
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Esqueleto" type="Skeleton2D" parent="Visual"]
+
+[node name="corpo" type="Bone2D" parent="Visual/Esqueleto"]
+position = Vector2(0, -20)
+rest = Transform2D(1, 0, 0, 1, 0, -20)
+auto_calculate_length_and_angle = false
+length = 11.4795
+bone_angle = -64.179
+
+[node name="tronco_1" type="RemoteTransform2D" parent="Visual/Esqueleto/corpo"]
+remote_path = NodePath("../../../Pecas/tronco_1")
+
+[node name="olho_3" type="RemoteTransform2D" parent="Visual/Esqueleto/corpo"]
+remote_path = NodePath("../../../Pecas/olho_3")
+
+[node name="r1" type="Bone2D" parent="Visual/Esqueleto/corpo"]
+position = Vector2(10, -15)
+rest = Transform2D(1, 0, 0, 1, 10, -15)
+auto_calculate_length_and_angle = false
+length = 20
+bone_angle = 0
+
+[node name="r2" type="Bone2D" parent="Visual/Esqueleto/corpo/r1"]
+position = Vector2(20, 0)
+rest = Transform2D(1, 0, 0, 1, 20, 0)
+auto_calculate_length_and_angle = false
+length = 5
+bone_angle = 90
+
+[node name="bola" type="Bone2D" parent="Visual/Esqueleto"]
+position = Vector2(-45, -65)
+rest = Transform2D(1, 0, 0, 1, -45, -65)
+auto_calculate_length_and_angle = false
+length = 5
+bone_angle = 90
+
+[node name="bolinha_4" type="RemoteTransform2D" parent="Visual/Esqueleto/bola"]
+remote_path = NodePath("../../../Pecas/bolinha_4")
+
+[node name="Pecas" type="Node2D" parent="Visual"]
+
+[node name="ponto_0" type="Sprite2D" parent="Visual/Pecas"]
+texture = SubResource("CanvasTexture_pecas")
+centered = false
+offset = Vector2(-57, -6)
+region_enabled = true
+region_rect = Rect2(2, 40, 114, 8)
+
+[node name="tronco_1" type="Sprite2D" parent="Visual/Pecas"]
+texture = SubResource("CanvasTexture_pecas")
+centered = false
+offset = Vector2(-14, -23)
+region_enabled = true
+region_rect = Rect2(2, 2, 28, 36)
+
+[node name="cauda_2" type="Polygon2D" parent="Visual/Pecas"]
+texture = SubResource("CanvasTexture_pecas")
+skeleton = NodePath("../../Esqueleto")
+polygon = PackedVector2Array(4, -41, 10, -41, 16, -41, 22, -41, 28, -41, 34, -41, 40, -41, 46, -41, 51, -41, 4, -35, 10, -35, 16, -35, 22, -35, 28, -35, 34, -35, 40, -35, 46, -35, 51, -35, 4, -29, 10, -29, 16, -29, 22, -29, 28, -29, 34, -29, 40, -29, 46, -29, 51, -29, 4, -27, 10, -27, 16, -27, 22, -27, 28, -27, 34, -27, 40, -27, 46, -27, 51, -27)
+uv = PackedVector2Array(32, 2, 38, 2, 44, 2, 50, 2, 56, 2, 62, 2, 68, 2, 74, 2, 79, 2, 32, 8, 38, 8, 44, 8, 50, 8, 56, 8, 62, 8, 68, 8, 74, 8, 79, 8, 32, 14, 38, 14, 44, 14, 50, 14, 56, 14, 62, 14, 68, 14, 74, 14, 79, 14, 32, 16, 38, 16, 44, 16, 50, 16, 56, 16, 62, 16, 68, 16, 74, 16, 79, 16)
+polygons = [PackedInt32Array(0, 1, 10), PackedInt32Array(0, 10, 9), PackedInt32Array(1, 2, 11), PackedInt32Array(1, 11, 10), PackedInt32Array(2, 3, 12), PackedInt32Array(2, 12, 11), PackedInt32Array(3, 4, 13), PackedInt32Array(3, 13, 12), PackedInt32Array(4, 5, 14), PackedInt32Array(4, 14, 13), PackedInt32Array(5, 6, 15), PackedInt32Array(5, 15, 14), PackedInt32Array(6, 7, 16), PackedInt32Array(6, 16, 15), PackedInt32Array(7, 8, 17), PackedInt32Array(7, 17, 16), PackedInt32Array(9, 10, 19), PackedInt32Array(9, 19, 18), PackedInt32Array(10, 11, 20), PackedInt32Array(10, 20, 19), PackedInt32Array(11, 12, 21), PackedInt32Array(11, 21, 20), PackedInt32Array(12, 13, 22), PackedInt32Array(12, 22, 21), PackedInt32Array(13, 14, 23), PackedInt32Array(13, 23, 22), PackedInt32Array(14, 15, 24), PackedInt32Array(14, 24, 23), PackedInt32Array(15, 16, 25), PackedInt32Array(15, 25, 24), PackedInt32Array(16, 17, 26), PackedInt32Array(16, 26, 25), PackedInt32Array(18, 19, 28), PackedInt32Array(18, 28, 27), PackedInt32Array(19, 20, 29), PackedInt32Array(19, 29, 28), PackedInt32Array(20, 21, 30), PackedInt32Array(20, 30, 29), PackedInt32Array(21, 22, 31), PackedInt32Array(21, 31, 30), PackedInt32Array(22, 23, 32), PackedInt32Array(22, 32, 31)]
+bones = [NodePath("corpo/r1"), PackedFloat32Array(0.9933, 0.9579, 0.8222, 0.6225, 0.5078, 0.4688, 0.3141, 0.1192, 0.0311, 0.9933, 0.9579, 0.8222, 0.6225, 0.5078, 0.4688, 0.3141, 0.1192, 0.0311, 0.9933, 0.9579, 0.8222, 0.6225, 0.5078, 0.4688, 0.3141, 0.1192, 0.0311, 0.9933, 0.9579, 0.8222, 0.6225, 0.5078, 0.4688, 0.3141, 0.1192, 0.0311), NodePath("corpo/r1/r2"), PackedFloat32Array(0.0067, 0.0421, 0.1778, 0.3775, 0.4922, 0.5312, 0.6859, 0.8808, 0.9689, 0.0067, 0.0421, 0.1778, 0.3775, 0.4922, 0.5312, 0.6859, 0.8808, 0.9689, 0.0067, 0.0421, 0.1778, 0.3775, 0.4922, 0.5312, 0.6859, 0.8808, 0.9689, 0.0067, 0.0421, 0.1778, 0.3775, 0.4922, 0.5312, 0.6859, 0.8808, 0.9689)]
+
+[node name="olho_3" type="Sprite2D" parent="Visual/Pecas"]
+texture = SubResource("CanvasTexture_pecas")
+centered = false
+offset = Vector2(1, -15)
+region_enabled = true
+region_rect = Rect2(2, 50, 8, 8)
+
+[node name="bolinha_4" type="Sprite2D" parent="Visual/Pecas"]
+texture = SubResource("CanvasTexture_pecas")
+centered = false
+offset = Vector2(-5, -5)
+region_enabled = true
+region_rect = Rect2(81, 2, 10, 10)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_weasel")
+}
+autoplay = &"balanca"
+script = ExtResource("2_script")

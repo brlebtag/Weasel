@@ -1,0 +1,8 @@
+canvas   200 × 200, fundo transparente
+camadas  1
+  rosto            8 item(ns)
+formas   8 (2 ocultas)
+ossos    cabeca, sobE←cabeca, sobD←cabeca
+animações nenhuma
+unity    100 px/unidade, raiz 100,190
+expressões bravo, feliz, susto

@@ -396,6 +396,7 @@ function filmInfo(m) {
     }
   }
   if (tl.subs.length) out.push(`legendas ${tl.subs.length} (${W.film.langs(m).join(', ')})${F.burn ? ', desenhadas no vídeo' : ''}`);
+  if (tl.marks.length) out.push(`marcadores ${tl.marks.map((k) => `${k.name} ${W.film.timecode(Math.round(k.start * F.fps), F.fps)}`).join(', ')}`);
   out.push(`planos   ${tl.entries.length}`);
   for (const e of tl.entries) {
     const s = e.shot, c = s.cam, notes = [];

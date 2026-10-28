@@ -143,7 +143,7 @@
     if (!srcLines || srcLines.model !== st.model) {
       srcLines = { model: st.model, map: new Map() };
       for (const [line, rec] of st.model.byLine) {
-        const s = rec.audio || rec.sub || rec.shot;
+        const s = rec.audio || rec.sub || rec.shot || rec.mark;
         if (s) srcLines.map.set(s, line);
       }
     }
@@ -162,6 +162,7 @@
       else editor.replaceRange(off + after.to, off + after.to, ` ${key}=${val}`, {});
     };
     const isAudio = kind === 'audio' || item.fromAudio;
+    if (kind === 'mark') { editor.replaceRange(off + sst.pos[1].from, off + sst.pos[1].to, fmt(sec - item.base), {}); return; }
     if (kind === 'shot') setAttr('dur', fmt(sec), sst.pos[0]);
     else if (isAudio) setAttr(field === 'start' ? 'at' : 'dur', fmt(field === 'start' ? sec - item.base : sec), sst.pos[1]);
     else if (field === 'start') editor.replaceRange(off + sst.pos[0].from, off + sst.pos[0].to, fmt(sec - item.base), {});
@@ -335,7 +336,7 @@
     at: 'muda algo num tempo', scene: 'planos de outro filme',
     audio: 'som de referência (fala, música)', sub: 'legenda', mouth: 'bocas do lip sync',
     box: 'colisão, golpe ou dano (jogo)', godot: 'cena do Godot', tileset: 'folha de blocos', tile: 'um bloco do tileset',
-    point: 'ponto de encaixe (jogo)',
+    point: 'ponto de encaixe (jogo)', repeat: 'repete as linhas até o end', mark: 'momento com nome (filme)', expr: 'expressão do personagem',
   };
   // o que dá para mudar com at, com o tipo de valor
   function atTargets(m) {
@@ -374,6 +375,8 @@
         const ac = actorOf(target);
         if (prop === 'anim') return ac && ac.model ? [...names(ac.model.anims.map((a) => a.name), 'animação'), { label: 'none' }] : [];
         if (prop === 'variant') return ac && ac.model ? [...names(ac.model.variants, 'variante'), { label: 'none' }] : [];
+        if (prop === 'expr') return ac && ac.model ? [...names([...ac.model.exprs.keys()], 'expressão'), { label: 'none' }] : [];
+        if (prop === 'along') return names(['0', '1'], '0 = começo do caminho, 1 = fim');
         if (prop === 'follow') return [...names(filmActors().map((a) => a.name), 'ator'), { label: 'none' }];
         if (prop === 'flip') return names(['x', 'y', 'xy', 'none']);
         if (prop === 'show') return names(['1', '0']);
@@ -423,6 +426,10 @@
         case 'c': case 'inkc': case 'bg': return colorList();
         case 'w': case 'ink': return names(widths, 'espessura');
         case 'bone': case 'on': case 'parent': case 'target': return names([...m.bones.keys()], 'osso');
+        case 'bones': return names([...m.bones.keys()], 'osso (separe com vírgula)');
+        case 'path': return names(els, 'linha, traço ou forma');
+        case 'turn': return names(['1', '0'], '1 = vira com a curva');
+        case 'mix': return names(m.anims.map((x) => x.name), 'base,ação');
         case 'cloth': return names([...m.cloths.keys()], 'tecido');
         case 'inkon': return names([...m.layerMap.keys()], 'camada');
         case 'clip': case 'cut': return [...names(els, 'forma'), ...names([...m.layerMap.keys()], 'camada')];
@@ -472,7 +479,8 @@
       const what = { A: 'fechada (M, B, P)', B: 'pouco aberta', C: 'aberta', D: 'bem aberta', E: 'arredondada (O)', F: 'biquinho (U)', G: 'dentes no lábio (F, V)', H: 'língua (L)', X: 'descanso' };
       return L.VISEMES.map((v) => ({ label: v + '=', detail: what[v] }));
     }
-    if (cmd === 'at' && idx === 1) return names(['0s', '1s', '+1s', '+0.5s'], 'tempo');
+    if (cmd === 'at' && idx === 1) return [...names(['0s', '1s', '+1s', '+0.5s'], 'tempo'), ...names(m.film ? m.film.marks.map((k) => k.name) : [], 'marcador')];
+    if (cmd === 'mark' && idx === 2) return names(['0s', '1m', '1m30s'], 'tempo');
     if (cmd === 'at' && idx >= 2) return atTargets(m);
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
     if (cmd === 'light' && idx === 2) return names(['point', 'spot', 'dir']);
@@ -947,8 +955,116 @@
     ctx.restore();
   }
 
+  // ---------- posar arrastando os ossos ----------
+  // Com Ossos ligado, uma animação escolhida e o player parado: arrastar a bolinha de um osso move o osso e
+  // arrastar a alça (o traço que sai dele) gira. O Weasel escreve o osso na key daquele quadro (ou cria a key).
+  const posing = () => !!(st.show.bones && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim));
+  // para onde o osso aponta parado: o meio das formas presas a ele (ou dos ossos filhos); sem nada, para baixo
+  function boneDir(m, b) {
+    m._boneDir = m._boneDir || new Map();
+    if (m._boneDir.has(b.name)) return m._boneDir.get(b.name);
+    const pose0 = S.makePose(m, null, 0), pts = [];
+    for (const el of m.elements) {
+      if (el.bone !== b.name || el.hidden || el.type === 'text' || el.type === 'emitter') continue;
+      const g = S.geometry(m, pose0, el);
+      if (g.segs.length) { const bb = S.segsBox(g.segs); pts.push([bb.x + bb.w / 2, bb.y + bb.h / 2]); }
+    }
+    for (const c of m.bones.values()) if (c.parent === b.name) pts.push(c.pivot);
+    let a = Math.PI / 2;
+    if (pts.length) {
+      const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+      if (Math.hypot(cx - b.pivot[0], cy - b.pivot[1]) > 2) a = Math.atan2(cy - b.pivot[1], cx - b.pivot[0]);
+    }
+    m._boneDir.set(b.name, a);
+    return a;
+  }
+  // a bolinha (mover) e a ponta da alça (girar) de cada osso, na pose do quadro
+  function boneGrips(m, pose, z) {
+    return [...m.bones.values()].map((b) => {
+      const wm = pose.bones.get(b.name), p = M.apply(wm, b.pivot[0], b.pivot[1]), a = boneDir(m, b);
+      let dx = wm[0] * Math.cos(a) + wm[2] * Math.sin(a), dy = wm[1] * Math.cos(a) + wm[3] * Math.sin(a);
+      const l = Math.hypot(dx, dy) || 1;
+      dx /= l; dy /= l;
+      return { b, p, knob: [p[0] + (dx * 30) / z, p[1] + (dy * 30) / z] };
+    });
+  }
+  function hitBone(e) {
+    if (!posing()) return null;
+    const [x, y] = toCanvas(e), r = 8 / st.view.z;
+    let best = null, bd = r;
+    for (const g of boneGrips(st.model, currentPose(), st.view.z)) {
+      const dk = Math.hypot(g.knob[0] - x, g.knob[1] - y), dp = Math.hypot(g.p[0] - x, g.p[1] - y);
+      if (dk < bd) { bd = dk; best = { bone: g.b.name, mode: 'rot' }; }
+      if (dp < bd) { bd = dp; best = { bone: g.b.name, mode: 'move' }; }
+    }
+    return best;
+  }
+  function startPose(hb, e) {
+    const m = st.model, an = m.animMap.get(st.anim), b = m.bones.get(hb.bone), f = st.frame;
+    const s = W.geom.segment(an.tracks.get(b.name), f, an.frames, an.loop);
+    const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
+    const pose = currentPose(), wm = pose.bones.get(b.name), parent = b.parent ? pose.bones.get(b.parent) : null;
+    st.pose = { bone: b.name, mode: hb.mode, v0, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null, anim: an.name, frame: f, key: 'pose' + Date.now() };
+  }
+  function movePose(e) {
+    const d = st.pose, [x, y] = toCanvas(e), v = d.v0.slice();
+    if (d.mode === 'rot') {
+      let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
+      while (da > 180) da -= 360;
+      while (da < -180) da += 360;
+      v[2] = d.v0[2] + (d.flip ? -da : da);
+    } else {
+      let dx = x - d.start[0], dy = y - d.start[1];
+      if (d.parentInv) { const q = d.parentInv; [dx, dy] = [q[0] * dx + q[2] * dy, q[1] * dx + q[3] * dy]; }
+      v[0] = d.v0[0] + dx;
+      v[1] = d.v0[1] + dy;
+    }
+    writeKey(d, v);
+  }
+  // escreve osso=dx,dy,rot[,sx,sy] na key do quadro (troca o valor, acrescenta o osso ou cria a linha)
+  function writeKey(d, v) {
+    const f1 = (n) => String(Number(n.toFixed(1))), f3 = (n) => String(Number(n.toFixed(3)));
+    const text = `${d.bone}=${[f1(v[0]), f1(v[1]), f1(v[2])].concat(v[3] !== 1 || v[4] !== 1 ? [f3(v[3]), f3(v[4])] : []).join(',')}`;
+    const lineText = (line) => { const s = editor.lineStart(line), n = editor.value.indexOf('\n', s); return editor.value.slice(s, n < 0 ? editor.value.length : n).replace(/\r$/, ''); };
+    let keyAt = -1, after = -1, best = -1;
+    for (const [line, rec] of st.model.byLine) {
+      if (!rec.anim || rec.anim.name !== d.anim) continue;
+      if (rec.st.cmd === 'anim' && after < 0) after = line;
+      if (rec.st.cmd === 'key' && rec.frame === d.frame && (keyAt < 0 || line < keyAt)) keyAt = line;
+      if (rec.st.cmd === 'key' && rec.frame < d.frame && rec.frame >= best) { best = rec.frame; after = Math.max(after, line); }
+    }
+    if (keyAt < 0) {
+      // linha nova, depois da key de quadro menor (ou logo depois do anim)
+      const at = editor.lineStart(after + 1), v0 = editor.value;
+      const ins = at >= v0.length && v0.length && !v0.endsWith('\n') ? `\nkey ${d.frame} ${text}` : `key ${d.frame} ${text}\n`;
+      editor.replaceRange(at, at, ins, { key: d.key });
+      return;
+    }
+    const off = editor.lineStart(keyAt), lt = lineText(keyAt);
+    const esc = d.bone.replace(/[-]/g, '\\$&');
+    const mm = new RegExp(`(^|\\s)${esc}=\\S*`).exec(lt);
+    if (mm) { const s0 = off + mm.index + mm[1].length; editor.replaceRange(s0, s0 + mm[0].length - mm[1].length, text, { key: d.key }); return; }
+    const c = /(^|\s)#(?![0-9a-fA-F]{3,8}\b)/.exec(lt), end = (c ? lt.slice(0, c.index) : lt).replace(/\s+$/, '').length;
+    editor.replaceRange(off + end, off + end, ` ${text}`, { key: d.key });
+  }
+
   function drawBones(ctx, m, pose, z) {
     ctx.save();
+    // posando: a alça de girar de cada osso
+    if (posing()) {
+      for (const g of boneGrips(m, pose, z)) {
+        ctx.strokeStyle = '#7fe0d0';
+        ctx.lineWidth = 1.5 / z;
+        ctx.beginPath();
+        ctx.moveTo(g.p[0], g.p[1]);
+        ctx.lineTo(g.knob[0], g.knob[1]);
+        ctx.stroke();
+        ctx.fillStyle = '#7fe0d0';
+        ctx.beginPath();
+        ctx.arc(g.knob[0], g.knob[1], 4 / z, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     for (const b of m.bones.values()) {
       const p = M.apply(pose.bones.get(b.name), b.pivot[0], b.pivot[1]);
       if (b.parent && m.bones.has(b.parent)) {
@@ -1102,6 +1218,8 @@
       ta.focus();
       return;
     }
+    const hb = e.button === 0 ? hitBone(e) : null;
+    if (hb) { startPose(hb, e); return; }
     const hi = e.button === 0 ? hitHandle(e) : -1;
     if (hi >= 0) {
       const rec = st.model.byLine.get(st.caret.line);
@@ -1120,6 +1238,7 @@
     const [x, y] = toCanvas(e);
     const wp = toWorld(e);
     $('coords').textContent = `x ${Math.round(wp[0])}  y ${Math.round(wp[1])}`;
+    if (st.pose) { movePose(e); return; }
     if (st.drag) { moveHandle(st.drag, x, y); return; }
     if (st.pan) {
       st.view.auto = false;
@@ -1128,10 +1247,11 @@
       draw();
       return;
     }
-    view.style.cursor = hitHandle(e) >= 0 ? 'move' : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    const hb = hitBone(e);
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hitHandle(e) >= 0 ? 'move' : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
-  const endPointer = () => { st.drag = null; st.pan = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.drag = null; st.pose = null; st.pan = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', endPointer);
   view.addEventListener('pointercancel', endPointer);
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });

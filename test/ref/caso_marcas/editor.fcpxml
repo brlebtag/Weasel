@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/12s" width="240" height="136" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_marcas_a" start="0s" duration="18/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_marcas_a.mov"/>
+    </asset>
+    <asset id="r3" name="caso_marcas_b" start="0s" duration="24/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_marcas_b.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_marcas">
+      <project name="caso_marcas">
+        <sequence format="r1" duration="42/12s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_marcas_a" offset="0s" start="0s" duration="18/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="a"/>
+              <marker start="6/12s" duration="1/12s" value="entra"/>
+            </asset-clip>
+            <asset-clip ref="r3" name="caso_marcas_b" offset="18/12s" start="0s" duration="24/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="b"/>
+              <marker start="8/12s" duration="1/12s" value="bravo"/>
+              <marker start="18/12s" duration="1/12s" value="susto"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

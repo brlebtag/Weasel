@@ -9,25 +9,30 @@
   const lerp = (a, b, t) => a + (b - a) * t;
 
   // ---------- trilhas de animação ----------
-  // Trecho da trilha que contém o quadro f: a key de antes, a de depois e o t (já com ease).
-  function segment(track, f, frames, loop) {
-    if (!track || !track.length) return null;
-    const first = track[0], last = track[track.length - 1];
-    if (track.length === 1) return { a: first, b: first, t: 0 };
-    let a, b, fa, fb;
-    if (f < first.frame) {
-      if (!loop) return { a: first, b: first, t: 0 };
-      a = last; fa = last.frame - frames; b = first; fb = first.frame;
-    } else if (f >= last.frame) {
-      if (!loop) return { a: last, b: last, t: 0 };
-      a = last; fa = last.frame; b = first; fb = first.frame + frames;
-    } else {
-      let i = 0;
-      while (track[i + 1].frame <= f) i++;
-      a = track[i]; b = track[i + 1]; fa = a.frame; fb = b.frame;
+  const segment = G.segment;
+  // only= de camadas e caixas: a animação pelo nome, ou pelos nomes das que ela junta (mix=)
+  const animIn = (list, anim) => list.includes(anim.name) || !!(anim.aliases && anim.aliases.some((n) => list.includes(n)));
+
+  // Ponto do caminho (path=) na fração t do comprimento (0 = começo, 1 = fim), com a direção dele em graus.
+  // Num caminho fechado, t dá voltas (1.5 = uma volta e meia).
+  function pathAt(el, t) {
+    let arc = el._arc;
+    if (!arc) {
+      const segs = rawSegs(el).map((s) => (el.xf ? G.mapSeg(s, (x, y) => M.apply(el.xf, x, y)) : s));
+      const fl = G.flatten(segs, 1.5), pts = [];
+      for (let i = 0; i < fl.length; i += 2) pts.push([fl[i], fl[i + 1]]);
+      if (el.closed && pts.length) pts.push(pts[0]);
+      const acc = [0];
+      for (let i = 1; i < pts.length; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      arc = el._arc = { pts, acc, total: acc[acc.length - 1] || 0 };
     }
-    const span = fb - fa;
-    return { a, b, t: span > 0 ? G.EASE[a.ease]((f - fa) / span) : 0 };
+    const { pts, acc, total } = arc;
+    if (pts.length < 2 || !total) return { x: pts.length ? pts[0][0] : 0, y: pts.length ? pts[0][1] : 0, angle: 0 };
+    const u = el.closed ? ((t % 1) + 1) % 1 : Math.max(0, Math.min(1, t)), s = u * total;
+    let lo = 0, hi = acc.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acc[mid] <= s) lo = mid; else hi = mid; }
+    const a = pts[lo], b = pts[hi], k = (s - acc[lo]) / (acc[hi] - acc[lo] || 1);
+    return { x: a[0] + (b[0] - a[0]) * k, y: a[1] + (b[1] - a[1]) * k, angle: (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI };
   }
 
   function hash(str, f) {
@@ -50,6 +55,16 @@
     if (b.sway) v[2] += wave(b.sway);
     if (b.bob) v[1] += wave(b.bob);
     if (b.jitter) { const q = Math.floor(f); v[0] += b.jitter * hash(b.name + 'x', q); v[1] += b.jitter * hash(b.name + 'y', q); }
+    // path=: o pivô anda pelo caminho (key osso.along=0 … 1) e, com turn, vira junto com a curva
+    if (b.path) {
+      const tr = anim.ptracks.get(`${b.name}.along`), s = tr && segment(tr.keys, f, anim.frames, anim.loop);
+      if (s) {
+        const P = pathAt(b.path, s.a.v + (s.b.v - s.a.v) * s.t);
+        v[0] += P.x - b.pivot[0];
+        v[1] += P.y - b.pivot[1];
+        if (b.turn) v[2] += P.angle;
+      }
+    }
     if (springs && springs.has(b.name)) v[2] += springs.get(b.name)[f];
     return v;
   }
@@ -160,6 +175,7 @@
     for (let f = 0; f < N; f++) {
       const pm = new Map(), lm = new Map(), li = new Map(), bm = new Map();
       for (const tr of anim.ptracks.values()) {
+        if (tr.kind === 'bone') continue; // osso.along entra nos valores do osso
         const s = segment(tr.keys, f, N, anim.loop);
         if (!s) continue;
         let v;
@@ -207,6 +223,73 @@
     return out;
   }
 
+  // Matrizes dos ossos a partir dos valores de cada um (como boneMatrices, mas com os valores prontos).
+  function matsFrom(model, vals) {
+    const out = new Map();
+    const get = (name, depth) => {
+      if (out.has(name)) return out.get(name);
+      const b = model.bones.get(name);
+      if (!b) return M.id();
+      const v = vals.get(name) || REST, [px, py] = b.pivot;
+      let local = M.mul(M.translate(px + v[0], py + v[1]), M.mul(M.rotate(v[2]), M.mul(M.scale(v[3], v[4]), M.translate(-px, -py))));
+      const m = b.parent && depth < 64 ? M.mul(get(b.parent, depth + 1), local) : local;
+      out.set(name, m);
+      return m;
+    };
+    for (const name of model.bones.keys()) get(name, 0);
+    return out;
+  }
+
+  // Expressão (expr) por cima de uma pose: os ossos e as formas que ela diz, misturando de uma expressão para a
+  // outra. ex = { from, to, u } (nomes, ou null para nenhuma). Os ossos da expressão substituem os da animação.
+  function exprPose(model, pose, ex) {
+    const A = ex.from ? model.exprs.get(ex.from) : null, B = ex.to ? model.exprs.get(ex.to) : null, u = ex.u;
+    if (!A && !B) return pose;
+    let bones = pose.bones;
+    const touched = new Set([...(A ? A.tracks.keys() : []), ...(B ? B.tracks.keys() : [])]);
+    if (touched.size) {
+      const base = pose.anim ? boneLocal(model, pose.anim, pose.frame) : null, vals = new Map();
+      for (const b of model.bones.values()) {
+        let v = base ? base.get(b.name) : pose.time !== undefined ? freeValues(b, pose.time) : REST;
+        if (touched.has(b.name)) {
+          const va = A && A.tracks.has(b.name) ? A.tracks.get(b.name)[0].v : v, vb = B && B.tracks.has(b.name) ? B.tracks.get(b.name)[0].v : v;
+          v = va.map((x, k) => x + (vb[k] - x) * u);
+        }
+        vals.set(b.name, v);
+      }
+      bones = matsFrom(model, vals);
+    }
+    let props = pose.props;
+    const keys = new Set([...(A ? A.ptracks.keys() : []), ...(B ? B.ptracks.keys() : [])]);
+    if (keys.size) {
+      props = new Map(pose.props);
+      for (const key of keys) {
+        const ta = A && A.ptracks.get(key), tb = B && B.ptracks.get(key), tr = ta || tb;
+        if (tr.kind !== 'el') continue;
+        const va = ta ? ta.keys[0].v : undefined, vb = tb ? tb.keys[0].v : undefined;
+        for (const el of tr.targets) {
+          const o = Object.assign({}, props.get(el.id) || {}), cur = o[tr.prop];
+          if (tr.type === 'shape') {
+            o.shape = { from: va !== undefined ? findNamed(model, va, el.inst) : el, to: vb !== undefined ? findNamed(model, vb, el.inst) : el, t: u };
+          } else if (tr.type === 'color') {
+            const own = cur !== undefined ? cur : tr.prop === 'inkc' ? el.inkc : el.closed ? el.fill : el.color;
+            const ca = va !== undefined ? va : own, cb = vb !== undefined ? vb : own;
+            o[tr.prop] = typeof ca === 'string' && typeof cb === 'string' ? G.lerpColor(ca, cb, u) : u < 0.5 ? ca : cb;
+          } else if (tr.type === 'step') {
+            const own = cur !== undefined ? cur : 1;
+            o[tr.prop] = u < 0.5 ? (va !== undefined ? va : own) : vb !== undefined ? vb : own;
+          } else if (tr.type !== 'order') {
+            const own = cur !== undefined ? cur : tr.prop === 'w' ? el.w : tr.prop === 'ink' ? el.ink : 1;
+            const na = va !== undefined ? va : own, nb = vb !== undefined ? vb : own;
+            o[tr.prop] = na + (nb - na) * u;
+          }
+          props.set(el.id, o);
+        }
+      }
+    }
+    return Object.assign({}, pose, { bones, props, geo: new Map() });
+  }
+
   function makePose(model, animName, frame) {
     const anim = animName ? model.animMap.get(animName) || null : null;
     if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, geo: new Map() };
@@ -225,7 +308,7 @@
   function boxState(model, pose, b) {
     const bp = (pose.bprops && pose.bprops.get(b.name)) || NOPROPS;
     let on = bp.show !== undefined ? bp.show !== 0 : b.on;
-    if (b.only && !(pose.anim ? b.only.includes(pose.anim.name) : b.only.includes('pose'))) on = false;
+    if (b.only && !(pose.anim ? animIn(b.only, pose.anim) : b.only.includes('pose'))) on = false;
     const cx = b.shape === 'rect' ? b.x + b.w / 2 : b.x, cy = b.shape === 'rect' ? b.y + b.h / 2 : b.y;
     const m = b.bone ? pose.bones.get(b.bone) : null;
     const c = m ? M.apply(m, cx, cy) : [cx, cy];
@@ -241,8 +324,48 @@
   }
 
   // ---------- geometria de cada elemento numa pose ----------
-  // coordenadas do código → mundo: componente (xf), osso, tecido
+  // bones=: o peso de cada osso num ponto, pela distância até o "pedaço" do osso (do pivô dele até o pivô do
+  // seguinte na lista; o último continua na mesma direção). Perto de uma junta, os dois ossos dividem o ponto.
+  function skinWeights(model, el, x, y) {
+    const segs = el._skin || (el._skin = el.bones.map((n, i) => {
+      const p = model.bones.get(n).pivot, q = el.bones[i + 1] ? model.bones.get(el.bones[i + 1]).pivot : null;
+      const prev = i > 0 ? model.bones.get(el.bones[i - 1]).pivot : null;
+      const e = q || (prev ? [2 * p[0] - prev[0], 2 * p[1] - prev[1]] : p);
+      return [p[0], p[1], e[0], e[1]];
+    }));
+    // a passagem de um osso para o outro ocupa uns 40% do tamanho médio dos pedaços
+    if (el._sigma === undefined) {
+      const ls = segs.map((q) => Math.hypot(q[2] - q[0], q[3] - q[1])).filter((l) => l > 0);
+      el._sigma = Math.max(4, 0.4 * (ls.length ? ls.reduce((a, b) => a + b, 0) / ls.length : 20));
+    }
+    const d2 = segs.map((q) => {
+      const dx = q[2] - q[0], dy = q[3] - q[1], l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, ((x - q[0]) * dx + (y - q[1]) * dy) / l2)) : 0;
+      return (x - q[0] - dx * t) ** 2 + (y - q[1] - dy * t) ** 2;
+    });
+    const near = Math.min(...d2), k = 2 * el._sigma * el._sigma;
+    const w = d2.map((v) => Math.exp(-(v - near) / k));
+    const sum = w.reduce((a, b) => a + b, 0);
+    return w.map((v) => v / sum);
+  }
+
+  // bones=: um ponto do desenho (já com o componente) vai para onde a média dos ossos, com os pesos, o leva
+  function skinMap(model, pose, el) {
+    const ms = el.bones.map((n) => pose.bones.get(n));
+    return (x, y) => {
+      const w = skinWeights(model, el, x, y);
+      let px = 0, py = 0;
+      ms.forEach((mm, i) => { const q = mm ? M.apply(mm, x, y) : [x, y]; px += q[0] * w[i]; py += q[1] * w[i]; });
+      return [px, py];
+    };
+  }
+
+  // coordenadas do código → mundo: componente (xf), osso (ou vários, com bones=), tecido
   function mapper(model, pose, el) {
+    if (el.bones) {
+      const sk = skinMap(model, pose, el), xf = el.xf;
+      return xf ? (x, y) => { const q = M.apply(xf, x, y); return sk(q[0], q[1]); } : sk;
+    }
     const m = el.bone ? pose.bones.get(el.bone) : null;
     const c = el.cloth ? model.cloths.get(el.cloth) : null;
     const o = c ? pose.cloth.get(el.cloth) : null;
@@ -332,13 +455,78 @@
     return { x: x0, y: y0, w: Math.max(1e-6, x1 - x0), h: Math.max(1e-6, y1 - y0) };
   }
 
+  // ---------- morph entre formas quaisquer ----------
+  // Formas do mesmo tipo e com o mesmo número de pontos se misturam ponto a ponto. As outras (elipse que
+  // vira estrela, boca de 4 pontos que vira uma de 7) viram contornos com MORPH_N pontos espalhados por
+  // igual, alinhados para cada ponto andar o mínimo, e a mistura é entre esses contornos.
+  const MORPH_N = 72;
+  const lerpable = (a, b) => a.type === b.type && (!a.pts || !b.pts || a.pts.length === b.pts.length);
+  function rawSegs(e) {
+    if (e.type === 'ellipse') return G.ellipseSegs(e.center[0], e.center[1], e.radius[0], e.radius[1], e.rot);
+    if (e.type === 'rect') return G.rectSegs(e.xy[0], e.xy[1], e.size[0], e.size[1], e.r, e.rot);
+    if (e.type === 'line') return G.polySegs(e.pts, false);
+    return G.smoothSegs(e.pts, e.closed, e.smooth);
+  }
+  // n pontos com a mesma distância entre si ao longo do contorno (fechado: sem repetir o primeiro)
+  function resample(flat, n, closed) {
+    const pts = [];
+    for (let i = 0; i < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
+    if (closed && pts.length > 1) { const a = pts[0], b = pts[pts.length - 1]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) > 1e-6) pts.push(a.slice()); }
+    const acc = [0];
+    for (let i = 1; i < pts.length; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const total = acc[acc.length - 1] || 1, out = [];
+    let j = 0;
+    for (let k = 0; k < n; k++) {
+      const s = closed ? (total * k) / n : (total * k) / (n - 1);
+      while (j < acc.length - 2 && acc[j + 1] < s) j++;
+      const span = acc[j + 1] - acc[j] || 1, f = Math.min(1, Math.max(0, (s - acc[j]) / span));
+      const a = pts[j], b = pts[Math.min(j + 1, pts.length - 1)];
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+    }
+    return out;
+  }
+  const area = (p) => { let s = 0; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; s += a[0] * b[1] - b[0] * a[1]; } return s; };
+  function morphPair(model, a, b) {
+    model._morph = model._morph || new Map();
+    const key = `${a.id}>${b.id}`;
+    if (model._morph.has(key)) return model._morph.get(key);
+    const closed = a.closed;
+    const A = resample(G.flatten(rawSegs(a), 1.5), MORPH_N, closed);
+    let B = resample(G.flatten(rawSegs(b), 1.5), MORPH_N, closed);
+    if (closed) {
+      // mesmo sentido de volta e o começo que deixa os pontos mais perto dos seus pares
+      if (Math.sign(area(A)) !== Math.sign(area(B))) B = B.slice().reverse();
+      let best = 0, bd = Infinity;
+      for (let s = 0; s < MORPH_N; s++) {
+        let d = 0;
+        for (let i = 0; i < MORPH_N && d < bd; i++) { const p = A[i], q = B[(i + s) % MORPH_N]; d += (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2; }
+        if (d < bd) { bd = d; best = s; }
+      }
+      B = B.map((_, i) => B[(i + best) % MORPH_N]);
+    } else {
+      const d = (P, Q) => P.reduce((s, p, i) => s + (p[0] - Q[i][0]) ** 2 + (p[1] - Q[i][1]) ** 2, 0);
+      const R2 = B.slice().reverse();
+      if (d(A, R2) < d(A, B)) B = R2;
+    }
+    const pair = { A, B };
+    model._morph.set(key, pair);
+    return pair;
+  }
+
   function geometry(model, pose, el) {
     let g = pose.geo.get(el.id);
     if (g) return g;
     const pr = pose.props.get(el.id);
     const mo = pr && pr.shape && pr.shape.from && pr.shape.to ? pr.shape : null;
     let segs = [];
-    if (el.type === 'ellipse') {
+    // bones=: a curva é desenhada parada e depois dobrada ponto a ponto pelos ossos
+    const skin = el.bones ? skinMap(model, pose, el) : null;
+    const mapOf = () => (skin ? (el.xf ? (x, y) => M.apply(el.xf, x, y) : (x, y) => [x, y]) : mapper(model, pose, el));
+    if (mo && (!lerpable(mo.from, mo.to) || mo.from.type !== el.type || mo.to.type !== el.type) && el.type !== 'text' && el.type !== 'emitter' && !el.limb) {
+      const { A, B } = morphPair(model, mo.from, mo.to), t = mo.t, f = mapOf();
+      const pts = A.map((p, i) => { const q = f(p[0] + (B[i][0] - p[0]) * t, p[1] + (B[i][1] - p[1]) * t); return { x: q[0], y: q[1] }; });
+      segs = G.polySegs(pts, el.closed);
+    } else if (el.type === 'ellipse') {
       let c = el.center, r = el.radius, rot = el.rot;
       if (mo) {
         const A = mo.from, B = mo.to, t = mo.t;
@@ -346,7 +534,7 @@
         r = [lerp(A.radius[0], B.radius[0], t), lerp(A.radius[1], B.radius[1], t)];
         rot = lerp(A.rot, B.rot, t);
       }
-      const f = mapper(model, pose, el);
+      const f = mapOf();
       segs = G.ellipseSegs(c[0], c[1], r[0], r[1], rot).map((s) => G.mapSeg(s, f));
     } else if (el.type === 'rect') {
       let xy = el.xy, size = el.size, rr = el.r, rot = el.rot;
@@ -357,21 +545,27 @@
         rr = lerp(A.r, B.r, t);
         rot = lerp(A.rot, B.rot, t);
       }
-      const f = mapper(model, pose, el);
+      const f = mapOf();
       segs = G.rectSegs(xy[0], xy[1], size[0], size[1], rr, rot).map((s) => G.mapSeg(s, f));
     } else if (el.type === 'text') {
       const b = textBox(el), m = textMatrix(pose, el);
       segs = G.rectSegs(b.x, b.y, b.w, b.h, 0, 0).map((s) => G.mapSeg(s, (x, y) => M.apply(m, x, y)));
     } else if (el.type === 'emitter') {
-      const f = mapper(model, pose, el);
+      const f = mapOf();
       segs = G.ellipseSegs(el.at[0], el.at[1], 4, 4, 0).map((s) => G.mapSeg(s, f));
     } else if (el.limb) {
       segs = G.smoothSegs(limbPoints(model, pose, el), false, 1);
     } else {
       const pts = mo ? lerpPts(mo.from.pts, mo.to.pts, mo.t, el.pts) : el.pts;
-      const f = mapper(model, pose, el);
+      const f = mapOf();
       if (el.type === 'line') segs = G.polySegs(mapPts(pts, f), false);
       else if (pts.length >= 2) segs = G.smoothSegs(mapPts(pts, f), el.closed, el.smooth);
+    }
+    if (skin && segs.length) {
+      const fl = G.flatten(segs, 3), pts = [];
+      for (let i = 0; i < fl.length; i += 2) { const q = skin(fl[i], fl[i + 1]); pts.push({ x: q[0], y: q[1] }); }
+      if (el.closed && pts.length > 2 && Math.hypot(pts[0].x - pts[pts.length - 1].x, pts[0].y - pts[pts.length - 1].y) < 1e-6) pts.pop();
+      segs = G.polySegs(pts, el.closed);
     }
     g = { segs, closed: el.closed, _path: null, _flat: null };
     pose.geo.set(el.id, g);
@@ -938,7 +1132,7 @@
     if (layer.hidden) return false;
     if (layer.guide && !opts.guides) return false;
     // only=: só nessas animações; o nome pose vale para a pose parada (sem animação)
-    if (layer.only && !(pose.anim ? layer.only.includes(pose.anim.name) : layer.only.includes('pose'))) return false;
+    if (layer.only && !(pose.anim ? animIn(layer.only, pose.anim) : layer.only.includes('pose'))) return false;
     return true;
   }
 
@@ -1517,7 +1711,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boneLocal, matsFrom, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

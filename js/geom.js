@@ -59,6 +59,28 @@
     back: (t) => { const c = 1.70158, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; },
   };
 
+  // Trecho de uma trilha de keys que contém o quadro f: a key de antes, a de depois e o t (já com o ease).
+  // Numa animação com loop, antes da primeira key o valor vem da última, passando pela emenda.
+  function segment(track, f, frames, loop) {
+    if (!track || !track.length) return null;
+    const first = track[0], last = track[track.length - 1];
+    if (track.length === 1) return { a: first, b: first, t: 0 };
+    let a, b, fa, fb;
+    if (f < first.frame) {
+      if (!loop) return { a: first, b: first, t: 0 };
+      a = last; fa = last.frame - frames; b = first; fb = first.frame;
+    } else if (f >= last.frame) {
+      if (!loop) return { a: last, b: last, t: 0 };
+      a = last; fa = last.frame; b = first; fb = first.frame + frames;
+    } else {
+      let i = 0;
+      while (track[i + 1].frame <= f) i++;
+      a = track[i]; b = track[i + 1]; fa = a.frame; fb = b.frame;
+    }
+    const span = fb - fa;
+    return { a, b, t: span > 0 ? EASE[a.ease]((f - fa) / span) : 0 };
+  }
+
   // Curva suave que passa por todos os pontos. Pontos com corner=true viram cantos vivos e
   // pontos com tan=[dx,dy] usam essa alça (a do outro lado é espelhada).
   // Cada segmento é uma cúbica [x0,y0, c1x,c1y, c2x,c2y, x1,y1].
@@ -275,5 +297,5 @@
     return out;
   }
 
-  W.geom = { M, EASE, parseHex, toHex, lerpColor, smoothSegs, polySegs, ellipseSegs, rectSegs, mapSeg, toPath, flatten, polyLength, polyPrefix, varBatches, strokeVar, drawVar, inkWidths, taperWidths };
+  W.geom = { M, EASE, segment, parseHex, toHex, lerpColor, smoothSegs, polySegs, ellipseSegs, rectSegs, mapSeg, toPath, flatten, polyLength, polyPrefix, varBatches, strokeVar, drawVar, inkWidths, taperWidths };
 })(window.Weasel = window.Weasel || {});

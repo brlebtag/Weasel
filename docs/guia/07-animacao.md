@@ -135,7 +135,7 @@ As `key` também mudam formas, camadas e luzes. Em vez do nome de um osso, escre
 | `w` | traço, linha | espessura | aos poucos |
 | `ink` | forma | espessura do contorno | aos poucos |
 | `show` | forma, camada, caixa | aparece (`1`) ou some (`0`) | de uma vez |
-| `shape` | forma | **morph**: vira outra forma | aos poucos (veja abaixo) |
+| `shape` | forma | **morph**: vira outra forma (fechada com fechada, traço com traço) | aos poucos (veja abaixo) |
 | `draw` | forma | quanto já foi **desenhado**, de 0 a 1 | aos poucos ([abaixo](#desenhar-aos-poucos-draw)) |
 | `above` `below` | forma, camada | pinta na frente (ou atrás) de outra ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)) | de uma vez |
 | `blur` `glow` `tint` `brightness` `saturate` `contrast` `hue` | camada | efeitos ([capítulo 8](08-luz-efeitos.md#efeitos-de-camada)) | aos poucos |
@@ -220,9 +220,30 @@ Como cada tipo de forma é desenhado:
 
 `key 10 forma.shape=outra` faz a forma **se transformar** no formato de `outra` até aquele quadro. É assim que se pisca um olho, se abre uma boca ou se muda uma expressão sem ossos.
 
+<!-- gerar: img/07_morph.gif -a vira -->
+```weasel
+canvas 420 160 bg=#f4efe6
+palette ink=#2b2a33 line=4
+
+ellipse bolha 70,80 44 c=#ff9a4a ink=line
+shape estrela c=#ffd34d ink=line hidden : 70,30! 82,64! 118,66! 90,88! 100,122! 70,102! 40,122! 50,88! 22,66! 58,64!
+shape boca c=#c44536 ink=line : 180,70 260,70 260,90 180,90
+shape sorriso c=#c44536 ink=line hidden : 170,66 200,74 220,76 240,74 270,66 250,96 220,104 190,96
+stroke onda w=5 c=#4a90d9 : 300,80 400,80
+stroke zigue w=5 c=#4a90d9 hidden : 300,100 320,60 340,100 360,60 380,100 400,60
+
+anim vira frames=24 fps=12
+key 0 bolha.shape=bolha boca.shape=boca onda.shape=onda
+key 12 bolha.shape=estrela boca.shape=sorriso onda.shape=zigue
+key 24 bolha.shape=bolha boca.shape=boca onda.shape=onda
+```
+
+![Um círculo laranja vira uma estrela amarela, uma boca reta vira um sorriso e uma linha vira um zigue-zague, e voltam](img/07_morph.gif)
+
 As regras:
 
-- A forma de destino precisa ser do **mesmo tipo** (elipse com elipse, `shape` com `shape`, `stroke` com `stroke`) e, se tiver pontos, o **mesmo número de pontos**. Ponto 1 vira ponto 1, ponto 2 vira ponto 2…
+- Uma forma **fechada** vira outra fechada (elipse, retângulo ou `shape`, de qualquer número de pontos), e um **traço** vira outro traço. O círculo do exemplo vira uma estrela de 10 pontos; a boca de 4 pontos vira uma de 8.
+- Quando as duas formas são do mesmo tipo e têm o mesmo número de pontos, ponto 1 vira ponto 1, ponto 2 vira ponto 2… Nos outros casos, o Weasel espalha pontos iguais pelo contorno das duas e casa cada um com o mais perto do outro lado.
 - A forma de destino quase sempre tem `hidden`: ela não aparece, só serve de molde.
 - Para voltar ao normal, faça o morph para a própria forma: `key 20 olho.shape=olho`.
 - A forma que muda mantém a cor, o contorno e o osso dela; só o formato muda.
@@ -283,6 +304,56 @@ Repare em três coisas:
 - Para **piscar**, cada olho vira o molde `fechado` (uma elipse achatada) no quadro 36 e volta no 38; o brilho do olho some nesse meio-tempo com `show=0`. Os moldes só emprestam o formato: a cor continua a do olho.
 - A **boca** é uma `shape` de 4 pontos, e `bocaAberta` também tem 4: por isso uma vira a outra.
 - As `key` estão misturadas por assunto (respiração, fala, piscada), não por ordem de quadro. Pode: o Weasel organiza sozinho.
+
+## Animações combinadas: `mix=`
+
+Andar e atacar ao mesmo tempo é uma animação nova, mas não precisa ser feita do zero. `mix=` junta duas animações: a **base** inteira, com alguns ossos vindos da **ação**:
+
+<!-- gerar: img/07_mix.gif -a walk_atk -->
+```weasel
+canvas 300 200 bg=#f4efe6
+palette ink=#2b2a33 line=4
+
+bone corpo pivot=150,150
+bone braco pivot=170,110 parent=corpo
+bone perna pivot=150,150 parent=corpo
+ellipse tronco 150,110 24,40 c=#4a6fd8 ink=line bone=corpo
+rect espada 168,50 6,60 c=#d9dde3 ink=line bone=braco
+rect pe 140,150 20,40 c=#5ea860 ink=line bone=perna
+box golpe hit rect 160,40 30,60 bone=braco only=atk off
+
+anim walk frames=16 fps=12
+key 0 corpo=0,0,0 perna=0,0,-20 braco=0,0,10
+key 8 corpo=0,-8,0 perna=0,0,20 braco=0,0,-10
+key 16 corpo=0,0,0 perna=0,0,-20 braco=0,0,10
+
+anim atk frames=8 fps=12 once
+key 0 braco=0,0,0 golpe.show=0
+key 3 braco=0,0,-80
+key 5 braco=0,0,90 golpe.show=1
+key 7 golpe.show=0
+key 8 braco=0,0,0
+event 5 golpe
+
+anim walk_atk mix=walk,atk bones=braco
+```
+
+![O boneco anda balançando a perna e o corpo enquanto o braço dá o golpe com a espada](img/07_mix.gif)
+
+- `mix=walk,atk bones=braco`: tudo vem do `walk`, menos o osso `braco` (e os filhos dele), que vem do `atk`.
+- O tempo é o da ação: 8 quadros, 12 fps e `once`, como o `atk`. Para mudar, escreva `frames=`, `fps=` ou `loop` na linha do `anim`.
+- O que é da ação vem junto: a caixa de golpe (presa ao braço e com `only=atk`) liga nos quadros certos, e o evento `golpe` também. As camadas e caixas com `only=walk` ou `only=atk` aparecem na combinada.
+- `key` escritas na própria animação combinada valem por cima.
+- Num jogo top-down, dê o nome com a direção (`walk_attack_right`): no Godot, o lado espelhado sai sozinho.
+
+## Posar arrastando os ossos
+
+No editor, também dá para animar **mexendo no desenho**. Ligue **Ossos**, escolha uma animação no player, pare num quadro e:
+
+- arraste a **bolinha** de um osso para movê-lo;
+- arraste a **alça** (o traço verde que sai do osso) para girá-lo.
+
+O Weasel escreve o osso na `key` daquele quadro, com os valores novos. Se o quadro ainda não tem `key`, ele cria a linha, na ordem dos quadros. É um jeito de experimentar uma pose e ver no código o que ela virou. **Ctrl+Z** desfaz.
 
 ## Eventos: `event`
 

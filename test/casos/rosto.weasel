@@ -1,0 +1,22 @@
+# teste: expressões (expr) de um personagem, para o filme trocar com at heroi.expr=nome
+canvas 200 200 bg=none
+palette ink=#2b2a33 line=4 pele=#ffcf8a
+
+unity root=100,190
+bone cabeca pivot=100,150
+bone sobE pivot=80,82 parent=cabeca
+bone sobD pivot=120,82 parent=cabeca
+
+layer rosto
+ellipse cara 100,110 60,56 c=pele ink=line bone=cabeca
+ellipse olhoE 80,102 6,9 c=ink bone=cabeca
+ellipse olhoD 120,102 6,9 c=ink bone=cabeca
+stroke sobrancelhaE w=5 c=ink bone=sobE : 66,84 94,80
+stroke sobrancelhaD w=5 c=ink bone=sobD : 106,80 134,84
+shape boca c=#c44536 ink=3 bone=cabeca : 84,130 116,130 112,138 88,138
+shape sorriso c=#c44536 ink=3 bone=cabeca hidden : 76,124 100,132 124,124 116,144 100,150 84,144
+ellipse grito c=#c44536 ink=3 bone=cabeca hidden 100,138 12,16
+
+expr bravo sobE=0,4,25 sobD=0,4,-25 cara.c=#ff9a7a
+expr feliz sobE=0,-6,-10 sobD=0,-6,10 boca.shape=sorriso
+expr susto sobE=0,-12 sobD=0,-12 boca.shape=grito cabeca=0,-6

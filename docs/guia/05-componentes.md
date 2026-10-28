@@ -38,9 +38,45 @@ Tudo na carinha depende de `cx`, `cy` e `r`. Mude `r=80` para `r=50` e ela intei
 | `round(v)` `floor(v)` `ceil(v)` | arredondar, para baixo, para cima | `{round(r/3)}` |
 | `lerp(a,b,t)` | o valor a `t` do caminho entre `a` e `b` | `{lerp(100,300,0.25)}` = 150 |
 | `clamp(v,a,b)` | prende `v` entre `a` e `b` | `{clamp(r,10,50)}` |
+| `rand(x)` `rand(x,a,b)` | um número "sorteado" de 0 a 1 (ou de `a` a `b`), sempre o mesmo para o mesmo `x` | `{rand(i,-4,4)}` |
 | `pi` | 3,14159… | `{2*pi*r}` |
 
 > No editor, pontos que vêm de contas aparecem em **cinza** e não podem ser arrastados (o editor não sabe reescrever a conta). Para ajustar, mude a variável, ou use **Alt+arrastar** em cima do número no código.
+
+## Repetir: `repeat`
+
+`repeat i 0..29` repete as linhas até o `end`, com a variável `i` valendo 0, 1, 2… até 29 nas contas. Junto com `rand()`, desenha grama, cercas, estrelas e florestas sem copiar linha por linha:
+
+<!-- gerar: img/05_repeat.png -->
+```weasel
+canvas 400 200 bg=#cfe8f5
+palette ink=#2b2a33 line=3
+let n=30
+
+rect chao 0,160 400,40 c=#7cc56a
+repeat i 0..{n-1}
+stroke capim w=3 c=#4f9a3e : {i*13+6},170 {i*13+4+rand(i,-4,4)},{150-rand(i+50)*25}
+end
+
+repeat j 0..4
+ellipse estrela {40+j*80},{40+rand(j*7)*30} {6+rand(j)*6} c=#ffd34d ink=line
+end
+
+repeat k 1..3
+repeat m 1..2
+rect bloco {k*90+m*20},100 16,16 c=#c58a4c ink=line
+end
+end
+```
+
+![Uma fileira de capins de alturas diferentes, cinco estrelas espalhadas e três pares de blocos](img/05_repeat.png)
+
+- `repeat i 0..29` repete 30 vezes. Os limites podem ser contas: `0..{n-1}`, com `n` de um `let`. De trás para a frente também vale: `repeat i 9..0`.
+- `rand(i)` dá um número entre 0 e 1 que parece sorteado, mas é **sempre o mesmo** para o mesmo `i`: o desenho sai igual toda vez. `rand(i,-4,4)` sorteia entre -4 e 4. Para dois sorteios diferentes do mesmo `i`, mude a conta: `rand(i)` e `rand(i+50)`.
+- Um `repeat` pode ficar dentro de outro, como os blocos do exemplo.
+- As formas repetidas têm o mesmo nome (`capim`): uma `key capim.c=…` muda todas juntas.
+- No editor, os pontos de uma linha repetida aparecem em cinza e não arrastam (mexer neles mudaria todas as cópias).
+- O máximo é 1000 voltas por `repeat`.
 
 ## Componentes: `def` e `use`
 

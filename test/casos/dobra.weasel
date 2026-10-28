@@ -1,0 +1,38 @@
+# teste: formas que dobram (bones=), caminho (path=), animação combinada (mix=), morph entre formas diferentes,
+# repeat e rand(), e o esqueleto do Godot com pele (Polygon2D), normal map e troca de ordem (z_index)
+canvas 300 200 bg=none
+palette ink=#2b2a33 line=3
+godot body=character root=150,190 rig=bones
+let n=6
+
+bone corpo pivot=150,150
+bone r1 pivot=170,120 parent=corpo
+bone r2 pivot=210,120 parent=r1
+bone bola pivot=60,60 path=trilho
+
+layer guia guide
+line trilho : 40,60 100,30 160,60 220,30
+
+layer chao
+repeat i 0..{n-1}
+ellipse ponto {40+i*44},{186+rand(i,-3,3)} 4 c=#7cc56a
+end
+
+layer corpo
+ellipse tronco 150,140 26,34 c=#4a6fd8 ink=line bone=corpo
+shape cauda c=#ff9a4a ink=line bones=r1,r2 : 166,112 246,118 250,122 246,126 166,132
+ellipse olho 160,128 5 c=ink bone=corpo
+shape estrela c=ink hidden bone=corpo : 160,120! 162,126! 168,126! 163,130! 165,136! 160,132! 155,136! 157,130! 152,126! 158,126!
+ellipse bolinha 60,60 8 c=#ffd34d ink=line bone=bola
+
+anim balanca frames=12 fps=12
+key 0 r1=0,0,-20 r2=0,0,-30 bola.along=0 bolinha.below=tronco olho.shape=olho
+key 6 r1=0,0,20 r2=0,0,30 bola.along=1 bolinha.above=tronco olho.shape=estrela
+key 12 r1=0,0,-20 r2=0,0,-30 bola.along=0 bolinha.below=tronco olho.shape=olho
+
+anim pula frames=8 fps=12 once
+key 0 corpo=0,0,0
+key 4 corpo=0,-20,0
+key 8 corpo=0,0,0
+
+anim pula_balanca mix=pula,balanca bones=r1,r2,bola

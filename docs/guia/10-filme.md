@@ -150,7 +150,7 @@ A câmera parada no centro do canvas e com `zoom=1` mostra o desenho exatamente 
 at tempo alvo.propriedade=valor  outro.prop=valor …  ease=…
 ```
 
-O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, luzes, camadas e formas como alvo.
+O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, luzes, camadas e formas como alvo. O tempo também pode ser um [marcador](#marcadores-mark): `at trovao`.
 
 **Tempo:** `2s`, `1.5` (segundos), `500ms`, `48f` (quadros do filme), `1m30s`. Com `+` na frente, conta a partir do `at` anterior: `at +0.5s`. O tempo conta do **começo do plano**.
 
@@ -165,13 +165,117 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 
 | Alvo | Propriedades |
 |---|---|
-| ator | `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant` |
+| ator | `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`, `expr` ([expressões](#expressões-expr)), `along` ([caminho](#andar-por-um-caminho-path)) |
 | `camera` | `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec` |
 | luz do filme | `power`, `radius`, `c`, `glow`, `aim`, `cone` |
 | camada do filme | `opacity`, `show` e os efeitos (`blur`, `glow`, `tint`…) |
 | forma do filme | `draw` (desenha aos poucos, [capítulo 7](07-animacao.md#desenhar-aos-poucos-draw)), `opacity`, `show` |
 
 As formas do próprio arquivo do filme (um mapa, uma seta, um título) mudam com `at` como as camadas: `at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota aos poucos. As formas dos atores mudam pelas animações deles.
+
+## Expressões: `expr`
+
+Num filme longo, o personagem reage o tempo todo: fica bravo, feliz, assustado. Em vez de criar uma animação para cada reação, dê nome às **expressões** no arquivo do personagem:
+
+<!-- arquivo: rosto.weasel -->
+<!-- gerar: img/10_rosto.png -->
+```weasel
+canvas 200 200 bg=none
+palette ink=#2b2a33 line=4 pele=#ffcf8a
+
+unity root=100,190
+bone cabeca pivot=100,150
+bone sobE pivot=80,82 parent=cabeca
+bone sobD pivot=120,82 parent=cabeca
+
+layer rosto
+ellipse cara 100,110 60,56 c=pele ink=line bone=cabeca
+ellipse olhoE 80,102 6,9 c=ink bone=cabeca
+ellipse olhoD 120,102 6,9 c=ink bone=cabeca
+stroke sobrancelhaE w=5 c=ink bone=sobE : 66,84 94,80
+stroke sobrancelhaD w=5 c=ink bone=sobD : 106,80 134,84
+shape boca c=#c44536 ink=3 bone=cabeca : 84,130 116,130 112,138 88,138
+shape sorriso c=#c44536 ink=3 bone=cabeca hidden : 76,124 100,132 124,124 116,144 100,150 84,144
+ellipse grito c=#c44536 ink=3 bone=cabeca hidden 100,138 12,16
+
+expr bravo sobE=0,4,25 sobD=0,4,-25 cara.c=#ff9a7a
+expr feliz sobE=0,-6,-10 sobD=0,-6,10 boca.shape=sorriso
+expr susto sobE=0,-12 sobD=0,-12 boca.shape=grito cabeca=0,-6
+```
+
+![Uma carinha cor de pele com sobrancelhas e uma boca reta](img/10_rosto.png)
+
+- `expr nome …` tem o mesmo jeito de uma `key`, sem o quadro: ossos (`sobE=0,4,25`) e formas (`boca.shape=sorriso`, `cara.c=#ff9a7a`).
+- No filme, `at 3s heroi.expr=bravo` põe a expressão no ator, e `expr=none` tira. Também vale no `actor`: `actor heroi "rosto.weasel" … expr=feliz`.
+- A troca é **aos poucos**, como a posição: do `at` anterior até este. Para trocar rápido, repita a expressão de antes um pouco antes (`at 2s heroi.expr=feliz` e `at 2.2s heroi.expr=bravo`).
+- Os ossos da expressão substituem os da animação que o ator está tocando; os outros ossos continuam na animação. A boca do lip sync vale por cima da expressão.
+
+## Marcadores: `mark`
+
+`mark nome tempo` dá nome a um momento do filme, e os `at` podem usar o nome no lugar do tempo:
+
+```
+mark trovao 1m12.5s
+…
+at trovao raio.power=8
+at trovao+0.3s heroi.expr=susto
+at trovao-1s heroi.expr=none
+```
+
+- Antes dos `shot`, o tempo do `mark` conta do começo do **filme**. Dentro de um `shot`, do começo dele.
+- `at trovao+0.3s` e `at trovao-1s` contam a partir do marcador. O `at` precisa ficar dentro do `shot` em que o marcador cai.
+- Na **linha do tempo** do editor, os marcadores aparecem na régua, em roxo, com uma linha tracejada descendo pelos sons. **Arraste** um marcador para cima da forma de onda da narração: o `mark` é reescrito, e tudo o que usa o nome vai junto.
+- Os marcadores também vão para o editor de vídeo (`.fcpxml` e `.edl`), junto com os começos dos planos.
+
+## Andar por um caminho: `path=`
+
+Um ator com `path=nome` anda por uma linha, um traço ou uma forma do arquivo do filme, e `at … ator.along=0 … 1` diz quanto do caminho ele já andou:
+
+```
+layer guia guide
+stroke trilha w=2 c=#4a90d9 : 60,250 180,200 300,240 420,190
+actor heroi "rosto.weasel" 60,250 scale=0.6 path=trilha turn=0
+```
+
+- Com `along`, a posição do ator vem do caminho (o `pos` deixa de valer).
+- O ator vira junto com a curva, a não ser com `turn=0` (como no exemplo, em que o rosto continua de pé).
+- Ossos de um personagem também andam por caminhos, dentro de uma animação ([capítulo 6](06-ossos.md#andar-por-um-caminho-path)).
+
+### Juntando tudo
+
+<!-- gerar: img/10_marcas.gif -s 0.5 -->
+```weasel
+film fps=12
+canvas 480 270 bg=#cfe8f5
+
+layer chao
+rect grama 0,220 480,50 c=#7cc56a
+layer guia guide
+stroke trilha w=2 c=#4a90d9 : 60,250 180,200 300,240 420,190
+
+actor heroi "rosto.weasel" 60,250 scale=0.6 path=trilha turn=0
+
+mark entra 0.5s
+mark bravo 2.2s
+
+shot a dur=1.5s
+at 0s heroi.along=0 heroi.expr=feliz
+at entra heroi.along=0
+at 1.5s heroi.along=0.4
+
+shot b dur=2s
+mark susto 1.5s
+at 0s heroi.along=0.4 heroi.expr=feliz
+at bravo-0.2s heroi.expr=feliz
+at bravo heroi.expr=bravo
+at susto heroi.expr=susto heroi.along=1
+```
+
+![A carinha anda pela trilha feliz, fica brava no meio do caminho e assustada no fim](img/10_marcas.gif)
+
+- O personagem é o `rosto.weasel` de cima. Ele fica parado até o marcador `entra` e então anda pela trilha.
+- O marcador `bravo` (2,2 s do filme) cai no segundo plano: a carinha fica brava ali, e `bravo-0.2s` faz a troca durar só 0,2 s.
+- `susto` foi marcado dentro do plano `b`, a 1,5 s do começo dele.
 
 ## Profundidade e paralaxe
 

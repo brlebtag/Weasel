@@ -13,6 +13,9 @@
     const from = o.from || 0, to = o.to === undefined ? tl.frames : o.to;
     const videos = o.videos.map((v) => ({ file: v.file, rec: v.start - from, frames: v.frames, src: 0 }));
     const markers = tl.entries.filter((e) => e.start >= from && e.start < to).map((e) => ({ rec: e.start - from, name: e.name }));
+    // os marcadores (mark) do filme também
+    for (const mk of tl.marks || []) { const f = Math.round(mk.start * fps); if (f >= from && f < to) markers.push({ rec: f - from, name: mk.name }); }
+    markers.sort((p, q) => p.rec - q.rec);
     // sons: os loops viram repetições do arquivo, um clipe por volta
     const pieces = [];
     for (const c of W.film.audioClips(model, from / fps, to / fps)) {

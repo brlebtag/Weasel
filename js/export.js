@@ -365,17 +365,18 @@
       const v = $('expAnim').value;
       const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
       const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
-      // Godot com esqueleto de verdade (Bone2D): a folha de peças, a cena e o ajudante
+      // Godot com esqueleto de verdade (Bone2D): a folha de peças, o normal map, a cena e o ajudante
+      const normal = $('expNormal').checked;
       const rig = !model.tileset && ($('expRig').checked || (model.godot && model.godot.rig === 'bones'));
       if (kind === 'godot' && rig) {
-        const pkg = W.rig.packageFiles(model, { base: o.baseName + suffix, scale: o.scale, mirror: $('expMirror').checked, names });
-        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas })));
+        const pkg = W.rig.packageFiles(model, { base: o.baseName + suffix, scale: o.scale, mirror: $('expMirror').checked, normal, names });
+        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
         const main = pkg.files[0].canvas;
-        const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+        const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.skinned ? ` · ${pkg.skinned} que dobra${pkg.skinned === 1 ? '' : 'm'}` : ''}${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
         return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}` };
       }
       // Godot completo: cena, normal map, ajudante; ou o TileSet
-      const scene = $('expGodotScene').checked, normal = $('expNormal').checked;
+      const scene = $('expGodotScene').checked;
       if (kind === 'godot' && (model.tileset || scene || normal)) {
         const pkg = W.godot.packageFiles(model, { base: model.tileset || scene ? o.baseName + suffix : `${o.baseName}_${tag}`, scale: o.scale, normal, scene, mirror: $('expMirror').checked, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin, trim: o.trim || scene, names: model.tileset ? null : names });
         const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));

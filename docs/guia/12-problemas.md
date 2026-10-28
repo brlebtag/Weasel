@@ -57,7 +57,13 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **O `draw` desenha do lado errado.** O traço vai do primeiro ponto para o último. Escreva os pontos na ordem contrária.
 
-**O morph não funciona** ("não combina"). A forma de destino precisa ser do mesmo tipo e ter o mesmo número de pontos. Conte os pontos das duas linhas.
+**O morph não funciona** ("não combina"). Uma forma fechada só vira outra fechada, e um traço, outro traço. O tipo e o número de pontos podem ser diferentes.
+
+**"repeat sem end".** Todo `repeat` fecha com um `end`, como o `def`. Num `repeat` dentro de outro, são dois `end`.
+
+**"o osso não tem caminho" no `along`.** O osso precisa de `path=nome` na linha `bone`, com o nome de uma linha, traço ou forma.
+
+**O `mix=` dá erro.** Escreva `mix=base,ação bones=osso1,osso2`: as duas animações separadas por vírgula e os ossos da ação em `bones=`.
 
 **A `key` de opacidade não faz a forma aparecer.** A `opacity` da `key` multiplica a `opacity=` escrita na forma. Se a forma tem `opacity=0` no código, ela fica invisível sempre. Tire o `opacity=0` e use `key 0 forma.opacity=0`.
 
@@ -76,6 +82,10 @@ O que costuma dar errado, por que acontece e como resolver.
 **Um erro aparece na linha do `include`.** O erro é dentro do arquivo incluído: a mensagem começa com o nome dele e a linha de lá.
 
 ## Filme
+
+**"o marcador fica fora do shot".** O `at` que usa um marcador precisa estar no `shot` em que o marcador cai. Mude o `at` de plano ou o tempo do `mark`.
+
+**A expressão troca devagar demais.** O `at heroi.expr=` muda aos poucos desde o `at` anterior. Repita a expressão de antes um pouco antes: `at 2s heroi.expr=feliz` e `at 2.2s heroi.expr=bravo`.
 
 **A transição (`in=`) mostra o plano anterior parado.** É assim mesmo: durante a transição, o plano anterior fica no último quadro dele enquanto o novo já anda. Para os dois andarem juntos, faça a passagem dentro de um plano só, com `at`.
 

@@ -1,0 +1,7 @@
+filme    480 × 270, 12 fps, 3.5s (42 quadros, 00:03:06), fundo #cfe8f5
+atores   heroi (rosto.weasel)
+camadas  chao, guia
+marcadores entra 00:00:06, bravo 00:02:02, susto 00:03:00
+planos   2
+  a                00:00:00    1.5s     18 quadros  câmera 240,135 · 4 mudança(s) com at
+  b                00:01:06      2s     24 quadros  câmera 240,135 · 6 mudança(s) com at

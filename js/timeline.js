@@ -1,11 +1,11 @@
-/* Weasel — linha do tempo do filme no editor: régua com o código de tempo, os planos (com marquinhas nos at),
+/* Weasel — linha do tempo do filme no editor: régua com o código de tempo e os marcadores (mark), os planos (com marquinhas nos at),
    os sons (forma de onda e, nas falas, as bocas do lip sync) e as legendas. Clicar leva o player até ali e o
    cursor do código até a linha do bloco; arrastar um som, uma legenda ou o fim de um plano reescreve o tempo
    no código (só do arquivo aberto). Roda do mouse rola, Ctrl+roda aproxima, duplo clique no vazio enquadra. */
 (function (W) {
   'use strict';
   const H_RULER = 20, H_SHOT = 30, H_AUDIO = 38, H_SUB = 26, GUT = 70, EDGE = 6;
-  const COLORS = { shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f' };
+  const COLORS = { shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f', mark: '#c77dff' };
 
   // picos da forma de onda: o maior valor a cada 5 ms (calculado uma vez por som)
   function peaks(media) {
@@ -57,6 +57,11 @@
       const L = v.layout;
       if (!L || x < GUT) return null;
       const t = tOf(x), near = (t1) => Math.abs(xOf(t1) - x) <= EDGE;
+      // na régua: os marcadores (arrastar muda o tempo do mark)
+      if (y < H_RULER) {
+        for (const mk of L.tl.marks || []) if (Math.abs(xOf(mk.start) - x) <= 5) return { kind: 'mark', item: mk, owner: mk.owner, src: mk.src };
+        return null;
+      }
       if (y >= L.rows.shots && y < L.rows.audio) {
         for (const e of L.tl.entries) {
           const a = e.start / L.tl.fps, b = (e.start + e.frames) / L.tl.fps;
@@ -204,6 +209,28 @@
         }
       }
 
+      // marcadores (mark): uma linha fina em tudo e o nome na régua
+      for (const mk of L.tl.marks || []) {
+        const x = Math.round(xOf(mk.start)) + 0.5;
+        if (x < GUT || x > w) continue;
+        ctx.strokeStyle = COLORS.mark;
+        ctx.globalAlpha = 0.55;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x, H_RULER);
+        ctx.lineTo(x, L.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = COLORS.mark;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, H_RULER - 9);
+        ctx.lineTo(x + 4, H_RULER - 9);
+        ctx.lineTo(x, H_RULER - 2);
+        ctx.fill();
+        ctx.fillText(mk.name, x + 6, H_RULER - 6);
+      }
+
       // trecho escolhido no player (um plano): o resto fica escuro
       const [lo, hi] = host.range();
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -268,13 +295,13 @@
       const [x, y] = pos(e);
       if (x < GUT) return;
       const h = hit(x, y);
-      if (!h || y < H_RULER) { v.drag = { kind: 'scrub' }; scrub(x); return; }
+      if (!h) { v.drag = { kind: 'scrub' }; scrub(x); return; }
       if (!host.editable(h.owner)) { host.hint('Este bloco é de outro arquivo (scene): duplo clique abre o arquivo.'); scrub(x); return; }
       const line = host.lineOf(h.src);
       if (line >= 0) host.gotoLine(line);
       const L = v.layout;
       let y0, hh, start, end;
-      if (h.kind === 'shot') { start = h.item.start / L.tl.fps; end = (h.item.start + h.item.frames) / L.tl.fps; y0 = L.rows.shots + 2; hh = H_SHOT - 4; } else if (h.kind === 'audio') { start = h.item.start; end = h.item.end; y0 = L.rows.audio + L.lanes.get(h.item) * H_AUDIO + 2; hh = H_AUDIO - 4; } else { start = h.item.start; end = h.item.end; y0 = L.rows.subs + 2; hh = H_SUB - 4; }
+      if (h.kind === 'mark') { start = end = h.item.start; y0 = 0; hh = H_RULER; } else if (h.kind === 'shot') { start = h.item.start / L.tl.fps; end = (h.item.start + h.item.frames) / L.tl.fps; y0 = L.rows.shots + 2; hh = H_SHOT - 4; } else if (h.kind === 'audio') { start = h.item.start; end = h.item.end; y0 = L.rows.audio + L.lanes.get(h.item) * H_AUDIO + 2; hh = H_AUDIO - 4; } else { start = h.item.start; end = h.item.end; y0 = L.rows.subs + 2; hh = H_SUB - 4; }
       // arrastar o meio de um plano só passeia o player (o começo dele vem dos planos de antes)
       if (h.kind === 'shot' && !h.edge) { v.drag = { kind: 'scrub' }; scrub(x); return; }
       v.drag = { kind: 'move', h, x0: x, start, end, y: y0, h0: hh, moved: false };
@@ -285,7 +312,7 @@
       const d = v.drag;
       if (!d) {
         const h = x >= GUT ? hit(x, y) : null;
-        canvas.style.cursor = !h || y < H_RULER ? 'text' : !host.editable(h.owner) ? 'default' : h.edge ? 'ew-resize' : h.kind === 'shot' ? 'text' : 'grab';
+        canvas.style.cursor = !h ? 'text' : !host.editable(h.owner) ? 'default' : h.edge ? 'ew-resize' : h.kind === 'shot' ? 'text' : 'grab';
         return;
       }
       if (d.kind === 'scrub') { scrub(x); return; }

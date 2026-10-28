@@ -1,0 +1,7 @@
+ellipse cara @0.000 +0.868
+ellipse olhoE @0.868 +0.313
+ellipse olhoD @1.181 +0.313
+stroke sobrancelhaE @1.494 +0.242
+stroke sobrancelhaD @1.736 +0.242
+shape boca @1.978 +0.401
+total 2.379

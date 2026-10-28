@@ -1,0 +1,25 @@
+# teste: marcadores (mark) usados pelos at, expressões dos atores (expr) e um ator que anda por um caminho
+film fps=12
+canvas 480 270 bg=#cfe8f5
+
+layer chao
+rect grama 0,220 480,50 c=#7cc56a
+layer guia guide
+stroke trilha w=2 c=#4a90d9 : 60,250 180,200 300,240 420,190
+
+actor heroi "rosto.weasel" 60,250 scale=0.6 path=trilha turn=0
+
+mark entra 0.5s
+mark bravo 2.2s
+
+shot a dur=1.5s
+at 0s heroi.along=0 heroi.expr=feliz
+at entra heroi.along=0
+at 1.5s heroi.along=0.4
+
+shot b dur=2s
+mark susto 1.5s
+at 0s heroi.along=0.4 heroi.expr=feliz
+at bravo-0.2s heroi.expr=feliz
+at bravo heroi.expr=bravo
+at susto heroi.expr=susto heroi.along=1

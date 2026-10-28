@@ -11,7 +11,7 @@
   // Também os sons (audio) e as legendas (sub e text= dos sons), em segundos do filme.
   function timeline(model) {
     if (model._timeline) return model._timeline;
-    const fps = model.film.fps, entries = [], audios = [], subs = [];
+    const fps = model.film.fps, entries = [], audios = [], subs = [], marks = [];
     const lang = model.film.lang;
     let start = 0;
     // um som no tempo: começa em base + at e dura dur=, o resto do arquivo, ou (loop, ou duração
@@ -42,10 +42,13 @@
       }
       for (const a of owner.film.audios) clip(a, owner, first / fps, start / fps, file);
       for (const sb of owner.film.subs) sub(sb, owner, first / fps, file);
+      // marcadores (mark): no tempo do filme inteiro
+      for (const mk of owner.film.marks || []) marks.push({ name: mk.name, start: first / fps + mk.abs, owner, src: mk, base: first / fps + (mk.shot ? mk.shot.start || 0 : 0), file });
     };
     walk(model, '', null, 0);
     subs.sort((p, q) => p.start - q.start || p.end - q.end);
-    model._timeline = { fps, entries, frames: start, duration: start / fps, audios, subs };
+    marks.sort((p, q) => p.start - q.start);
+    model._timeline = { fps, entries, frames: start, duration: start / fps, audios, subs, marks };
     return model._timeline;
   }
 
@@ -210,8 +213,11 @@
     return total + (b - from) * cur;
   }
 
+  // com path= e at … ator.along=, o ator anda pelo caminho (o x e o y do at deixam de valer)
   function actorPos(shot, ac, t) {
-    return [valueAt(trackOf(shot, 'actor', ac.name, 'x'), t, ac.x), valueAt(trackOf(shot, 'actor', ac.name, 'y'), t, ac.y)];
+    const al = ac.path && trackOf(shot, 'actor', ac.name, 'along');
+    if (al) { const P = S.pathAt(ac.path, valueAt(al, t, 0)); return [P.x, P.y, ac.turn ? P.angle : 0]; }
+    return [valueAt(trackOf(shot, 'actor', ac.name, 'x'), t, ac.x), valueAt(trackOf(shot, 'actor', ac.name, 'y'), t, ac.y), 0];
   }
 
   // Estado de um ator no instante t do plano: lugar, tamanho, animação (com o quadro dela) e pose.
@@ -224,7 +230,7 @@
     if (at) for (const k of at.keys) { if (k.t <= t + 1e-9) { anim = k.v; start = k.t; } else break; }
     const p = actorPos(shot, ac, t);
     const s = {
-      ac, model, x: p[0], y: p[1], sx: v('sx', ac.sx), sy: v('sy', ac.sy), rot: v('rot', ac.rot), opacity: v('opacity', ac.opacity),
+      ac, model, x: p[0], y: p[1], sx: v('sx', ac.sx), sy: v('sy', ac.sy), rot: v('rot', ac.rot) + p[2], opacity: v('opacity', ac.opacity),
       depth: Math.max(0.05, v('depth', ac.depth)), flip: v('flip', ac.flip), show: v('show', ac.show ? 1 : 0), anim: null, animFrame: 0, pose: null,
     };
     if (!model) return s;
@@ -237,6 +243,14 @@
       s.animFrame = f;
       s.pose = S.makePose(model, a.name, f);
     } else s.pose = S.timePose(model, t);
+    // expressão (expr): muda aos poucos de um at para o seguinte, como a posição
+    const et = trackOf(shot, 'actor', ac.name, 'expr');
+    if (et || ac.expr) {
+      let prev = { t: 0, v: ac.expr || null }, next = null;
+      for (const k of et ? et.keys : []) { if (k.t <= t + 1e-9) prev = k; else { next = k; break; } }
+      const ex = next ? { from: prev.v, to: next.v, u: G.EASE[next.ease]((t - prev.t) / Math.max(1e-9, next.t - prev.t)) } : { from: prev.v, to: prev.v, u: 1 };
+      if (ex.from || ex.to) s.pose = S.exprPose(model, s.pose, ex);
+    }
     return s;
   }
   function actorMatrix(s) {

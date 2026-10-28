@@ -226,7 +226,7 @@ Qual escolher:
 | | Por quadros (padrão) | Com esqueleto |
 |---|---|---|
 | Movimento | pula de quadro em quadro | liso, também em câmera lenta |
-| Tamanho | uma imagem por quadro | uma imagem por peça (o Furão cai de 344 KB para 24 KB) |
+| Tamanho | uma imagem por quadro | uma imagem por peça (o Cavaleiro cai de 1,6 MB para 52 KB) |
 | No Godot | o AnimationPlayer troca os quadros | dá para misturar animações no AnimationTree e girar ossos pelo código |
 | Bom para | pixel art, inimigos pequenos, personagens que mudam muito de forma | o herói, chefes, personagens grandes e macios |
 
@@ -239,20 +239,28 @@ Lagarto (CharacterBody2D)
 │   │   └── corpo (Bone2D)           ← um Bone2D para cada bone, na mesma hierarquia
 │   │       ├── tronco_2 (RemoteTransform2D)   → leva a peça junto com o osso
 │   │       └── braco (Bone2D) …
+│   │           └── pernaE_coxa (Bone2D) → pernaE_canela   ← criados para a perna com IK
 │   └── Pecas (Node2D)
-│       ├── pernaE_0 (Sprite2D)      ← as peças, na ordem de pintura, todas da mesma folha
+│       ├── pernaE_0 (Polygon2D)     ← a perna: uma malha que dobra com a coxa e a canela
+│       ├── tronco_2 (Sprite2D)      ← as peças, na ordem de pintura, todas da mesma folha
 │       └── …
 ├── corpo_caixa · Hitbox · Hurtbox · ponta   ← caixas e pontos, como na cena por quadros
 └── AnimationPlayer                  ← weasel_anim.gd
 ```
 
 - Cada `bone` vira um `Bone2D`; a origem dele é o pivô. Cada sequência de formas presas ao mesmo osso vira **uma imagem**, e um `RemoteTransform2D` faz ela seguir o osso.
-- O que **muda de forma** não cabe numa imagem só: pernas e braços com IK, tecido, partículas, rastro e sombra no chão viram uma imagem **trocada a cada quadro**. Morph, `draw` e cores animadas também, mas presos ao osso: a imagem só troca quando a forma muda (o olho que pisca tem três imagens).
+- O que **dobra** vira um `Polygon2D` com pele: a imagem parada vira uma malha, e cada ponto dela segue os ossos com um peso, como no Weasel.
+  - **Perna ou braço com IK:** o Weasel cria dois ossos, a coxa e a canela (`pernaE_coxa` e `pernaE_canela`), e a malha dobra no joelho.
+  - **Tecido:** um osso a mais (`capa_pano`) balança, e a ponta do tecido segue o balanço; perto do pivô, fica parado.
+  - **Formas com `bones=`:** a malha usa os mesmos ossos e os mesmos pesos.
+- O que **muda de forma** troca de imagem, presa ao osso: morph, `draw` e cores animadas (a imagem só troca quando a forma muda; o olho que pisca tem três imagens). Partículas, rastro e sombra no chão trocam de imagem quadro a quadro, no mundo.
+- **Normal map:** sai junto (`lagarto_normal.png`), uma imagem por peça, para a luz 2D do Godot. `--no-normal` (ou a caixa **Normal map**) tira.
+- **`above=` e `below=`** viram `z_index` das peças, só nos quadros em que a ordem muda.
+- **Luzes animadas do Weasel** (ou presas a um osso que se mexe): o que elas iluminam troca de imagem quadro a quadro, para a luz ficar certa. Com as luzes paradas, as peças levam a luz da pose parada; no Godot, prefira as luzes 2D dele com o normal map.
 - Um osso que nenhuma animação mexe fica livre para o código do jogo: `$Visual/Esqueleto/corpo/cabeca.rotation = …` faz a cabeça olhar para o mouse.
 - Caixas, pontos de encaixe, eventos, `tocar()` e as animações espelhadas funcionam como na cena por quadros.
-- **Ainda não vão:** o normal map, a troca de ordem com `above=` e `below=` (vale a ordem do arquivo) e as luzes animadas (as peças levam a luz da pose parada).
 
-O lagarto de teste ([`test/casos/esqueleto.weasel`](../../test/casos/esqueleto.weasel)) tem um pouco de tudo: corpo e cabeça que respiram, antena com mola, espada, pernas com IK, olho que pisca e sombra recortada. Ele, o Furão, o Chefe e o Cavaleiro foram abertos no Godot 4.7.2 e comparados quadro a quadro com o Weasel.
+O lagarto de teste ([`test/casos/esqueleto.weasel`](../../test/casos/esqueleto.weasel)) tem um pouco de tudo: corpo e cabeça que respiram, antena com mola, espada, pernas com IK, olho que pisca e sombra recortada. Ele, o Furão, o Chefe, o Cavaleiro (com a capa de tecido) e o Fantasma foram abertos no Godot 4.7.2 e comparados quadro a quadro com o Weasel, junto com uma cauda com `bones=` e a bola que passa atrás e na frente do poste.
 
 ## Direções (jogos vistos de cima)
 

@@ -6,27 +6,27 @@
   const KEYWORDS = {
     canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup',
     layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
-    def: 'comp', end: 'comp', use: 'comp',
-    bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
+    def: 'comp', end: 'comp', use: 'comp', repeat: 'comp',
+    bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
     light: 'fx', ambient: 'fx',
-    film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mouth: 'rig',
+    film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mark: 'film', mouth: 'rig',
     box: 'game', godot: 'game', tileset: 'game', tile: 'game', point: 'game',
   };
-  const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at', 'audio', 'sub']);
+  const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at', 'audio', 'sub', 'mark']);
   // bocas do lip sync (padrão do Rhubarb Lip Sync): A fechada … F biquinho, G F/V, H L, X descanso
   const VISEMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'X'];
   const DRAWABLE = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'emitter']);
   const CLOSED = new Set(['shape', 'ellipse', 'rect']);
-  const COMMON = ['c', 'bone', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
+  const COMMON = ['c', 'bone', 'bones', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
   const OUTLINE = ['ink', 'inkc', 'weight', 'inkon'];
   const ATTRS = {
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
-    anim: ['frames', 'fps'],
+    anim: ['frames', 'fps', 'mix', 'bones'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
     ambient: ['c', 'power'],
@@ -43,7 +43,8 @@
     sub: ['dur', 'lang'],
     mouth: VISEMES,
     shot: ['dur', 'in'],
-    actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide'],
+    mark: [],
+    actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide', 'path', 'turn', 'expr'],
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
     box: ['bone', 'only'],
     point: ['bone'],
@@ -67,7 +68,9 @@
   const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free', above: 'order', below: 'order' };
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
-  const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant' };
+  const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant', along: 'free', expr: 'expr' };
+  // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1
+  const BONE_PROPS = { along: 'free' };
   const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color' };
   // formas do próprio arquivo do filme (mapas, setas, títulos)
   const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step' };
@@ -92,6 +95,14 @@
     atan2: (y, x) => Math.atan2(y, x) * 180 / Math.PI, sqrt: Math.sqrt, abs: Math.abs, min: Math.min, max: Math.max,
     floor: Math.floor, ceil: Math.ceil, round: Math.round, pow: Math.pow,
     lerp: (a, b, t) => a + (b - a) * t, clamp: (v, a, b) => Math.min(b, Math.max(a, v)),
+    // rand(x) de 0 a 1, rand(x, a, b) de a até b: sempre o mesmo valor para o mesmo x
+    rand: (x, a, b) => {
+      let h = Math.imul(Math.round(x * 1000) ^ 0x2545f491, 0x9e3779b1) >>> 0;
+      h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
+      h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+      const r = ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+      return b === undefined ? r : a + (b - a) * r;
+    },
   };
   function evalExpr(s, vars) {
     let i = 0;
@@ -309,6 +320,84 @@
     return st;
   }
 
+  // repeat i 0..9 … end: as linhas de dentro se repetem, com a variável valendo 0, 1, … 9 nas {contas}.
+  // As cópias guardam a linha de origem (erros e alças voltam para ela). Devolve null se não há repeat.
+  const REPEAT_MAX = 20000;
+  function expandRepeats(lines, vars) {
+    if (!lines.some((ln) => /^\s*repeat(\s|$)/.test(ln.text))) return null;
+    const errs = [], pairs = new Map(), stack = [];
+    lines.forEach((ln, i) => {
+      const w = splitLine(ln.text).words[0];
+      if (!w) return;
+      if (w.text === 'repeat' || w.text === 'def') stack.push({ kind: w.text, i });
+      else if (w.text === 'end' && stack.length) { const b = stack.pop(); if (b.kind === 'repeat') pairs.set(b.i, i); }
+    });
+    for (const b of stack) if (b.kind === 'repeat') pairs.set(b.i, -1);
+    const out = [];
+    const blank = (ln) => out.push(Object.assign({}, ln, { text: '', vars: null }));
+    function emit(from, to, scope) {
+      for (let i = from; i < to; i++) {
+        const ln = lines[i];
+        if (!pairs.has(i)) { out.push(scope.size ? Object.assign({}, ln, { vars: scope }) : ln); continue; }
+        const end = pairs.get(i), sp = splitLine(ln.text), ws = sp.words, at = out.length;
+        blank(ln);
+        const fail = (msg, t) => { errs.push({ at, msg, from: t ? t.from : ws[0].from, to: t ? t.to : ws[0].to }); };
+        if (end < 0) { fail('repeat sem end'); continue; }
+        const name = ws[1], range = ws[2];
+        const m = range ? /^(.+?)\.\.(.+)$/.exec(range.text) : null;
+        let a = NaN, b = NaN;
+        if (m) {
+          const all = new Map([...vars, ...scope]);
+          const val = (s) => { try { return evalExpr(s[0] === '{' && s[s.length - 1] === '}' ? s.slice(1, -1) : s, all); } catch (e) { return NaN; } };
+          a = Math.round(val(m[1]));
+          b = Math.round(val(m[2]));
+        }
+        if (!name || !IDENT.test(name.text) || !m || isNaN(a) || isNaN(b)) fail('use: repeat i 0..9  (as linhas até o end se repetem, com i = 0, 1, … 9)', name && !IDENT.test(name.text) ? name : range);
+        else if (Math.abs(b - a) >= 1000) fail('repeat de no máximo 1000 vezes', range);
+        else {
+          const step = b >= a ? 1 : -1;
+          for (let v = a; step > 0 ? v <= b : v >= b; v += step) {
+            if (out.length > REPEAT_MAX) { fail('repeat demais: o arquivo passou de 20000 linhas'); break; }
+            emit(i + 1, end, new Map([...scope, [name.text, v]]));
+          }
+        }
+        blank(lines[end]);
+        i = end;
+      }
+    }
+    emit(0, lines.length, new Map());
+    return { lines: out, errs };
+  }
+
+  // Numa cópia de repeat, cada {conta} vira o número dela (as contas também são lidas mais tarde, quando a
+  // variável do repeat já não vale). O número ocupa o mesmo espaço da conta (zeros à esquerda ou à direita),
+  // para as colunas dos erros e das alças continuarem certas.
+  function bakeExprs(text, vars, names) {
+    // só as contas que usam a variável do repeat (as outras ficam para depois, como sempre)
+    const uses = new RegExp(`\\b(${[...names].join('|')})\\b`);
+    let out = '', i = 0, quote = false;
+    while (i < text.length) {
+      const ch = text[i];
+      if (ch === '"') quote = !quote;
+      if (ch !== '{' || quote) { out += ch; i++; continue; }
+      const j = text.indexOf('}', i);
+      if (j < 0) { out += text.slice(i); break; }
+      const src = text.slice(i, j + 1);
+      if (!uses.test(src)) { out += src; i = j + 1; continue; }
+      let v;
+      try { v = evalExpr(src.slice(1, -1), vars); } catch (e) { v = NaN; }
+      if (!Number.isFinite(v)) { out += src; i = j + 1; continue; }
+      let s = String(Math.round(v * 1e6) / 1e6);
+      if (s.includes('e')) s = v.toFixed(6);
+      const neg = s[0] === '-', body = neg ? s.slice(1) : s;
+      const pad = src.length - s.length;
+      if (pad > 0) s = body.includes('.') ? (neg ? '-' : '') + body + '0'.repeat(pad) : (neg ? '-' : '') + '0'.repeat(pad) + body;
+      out += s;
+      i = j + 1;
+    }
+    return out;
+  }
+
   // Junta os arquivos de include numa lista só de linhas, lembrando de onde cada uma veio.
   function expandIncludes(src, opts) {
     const out = [], files = [];
@@ -348,7 +437,7 @@
       errors.push({ line, msg, from: from || 0, to: to || 0, level: level || 'error' });
     };
     const X = expandIncludes(src, opts);
-    const L = X.lines;
+    let L = X.lines;
 
     const m = {
       lineCount: src.split(/\r?\n/).length,
@@ -364,7 +453,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), points: new Map(), godot: null, tileset: null, mouth: null,
+      boxes: new Map(), points: new Map(), exprs: new Map(), godot: null, tileset: null, mouth: null,
       byLine: new Map(),
       errors,
     };
@@ -372,25 +461,41 @@
     // ---- let: variáveis para {expressões}, lidas antes de tudo ----
     const globals = new Map();
     m.vars = globals;
-    L.forEach((ln, i) => {
+    const readLets = (report) => L.forEach((ln, i) => {
       const sp = splitLine(ln.text);
       if (!sp.words.length || sp.words[0].text !== 'let') return;
-      if (sp.words.length < 2) err(i, 'use: let nome=valor', sp.words[0].from, sp.words[0].to);
+      const e = report ? err : () => {};
+      if (sp.words.length < 2) e(i, 'use: let nome=valor', sp.words[0].from, sp.words[0].to);
       for (const w of sp.words.slice(1)) {
         const eq = w.text.indexOf('=');
         const key = eq > 0 ? w.text.slice(0, eq) : '';
-        if (!IDENT.test(key)) { err(i, `use let nome=valor ("${w.text}")`, w.from, w.to); continue; }
+        if (!IDENT.test(key)) { e(i, `use let nome=valor ("${w.text}")`, w.from, w.to); continue; }
         let v = w.text.slice(eq + 1);
         if (v[0] === '{' && v[v.length - 1] === '}') v = v.slice(1, -1);
-        try { globals.set(key, evalExpr(v, globals)); } catch (e) { err(i, `let ${key}: ${e.message}`, w.from + eq + 1, w.to); }
+        try { globals.set(key, evalExpr(v, globals)); } catch (x) { e(i, `let ${key}: ${x.message}`, w.from + eq + 1, w.to); }
       }
     });
+    // repeat: as variáveis do let já valem nos limites (repeat i 0..{n-1})
+    readLets(false);
+    const RX = expandRepeats(L, globals);
+    if (RX) {
+      L = RX.lines;
+      X.repeated = true;
+      for (const e of RX.errs) err(e.at, e.msg, e.from, e.to);
+      globals.clear();
+    }
+    readLets(true);
 
     scope = globals;
     const stmts = [];
     L.forEach((ln, i) => {
       if (ln.incErr) { const sp = splitLine(ln.text); const t = sp.words[1] || sp.words[0]; err(i, ln.incErr, t.from, t.to); }
-      const s = readStatement(ln.text, i, err);
+      // dentro de um repeat, a variável dele vale nas {contas} daquela cópia
+      const outer = scope;
+      if (ln.vars) { scope = new Map(scope); for (const [k, v] of ln.vars) scope.set(k, v); }
+      const s = readStatement(ln.vars ? bakeExprs(ln.text, scope, ln.vars.keys()) : ln.text, i, err);
+      if (ln.vars) scope = outer;
+      if (s && ln.vars) s.repeated = true;
       if (s) stmts.push(s);
       // dentro de def … end, os parâmetros numéricos do def também valem nas {contas}
       if (s && s.cmd === 'def') {
@@ -476,7 +581,7 @@
       for (const a of st.attrs.values()) if (!ok.includes(a.key)) bad(st, a, `atributo desconhecido "${a.key}" em ${st.cmd}`, 'warn');
     }
     function info(st, extra) {
-      const rec = Object.assign({ st, handles: [] }, extra || {});
+      const rec = Object.assign({ st, handles: [], repeated: !!st.repeated }, extra || {});
       m.byLine.set(st.line, rec);
       return rec;
     }
@@ -623,6 +728,8 @@
           }
           if (A.has('jitter')) b.jitter = number(st, A.get('jitter'), 0, 0, 200);
           if (A.has('spring')) b.spring = number(st, A.get('spring'), 0.5, 0, 1) || 0.001;
+          if (A.has('path')) { b.pathAt = { st, a: A.get('path') }; b.turn = true; }
+          if (A.has('turn')) b.turn = A.get('turn').text !== '0';
           m.bones.set(name, b);
           break;
         }
@@ -873,6 +980,15 @@
       const real = ctx.inst >= 0;
       const rec = prev && prev.real && prev.el ? { handles: [] } : info(st, { el, xf: ctx.xf, real });
       if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) el.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
+      // bones=a,b,c: cada ponto segue os ossos mais perto dele (a forma dobra em vez de girar inteira)
+      if (A.has('bones')) {
+        const a = A.get('bones'), names = a.text.split(',').filter(Boolean);
+        const miss = names.find((n) => !m.bones.has(n));
+        if (miss) bad(st, a, `osso "${miss}" não existe`);
+        else if (st.cmd === 'text' || st.cmd === 'emitter') bad(st, a, `bones= não vale em ${st.cmd} (use bone=)`, 'warn');
+        else if (names.length < 2) bad(st, a, 'bones= precisa de dois ossos ou mais (para um só, use bone=)', 'warn');
+        else { el.bones = names; el.bone = names[0]; }
+      }
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) el.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
       if (A.has('opacity')) el.opacity *= number(st, A.get('opacity'), 1, 0, 1);
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
@@ -1119,6 +1235,7 @@
         if (!name) { curAnim = null; continue; }
         if (m.animMap.has(name)) { err(st.line, `animação "${name}" já existe`, st.pos[0].from, st.pos[0].to); curAnim = null; continue; }
         const an = { name, line: st.line, frames: 24, fps: 12, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
+        if (A.has('mix')) an.mixSpec = { a: A.get('mix'), st };
         if (A.has('frames')) an.frames = Math.round(number(st, A.get('frames'), 24, 1, 600));
         if (A.has('fps')) an.fps = number(st, A.get('fps'), 12, 1, 60);
         for (const f of st.pos.slice(1)) {
@@ -1130,6 +1247,28 @@
         m.animMap.set(name, an);
         curAnim = an;
         info(st, { anim: an });
+        continue;
+      }
+      // expr nome …: uma expressão do personagem (os valores de uma key, com nome), para o filme usar
+      if (st.cmd === 'expr') {
+        const name = ident(st, st.pos[0], 'da expressão');
+        if (!name) continue;
+        if (m.exprs.has(name)) { err(st.line, `expressão "${name}" já existe`, st.pos[0].from, st.pos[0].to); continue; }
+        const ex = { name, line: st.line, frames: 1, fps: 1, loop: false, tracks: new Map(), ptracks: new Map(), events: [], expr: true };
+        m.exprs.set(name, ex);
+        info(st, { expr: ex });
+        for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use osso=dx,dy,rot ou forma.propriedade=valor)`, f.from, f.to, 'warn');
+        if (!A.size) err(st.line, 'use: expr nome osso=dx,dy,rot forma.propriedade=valor …', st.cmdTok.from, st.cmdTok.to);
+        for (const a of A.values()) {
+          if (a.key.includes('.')) { pendingProps.push({ anim: ex, frame: 0, ease: 'smooth', a, st }); continue; }
+          if (!m.bones.has(a.key)) { bad(st, a, `osso "${a.key}" não existe (para formas use nome.propriedade=valor)`); continue; }
+          const v = list(st, a, 1, 5, null);
+          if (!v) continue;
+          const full = [0, 0, 0, 1, 1];
+          v.forEach((x, i) => { full[i] = x; });
+          if (v.length === 4) full[4] = v[3];
+          ex.tracks.set(a.key, [{ frame: 0, v: full, ease: 'smooth' }]);
+        }
         continue;
       }
       if (st.cmd === 'key' || st.cmd === 'event') {
@@ -1282,6 +1421,14 @@
       if (!b.tip || Math.hypot(b.tip[0] - b.pivot[0], b.tip[1] - b.pivot[1]) < 2) b.tip = [b.pivot[0], b.pivot[1] + 30];
     }
 
+    // path= dos ossos: o nome de uma linha, traço ou forma (o osso anda por ela)
+    for (const b of m.bones.values()) {
+      if (!b.pathAt) continue;
+      const { st, a } = b.pathAt, el = (m.named.get(a.text) || []).find((e) => e.type !== 'text' && e.type !== 'emitter' && !e.limb);
+      if (!el) bad(st, a, `path: não achei a linha, traço ou forma "${a.text}"`);
+      else b.path = el;
+    }
+
     // variante com show= e hide=: peças (formas ou camadas) que aparecem ou somem nessa versão
     for (const v of variantStmts) {
       for (const k of ['show', 'hide']) {
@@ -1351,7 +1498,7 @@
         const shape = at > 0 ? a.text.slice(0, at) : a.text, t = at > 0 ? num(a.text.slice(at + 1)) : 1;
         const target = (m.named.get(shape) || [])[0];
         if (!target) bad(st, a, `forma "${shape}" não existe`);
-        else if (!compatible(els[0], target)) bad(st, a, `"${shape}" não combina com "${name}": precisa ser do mesmo tipo e ter o mesmo número de pontos`);
+        else if (!compatible(els[0], target)) bad(st, a, `"${shape}" não combina com "${name}": uma forma fechada só vira outra fechada, e um traço, outro traço`);
         else if (isNaN(t) || t < 0 || t > 1) bad(st, a, 'use forma@0.5 (o quanto do morph, de 0 a 1)');
         else mo.map[a.key] = { shape, t };
       }
@@ -1457,13 +1604,15 @@
       // quem é o alvo: forma, luz ou camada — o primeiro que tiver essa propriedade
       const cands = [
         m.boxes.has(name) && { kind: 'box', table: BOX_PROPS, targets: null },
+        m.bones.has(name) && { kind: 'bone', table: BONE_PROPS, targets: null },
         m.named.has(name) && { kind: 'el', table: PROPS, targets: m.named.get(name) },
         m.lights.has(name) && { kind: 'light', table: LIGHT_PROPS, targets: null },
         m.layerMap.has(name) && { kind: 'layer', table: LAYER_PROPS, targets: null },
       ].filter(Boolean);
-      if (!cands.length) { bad(st, a, `"${name}" não é forma, caixa, luz nem camada`); continue; }
+      if (!cands.length) { bad(st, a, `"${name}" não é forma, caixa, luz, camada nem osso`); continue; }
       const tgt = cands.find((c) => c.table[prop]);
-      if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada', box: 'caixa' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
+      if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada', box: 'caixa', bone: 'osso' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
+      if (tgt.kind === 'bone' && !m.bones.get(name).pathAt) { bad(st, a, `o osso "${name}" não tem caminho: use bone ${name} … path=nome_de_uma_linha`); continue; }
       const els = tgt.kind === 'el' ? tgt.targets : null;
       const type = tgt.table[prop];
       let v;
@@ -1481,7 +1630,7 @@
       } else {
         const t = m.named.get(a.text);
         if (!t) { bad(st, a, `forma "${a.text}" não existe`); continue; }
-        if (!els.every((e) => compatible(e, t[0]))) { bad(st, a, `"${a.text}" não combina com "${name}": precisa ser do mesmo tipo e ter o mesmo número de pontos`); continue; }
+        if (!els.every((e) => compatible(e, t[0]))) { bad(st, a, `"${a.text}" não combina com "${name}": uma forma fechada só vira outra fechada, e um traço, outro traço`); continue; }
         v = a.text;
       }
       if (tgt.kind === 'light' && type === 'color' && !v) continue;
@@ -1493,6 +1642,69 @@
       const same = tr.keys.findIndex((x) => x.frame === frame);
       if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
     }
+    // anim nome mix=base,ação bones=osso1,osso2 — a base inteira, com os ossos listados (e os filhos deles) vindos
+    // da ação. O tempo é o da ação (frames, fps e once), a não ser que a linha do anim diga outro. As keys
+    // escritas na própria animação valem por cima.
+    function mixAnim(an) {
+      const { a, st } = an.mixSpec, A = st.attrs;
+      const mm = /^([\w-]+),([\w-]+)$/.exec(a.text), bt = A.get('bones');
+      if (!mm || !bt) { bad(st, a, 'use mix=base,ação bones=osso1,osso2 (ex.: mix=walk_right,attack_right bones=braco)'); return; }
+      const base = m.animMap.get(mm[1]), over = m.animMap.get(mm[2]), list = bt.text.split(',').filter(Boolean);
+      for (const [x, n] of [[base, mm[1]], [over, mm[2]]]) if (!x || x === an || x.mixSpec) { bad(st, a, `animação "${n}" não existe (ou também é um mix)`); return; }
+      const miss = list.find((n) => !m.bones.has(n));
+      if (miss) { bad(st, bt, `osso "${miss}" não existe`); return; }
+      if (!A.has('frames')) an.frames = over.frames;
+      if (!A.has('fps')) an.fps = over.fps;
+      if (!st.pos.slice(1).some((f) => f.text === 'once' || f.text === 'loop')) an.loop = over.loop;
+      an.aliases = [base.name, over.name];
+      // os ossos da lista e os filhos deles seguem a ação
+      const set = new Set(list);
+      for (let grew = true; grew;) { grew = false; for (const b of m.bones.values()) if (b.parent && set.has(b.parent) && !set.has(b.name)) { set.add(b.name); grew = true; } }
+      // em que quadro da animação de origem está o quadro f da nova (pelo tempo)
+      const at = (src, f) => { const x = (f / an.fps) * src.fps; return src.loop ? ((x % src.frames) + src.frames) % src.frames : Math.min(x, src.frames); };
+      const lerpV = (s) => s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t);
+      for (const b of m.bones.values()) {
+        if (an.tracks.has(b.name)) continue;
+        const src = set.has(b.name) ? over : base, tr = src.tracks.get(b.name);
+        if (!tr) continue;
+        const keys = [];
+        for (let f = 0; f <= an.frames; f++) keys.push({ frame: f, v: lerpV(W.geom.segment(tr, at(src, f), src.frames, src.loop)), ease: 'linear' });
+        an.tracks.set(b.name, keys);
+      }
+      // propriedades: da ação o que é dos ossos dela (formas presas a eles, caixas, o caminho); o resto da base
+      const ownsOver = (tr) => (tr.kind === 'el' ? tr.targets.some((e) => e.bone && set.has(e.bone)) : tr.kind === 'box' ? (m.boxes.get(tr.name).bone && set.has(m.boxes.get(tr.name).bone)) || (m.boxes.get(tr.name).only || []).includes(over.name) : tr.kind === 'bone' ? set.has(tr.name) : false);
+      for (const key of new Set([...base.ptracks.keys(), ...over.ptracks.keys()])) {
+        if (an.ptracks.has(key)) continue;
+        const to = over.ptracks.get(key), tb = base.ptracks.get(key);
+        const [src, tr] = to && (ownsOver(to) || !tb) ? [over, to] : [base, tb];
+        let keys;
+        if (tr.type === 'shape') {
+          // morph: as keys de origem, no tempo novo (a base se repete)
+          keys = [];
+          const period = (src.frames / src.fps) * an.fps, reps = src === base && src.loop ? Math.ceil(an.frames / period) + 1 : 1;
+          for (let c = 0; c < reps; c++) for (const k of tr.keys) { const f = Math.round((k.frame / src.fps) * an.fps + c * period); if (f <= an.frames) keys.push(Object.assign({}, k, { frame: f })); }
+          keys = keys.filter((k, i) => !keys.slice(i + 1).some((o) => o.frame === k.frame));
+        } else {
+          keys = [];
+          for (let f = 0; f <= an.frames; f++) {
+            const s = W.geom.segment(tr.keys, at(src, f), src.frames, src.loop);
+            let v;
+            if (tr.type === 'color') v = typeof s.a.v === 'string' && typeof s.b.v === 'string' ? W.geom.lerpColor(s.a.v, s.b.v, s.t) : s.t < 1 ? s.a.v : s.b.v;
+            else if (tr.type === 'step' || tr.type === 'order') v = s.a.v;
+            else v = s.a.v + (s.b.v - s.a.v) * s.t;
+            keys.push({ frame: f, v, ease: 'linear' });
+          }
+        }
+        an.ptracks.set(key, Object.assign({}, tr, { keys }));
+      }
+      // eventos: os da ação e os da base (passos), no tempo novo
+      for (const [src, own] of [[over, true], [base, false]]) {
+        const period = (src.frames / src.fps) * an.fps, reps = !own && src.loop ? Math.ceil(an.frames / period) : 1;
+        for (let c = 0; c < reps; c++) for (const e of src.events) { const f = Math.round((e.frame / src.fps) * an.fps + c * period); if (f < an.frames) an.events.push(Object.assign({}, e, { frame: f })); }
+      }
+      an.events.sort((p, q) => p.frame - q.frame);
+    }
+
     // key forma.above=outra / below=outra (ou camada.above=outra_camada); none volta para a ordem do arquivo
     function orderOf(st, a, kind, name, els, rel) {
       const t = a.text;
@@ -1507,6 +1719,11 @@
       if (!els.every((e) => others.some((o) => o.layer === e.layer))) { bad(st, a, `"${t}" não está na mesma camada que "${name}" (para trocar camadas inteiras, use os nomes das camadas)`); return undefined; }
       return { rel, target: t };
     }
+    for (const an of m.anims) {
+      for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
+      for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);
+    }
+    for (const an of m.anims) if (an.mixSpec) mixAnim(an);
     for (const an of m.anims) {
       for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
       for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);
@@ -1601,6 +1818,14 @@
       if (A.has('origin')) ac.origin = pair(st, A.get('origin'), ac.origin);
       if (A.has('variant')) { const v = variantOf(st, A.get('variant'), ac); if (v !== null) ac.variant = v; }
       if (A.has('anim')) { const v = animOf(st, A.get('anim'), ac); if (v !== undefined) ac.anim = v; }
+      ac.expr = null;
+      if (A.has('expr')) { const v = exprOf(st, A.get('expr'), ac); if (v !== undefined) ac.expr = v; }
+      if (A.has('path')) {
+        const a = A.get('path'), el = (m.named.get(a.text) || []).find((e) => e.type !== 'text' && e.type !== 'emitter' && !e.limb);
+        if (!el) bad(st, a, `path: não achei a linha, traço ou forma "${a.text}" neste filme`);
+        else { ac.path = el; ac.turn = true; }
+      }
+      if (A.has('turn')) ac.turn = A.get('turn').text !== '0';
       if (A.has('hide')) {
         const a = A.get('hide');
         ac.hide = new Set(a.text.split(',').filter(Boolean));
@@ -1623,6 +1848,14 @@
       if (!ac.model) return undefined;
       if (ac.model.animMap.has(a.text)) return a.text;
       bad(st, a, `o ator "${ac.name}" não tem a animação "${a.text}"${ac.model.anims.length ? ` (tem: ${ac.model.anims.map((x) => x.name).join(', ')})` : ''}`);
+      return undefined;
+    }
+    // expr= de um ator: o nome de uma expressão do arquivo dele (none = nenhuma)
+    function exprOf(st, a, ac) {
+      if (a.text === 'none') return null;
+      if (!ac.model) return undefined;
+      if (ac.model.exprs.has(a.text)) return a.text;
+      bad(st, a, `o ator "${ac.name}" não tem a expressão "${a.text}"${ac.model.exprs.size ? ` (tem: ${[...ac.model.exprs.keys()].join(', ')})` : ' (crie com expr nome … no arquivo dele)'}`);
       return undefined;
     }
     function variantOf(st, a, ac) {
@@ -1657,7 +1890,7 @@
       const F = {
         fps: 24, dur: null, line: fst.line, names: new Set(),
         actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000' },
-        shots: [], seq: [], audios: [], subs: [],
+        shots: [], seq: [], audios: [], subs: [], marks: [],
         lang: 'pt', burn: false, subsize: null, subc: '#ffffff',
       };
       m.film = F;
@@ -1736,19 +1969,65 @@
           readSub(st, F, shot && !shot.implicit ? shot : F);
           continue;
         }
+        // mark nome tempo: um momento com nome; num shot, conta do começo dele, fora, do começo do filme
+        if (st.cmd === 'mark') {
+          const name = ident(st, st.pos[0], 'do marcador');
+          if (!name) continue;
+          const t = timeOf(st, st.pos[1], F.fps, 'o tempo (ex.: mark trovao 1m12.5s)');
+          if (!t) continue;
+          if (t.rel) { err(st.line, 'mark não aceita + (use o tempo do marcador)', st.pos[1].from, st.pos[1].to); continue; }
+          if (F.marks.some((k) => k.name === name)) err(st.line, `marcador "${name}" já existe`, st.pos[0].from, st.pos[0].to);
+          for (const f of st.pos.slice(2)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+          const mk = { name, t: t.v, shot: shot && !shot.implicit ? shot : null, line: st.line, abs: t.v };
+          F.marks.push(mk);
+          info(st, { mark: mk });
+          continue;
+        }
         if (st.cmd === 'at') {
           if (!shot) { err(st.line, sequenced ? 'at precisa ficar dentro de um shot' : 'at precisa vir depois do film', st.cmdTok.from, st.cmdTok.to); continue; }
+          // at trovao+0.3s: o tempo de um marcador (resolvido depois, quando o começo de cada shot é conhecido)
+          const mt = st.pos[0] && /^([A-Za-z_]\w*)(?:([+-])(.+))?$/.exec(st.pos[0].text);
+          if (mt) {
+            let off = 0;
+            if (mt[3]) {
+              const o = timeOf(st, { key: 'at', text: mt[3], vfrom: st.pos[0].from + mt[1].length + 1, from: st.pos[0].from, to: st.pos[0].to }, F.fps, 'o tempo depois do marcador');
+              if (!o) continue;
+              off = mt[2] === '-' ? -o.v : o.v;
+            }
+            shot.ats.push({ st, mark: mt[1], off, tok: st.pos[0] });
+            for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
+            continue;
+          }
           const t = timeOf(st, st.pos[0], F.fps, 'o tempo (ex.: at 2s heroi.pos=400,560)');
           if (!t) continue;
-          const prev = shot.ats.length ? shot.ats[shot.ats.length - 1].t : 0;
-          shot.ats.push({ st, t: t.rel ? prev + t.v : t.v });
+          shot.ats.push({ st, v: t.v, rel: t.rel });
           for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
         }
       }
+      // começo de cada shot no filme (os marcadores dentro de um shot contam dele)
+      const framesOf = (F2) => F2.seq.reduce((n, x) => n + (x.kind === 'shot' ? Math.max(1, Math.round((x.shot.dur || 0) * F.fps)) : x.model && x.model.film ? framesOf(x.model.film) : 0), 0);
+      let at0 = 0;
+      for (const x of F.seq) {
+        if (x.kind === 'shot') { x.shot.start = at0 / F.fps; at0 += Math.max(1, Math.round((x.shot.dur || 0) * F.fps)); } else if (x.model && x.model.film) at0 += framesOf(x.model.film);
+      }
+      const marks = new Map();
+      for (const mk of F.marks) { mk.abs = (mk.shot ? mk.shot.start || 0 : 0) + mk.t; marks.set(mk.name, mk); }
       for (const s of F.shots) {
         if (s.implicit) s.cam = F.camera;
         const actors = new Map([...F.actors, ...s.actors].map((a) => [a.name, a]));
         s.actorMap = actors;
+        // o tempo de cada at: do marcador, depois do anterior (+) ou o escrito
+        let prev = 0;
+        for (const x of s.ats) {
+          if (x.mark) {
+            const mk = marks.get(x.mark);
+            if (!mk) { err(x.st.line, `marcador "${x.mark}" não existe (use mark ${x.mark} tempo)`, x.tok.from, x.tok.to); x.t = null; continue; }
+            x.t = mk.abs - (s.start || 0) + x.off;
+            if (x.t < -1e-9 || (s.dur !== null && x.t > s.dur + 1e-9)) { err(x.st.line, `o marcador "${x.mark}" (${round3(mk.abs + x.off)}s) fica fora do shot "${s.name}"`, x.tok.from, x.tok.to, 'warn'); x.t = null; continue; }
+          } else x.t = x.rel ? prev + x.v : x.v;
+          prev = x.t;
+        }
+        s.ats = s.ats.filter((x) => x.t !== null);
         for (const { st, t } of s.ats) readAt(st, t, s, actors, F.fps);
         if (s.implicit && s.dur === null) {
           const last = Math.max(0, ...s.ats.map((x) => x.t));
@@ -1911,6 +2190,7 @@
           case 'flip': { const f = flipOf(st, a); if (f) key(kind, name, prop, 'step', f); break; }
           case 'anim': { const v = animOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'step', v); break; }
           case 'variant': { const v = variantOf(st, a, ac); if (v !== null) key(kind, name, prop, 'step', v); break; }
+          case 'expr': { const v = exprOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'expr', v); break; }
           case 'actor':
             if (a.text !== 'none' && !actors.has(a.text)) bad(st, a, `ator "${a.text}" não existe aqui`);
             else key(kind, name, prop, 'step', a.text === 'none' ? null : a.text);
@@ -1921,7 +2201,7 @@
     }
 
     // ---- linhas de arquivos incluídos: erros e alças voltam para a linha do include ----
-    if (X.files.length) {
+    if (X.files.length || X.repeated) {
       const mainLines = src.split(/\r?\n/);
       for (const e of errors) {
         const o = L[e.line];
@@ -1936,16 +2216,26 @@
       const nb = new Map();
       for (const [k, rec] of m.byLine) { const o = L[k]; if (o && o.file === X.mainFile) nb.set(o.line, rec); }
       m.byLine = nb;
+      // as alças de uma linha repetida não arrastam (mexer nelas mudaria todas as cópias)
+      for (const rec of nb.values()) if (rec.repeated) for (const h of rec.handles) h.fixed = true;
+      // cada cópia de um repeat dá o mesmo erro: fica um só
+      const once = new Set();
+      for (let i = errors.length - 1; i >= 0; i--) {
+        const e = errors[i], k = `${e.line}:${e.from}:${e.msg}`;
+        if (once.has(k)) errors.splice(i, 1); else once.add(k);
+      }
     }
     scope = null;
     errors.sort((a, b) => a.line - b.line || a.from - b.from);
     return m;
   }
 
+  // morph: fechada com fechada, aberta com aberta (o mesmo tipo e o mesmo número de pontos mistura ponto a
+  // ponto; o resto, pelo contorno)
   function compatible(a, b) {
-    if (a.type !== b.type || a.limb || b.limb || a.type === 'text') return false;
-    if (a.pts && a.pts.length && b.pts) return a.pts.length === b.pts.length;
-    return true;
+    const bad = (e) => e.limb || e.type === 'text' || e.type === 'emitter';
+    if (bad(a) || bad(b)) return false;
+    return a.closed === b.closed;
   }
 
   function yOnLine(pts, x) {
@@ -1968,5 +2258,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

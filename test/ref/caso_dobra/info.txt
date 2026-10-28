@@ -1,0 +1,13 @@
+canvas   300 × 200, fundo transparente
+let      n=6
+camadas  3
+  guia             1 item(ns)  guide
+  chao             6 item(ns)
+  corpo            5 item(ns)
+formas   12 (1 ocultas)
+ossos    corpo, r1←corpo, r2←r1, bola
+animações 3
+  balanca        12 quadros, 12 fps, anima bola.along bolinha.order olho.shape
+  pula           8 quadros, 12 fps, once
+  pula_balanca   12 quadros, 12 fps, anima bola.along bolinha.order olho.shape
+godot    character, raiz 150,190, esqueleto (Bone2D)

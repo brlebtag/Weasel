@@ -279,6 +279,7 @@ function info(m) {
     }
   } else out.push('animações nenhuma');
   if (m.unity) out.push(`unity    ${m.unity.unit} px/unidade, raiz ${m.unity.root.join(',')}`);
+  if (m.exprs.size) out.push(`expressões ${[...m.exprs.keys()].join(', ')}`);
   if (m.mouth) out.push(`boca     ${m.mouth.name} (lip sync: ${Object.entries(m.mouth.map).map(([k, v]) => `${k}=${v.shape}${v.t < 1 ? '@' + v.t : ''}`).join(' ')})`);
   if (m.godot) out.push(`godot    ${m.godot.body}${m.godot.root ? `, raiz ${m.godot.root.join(',')}` : ''}${m.godot.name ? `, nó ${m.godot.name}` : ''}${m.godot.normal !== 1 ? `, normal ${m.godot.normal}` : ''}${m.godot.rig === 'bones' ? ', esqueleto (Bone2D)' : ''}`);
   if (m.boxes.size) {
@@ -363,11 +364,11 @@ async function exportModel(model, o, format, base, sfx) {
     if (rig) {
       let pr;
       try {
-        pr = W.rig.packageFiles(model, { base: b, scale: o.scale, mirror: o.mirror });
+        pr = W.rig.packageFiles(model, { base: b, scale: o.scale, mirror: o.mirror, normal: o.normal !== false });
       } catch (e) { usage(e.message); }
       const say = (f) => {
-        if (f.canvas) return `${f.canvas.width}×${f.canvas.height}, ${pr.images} imagens de peças`;
-        if (f.name.endsWith('.tscn')) return `cena do Godot 4 com esqueleto (${pr.bones} osso${pr.bones === 1 ? '' : 's'}, ${pr.rigid} peça${pr.rigid === 1 ? '' : 's'} presas aos ossos${pr.framed ? `, ${pr.framed} quadro a quadro` : ''}${pr.boxes ? `, ${pr.boxes} caixa${pr.boxes === 1 ? '' : 's'}` : ''}${pr.points ? `, ${pr.points} ponto${pr.points === 1 ? '' : 's'}` : ''}${pr.mirrored.length ? `, espelhadas: ${pr.mirrored.join(', ')}` : ''})`;
+        if (f.canvas) return /_normal\.png$/.test(f.name) ? `${f.canvas.width}×${f.canvas.height}, normal map` : `${f.canvas.width}×${f.canvas.height}, ${pr.images} imagens de peças`;
+        if (f.name.endsWith('.tscn')) return `cena do Godot 4 com esqueleto (${pr.bones} osso${pr.bones === 1 ? '' : 's'}, ${pr.rigid} peça${pr.rigid === 1 ? '' : 's'} presas aos ossos${pr.skinned ? `, ${pr.skinned} que dobra${pr.skinned === 1 ? '' : 'm'}` : ''}${pr.framed ? `, ${pr.framed} quadro a quadro` : ''}${pr.boxes ? `, ${pr.boxes} caixa${pr.boxes === 1 ? '' : 's'}` : ''}${pr.points ? `, ${pr.points} ponto${pr.points === 1 ? '' : 's'}` : ''}${pr.mirrored.length ? `, espelhadas: ${pr.mirrored.join(', ')}` : ''})`;
         return 'ajudante do AnimationPlayer';
       };
       for (const f of pr.files) save(path.join(dir, f.name), f.canvas ? f.canvas.toBuffer('image/png') : Buffer.from(f.text), say(f), o.quiet);

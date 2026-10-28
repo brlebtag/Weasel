@@ -320,8 +320,9 @@ pre.ex u { color: var(--num); text-decoration: none; }
 .seg button:first-child { border-radius: 7px 0 0 7px; }
 .seg button:last-child { border-radius: 0 7px 7px 0; }
 .seg button.on { background: #24364a; border-color: #3d5a7a; color: #fff; position: relative; z-index: 1; }
-.dlg-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; padding: 14px 16px; min-height: 0; }
-.opts { display: flex; flex-direction: column; gap: 10px; }
+.dlg-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; padding: 14px 16px; min-height: 0; overflow: hidden; }
+/* com a janela baixa, as opções rolam dentro dela (sem passar por cima do rodapé) */
+.opts { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .opts label { display: flex; flex-direction: column; gap: 4px; color: var(--dim); font-size: 12px; }
 .opts label.chk { flex-direction: row; align-items: center; gap: 8px; color: var(--text); font-size: 13px; }
 .opts select, .opts input[type=number], .opts input[type=text] { width: 100%; }
@@ -346,7 +347,7 @@ pre.ex u { color: var(--num); text-decoration: none; }
   background-position: 0 0, 8px 8px;
 }
 .dlg-foot { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
-.exp-info { flex: 1; color: var(--dim); font: 12px var(--mono); }
+.exp-info { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--dim); font: 12px var(--mono); }
 
 @media (max-width: 860px) {
   body { grid-template-rows: auto minmax(0, 1fr); }

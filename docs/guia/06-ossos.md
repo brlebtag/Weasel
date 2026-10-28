@@ -296,4 +296,62 @@ key 48 corpo=0,0 mao=0,0
 
 O membro é desenhado com a cor `c=` (padrão: a cor de tinta) e não precisa de pontos depois do `:`.
 
+## Formas que dobram: `bones=`
+
+Uma forma com `bone=` gira inteira, como uma peça rígida. Com `bones=a,b,c`, cada ponto da forma segue os ossos **mais perto dele**, e a forma dobra: um rabo, uma cobra, um tentáculo, um corpo que se curva.
+
+<!-- gerar: img/06_bones.gif -a mexe -->
+```weasel
+canvas 360 200 bg=#f4efe6
+palette ink=#2b2a33 line=4
+
+bone r1 pivot=120,100
+bone r2 pivot=180,100 parent=r1
+bone r3 pivot=240,100 parent=r2
+
+shape cauda c=#ff9a4a ink=line bones=r1,r2,r3 : 110,84 300,94 310,100 300,106 110,116
+shape rigida c=#9ab8ff ink=line bone=r1 opacity=0.4 : 110,144 300,154 310,160 300,166 110,176
+
+anim mexe frames=24 fps=12
+key 0 r1=0,0,0 r2=0,0,0 r3=0,0,0
+key 6 r1=0,0,-15 r2=0,0,-25 r3=0,0,-30
+key 18 r1=0,0,15 r2=0,0,25 r3=0,0,30
+key 24 r1=0,0,0 r2=0,0,0 r3=0,0,0
+```
+
+![Uma cauda laranja que dobra em curva, para cima e para baixo; embaixo, a mesma forma com um osso só gira inteira, dura](img/06_bones.gif)
+
+- Os ossos fazem uma corrente (`r2` é filho de `r1`, `r3` de `r2`), cada um um pouco mais adiante na cauda. Cada um cuida do pedaço entre o pivô dele e o pivô do seguinte.
+- Perto de uma junta, os dois ossos dividem o ponto, e a curva sai lisa. Por isso a forma pode ter poucos pontos: quem dobra é a curva desenhada, não só os pontos do código.
+- A forma de baixo (azul) usa `bone=r1`: gira inteira, sem dobrar.
+- No Godot com esqueleto ([capítulo 9](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), a forma vira uma malha que dobra do mesmo jeito.
+
+## Andar por um caminho: `path=`
+
+Com `path=nome`, o osso anda por uma linha, um traço ou uma forma, e `key quadro osso.along=0 … 1` diz quanto do caminho ele já andou (0 = começo, 1 = fim):
+
+<!-- gerar: img/06_caminho.gif -a vai -->
+```weasel
+canvas 400 220 bg=#cfe8f5
+palette ink=#2b2a33 line=3
+
+stroke estrada w=14 c=#9aa0ad : 20,180 120,120 220,170 300,90 380,60
+bone carro pivot=60,40 path=estrada
+rect lata 40,28 40,20 r=5 c=#ff6b4a ink=line bone=carro
+ellipse roda1 48,48 6 c=ink bone=carro
+ellipse roda2 72,48 6 c=ink bone=carro
+
+anim vai frames=36 fps=12
+key 0 carro.along=0 ease=linear
+key 36 carro.along=1
+```
+
+![Um carrinho vermelho anda pela estrada cinza, subindo e descendo e inclinando junto com ela](img/06_caminho.gif)
+
+- O pivô do osso vai para o ponto do caminho. O carro foi desenhado em qualquer lugar (lá em cima): o osso leva o desenho junto.
+- O osso **vira junto com a curva**, como o carro na subida. O desenho deve estar virado para a **direita**, que é a direção de quem anda. Para não virar, use `turn=0`.
+- `ease=linear` dá velocidade constante. Num caminho fechado (uma forma), `along` maior que 1 dá mais voltas.
+- As outras `key` do osso continuam valendo por cima: `carro=0,-10` levanta o carro 10 acima da estrada.
+- Num filme, um ator também anda por um caminho do arquivo do filme ([capítulo 10](10-filme.md#andar-por-um-caminho-path)).
+
 [← Contas e componentes](05-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)

@@ -194,7 +194,8 @@ async function drawingCases(file, prefix, svg) {
   if (model.godot && model.godot.rig === 'bones') {
     const pkg = W.rig.packageFiles(model, { base: group, scale: 0.5, mirror: true });
     for (const f of pkg.files) {
-      if (f.name.endsWith('.png')) await check(group, 'esqueleto.png', 'png', f.canvas);
+      if (f.name.endsWith('_normal.png')) await check(group, 'esqueleto_normal.png', 'png', f.canvas);
+      else if (f.name.endsWith('.png')) await check(group, 'esqueleto.png', 'png', f.canvas);
       else if (f.name.endsWith('.tscn')) await check(group, 'esqueleto.tscn', 'text', f.text);
     }
   }

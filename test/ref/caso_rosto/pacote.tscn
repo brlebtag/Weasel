@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="SpriteFrames" path="caso_rosto.tres" id="1_frames"]
+[ext_resource type="Script" path="weasel_anim.gd" id="2_script"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_weasel"]
+_data = {
+
+}
+
+[node name="CasoRosto" type="CharacterBody2D"]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("1_frames")
+animation = &"default"
+centered = false
+offset = Vector2(-21, -43.8)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_weasel")
+}
+script = ExtResource("2_script")

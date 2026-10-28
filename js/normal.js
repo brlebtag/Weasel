@@ -118,8 +118,9 @@
     return v;
   }
 
-  // Altura (em pixels da imagem) de cada ponto do quadro.
-  function heights(model, pose, rect, s, strength) {
+  // Altura (em pixels da imagem) de cada ponto do quadro. sel = { items, layers }: só essas peças (o esqueleto do
+  // Godot faz um normal map por peça).
+  function heights(model, pose, rect, s, strength, sel) {
     const Wd = Math.max(1, Math.round(rect.w * s)), Hd = Math.max(1, Math.round(rect.h * s));
     const H = new Float32Array(Wd * Hd);
     const x = maskCtx(Wd, Hd);
@@ -143,10 +144,11 @@
     };
     for (const layer of S.orderLayers(model, pose)) {
       // camadas de sombreado (clip, dentro de outra forma) e o que não recebe luz (unlit) não fazem relevo
-      if (layer.clip || layer.unlit || !S.layerVisible(layer, pose, { guides: false })) continue;
+      if (layer.clip || layer.unlit || (sel && sel.layers ? !sel.layers.has(layer) || layer.hidden || layer.guide : !S.layerVisible(layer, pose, { guides: false }))) continue;
       const lp = pose.lprops.get(layer.name) || NOPROPS;
       if (lp.show === 0 || layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1) <= 0.02) continue;
       for (const it of S.orderItems(layer.items, pose)) {
+        if (sel && sel.items && !sel.items.has(it)) continue;
         const el = it.el;
         if (el.hidden || el.emit || el.type === 'emitter' || el.type === 'text') continue;
         const pr = pose.props.get(el.id) || NOPROPS;
@@ -219,7 +221,7 @@
   // Normal map de um quadro. alpha: os pixels do quadro colorido (a transparência é copiada dele).
   function frame(model, pose, o) {
     const s = o.scale || 1, rect = o.rect;
-    const { H, Wd, Hd } = heights(model, pose, rect, s, o.strength !== undefined ? o.strength : 1);
+    const { H, Wd, Hd } = heights(model, pose, rect, s, o.strength !== undefined ? o.strength : 1, o.items || o.layers ? { items: o.items, layers: o.layers } : null);
     const out = document.createElement('canvas');
     out.width = Wd;
     out.height = Hd;

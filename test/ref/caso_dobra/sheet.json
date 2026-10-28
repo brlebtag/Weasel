@@ -1,0 +1,893 @@
+{
+  "frames": {
+    "balanca_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_01": {
+      "frame": {
+        "x": 77,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_02": {
+      "frame": {
+        "x": 152,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_03": {
+      "frame": {
+        "x": 227,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_04": {
+      "frame": {
+        "x": 302,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_05": {
+      "frame": {
+        "x": 377,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_06": {
+      "frame": {
+        "x": 452,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_07": {
+      "frame": {
+        "x": 527,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_08": {
+      "frame": {
+        "x": 602,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_09": {
+      "frame": {
+        "x": 677,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_10": {
+      "frame": {
+        "x": 752,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "balanca_11": {
+      "frame": {
+        "x": 827,
+        "y": 2,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_00": {
+      "frame": {
+        "x": 2,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_01": {
+      "frame": {
+        "x": 77,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_02": {
+      "frame": {
+        "x": 152,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_03": {
+      "frame": {
+        "x": 227,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_04": {
+      "frame": {
+        "x": 302,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_05": {
+      "frame": {
+        "x": 377,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_06": {
+      "frame": {
+        "x": 452,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_07": {
+      "frame": {
+        "x": 527,
+        "y": 58,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_00": {
+      "frame": {
+        "x": 2,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_01": {
+      "frame": {
+        "x": 77,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_02": {
+      "frame": {
+        "x": 152,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_03": {
+      "frame": {
+        "x": 227,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_04": {
+      "frame": {
+        "x": 302,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_05": {
+      "frame": {
+        "x": 377,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_06": {
+      "frame": {
+        "x": 452,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_07": {
+      "frame": {
+        "x": 527,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_08": {
+      "frame": {
+        "x": 602,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_09": {
+      "frame": {
+        "x": 677,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_10": {
+      "frame": {
+        "x": 752,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "pula_balanca_11": {
+      "frame": {
+        "x": 827,
+        "y": 114,
+        "w": 73,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "balanca": [
+      "balanca_00",
+      "balanca_01",
+      "balanca_02",
+      "balanca_03",
+      "balanca_04",
+      "balanca_05",
+      "balanca_06",
+      "balanca_07",
+      "balanca_08",
+      "balanca_09",
+      "balanca_10",
+      "balanca_11"
+    ],
+    "pula": [
+      "pula_00",
+      "pula_01",
+      "pula_02",
+      "pula_03",
+      "pula_04",
+      "pula_05",
+      "pula_06",
+      "pula_07"
+    ],
+    "pula_balanca": [
+      "pula_balanca_00",
+      "pula_balanca_01",
+      "pula_balanca_02",
+      "pula_balanca_03",
+      "pula_balanca_04",
+      "pula_balanca_05",
+      "pula_balanca_06",
+      "pula_balanca_07",
+      "pula_balanca_08",
+      "pula_balanca_09",
+      "pula_balanca_10",
+      "pula_balanca_11"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_dobra.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 902,
+      "h": 170
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 73,
+      "h": 54
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "balanca",
+        "from": 0,
+        "to": 11,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "pula",
+        "from": 12,
+        "to": 19,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      },
+      {
+        "name": "pula_balanca",
+        "from": 20,
+        "to": 31,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 26,
+      "y": 16,
+      "w": 242,
+      "h": 181
+    }
+  }
+}

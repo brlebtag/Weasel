@@ -13,7 +13,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 | Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça |
 | Cor | `#rgb` `#rrggbb` `#rrggbbaa` · nome da `palette` · `gradient` · `pattern` · nome do CSS · `none` |
 | Espessura | número · nome numérico da `palette` (`line`, `inner`…) · `none` (0) |
-| Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, variáveis do `let` e de `def`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp` |
+| Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, variáveis do `let`, de `def` e de `repeat`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp`, `rand(x)` e `rand(x,a,b)` |
 | Ângulo | graus; 0 = direita, positivo = horário, 90 = para baixo |
 | Texto | entre aspas: `"Olá"` |
 | Tempo (filme) | `2s` `1.5` `500ms` `48f` `1m30s`; `+1s` = depois do anterior |
@@ -31,6 +31,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 | `pattern nome [hatch\|dots] [cross]` | `c=` (cor de tinta) · `bg=` (nenhum) · `gap=` (6) · `w=` (1.2) · `r=` (1.4) · `angle=` (45) |
 | `variant nome chave=valor …` | troca valores da `palette` nessa versão · `hide=nomes` esconde formas ou camadas · `show=nomes` mostra as que têm `hidden` |
 | `include "arquivo.weasel"` | o outro arquivo entra nesta linha |
+| `repeat i a..b` … `end` | repete as linhas, com `i` de `a` até `b` nas contas (até 1000 vezes) |
 | `unity` | `unit=` pixels por unidade (100) · `root=x,y` (meio da base do canvas) · `collider=l,a[,dx,dy]` |
 
 ## Camadas
@@ -59,7 +60,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 
 ## Formas
 
-Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
+Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
 
 | Instrução | Valores e atributos (padrão) |
 |---|---|
@@ -84,11 +85,12 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 
 | Instrução | Atributos (padrão) |
 |---|---|
-| `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) |
+| `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) · `path=linha` (anda pelo caminho com `key osso.along=`) · `turn=1\|0` (1: vira com a curva) |
 | `cloth nome pivot=x,y` | `tension=` 0–1 (0.5) · `drag=` 0–10 (1) · `swing=` 0–10 (1) · `bone=` |
-| `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) |
+| `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) · `mix=base,ação bones=ossos` (junta duas animações; o tempo é o da ação) |
 | `key quadro …` | `osso=dx,dy,rot,sx,sy` (padrão `0,0,0,1,1`; 1 número = dx, 4 números = escala igual) · `alvo.prop=valor` · `ease=` (smooth) |
 | `event quadro nome …` | um ou mais nomes |
+| `expr nome …` | uma expressão: `osso=dx,dy,rot` e `forma.prop=valor`, como numa `key` sem quadro (para `at ator.expr=`) |
 
 **`ease=`**: `smooth` (padrão), `linear`, `in`, `out`, `back`, `step`. Na `key`, diz como o movimento **sai** daquela key; no `at` do filme, como ele **chega** naquele `at`.
 
@@ -96,7 +98,8 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 
 | Alvo | Propriedades |
 |---|---|
-| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph) · `draw` (0 a 1, desenha aos poucos) · `above` / `below` (outra forma da mesma camada, ou `none`) |
+| osso | `along` (0 a 1, com `path=`) |
+| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph: fechada com fechada, traço com traço) · `draw` (0 a 1, desenha aos poucos) · `above` / `below` (outra forma da mesma camada, ou `none`) |
 | camada | `opacity` · `show` · `blur` · `glow` · `tint` · `brightness` · `saturate` · `contrast` · `hue` · `above` / `below` (outra camada, ou `none`) |
 | luz | `power` · `radius` · `c` · `glow` · `aim` · `cone` |
 | caixa | `show` |
@@ -126,15 +129,16 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 | Instrução | Atributos (padrão) |
 |---|---|
 | `film` | `fps=` 1–120 (24) · `dur=` (só sem `shot`) · `lang=` (pt) · `subs=burn\|file` · `subsize=` · `subc=` (#ffffff) |
-| `actor nome "arquivo" x,y` | `scale=` · `rot=` · `flip=x\|y\|xy\|none` · `depth=` (1) · `anim=` · `speed=` (1) · `opacity=` (1) · `origin=x,y` (o `root=` do `unity` do arquivo, ou 0,0) · `variant=` · `hide=camada,…` · `[screen]` `[bg]` `[hidden]` `[unlit]` `[front]` |
+| `actor nome "arquivo" x,y` | `scale=` · `rot=` · `flip=x\|y\|xy\|none` · `depth=` (1) · `anim=` · `speed=` (1) · `opacity=` (1) · `origin=x,y` (o `root=` do `unity` do arquivo, ou 0,0) · `variant=` · `hide=camada,…` · `expr=` · `path=linha` · `turn=1\|0` · `[screen]` `[bg]` `[hidden]` `[unlit]` `[front]` |
 | `shot nome` | `dur=` (obrigatório) · `in=fade\|wipe\|slide\|zoom\|iris[,duração]` (0.5s) |
 | `camera x,y` | `zoom=` (1) · `rot=` (0) · `shake=` (0) · `follow=ator` · `offset=dx,dy` · `lag=` segundos (0) · `fade=` 0–1 (0) · `fadec=` (#000000). Padrão: o centro do canvas. |
 | `at tempo alvo.prop=valor …` | `ease=` (smooth) |
 | `scene "arquivo"` | os planos de outro filme |
+| `mark nome tempo` | um momento com nome (antes dos `shot`: do começo do filme; dentro de um: do começo dele); `at nome`, `at nome+0.3s` |
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |
 | `sub tempo "texto"` | `dur=` (o tempo de ler) · `lang=` |
 
-**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant` · câmera `pos x y zoom rot shake follow offset lag fade fadec` · luz `power radius c glow aim cone` · camada `opacity show` e os efeitos · forma do filme `draw opacity show`.
+**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec` · luz `power radius c glow aim cone` · camada `opacity show` e os efeitos · forma do filme `draw opacity show`.
 
 ## Linha de comando
 
