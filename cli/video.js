@@ -404,6 +404,7 @@ function filmInfo(m) {
     if (s.actors.length) notes.push(`atores ${s.actors.map((a) => a.name).join(', ')}`);
     const keys = [...s.tracks.values()].reduce((n, t) => n + t.keys.length, 0);
     if (keys) notes.push(`${keys} mudança(s) com at`);
+    if (s.trans) notes.push(`entra com ${s.trans.type} (${secs(s.trans.dur)})`);
     out.push(`  ${e.name.padEnd(16)} ${W.film.timecode(e.start, F.fps)}  ${secs(e.frames / F.fps).padStart(6)}  ${String(e.frames).padStart(5)} quadros  ${notes.join(' · ')}`);
   }
   return out.join('\n');

@@ -206,7 +206,7 @@ ellipse reflexo 218,156 22,14 rot=-30 c=#ffc2ad
 | `let nome=valor ...` | Variáveis para as contas: `let cx=400 r={cx/8}`. Funções: `sin`, `cos`, `tan` (em graus), `atan2`, `sqrt`, `abs`, `min`, `max`, `round`, `floor`, `ceil`, `pow`, `lerp`, `clamp`; constante `pi`. |
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | Gradiente linear. Cores com posição opcional: `: #fff@0 #889@1`, ou só `: pena penad`. Com `box`, as coordenadas vão de 0 a 1 dentro de cada forma que usa o gradiente. |
 | `gradient nome radial cx,cy r [fx,fy] [box] : cores` | Gradiente circular, com foco opcional. Use o nome em `c=`, `inkc=` ou `bg=`. Os gradientes seguem os ossos da forma. |
-| `variant nome chave=valor ...` | Outra versão das cores: troca valores da `palette` (inimigos recoloridos, dia/noite...). |
+| `variant nome chave=valor ... show= hide=` | Outra versão das cores: troca valores da `palette` (inimigos recoloridos, dia/noite...). `hide=elmo,espada` esconde formas ou camadas nessa versão e `show=chapeu` mostra as que têm `hidden`: peças trocáveis (outra arma, um chapéu, sem o elmo). |
 | `include "arquivo.weasel"` | Usa outro arquivo: palette, componentes, ossos. No terminal, o caminho é relativo ao arquivo que inclui. |
 | `unity unit= root=x,y collider=l,a,dx,dy` | Pixels por unidade, ponto raiz e colisor para a Unity (vão no JSON da sprite sheet). |
 
@@ -255,7 +255,8 @@ use estrela 452,206 flip=x
 | `cloth nome pivot=x,y tension= drag= swing=` | Tecido: os pontos longe do pivô balançam atrasados quando o osso se move. |
 | `anim nome frames= fps= [once]` | Começa uma animação. |
 | `key quadro osso=dx,dy,rot,sx,sy ... ease=` | Pose dos ossos naquele quadro; o resto é interpolado (`smooth`, `linear`, `in`, `out`, `back`, `step`). |
-| `key quadro forma.prop=valor` | Anima uma forma: `opacity`, `c`, `inkc` (cores se misturam), `w`, `ink`, `show` (1/0) e `shape` (morph para outra forma com o mesmo número de pontos). Camadas: `camada.opacity` e `camada.show`. |
+| `key quadro forma.prop=valor` | Anima uma forma: `opacity`, `c`, `inkc` (cores se misturam), `w`, `ink`, `show` (1/0), `shape` (morph para outra forma com o mesmo número de pontos) e `draw` (0 a 1: desenha aos poucos, do primeiro ponto ao último; num texto, as letras aparecem uma a uma). Camadas: `camada.opacity` e `camada.show`. |
+| `key quadro forma.above=outra` | Muda a ordem de pintura a partir daquele quadro: `above=` pinta logo depois da outra forma (na frente), `below=` logo antes (atrás), `none` volta à ordem do arquivo. Entre formas da mesma camada, ou entre camadas (`bracoD.above=corpo`). |
 | `event quadro nome` | Marca um evento (passo, som, golpe). Aparece no player e vai no JSON da sprite sheet. |
 
 ```
@@ -345,8 +346,9 @@ event 2 golpe
 | `godot body=character\|static\|area\|rigid\|node root=x,y name= normal=` | O nó raiz da cena (CharacterBody2D, StaticBody2D, Area2D, RigidBody2D ou Node2D), o ponto que vira a origem (padrão: `unity root=`, ou o meio da base do desenho), o nome do nó e a força do relevo do normal map (padrão 1). |
 | `tileset size=32 [auto]` | O canvas vira uma folha de blocos (`size=l,a` para blocos retangulares). `auto` cria também um bloco sem colisão para cada célula desenhada que não tem `tile`. |
 | `tile nome coluna,linha [solid] [oneway] collision=forma` | Um bloco: `solid` colide no quadrado todo, `oneway` só por cima (plataforma), `collision=` usa o formato de uma forma (rampa, meio-bloco). O nome vai junto no bloco (dado `nome`). |
+| `point nome x,y bone=` | Ponto de encaixe que segue a posição e a rotação do osso: de onde sai o tiro, onde a mão segura a arma, onde nasce a poeira do passo. Na cena do Godot vira um `Marker2D` movido quadro a quadro; na sprite sheet, vai no JSON de cada quadro (`points`). |
 
-- No editor, com **Guias**, as caixas aparecem no desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas. O tileset mostra a grade, o nome de cada bloco e a colisão.
+- No editor, com **Guias**, as caixas aparecem no desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas. Os pontos de encaixe aparecem em roxo, com uma seta para onde o osso aponta. O tileset mostra a grade, o nome de cada bloco e a colisão.
 - **Direções (top-down):** anime `walk_down`, `walk_up` e `walk_right` (e as diagonais `_down_right`, `_up_right`, se quiser). Na cena do Godot, o lado que falta (`walk_left`) sai espelhado, com as caixas espelhadas também. Camadas de cada vista usam `only=`; `only=pose,idle_down,…` também aparece na pose parada.
 - A sprite sheet em JSON também leva as caixas ligadas em cada quadro (`boxes`), para usar em outros motores.
 
@@ -382,9 +384,9 @@ at 4.5s camera.fade=1 ease=linear
 |---|---|
 | `film fps= dur=` | Marca o arquivo como filme. `canvas L A bg=` é o tamanho do quadro (padrão 1920 × 1080) e o fundo. `dur=` só vale sem `shot`. |
 | `actor nome "arquivo.weasel" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= [screen] [bg] [hidden] [unlit] [front]` | Põe outro arquivo em cena. `anim=` é a animação que começa tocando, `hide=` esconde camadas do arquivo (o céu que só faz sentido no jogo), `hidden` começa invisível, `bg` desenha o fundo do arquivo. Declarado antes do primeiro `shot`, vale para todos os planos. |
-| `shot nome dur=` | Um plano. Os planos tocam em sequência; atores, `camera` e `at` abaixo dele valem só para ele, e cada plano começa com tudo como foi declarado. |
+| `shot nome dur= in=tipo,duração` | Um plano. Os planos tocam em sequência; atores, `camera` e `at` abaixo dele valem só para ele, e cada plano começa com tudo como foi declarado. `in=` é a transição de entrada: `fade` (dissolve), `wipe` (cortina), `slide` (empurra), `zoom` ou `iris` (o círculo de desenho animado), com 0.5s se a duração faltar. O plano anterior fica parado no último quadro durante a troca, e a duração do filme não muda. |
 | `camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=` | Para onde a câmera olha (o centro do quadro). `follow=ator` segue um ator (mais `offset=`), `lag=` (segundos) faz a câmera chegar atrasada e macia, `shake=` treme (px), `fade=1` escurece tudo (`fadec=` muda a cor). |
-| `at tempo alvo.prop=valor … ease=` | Muda algo num momento do plano. Ator: `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`. Câmera: `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`. Luzes do filme: `power`, `radius`, `c`, `glow`, `aim`, `cone`. Camadas do filme: `opacity`, `show` e os efeitos. |
+| `at tempo alvo.prop=valor … ease=` | Muda algo num momento do plano. Ator: `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`. Câmera: `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`. Luzes do filme: `power`, `radius`, `c`, `glow`, `aim`, `cone`. Camadas do filme: `opacity`, `show` e os efeitos. Formas do arquivo do filme: `draw`, `opacity` e `show` (`at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota de um mapa). |
 | `scene "arquivo.weasel"` | Acrescenta, nesse ponto da sequência, os planos de outro arquivo de filme. |
 | `layer … depth= [screen] [front]` | Profundidade da camada (em qualquer arquivo; só vale num filme). `only=` no arquivo do filme também aceita nomes de plano. |
 
@@ -458,11 +460,13 @@ Furao (CharacterBody2D)            ← godot body=; a origem é o ponto raiz (os
 ├── corpo_pes (CollisionShape2D)   ← box … body
 ├── Hitbox (Area2D)                ← box … hit: golpe_down, golpe_up, golpe_right
 ├── Hurtbox (Area2D)               ← box … hurt: dano
+├── saida (Marker2D)               ← point (se houver)
 └── AnimationPlayer                ← weasel_anim.gd
 ```
 
 - O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do Sprite, liga, desliga e move as caixas quadro a quadro e chama os `event` na hora certa. Toque pelo AnimationPlayer, não pelo Sprite.
 - Os **eventos** chegam pelo sinal `evento(nome)` do AnimationPlayer.
+- Os **pontos** (`point`) são `Marker2D` com o nome do ponto: `$saida.global_position` diz de onde sai o tiro e `$saida.global_transform.x`, para onde o osso aponta. Nas animações espelhadas, o ponto e a direção também espelham.
 - **Hitbox** e **Hurtbox** são Area2D: a Hitbox procura (`monitoring`) e a Hurtbox é encontrada (`monitorable`). As duas ficam na camada de colisão 1; num jogo com times, ajuste as camadas e máscaras, e ignore a própria Hurtbox (`area.owner != self`).
 - **`tocar(acao, direcao)`** escolhe a animação pela direção: `tocar("walk", velocity)` toca `walk_down`, `walk_up`, `walk_right` ou `walk_left` (e as diagonais, se existirem) e só recomeça quando a animação muda. Parado (`Vector2.ZERO`), vale a última direção.
 - O **normal map** é gerado das formas: cada forma vira um relevo arredondado, apoiado no que ela cobre; como na cor, a forma de cima esconde a de baixo, então a borda do que ficou atrás (o tronco atrás da máscara, a orelha atrás da cabeça) não aparece na luz. Uma `PointLight2D` ilumina o personagem de lado; sem luzes, ele aparece normal.
@@ -521,7 +525,7 @@ Os mesmos exemplos estão em [`exemplos/`](exemplos/) como arquivos `.weasel`.
 
 ## Testes
 
-`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha), alguns quadros prontos, os sons, bocas e legendas, o EDL e o FCPXML para o editor de vídeo e o desenho da linha do tempo do editor.
+`npm test` renderiza todos os exemplos e compara com as referências guardadas em [`test/ref/`](test/ref/): a pose, cada variante, um quadro do meio de cada animação, a sprite sheet de todas as animações com o JSON, o `.tres` do Godot, o SVG, a ordem da pintura, o resumo do `--info` e o codificador de GIF. Os arquivos de [`test/casos/`](test/casos/) testam uma função nova cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos e transições), com o SVG do meio de cada animação. No filme, confere a linha do tempo de 6 em 6 quadros (onde está cada ator, que quadro da animação toca, para onde a câmera olha), alguns quadros prontos, os sons, bocas e legendas, o EDL e o FCPXML para o editor de vídeo e o desenho da linha do tempo do editor.
 
 As referências dos desenhos foram gravadas antes de o filme existir, então o teste mostra que os desenhos e as exportações de jogo continuam iguais. Quando algo muda, o teste diz o que foi e grava a saída nova em `test/out/`, com uma imagem dos pixels diferentes em vermelho. Se a mudança foi de propósito, `npm run test:update` regrava as referências; `node test/regress.js coruja` roda só os casos com esse nome.
 
@@ -557,7 +561,7 @@ cli/runtime.js      carrega os arquivos de js/ no Node (para a linha de comando 
 cli/video.js        filme na linha de comando: ffmpeg, sequência, GIF, render em paralelo
 cli/film-worker.js  thread que renderiza quadros de um filme
 cli/media.js        acha e lê os sons (audio) para a linha de comando
-test/regress.js     testes de regressão; test/ref/ guarda as referências
+test/regress.js     testes de regressão; test/ref/ guarda as referências; test/casos/ tem um arquivo por função
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
 docs/guia/          guia da linguagem: capítulos com exemplos; gerar.js faz as imagens (npm run docs)

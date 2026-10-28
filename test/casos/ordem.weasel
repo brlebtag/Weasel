@@ -1,0 +1,22 @@
+# teste: a ordem de pintura muda numa animação (above= e below=, em formas e em camadas)
+canvas 320 200 bg=#f4efe6
+palette ink=#2b2a33 line=5 bola=#ff6b4a madeira=#a8794f
+
+bone bola pivot=160,110
+
+layer cena
+ellipse bola 160,110 28 c=bola ink=line bone=bola
+rect poste 154,16 12,176 r=4 c=madeira ink=line
+layer placa
+rect quadro 200,30 90,60 r=6 c=#ffffff ink=line
+
+anim volta frames=24 fps=12
+key 0 bola=-110,0,0,1,1 bola.below=poste
+key 6 bola=0,-18,0,0.85,0.85
+key 12 bola=110,0,0,1,1 bola.above=poste
+key 18 bola=0,18,0,1.15,1.15
+key 24 bola=-110,0,0,1,1 bola.below=poste
+
+anim camadas frames=4 fps=4 once
+key 0 bola=60,-50,0,1,1 cena.above=placa
+key 2 cena.above=none

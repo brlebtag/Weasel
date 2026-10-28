@@ -77,11 +77,12 @@ Algumas coisas não são pintadas na linha em que estão escritas:
 | `inkon=camada` | o preenchimento fica na camada da forma, mas o **contorno** é pintado junto com a outra camada ([mais abaixo](#o-contorno-por-cima-inkon)) |
 | `cast=` (sombra no chão) | no lugar da camada que tem o `cast=`, logo **antes** das formas dela, para a sombra ficar por baixo ([capítulo 8](08-luz-efeitos.md#sombra-projetada-no-chão)) |
 | o halo das lâmpadas (`light … glow=`) | depois de todas as camadas, por cima do desenho inteiro ([capítulo 8](08-luz-efeitos.md#os-três-tipos-de-luz-e-o-ambiente)) |
+| `key … forma.above=outra` (ou `below=`) | numa animação, a partir daquele quadro, logo depois (ou antes) da outra forma ou camada ([mais abaixo](#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)) |
 | atores e camadas num filme | pela distância: o mais longe (`depth=` maior) primeiro, `front` na frente dos outros da mesma distância e `screen` por cima de tudo. Só quando a distância empata vale a ordem do arquivo ([capítulo 10](10-filme.md#profundidade-e-paralaxe)) |
 
-### Trocar quem fica na frente durante uma animação
+### Trocar quem fica na frente durante uma animação: `above=` e `below=`
 
-Uma animação não muda a ordem de pintura: ela move, gira, estica, troca cores e liga e desliga formas, mas não troca a posição das linhas. Quando algo precisa passar **por trás** e depois **pela frente** de outra coisa (uma bola dando a volta num poste, um braço que passa atrás do corpo), faça **duas cópias**: uma escrita antes e outra depois, presas ao mesmo osso, e deixe só uma ligada de cada vez com `.show`:
+Uma animação também pode mudar a ordem de pintura. `key quadro forma.above=outra` faz a forma ser pintada logo **depois** da outra (na frente dela) a partir daquele quadro, e `below=` faz ela ser pintada logo **antes** (atrás). É assim que uma bola dá a volta num poste, um braço passa atrás do corpo ou uma espada gira em volta do personagem:
 
 <!-- gerar: img/04_volta.gif -a volta -->
 ```weasel
@@ -90,26 +91,25 @@ palette ink=#2b2a33 line=5 bola=#ff6b4a madeira=#a8794f
 
 bone bola pivot=160,110
 
-# a cópia de trás vem antes do poste…
-ellipse atras 160,110 28 c=bola ink=line bone=bola
+ellipse bola 160,110 28 c=bola ink=line bone=bola
 rect poste 154,16 12,176 r=4 c=madeira ink=line
-# …e a da frente, depois dele
-ellipse frente 160,110 28 c=bola ink=line bone=bola
 
 anim volta frames=24 fps=12
-key 0 bola=-110,0,0,1,1 atras.show=1 frente.show=0
+key 0 bola=-110,0,0,1,1 bola.below=poste
 key 6 bola=0,-18,0,0.85,0.85
-key 12 bola=110,0,0,1,1 atras.show=0 frente.show=1
+key 12 bola=110,0,0,1,1 bola.above=poste
 key 18 bola=0,18,0,1.15,1.15
-key 24 bola=-110,0,0,1,1 atras.show=1 frente.show=0
+key 24 bola=-110,0,0,1,1 bola.below=poste
 ```
 
 ![Uma bola vermelha dá a volta num poste: na ida passa por trás dele, na volta passa pela frente](img/04_volta.gif)
 
-- `atras` é escrita antes do poste e `frente` depois dele. As duas seguem o osso `bola`, então estão sempre no mesmo lugar.
-- Na ida (quadros 0 a 12) só `atras` está ligada, e o poste a cobre. Na volta (quadros 12 a 24) só `frente` está ligada, e ela cobre o poste.
-- A troca acontece nos quadros 0 e 12, quando a bola está longe do poste, para ninguém ver o salto.
+- Na ida (quadros 0 a 12), `bola.below=poste` põe a bola atrás do poste. Na volta (quadros 12 a 24), `bola.above=poste` põe na frente.
+- A troca é **de uma vez**, como o `show`, e vale até a próxima `key` que mude a ordem da bola. Por isso ela fica nos quadros 0 e 12, quando a bola está longe do poste e ninguém vê o salto.
 - Na ida a bola sobe e encolhe um pouco (`0.85`), e na volta desce e cresce (`1.15`): isso dá a impressão de longe e perto.
+- As duas formas precisam estar na **mesma camada**. Para mudar uma camada inteira de lugar, use os nomes das camadas: `key 8 bracoD.above=corpo`.
+- `none` volta para a ordem do arquivo: `key 20 bola.above=none`.
+- Na pose parada, sem animação, vale a ordem do arquivo.
 
 ## Recortar por dentro: `clip=`
 

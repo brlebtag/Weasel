@@ -1,0 +1,22 @@
+# teste: transições entre planos (shot … in=) e formas do filme mudando com at (draw, opacity, show)
+film fps=12
+canvas 320 180 bg=#1b2633
+
+layer fundoA only=a,c,e
+rect ceuA 0,0 320,180 c=#2d4a6b
+ellipse luaA 230,70 34 c=#f4efe6
+layer fundoB only=b,d
+rect ceuB 0,0 320,180 c=#c44536
+ellipse solB 90,80 40 c=#ffd34d
+layer marcas
+stroke seta w=6 c=#ffffff : 40,150 160,120 280,150
+text nome 160,40 "Weasel" size=30 align=center bold c=#ffffff
+
+shot a dur=1s in=fade
+at 0s seta.draw=0 nome.opacity=0
+at 1s seta.draw=1 nome.opacity=1
+shot b dur=1s in=wipe,0.5s
+at 0s nome.show=0
+shot c dur=1s in=slide
+shot d dur=1s in=zoom,0.6s
+shot e dur=1.5s in=iris,1s

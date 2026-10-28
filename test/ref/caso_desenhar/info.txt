@@ -1,0 +1,6 @@
+canvas   400 × 240, fundo #f4efe6
+camadas  1
+  base             6 item(ns)
+formas   6
+animações 1
+  aparece        24 quadros, 12 fps, once, anima rota.draw borda.draw casa.draw sol.draw placa.draw titulo.draw

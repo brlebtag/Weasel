@@ -141,16 +141,16 @@
       for (let i = 0; i < a.length; i++) a[i] = img[i * 4 + 3] / 255;
       return a;
     };
-    for (const layer of model.layers) {
+    for (const layer of S.orderLayers(model, pose)) {
       // camadas de sombreado (clip, dentro de outra forma) e o que não recebe luz (unlit) não fazem relevo
       if (layer.clip || layer.unlit || !S.layerVisible(layer, pose, { guides: false })) continue;
       const lp = pose.lprops.get(layer.name) || NOPROPS;
       if (lp.show === 0 || layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1) <= 0.02) continue;
-      for (const it of layer.items) {
+      for (const it of S.orderItems(layer.items, pose)) {
         const el = it.el;
         if (el.hidden || el.emit || el.type === 'emitter' || el.type === 'text') continue;
         const pr = pose.props.get(el.id) || NOPROPS;
-        if (pr.show === 0 || el.opacity * (pr.opacity !== undefined ? pr.opacity : 1) <= 0.02) continue;
+        if (pr.show === 0 || el.opacity * (pr.opacity !== undefined ? pr.opacity : 1) <= 0.02 || (pr.draw !== undefined && pr.draw <= 0.02)) continue;
         const g = S.geometry(model, pose, el);
         if (!g.segs.length) continue;
         // o contorno é parte da forma, também quando vem em outra camada (inkon=)

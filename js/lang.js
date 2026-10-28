@@ -10,7 +10,7 @@
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig',
     light: 'fx', ambient: 'fx',
     film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mouth: 'rig',
-    box: 'game', godot: 'game', tileset: 'game', tile: 'game',
+    box: 'game', godot: 'game', tileset: 'game', tile: 'game', point: 'game',
   };
   const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at', 'audio', 'sub']);
   // bocas do lip sync (padrão do Rhubarb Lip Sync): A fechada … F biquinho, G F/V, H L, X descanso
@@ -42,10 +42,11 @@
     audio: ['at', 'from', 'dur', 'vol', 'lips', 'cues', 'text', 'lang'],
     sub: ['dur', 'lang'],
     mouth: VISEMES,
-    shot: ['dur'],
+    shot: ['dur', 'in'],
     actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide'],
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
     box: ['bone', 'only'],
+    point: ['bone'],
     godot: ['body', 'root', 'normal', 'name'],
     tileset: ['size'],
     tile: ['collision'],
@@ -61,12 +62,17 @@
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
-  const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape' };
-  const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free' };
+  // order = above=/below= (pinta logo depois/antes de outra forma ou camada); draw = quanto já foi desenhado (0 a 1)
+  const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape', draw: 'num', above: 'order', below: 'order' };
+  const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free', above: 'order', below: 'order' };
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
   const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant' };
   const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color' };
+  // formas do próprio arquivo do filme (mapas, setas, títulos)
+  const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step' };
+  // transições na entrada de um plano: shot nome dur=4s in=fade,0.5s
+  const TRANSITIONS = ['fade', 'wipe', 'slide', 'zoom', 'iris'];
   const FILM_W = 1920, FILM_H = 1080;
   // jogo: caixas (colisão do corpo, golpe, dano) e o tipo do nó raiz da cena do Godot
   const BOX_PROPS = { show: 'step' };
@@ -358,7 +364,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), godot: null, tileset: null, mouth: null,
+      boxes: new Map(), points: new Map(), godot: null, tileset: null, mouth: null,
       byLine: new Map(),
       errors,
     };
@@ -656,7 +662,11 @@
     // variante escolhida: troca valores da palette antes de qualquer cor ser usada
     for (const v of variantStmts) {
       if (v.name !== opts.variant) continue;
-      for (const a of v.st.attrs.values()) { const val = paletteValue(v.st, a); if (val !== undefined) m.palette.set(a.key, val); }
+      for (const a of v.st.attrs.values()) {
+        if (a.key === 'show' || a.key === 'hide') continue;
+        const val = paletteValue(v.st, a);
+        if (val !== undefined) m.palette.set(a.key, val);
+      }
       m.variant = v.name;
     }
     if (opts.variant && !m.variant) m.variant = null;
@@ -1272,10 +1282,26 @@
       if (!b.tip || Math.hypot(b.tip[0] - b.pivot[0], b.tip[1] - b.pivot[1]) < 2) b.tip = [b.pivot[0], b.pivot[1] + 30];
     }
 
+    // variante com show= e hide=: peças (formas ou camadas) que aparecem ou somem nessa versão
+    for (const v of variantStmts) {
+      for (const k of ['show', 'hide']) {
+        const a = v.st.attrs.get(k);
+        if (!a) continue;
+        for (const n of a.text.split(',').filter(Boolean)) {
+          const ly = m.layerMap.get(n), els = m.named.get(n);
+          if (!ly && !els) { bad(v.st, a, `${k}: "${n}" não é forma nem camada`, 'warn'); continue; }
+          if (v.name !== opts.variant) continue;
+          if (ly) ly.hidden = k === 'hide';
+          if (els) for (const e of els) e.hidden = k === 'hide';
+        }
+      }
+    }
+
     // ---- jogo: caixas de colisão, godot, tileset e tile ----
     for (const st of top) {
       const A = st.attrs;
       if (st.cmd === 'box') readBox(st, A);
+      else if (st.cmd === 'point') readPoint(st, A);
       else if (st.cmd === 'mouth') readMouth(st, A);
       else if (st.cmd === 'godot') {
         const g = { body: 'character', root: null, normal: 1, name: null, line: st.line };
@@ -1338,6 +1364,7 @@
       const name = ident(st, st.pos[0], 'da caixa');
       if (!name) return;
       if (m.boxes.has(name)) { err(st.line, `caixa "${name}" já existe`, st.pos[0].from, st.pos[0].to); return; }
+      if (m.points.has(name)) { err(st.line, `"${name}" já é o nome de um ponto`, st.pos[0].from, st.pos[0].to); return; }
       const b = { name, line: st.line, kind: 'body', shape: 'rect', x: 0, y: 0, w: 10, h: 10, r: 5, bone: null, only: null, on: true };
       const vals = [];
       for (const t of st.pos.slice(1)) {
@@ -1366,6 +1393,24 @@
       rec.handles.push({ kind: 'box', box: name, bone: b.bone, x: b.x, y: b.y, from: vals[0].from, to: vals[0].to, fixed: vals[0].text.includes('{') });
       if (m.named.has(name)) err(st.line, `"${name}" também é o nome de uma forma; nas keys, vale a caixa`, st.pos[0].from, st.pos[0].to, 'warn');
       m.boxes.set(name, b);
+    }
+
+    // point nome x,y bone=osso: ponto de encaixe que segue o osso (de onde sai o tiro, onde a mão segura,
+    // onde nasce a poeira do passo); vai quadro a quadro para o Godot (Marker2D) e para o JSON da sprite sheet
+    function readPoint(st, A) {
+      const name = ident(st, st.pos[0], 'do ponto');
+      if (!name) return;
+      if (m.points.has(name)) { err(st.line, `ponto "${name}" já existe`, st.pos[0].from, st.pos[0].to); return; }
+      if (m.boxes.has(name)) { err(st.line, `"${name}" já é o nome de uma caixa`, st.pos[0].from, st.pos[0].to); return; }
+      const t = st.pos[1];
+      const v = posPair(st, t, 'a posição do ponto', null);
+      if (!v) return;
+      for (const f of st.pos.slice(2)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      const p = { name, line: st.line, x: v[0], y: v[1], bone: null };
+      if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) p.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
+      const rec = info(st, { point: p });
+      rec.handles.push({ kind: 'point', point: name, bone: p.bone, x: p.x, y: p.y, from: t.from, to: t.to, fixed: t.text.includes('{') });
+      m.points.set(name, p);
     }
 
     // tile nome coluna,linha [solid] [oneway] collision=forma
@@ -1428,18 +1473,37 @@
         if (v === null) { bad(st, a, 'show= aceita 1 ou 0'); continue; }
       } else if (type === 'color') v = tgt.kind === 'light' ? plainColor(st, a) : color(st, a, ROOT);
       else if (type === 'width') v = width(st, a, ROOT);
-      else {
+      else if (type === 'order') {
+        v = orderOf(st, a, tgt.kind, name, els, prop);
+        if (v === undefined) continue;
+      } else {
         const t = m.named.get(a.text);
         if (!t) { bad(st, a, `forma "${a.text}" não existe`); continue; }
         if (!els.every((e) => compatible(e, t[0]))) { bad(st, a, `"${a.text}" não combina com "${name}": precisa ser do mesmo tipo e ter o mesmo número de pontos`); continue; }
         v = a.text;
       }
       if (tgt.kind === 'light' && type === 'color' && !v) continue;
-      if (!anim.ptracks.has(a.key)) anim.ptracks.set(a.key, { name, prop, kind: tgt.kind, type, keys: [], targets: els });
-      const tr = anim.ptracks.get(a.key);
+      // above= e below= são a mesma trilha (a ordem): a key seguinte pode trocar uma pela outra
+      const tkey = type === 'order' ? `${name}.order` : a.key;
+      if (!anim.ptracks.has(tkey)) anim.ptracks.set(tkey, { name, prop: type === 'order' ? 'order' : prop, kind: tgt.kind, type, keys: [], targets: els });
+      const tr = anim.ptracks.get(tkey);
       const k = { frame, v, ease };
       const same = tr.keys.findIndex((x) => x.frame === frame);
       if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
+    }
+    // key forma.above=outra / below=outra (ou camada.above=outra_camada); none volta para a ordem do arquivo
+    function orderOf(st, a, kind, name, els, rel) {
+      const t = a.text;
+      if (t === 'none') return null;
+      if (t === name) { bad(st, a, `${rel}= precisa de outra ${kind === 'layer' ? 'camada' : 'forma'}`); return undefined; }
+      if (kind === 'layer') {
+        if (!m.layerMap.has(t)) { bad(st, a, `camada "${t}" não existe`); return undefined; }
+        return { rel, target: t };
+      }
+      const others = m.named.get(t);
+      if (!others) { bad(st, a, `forma "${t}" não existe`); return undefined; }
+      if (!els.every((e) => others.some((o) => o.layer === e.layer))) { bad(st, a, `"${t}" não está na mesma camada que "${name}" (para trocar camadas inteiras, use os nomes das camadas)`); return undefined; }
+      return { rel, target: t };
     }
     for (const an of m.anims) {
       for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
@@ -1617,12 +1681,13 @@
         if (st.cmd === 'shot') {
           seen = true;
           const name = ident(st, st.pos[0], 'do plano');
-          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names), audios: [], subs: [] };
+          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names), audios: [], subs: [], trans: null };
           if (name && shotNames.has(name)) err(st.line, `shot "${name}" já existe`, st.pos[0].from, st.pos[0].to);
           shotNames.add(shot.name);
           shot.cam = Object.assign({}, F.camera, { offset: F.camera.offset.slice() });
           if (st.attrs.has('dur')) { const t = timeOf(st, st.attrs.get('dur'), F.fps, 'a duração'); if (t) shot.dur = Math.max(1 / F.fps, t.v); } else err(st.line, 'falta dur= (ex.: shot abertura dur=4s)', st.cmdTok.from, st.cmdTok.to);
           if (shot.dur === null) shot.dur = 3;
+          if (st.attrs.has('in')) shot.trans = transOf(st, st.attrs.get('in'), F.fps, shot.dur);
           for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
           F.shots.push(shot);
           F.seq.push({ kind: 'shot', shot });
@@ -1703,6 +1768,24 @@
       if (!F.seq.length) err(fst.line, 'o filme não tem nenhum shot', fst.cmdTok.from, fst.cmdTok.to, 'warn');
       delete F.names;
       for (const s of F.shots) delete s.names;
+    }
+
+    // in=fade | in=iris,0.8s: como o plano entra (o plano anterior fica parado no último quadro durante a troca)
+    function transOf(st, a, fps, dur) {
+      const parts = a.text.split(',');
+      const type = parts[0];
+      if (!TRANSITIONS.includes(type)) { bad(st, a, `transição desconhecida "${type}" (use ${TRANSITIONS.join(', ')})`); return null; }
+      if (parts.length > 2) { bad(st, a, 'use in=tipo,duração (ex.: in=fade,0.5s)'); return null; }
+      let d = 0.5;
+      if (parts[1]) {
+        const off = a.vfrom + type.length + 1;
+        const t = timeOf(st, { key: 'in', text: parts[1], vfrom: off, from: off, to: a.to }, fps, 'a duração da transição');
+        if (!t) return null;
+        if (t.rel) { bad(st, a, 'a duração da transição não aceita +'); return null; }
+        d = t.v;
+      }
+      if (d > dur + 1e-9) { bad(st, a, `a transição (${round3(d)}s) é mais longa que o plano (${round3(dur)}s)`, 'warn'); d = dur; }
+      return d > 0 ? { type, dur: d } : null;
     }
 
     // audio fala1 "voz/fala01.wav" at=1.2s from= dur= vol= lips=ator cues="fala01.json" text="legenda" lang= [loop]
@@ -1789,9 +1872,10 @@
         const name = a.key.slice(0, dot), prop = a.key.slice(dot + 1);
         const ac = actors.get(name);
         let kind, table;
-        if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz nem camada deste filme`); continue; }
+        if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else if (m.named.has(name)) { kind = 'shape'; table = SHAPE_AT_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz, camada nem forma deste filme`); continue; }
         const type = table[prop];
-        if (!type) { bad(st, a, `"${prop}" não muda com at em ${{ camera: 'camera', actor: 'ator', light: 'luz', layer: 'camada' }[kind]} (use ${Object.keys(table).join(', ')})`); continue; }
+        if (type === 'order') { bad(st, a, `${prop}= muda a ordem só numa animação (key), não no at`); continue; }
+        if (!type) { bad(st, a, `"${prop}" não muda com at em ${{ camera: 'camera', actor: 'ator', light: 'luz', layer: 'camada', shape: 'forma' }[kind]} (use ${Object.keys(table).filter((k) => table[k] !== 'order').join(', ')})`); continue; }
         switch (type) {
           case 'xy': {
             const v = pair(st, a, null);
@@ -1882,5 +1966,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

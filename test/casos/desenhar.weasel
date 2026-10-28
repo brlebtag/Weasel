@@ -1,0 +1,14 @@
+# teste: desenhar aos poucos (key forma.draw=0 … 1) em traço, linha, forma com e sem contorno e texto
+canvas 400 240 bg=#f4efe6
+palette ink=#2b2a33 line=5
+
+stroke rota w=6 c=#c44536 taper=0,0.3 : 30,200 90,120 170,170 250,80 360,60
+line borda c=#4a90d9 w=2 dash=8,6 : 30,224 380,224
+shape casa c=#ffd34d ink=line weight=0.4 : 260,190! 260,140! 300,110! 340,140! 340,190!
+ellipse sol 80,60 30 c=#ff9a4a
+rect placa 140,150 70,40 r=6 c=#7cc56a
+text titulo 200,40 "Mapa do tesouro" size=26 align=center bold
+
+anim aparece frames=24 fps=12 once
+key 0 rota.draw=0 borda.draw=0 casa.draw=0 sol.draw=0 placa.draw=0 titulo.draw=0
+key 20 rota.draw=1 borda.draw=1 casa.draw=1 sol.draw=1 placa.draw=1 titulo.draw=1

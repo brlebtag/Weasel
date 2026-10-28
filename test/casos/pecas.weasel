@@ -1,0 +1,18 @@
+# teste: variantes que trocam peças (show= e hide=) além das cores
+canvas 200 160 bg=#cfe8f5
+palette ink=#2b2a33 line=4 corpo=#ffb36b
+
+layer boneco
+ellipse cabeca 100,70 34 c=corpo ink=line
+ellipse olhoE 88,66 4,6 c=ink
+ellipse olhoD 112,66 4,6 c=ink
+rect elmo 66,30 68,22 r=8 c=#9aa6b2 ink=line
+shape chapeu c=#6a4bc4 ink=line hidden : 100,0! 128,44! 72,44!
+layer arma
+rect espada 140,60 8,70 c=#d9dde3 ink=line
+layer cajado hidden
+stroke vara w=6 c=#8a5a2b : 146,40 150,140
+ellipse gema 146,36 9 c=#7ae0ff ink=line
+
+variant mago corpo=#ffd9a0 hide=elmo,arma show=chapeu,cajado
+variant sem_elmo hide=elmo

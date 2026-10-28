@@ -136,6 +136,8 @@ As `key` também mudam formas, camadas e luzes. Em vez do nome de um osso, escre
 | `ink` | forma | espessura do contorno | aos poucos |
 | `show` | forma, camada, caixa | aparece (`1`) ou some (`0`) | de uma vez |
 | `shape` | forma | **morph**: vira outra forma | aos poucos (veja abaixo) |
+| `draw` | forma | quanto já foi **desenhado**, de 0 a 1 | aos poucos ([abaixo](#desenhar-aos-poucos-draw)) |
+| `above` `below` | forma, camada | pinta na frente (ou atrás) de outra ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)) | de uma vez |
 | `blur` `glow` `tint` `brightness` `saturate` `contrast` `hue` | camada | efeitos ([capítulo 8](08-luz-efeitos.md#efeitos-de-camada)) | aos poucos |
 | `power` `radius` `c` `glow` `aim` `cone` | luz | a luz ([capítulo 8](08-luz-efeitos.md)) | aos poucos |
 
@@ -168,6 +170,51 @@ key 32 bulbo.c=apagada brilho.opacity=0
 - Se várias formas têm o mesmo nome (por exemplo, dentro de um componente usado várias vezes), a `key` muda todas.
 - A `opacity` das `key` **multiplica** a `opacity=` escrita na forma. Uma forma com `opacity=0` no código fica invisível para sempre; para começar apagada, use `key 0 forma.opacity=0`.
 - Fora das animações (na pose parada), valem os valores do código: o halo aparece e o texto também.
+
+## Desenhar aos poucos: `.draw`
+
+`key quadro forma.draw=0` esconde a forma, e `draw=1` mostra ela inteira. Entre os dois, o Weasel **desenha a forma aos poucos**, como se uma caneta passasse por ela. É o efeito dos vídeos explicativos: a rota traçada no mapa, a seta que se desenha, o título digitado.
+
+<!-- gerar: img/07_mapa.gif -a aparece -->
+```weasel
+canvas 400 240 bg=#e9d8b4
+palette ink=#5a3b22 line=4 rota=#c44536
+
+rect papel 12,12 376,216 r=10 c=#f8edd4 ink=line
+text titulo 200,54 "Mapa do tesouro" size=28 align=center bold
+ellipse sol 70,104 22 c=#ffb84d
+shape ilha c=#9bc97a ink=line weight=0.5 : 282,84 352,92 362,146 314,168 274,136
+stroke caminho w=5 c=rota taper=0,0.25 : 48,198 104,150 176,186 252,150 318,124
+text marca 320,134 "X" size=28 bold align=center c=rota
+
+anim aparece frames=48 fps=12 once
+key 0 titulo.draw=0 sol.draw=0 ilha.draw=0 caminho.draw=0 marca.show=0 ease=linear
+key 12 titulo.draw=1
+key 6 sol.draw=0 ease=linear
+key 16 sol.draw=1
+key 10 ilha.draw=0 ease=linear
+key 22 ilha.draw=1
+key 20 caminho.draw=0 ease=linear
+key 36 caminho.draw=1 marca.show=1
+```
+
+![Um mapa que se desenha sozinho: o título é digitado, o sol e a ilha aparecem, a rota vermelha é traçada até o X](img/07_mapa.gif)
+
+Como cada tipo de forma é desenhado:
+
+| Forma | Com `draw` entre 0 e 1 |
+|---|---|
+| `stroke` e `line` | o traço cresce do primeiro ponto até o último |
+| forma fechada com contorno (`ink=`) | o contorno corre em volta da forma, e o preenchimento aparece no fim |
+| forma fechada sem contorno | um traço da cor da forma corre em volta, e o preenchimento aparece no fim |
+| `text` | as letras aparecem uma a uma, cada uma no lugar dela |
+
+- `ease=linear` dá velocidade constante, como uma caneta. Com o `smooth` (o padrão), o desenho começa devagar e termina devagar.
+- O traço vai na **ordem dos pontos**. Para desenhar do outro lado, escreva os pontos ao contrário.
+- Os quadros com `key` de cada forma são independentes: no exemplo, o sol começa no quadro 6, enquanto o título ainda está sendo digitado.
+- A animação é `once` para o mapa ficar pronto no fim, em vez de se apagar ao voltar para o começo.
+- Na pose parada, sem animação, tudo aparece inteiro.
+- Num filme, as formas do próprio arquivo do filme também se desenham com `at`: `at 1s rota.draw=0` e `at 4s rota.draw=1` ([capítulo 10](10-filme.md#mudanças-no-tempo-at)).
 
 ## Morph: uma forma vira outra
 

@@ -29,7 +29,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | cores com posição opcional `cor@0.5` |
 | `gradient nome radial cx,cy raio [fx,fy] [box] : cores` | `fx,fy` = foco |
 | `pattern nome [hatch\|dots] [cross]` | `c=` (cor de tinta) · `bg=` (nenhum) · `gap=` (6) · `w=` (1.2) · `r=` (1.4) · `angle=` (45) |
-| `variant nome chave=valor …` | troca valores da `palette` nessa versão |
+| `variant nome chave=valor …` | troca valores da `palette` nessa versão · `hide=nomes` esconde formas ou camadas · `show=nomes` mostra as que têm `hidden` |
 | `include "arquivo.weasel"` | o outro arquivo entra nesta linha |
 | `unity` | `unit=` pixels por unidade (100) · `root=x,y` (meio da base do canvas) · `collider=l,a[,dx,dy]` |
 
@@ -96,8 +96,8 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 
 | Alvo | Propriedades |
 |---|---|
-| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph) |
-| camada | `opacity` · `show` · `blur` · `glow` · `tint` · `brightness` · `saturate` · `contrast` · `hue` |
+| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph) · `draw` (0 a 1, desenha aos poucos) · `above` / `below` (outra forma da mesma camada, ou `none`) |
+| camada | `opacity` · `show` · `blur` · `glow` · `tint` · `brightness` · `saturate` · `contrast` · `hue` · `above` / `below` (outra camada, ou `none`) |
 | luz | `power` · `radius` · `c` · `glow` · `aim` · `cone` |
 | caixa | `show` |
 
@@ -118,6 +118,7 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 | `godot` | `body=character\|static\|area\|rigid\|node` (character) · `root=x,y` · `name=` · `normal=` 0–10 (1) |
 | `tileset` | `size=l` ou `l,a` (32) · `[auto]` |
 | `tile nome coluna,linha` | `[solid]` · `[oneway]` · `collision=forma` |
+| `point nome x,y` | `bone=` · vira `Marker2D` no Godot e `points` no JSON da sprite sheet |
 | `mouth forma A=forma B=forma@0.3 …` | bocas A, B, C, D, E, F, G, H e X, por morph |
 
 ## Filme
@@ -126,14 +127,14 @@ Todas aceitam: `c=` `opacity=` `bone=` `cloth=` `cut=forma,…` `mirror=forma@x`
 |---|---|
 | `film` | `fps=` 1–120 (24) · `dur=` (só sem `shot`) · `lang=` (pt) · `subs=burn\|file` · `subsize=` · `subc=` (#ffffff) |
 | `actor nome "arquivo" x,y` | `scale=` · `rot=` · `flip=x\|y\|xy\|none` · `depth=` (1) · `anim=` · `speed=` (1) · `opacity=` (1) · `origin=x,y` (o `root=` do `unity` do arquivo, ou 0,0) · `variant=` · `hide=camada,…` · `[screen]` `[bg]` `[hidden]` `[unlit]` `[front]` |
-| `shot nome` | `dur=` (obrigatório) |
+| `shot nome` | `dur=` (obrigatório) · `in=fade\|wipe\|slide\|zoom\|iris[,duração]` (0.5s) |
 | `camera x,y` | `zoom=` (1) · `rot=` (0) · `shake=` (0) · `follow=ator` · `offset=dx,dy` · `lag=` segundos (0) · `fade=` 0–1 (0) · `fadec=` (#000000). Padrão: o centro do canvas. |
 | `at tempo alvo.prop=valor …` | `ease=` (smooth) |
 | `scene "arquivo"` | os planos de outro filme |
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |
 | `sub tempo "texto"` | `dur=` (o tempo de ler) · `lang=` |
 
-**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant` · câmera `pos x y zoom rot shake follow offset lag fade fadec` · luz `power radius c glow aim cone` · camada `opacity show` e os efeitos.
+**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant` · câmera `pos x y zoom rot shake follow offset lag fade fadec` · luz `power radius c glow aim cone` · camada `opacity show` e os efeitos · forma do filme `draw opacity show`.
 
 ## Linha de comando
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Weasel — testes de regressão: renderiza os exemplos e compara com as imagens e textos de
    referência em test/ref/. Garante que mudanças novas (filme, etc.) não mexem no que já existe
-   (sprite sheets, Godot, SVG, poses, variantes).
+   (sprite sheets, Godot, SVG, poses, variantes). Os arquivos de test/casos/ testam uma função
+   cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos, transições).
 
      npm test                      compara tudo
      npm run test:update           regrava as referências (só depois de conferir que a mudança é desejada)
@@ -20,6 +21,7 @@ const X = W.exporter;
 
 const ROOT = path.join(__dirname, '..');
 const EX = path.join(ROOT, 'exemplos');
+const CASES = path.join(__dirname, 'casos');
 const REF = path.join(__dirname, 'ref');
 const OUT = path.join(__dirname, 'out');
 const CLI = path.join(ROOT, 'cli', 'weasel.js');
@@ -128,8 +130,9 @@ async function check(group, file, kind, actual) {
 }
 
 // ---------- casos ----------
-async function drawingCases(file) {
-  const group = path.basename(file, '.weasel');
+// prefix: o nome do grupo em test/ref (os casos de teste ficam como caso_nome); svg: SVG do meio de cada animação
+async function drawingCases(file, prefix, svg) {
+  const group = (prefix || '') + path.basename(file, '.weasel');
   const model = load(file);
   console.log(paint('1', group));
   const errs = model.errors.filter((e) => e.level === 'error');
@@ -166,6 +169,7 @@ async function drawingCases(file) {
 
   // um quadro do meio de cada animação em tamanho maior (pega detalhe que a folha pequena perde)
   for (const a of model.anims) await check(group, `${a.name}_meio.png`, 'png', X.imageCanvas(model, a.name, Math.floor(a.frames / 2), o));
+  if (svg) for (const a of model.anims) await check(group, `${a.name}_meio.svg`, 'text', X.svgText(model, a.name, Math.floor(a.frames / 2), { scale: 0.5, transparent: false }));
 
   // pacote do Godot (cena, TileSet, normal map) para quem tem caixas, unity, godot ou tileset
   if (model.boxes.size || model.unity || model.godot || model.tileset) {
@@ -193,8 +197,8 @@ async function drawingCases(file) {
 
 // Filme: a linha do tempo em texto (onde cada ator está, que quadro da animação toca, para onde a
 // câmera olha) e alguns quadros prontos numa folha.
-async function filmCases(file) {
-  const group = path.basename(file, '.weasel');
+async function filmCases(file, prefix) {
+  const group = (prefix || '') + path.basename(file, '.weasel');
   const model = load(file);
   console.log(paint('1', group));
   const errs = model.errors.filter((e) => e.level === 'error');
@@ -322,6 +326,12 @@ async function main() {
     const m = load(f);
     if (m.film) await filmCases(f);
     else await drawingCases(f);
+  }
+  const cases = fs.existsSync(CASES) ? fs.readdirSync(CASES).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(CASES, f)) : [];
+  for (const f of cases) {
+    if (only.length && !only.some((o) => path.basename(f).includes(o))) continue;
+    if (load(f).film) await filmCases(f, 'caso_');
+    else await drawingCases(f, 'caso_', true);
   }
   if (!only.length || only.some((o) => '_gif'.includes(o))) await gifCase();
   if (!only.length || only.some((o) => '_audio'.includes(o))) await audioCase();

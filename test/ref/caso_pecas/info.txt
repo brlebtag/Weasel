@@ -1,0 +1,8 @@
+canvas   200 × 160, fundo #cfe8f5
+variantes mago, sem_elmo
+camadas  3
+  boneco           5 item(ns)
+  arma             1 item(ns)
+  cajado           2 item(ns)  hidden
+formas   8 (1 ocultas)
+animações nenhuma

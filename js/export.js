@@ -158,6 +158,7 @@
         };
         if (fe.length) json.frames[id].events = fe;
         if (model.boxes.size) json.frames[id].boxes = frameBoxes(model, S.makePose(model, name, f), rect, o.scale);
+        if (model.points.size) json.frames[id].points = framePoints(model, S.makePose(model, name, f), rect, o.scale);
         for (const n of fe) events.push({ animation: key, frame: f, name: n });
         json.animations[key].push(id);
         flat++;
@@ -192,6 +193,16 @@
       out.push(o);
     }
     return out;
+  }
+
+  // pontos de encaixe no quadro, em pixels do quadro, com a rotação do osso (graus)
+  function framePoints(model, pose, rect, scale) {
+    return [...model.points.values()].map((p) => {
+      const st = S.pointState(model, pose, p);
+      const o = { name: p.name, x: round3((st.x - rect.x) * scale), y: round3((st.y - rect.y) * scale) };
+      if (st.rot) o.rot = round3(st.rot);
+      return o;
+    });
   }
 
   // SpriteFrames do Godot 4 (.tres) apontando para a folha; deixe o .png e o .tres na mesma pasta.
@@ -360,7 +371,7 @@
         const pkg = W.godot.packageFiles(model, { base: model.tileset || scene ? o.baseName + suffix : `${o.baseName}_${tag}`, scale: o.scale, normal, scene, mirror: $('expMirror').checked, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin, trim: o.trim || scene, names: model.tileset ? null : names });
         const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
         const main = pkg.files[0].canvas;
-        const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+        const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
         return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}` };
       }
       o.imageName = `${o.baseName}_${tag}.png`;

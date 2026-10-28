@@ -1,0 +1,6 @@
+ellipse cabeca @0.000 +0.664
+ellipse olhoE @0.664 +0.255
+ellipse olhoD @0.920 +0.255
+rect elmo @1.175 +0.586
+rect espada @1.761 +0.568
+total 2.328

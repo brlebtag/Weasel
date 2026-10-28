@@ -343,8 +343,17 @@
   const LAYER_BASE = { opacity: 1, show: 1, blur: 0, glow: 0, tint: 0, brightness: 1, saturate: 1, contrast: 1, hue: 0 };
   function stagePose(entry, t) {
     const owner = entry.owner, pose = S.timePose(owner, t);
-    let lp = null, li = null;
+    let lp = null, li = null, pm = null;
     for (const tr of entry.shot.tracks.values()) {
+      if (tr.kind === 'shape') {
+        const v = valueAt(tr, t, 1);
+        for (const el of owner.named.get(tr.name) || []) {
+          const o = (pm || (pm = new Map())).get(el.id) || {};
+          o[tr.prop] = v;
+          pm.set(el.id, o);
+        }
+        continue;
+      }
       if (tr.kind !== 'light' && tr.kind !== 'layer') continue;
       let base;
       if (tr.kind === 'light') base = owner.lights.get(tr.name)[tr.prop];
@@ -356,6 +365,7 @@
     }
     if (lp) pose.lprops = lp;
     if (li) pose.liprops = li;
+    if (pm) pose.props = pm;
     return pose;
   }
 
@@ -390,7 +400,7 @@
       const vis = { guides: !!(w.stage && opts.guides) };
       const screen0 = !!w.ac.screen;
       if (w.ac.bg && w.model.canvas.bg) list.push({ w, kind: 'bg', d: screen0 ? Infinity : w.depth, screen: screen0, front: !!w.ac.front, li: -1 });
-      w.model.layers.forEach((layer, li) => {
+      S.orderLayers(w.model, w.pose).forEach((layer, li) => {
         if (!layer.items.length && !layer.cast) return;
         if (w.ac.hide && w.ac.hide.has(layer.name)) return;
         // no arquivo do filme, only= também aceita nomes de shot (títulos, letreiros)
@@ -429,10 +439,98 @@
     return x;
   }
 
+  // ---------- transições entre planos (shot … in=) ----------
+  // Nos primeiros quadros do plano, o último quadro do plano anterior (parado) sai enquanto este entra.
+  // O primeiro plano do filme entra a partir do preto.
+  function transitionAt(model, frame) {
+    const loc = locate(model, frame);
+    const tr = loc && loc.entry.shot.trans;
+    if (!tr) return null;
+    const n = Math.max(1, Math.round(tr.dur * timeline(model).fps));
+    if (loc.local >= n) return null;
+    return { type: tr.type, p: G.EASE.smooth((loc.local + 1) / (n + 1)), from: loc.entry.index > 0 ? loc.entry.start - 1 : null };
+  }
+  const transPool = [null, null];
+  function transLayer(i, w, h) {
+    if (!transPool[i]) transPool[i] = document.createElement('canvas');
+    const c = transPool[i];
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const x = c.getContext('2d');
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalAlpha = 1;
+    x.globalCompositeOperation = 'source-over';
+    x.clearRect(0, 0, w, h);
+    return x;
+  }
+  // Junta o plano que sai (A) e o que entra (B), imagens do tamanho do ctx; base = quadro do filme → tela.
+  function composeTransition(ctx, tr, A, B, base, Wd, Hd, transparent) {
+    const p = tr.p;
+    const put = (img, alpha, m) => {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (m) ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+    };
+    const o = M.apply(base, 0, 0), e = M.apply(base, Wd, 0), c = M.apply(base, Wd / 2, Hd / 2);
+    const ux = e[0] - o[0], uy = e[1] - o[1]; // a largura do quadro, em pixels da tela
+    ctx.save();
+    setMat(ctx, base);
+    ctx.beginPath();
+    ctx.rect(0, 0, Wd, Hd);
+    ctx.clip();
+    if (tr.type === 'fade') { put(A, 1); put(B, p); } else if (tr.type === 'wipe') {
+      // cortina: o plano novo entra da esquerda para a direita
+      put(A, 1);
+      setMat(ctx, base);
+      ctx.beginPath();
+      ctx.rect(0, 0, Wd * p, Hd);
+      ctx.clip();
+      put(B, 1);
+    } else if (tr.type === 'slide') {
+      // o plano novo empurra o anterior para a esquerda
+      put(A, 1, [1, 0, 0, 1, -ux * p, -uy * p]);
+      put(B, 1, [1, 0, 0, 1, ux * (1 - p), uy * (1 - p)]);
+    } else if (tr.type === 'zoom') {
+      // o plano anterior cresce e some, mostrando o novo
+      const k = 1 + 0.6 * p;
+      put(B, 1);
+      put(A, 1 - p, [k, 0, 0, k, c[0] - k * c[0], c[1] - k * c[1]]);
+    } else {
+      // íris: um círculo fecha sobre o plano anterior e abre sobre o novo, com preto em volta
+      const closing = p < 0.5, q = closing ? 1 - p * 2 : p * 2 - 1;
+      if (!transparent) { setMat(ctx, base); ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, Wd, Hd); }
+      setMat(ctx, base);
+      ctx.beginPath();
+      ctx.arc(Wd / 2, Hd / 2, Math.max(0.01, (q * Math.hypot(Wd, Hd)) / 2), 0, Math.PI * 2);
+      ctx.clip();
+      put(closing ? A : B, 1);
+    }
+    ctx.restore();
+  }
+
   // Desenha o quadro no ctx, com a transformação atual valendo como "quadro do filme → tela".
   // opts.view: 'camera' (padrão) ou 'world' (como foi desenhado, sem a câmera); opts.transparent; opts.guides.
   function drawFrame(ctx, model, frame, opts) {
     opts = opts || {};
+    const tr = opts.view === 'world' || opts.still ? null : transitionAt(model, frame);
+    if (!tr) return drawShot(ctx, model, frame, opts);
+    const w = ctx.canvas.width, h = ctx.canvas.height, base = matOf(ctx), Wd = model.canvas.w, Hd = model.canvas.h;
+    const inner = Object.assign({}, opts, { subs: false, still: true });
+    const xa = transLayer(0, w, h), xb = transLayer(1, w, h);
+    setMat(xa, base);
+    if (tr.from !== null) drawShot(xa, model, tr.from, inner);
+    else if (!opts.transparent) { xa.fillStyle = '#000000'; xa.fillRect(0, 0, Wd, Hd); }
+    setMat(xb, base);
+    const fs = drawShot(xb, model, frame, inner);
+    composeTransition(ctx, tr, xa.canvas, xb.canvas, base, Wd, Hd, opts.transparent);
+    if (opts.subs && fs) { ctx.save(); setMat(ctx, base); drawSubs(ctx, model, fs.loc.frame, opts.lang); ctx.restore(); }
+    return fs;
+  }
+
+  // Um quadro sem transição: o plano daquele quadro, com câmera, atores e legendas.
+  function drawShot(ctx, model, frame, opts) {
     const fs = frameState(model, frame, opts);
     if (!fs) return null;
     const base = matOf(ctx);
@@ -539,5 +637,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
+  W.film = { timeline, locate, timecode, frameState, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

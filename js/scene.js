@@ -165,7 +165,7 @@
         let v;
         if (tr.type === 'num' || tr.type === 'width' || tr.type === 'free') v = lerp(s.a.v, s.b.v, s.t);
         else if (tr.type === 'color') v = typeof s.a.v === 'string' && typeof s.b.v === 'string' ? G.lerpColor(s.a.v, s.b.v, s.t) : s.t < 1 ? s.a.v : s.b.v;
-        else if (tr.type === 'step') v = s.a.v;
+        else if (tr.type === 'step' || tr.type === 'order') v = s.a.v;
         else v = { from: s.a.v, to: s.b.v, t: s.t };
         // caixa numa animação sem loop: antes da primeira key vale o estado declarado (off = desligada)
         if (tr.kind === 'box' && !anim.loop && f < tr.keys[0].frame) continue;
@@ -217,6 +217,13 @@
     const c = m ? M.apply(m, cx, cy) : [cx, cy];
     const rot = m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0;
     return { box: b, on, cx: c[0], cy: c[1], rot, shape: b.shape, w: b.w, h: b.h, r: b.r, kind: b.kind };
+  }
+
+  // Ponto de encaixe (point) nesta pose: segue a posição e a rotação do osso (graus).
+  function pointState(model, pose, p) {
+    const m = p.bone ? pose.bones.get(p.bone) : null;
+    const c = m ? M.apply(m, p.x, p.y) : [p.x, p.y];
+    return { point: p, x: c[0], y: c[1], rot: m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0 };
   }
 
   // ---------- geometria de cada elemento numa pose ----------
@@ -952,6 +959,43 @@
     return b.canvas;
   }
 
+  // ---------- ordem de pintura ----------
+  // key forma.above=outra / below=outra: a forma é pintada logo depois (ou antes) da outra, na mesma camada.
+  // Sem nenhuma mudança, devolve a própria lista (a ordem do arquivo).
+  function orderItems(items, pose) {
+    const pm = pose.props;
+    if (!pm || !pm.size) return items;
+    let moved = null;
+    for (const it of items) { const o = pm.get(it.el.id); if (o && o.order) (moved || (moved = [])).push(it); }
+    if (!moved) return items;
+    const out = items.filter((it) => !moved.includes(it));
+    for (const it of moved) {
+      const o = pm.get(it.el.id).order, hits = [];
+      out.forEach((x, i) => { if (x.el.name === o.target) hits.push(i); });
+      // num componente, a outra forma da mesma cópia
+      const mine = hits.filter((i) => out[i].el.inst === it.el.inst);
+      const at = mine.length ? mine : hits;
+      if (!at.length) out.splice(Math.min(items.indexOf(it), out.length), 0, it);
+      else out.splice(o.rel === 'above' ? at[at.length - 1] + 1 : at[0], 0, it);
+    }
+    return out;
+  }
+  // key camada.above=outra / below=outra: a camada inteira muda de lugar.
+  function orderLayers(model, pose) {
+    const lp = pose.lprops;
+    if (!lp || !lp.size) return model.layers;
+    let moved = null;
+    for (const [name, o] of lp) if (o.order) { const Ly = model.layerMap.get(name); if (Ly) (moved || (moved = [])).push(Ly); }
+    if (!moved) return model.layers;
+    const out = model.layers.filter((Ly) => !moved.includes(Ly));
+    for (const Ly of moved) {
+      const o = lp.get(Ly.name).order, t = out.findIndex((x) => x.name === o.target);
+      if (t < 0) out.splice(Math.min(model.layers.indexOf(Ly), out.length), 0, Ly);
+      else out.splice(o.rel === 'above' ? t + 1 : t, 0, Ly);
+    }
+    return out;
+  }
+
   // opts.layers: só essas camadas (filme: cada profundidade é desenhada à parte);
   // opts.lighting: luz pronta (filme: a do ator mais a da cena); opts.glows=false: sem os halos das lâmpadas.
   function drawScene(ctx, model, pose, opts) {
@@ -959,14 +1003,14 @@
     if (opts.background !== false) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
     const lighting = opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
     const R = { model, pose, opts, lighting, maps: null };
-    for (const layer of model.layers) {
+    for (const layer of orderLayers(model, pose)) {
       // com opts.layers, quem chama já decidiu o que aparece (no filme, only= também aceita shots)
       if (opts.layers ? !opts.layers.has(layer) : !layerVisible(layer, pose, opts)) continue;
       const lp = pose.lprops.get(layer.name) || NOPROPS;
       if (lp.show === 0) continue;
       const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
       if (alpha <= 0.001) continue;
-      const items = opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items;
+      const items = orderItems(opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items, pose);
       if (layer.cast && lighting) drawCast(ctx, R, layer, items, alpha);
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
@@ -1063,6 +1107,25 @@
   }
   function glowOff(ctx) { ctx.shadowColor = 'rgba(0,0,0,0)'; ctx.shadowBlur = 0; }
 
+  // ---------- desenhar aos poucos (key forma.draw=0 … 1) ----------
+  // Traços e contornos andam do começo ao fim; numa forma fechada, o preenchimento aparece no fim.
+  const DRAW_LINE = 0.8, DRAW_FILL = 0.6;
+  const drawParts = (d) => ({ line: Math.min(1, d / DRAW_LINE), fill: Math.max(0, Math.min(1, (d - DRAW_FILL) / (1 - DRAW_FILL))) });
+  function strokePoly(ctx, q, w, cap) {
+    ctx.lineWidth = w;
+    ctx.lineCap = cap;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(q[0], q[1]);
+    for (let i = 2; i < q.length; i += 2) ctx.lineTo(q[i], q[i + 1]);
+    ctx.stroke();
+  }
+  // o começo (t de 0 a 1) de um traço com espessura variável: as espessuras são as do traço inteiro
+  function drawVarPart(ctx, p, widths, t) {
+    const q = G.polyPrefix(p, t);
+    if (q.length >= 4) G.drawVar(ctx, q, widths.slice(0, q.length / 2));
+  }
+
   // R: iluminação da camada (null = sem luz). flat: só a silhueta (sombra projetada), sem brilho próprio.
   function drawItem(ctx, model, pose, el, part, layer, base, R, flat) {
     if (el.hidden) return;
@@ -1070,13 +1133,15 @@
     if (pr.show === 0) return;
     const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001) return;
+    const dr = pr.draw !== undefined ? Math.max(0, Math.min(1, pr.draw)) : 1;
+    if (dr <= 0.001) return;
     const fin = model.finish;
     const L = R && !el.emit ? R : null; // o que emite luz não recebe luz
     ctx.globalAlpha = alpha;
     ctx.setLineDash([]);
     const emit = el.emit && !flat;
     if (emit) glowOn(ctx, el.emit);
-    if (el.type === 'text') { drawText(ctx, model, pose, el, pr, L); glowOff(ctx); return; }
+    if (el.type === 'text') { drawText(ctx, model, pose, el, pr, L, dr); glowOff(ctx); return; }
     if (el.type === 'emitter') { drawParticles(ctx, model, pose, el, alpha, L); glowOff(ctx); return; }
     const g = geometry(model, pose, el);
     if (!g.segs.length) { glowOff(ctx); return; }
@@ -1084,28 +1149,46 @@
       const fill = pr.c !== undefined ? pr.c : el.fill;
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
       let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-      const withInk = part !== 'fill' && ink > 0 && fin.style !== 'flat' && inkc;
+      const hasInk = ink > 0 && fin.style !== 'flat' && inkc;
+      const withInk = part !== 'fill' && hasInk;
       const cut = el.cuts ? cutPath(model, pose, el) : null;
       const path = pathOf(g);
       const bb = L ? segsBox(g.segs) : null;
+      const dp = dr < 1 ? drawParts(dr) : null;
       if (L && withInk) inkc = litColor(inkc, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2, true);
       if (cut) { ctx.save(); ctx.clip(inverse(cut), 'evenodd'); }
-      if (part !== 'ink' && fill) {
+      if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
+        const fa = dp ? alpha * dp.fill : alpha;
+        ctx.globalAlpha = fa;
         if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
         else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
         glowOff(ctx);
         if (L) {
-          shadeShape(ctx, L, path, bb, layer, alpha);
-          lightRaster(ctx, L, path, bb, alpha);
+          shadeShape(ctx, L, path, bb, layer, fa);
+          lightRaster(ctx, L, path, bb, fa);
           const rim = layer.rim || L.lighting.rim;
-          if (rim) rimShape(ctx, L, el, g, path, bb, rim, alpha);
+          if (rim) rimShape(ctx, L, el, g, path, bb, rim, fa);
         }
       }
       glowOff(ctx);
-      if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
+      if (dp) {
+        ctx.globalAlpha = alpha;
+        if (withInk && dp.line > 0) {
+          ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
+          const p = flatOf(g);
+          if (el.weight > 0) drawVarPart(ctx, p, G.inkWidths(p, ink, el.weight, model.canvas.light), dp.line);
+          else { const q = G.polyPrefix(p, dp.line); if (q.length >= 4) strokePoly(ctx, q, ink, 'round'); }
+        } else if (!hasInk && part !== 'ink' && fill && dp.fill < 1) {
+          // sem contorno: um traço da cor da forma corre a borda e some quando o preenchimento chega
+          const q = G.polyPrefix(flatOf(g), dp.line);
+          ctx.globalAlpha = alpha * (1 - dp.fill);
+          ctx.strokeStyle = paint(ctx, model, pose, el, fill);
+          if (q.length >= 4) strokePoly(ctx, q, 3 * (el.ws || 1), 'round');
+        }
+      } else if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
       if (cut) {
         ctx.restore();
-        if (withInk) {
+        if (withInk && !dp) {
           // contorno dos buracos, só por dentro da forma
           ctx.save();
           ctx.clip(path);
@@ -1123,12 +1206,16 @@
     if (L) { const bb = segsBox(g.segs); color = litColor(color, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2); }
     const w = pr.w !== undefined ? pr.w : el.w;
     ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, color);
+    // desenhando aos poucos: só o começo do traço
+    const pre = dr < 1 ? G.polyPrefix(flatOf(g), dr) : null;
+    if (pre && pre.length < 4) { glowOff(ctx); return; }
     if (el.type === 'line') {
       ctx.lineWidth = w;
       ctx.lineCap = 'butt';
       ctx.lineJoin = 'round';
       if (el.dash) ctx.setLineDash(el.dash);
-      ctx.stroke(pathOf(g));
+      if (pre) strokePoly(ctx, pre, w, 'butt');
+      else ctx.stroke(pathOf(g));
       glowOff(ctx);
       return;
     }
@@ -1136,11 +1223,14 @@
     if (el.limb) {
       const p = flatOf(g);
       const s = w / (el.w || 1);
-      G.drawVar(ctx, p, G.taperWidths(p, el.limb[0] * s, el.limb[1] * s, [0, 0]));
+      const ws = G.taperWidths(p, el.limb[0] * s, el.limb[1] * s, [0, 0]);
+      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws);
     } else if (el.taper[0] > 0 || el.taper[1] > 0) {
       const p = flatOf(g);
-      G.drawVar(ctx, p, G.taperWidths(p, w, w, el.taper));
-    } else {
+      const ws = G.taperWidths(p, w, w, el.taper);
+      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws);
+    } else if (pre) strokePoly(ctx, pre, w, el.cap);
+    else {
       ctx.lineWidth = w;
       ctx.lineCap = el.cap;
       ctx.lineJoin = 'round';
@@ -1162,7 +1252,8 @@
     G.drawVar(ctx, p, G.inkWidths(p, ink, el.weight, model.canvas.light));
   }
 
-  function drawText(ctx, model, pose, el, pr, R) {
+  // dr < 1: as letras aparecem uma a uma, no lugar que ocupam no texto inteiro
+  function drawText(ctx, model, pose, el, pr, R, dr) {
     if (!el.str) return;
     let fill = pr.c !== undefined ? pr.c : el.fill;
     const ink = pr.ink !== undefined ? pr.ink : el.ink;
@@ -1174,13 +1265,22 @@
     ctx.font = textFont(el);
     ctx.textAlign = el.align;
     ctx.textBaseline = 'alphabetic';
+    let str = el.str, x = 0;
+    if (dr !== undefined && dr < 1) {
+      const chars = Array.from(el.str), n = Math.floor(chars.length * dr + 1e-6);
+      if (!n) { ctx.restore(); return; }
+      const full = ctx.measureText(el.str).width;
+      x = el.align === 'center' ? -full / 2 : el.align === 'right' ? -full : 0;
+      str = chars.slice(0, n).join('');
+      ctx.textAlign = 'left';
+    }
     if (ink > 0 && inkc && model.finish.style !== 'flat') {
       ctx.lineWidth = ink * 2;
       ctx.lineJoin = 'round';
       ctx.strokeStyle = paintText(ctx, el, inkc);
-      ctx.strokeText(el.str, 0, 0);
+      ctx.strokeText(str, x, 0);
     }
-    if (fill) { ctx.fillStyle = paintText(ctx, el, fill); ctx.fillText(el.str, 0, 0); }
+    if (fill) { ctx.fillStyle = paintText(ctx, el, fill); ctx.fillText(str, x, 0); }
     ctx.restore();
   }
 
@@ -1385,7 +1485,7 @@
   // Posição de uma alça (ponto editável) na pose atual.
   function handlePos(model, pose, rec, h) {
     if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return mapper(model, pose, rec.el)(h.x, h.y);
-    if (h.kind === 'box') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
+    if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
       const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
       return m ? M.apply(m, h.x, h.y) : [h.x, h.y];
@@ -1402,7 +1502,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boxState, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

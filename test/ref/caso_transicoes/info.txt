@@ -1,0 +1,8 @@
+filme    320 × 180, 12 fps, 5.5s (66 quadros, 00:05:06), fundo #1b2633
+camadas  fundoA (only a,c,e), fundoB (only b,d), marcas
+planos   5
+  a                00:00:00      1s     12 quadros  câmera 160,90 · 4 mudança(s) com at · entra com fade (0.5s)
+  b                00:01:00      1s     12 quadros  câmera 160,90 · 1 mudança(s) com at · entra com wipe (0.5s)
+  c                00:02:00      1s     12 quadros  câmera 160,90 · entra com slide (0.5s)
+  d                00:03:00      1s     12 quadros  câmera 160,90 · entra com zoom (0.6s)
+  e                00:04:00    1.5s     18 quadros  câmera 160,90 · entra com iris (1s)

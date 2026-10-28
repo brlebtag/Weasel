@@ -88,19 +88,27 @@
       return `<g clip-path="url(#${cid})">${body}</g>`;
     }
 
-    function textSvg(el, pr, P, lit) {
+    function textSvg(el, pr, P, lit, dr) {
       if (!el.str) return '';
+      // desenhando aos poucos: as primeiras letras, no lugar delas no texto inteiro
+      let str = el.str, at = '';
+      if (dr < 1) {
+        const chars = Array.from(el.str), n = Math.floor(chars.length * dr + 1e-6);
+        if (!n) return '';
+        str = chars.slice(0, n).join('');
+        at = ` x="${n2(S.textBox(el).x)}"`;
+      }
       const fill = pr.c !== undefined ? pr.c : el.fill;
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
       const inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
       const m = S.textMatrix(P, el);
       const Lp = lit ? [m[4], m[5]] : null;
-      const anchor = { left: 'start', center: 'middle', right: 'end' }[el.align];
-      let a = `transform="${matAttr(m)}" font-family="${esc(el.font)}" font-size="${n2(el.size)}" text-anchor="${anchor}"`;
+      const anchor = at ? 'start' : { left: 'start', center: 'middle', right: 'end' }[el.align];
+      let a = `transform="${matAttr(m)}"${at} font-family="${esc(el.font)}" font-size="${n2(el.size)}" text-anchor="${anchor}"`;
       if (el.bold) a += ' font-weight="bold"';
       if (el.italic) a += ' font-style="italic"';
       if (ink > 0 && inkc && model.finish.style !== 'flat') a += ` ${strokeA(inkc, el, ink * 2, true, Lp)} stroke-linejoin="round" paint-order="stroke"`;
-      return `<text ${a} ${fillA(fill, el, true, Lp)}>${esc(el.str)}</text>`;
+      return `<text ${a} ${fillA(fill, el, true, Lp)}>${esc(str)}</text>`;
     }
 
     function particlesSvg(el, P, lit) {
@@ -132,9 +140,13 @@
       if (pr.show === 0) return '';
       let alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
       if (alpha <= 0.001) return '';
+      const dr = pr.draw !== undefined ? Math.max(0, Math.min(1, pr.draw)) : 1;
+      if (dr <= 0.001) return '';
       const L = lit && !el.emit;
       let body = '';
-      if (el.type === 'text') body = textSvg(el, pr, P, L);
+      const pre = (p, t) => G.polyPrefix(p, t);
+      const preD = (q) => polyD(q, 0, q.length / 2 - 1);
+      if (el.type === 'text') body = textSvg(el, pr, P, L, dr);
       else if (el.type === 'emitter') body = particlesSvg(el, P, L);
       else {
         const g = S.geometry(model, P, el);
@@ -144,9 +156,11 @@
           const fill = pr.c !== undefined ? pr.c : el.fill;
           const ink = pr.ink !== undefined ? pr.ink : el.ink;
           const inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-          const withInk = part !== 'fill' && ink > 0 && model.finish.style !== 'flat' && inkc;
+          const hasInk = ink > 0 && model.finish.style !== 'flat' && inkc;
+          const withInk = part !== 'fill' && hasInk;
           const d = pathD(g.segs, true);
-          if (part !== 'ink' && fill) {
+          const dp = dr < 1 ? S.drawParts(dr) : null;
+          if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
             body += fill.kind === 'pat' ? patternSvg(el, g, fill, P, Lp) : `<path d="${d}" ${fillA(fill, el, false, Lp)}/>`;
             if (L) {
               const la = S.lightAt(lighting, Lp[0], Lp[1]);
@@ -168,28 +182,38 @@
               }
             }
             if (el.emit) body = `<g filter="url(#${glowFilter(el.emit.c, 8 * el.emit.s)})">${body}</g>`;
+            if (dp) body = `<g opacity="${n2(dp.fill)}">${body}</g>`;
           }
-          if (withInk) {
+          if (dp) {
+            const p = S.flatOf(g), q = pre(p, dp.line);
+            if (q.length < 4) { /* nada do contorno ainda */ } else if (withInk) body += el.weight > 0 ? varStroke(q, G.inkWidths(p, ink, el.weight, model.canvas.light).slice(0, q.length / 2), inkc, el, Lp, true) : `<path d="${preD(q)}" fill="none" ${strokeA(inkc, el, ink, false, Lp, true)} stroke-linejoin="round" stroke-linecap="round"/>`;
+            else if (!hasInk && part !== 'ink' && fill && dp.fill < 1) body += `<path d="${preD(q)}" fill="none" ${strokeA(fill, el, 3 * (el.ws || 1), false, Lp)} stroke-linejoin="round" stroke-linecap="round" opacity="${n2(1 - dp.fill)}"/>`;
+          } else if (withInk) {
             if (el.weight > 0) { const p = S.flatOf(g); body += varStroke(p, G.inkWidths(p, ink, el.weight, model.canvas.light), inkc, el, Lp, true); } else body += `<path d="${d}" fill="none" ${strokeA(inkc, el, ink, false, Lp, true)} stroke-linejoin="round" stroke-linecap="round"/>`;
           }
           if (el.cuts) {
             body = `<g mask="url(#${maskOut(el.cuts.map((cu) => elPath(cu, P)))})">${body}</g>`;
-            if (withInk) body += `<g clip-path="url(#${clipDef([el], P)})">${el.cuts.map((cu) => `<path d="${elPath(cu, P)}" fill="none" ${strokeA(inkc, el, ink, false, Lp)} stroke-linejoin="round"/>`).join('')}</g>`;
+            if (withInk && !dp) body += `<g clip-path="url(#${clipDef([el], P)})">${el.cuts.map((cu) => `<path d="${elPath(cu, P)}" fill="none" ${strokeA(inkc, el, ink, false, Lp)} stroke-linejoin="round"/>`).join('')}</g>`;
           }
         } else {
           const color = pr.c !== undefined ? pr.c : el.color;
           if (!color) return '';
           const w = pr.w !== undefined ? pr.w : el.w;
-          if (el.type === 'line') body = `<path d="${pathD(g.segs, false)}" fill="none" ${strokeA(color, el, w, false, Lp)} stroke-linejoin="round"${el.dash ? ` stroke-dasharray="${el.dash.map(n2).join(' ')}"` : ''}/>`;
+          // desenhando aos poucos: só o começo do traço
+          const q = dr < 1 ? pre(S.flatOf(g), dr) : null;
+          if (q && q.length < 4) return '';
+          const dd = q ? preD(q) : pathD(g.segs, false);
+          const vs = (p, ws) => (q ? varStroke(q, ws.slice(0, q.length / 2), color, el, Lp) : varStroke(p, ws, color, el, Lp));
+          if (el.type === 'line') body = `<path d="${dd}" fill="none" ${strokeA(color, el, w, false, Lp)} stroke-linejoin="round"${el.dash ? ` stroke-dasharray="${el.dash.map(n2).join(' ')}"` : ''}/>`;
           else {
             if (layer.clip && !el.limb) alpha *= model.finish.inner;
             if (el.limb) {
               const p = S.flatOf(g), s = w / (el.w || 1);
-              body = varStroke(p, G.taperWidths(p, el.limb[0] * s, el.limb[1] * s, [0, 0]), color, el, Lp);
+              body = vs(p, G.taperWidths(p, el.limb[0] * s, el.limb[1] * s, [0, 0]));
             } else if (el.taper[0] > 0 || el.taper[1] > 0) {
               const p = S.flatOf(g);
-              body = varStroke(p, G.taperWidths(p, w, w, el.taper), color, el, Lp);
-            } else body = `<path d="${pathD(g.segs, false)}" fill="none" ${strokeA(color, el, w, false, Lp)} stroke-linecap="${el.cap}" stroke-linejoin="round"/>`;
+              body = vs(p, G.taperWidths(p, w, w, el.taper));
+            } else body = `<path d="${dd}" fill="none" ${strokeA(color, el, w, false, Lp)} stroke-linecap="${el.cap}" stroke-linejoin="round"/>`;
           }
         }
       }
@@ -239,6 +263,7 @@
     }
 
     function layerBody(layer, items, P, lit) {
+      items = S.orderItems(items, P);
       let attrs = '';
       if (layer.clip) attrs += ` clip-path="url(#${clipDef(S.clipEls(model, layer.clip), P)})"`;
       if (layer.cut) attrs += ` mask="url(#${maskOut(S.clipEls(model, layer.cut).filter((e) => e.closed).map((e) => elPath(e, P)))})"`;
@@ -248,7 +273,7 @@
 
     const parts = [];
     if (!o.transparent) parts.push(`<rect x="${n2(rect.x)}" y="${n2(rect.y)}" width="${n2(rect.w)}" height="${n2(rect.h)}" ${c.bg ? fillA(c.bg, null) : 'fill="#ffffff"'}/>`);
-    for (const layer of model.layers) {
+    for (const layer of S.orderLayers(model, pose)) {
       if (!S.layerVisible(layer, pose, o)) continue;
       const lp = pose.lprops.get(layer.name) || {};
       if (lp.show === 0) continue;

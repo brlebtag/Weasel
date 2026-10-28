@@ -1,0 +1,15 @@
+canvas   160 × 128, fundo transparente
+camadas  2
+  corpo            2 item(ns)
+  braco            2 item(ns)
+formas   4
+ossos    corpo, braco←corpo
+animações 1
+  aim_right      12 quadros, 12 fps
+                 eventos: tiro@6
+godot    character, raiz 64,122, nó Atirador
+caixas   1
+  corpo_caixa    body rect
+pontos   2
+  boca           122,73 osso braco
+  pe             64,122

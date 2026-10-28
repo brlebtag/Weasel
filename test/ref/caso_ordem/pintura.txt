@@ -1,0 +1,4 @@
+ellipse bola @0.000 +0.603
+rect poste @0.603 +0.873
+rect quadro @1.476 +0.773
+total 2.249

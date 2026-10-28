@@ -267,7 +267,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe' };
   function activeHandle(rec) {
     if (!rec) return -1;
     return rec.handles.findIndex((h) => st.caret.col >= h.from && st.caret.col <= h.to);
@@ -277,10 +277,10 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.tile ? rec.tile.name : rec.audio ? rec.audio.name : rec.mouth ? rec.mouth.name : rec.use || rec.scene || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.point ? rec.point.name : rec.tile ? rec.tile.name : rec.audio ? rec.audio.name : rec.mouth ? rec.mouth.name : rec.use || rec.scene || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
       if (rec.actor) s += ` · ${esc(rec.actor.file)}${rec.actor.model ? '' : ' <span style="color:var(--err)">(não carregou)</span>'}`;
-      if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s`;
+      if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s${rec.shot.trans ? ` · entra com ${rec.shot.trans.type} (${Math.round(rec.shot.trans.dur * 1000) / 1000}s)` : ''}`;
       if (rec.at) s += ` · ${Math.round(rec.at.t * 1000) / 1000}s no shot ${esc(rec.at.shot.name)}`;
       if (rec.audio) {
         const a = rec.audio;
@@ -289,6 +289,7 @@
       if (rec.sub) s += ` · legenda de ${rec.sub.dur.toFixed(1)}s`;
       if (rec.mouth) s += ` · bocas ${Object.keys(rec.mouth.map).join(' ')}`;
       if (rec.box) s += ` · ${{ body: 'colisão do corpo', hit: 'golpe (hitbox)', hurt: 'leva dano (hurtbox)' }[rec.box.kind]}`;
+      if (rec.point) s += ` · ponto de encaixe${rec.point.bone ? ` no osso ${esc(rec.point.bone)}` : ''} (Marker2D no Godot)`;
       if (rec.tile) s += ` · célula ${rec.tile.col},${rec.tile.row}${rec.tile.collision ? ` · colisão ${esc(rec.tile.collision.name)}` : rec.tile.solid ? ' · sólido' : ''}${rec.tile.oneway ? ' · só por cima' : ''}`;
       if (rec.el && rec.el.layer && !rec.el.layer.implicit && rec.el.layer.name !== '(def)') s += ` na camada ${esc(rec.el.layer.name)}`;
       if (rec.st.inDef) s += ` · dentro de def ${esc(rec.st.inDef.name)}`;
@@ -334,6 +335,7 @@
     at: 'muda algo num tempo', scene: 'planos de outro filme',
     audio: 'som de referência (fala, música)', sub: 'legenda', mouth: 'bocas do lip sync',
     box: 'colisão, golpe ou dano (jogo)', godot: 'cena do Godot', tileset: 'folha de blocos', tile: 'um bloco do tileset',
+    point: 'ponto de encaixe (jogo)',
   };
   // o que dá para mudar com at, com o tipo de valor
   function atTargets(m) {
@@ -342,6 +344,7 @@
     for (const p of Object.keys(L.CAMERA_PROPS)) out.push({ label: `camera.${p}=`, detail: 'câmera' });
     for (const n of m.lights.keys()) for (const p of Object.keys(L.LIGHT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'luz' });
     for (const n of m.layerMap.keys()) for (const p of ['opacity', 'show']) out.push({ label: `${n}.${p}=`, detail: 'camada' });
+    for (const n of m.named.keys()) for (const p of Object.keys(L.SHAPE_AT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'forma' });
     out.push({ label: 'ease=' });
     return out;
   }
@@ -374,9 +377,11 @@
         if (prop === 'follow') return [...names(filmActors().map((a) => a.name), 'ator'), { label: 'none' }];
         if (prop === 'flip') return names(['x', 'y', 'xy', 'none']);
         if (prop === 'show') return names(['1', '0']);
+        if (prop === 'draw') return names(['0', '1'], '0 = nada, 1 = inteira');
         if (prop === 'c' || prop === 'fadec') return names(colors, 'cor');
         return [];
       }
+      if (cmd === 'shot' && key === 'in') return names(L.TRANSITIONS.map((t) => t + ',0.5s'), 'transição');
       if (cmd === 'actor') {
         const rec = m.byLine.get(st.caret.line), ac = rec && rec.actor;
         if (key === 'anim') return ac && ac.model ? names(ac.model.anims.map((a) => a.name), 'animação') : [];
@@ -391,6 +396,14 @@
         if (prop === 'shape') return names(els, 'forma');
         if (prop === 'c' || prop === 'inkc') return m.lights.has(key.slice(0, key.lastIndexOf('.'))) ? names(colors, 'cor') : colorList();
         if (prop === 'show') return names(['1', '0']);
+        if (prop === 'draw') return names(['0', '1'], '0 = nada, 1 = inteira');
+        if (prop === 'above' || prop === 'below') {
+          const target = key.slice(0, key.lastIndexOf('.'));
+          // forma: só as da mesma camada; camada: as outras camadas
+          const mine = m.named.has(target) ? new Set(m.named.get(target).map((e) => e.layer)) : null;
+          const pool = mine ? els.filter((n) => n !== target && m.named.get(n).some((e) => mine.has(e.layer))) : [...m.layerMap.keys()].filter((n) => n !== target);
+          return [...names(pool, prop === 'above' ? 'pinta logo depois desta' : 'pinta logo antes desta'), { label: 'none', detail: 'volta para a ordem do arquivo' }];
+        }
         if (prop === 'w' || prop === 'ink') return names(widths, 'espessura');
         return [];
       }
@@ -404,6 +417,7 @@
         const def = m.defs.get(ws[1] && ws[1].text);
         if (def && def.st.attrs.has(key)) return isNaN(Number(def.st.attrs.get(key).text)) ? colorList() : names(widths, 'espessura');
       }
+      if (cmd === 'variant' && (key === 'show' || key === 'hide')) return [...names(els, 'forma'), ...names([...m.layerMap.keys()], 'camada')];
       if (cmd === 'palette' || cmd === 'variant' || cmd === 'def') return colorList();
       switch (key) {
         case 'c': case 'inkc': case 'bg': return colorList();
@@ -729,6 +743,7 @@
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
     if (st.show.guides && m.tileset) drawTileset(ctx, m, z);
     if (st.show.guides && m.boxes.size) drawBoxes(ctx, m, pose, z);
+    if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
     if (st.show.bones) drawBones(ctx, m, pose, z);
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
@@ -818,6 +833,27 @@
       ctx.fill();
       ctx.stroke();
       ctx.restore();
+    }
+    ctx.restore();
+  }
+  // pontos de encaixe: uma mira com o nome e uma seta para onde o osso aponta
+  function drawPoints(ctx, m, pose, z) {
+    ctx.save();
+    ctx.lineWidth = 1.5 / z;
+    ctx.strokeStyle = ctx.fillStyle = '#c77dff';
+    ctx.font = `${11 / z}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
+    for (const p of m.points.values()) {
+      const s = S.pointState(m, pose, p), r = 6 / z, a = (s.rot * Math.PI) / 180;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+      ctx.moveTo(s.x - r * 1.8, s.y);
+      ctx.lineTo(s.x + r * 1.8, s.y);
+      ctx.moveTo(s.x, s.y - r * 1.8);
+      ctx.lineTo(s.x, s.y + r * 1.8);
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + Math.cos(a) * r * 3.2, s.y + Math.sin(a) * r * 3.2);
+      ctx.stroke();
+      ctx.fillText(p.name, s.x + r * 1.4, s.y - r * 1.4);
     }
     ctx.restore();
   }

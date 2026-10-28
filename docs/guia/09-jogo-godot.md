@@ -2,7 +2,7 @@
 
 [← Luz, efeitos e partículas](08-luz-efeitos.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
 
-Um personagem de jogo no Weasel é um arquivo `.weasel` comum, com desenho, ossos e animações (`idle`, `walk`, `attack`…). Este capítulo mostra o que se acrescenta para ele sair **pronto para o jogo**: colisão, golpe e dano por quadro, o ponto de origem, direções, e como exportar para o Godot (ou qualquer motor).
+Um personagem de jogo no Weasel é um arquivo `.weasel` comum, com desenho, ossos e animações (`idle`, `walk`, `attack`…). Este capítulo mostra o que se acrescenta para ele sair **pronto para o jogo**: colisão, golpe e dano por quadro, pontos de encaixe, o ponto de origem, direções, e como exportar para o Godot (ou qualquer motor).
 
 ## Um personagem de jogo
 
@@ -69,6 +69,70 @@ box nome body|hit|hurt capsule cx,cy largura,altura
 - `off` faz ela começar **desligada**. `key 2 golpe_right.show=1` liga num quadro e `key 4 golpe_right.show=0` desliga. Assim o golpe só existe nos quadros em que a espada (ou a gosma) está esticada.
 - No editor, com **Guias** ligado, as caixas aparecem por cima do desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas.
 
+## Pontos de encaixe: `point`
+
+```
+point nome x,y [bone=osso]
+```
+
+Um **ponto de encaixe** é um ponto com nome que acompanha um osso: de onde sai o tiro, onde a mão segura a arma, onde nasce a poeira do passo. Ele não aparece no desenho, mas vai para o jogo quadro a quadro, então o jogo sabe onde ele está em cada momento da animação.
+
+<!-- gerar: img/09_ponto.gif -a shoot_right --guides -->
+```weasel
+canvas 160 128 bg=#e8eef5
+palette ink=#2a2433 line=4 pele=#7cc4e8 arma=#5b5f6e fogo=#ffcf4d
+
+godot body=character root=64,122 name=Atirador
+
+bone corpo pivot=64,122
+bone braco pivot=74,74 parent=corpo
+
+layer corpo
+ellipse tronco 60,90 26,32 c=pele ink=line bone=corpo
+ellipse olho 70,76 4,6 c=ink bone=corpo
+layer braco
+rect cano 74,68 46,10 r=3 c=arma ink=line bone=braco
+ellipse mao 76,76 8 c=pele ink=line bone=braco
+ellipse clarao 130,73 10,6 c=fogo bone=braco
+
+point saida 122,73 bone=braco
+point pe 64,122
+
+# só para ver onde o ponto está (as camadas guide não vão para o jogo)
+layer mira guide
+ellipse alvo 122,73 3 c=#c77dff bone=braco
+
+anim shoot_right frames=12 fps=12
+key 0 braco=0,0,0 clarao.show=0
+key 4 braco=0,0,-30
+key 6 clarao.show=1
+key 8 clarao.show=0
+key 12 braco=0,0,0
+event 6 tiro
+```
+
+![Um boneco azul levanta a arma, sai um clarão amarelo da ponta do cano e a arma abaixa; um ponto roxo acompanha a ponta do cano](img/09_ponto.gif)
+
+- `point saida 122,73 bone=braco` fica na ponta do cano e gira com o braço. O ponto roxo da camada `guide` mostra onde ele está; no editor, com **Guias** ligado, os pontos aparecem sozinhos, em roxo, com uma seta para onde o osso aponta.
+- `point pe 64,122` não tem osso: fica parado entre os pés.
+- O ponto segue a **posição e a rotação** do osso, como as caixas.
+- O nome não pode repetir o de uma caixa: no Godot, os dois viram nós da mesma cena.
+
+Na cena do Godot, cada ponto vira um **`Marker2D`** com o nome do ponto, que o AnimationPlayer move quadro a quadro. Na animação espelhada (`shoot_left`), o ponto e a direção também espelham. No script do jogo:
+
+```gdscript
+const BALA := preload("res://bala.tscn")
+
+func _quando_evento(nome: StringName) -> void:
+	if nome == &"tiro":
+		var bala := BALA.instantiate()
+		bala.global_position = $saida.global_position
+		bala.direcao = $saida.global_transform.x  # para onde o cano aponta
+		get_parent().add_child(bala)
+```
+
+Na sprite sheet, os pontos vão no JSON de cada quadro, em pixels do quadro e com a rotação do osso em graus: `"points": [{ "name": "saida", "x": 120.6, "y": 47.1, "rot": -30 }, …]`.
+
 ## O nó do Godot: `godot`
 
 ```
@@ -106,10 +170,11 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 ├── pes (CollisionShape2D)         ← box … body
 ├── Hitbox (Area2D)                ← box … hit
 ├── Hurtbox (Area2D)               ← box … hurt
+├── saida (Marker2D)               ← point (se houver)
 └── AnimationPlayer                ← weasel_anim.gd
 ```
 
-- O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do sprite, liga, desliga e move as caixas quadro a quadro e chama os eventos na hora certa. **Toque as animações pelo AnimationPlayer**, não pelo sprite.
+- O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do sprite, liga, desliga e move as caixas e os pontos quadro a quadro e chama os eventos na hora certa. **Toque as animações pelo AnimationPlayer**, não pelo sprite.
 - `tocar("attack", velocity)` escolhe a direção sozinho: toca `attack_right` ou `attack_left` (ou `_up`, `_down` e as diagonais, se existirem), e só recomeça quando a animação muda.
 - Os eventos chegam pelo sinal `evento(nome)`.
 - `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado.
@@ -195,7 +260,7 @@ tile rampa 2,0 collision=rampa
 node cli/weasel.js gosma.weasel -f sheet -a all --trim -t -o sprites/gosma.png
 ```
 
-A sprite sheet sai em PNG mais um JSON no formato do TexturePacker/Phaser, que quase todo motor lê: a posição de cada quadro, a duração, as animações (`frameTags`), os eventos e as caixas ligadas em cada quadro. Veja o [JSON da gosma](img/09_folha.json); nele, cada caixa vem pelo centro (`x`,`y`) e pelo tamanho.
+A sprite sheet sai em PNG mais um JSON no formato do TexturePacker/Phaser, que quase todo motor lê: a posição de cada quadro, a duração, as animações (`frameTags`), os eventos, as caixas ligadas e os pontos de encaixe em cada quadro. Veja o [JSON da gosma](img/09_folha.json); nele, cada caixa vem pelo centro (`x`,`y`) e pelo tamanho.
 
 Para a Unity, `unity unit=100 root=x,y collider=l,a,dx,dy` acrescenta ao JSON os pixels por unidade, o pivô (o ponto `root=`, que também vira a origem dos personagens num filme) e um colisor.
 

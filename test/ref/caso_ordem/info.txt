@@ -1,0 +1,9 @@
+canvas   320 × 200, fundo #f4efe6
+camadas  2
+  cena             2 item(ns)
+  placa            1 item(ns)
+formas   3
+ossos    bola
+animações 2
+  volta          24 quadros, 12 fps, anima bola.order
+  camadas        4 quadros, 4 fps, once, anima cena.order

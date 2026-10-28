@@ -84,6 +84,49 @@ shot nome dur=4s
 
 Os planos tocam em sequência. O importante: **cada plano começa com tudo como foi declarado**. O que um `at` mudou num plano não passa para o seguinte. Por isso o plano `susto` começa com `at 0s fantasma.pos=2350,880`: sem isso, o fantasma voltaria para `3000,880`, onde foi declarado.
 
+### Transições: `in=`
+
+Sem nada, um plano corta seco para o seguinte. `in=tipo,duração` faz o plano **entrar** com uma transição:
+
+<!-- gerar: img/10_transicoes.gif -s 0.5 -->
+```weasel
+film fps=12
+canvas 480 270 bg=#14182a
+
+layer manha only=manha
+rect ceu1 0,0 480,270 c=#9fd3ef
+ellipse sol1 380,70 36 c=#ffd34d
+rect chao1 0,200 480,70 c=#7cc56a
+layer tarde only=tarde
+rect ceu2 0,0 480,270 c=#f2a65a
+ellipse sol2 130,160 54 c=#ff7a45
+rect chao2 0,200 480,70 c=#5c8f4a
+layer noite only=noite
+rect ceu3 0,0 480,270 c=#1b2140
+ellipse lua 360,70 30 c=#f4efe6
+rect chao3 0,200 480,70 c=#2f5a3a
+
+shot manha dur=1.5s in=fade,0.8s
+shot tarde dur=1.5s in=wipe,0.6s
+shot noite dur=2s in=iris,1s
+```
+
+![Um céu azul de manhã surge do preto, uma cortina passa para a tarde alaranjada e um círculo fecha e abre para a noite](img/10_transicoes.gif)
+
+| Tipo | O que faz |
+|---|---|
+| `fade` | dissolve: o plano novo aparece por cima do anterior |
+| `wipe` | cortina: o plano novo entra da esquerda para a direita |
+| `slide` | o plano novo empurra o anterior para fora, para a esquerda |
+| `zoom` | o plano anterior cresce e some, mostrando o novo |
+| `iris` | um círculo fecha sobre o plano anterior e abre sobre o novo, com preto em volta (o fim dos desenhos animados antigos) |
+
+- A duração é opcional: `in=fade` dura meio segundo.
+- Durante a transição, o plano anterior fica **parado no último quadro dele**, e o plano novo já está andando. A transição acontece dentro do plano novo, então a duração do filme e o tempo dos sons e das legendas não mudam.
+- No primeiro plano do filme, a transição vem do preto (o `fade` do exemplo).
+- Na linha do tempo do editor, a transição aparece como uma cunha clara no começo do plano.
+- O `fade` da câmera (`camera fade=1`) continua valendo para escurecer até o preto dentro de um plano.
+
 ## Câmera: `camera`
 
 ```
@@ -107,7 +150,7 @@ A câmera parada no centro do canvas e com `zoom=1` mostra o desenho exatamente 
 at tempo alvo.propriedade=valor  outro.prop=valor …  ease=…
 ```
 
-O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, luzes e camadas como alvo.
+O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, luzes, camadas e formas como alvo.
 
 **Tempo:** `2s`, `1.5` (segundos), `500ms`, `48f` (quadros do filme), `1m30s`. Com `+` na frente, conta a partir do `at` anterior: `at +0.5s`. O tempo conta do **começo do plano**.
 
@@ -126,6 +169,9 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 | `camera` | `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec` |
 | luz do filme | `power`, `radius`, `c`, `glow`, `aim`, `cone` |
 | camada do filme | `opacity`, `show` e os efeitos (`blur`, `glow`, `tint`…) |
+| forma do filme | `draw` (desenha aos poucos, [capítulo 7](07-animacao.md#desenhar-aos-poucos-draw)), `opacity`, `show` |
+
+As formas do próprio arquivo do filme (um mapa, uma seta, um título) mudam com `at` como as camadas: `at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota aos poucos. As formas dos atores mudam pelas animações deles.
 
 ## Profundidade e paralaxe
 

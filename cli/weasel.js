@@ -281,6 +281,10 @@ function info(m) {
     out.push(`caixas   ${m.boxes.size}`);
     for (const b of m.boxes.values()) out.push(`  ${b.name.padEnd(14)} ${b.kind} ${b.shape}${b.bone ? ` osso ${b.bone}` : ''}${b.only ? ` só em ${b.only.join(',')}` : ''}${b.on ? '' : ' (começa desligada)'}`);
   }
+  if (m.points.size) {
+    out.push(`pontos   ${m.points.size}`);
+    for (const p of m.points.values()) out.push(`  ${p.name.padEnd(14)} ${p.x},${p.y}${p.bone ? ` osso ${p.bone}` : ''}`);
+  }
   if (m.tileset) {
     const T = m.tileset;
     out.push(`tileset  blocos de ${T.size.join('×')}, ${T.cols} × ${T.rows} células${T.auto ? ', auto' : ''}`);
@@ -356,7 +360,7 @@ async function exportModel(model, o, format, base, sfx) {
     } catch (e) { usage(e.message); }
     const what = (f) => {
       if (f.canvas) return `${f.canvas.width}×${f.canvas.height}${/_normal\.png$/.test(f.name) ? ', normal map' : pkg.sheet ? `, ${pkg.sheet.frames} quadros de ${pkg.sheet.fw}×${pkg.sheet.fh}` : ''}`;
-      if (f.name.endsWith('.tscn')) return `cena do Godot 4 (${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.mirrored.length ? `, espelhadas: ${pkg.mirrored.join(', ')}` : ''})`;
+      if (f.name.endsWith('.tscn')) return `cena do Godot 4 (${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.points ? `, ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? `, espelhadas: ${pkg.mirrored.join(', ')}` : ''})`;
       if (f.name.endsWith('.gd')) return 'ajudante do AnimationPlayer';
       return pkg.kind === 'tileset' ? `TileSet do Godot 4 (${pkg.tiles} blocos)` : 'SpriteFrames do Godot 4';
     };

@@ -90,6 +90,47 @@ Ela não muda nada sozinha: diz "na versão `noite`, troque estas cores da `pale
 - **No editor:** o seletor de variante fica na barra da vista do desenho.
 - **Na linha de comando:** `--variant noite` exporta essa versão; `--variant all` exporta todas de uma vez (com o nome da variante no fim do arquivo).
 
+### Variantes que trocam peças: `show=` e `hide=`
+
+Além das cores, uma variante pode **esconder** e **mostrar** partes do desenho. É o que os jogos chamam de *skin*: o mesmo personagem com peças trocadas (outra arma, um chapéu, sem o elmo).
+
+<!-- gerar: img/03_pecas.png -->
+<!-- gerar: img/03_pecas_mago.png --variant mago -->
+<!-- gerar: img/03_pecas_sem_elmo.png --variant sem_elmo -->
+```weasel
+canvas 200 160 bg=#cfe8f5
+palette ink=#2b2a33 line=4 pele=#ffb36b
+
+layer boneco
+ellipse cabeca 100,76 34 c=pele ink=line
+ellipse olhoE 88,72 4,6 c=ink
+ellipse olhoD 112,72 4,6 c=ink
+rect elmo 66,36 68,22 r=8 c=#9aa6b2 ink=line
+shape chapeu c=#6a4bc4 ink=line hidden : 100,4! 130,50! 70,50!
+
+layer espada
+rect lamina 142,50 8,72 c=#d9dde3 ink=line
+rect guarda 132,114 28,8 r=3 c=#c58a4c ink=line
+
+layer cajado hidden
+stroke vara w=6 c=#8a5a2b : 148,42 152,146
+ellipse gema 148,36 9 c=#7ae0ff ink=line
+
+variant mago pele=#ffd9a0 hide=elmo,espada show=chapeu,cajado
+variant sem_elmo hide=elmo
+```
+
+| Padrão | `--variant mago` | `--variant sem_elmo` |
+|---|---|---|
+| ![Um boneco de elmo cinza com uma espada](img/03_pecas.png) | ![O mesmo boneco de chapéu roxo pontudo e um cajado com uma gema azul](img/03_pecas_mago.png) | ![O boneco com a espada e sem o elmo](img/03_pecas_sem_elmo.png) |
+
+- `hide=` esconde formas ou camadas inteiras nessa versão. A espada é uma camada com duas formas, então `hide=espada` some com a lâmina e com a guarda.
+- `show=` mostra o que está escondido no código com `hidden`: o chapéu (uma forma) e o cajado (uma camada `hidden`).
+- O nome vale para todas as formas com aquele nome, também dentro de componentes.
+- A mesma variante pode trocar cores e peças, como `mago`, que também clareia a pele.
+- O que some continua servindo de molde para `clip` e `cut`, como qualquer forma `hidden`.
+- Num filme, `at 3s heroi.variant=mago` troca as peças no meio da cena ([capítulo 10](10-filme.md#mudanças-no-tempo-at)).
+
 ## Gradientes
 
 Um gradiente é uma cor que muda aos poucos. Primeiro ele é declarado com um nome; depois o nome é usado como cor.

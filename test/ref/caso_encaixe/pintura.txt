@@ -1,0 +1,5 @@
+ellipse tronco @0.000 +0.614
+ellipse olho @0.614 +0.255
+rect cano @0.870 +0.469
+ellipse mao @1.339 +0.322
+total 1.661

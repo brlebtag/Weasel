@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weasel — desenho por código</title>
-<link rel="stylesheet" href="css/style.css?v=1.6.2">
+<link rel="stylesheet" href="css/style.css?v=1.7.0">
 </head>
 <body>
 <header class="top">
@@ -103,7 +103,7 @@
       <tr><td><code>gradient nome linear x1,y1 x2,y2 [box] : cores</code></td><td>Gradiente. Cores com posição opcional: <code>: #fff@0 #889@1</code> ou <code>: pena penad</code>. Com <code>box</code>, as coordenadas vão de 0 a 1 dentro de cada forma.</td></tr>
       <tr><td><code>gradient nome radial cx,cy r [fx,fy] [box] : cores</code></td><td>Gradiente circular (com foco opcional). Use o nome em <code>c=</code>, <code>inkc=</code> ou <code>bg=</code>.</td></tr>
       <tr><td><code>pattern nome hatch|dots [cross] c= bg= gap= w= r= angle=</code></td><td>Preenchimento de hachura (linhas; <code>cross</code> cruza) ou pontos. Use o nome em <code>c=</code> de formas fechadas; o padrão acompanha a forma quando ela se mexe.</td></tr>
-      <tr><td><code>variant nome chave=valor …</code></td><td>Outra versão das cores: troca valores da <code>palette</code>. Escolha no seletor da vista e exporte uma ou todas.</td></tr>
+      <tr><td><code>variant nome chave=valor … show= hide=</code></td><td>Outra versão das cores: troca valores da <code>palette</code>. <code>hide=elmo,espada</code> esconde formas ou camadas nessa versão e <code>show=chapeu</code> mostra as que têm <code>hidden</code> (peças trocáveis). Escolha no seletor da vista e exporte uma ou todas.</td></tr>
       <tr><td><code>include "arquivo.weasel"</code></td><td>Usa outro arquivo (palette, componentes, ossos…). No navegador, o arquivo precisa estar na lista de arquivos.</td></tr>
       <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Pixels por unidade, ponto raiz e colisor da Unity. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
     </table>
@@ -137,7 +137,8 @@
       <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados. <code>tension</code> 0–1 (mole a duro).</td></tr>
       <tr><td><code>anim nome frames= fps= [once]</code></td><td>Começa uma animação. Ela repete, a não ser com <code>once</code>.</td></tr>
       <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose dos ossos naquele quadro; o meio é interpolado. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
-      <tr><td><code>key quadro forma.prop=valor</code></td><td>Anima uma forma: <code>opacity</code>, <code>c</code>, <code>inkc</code>, <code>w</code>, <code>ink</code>, <code>show</code> (1/0) e <code>shape</code> (morph para outra forma com o mesmo número de pontos). Camadas: <code>camada.opacity</code> e <code>camada.show</code>.</td></tr>
+      <tr><td><code>key quadro forma.prop=valor</code></td><td>Anima uma forma: <code>opacity</code>, <code>c</code>, <code>inkc</code>, <code>w</code>, <code>ink</code>, <code>show</code> (1/0), <code>shape</code> (morph para outra forma com o mesmo número de pontos) e <code>draw</code> (0 a 1: desenha aos poucos; num texto, as letras aparecem uma a uma). Camadas: <code>camada.opacity</code> e <code>camada.show</code>.</td></tr>
+      <tr><td><code>key quadro forma.above=outra</code></td><td>Muda a ordem de pintura a partir daquele quadro: <code>above=</code> pinta logo depois da outra (na frente), <code>below=</code> logo antes (atrás), <code>none</code> volta à ordem do arquivo. Vale entre formas da mesma camada e entre camadas (<code>bracoD.above=corpo</code>).</td></tr>
       <tr><td><code>event quadro nome</code></td><td>Marca um evento (passo, som, golpe). Aparece no player e vai no JSON da sprite sheet.</td></tr>
     </table>
 
@@ -175,8 +176,9 @@
       <tr><td><code>godot body= root=x,y name= normal=</code></td><td>Nó raiz da cena (<code>character</code>, <code>static</code>, <code>area</code>, <code>rigid</code> ou <code>node</code>), o ponto que vira a origem (os pés), o nome do nó e a força do normal map.</td></tr>
       <tr><td><code>tileset size=32 [auto]</code></td><td>O canvas vira uma folha de blocos. <code>auto</code> cria um bloco para cada célula desenhada sem <code>tile</code>.</td></tr>
       <tr><td><code>tile nome coluna,linha [solid] [oneway] collision=forma</code></td><td>Um bloco: <code>solid</code> colide no quadrado todo, <code>oneway</code> só por cima, <code>collision=</code> usa o formato de uma forma (rampa). O nome vai como dado do bloco.</td></tr>
+      <tr><td><code>point nome x,y bone=</code></td><td>Ponto de encaixe que segue o osso (posição e rotação): de onde sai o tiro, onde a mão segura, onde nasce a poeira. No Godot vira um <code>Marker2D</code> que o AnimationPlayer move; na sprite sheet, vai no JSON de cada quadro.</td></tr>
     </table>
-    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code>. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Guias</b>, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas).</p>
+    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code>. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Guias</b>, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas) e os pontos de encaixe em roxo, com uma seta para onde o osso aponta.</p>
 
     <h3>Filme</h3>
     <p>Um arquivo com <code>film</code> vira um filme e sai em vídeo. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo), postos em cena com <code>actor</code>.</p>
@@ -190,9 +192,9 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <table>
       <tr><td><code>film fps= dur=</code></td><td>Marca o arquivo como filme. <code>canvas</code> é o tamanho do quadro (padrão 1920×1080) e o fundo. <code>dur=</code> só vale sem <code>shot</code>.</td></tr>
       <tr><td><code>actor nome "arquivo" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= [screen] [bg] [hidden] [unlit] [front]</code></td><td>Põe outro arquivo em cena. <code>x,y</code> é onde vai o <code>root=</code> do <code>unity</code> dele (os pés), ou o canto 0,0; <code>origin=</code> escolhe outro ponto. <code>hide=</code> esconde camadas do arquivo, <code>bg</code> desenha o fundo dele, <code>screen</code> prende na tela. Antes do primeiro <code>shot</code>, vale para todos.</td></tr>
-      <tr><td><code>shot nome dur=</code></td><td>Um plano. Os planos tocam em sequência; o que vem abaixo vale só para ele.</td></tr>
+      <tr><td><code>shot nome dur= in=tipo,duração</code></td><td>Um plano. Os planos tocam em sequência; o que vem abaixo vale só para ele. <code>in=</code> é a transição de entrada: <code>fade</code>, <code>wipe</code>, <code>slide</code>, <code>zoom</code> ou <code>iris</code> (padrão 0.5s); o plano anterior fica parado no último quadro enquanto este entra.</td></tr>
       <tr><td><code>camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=</code></td><td>Para onde a câmera olha (centro do quadro). <code>follow=ator</code> segue um ator; <code>lag=</code> (segundos) atrasa e suaviza; <code>shake=</code> treme; <code>fade=1</code> escurece.</td></tr>
-      <tr><td><code>at tempo alvo.prop=valor … ease=</code></td><td>Muda algo naquele momento do plano. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também.</td></tr>
+      <tr><td><code>at tempo alvo.prop=valor … ease=</code></td><td>Muda algo naquele momento do plano. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também, e as formas do arquivo do filme: <code>draw</code>, <code>opacity</code> e <code>show</code>.</td></tr>
       <tr><td><code>scene "arquivo"</code></td><td>Acrescenta os planos de outro arquivo de filme (um arquivo por cena).</td></tr>
       <tr><td><code>audio nome "arquivo" at= from= dur= vol= lips=ator cues= text= [loop]</code></td><td>Som de referência (fala, música). Num <code>shot</code>, <code>at=</code> conta do começo dele; fora, do começo do filme. <code>lips=</code> faz a boca do ator seguir a fala (pelo .wav, ou pelas bocas do Rhubarb em <code>cues=</code>); <code>text=</code> vira legenda. Abra os sons com <b>Abrir…</b>.</td></tr>
       <tr><td><code>sub tempo "texto" dur= lang=</code></td><td>Legenda (<code>+0.3s</code> = depois da anterior). Sai em .srt/.vtt; <code>film subs=burn</code> desenha no vídeo.</td></tr>
@@ -288,22 +290,22 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.6.2"></script>
-<script src="js/lang.js?v=1.6.2"></script>
-<script src="js/scene.js?v=1.6.2"></script>
-<script src="js/film.js?v=1.6.2"></script>
-<script src="js/audio.js?v=1.6.2"></script>
-<script src="js/nle.js?v=1.6.2"></script>
-<script src="js/webm.js?v=1.6.2"></script>
-<script src="js/svg.js?v=1.6.2"></script>
-<script src="js/gif.js?v=1.6.2"></script>
-<script src="js/zip.js?v=1.6.2"></script>
-<script src="js/normal.js?v=1.6.2"></script>
-<script src="js/export.js?v=1.6.2"></script>
-<script src="js/godot.js?v=1.6.2"></script>
-<script src="js/editor.js?v=1.6.2"></script>
-<script src="js/examples.js?v=1.6.2"></script>
-<script src="js/timeline.js?v=1.6.2"></script>
-<script src="js/app.js?v=1.6.2"></script>
+<script src="js/geom.js?v=1.7.0"></script>
+<script src="js/lang.js?v=1.7.0"></script>
+<script src="js/scene.js?v=1.7.0"></script>
+<script src="js/film.js?v=1.7.0"></script>
+<script src="js/audio.js?v=1.7.0"></script>
+<script src="js/nle.js?v=1.7.0"></script>
+<script src="js/webm.js?v=1.7.0"></script>
+<script src="js/svg.js?v=1.7.0"></script>
+<script src="js/gif.js?v=1.7.0"></script>
+<script src="js/zip.js?v=1.7.0"></script>
+<script src="js/normal.js?v=1.7.0"></script>
+<script src="js/export.js?v=1.7.0"></script>
+<script src="js/godot.js?v=1.7.0"></script>
+<script src="js/editor.js?v=1.7.0"></script>
+<script src="js/examples.js?v=1.7.0"></script>
+<script src="js/timeline.js?v=1.7.0"></script>
+<script src="js/app.js?v=1.7.0"></script>
 </body>
 </html>

@@ -132,6 +132,17 @@
         const mine = host.editable(e.owner);
         ctx.fillStyle = mine ? (i % 2 ? COLORS.shotB : COLORS.shotA) : COLORS.other;
         ctx.fillRect(x0, y, Math.max(1, x1 - x0 - 1), H_SHOT - 4);
+        // transição na entrada (in=): uma cunha clara no começo do plano
+        if (e.shot.trans) {
+          const xt = Math.min(x1, xOf(e.start / fps + e.shot.trans.dur));
+          ctx.fillStyle = 'rgba(255,255,255,0.16)';
+          ctx.beginPath();
+          ctx.moveTo(x0, y);
+          ctx.lineTo(xt, y);
+          ctx.lineTo(x0, y + H_SHOT - 4);
+          ctx.closePath();
+          ctx.fill();
+        }
         ctx.fillStyle = '#c9d4ea';
         clipText(e.name, x0 + 5, y + 10, x1 - x0 - 8);
         const keys = new Set();

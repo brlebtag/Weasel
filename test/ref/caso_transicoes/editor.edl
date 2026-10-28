@@ -1,0 +1,17 @@
+TITLE: caso_transicoes
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:01:00 01:00:00:00 01:00:01:00
+* FROM CLIP NAME: caso_transicoes_a.mov
+
+002  AX       V     C        00:00:00:00 00:00:01:00 01:00:01:00 01:00:02:00
+* FROM CLIP NAME: caso_transicoes_b.mov
+
+003  AX       V     C        00:00:00:00 00:00:01:00 01:00:02:00 01:00:03:00
+* FROM CLIP NAME: caso_transicoes_c.mov
+
+004  AX       V     C        00:00:00:00 00:00:01:00 01:00:03:00 01:00:04:00
+* FROM CLIP NAME: caso_transicoes_d.mov
+
+005  AX       V     C        00:00:00:00 00:00:01:06 01:00:04:00 01:00:05:06
+* FROM CLIP NAME: caso_transicoes_e.mov

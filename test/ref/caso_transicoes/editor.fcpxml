@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/12s" width="160" height="90" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_transicoes_a" start="0s" duration="12/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_transicoes_a.mov"/>
+    </asset>
+    <asset id="r3" name="caso_transicoes_b" start="0s" duration="12/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_transicoes_b.mov"/>
+    </asset>
+    <asset id="r4" name="caso_transicoes_c" start="0s" duration="12/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_transicoes_c.mov"/>
+    </asset>
+    <asset id="r5" name="caso_transicoes_d" start="0s" duration="12/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_transicoes_d.mov"/>
+    </asset>
+    <asset id="r6" name="caso_transicoes_e" start="0s" duration="18/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_transicoes_e.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_transicoes">
+      <project name="caso_transicoes">
+        <sequence format="r1" duration="66/12s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_transicoes_a" offset="0s" start="0s" duration="12/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="a"/>
+            </asset-clip>
+            <asset-clip ref="r3" name="caso_transicoes_b" offset="12/12s" start="0s" duration="12/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="b"/>
+            </asset-clip>
+            <asset-clip ref="r4" name="caso_transicoes_c" offset="24/12s" start="0s" duration="12/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="c"/>
+            </asset-clip>
+            <asset-clip ref="r5" name="caso_transicoes_d" offset="36/12s" start="0s" duration="12/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="d"/>
+            </asset-clip>
+            <asset-clip ref="r6" name="caso_transicoes_e" offset="48/12s" start="0s" duration="18/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="e"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

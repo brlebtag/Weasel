@@ -1,5 +1,5 @@
 /* Weasel — Godot 4: SpriteFrames (.tres) com normal map opcional, cena pronta (.tscn) com AnimatedSprite2D,
-   colisão, hitbox e hurtbox que mudam quadro a quadro, eventos chamados pelo AnimationPlayer e direções
+   colisão, hitbox e hurtbox que mudam quadro a quadro, pontos de encaixe (Marker2D), eventos chamados pelo AnimationPlayer e direções
    espelhadas (top-down), e TileSet com colisão. Tudo em pixels do jogo, com o ponto raiz na origem do nó. */
 (function (W) {
   'use strict';
@@ -118,6 +118,22 @@
       b.res = `Shape_${i}`;
       b.extra = b.shape === 'capsule' && b.w > b.h ? 90 : 0; // cápsula deitada: a do Godot é em pé
     });
+    // pontos de encaixe: Marker2D com o nome do ponto (o eixo x do marcador aponta para onde o osso aponta)
+    const points = [...model.points.values()];
+    for (const p of points) {
+      let n = p.name;
+      while (reserved.has(n) || used.has(n)) n += '_ponto';
+      used.add(n);
+      p.node = n;
+    }
+    const pointAt = (pose, p, flip) => {
+      const st = S.pointState(model, pose, p);
+      const q = T(st.x, st.y);
+      let rot = st.rot;
+      // no lado espelhado, a direção também espelha
+      if (flip) { q[0] = -q[0]; rot = 180 - rot; }
+      return { pos: vec(q), rot: num((rot * Math.PI) / 180) };
+    };
     // onde cada caixa está (e se está ligada) num quadro
     const boxAt = (pose, b, flip) => {
       const st = S.boxState(model, pose, b);
@@ -128,11 +144,19 @@
     };
     const restPose = first ? S.makePose(model, first.anim.name, 0) : S.makePose(model, null, 0);
     const rest = boxes.map((b) => boxAt(restPose, b, false));
+    const restP = points.map((pt) => pointAt(restPose, pt, false));
+    const perAnimP = [];
     const perAnim = anims.map((p) => {
-      const rows = [];
-      for (let f = 0; f < p.anim.frames; f++) { const pose = S.makePose(model, p.anim.name, f); rows.push(boxes.map((b) => boxAt(pose, b, p.flip))); }
+      const rows = [], prow = [];
+      for (let f = 0; f < p.anim.frames; f++) {
+        const pose = S.makePose(model, p.anim.name, f);
+        rows.push(boxes.map((b) => boxAt(pose, b, p.flip)));
+        prow.push(points.map((pt) => pointAt(pose, pt, p.flip)));
+      }
+      perAnimP.push(prow);
       return rows;
     });
+    points.forEach((pt, k) => { pt.movePos = perAnimP.some((rows) => rows.some((row) => row[k].pos !== restP[k].pos || row[k].rot !== restP[k].rot)); });
     // caixa que se mexe ou liga/desliga ganha faixas em todas as animações (trocar de animação acerta o estado)
     boxes.forEach((b, k) => {
       b.movePos = perAnim.some((rows) => rows.some((row) => row[k].pos !== rest[k].pos || row[k].rot !== rest[k].rot));
@@ -169,6 +193,9 @@
           if (b.movePos) { add((i) => valueTrack(i, `${b.path}:position`, [[0, rest[k].pos]])); add((i) => valueTrack(i, `${b.path}:rotation`, [[0, rest[k].rot]])); }
           if (b.moveOn) add((i) => valueTrack(i, `${b.path}:disabled`, [[0, rest[k].off]]));
         });
+        points.forEach((pt, k) => {
+          if (pt.movePos) { add((i) => valueTrack(i, `${pt.node}:position`, [[0, restP[k].pos]])); add((i) => valueTrack(i, `${pt.node}:rotation`, [[0, restP[k].rot]])); }
+        });
       });
     }
     anims.forEach((p, n) => {
@@ -183,6 +210,12 @@
             add((i) => valueTrack(i, `${b.path}:rotation`, changes(rows.map((row) => row[k].rot), dt)));
           }
           if (b.moveOn) add((i) => valueTrack(i, `${b.path}:disabled`, changes(rows.map((row) => row[k].off), dt)));
+        });
+        points.forEach((pt, k) => {
+          if (!pt.movePos) return;
+          const prow = perAnimP[n];
+          add((i) => valueTrack(i, `${pt.node}:position`, changes(prow.map((row) => row[k].pos), dt)));
+          add((i) => valueTrack(i, `${pt.node}:rotation`, changes(prow.map((row) => row[k].rot), dt)));
         });
         if (a.events.length) add((i) => methodTrack(i, 'AnimationPlayer', a.events.map((e) => [e.frame * dt, e.name])));
       });
@@ -210,6 +243,11 @@
       if (type) nodes.push(`[node name="${parent}" type="${type}" parent="."]${extra}`);
       for (const [b, k] of mine) nodes.push(boxNode(b, k));
     }
+    points.forEach((pt, k) => {
+      const lines = [`[node name="${pt.node}" type="Marker2D" parent="."]`, `position = ${restP[k].pos}`];
+      if (restP[k].rot !== '0') lines.push(`rotation = ${restP[k].rot}`);
+      nodes.push(lines.join('\n'));
+    });
     const player = [`[node name="AnimationPlayer" type="AnimationPlayer" parent="."]`, 'libraries = {\n&"": SubResource("AnimationLibrary_weasel")\n}'];
     if (first) player.push(`autoplay = ${sname(first.name)}`);
     player.push('script = ExtResource("2_script")');
@@ -375,7 +413,7 @@ func _weasel_evento(nome: StringName) -> void:
       files.push({ name: 'weasel_anim.gd', text: SCRIPT });
     }
     const mirrored = o.scene === false ? [] : playerAnims(model, o.mirror !== false).filter((p) => p.flip && names.includes(p.anim.name)).map((p) => p.name);
-    return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length };
+    return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length, points: model.points.size };
   }
 
   W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf };

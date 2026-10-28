@@ -1,0 +1,7 @@
+stroke rota @0.000 +0.953
+line borda @0.953 +0.850
+shape casa @1.803 +0.761
+ellipse sol @2.564 +0.624
+rect placa @3.188 +0.658
+text titulo @3.846 +0.352
+total 4.198

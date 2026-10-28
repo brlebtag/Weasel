@@ -14,7 +14,9 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **A forma ficou atrás (ou na frente) da outra.** O que vem depois no arquivo é pintado por cima, camada por camada. Mude a linha de lugar, ou a forma de camada. Um componente é pintado na linha do `use`, não na do `def`. Veja a [ordem de pintura](04-camadas.md#a-ordem-de-pintura).
 
-**Quero que uma forma passe para a frente no meio da animação.** A animação não muda a ordem de pintura. Use duas cópias, uma antes e outra depois, presas ao mesmo osso, e ligue uma de cada vez com `.show` ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação)).
+**Quero que uma forma passe para a frente no meio da animação.** Use `key quadro forma.above=outra` (na frente) ou `below=` (atrás) ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)).
+
+**"não está na mesma camada" no `above=` ou `below=`.** Formas só trocam de lugar com outras da mesma camada. Ponha as duas na mesma camada, ou troque as camadas inteiras: `key 8 bracoD.above=corpo` (com os nomes das camadas).
 
 **O contorno não aparece.** Formas não têm contorno se você não pedir: ponha `ink=` (por exemplo `ink=line`). Se mesmo assim não aparece, veja se há `finish flat`, que tira todos os contornos.
 
@@ -53,6 +55,8 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **A mola enlouquece numa transição rápida.** Mudanças bruscas sacodem a mola demais. Deixe-a mais dura (`spring=` mais perto de 1) ou tire a mola daquele osso e anime-o com `key`.
 
+**O `draw` desenha do lado errado.** O traço vai do primeiro ponto para o último. Escreva os pontos na ordem contrária.
+
 **O morph não funciona** ("não combina"). A forma de destino precisa ser do mesmo tipo e ter o mesmo número de pontos. Conte os pontos das duas linhas.
 
 **A `key` de opacidade não faz a forma aparecer.** A `opacity` da `key` multiplica a `opacity=` escrita na forma. Se a forma tem `opacity=0` no código, ela fica invisível sempre. Tire o `opacity=0` e use `key 0 forma.opacity=0`.
@@ -72,6 +76,8 @@ O que costuma dar errado, por que acontece e como resolver.
 **Um erro aparece na linha do `include`.** O erro é dentro do arquivo incluído: a mensagem começa com o nome dele e a linha de lá.
 
 ## Filme
+
+**A transição (`in=`) mostra o plano anterior parado.** É assim mesmo: durante a transição, o plano anterior fica no último quadro dele enquanto o novo já anda. Para os dois andarem juntos, faça a passagem dentro de um plano só, com `at`.
 
 **O ator voltou para o lugar no plano seguinte.** Cada `shot` começa com tudo como foi declarado. Repita a posição no começo do plano: `at 0s heroi.pos=…`.
 

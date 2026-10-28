@@ -1,0 +1,649 @@
+{
+  "frames": {
+    "aim_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 29.496,
+          "y": 10.188
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_01": {
+      "frame": {
+        "x": 35,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 29.467,
+          "y": 9.563,
+          "rot": -2.393
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_02": {
+      "frame": {
+        "x": 68,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 29.259,
+          "y": 8.011,
+          "rot": -8.386
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_03": {
+      "frame": {
+        "x": 101,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 28.709,
+          "y": 6.044,
+          "rot": -16.227
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_04": {
+      "frame": {
+        "x": 134,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 27.852,
+          "y": 4.173,
+          "rot": -24.168
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_05": {
+      "frame": {
+        "x": 167,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 26.996,
+          "y": 2.824,
+          "rot": -30.369
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_06": {
+      "frame": {
+        "x": 200,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "tiro"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 26.609,
+          "y": 2.311,
+          "rot": -32.876
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_07": {
+      "frame": {
+        "x": 233,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 26.996,
+          "y": 2.824,
+          "rot": -30.369
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_08": {
+      "frame": {
+        "x": 266,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 27.852,
+          "y": 4.173,
+          "rot": -24.168
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_09": {
+      "frame": {
+        "x": 299,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 28.709,
+          "y": 6.044,
+          "rot": -16.227
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_10": {
+      "frame": {
+        "x": 332,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 29.259,
+          "y": 8.011,
+          "rot": -8.386
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    },
+    "aim_right_11": {
+      "frame": {
+        "x": 365,
+        "y": 2,
+        "w": 31,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 26
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 15,
+          "w": 14.4,
+          "h": 18.6
+        }
+      ],
+      "points": [
+        {
+          "name": "boca",
+          "x": 29.467,
+          "y": 9.563,
+          "rot": -2.393
+        },
+        {
+          "name": "pe",
+          "x": 11.4,
+          "y": 24.3
+        }
+      ]
+    }
+  },
+  "animations": {
+    "aim_right": [
+      "aim_right_00",
+      "aim_right_01",
+      "aim_right_02",
+      "aim_right_03",
+      "aim_right_04",
+      "aim_right_05",
+      "aim_right_06",
+      "aim_right_07",
+      "aim_right_08",
+      "aim_right_09",
+      "aim_right_10",
+      "aim_right_11"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_encaixe.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 398,
+      "h": 30
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 31,
+      "h": 26
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "aim_right",
+        "from": 0,
+        "to": 11,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [
+      {
+        "animation": "aim_right",
+        "frame": 6,
+        "name": "tiro"
+      }
+    ],
+    "sourceRect": {
+      "x": 26,
+      "y": 41,
+      "w": 103,
+      "h": 87
+    }
+  }
+}

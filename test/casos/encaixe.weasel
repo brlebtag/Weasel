@@ -1,0 +1,25 @@
+# teste: pontos de encaixe (point) que seguem o osso, no JSON da sprite sheet e no Godot (Marker2D)
+canvas 160 128 bg=none
+palette ink=#2a2433 line=4 pele=#7cc4e8 arma=#5b5f6e
+
+godot body=character root=64,122 name=Atirador
+
+bone corpo pivot=64,122
+bone braco pivot=74,74 parent=corpo
+
+layer corpo
+ellipse tronco 60,90 26,32 c=pele ink=line bone=corpo
+ellipse olho 70,76 4,6 c=ink bone=corpo
+layer braco
+rect cano 74,68 46,10 r=3 c=arma ink=line bone=braco
+ellipse mao 76,76 8 c=pele ink=line bone=braco
+
+point boca 122,73 bone=braco
+point pe 64,122
+box corpo_caixa body rect 36,60 48,62
+
+anim aim_right frames=12 fps=12
+key 0 braco=0,0,0
+key 6 braco=0,0,-35 corpo=0,0,0,1.04,0.96
+key 12 braco=0,0,0
+event 6 tiro
