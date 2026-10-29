@@ -2,7 +2,8 @@
 /* Weasel — testes de regressão: renderiza os exemplos e compara com as imagens e textos de
    referência em test/ref/. Garante que mudanças novas (filme, etc.) não mexem no que já existe
    (sprite sheets, Godot, SVG, poses, variantes). Os arquivos de test/casos/ testam uma função
-   cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos, transições).
+   cada (pontos de encaixe, peças das variantes, ordem de pintura, desenhar aos poucos, transições,
+   imagens guia).
 
      npm test                      compara tudo
      npm run test:update           regrava as referências (só depois de conferir que a mudança é desejada)
@@ -146,6 +147,21 @@ async function drawingCases(file, prefix, svg) {
   await check(group, 'pose.png', 'png', X.imageCanvas(model, null, 0, o));
   for (const v of model.variants) await check(group, `pose_${v}.png`, 'png', X.imageCanvas(load(file, v), null, 0, o));
   await check(group, 'pose.svg', 'text', X.svgText(model, null, 0, { scale: 0.5, transparent: false }));
+
+  // imagens guia (ref): ficam fora de tudo acima; com --refs, a linha de comando desenha por baixo
+  if (model.refs.length) {
+    fs.mkdirSync(OUT, { recursive: true });
+    const shots = [['com_guias.png', []]].concat(model.anims.map((a) => [`com_guias_${a.name}.png`, ['-a', a.name, '--frame', String(Math.floor(a.frames / 2))]]));
+    for (const [name, extra] of shots) {
+      const out = path.join(OUT, `${group}_${name}`);
+      const r = spawnSync(process.execPath, [CLI, file, '--refs', '-s', '0.5', '--quiet', '-o', out, ...extra], { encoding: 'utf8' });
+      if (r.status) { record(false, `${group}/${name}`, r.stderr.trim()); continue; }
+      const img = await loadImage(fs.readFileSync(out));
+      const c = createCanvas(img.width, img.height);
+      c.getContext('2d').drawImage(img, 0, 0);
+      await check(group, name, 'png', c);
+    }
+  }
 
   // cada quadro de cada animação, numa sprite sheet pequena, com o JSON e o .tres do Godot
   // (escala pelo total de pixels, para as referências não pesarem no repositório)

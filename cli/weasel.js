@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { W } = require('./runtime');
+const { W, loadImage } = require('./runtime');
 const X = W.exporter;
 const V = require('./video');
 const { makeMediaResolver } = require('./media');
@@ -42,6 +42,7 @@ Saída:
       --speed <n>         velocidade da pintura no GIF "build" (padrão 1)
       --dither            GIF com pontilhado (menos faixas em brilhos e degradês)
       --guides            inclui as camadas "guide"
+      --refs              desenha as imagens guia (ref) por baixo, para conferir o traço
 
 Godot:
   -o personagem.tscn      pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
@@ -177,6 +178,7 @@ function parseArgs(argv) {
       case '--speed': o.speed = num('--speed', val(), 0.05, 20); break;
       case '--dither': o.dither = true; break;
       case '--guides': o.guides = true; break;
+      case '--refs': o.refs = true; break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -286,6 +288,7 @@ function info(m) {
     out.push(`caixas   ${m.boxes.size}`);
     for (const b of m.boxes.values()) out.push(`  ${b.name.padEnd(14)} ${b.kind} ${b.shape}${b.bone ? ` osso ${b.bone}` : ''}${b.only ? ` só em ${b.only.join(',')}` : ''}${b.on ? '' : ' (começa desligada)'}`);
   }
+  if (m.refs.length) out.push(`imagens guia ${m.refs.map((r) => `${r.name} (${r.file}${r.lock ? ', travada' : ''}${r.hidden ? ', escondida' : ''}${r.only ? `, só em ${r.only.join(',')}` : ''})`).join(', ')}`);
   if (m.points.size) {
     out.push(`pontos   ${m.points.size}`);
     for (const p of m.points.values()) out.push(`  ${p.name.padEnd(14)} ${p.x},${p.y}${p.bone ? ` osso ${p.bone}` : ''}`);
@@ -323,7 +326,7 @@ function pickAnim(m, name, required) {
 
 // Exporta um modelo (uma variante). sfx vai no fim do nome dos arquivos.
 async function exportModel(model, o, format, base, sfx) {
-  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, format };
+  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, refs: o.refImages || null, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
 
   if (format === 'png' || format === 'jpg' || format === 'svg') {
@@ -424,8 +427,18 @@ async function run(o) {
   const source = readSource(o);
   if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
   const resolve = makeResolver(source, watched);
-  const parse = (variant) => W.lang.parse(source.src, { file: path.basename(source.name), resolve, media: resolve.media, variant: variant || null });
+  // imagens guia (ref): relativas ao arquivo; só desenhadas com --refs
+  const image = (file) => fs.existsSync(path.resolve(source.dir, file));
+  const parse = (variant) => W.lang.parse(source.src, { file: path.basename(source.name), resolve, media: resolve.media, image, imageHint: 'o caminho é relativo ao arquivo .weasel', variant: variant || null });
   const model = parse(o.variant && o.variant !== 'all' ? o.variant : null);
+  if (o.refs) {
+    const imgs = new Map();
+    for (const r of model.refs) {
+      const p = path.resolve(source.dir, r.file);
+      if (!imgs.has(r.file) && fs.existsSync(p)) { try { imgs.set(r.file, await loadImage(fs.readFileSync(p))); } catch (e) { console.error(`weasel: não consegui ler a imagem "${r.file}"`); } }
+    }
+    o.refImages = (file) => imgs.get(file) || null;
+  }
   const nErr = model.errors.filter((e) => e.level === 'error').length;
   report(model, source.src, source.name);
 

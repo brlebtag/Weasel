@@ -22,12 +22,14 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, points: true, bones: false, onion: false },
+    show: { guides: true, points: true, bones: false, onion: false, refs: true },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
     build: null,
     media: new Map(), // sons (audio): nome → { buf, duração, amostras do .wav, áudio decodificado para tocar }
+    images: new Map(), // imagens guia (ref): nome → { img, w, h }
+    refDrag: null,
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -58,7 +60,7 @@
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
     return null;
   };
-  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, variant: variant || null });
+  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Imagens" para ela ficar guardada neste navegador', variant: variant || null });
 
   // ---------- sons (audio) ----------
   // Guardados no navegador (IndexedDB, que aguenta arquivos grandes), pelo nome. O .wav é lido aqui (o lip
@@ -135,6 +137,172 @@
     }
     if (!st.media.size) list.hidden = true;
   }
+
+  // ---------- imagens guia (ref) ----------
+  // Guardadas no navegador junto com os sons (IndexedDB), pelo nome; o ref acha a imagem pelo nome do arquivo.
+  // Nunca entram nas exportações: só aparecem aqui, para desenhar por cima.
+  const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|svg)$/i;
+  const IMAGE_TYPE = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', svg: 'image/svg+xml' };
+  async function addImage(name, buf, persist) {
+    const img = new Image();
+    img.src = URL.createObjectURL(new Blob([buf], { type: IMAGE_TYPE[name.split('.').pop().toLowerCase()] || 'image/png' }));
+    try { await img.decode(); } catch (e) { URL.revokeObjectURL(img.src); hint(`O navegador não conseguiu ler a imagem "${name}".`, 3000); return null; }
+    const old = st.images.get(name);
+    if (old) URL.revokeObjectURL(old.img.src);
+    const info = { name, img, w: img.naturalWidth || 300, h: img.naturalHeight || 150 };
+    st.images.set(name, info);
+    if (persist) idb.put(name, buf);
+    return info;
+  }
+  function imageInfo(name) {
+    if (st.images.has(name)) return st.images.get(name);
+    const base = name.split(/[\\/]/).pop();
+    for (const [k, v] of st.images) if (k.split(/[\\/]/).pop() === base) return v;
+    return null;
+  }
+  const refImage = (file) => { const i = imageInfo(file); return i ? i.img : null; };
+  // onde o ref está no desenho: a matriz da imagem e o tamanho dela (null se a imagem não foi aberta)
+  function refBox(r) {
+    const i = imageInfo(r.file);
+    return i ? { m: S.refMatrix(r, i.w, i.h), w: i.w, h: i.h } : null;
+  }
+
+  // Reescreve a linha de um ref: ch.pos 'x,y'; ch.attrs { nome: valor ou null para tirar }; ch.flags { lock: true/false }.
+  // ch.caret: põe o cursor nessa linha (arrastar); senão o cursor fica onde estava (painel).
+  function editRef(r, ch, key) {
+    const off = editor.lineStart(r.line), v = editor.value;
+    let end = v.indexOf('\n', off);
+    if (end < 0) end = v.length;
+    const text = v.slice(off, end), sp = L.splitLine(text), ws = sp.words;
+    const edits = [], tail = sp.code.replace(/\s+$/, '').length;
+    const cut = (t) => { let a = t.from; while (a > 0 && /[ \t]/.test(text[a - 1])) a--; edits.push({ from: a, to: t.to, text: '' }); };
+    if (ch.pos) {
+      const pt = ws.slice(2).find((t) => !t.text.includes('=') && (t.text.includes(',') || t.text.includes('{')));
+      if (pt) edits.push({ from: pt.from, to: pt.to, text: ch.pos });
+      else if (ws[1]) edits.push({ from: ws[1].to, to: ws[1].to, text: ' ' + ch.pos });
+    }
+    for (const [k, val] of Object.entries(ch.attrs || {})) {
+      const t = ws.find((w) => w.text.startsWith(k + '='));
+      if (t && val === null) cut(t);
+      else if (t) edits.push({ from: t.from, to: t.to, text: `${k}=${val}` });
+      else if (val !== null) edits.push({ from: tail, to: tail, text: ` ${k}=${val}` });
+    }
+    for (const [k, on] of Object.entries(ch.flags || {})) {
+      const t = ws.slice(2).find((w) => w.text === k);
+      if (t && !on) cut(t);
+      else if (!t && on) edits.push({ from: tail, to: tail, text: ' ' + k });
+    }
+    let out = text;
+    edits.map((e, i) => [e, i]).sort((a, b) => b[0].from - a[0].from || b[1] - a[1]).forEach(([e]) => { out = out.slice(0, e.from) + e.text + out.slice(e.to); });
+    if (out === text) return;
+    const ta = editor.ta, d = out.length - text.length;
+    const keep = (p) => (p >= end ? p + d : p > off ? Math.min(p, off + out.length) : p);
+    const sel = ch.caret ? [off + out.length, off + out.length] : [keep(ta.selectionStart), keep(ta.selectionEnd)];
+    editor.replaceRange(off, end, out, { key: key || null, select: sel });
+  }
+
+  // uma imagem nova vira uma linha ref: cabendo no desenho, no meio, e só na animação escolhida no player
+  function insertRef(info) {
+    const m = st.model, c = m.canvas;
+    let base = info.name.split(/[\\/]/).pop().replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9_]/g, '_');
+    if (!L.IDENT.test(base)) base = 'guia';
+    let name = base, n = 2;
+    while (m.refs.some((r) => r.name === name)) name = base + n++;
+    const sc = Number(Math.min(1, c.w / info.w, c.h / info.h).toFixed(3));
+    const x = Math.round((c.w - info.w * sc) / 2), y = Math.round((c.h - info.h * sc) / 2);
+    const txt = `ref ${name} "${info.name}" ${x},${y}${sc !== 1 ? ` scale=${sc}` : ''} opacity=0.5${st.anim ? ` only=${st.anim}` : ''}`;
+    // depois do último ref; senão depois do canvas; senão no começo
+    const lines = editor.value.split('\n');
+    let at = m.refs.length ? Math.max(...m.refs.map((r) => r.line)) + 1 : lines.findIndex((l) => /^\s*canvas\b/.test(l)) + 1;
+    if (at >= lines.length) {
+      const e = editor.value.length;
+      editor.replaceRange(e, e, (editor.value.endsWith('\n') ? '' : '\n') + txt, { select: [e, e] });
+    } else {
+      const off = editor.lineStart(at);
+      editor.replaceRange(off, off, txt + '\n', { select: [off, off + txt.length] });
+    }
+    hint(`Imagem guia "${name}" adicionada${st.anim ? ` (só em ${st.anim})` : ''}: arraste para mover, o canto para mudar o tamanho.`, 4200);
+  }
+
+  let refSig = '';
+  function fillRefPanel() {
+    const m = st.model, film = isFilm(), b = $('refBtn'), p = $('refPanel');
+    b.hidden = film;
+    b.textContent = m && m.refs.length ? `Imagens ${m.refs.length}` : 'Imagens';
+    b.classList.toggle('on', !p.hidden);
+    if (film) p.hidden = true;
+    if (p.hidden || !m) return;
+    const refs = m.refs;
+    const sig = refs.map((r) => `${r.name}|${r.file}|${r.line}|${!!imageInfo(r.file)}`).join('/') + '#' + [...st.images.keys()].join('/');
+    if (sig === refSig) {
+      // só os valores: refazer tudo cortaria o arraste da opacidade
+      p.querySelectorAll('.rp-row').forEach((row, i) => {
+        const r = refs[i];
+        row.querySelector('.vis').checked = !r.hidden;
+        const lk = row.querySelector('.lk');
+        lk.classList.toggle('on', r.lock);
+        lk.textContent = r.lock ? '🔒' : '🔓';
+        const op = row.querySelector('.op');
+        if (document.activeElement !== op) op.value = r.opacity;
+        row.querySelector('.ov').textContent = Math.round(r.opacity * 100) + '%';
+      });
+      p.querySelector('#rpShow').checked = st.show.refs;
+      return;
+    }
+    refSig = sig;
+    p.innerHTML = `<div class="rp-head"><b>Imagens guia</b><label class="tog" title="Mostrar ou esconder todas"><input type="checkbox" id="rpShow"> mostrar</label><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div>
+      <div class="rp-rows"></div>
+      <div class="rp-foot"><button type="button" id="rpAdd">Adicionar imagem…</button><small>Só no editor: nunca sai na exportação.</small></div>
+      <div class="rp-store"></div>`;
+    p.querySelector('#rpShow').checked = st.show.refs;
+    p.querySelector('#rpShow').addEventListener('change', (e) => { st.show.refs = e.target.checked; draw(); });
+    p.querySelector('.x').addEventListener('click', () => { p.hidden = true; fillRefPanel(); });
+    p.querySelector('#rpAdd').addEventListener('click', () => { refTarget = null; $('refIn').click(); });
+    const rows = p.querySelector('.rp-rows');
+    if (!refs.length) rows.innerHTML = '<div class="rp-empty">Nenhuma ainda. Adicione uma imagem para desenhar por cima dela; para cada movimento, uma imagem com <code>only=</code> a animação.</div>';
+    refs.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'rp-row';
+      const ok = !!imageInfo(r.file);
+      row.innerHTML = `<input type="checkbox" class="vis" title="Visível"><button type="button" class="rn" title="Ir para a linha ${r.line + 1}"></button>` +
+        (ok ? `<input type="range" class="op" min="0" max="1" step="0.05" title="Opacidade"><span class="ov"></span>` : `<button type="button" class="load" title="Abrir a imagem neste navegador">abrir ${r.file.split(/[\\/]/).pop()}…</button><span class="ov" hidden></span><input type="range" class="op" hidden>`) +
+        `<button type="button" class="lk" title="Travada: não arrasta com o mouse"></button>`;
+      row.querySelector('.rn').textContent = r.name + (r.only ? ` · ${r.only.join(',')}` : '');
+      row.querySelector('.rn').addEventListener('click', () => editor.goto(r.line, 0));
+      row.querySelector('.vis').addEventListener('change', (e) => editRef(r, { flags: { hidden: !e.target.checked } }));
+      row.querySelector('.lk').addEventListener('click', () => editRef(r, { flags: { lock: !r.lock } }));
+      const op = row.querySelector('.op');
+      let key = '';
+      op.addEventListener('pointerdown', () => { key = 'refop' + Date.now(); });
+      op.addEventListener('input', () => {
+        row.querySelector('.ov').textContent = Math.round(op.value * 100) + '%';
+        editRef(st.model.refs.find((x) => x.name === r.name) || r, { attrs: { opacity: fmtN(+op.value, 2) } }, key || 'refop');
+      });
+      const ld = row.querySelector('.load');
+      if (ld) ld.addEventListener('click', () => { refTarget = r.file; $('refIn').click(); });
+      rows.appendChild(row);
+    });
+    if (st.images.size) {
+      const box = p.querySelector('.rp-store');
+      box.innerHTML = '<small>Guardadas neste navegador:</small>';
+      for (const name of st.images.keys()) {
+        const chip = document.createElement('span');
+        chip.className = 'rp-chip';
+        chip.innerHTML = '<span></span><button type="button" class="x" title="Tirar esta imagem do navegador">✕</button>';
+        chip.firstChild.textContent = name;
+        chip.querySelector('button').addEventListener('click', async () => {
+          URL.revokeObjectURL(st.images.get(name).img.src);
+          st.images.delete(name);
+          await idb.del(name);
+          reparse();
+        });
+        box.appendChild(chip);
+      }
+    }
+    fillRefPanel(); // a mesma assinatura: só preenche os valores
+  }
+  // "abrir…" de um ref sem imagem: guarda com o nome escrito no ref; "Adicionar imagem…": guarda e cria a linha
+  let refTarget = null;
 
   // ---------- linha do tempo do filme ----------
   // a linha do arquivo onde está um shot, audio ou sub (para o cursor e para reescrever o tempo)
@@ -237,6 +405,7 @@
     if (st.build) stopBuild();
     fillAnimSelect();
     fillVariantSelect();
+    fillRefPanel();
     updateErrors();
     updateCaretInfo();
     draw();
@@ -721,11 +890,14 @@
 
     let bf = null;
     if (st.build) bf = S.buildFilter(st.build.plan, (performance.now() - st.build.t0) / 1000);
+    const refs = st.show.refs && m.refs.length && !st.build ? refImage : null;
 
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, c.w, c.h);
     ctx.clip();
+    const post = m.finish.pixel > 1 || S.hasPost(m);
+    if (refs && !post) S.drawRefs(ctx, m, pose, refs, false);
     const anim = pose.anim;
     if (st.show.onion && anim && anim.frames > 1 && !st.build) {
       const s = Math.min(2, z * dpr);
@@ -736,19 +908,21 @@
       }
       ctx.globalAlpha = 1;
     }
-    if (m.finish.pixel > 1 || S.hasPost(m)) {
+    if (post) {
       // acabamentos de imagem (pixel, bloom, vinheta, granulado) precisam da imagem pronta
       const cap = m.finish.posterize ? 2 : 4;
-      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter });
+      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter, refs });
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, c.w, c.h);
       ctx.imageSmoothingEnabled = true;
     } else {
       S.drawScene(ctx, m, pose, { background: false, guides: st.show.guides, filter: bf && bf.filter });
+      if (refs) S.drawRefs(ctx, m, pose, refs, true);
     }
     ctx.restore();
 
     T();
+    if (refs) drawRefFrames(ctx, m, pose, z);
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
     if (st.show.guides && m.tileset) drawTileset(ctx, m, z);
     if (st.show.guides && m.boxes.size) drawBoxes(ctx, m, pose, z);
@@ -815,6 +989,31 @@
       ctx.restore();
     }
     if (st.show.points) drawHandles(ctx, m, currentPose(), z);
+  }
+
+  // imagens guia soltas: moldura tracejada, o nome e o canto que muda o tamanho
+  function drawRefFrames(ctx, m, pose, z) {
+    ctx.save();
+    ctx.font = `${11 / z}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;
+    for (const r of m.refs) {
+      if (r.lock || !S.refOn(r, pose)) continue;
+      const b = refBox(r);
+      if (!b) continue;
+      const q = [[0, 0], [b.w, 0], [b.w, b.h], [0, b.h]].map((p) => M.apply(b.m, p[0], p[1]));
+      ctx.lineWidth = 1.5 / z;
+      ctx.setLineDash([6 / z, 4 / z]);
+      ctx.strokeStyle = 'rgba(92,198,212,.85)';
+      ctx.beginPath();
+      q.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const s = 7 / z;
+      ctx.fillStyle = '#5cc6d4';
+      ctx.fillRect(q[2][0] - s / 2, q[2][1] - s / 2, s, s);
+      ctx.fillText(r.name, q[0][0] + 4 / z, q[0][1] - 5 / z);
+    }
+    ctx.restore();
   }
 
   // caixas do jogo: corpo em verde, golpe em vermelho, dano em amarelo; desligadas, tracejadas
@@ -1198,6 +1397,35 @@
     return best;
   }
   const fmtN = (v, dec) => String(Number(v.toFixed(dec)));
+  // imagem guia solta sob o mouse (as da frente primeiro): mover, ou o canto de baixo à direita para o tamanho
+  function hitRef(e) {
+    const m = st.model;
+    if (!st.show.refs || st.build || isFilm() || !m.refs.length) return null;
+    const pose = currentPose(), [x, y] = toCanvas(e);
+    const list = [...m.refs.filter((r) => !r.front), ...m.refs.filter((r) => r.front)].reverse();
+    for (const r of list) {
+      if (r.lock || !S.refOn(r, pose)) continue;
+      const b = refBox(r);
+      if (!b) continue;
+      const br = M.apply(b.m, b.w, b.h);
+      if (Math.hypot(br[0] - x, br[1] - y) < 9 / st.view.z) return { r, b, mode: 'scale' };
+      const [u, v] = M.apply(M.invert(b.m), x, y);
+      if (u >= 0 && v >= 0 && u <= b.w && v <= b.h) return { r, b, mode: 'move' };
+    }
+    return null;
+  }
+  function moveRef(d, x, y) {
+    const r = st.model.refs.find((q) => q.name === d.name);
+    if (!r) { st.refDrag = null; return; }
+    const dec = st.view.z > 3 ? 1 : 0;
+    if (d.mode === 'move') { editRef(r, { pos: `${fmtN(d.x + x - d.px, dec)},${fmtN(d.y + y - d.py, dec)}`, caret: true }, d.key); return; }
+    // tamanho: pela diagonal, com o canto de cima à esquerda parado (mesmo girada)
+    const [dx, dy] = [d.br[0] - d.tl[0], d.br[1] - d.tl[1]];
+    const t = ((x - d.tl[0]) * dx + (y - d.tl[1]) * dy) / (dx * dx + dy * dy);
+    const s = Number(Math.max(0.01, d.scale * t).toFixed(3));
+    const hw = (d.w * s) / 2, hh = (d.h * s) / 2, c = M.apply(M.rotate(r.rot), -hw, -hh);
+    editRef(r, { pos: `${fmtN(d.tl[0] - hw - c[0], dec)},${fmtN(d.tl[1] - hh - c[1], dec)}`, attrs: { scale: s === 1 ? null : String(s) }, caret: true }, d.key);
+  }
 
   function hint(msg, ms) {
     const h = $('hint');
@@ -1221,6 +1449,14 @@
     const hb = e.button === 0 ? hitBone(e) : null;
     if (hb) { startPose(hb, e); return; }
     const hi = e.button === 0 ? hitHandle(e) : -1;
+    const hr = e.button === 0 && hi < 0 ? hitRef(e) : null;
+    if (hr) {
+      const rec = st.model.byLine.get(hr.r.line);
+      if (rec && (rec.repeated || (rec.refPos && rec.refPos.text.includes('{')))) { hint('A posição desta imagem guia vem de uma {expressão}: mude no código.', 2800); return; }
+      const [px, py] = toCanvas(e);
+      st.refDrag = { name: hr.r.name, mode: hr.mode, key: 'ref' + Date.now(), px, py, x: hr.r.x, y: hr.r.y, scale: hr.r.scale, w: hr.b.w, h: hr.b.h, tl: M.apply(hr.b.m, 0, 0), br: M.apply(hr.b.m, hr.b.w, hr.b.h) };
+      return;
+    }
     if (hi >= 0) {
       const rec = st.model.byLine.get(st.caret.line);
       if (rec.handles[hi].fixed) { hint('Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
@@ -1240,6 +1476,7 @@
     $('coords').textContent = `x ${Math.round(wp[0])}  y ${Math.round(wp[1])}`;
     if (st.pose) { movePose(e); return; }
     if (st.drag) { moveHandle(st.drag, x, y); return; }
+    if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
     if (st.pan) {
       st.view.auto = false;
       st.view.x = st.pan.vx + (e.clientX - st.pan.x);
@@ -1248,10 +1485,11 @@
       return;
     }
     const hb = hitBone(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hitHandle(e) >= 0 ? 'move' : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    const hr = hb || hitHandle(e) >= 0 ? null : hitRef(e);
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hitHandle(e) >= 0 ? 'move' : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
-  const endPointer = () => { st.drag = null; st.pose = null; st.pan = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.drag = null; st.refDrag = null; st.pose = null; st.pan = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', endPointer);
   view.addEventListener('pointercancel', endPointer);
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
@@ -1331,6 +1569,17 @@
   $('tTimeline').addEventListener('change', (e) => { st.timeline = e.target.checked; $('timeline').hidden = !(isFilm() && st.timeline); draw(); });
   $('bSubs').addEventListener('click', () => { st.subs = !st.subs; $('bSubs').classList.toggle('on', st.subs); draw(); });
   $('mediaBtn').addEventListener('click', () => { const l = $('mediaList'); l.hidden = !l.hidden; });
+  $('refBtn').addEventListener('click', () => { const p = $('refPanel'); p.hidden = !p.hidden; refSig = ''; fillRefPanel(); });
+  $('refIn').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const target = refTarget;
+    refTarget = null;
+    const info = await addImage(target || f.name, await f.arrayBuffer(), true);
+    if (!info) return;
+    if (target) { reparse(); hint(`Imagem guardada neste navegador como "${target}".`, 3000); } else insertRef(info);
+  });
   $('btnBuild').addEventListener('click', startBuild);
 
   $('errBtn').addEventListener('click', () => {
@@ -1411,12 +1660,15 @@
     const list = [...e.target.files];
     e.target.value = '';
     if (!list.length) return;
-    const sounds = list.filter((f) => AUDIO_EXT.test(f.name)), texts = list.filter((f) => !AUDIO_EXT.test(f.name));
+    const sounds = list.filter((f) => AUDIO_EXT.test(f.name)), images = list.filter((f) => IMAGE_EXT.test(f.name));
+    const texts = list.filter((f) => !AUDIO_EXT.test(f.name) && !IMAGE_EXT.test(f.name));
     for (const f of sounds) await addMedia(f.name, await f.arrayBuffer(), true);
+    for (const f of images) await addImage(f.name, await f.arrayBuffer(), true);
     for (const f of texts) st.files.set(f.name, await f.text());
     fillMediaList();
     if (texts.length) openFile(texts[0].name); else reparse();
-    if (sounds.length) hint(`${sounds.length} som${sounds.length > 1 ? 's' : ''} aberto${sounds.length > 1 ? 's' : ''}: ficam guardados neste navegador (♪ na barra de arquivos).`, 3600);
+    if (images.length && !texts.length) hint(`${images.length > 1 ? `${images.length} imagens guardadas` : 'Imagem guardada'} neste navegador: use no painel "Imagens" ou com ref nome "${images[0].name}" x,y.`, 4200);
+    else if (sounds.length) hint(`${sounds.length} som${sounds.length > 1 ? 's' : ''} aberto${sounds.length > 1 ? 's' : ''}: ficam guardados neste navegador (♪ na barra de arquivos).`, 3600);
     else if (texts.length > 1) hint(`${texts.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
   });
   $('btnSave').addEventListener('click', saveFile);
@@ -1484,7 +1736,7 @@
   }
 
   idb.all().then(async (list) => {
-    for (const [k, v] of list) await addMedia(k, v, false);
+    for (const [k, v] of list) { if (IMAGE_EXT.test(k)) await addImage(k, v, false); else await addMedia(k, v, false); }
     if (list.length) { fillMediaList(); reparse(); }
   });
 

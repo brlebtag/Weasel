@@ -81,6 +81,14 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **Um erro aparece na linha do `include`.** O erro é dentro do arquivo incluído: a mensagem começa com o nome dele e a linha de lá.
 
+**A imagem guia (`ref`) não aparece.**
+- No **editor web**, a imagem precisa estar guardada no navegador: abra o painel **Imagens** e use **abrir …** ao lado dela (ou **Adicionar imagem…**). O aviso "não achei a imagem" diz qual falta.
+- Confira o `only=` e o `frames=`: com uma animação escolhida no player, só aparecem as imagens guia dela, e a pose parada é `pose`. Confira também o `hidden` e a caixa **mostrar** do painel.
+- Na **linha de comando**, ela só aparece com `--refs`, e o caminho é relativo ao arquivo `.weasel`.
+- Uma imagem guia escrita num arquivo incluído não aparece: o `ref` só vale no arquivo onde está.
+
+**A imagem guia não arrasta.** Ela está com `lock` (o cadeado no painel), ou a posição vem de uma `{conta}`.
+
 ## Filme
 
 **"o marcador fica fora do shot".** O `at` que usa um marcador precisa estar no `shot` em que o marcador cai. Mude o `at` de plano ou o tempo do `mark`.

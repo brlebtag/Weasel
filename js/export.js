@@ -44,7 +44,7 @@
   // As funções *Canvas / *Bytes / *Text não dependem do navegador: a linha de comando usa as mesmas.
   function imageCanvas(model, animName, frame, o) {
     const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
-    return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides });
+    return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides, refs: o.refs });
   }
 
   function svgText(model, animName, frame, o) {
@@ -90,7 +90,7 @@
       const anim = model.animMap.get(source);
       fps = anim ? anim.fps : 12;
       for (const f of frameIdx(model, source)) {
-        const cv = S.renderImage(model, S.makePose(model, source, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
+        const cv = S.renderImage(model, S.makePose(model, source, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, refs: o.refs });
         frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
         if (!preview) preview = cv;
       }

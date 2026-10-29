@@ -88,7 +88,7 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | Só verificar o código | `node cli/weasel.js meu.weasel --check` |
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 
-No `.tscn`, `--no-normal` tira o normal map, `--no-mirror` não gera o lado espelhado e `--rig` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (`--no-rig` volta para os quadros); no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
+No `.tscn`, `--no-normal` tira o normal map, `--no-mirror` não gera o lado espelhado e `--rig` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (`--no-rig` volta para os quadros); no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--refs` (desenha as imagens guia por baixo), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
 
 ### Filmes na linha de comando
 
@@ -152,6 +152,7 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Editor** (esquerda) | Código com cores, números de linha, erros na margem e sugestões enquanto você digita. A barra de baixo mostra os erros (clique para ver a lista) e o que está sob o cursor. |
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
 | **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide`, as luzes (ícone e alcance), as caixas do jogo e a grade do tileset, os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. Com **Ossos** ligado, uma animação escolhida e o player parado, arrastar a bolinha de um osso o move e arrastar a alça verde o gira: o Weasel escreve a `key` daquele quadro. |
+| **Imagens** | O painel das imagens guia (`ref`): **Adicionar imagem…** escreve a linha `ref` e guarda a imagem no navegador; em cada uma, liga/desliga, opacidade e cadeado (`lock`). Uma imagem solta arrasta no desenho (por dentro move, pelo canto muda o tamanho). Não saem na exportação. |
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
 | **♪ e CC** (filmes) | Tocam o som dos `audio` junto com o player e mostram as legendas na tela. O botão **♪ N** na barra de arquivos lista os sons guardados no navegador. |
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
@@ -213,6 +214,7 @@ ellipse reflexo 218,156 22,14 rot=-30 c=#ffc2ad
 | `gradient nome radial cx,cy r [fx,fy] [box] : cores` | Gradiente circular, com foco opcional. Use o nome em `c=`, `inkc=` ou `bg=`. Os gradientes seguem os ossos da forma. |
 | `variant nome chave=valor ... show= hide=` | Outra versão das cores: troca valores da `palette` (inimigos recoloridos, dia/noite...). `hide=elmo,espada` esconde formas ou camadas nessa versão e `show=chapeu` mostra as que têm `hidden`: peças trocáveis (outra arma, um chapéu, sem o elmo). |
 | `include "arquivo.weasel"` | Usa outro arquivo: palette, componentes, ossos. No terminal, o caminho é relativo ao arquivo que inclui. |
+| `ref nome "imagem.png" x,y scale= rot= opacity= only= frames=a..b [lock] [hidden] [front]` | **Imagem guia**: um rascunho ou foto por baixo, para desenhar por cima. Nunca sai na exportação (só no editor e com `--refs`). `lock` não deixa arrastar, `hidden` esconde, `front` põe por cima das formas, `only=`/`frames=` mostram só em certas animações e quadros. No editor, a imagem fica guardada no navegador; no terminal, o caminho é relativo ao arquivo. |
 | `unity unit= root=x,y collider=l,a,dx,dy` | Pixels por unidade, ponto raiz e colisor para a Unity (vão no JSON da sprite sheet). |
 
 ### Camadas e formas
@@ -615,7 +617,8 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 
 - O vídeo mostra a linguagem por poucos segundos e corta as linhas compridas. A sintaxe (`layer`, `shape`, `stroke`, `ellipse`, `line`, `bone`, `cloth`, `palette`, `clip=`, `inkon=`, `limb=`, `x,y!`...) segue o vídeo, mas o significado de alguns atributos foi deduzido (`weight`, `inner`, `limb`, `foot`), e o resto da linguagem foi criado aqui.
 - A linha de comando precisa do `npm install` (a biblioteca `@napi-rs/canvas` desenha fora do navegador); o editor web não precisa de nada.
-- No navegador, `include` só encontra arquivos que estão na lista de arquivos do editor (abra-os com **Abrir…**).
+- No navegador, `include` só encontra arquivos que estão na lista de arquivos do editor (abra-os com **Abrir…**). As imagens guia e os sons ficam guardados no navegador, separados do código: em outro navegador ou computador, abra-os de novo.
+- Num filme, a imagem guia (`ref`) ainda não aparece; use no desenho ou no personagem.
 - O `.tres` do Godot aponta para a folha pelo nome do arquivo, então os dois precisam ficar na mesma pasta.
 - A luz é 2D: não há volume de verdade nem sombra de uma forma sobre outra; o "lado claro/escuro" vem de um degradê orientado para a luz em cada forma. A sombra projetada é a silhueta achatada no chão.
 - No SVG, a luz vira uma cor por forma (mais o degradê do lado iluminado) em vez do mapa de luz contínuo; efeitos viram filtros do SVG (programas como o Inkscape podem mostrar alguns de forma diferente). O SVG ignora `pixel=` e `posterize=`.

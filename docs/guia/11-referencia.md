@@ -31,6 +31,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 | `pattern nome [hatch\|dots] [cross]` | `c=` (cor de tinta) · `bg=` (nenhum) · `gap=` (6) · `w=` (1.2) · `r=` (1.4) · `angle=` (45) |
 | `variant nome chave=valor …` | troca valores da `palette` nessa versão · `hide=nomes` esconde formas ou camadas · `show=nomes` mostra as que têm `hidden` |
 | `include "arquivo.weasel"` | o outro arquivo entra nesta linha |
+| `ref nome "imagem.png" x,y` | imagem guia, só no editor (nunca sai na exportação) · `scale=` (1) · `rot=` graus, em volta do centro (0) · `opacity=` 0–1 (0.5) · `only=` animações · `frames=a..b` · `lock` · `hidden` · `front` |
 | `repeat i a..b` … `end` | repete as linhas, com `i` de `a` até `b` nas contas (até 1000 vezes) |
 | `unity` | `unit=` pixels por unidade (100) · `root=x,y` (meio da base do canvas) · `collider=l,a[,dx,dy]` |
 
@@ -152,6 +153,7 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 | `-s n` · `-t` · `--trim` | escala · fundo transparente · recortar ao desenho |
 | `--rig` · `--no-rig` | `.tscn` com esqueleto de verdade · por quadros, mesmo com `rig=bones` |
 | `--guides` | inclui as camadas `guide` |
+| `--refs` | desenha as imagens guia (`ref`) por baixo, para conferir o traço |
 | `--check` · `--info` | só procurar erros · mostrar camadas, ossos, animações e eventos |
 | `--watch` | exportar de novo a cada mudança |
 | `-e "código"` · `-` | código direto (`;` separa linhas) · ler da entrada padrão |

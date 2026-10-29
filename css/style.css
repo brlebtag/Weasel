@@ -137,6 +137,25 @@ main {
 .media-row { display: flex; gap: 8px; align-items: center; font: 12px var(--mono); padding: 3px 4px; }
 .media-row .mn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .media-row .md { color: var(--dim); }
+.refbtn { padding: 3px 9px; }
+.refbtn.on { border-color: var(--accent); color: var(--accent); }
+.ref-panel { position: absolute; z-index: 15; top: 8px; right: 8px; width: 360px; max-width: calc(100% - 16px); max-height: calc(100% - 16px); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.45); font-size: 12px; }
+.rp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.rp-head .x, .rp-chip .x { padding: 0 6px; border: none; background: none; color: var(--dim); }
+.rp-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-top: 1px solid var(--line); }
+.rp-row .rn { flex: 1; min-width: 0; text-align: left; border: none; background: none; padding: 2px 0; font: 12px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-row .rn:hover { color: var(--kw); background: none; }
+.rp-row .op { width: 90px; }
+.rp-row .ov { width: 34px; text-align: right; color: var(--dim); font: 11px var(--mono); }
+.rp-row .load { color: var(--warn); padding: 2px 6px; font-size: 11px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-row .lk { padding: 1px 5px; opacity: .55; }
+.rp-row .lk.on { opacity: 1; }
+.rp-empty { color: var(--dim); padding: 4px 0 6px; line-height: 1.45; }
+.rp-foot { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.rp-foot small, .rp-store small { color: var(--dim); }
+.rp-store { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 6px; }
+.rp-store:empty { display: none; }
+.rp-chip { display: inline-flex; align-items: center; font: 11px var(--mono); background: var(--panel2); border-radius: 4px; padding: 1px 0 1px 6px; }
 .expr { color: #c6a6ff; }
 .str { color: #a6e3a1; }
 .tan { color: #5cc6d4; }

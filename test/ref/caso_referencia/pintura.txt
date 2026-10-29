@@ -1,0 +1,5 @@
+ellipse cabeca @0.000 +0.645
+ellipse olhoE @0.645 +0.255
+ellipse olhoD @0.900 +0.255
+rect tronco @1.155 +0.519
+total 1.674

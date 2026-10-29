@@ -381,6 +381,22 @@ layer frente only=pose,idle_down,walk_down
 - `pose` é a **pose parada** (sem animação): inclua `pose` para a camada aparecer no desenho parado também.
 - As caixas de jogo (`box`) aceitam o mesmo `only=`.
 
+## Uma imagem guia para cada movimento
+
+A imagem guia ([capítulo 2](02-formas.md#desenhar-por-cima-de-uma-imagem-ref)) aceita o mesmo `only=`, e também `frames=`, para cada animação ter o seu rascunho por baixo:
+
+```
+ref parado "rascunhos/parado.png" 0,0 only=pose,idle
+ref passo1 "rascunhos/andar1.png" 0,0 only=walk frames=0..5
+ref passo2 "rascunhos/andar2.png" 0,0 only=walk frames=6..11
+ref pulo "rascunhos/pulo.png" 0,0 only=jump opacity=0.3
+```
+
+- Com uma animação escolhida no player, só aparecem as imagens guia dela; `pose` é a pose parada. Sem `only=`, a imagem aparece em todas.
+- `frames=a..b` limita aos quadros de `a` até `b` (os mesmos números das `key`): um desenho para cada parte do passo.
+- No editor, **Adicionar imagem…** com uma animação escolhida já escreve o `only=` dela.
+- O `ref` só vale no arquivo onde está escrito: as imagens guia de um personagem não aparecem num arquivo que faz `include` dele.
+
 ## Vendo e exportando
 
 - **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (setas `←` `→` com o foco fora do código). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. O botão **Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador.

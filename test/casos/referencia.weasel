@@ -1,0 +1,21 @@
+# teste: imagens guia (ref). Não saem nas exportações; com --refs, a "base" aparece por baixo
+# na pose, "passo" só nos quadros 2..4 de "anda", e "escondida" nunca.
+canvas 200 160 bg=#f4efe6
+palette ink=#2a2433 line=4 pele=#e8a87c
+
+ref base "../../docs/logo.png" 20,10 scale=0.28 opacity=0.4 lock only=pose
+ref passo "../../docs/logo.png" 60,20 scale=0.2 rot=15 opacity=0.6 only=anda frames=2..4
+ref escondida "../../docs/logo.png" 0,0 hidden front
+
+bone corpo pivot=100,140
+
+layer corpo
+ellipse cabeca 100,70 34,30 c=pele ink=line bone=corpo
+ellipse olhoE 88,66 4,6 c=ink bone=corpo
+ellipse olhoD 112,66 4,6 c=ink bone=corpo
+rect tronco 84,96 32,40 r=8 c=pele ink=line bone=corpo
+
+anim anda frames=6 fps=8
+key 0 corpo=0,0,0
+key 3 corpo=6,-4,4
+key 6 corpo=0,0,0

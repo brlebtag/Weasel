@@ -323,6 +323,30 @@
     return { point: p, x: c[0], y: c[1], rot: m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0 };
   }
 
+  // ---------- imagens guia (ref) ----------
+  // Só no editor (e na linha de comando com --refs): nunca saem nas exportações. A posição é o canto de cima à
+  // esquerda da imagem (já na escala); a rotação gira em volta do centro.
+  const refOn = (r, pose) => !r.hidden && (!r.only || (pose.anim ? animIn(r.only, pose.anim) : r.only.includes('pose'))) && (!r.frames || !pose.anim || (pose.frame >= r.frames[0] && pose.frame <= r.frames[1]));
+  // da imagem (w × h pixels) para o desenho
+  function refMatrix(r, w, h) {
+    const hw = (w * r.scale) / 2, hh = (h * r.scale) / 2;
+    return M.mul(M.translate(r.x + hw, r.y + hh), M.mul(M.rotate(r.rot), M.mul(M.translate(-hw, -hh), M.scale(r.scale, r.scale))));
+  }
+  // images(arquivo) → a imagem carregada (ou null); front: as de trás (false) ou as da frente (true)
+  function drawRefs(ctx, model, pose, images, front) {
+    for (const r of model.refs) {
+      if (!!r.front !== !!front || !refOn(r, pose)) continue;
+      const img = images(r.file);
+      if (!img) continue;
+      const m = refMatrix(r, img.naturalWidth || img.width, img.naturalHeight || img.height);
+      ctx.save();
+      ctx.globalAlpha = r.opacity;
+      ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+    }
+  }
+
   // ---------- geometria de cada elemento numa pose ----------
   // bones=: o peso de cada osso num ponto, pela distância até o "pedaço" do osso (do pivô dele até o pivô do
   // seguinte na lista; o último continua na mesma direção). Perto de uma junta, os dois ossos dividem o ponto.
@@ -1590,13 +1614,17 @@
     const px = model.finish.pixel || 1;
     const draw = (ctx, s) => {
       ctx.setTransform(s, 0, 0, s, -rect.x * s, -rect.y * s);
-      if (opts.transparent) drawScene(ctx, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
-      else {
+      if (opts.transparent) {
+        if (opts.refs) drawRefs(ctx, model, pose, opts.refs, false);
+        drawScene(ctx, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
+      } else {
         ctx.fillStyle = '#ffffff';
         if (!model.canvas.bg && !opts.matte) ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         fillBg(ctx, model, pose, rect, opts.matte);
+        if (opts.refs) drawRefs(ctx, model, pose, opts.refs, false);
         drawScene(ctx, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
       }
+      if (opts.refs) drawRefs(ctx, model, pose, opts.refs, true);
       if (opts.after) opts.after(ctx, s);
     };
     if (px > 1) {
@@ -1711,7 +1739,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, matsFrom, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

@@ -1,0 +1,8 @@
+canvas   200 × 160, fundo #f4efe6
+camadas  1
+  corpo            4 item(ns)
+formas   4
+ossos    corpo
+animações 1
+  anda           6 quadros, 8 fps
+imagens guia base (../../docs/logo.png, travada, só em pose), passo (../../docs/logo.png, só em anda), escondida (../../docs/logo.png, escondida)

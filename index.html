@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.9.1">
+<link rel="stylesheet" href="css/style.css?v=1.10.0">
 </head>
 <body>
 <header class="top">
@@ -16,7 +16,8 @@
     <button id="btnNew" title="Começar um desenho novo">Novo</button>
     <button id="btnOpen" title="Abrir arquivos .weasel (dá para escolher vários)">Abrir…</button>
     <button id="btnSave" title="Baixar o arquivo atual (Ctrl+S)">Salvar</button>
-    <input type="file" id="fileIn" accept=".weasel,.txt,.json,.tsv,.wav,.mp3,.ogg,.opus,.m4a,.flac,audio/*" multiple hidden>
+    <input type="file" id="fileIn" accept=".weasel,.txt,.json,.tsv,.wav,.mp3,.ogg,.opus,.m4a,.flac,audio/*,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" multiple hidden>
+    <input type="file" id="refIn" accept="image/*,.svg" hidden>
   </div>
   <div class="tb right">
     <button id="btnHelp" title="Referência da linguagem (F1)">Referência</button>
@@ -49,6 +50,7 @@
       <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <button id="refBtn" class="refbtn" type="button" title="Imagens guia: uma referência por baixo para desenhar por cima (não sai na exportação)">Imagens</button>
       <label class="tog" id="tTimelineWrap" title="Planos, sons e legendas no tempo; arraste para mudar os tempos no código" hidden><input type="checkbox" id="tTimeline" checked> Linha do tempo</label>
       <label class="tog" id="tCameraWrap" title="Ligado: o que a câmera filma. Desligado: o mundo inteiro como foi desenhado, com a moldura da câmera" hidden><input type="checkbox" id="tCamera" checked> Câmera</label>
       <select id="variantSel" title="Variante de cores" hidden></select>
@@ -63,6 +65,7 @@
     <div id="stage" class="stage">
       <canvas id="view"></canvas>
       <div id="hint" class="hint" hidden></div>
+      <div id="refPanel" class="ref-panel" hidden></div>
     </div>
     <div id="timeline" class="timeline" hidden><canvas id="tlCanvas"></canvas></div>
     <div class="player">
@@ -108,6 +111,7 @@
       <tr><td><code>pattern nome hatch|dots [cross] c= bg= gap= w= r= angle=</code></td><td>Preenchimento de hachura (linhas; <code>cross</code> cruza) ou pontos. Use o nome em <code>c=</code> de formas fechadas; o padrão acompanha a forma quando ela se mexe.</td></tr>
       <tr><td><code>variant nome chave=valor … show= hide=</code></td><td>Outra versão das cores: troca valores da <code>palette</code>. <code>hide=elmo,espada</code> esconde formas ou camadas nessa versão e <code>show=chapeu</code> mostra as que têm <code>hidden</code> (peças trocáveis). Escolha no seletor da vista e exporte uma ou todas.</td></tr>
       <tr><td><code>include "arquivo.weasel"</code></td><td>Usa outro arquivo (palette, componentes, ossos…). No navegador, o arquivo precisa estar na lista de arquivos.</td></tr>
+      <tr><td><code>ref nome "imagem.png" x,y scale= rot= opacity= only= frames=a..b [lock] [hidden] [front]</code></td><td>Imagem guia por baixo, para desenhar por cima. Nunca sai na exportação. <code>lock</code> não deixa arrastar, <code>hidden</code> esconde, <code>front</code> põe por cima, <code>only=</code>/<code>frames=</code> mostram só em certas animações e quadros. Use o painel <b>Imagens</b> para adicionar e ajustar.</td></tr>
       <tr><td><code>unity unit= root=x,y collider=l,a,dx,dy</code></td><td>Pixels por unidade, ponto raiz e colisor da Unity. Aparece como guia e vai no JSON da sprite sheet.</td></tr>
     </table>
 
@@ -218,6 +222,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
       <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code>. Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
       <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
+      <li><b>Imagens</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
       <li><kbd>Alt</kbd>+arrastar sobre um número muda o valor (com <kbd>Shift</kbd>, 10× mais rápido). <kbd>Alt</kbd>+clique numa cor <code>#hex</code> abre o seletor de cor.</li>
       <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
       <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha, <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
@@ -299,23 +304,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.9.1"></script>
-<script src="js/lang.js?v=1.9.1"></script>
-<script src="js/scene.js?v=1.9.1"></script>
-<script src="js/film.js?v=1.9.1"></script>
-<script src="js/audio.js?v=1.9.1"></script>
-<script src="js/nle.js?v=1.9.1"></script>
-<script src="js/webm.js?v=1.9.1"></script>
-<script src="js/svg.js?v=1.9.1"></script>
-<script src="js/gif.js?v=1.9.1"></script>
-<script src="js/zip.js?v=1.9.1"></script>
-<script src="js/normal.js?v=1.9.1"></script>
-<script src="js/export.js?v=1.9.1"></script>
-<script src="js/godot.js?v=1.9.1"></script>
-<script src="js/rig.js?v=1.9.1"></script>
-<script src="js/editor.js?v=1.9.1"></script>
-<script src="js/examples.js?v=1.9.1"></script>
-<script src="js/timeline.js?v=1.9.1"></script>
-<script src="js/app.js?v=1.9.1"></script>
+<script src="js/geom.js?v=1.10.0"></script>
+<script src="js/lang.js?v=1.10.0"></script>
+<script src="js/scene.js?v=1.10.0"></script>
+<script src="js/film.js?v=1.10.0"></script>
+<script src="js/audio.js?v=1.10.0"></script>
+<script src="js/nle.js?v=1.10.0"></script>
+<script src="js/webm.js?v=1.10.0"></script>
+<script src="js/svg.js?v=1.10.0"></script>
+<script src="js/gif.js?v=1.10.0"></script>
+<script src="js/zip.js?v=1.10.0"></script>
+<script src="js/normal.js?v=1.10.0"></script>
+<script src="js/export.js?v=1.10.0"></script>
+<script src="js/godot.js?v=1.10.0"></script>
+<script src="js/rig.js?v=1.10.0"></script>
+<script src="js/editor.js?v=1.10.0"></script>
+<script src="js/examples.js?v=1.10.0"></script>
+<script src="js/timeline.js?v=1.10.0"></script>
+<script src="js/app.js?v=1.10.0"></script>
 </body>
 </html>

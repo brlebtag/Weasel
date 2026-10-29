@@ -1,0 +1,197 @@
+{
+  "frames": {
+    "anda_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "anda_01": {
+      "frame": {
+        "x": 31,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "anda_02": {
+      "frame": {
+        "x": 60,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "anda_03": {
+      "frame": {
+        "x": 89,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "anda_04": {
+      "frame": {
+        "x": 118,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "anda_05": {
+      "frame": {
+        "x": 147,
+        "y": 2,
+        "w": 27,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 34
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    }
+  },
+  "animations": {
+    "anda": [
+      "anda_00",
+      "anda_01",
+      "anda_02",
+      "anda_03",
+      "anda_04",
+      "anda_05"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_referencia.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 176,
+      "h": 38
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 27,
+      "h": 34
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "anda",
+        "from": 0,
+        "to": 5,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 60,
+      "y": 30,
+      "w": 91,
+      "h": 112
+    }
+  }
+}

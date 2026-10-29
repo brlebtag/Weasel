@@ -279,6 +279,50 @@ text t2 360,160 "weight=0.7" size=14 align=center
 
 O `light=` do `canvas` só afeta essa espessura do contorno. Luz de verdade, que muda as cores, é a do [capítulo 8](08-luz-efeitos.md).
 
+## Desenhar por cima de uma imagem: `ref`
+
+Para copiar um rascunho, uma foto ou um personagem que já existe, ponha a imagem **por baixo**, como guia, e desenhe as formas por cima dela, como num papel vegetal:
+
+<!-- gerar: img/02_ref.png -s 0.5 --refs -->
+```weasel
+canvas 512 512 bg=#ffffff
+palette ink=#1c1f2b line=10 pelo=#b8733a
+ref modelo "../docs/logo.png" 0,0 opacity=0.35 lock
+
+layer cabeca
+shape cara c=pelo ink=line : 256,112 314,122 356,160 368,218 354,280 320,340 286,388 256,404 226,388 192,340 158,280 144,218 156,160 198,122
+ellipse olhoE 212,222 18,23 rot=-12 c=ink
+ellipse olhoD 300,222 18,23 rot=12 c=ink
+```
+
+![O logo do Weasel bem clarinho, por baixo, e por cima dele a cabeça e os olhos da doninha já redesenhados](img/02_ref.png)
+
+A doninha clarinha é a **imagem guia**; a cabeça e os olhos por cima são as formas, que copiam o contorno dela. A imagem guia **nunca sai na exportação**: PNG, GIF, SVG, sprite sheet e Godot só têm as formas. Ela aparece no editor e na linha de comando com `--refs` (a imagem acima foi feita assim).
+
+```
+ref nome "imagem.png" x,y scale= rot= opacity= [lock] [hidden] [front]
+```
+
+| Parte | O que faz |
+|---|---|
+| `"imagem.png"` | A imagem: PNG, JPG, GIF, WebP ou SVG. Na linha de comando, o caminho é relativo ao arquivo `.weasel` (o exemplo usa o logo do projeto, visto da pasta `exemplos/`). |
+| `x,y` | Onde fica o canto de cima à esquerda da imagem (padrão `0,0`). |
+| `scale=` | Tamanho: `0.5` é metade (padrão `1`, um pixel da imagem por unidade do desenho). |
+| `rot=` | Giro em graus, em volta do centro da imagem (padrão `0`). |
+| `opacity=` | De 0 a 1 (padrão `0.5`): clarinha o bastante para ver as suas formas por cima. |
+| `lock` | Travada: no editor, não sai do lugar quando você arrasta por cima dela. |
+| `hidden` | Escondida, sem tirar a linha do arquivo. |
+| `front` | Por cima das formas, em vez de por baixo (para conferir o traço). |
+
+**No editor**, o botão **Imagens**, acima do desenho, abre o painel das imagens guia:
+
+- **Adicionar imagem…** escolhe um arquivo do computador e escreve a linha `ref`, com a imagem cabendo no desenho. A imagem fica guardada **neste navegador** (como os sons dos filmes); o código só tem o nome dela.
+- Em cada imagem guia: a caixa liga e desliga (`hidden`), o controle muda a opacidade (`opacity=`) e o cadeado trava (`lock`). Clicar no nome leva à linha dela no código. **mostrar** esconde todas de uma vez, sem mexer no código.
+- No desenho, uma imagem **solta** (sem `lock`) tem uma moldura tracejada: arraste por dentro para mover e pelo quadradinho do canto para mudar o tamanho. O Weasel reescreve o `x,y` e o `scale=` (Ctrl+Z desfaz). Uma imagem travada não se mexe: arrastar por cima dela move a vista.
+- Se o código tem um `ref` com uma imagem que este navegador ainda não guardou, o painel mostra **abrir …** ao lado dele.
+
+Quando terminar de copiar, apague a linha `ref` ou deixe `hidden`. Para usar uma imagem diferente em cada animação, veja o [capítulo 7](07-animacao.md#uma-imagem-guia-para-cada-movimento).
+
 ## Opções que toda forma aceita
 
 | Atributo | O que faz |

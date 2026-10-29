@@ -4,7 +4,7 @@
   const M = W.geom.M;
 
   const KEYWORDS = {
-    canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup',
+    canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup', ref: 'setup',
     layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
     def: 'comp', end: 'comp', use: 'comp', repeat: 'comp',
     bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
@@ -48,6 +48,7 @@
     camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
     box: ['bone', 'only'],
     point: ['bone'],
+    ref: ['scale', 'rot', 'opacity', 'only', 'frames'],
     godot: ['body', 'root', 'normal', 'name', 'rig'],
     tileset: ['size'],
     tile: ['collision'],
@@ -60,6 +61,7 @@
     box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
     tileset: ['auto'],
     tile: ['solid', 'oneway'],
+    ref: ['lock', 'hidden', 'front'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
@@ -453,7 +455,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), points: new Map(), exprs: new Map(), godot: null, tileset: null, mouth: null,
+      boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null,
       byLine: new Map(),
       errors,
     };
@@ -1449,6 +1451,7 @@
       const A = st.attrs;
       if (st.cmd === 'box') readBox(st, A);
       else if (st.cmd === 'point') readPoint(st, A);
+      else if (st.cmd === 'ref') readRef(st, A);
       else if (st.cmd === 'mouth') readMouth(st, A);
       else if (st.cmd === 'godot') {
         const g = { body: 'character', root: null, normal: 1, name: null, rig: 'frames', line: st.line };
@@ -1560,6 +1563,43 @@
       const rec = info(st, { point: p });
       rec.handles.push({ kind: 'point', point: name, bone: p.bone, x: p.x, y: p.y, from: t.from, to: t.to, fixed: t.text.includes('{') });
       m.points.set(name, p);
+    }
+
+    // ref nome "imagem.png" x,y scale= rot= opacity= only= frames=a..b [lock] [hidden] [front]: imagem guia para
+    // desenhar por cima. Só aparece no editor (e na linha de comando com --refs); nunca sai nas exportações.
+    function readRef(st, A) {
+      // a imagem guia é do arquivo que você está desenhando: as dos arquivos incluídos não aparecem
+      if (L[st.line].file !== X.mainFile) return;
+      const name = ident(st, st.pos[0], 'da imagem guia');
+      if (!name) return;
+      const ft = st.pos[1];
+      if (!ft || ft.text[0] !== '"') { err(st.line, 'use: ref nome "imagem.png" x,y opacity=0.5 (o canto de cima à esquerda)', ft ? ft.from : st.cmdTok.from, ft ? ft.to : st.cmdTok.to); return; }
+      const r = { name, file: unq(ft.text), line: L[st.line].line, x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, lock: false, hidden: false, front: false, only: null, frames: null };
+      let posTok = null;
+      for (const t of st.pos.slice(2)) {
+        if (FLAGS.ref.includes(t.text)) r[t.text] = true;
+        else if (!posTok && (t.text.includes(',') || t.text.includes('{'))) posTok = t;
+        else err(st.line, `opção desconhecida "${t.text}" (use ${FLAGS.ref.join(', ')})`, t.from, t.to, 'warn');
+      }
+      if (posTok) { const v = posPair(st, posTok, 'a posição (o canto de cima à esquerda)', [0, 0]); r.x = v[0]; r.y = v[1]; }
+      if (A.has('scale')) r.scale = number(st, A.get('scale'), 1, 0.001, 100);
+      if (A.has('rot')) r.rot = number(st, A.get('rot'), 0);
+      if (A.has('opacity')) r.opacity = number(st, A.get('opacity'), 0.5, 0, 1);
+      if (A.has('only')) {
+        const a = A.get('only');
+        r.only = a.text.split(',').filter(Boolean);
+        for (const n of r.only) if (n !== 'pose' && !m.animMap.has(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
+      }
+      if (A.has('frames')) {
+        const a = A.get('frames'), mm = /^(\d+)\.\.(\d+)$/.exec(a.text);
+        if (!mm) bad(st, a, 'use frames=a..b (do quadro a até o b)');
+        else r.frames = [Math.min(+mm[1], +mm[2]), Math.max(+mm[1], +mm[2])];
+      }
+      if (m.refs.some((x) => x.name === name)) err(st.line, `imagem guia "${name}" já existe`, st.pos[0].from, st.pos[0].to);
+      if (opts.image && !opts.image(r.file)) err(st.line, `não achei a imagem "${r.file}"${opts.imageHint ? ` (${opts.imageHint})` : ''}`, ft.from, ft.to, 'warn');
+      if (top.some((s) => s.cmd === 'film')) err(st.line, 'num filme, a imagem guia ainda não aparece (use num desenho ou personagem)', st.cmdTok.from, st.cmdTok.to, 'warn');
+      info(st, { ref: r, refPos: posTok, refFile: ft });
+      m.refs.push(r);
     }
 
     // tile nome coluna,linha [solid] [oneway] collision=forma
