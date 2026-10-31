@@ -33,13 +33,13 @@ O editor web não precisa de instalação nem de compilação: é HTML, CSS e Ja
 
 **Opção 1 — abrir o arquivo direto.** Dê dois cliques em `index.html` (Chrome, Edge ou Firefox).
 
-**Opção 2 — servidor local** (útil se o navegador bloquear algo em `file://`). Na pasta do projeto:
+**Opção 2 — servidor local** (útil se o navegador bloquear algo em `file://`). Na pasta do projeto (só precisa do Node.js, sem `npm install`):
 
 ```bash
-python -m http.server 5317
+npm run web
 ```
 
-Depois abra <http://localhost:5317>.
+Depois abra <http://localhost:5317> (o endereço aparece no terminal e dá para clicar). Também mostra o endereço em IPv4 (`127.0.0.1`) e o da rede, para abrir no celular; `npm run web -- --port 8080` usa outra porta. Os arquivos ficam guardados por endereço: `localhost` e `127.0.0.1` não veem os mesmos.
 
 Os arquivos ficam salvos automaticamente no navegador (localStorage). **Abrir…** aceita vários `.weasel` de uma vez, **Salvar** baixa o arquivo atual e **Baixar todos** junta todos num `.zip`.
 
@@ -605,6 +605,7 @@ cli/runtime.js      carrega os arquivos de js/ no Node (para a linha de comando 
 cli/video.js        filme na linha de comando: ffmpeg, sequência, GIF, render em paralelo
 cli/film-worker.js  thread que renderiza quadros de um filme
 cli/media.js        acha e lê os sons (audio) para a linha de comando
+cli/web.js          servidor local do editor (npm run web), só com o Node
 test/regress.js     testes de regressão; test/ref/ guarda as referências; test/casos/ tem um arquivo por função
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
