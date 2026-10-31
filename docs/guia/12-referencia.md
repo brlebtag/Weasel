@@ -1,6 +1,6 @@
-# 11. Referência rápida
+# 12. Referência rápida
 
-[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Problemas comuns →](12-problemas.md)
+[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Problemas comuns →](13-problemas.md)
 
 Todas as instruções, com os atributos e os **valores padrão** (o que vale quando você não escreve o atributo). Entre colchetes, `[opção]` é uma palavra solta opcional. "Cor de tinta" é o `ink` da `palette` (padrão `#14141c`).
 
@@ -37,7 +37,7 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 
 ## Camadas
 
-`layer nome [guide] [hidden] [lit] [unlit] [screen] [front]`
+`layer nome [guide] [hidden] [lit] [unlit] [screen] [front] [zsort] [floor]`
 
 | Atributo | Padrão | O que faz |
 |---|---|---|
@@ -58,10 +58,19 @@ Todas as instruções, com os atributos e os **valores padrão** (o que vale qua
 | `rim=cor,largura` | largura 4 | fio de luz na borda |
 | `shade=` | 0.5 | claro e escuro da luz (0–2) |
 | `depth=` | 1 | profundidade no filme (0.05–1000) |
+| `yaw=` `pitch=` | 0 | giro 3D da camada inteira (graus) |
+| `persp=` | o dobro do lado maior | distância do olho (0 = sem perspectiva) |
+| `pivot=x,y` | o meio (com `floor`: o meio da base) | centro do giro; com `floor`, a linha que fica parada |
+| `horizon=` | 30% da altura | com `floor`: a altura do horizonte na tela |
+| `iso=x,y` | em cima, no meio | mapa isométrico; `x,y` é onde fica o canto (0,0) |
+
+`[zsort]` pinta de longe para perto a cada quadro · `[floor]` deita a camada como chão (sem `persp=`, 45°).
 
 ## Formas
 
 Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
+
+**2.5D** (todas, menos `emitter`, que só aceita `z=`): `z=` profundidade, positivo = perto (0) · `yaw=` `pitch=` giro 3D em volta do meio (0) · `persp=` (o dobro do lado maior) · `[billboard]` sempre de frente. Só nas fechadas (`shape`, `ellipse`, `rect`): `thick=` espessura (0) · `thickc=` cor dos lados (a da forma, mais escura) · `back=forma` o verso.
 
 | Instrução | Valores e atributos (padrão) |
 |---|---|
@@ -80,13 +89,13 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 | Instrução | Atributos |
 |---|---|
 | `def nome param=padrão …` … `end` | só formas e `use` dentro; desenho em volta de `0,0`; parâmetro numérico vira variável e espessura, os outros viram cor |
-| `use nome x,y` | `scale=s` ou `sx,sy` · `rot=` · `flip=x\|y\|xy` · `bone=` · `cloth=` · `opacity=` · `param=valor` |
+| `use nome x,y` | `scale=s` ou `sx,sy` · `rot=` · `flip=x\|y\|xy` · `bone=` · `cloth=` · `opacity=` · `z=` · `param=valor` · `[billboard]` (o componente fica de frente, de pé no ponto do `use`) |
 
 ## Esqueleto e animação
 
 | Instrução | Atributos (padrão) |
 |---|---|
-| `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) · `path=linha` (anda pelo caminho com `key osso.along=`) · `turn=1\|0` (1: vira com a curva) |
+| `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) · `path=linha` (anda pelo caminho com `key osso.along=`) · `turn=1\|0` (1: vira com a curva) · `yaw=` `pitch=` giro 3D em volta do pivô (0) · `persp=` · `round=raio[,x,y]` as peças do osso viram uma bola (centro: o meio delas) |
 | `cloth nome pivot=x,y` | `tension=` 0–1 (0.5) · `drag=` 0–10 (1) · `swing=` 0–10 (1) · `bone=` |
 | `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) · `mix=base,ação bones=ossos` (junta duas animações; o tempo é o da ação) |
 | `key quadro …` | `osso=dx,dy,rot,sx,sy` (padrão `0,0,0,1,1`; 1 número = dx, 4 números = escala igual) · `alvo.prop=valor` · `ease=` (smooth) |
@@ -99,9 +108,9 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 
 | Alvo | Propriedades |
 |---|---|
-| osso | `along` (0 a 1, com `path=`) |
-| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph: fechada com fechada, traço com traço) · `draw` (0 a 1, desenha aos poucos) · `above` / `below` (outra forma da mesma camada, ou `none`) |
-| camada | `opacity` · `show` · `blur` · `glow` · `tint` · `brightness` · `saturate` · `contrast` · `hue` · `above` / `below` (outra camada, ou `none`) |
+| osso | `along` (0 a 1, com `path=`) · `yaw` · `pitch` |
+| forma | `opacity` · `c` · `inkc` · `w` · `ink` · `show` (1/0) · `shape` (morph: fechada com fechada, traço com traço) · `draw` (0 a 1, desenha aos poucos) · `above` / `below` (outra forma da mesma camada, ou `none`) · `yaw` · `pitch` · `z` |
+| camada | `opacity` · `show` · `blur` · `glow` · `tint` · `brightness` · `saturate` · `contrast` · `hue` · `yaw` · `pitch` · `above` / `below` (outra camada, ou `none`) |
 | luz | `power` · `radius` · `c` · `glow` · `aim` · `cone` |
 | caixa | `show` |
 
@@ -120,7 +129,7 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 |---|---|
 | `box nome body\|hit\|hurt rect x,y l,a` | também `circle cx,cy r` e `capsule cx,cy l,a` · `bone=` · `only=` · `[off]` (padrão: `body`, `rect`, ligada) |
 | `godot` | `body=character\|static\|area\|rigid\|node` (character) · `root=x,y` · `name=` · `normal=` 0–10 (1) · `rig=frames\|bones` (frames; `bones` = esqueleto de verdade, experimental) |
-| `tileset` | `size=l` ou `l,a` (32) · `[auto]` |
+| `tileset` | `size=l` ou `l,a` (32) · `[auto]` · `[iso]` (losango largura × metade, embaixo da célula) |
 | `tile nome coluna,linha` | `[solid]` · `[oneway]` · `collision=forma` |
 | `point nome x,y` | `bone=` · vira `Marker2D` no Godot e `points` no JSON da sprite sheet |
 | `mouth forma A=forma B=forma@0.3 …` | bocas A, B, C, D, E, F, G, H e X, por morph |
@@ -132,14 +141,14 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 | `film` | `fps=` 1–120 (24) · `dur=` (só sem `shot`) · `lang=` (pt) · `subs=burn\|file` · `subsize=` · `subc=` (#ffffff) |
 | `actor nome "arquivo" x,y` | `scale=` · `rot=` · `flip=x\|y\|xy\|none` · `depth=` (1) · `anim=` · `speed=` (1) · `opacity=` (1) · `origin=x,y` (o `root=` do `unity` do arquivo, ou 0,0) · `variant=` · `hide=camada,…` · `expr=` · `path=linha` · `turn=1\|0` · `[screen]` `[bg]` `[hidden]` `[unlit]` `[front]` |
 | `shot nome` | `dur=` (obrigatório) · `in=fade\|wipe\|slide\|zoom\|iris[,duração]` (0.5s) |
-| `camera x,y` | `zoom=` (1) · `rot=` (0) · `shake=` (0) · `follow=ator` · `offset=dx,dy` · `lag=` segundos (0) · `fade=` 0–1 (0) · `fadec=` (#000000). Padrão: o centro do canvas. |
+| `camera x,y` | `zoom=` (1) · `rot=` (0) · `shake=` (0) · `follow=ator` · `offset=dx,dy` · `lag=` segundos (0) · `fade=` 0–1 (0) · `fadec=` (#000000) · `lens=` lente (1) · `fog=` cor da névoa (nenhuma) · `haze=` profundidade da meia névoa (6). Padrão: o centro do canvas. |
 | `at tempo alvo.prop=valor …` | `ease=` (smooth) |
 | `scene "arquivo"` | os planos de outro filme |
 | `mark nome tempo` | um momento com nome (antes dos `shot`: do começo do filme; dentro de um: do começo dele); `at nome`, `at nome+0.3s` |
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |
 | `sub tempo "texto"` | `dur=` (o tempo de ler) · `lang=` |
 
-**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec` · luz `power radius c glow aim cone` · camada `opacity show` e os efeitos · forma do filme `draw opacity show`.
+**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec lens fog haze` · luz `power radius c glow aim cone` · camada `opacity show yaw pitch` e os efeitos · forma do filme `draw opacity show yaw pitch z`.
 
 ## Linha de comando
 
@@ -159,4 +168,4 @@ Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos;
 | `-e "código"` · `-` | código direto (`;` separa linhas) · ler da entrada padrão |
 | `--help` | a lista completa |
 
-[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Problemas comuns →](12-problemas.md)
+[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Problemas comuns →](13-problemas.md)

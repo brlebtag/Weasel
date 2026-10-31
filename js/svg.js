@@ -101,7 +101,7 @@
       const fill = pr.c !== undefined ? pr.c : el.fill;
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
       const inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-      const m = S.textMatrix(P, el);
+      const m = S.textMat(model, P, el);
       const Lp = lit ? [m[4], m[5]] : null;
       const anchor = at ? 'start' : { left: 'start', center: 'middle', right: 'end' }[el.align];
       let a = `transform="${matAttr(m)}"${at} font-family="${esc(el.font)}" font-size="${n2(el.size)}" text-anchor="${anchor}"`;
@@ -133,10 +133,49 @@
       return out;
     }
 
-    // um elemento da camada; P = pose (o rastro usa poses de quadros anteriores)
+    // um elemento da camada; P = pose (o rastro usa poses de quadros anteriores). Com 3D: some atrás da bola,
+    // mostra o verso (back=) quando vira de costas e monta o bloco (thick=), como no canvas.
     function item(el, part, layer, base, P, lit, flat) {
+      const d3 = model.has3d && !el.hidden ? S.el3(model, P, el) : null;
+      if (!d3) return item0(el, part, layer, base, P, lit, flat);
+      if (d3.fade <= 0.001) return '';
+      base *= d3.fade;
+      if (el.thick > 0 && el.closed && !el._src && !el.billboard) {
+        const sp = S.solidParts(model, P, el, d3);
+        let out = '';
+        if (part !== 'ink') {
+          if (sp.far) out += item0(sp.far, part, layer, base, P, lit, flat);
+          out += sidesSvg(el, sp.quads, base, P, lit && !el.emit);
+        }
+        return out + item0(sp.near, part, layer, base, P, lit, flat);
+      }
+      return item0(d3.nz < 0 && el.back ? S.proxy3(el, 'bk') : el, part, layer, base, P, lit, flat);
+    }
+    // os lados do bloco: o contorno de todos (fica só por fora) e depois cada lado com a sua luz
+    function sidesSvg(el, quads, base, P, lit) {
+      const pr = S.propsOf(P, el);
+      const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+      if (alpha <= 0.001 || pr.show === 0 || !quads.length) return '';
+      let col = S.sideColor(el, pr);
+      const ink = pr.ink !== undefined ? pr.ink : el.ink;
+      let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
+      if (lit) {
+        const b = S.segsBox(S.geometry(model, P, el).segs), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+        col = S.litColor(col, lighting, cx, cy);
+        inkc = S.litColor(inkc, lighting, cx, cy, true);
+      }
+      const qd = (q) => `M${n2(q[0])} ${n2(q[1])}L${n2(q[2])} ${n2(q[3])}L${n2(q[4])} ${n2(q[5])}L${n2(q[6])} ${n2(q[7])}Z`;
+      let body = '';
+      if (ink > 0 && typeof inkc === 'string' && model.finish.style !== 'flat') {
+        const ca = colorAttr(inkc);
+        body += `<path d="${quads.map((s) => qd(s.q)).join('')}" fill="none" stroke="${ca.c}"${ca.o < 1 ? ` stroke-opacity="${n2(ca.o)}"` : ''} stroke-width="${n2(ink)}" stroke-linejoin="round"/>`;
+      }
+      for (const s of quads) { const ca = colorAttr(G.lerpColor(col, '#000000', 1 - s.k)); body += `<path d="${qd(s.q)}" fill="${ca.c}" stroke="${ca.c}" stroke-width="1" stroke-linejoin="round"/>`; }
+      return alpha < 0.999 ? `<g opacity="${n2(alpha)}">${body}</g>` : body;
+    }
+    function item0(el, part, layer, base, P, lit, flat) {
       if (el.hidden) return '';
-      const pr = P.props.get(el.id) || {};
+      const pr = S.propsOf(P, el);
       if (pr.show === 0) return '';
       let alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
       if (alpha <= 0.001) return '';
@@ -162,6 +201,9 @@
           const dp = dr < 1 ? S.drawParts(dr) : null;
           if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
             body += fill.kind === 'pat' ? patternSvg(el, g, fill, P, Lp) : `<path d="${d}" ${fillA(fill, el, false, Lp)}/>`;
+            // cartão virando de lado (3D): mais escuro
+            const d3 = S.el3(model, P, el);
+            if (d3 && d3.dark > 0.004) body += `<path d="${d}" fill="#000000" opacity="${n2(d3.dark)}"/>`;
             if (L) {
               const la = S.lightAt(lighting, Lp[0], Lp[1]);
               const k = la ? layer.shade * Math.min(1, la.I) * la.dir : 0;
@@ -264,6 +306,7 @@
 
     function layerBody(layer, items, P, lit) {
       items = S.orderItems(items, P);
+      if (layer.zsort && model.has3d) items = S.zSort(model, P, items);
       let attrs = '';
       if (layer.clip) attrs += ` clip-path="url(#${clipDef(S.clipEls(model, layer.clip), P)})"`;
       if (layer.cut) attrs += ` mask="url(#${maskOut(S.clipEls(model, layer.cut).filter((e) => e.closed).map((e) => elPath(e, P)))})"`;

@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "sobe_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 75,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 75,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 75,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "sobe_01": {
+      "frame": {
+        "x": 79,
+        "y": 2,
+        "w": 75,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 75,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 75,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "sobe_02": {
+      "frame": {
+        "x": 156,
+        "y": 2,
+        "w": 75,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 75,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 75,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "sobe_03": {
+      "frame": {
+        "x": 233,
+        "y": 2,
+        "w": 75,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 75,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 75,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "sobe": [
+      "sobe_00",
+      "sobe_01",
+      "sobe_02",
+      "sobe_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_3d_iso.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 310,
+      "h": 51
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 75,
+      "h": 47
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "sobe",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 35,
+      "y": 0,
+      "w": 250,
+      "h": 155
+    }
+  }
+}

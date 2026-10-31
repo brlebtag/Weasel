@@ -1,0 +1,8 @@
+TITLE: caso_3d_vertigo
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:01:00 01:00:00:00 01:00:01:00
+* FROM CLIP NAME: caso_3d_vertigo_a.mov
+
+002  AX       V     C        00:00:00:00 00:00:01:00 01:00:01:00 01:00:02:00
+* FROM CLIP NAME: caso_3d_vertigo_b.mov

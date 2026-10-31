@@ -1,0 +1,10 @@
+canvas   320 × 240, fundo #f4efe6
+gradientes brilho (linear, box)
+padrões  riscos (hatch)
+camadas  2
+  cartas           4 item(ns)
+  soltas           4 item(ns)
+formas   8 (1 ocultas)
+ossos    carta
+animações 1
+  gira           8 quadros, 12 fps, anima carta.yaw pipa.yaw soltas.yaw

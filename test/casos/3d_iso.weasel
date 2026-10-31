@@ -1,0 +1,20 @@
+# teste: 2.5D — mapa isométrico (layer iso=): chão numa camada, blocos com thick=, z= sem bloco, zsort
+canvas 320 200 bg=#20242e
+palette ink=#1c1f2b line=2
+
+layer chao iso=160,30
+rect piso 0,0 120,120 c=#9ccc65 ink=line
+rect caminho 54,0 18,120 c=#d9c49a
+
+layer coisas iso=160,30 zsort
+rect caixa 12,12 26,26 c=#d7a86e ink=line thick=24
+rect torre 84,14 24,24 c=#90a4ae ink=line thick=70
+rect casa 78,72 34,30 c=#f4efe6 ink=line thick=28
+shape telhado c=#c0392b ink=line z=28 thick=8 : 75,69! 115,69! 115,105! 75,105!
+ellipse poco 30,90 14 c=#78909c ink=line thick=12
+ellipse agua 30,90 9 c=#4fc3f7 z=12
+text placa 60,40 "OI" size=12 c=#ffffff z=30 bold
+
+anim sobe frames=4
+key 0 caixa.z=0
+key 4 caixa.z=20

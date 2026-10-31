@@ -350,6 +350,9 @@ func _weasel_evento(nome: StringName) -> void:
   function tilesetText(model, o) {
     const T = model.tileset, s = o.scale;
     const tw = Math.round(T.size[0] * s), th = Math.round(T.size[1] * s);
+    // iso: o bloco do mapa é um losango 2:1 (largura × metade) na parte de baixo da célula; o que sobra em cima
+    // (a altura das caixas e paredes) aparece acima dele no mapa
+    const dh = T.iso ? Math.round(tw / 2) : th, oy = T.iso ? Math.round((th - dh) / 2) : 0;
     const pose = S.makePose(model, null, 0);
     const tiles = tileList(model, o.atlas, s);
     const tex = o.normalPath ? 'SubResource("CanvasTexture_tiles")' : 'ExtResource("1_tiles")';
@@ -359,7 +362,7 @@ func _weasel_evento(nome: StringName) -> void:
     for (const t of tiles) {
       const key = `${t.col}:${t.row}/0`;
       out.push(`${key} = 0`);
-      const cx = (t.col + 0.5) * T.size[0], cy = (t.row + 0.5) * T.size[1];
+      const cx = (t.col + 0.5) * T.size[0], cy = (t.row + 0.5) * T.size[1] + oy / s;
       let poly = null;
       if (t.collision) {
         const flat = S.flatOf(S.geometry(model, pose, t.collision));
@@ -368,14 +371,15 @@ func _weasel_evento(nome: StringName) -> void:
         if (pts.length > 2 && Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]) < 0.01) pts.pop();
         pts = dropCollinear(simplify(pts, 0.6), 0.6);
         if (pts.length >= 3) poly = pts;
-      } else if (t.solid) poly = [[-tw / 2, -th / 2], [tw / 2, -th / 2], [tw / 2, th / 2], [-tw / 2, th / 2]];
+      } else if (t.solid) poly = T.iso ? [[0, -dh / 2], [tw / 2, 0], [0, dh / 2], [-tw / 2, 0]] : [[-tw / 2, -th / 2], [tw / 2, -th / 2], [tw / 2, th / 2], [-tw / 2, th / 2]];
+      if (oy) out.push(`${key}/texture_origin = Vector2i(0, ${oy})`);
       if (poly) {
         out.push(`${key}/physics_layer_0/polygon_0/points = PackedVector2Array(${poly.map((p) => `${num(p[0])}, ${num(p[1])}`).join(', ')})`);
         if (t.oneway) out.push(`${key}/physics_layer_0/polygon_0/one_way = true`);
       }
       out.push(`${key}/custom_data_0 = ${quote(t.name)}`);
     }
-    out.push('', '[resource]', `tile_size = Vector2i(${tw}, ${th})`, 'physics_layer_0/collision_layer = 1', 'custom_data_layer_0/name = "nome"', 'custom_data_layer_0/type = 4', 'sources/0 = SubResource("TileSetAtlasSource_tiles")', '');
+    out.push('', '[resource]', ...(T.iso ? ['tile_shape = 1', 'tile_layout = 5'] : []), `tile_size = Vector2i(${tw}, ${dh})`, 'physics_layer_0/collision_layer = 1', 'custom_data_layer_0/name = "nome"', 'custom_data_layer_0/type = 4', 'sources/0 = SubResource("TileSetAtlasSource_tiles")', '');
     return { text: out.join('\n'), tiles };
   }
 

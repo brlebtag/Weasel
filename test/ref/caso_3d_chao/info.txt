@@ -1,0 +1,9 @@
+canvas   320 × 200, fundo #bfe3f5
+componentes arvore (4×)
+camadas  2
+  chao            17 item(ns)
+  curva            1 item(ns)
+formas   18
+partículas poeira (dot, 20/s, rajada 12)
+animações 1
+  vento          4 quadros, 12 fps, anima chao.pitch

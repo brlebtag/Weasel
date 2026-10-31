@@ -1,0 +1,24 @@
+# teste: 2.5D no filme — lente (lens=), névoa da distância (fog=, haze=) e formas e camadas que giram com at
+film fps=12
+canvas 320 180 bg=#cfe3ef
+
+layer montanhas depth=6
+shape monte c=#5b7c99 : 0,140 60,60 130,125 200,50 270,120 320,70 320,180 0,180
+layer arvores depth=1.6
+rect tronco 50,110 8,50 c=#6b4a30
+ellipse copa 54,104 22 c=#2f6e3a
+layer palco depth=1
+rect chao 0,150 320,30 c=#7aa35a
+rect carta 140,80 40,56 c=#e94f37 ink=2
+layer titulo screen pitch=0
+text nome 160,30 "VERTIGO" size=20 align=center c=#1c1f2b bold
+
+shot a dur=1s
+camera fog=#cfe3ef haze=3
+at 0s camera.zoom=1 camera.lens=1 carta.yaw=0 titulo.pitch=0
+at 1s camera.zoom=0.5 camera.lens=2 carta.yaw=180 titulo.pitch=60 ease=linear
+
+shot b dur=1s
+camera lens=1.5 fog=#20242e haze=2
+at 0s carta.z=0
+at 1s carta.z=60 camera.fog=#cfe3ef

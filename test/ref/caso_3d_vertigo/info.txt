@@ -1,0 +1,5 @@
+filme    320 × 180, 12 fps, 2s (24 quadros, 00:02:00), fundo #cfe3ef
+camadas  montanhas (depth 6), arvores (depth 1.6), palco, titulo (screen)
+planos   2
+  a                00:00:00      1s     12 quadros  câmera 160,90 · 8 mudança(s) com at
+  b                00:01:00      1s     12 quadros  câmera 160,90 · 3 mudança(s) com at

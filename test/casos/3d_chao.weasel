@@ -1,0 +1,28 @@
+# teste: 2.5D — chão em perspectiva (layer floor horizon=), billboard no use e na forma, partículas no chão
+canvas 320 200 bg=#bfe3f5
+palette ink=#1c1f2b line=2
+
+def arvore
+  rect tronco -4,-30 8,30 c=#8d5a3b ink=line
+  ellipse copa 0,-46 20,24 c=#4caf50 ink=line
+end
+
+layer chao floor horizon=60 zsort
+rect campo -10000,-10000 20320,10200 c=#7cb342
+rect estrada 130,-10000 60,10200 c=#5d5d5d
+repeat i 0..4
+  rect faixa{i} 157,{170 - i*90} 6,36 c=#ffffff
+end
+use arvore 90,190 billboard
+use arvore 230,190 billboard
+use arvore 90,40 billboard
+use arvore 230,40 billboard
+ellipse pedra 40,150 10,7 c=#9e9e9e ink=line billboard
+emitter poeira 160,150 burst=12 life=0.8 speed=30 spread=80 size=4,1 c=#d9c49a,#d9c49a00 seed=3
+
+layer curva floor horizon=60 yaw=20 opacity=0.4
+rect sombra 220,100 40,40 c=#1c1f2b
+
+anim vento frames=4
+key 0 chao.pitch=50
+key 4 chao.pitch=60

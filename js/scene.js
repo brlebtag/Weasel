@@ -171,11 +171,11 @@
     }
 
     // Propriedades animadas (opacidade, cor, espessura, visibilidade, morph, efeitos, luzes, caixas).
-    const props = [], lprops = [], liprops = [], bprops = [];
+    const props = [], lprops = [], liprops = [], bprops = [], b3s = [];
     for (let f = 0; f < N; f++) {
-      const pm = new Map(), lm = new Map(), li = new Map(), bm = new Map();
+      const pm = new Map(), lm = new Map(), li = new Map(), bm = new Map(), b3 = new Map();
       for (const tr of anim.ptracks.values()) {
-        if (tr.kind === 'bone') continue; // osso.along entra nos valores do osso
+        if (tr.kind === 'bone' && tr.prop === 'along') continue; // osso.along entra nos valores do osso
         const s = segment(tr.keys, f, N, anim.loop);
         if (!s) continue;
         let v;
@@ -185,8 +185,8 @@
         else v = { from: s.a.v, to: s.b.v, t: s.t };
         // caixa numa animação sem loop: antes da primeira key vale o estado declarado (off = desligada)
         if (tr.kind === 'box' && !anim.loop && f < tr.keys[0].frame) continue;
-        if (tr.kind === 'layer' || tr.kind === 'light' || tr.kind === 'box') {
-          const map = tr.kind === 'layer' ? lm : tr.kind === 'light' ? li : bm;
+        if (tr.kind === 'layer' || tr.kind === 'light' || tr.kind === 'box' || tr.kind === 'bone') {
+          const map = tr.kind === 'layer' ? lm : tr.kind === 'light' ? li : tr.kind === 'bone' ? b3 : bm;
           const o = map.get(tr.name) || {};
           o[tr.prop] = v;
           map.set(tr.name, o);
@@ -203,8 +203,9 @@
       lprops.push(lm);
       liprops.push(li);
       bprops.push(bm);
+      b3s.push(b3);
     }
-    d = { mats, cloth, props, lprops, liprops, bprops, springs };
+    d = { mats, cloth, props, lprops, liprops, bprops, b3s, springs };
     model._anim.set(anim.name, d);
     return d;
   }
@@ -259,12 +260,21 @@
       }
       bones = matsFrom(model, vals);
     }
-    let props = pose.props;
+    let props = pose.props, b3 = pose.b3;
     const keys = new Set([...(A ? A.ptracks.keys() : []), ...(B ? B.ptracks.keys() : [])]);
     if (keys.size) {
       props = new Map(pose.props);
       for (const key of keys) {
         const ta = A && A.ptracks.get(key), tb = B && B.ptracks.get(key), tr = ta || tb;
+        // osso.yaw / osso.pitch: o giro 3D do osso
+        if (tr.kind === 'bone' && tr.prop !== 'along') {
+          if (b3 === pose.b3) b3 = new Map(pose.b3 || []);
+          const o = Object.assign({}, b3.get(tr.name) || {}), own = o[tr.prop] !== undefined ? o[tr.prop] : model.bones.get(tr.name)[tr.prop] || 0;
+          const na = ta ? ta.keys[0].v : own, nb = tb ? tb.keys[0].v : own;
+          o[tr.prop] = na + (nb - na) * u;
+          b3.set(tr.name, o);
+          continue;
+        }
         if (tr.kind !== 'el') continue;
         const va = ta ? ta.keys[0].v : undefined, vb = tb ? tb.keys[0].v : undefined;
         for (const el of tr.targets) {
@@ -279,7 +289,7 @@
             const own = cur !== undefined ? cur : 1;
             o[tr.prop] = u < 0.5 ? (va !== undefined ? va : own) : vb !== undefined ? vb : own;
           } else if (tr.type !== 'order') {
-            const own = cur !== undefined ? cur : tr.prop === 'w' ? el.w : tr.prop === 'ink' ? el.ink : 1;
+            const own = cur !== undefined ? cur : tr.prop === 'w' ? el.w : tr.prop === 'ink' ? el.ink : tr.type === 'free' ? el[tr.prop] || 0 : 1;
             const na = va !== undefined ? va : own, nb = vb !== undefined ? vb : own;
             o[tr.prop] = na + (nb - na) * u;
           }
@@ -287,19 +297,19 @@
         }
       }
     }
-    return Object.assign({}, pose, { bones, props, geo: new Map() });
+    return Object.assign({}, pose, { bones, props, b3, geo: new Map() });
   }
 
   function makePose(model, animName, frame) {
     const anim = animName ? model.animMap.get(animName) || null : null;
-    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, geo: new Map() };
+    if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, b3: NONE, geo: new Map() };
     const d = animData(model, anim);
     const f = ((Math.round(frame) % anim.frames) + anim.frames) % anim.frames;
-    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], geo: new Map() };
+    return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], b3: d.b3s[f], geo: new Map() };
   }
   // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
   function timePose(model, time) {
-    return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, geo: new Map() };
+    return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, b3: NONE, geo: new Map() };
   }
 
   // ---------- caixas de colisão (jogo) ----------
@@ -479,6 +489,226 @@
     return { x: x0, y: y0, w: Math.max(1e-6, x1 - x0), h: Math.max(1e-6, y1 - y0) };
   }
 
+  // ---------- 2.5D: giro 3D, profundidade e perspectiva ----------
+  // Cada giro é um "estágio": desfaz a perspectiva do ponto (pelo z dele), gira em volta do centro e projeta de
+  // novo. Sem giro, o estágio não muda nada: o desenho fica onde foi desenhado. Os estágios vão de dentro para
+  // fora: o giro da própria forma, os dos ossos (do osso dela até a raiz) e o da camada. O z sai da tela (perto).
+  const D2R = Math.PI / 180;
+  // distância do olho (persp=; 0 = sem perspectiva). Padrão: o dobro do lado maior do desenho.
+  const eyeOf = (model, v) => (v === undefined || v === null ? 2 * Math.max(model.canvas.w, model.canvas.h) : v);
+  function stage3(cx, cy, yaw, pitch, F) {
+    const a = yaw * D2R, b = pitch * D2R;
+    return { cx, cy, F, ca: Math.cos(a), sa: Math.sin(a), cb: Math.cos(b), sb: Math.sin(b) };
+  }
+  // p = [x, y, z, escala], alterado no lugar; a escala junta o quanto a perspectiva aumentou o ponto
+  function run3(s, p) {
+    const F = s.F, z = p[2];
+    const k0 = F ? Math.max(0.05 * F, F - z) / F : 1;
+    const dx = (p[0] - s.cx) * k0, dy = (p[1] - s.cy) * k0;
+    const x1 = dx * s.ca + z * s.sa, z1 = -dx * s.sa + z * s.ca;
+    const y1 = dy * s.cb - z1 * s.sb, z2 = dy * s.sb + z1 * s.cb;
+    const k1 = F ? F / Math.max(0.05 * F, F - z2) : 1;
+    p[0] = s.cx + x1 * k1;
+    p[1] = s.cy + y1 * k1;
+    p[2] = z2;
+    p[3] *= k0 * k1;
+  }
+  // iso: o ponto (0,0) do mapa vai para iso=x,y (padrão: em cima, no meio do desenho)
+  const isoOrigin = (model, L) => (Array.isArray(L.iso) ? L.iso : [model.canvas.w / 2, 0]);
+  // giro da camada inteira. floor deita a camada: a linha do pivô (padrão: a de baixo) fica igual e o que está
+  // mais para cima vai para longe, até o infinito chegar no horizonte (horizon=). Sem persp=, deita 45°.
+  function layerStage(model, pose, L) {
+    const lp = pose.lprops.get(L.name) || NOPROPS;
+    const yaw = lp.yaw !== undefined ? lp.yaw : L.yaw || 0;
+    let pitch = lp.pitch !== undefined ? lp.pitch : L.pitch || 0, c = L.pivot, F = eyeOf(model, L.persp);
+    if (L.floor) {
+      c = c || [model.canvas.w / 2, model.canvas.h];
+      const H = L.horizon !== null && L.horizon !== undefined ? L.horizon : model.canvas.h * 0.3, hh = c[1] - H;
+      const own = L.persp !== null && L.persp !== undefined;
+      if (hh > 0) {
+        if (!pitch) pitch = own ? (F ? Math.atan(F / hh) / D2R : 60) : 45;
+        if (!own) F = hh * Math.tan(Math.min(89, pitch) * D2R);
+      }
+    }
+    if (!yaw && !pitch) return null;
+    c = c || [model.canvas.w / 2, model.canvas.h / 2];
+    return stage3(c[0], c[1], yaw, pitch, F);
+  }
+  // as propriedades animadas de uma forma (as cópias do 3D, como o verso, usam as da forma de origem)
+  const propsOf = (pose, el) => pose.props.get(el._pid !== undefined ? el._pid : el.id) || NOPROPS;
+
+  // Tudo o que o 3D precisa de uma forma nesta pose (fica guardado na pose). on = false: nada gira e a forma
+  // fica como foi desenhada (sai igualzinho a antes do 3D); depth ainda serve para o zsort.
+  function info3(model, pose, el) {
+    const key = '3d' + el.id;
+    let d = pose.geo.get(key);
+    if (!d) { d = make3(model, pose, el); pose.geo.set(key, d); }
+    return d;
+  }
+  const el3 = (model, pose, el) => { if (!model.has3d) return null; const d = info3(model, pose, el); return d.on ? d : null; };
+  function make3(model, pose, el) {
+    const src = el._src || el, pr = pose.props.get(src.id) || NOPROPS;
+    const L = src.layer, iso = L && L.iso ? isoOrigin(model, L) : null;
+    const yaw = (pr.yaw !== undefined ? pr.yaw : src.yaw || 0) + (el._flip ? 180 : 0);
+    const pitch = pr.pitch !== undefined ? pr.pitch : src.pitch || 0;
+    const hasZ = pr.z !== undefined || src.z !== undefined;
+    let zc = (pr.z !== undefined ? pr.z : src.z || 0) + (src.zu || 0);
+    // no mapa isométrico a espessura sobe: a forma é o tampo do bloco
+    if (iso && src.thick > 0) zc += src.thick;
+    const dz = el._dz || 0, sign = el._flip ? -1 : 1;
+    const f = mapper(model, pose, src), lb = localBox(src), own = f(lb.x + lb.w / 2, lb.y + lb.h / 2);
+    const stages = [];
+    if (yaw || pitch) stages.push(stage3(own[0], own[1], yaw, pitch, eyeOf(model, src.persp)));
+    // ossos, do osso da forma até a raiz; o primeiro com round= dá a bola
+    let ball = null;
+    for (let bn = src.bone || src.on, guard = 0; bn && guard < 64; guard++) {
+      const b = model.bones.get(bn);
+      if (!b) break;
+      const m = pose.bones.get(bn), bv = pose.b3 && pose.b3.get(bn);
+      const c0 = b.round ? b.round.c : b.pivot, c = m ? M.apply(m, c0[0], c0[1]) : c0;
+      if (b.round && !ball) ball = { x: c[0], y: c[1], r: b.round.r * (m ? scaleOf(m) : 1) };
+      const by = bv && bv.yaw !== undefined ? bv.yaw : b.yaw || 0, bp = bv && bv.pitch !== undefined ? bv.pitch : b.pitch || 0;
+      if (by || bp) stages.push(stage3(c[0], c[1], by, bp, eyeOf(model, b.persp)));
+      bn = b.parent;
+    }
+    const nOwn = stages.length;
+    if (L && !iso) { const s = layerStage(model, pose, L); if (s) stages.push(s); }
+    // z de cada ponto: o z= da forma (um cartão reto) ou, num osso com round=, a superfície da bola
+    const sphere = ball && !hasZ && !src.billboard ? ball : null;
+    const z0 = sign * (zc + dz);
+    const zOf = sphere ? (x, y) => { const dx = x - sphere.x, dy = y - sphere.y, q = sphere.r * sphere.r - dx * dx - dy * dy; return sign * ((q > 0 ? Math.sqrt(q) : 0) + zc + dz); } : () => z0;
+    if (!stages.length && !iso) return { on: false, depth: zOf(own[0], own[1]) };
+    const map3 = (x, y, z) => {
+      const p = [x, y, z, 1];
+      for (const s of stages) run3(s, p);
+      if (iso) { const X = p[0], Y = p[1]; p[0] = iso[0] + X - Y; p[1] = iso[1] + (X + Y) / 2 - p[2]; p[2] = X + Y + 1e-3 * p[2]; }
+      return p;
+    };
+    // para onde a frente aponta: só os giros da forma e dos ossos (o da camada não escurece nada)
+    let nx = 0, ny = 0, nz = 1, nzOwn = 1;
+    stages.forEach((s, i) => {
+      const x1 = nx * s.ca + nz * s.sa, z1 = -nx * s.sa + nz * s.ca;
+      nx = x1;
+      const y1 = ny * s.cb - z1 * s.sb;
+      nz = ny * s.sb + z1 * s.cb;
+      ny = y1;
+      if (i === nOwn - 1) nzOwn = nz;
+    });
+    let map, depth;
+    if (src.billboard) {
+      // billboard: só o ponto de apoio anda (e a perspectiva muda o tamanho); a forma continua de frente
+      const m = src.bone ? pose.bones.get(src.bone) : null;
+      const a = src.boardAt ? (m ? M.apply(m, src.boardAt[0], src.boardAt[1]) : src.boardAt) : f(lb.x + lb.w / 2, lb.y + lb.h);
+      const q = map3(a[0], a[1], z0), k = q[3];
+      map = (x, y) => [q[0] + (x - a[0]) * k, q[1] + (y - a[1]) * k];
+      depth = q[2];
+      nz = nzOwn = 1;
+    } else {
+      map = (x, y) => map3(x, y, zOf(x, y));
+      depth = map3(own[0], own[1], zOf(own[0], own[1]))[2];
+    }
+    // na bola, a peça que vai para trás dela some aos poucos
+    let fade = 1;
+    if (sphere && !iso) {
+      const c = map3(sphere.x, sphere.y, sign * (zc + dz)), t = (depth - c[2]) / (sphere.r || 1);
+      fade = Math.max(0, Math.min(1, 1 + t / 0.12));
+    }
+    // cartão virando: fica mais escuro quanto mais de lado (shade= da camada)
+    const sh = L && L.shade !== undefined ? L.shade : 0.5;
+    const dark = nOwn && !sphere && !src.billboard && !iso ? sh * 0.7 * (1 - Math.min(1, Math.abs(nzOwn))) : 0;
+    // uma direção girada como a forma (sem perspectiva): para a luz dos lados do bloco
+    const rotN = (v) => {
+      let [x, y, z] = v;
+      for (const s of stages) { const x1 = x * s.ca + z * s.sa, z1 = -x * s.sa + z * s.ca, y1 = y * s.cb - z1 * s.sb; z = y * s.sb + z1 * s.cb; x = x1; y = y1; }
+      return [x, y, z];
+    };
+    return { on: true, map, map3, zOf, rotN, nz, fade, dark, depth, iso, curved: !!sphere };
+  }
+  // coordenadas do código → tela, com o 3D (para gradientes, hachuras e alças)
+  function fullMap(model, pose, el) {
+    const f = mapper(model, pose, el), d3 = el3(model, pose, el);
+    return d3 ? (x, y) => { const q = f(x, y); return d3.map(q[0], q[1]); } : f;
+  }
+  // matriz do texto com o 3D: a mais parecida com o giro, pelos cantos da caixa do texto
+  function textMat(model, pose, el) {
+    const m = textMatrix(pose, el), d3 = el3(model, pose, el);
+    if (!d3) return m;
+    const b = textBox(el);
+    if (!(b.w > 0) || !(b.h > 0)) return m;
+    const P = (x, y) => { const q = M.apply(m, x, y); return d3.map(q[0], q[1]); };
+    const p0 = P(b.x, b.y), px = P(b.x + b.w, b.y), py = P(b.x, b.y + b.h);
+    const a = [(px[0] - p0[0]) / b.w, (px[1] - p0[1]) / b.w], c = [(py[0] - p0[0]) / b.h, (py[1] - p0[1]) / b.h];
+    return [a[0], a[1], c[0], c[1], p0[0] - a[0] * b.x - c[0] * b.y, p0[1] - a[1] * b.x - c[1] * b.y];
+  }
+  // Cópias de uma forma para o 3D: bk = o verso (back=) virado de costas no lugar dela; bt = o verso no fundo
+  // do bloco (thick=); tb = a própria forma no fundo do bloco.
+  function proxy3(el, kind) {
+    const key = '_p3' + kind;
+    if (el[key]) return el[key];
+    const flip = kind !== 'tb', B = flip ? el.back : el, P = Object.create(B);
+    Object.assign(P, { id: kind + el.id, _pid: B.id, _src: el, _flip: flip, _dz: kind === 'bk' ? 0 : -el.thick, hidden: false, layer: el.layer, bone: el.bone, bones: el.bones, cloth: el.cloth, thick: 0, back: null, cuts: null });
+    el[key] = P;
+    return P;
+  }
+  // lados de uma forma com espessura: um quadrilátero por trecho do contorno, de longe para perto. k = luz do
+  // lado (1 = a cor dos lados; menos = mais escuro): a luz vem de cima à esquerda; no iso, o lado esquerdo é o claro.
+  function sideQuads(model, pose, el, d3) {
+    const fl = geometry(model, pose, el).flat2;
+    if (!fl) return [];
+    const n = fl.length / 2, t = el.thick, top = [], bot = [];
+    let A2 = 0;
+    for (let i = 0; i < n; i++) { const j = (i + 1) % n; A2 += fl[2 * i] * fl[2 * j + 1] - fl[2 * j] * fl[2 * i + 1]; }
+    const sg = A2 > 0 ? 1 : -1, clamp1 = (v) => Math.max(-1, Math.min(1, v));
+    for (let i = 0; i < n; i++) {
+      const x = fl[2 * i], y = fl[2 * i + 1], z = d3.zOf(x, y);
+      top.push(d3.map3(x, y, z));
+      bot.push(d3.map3(x, y, z - t));
+    }
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, a = top[i], b = top[j], c = bot[j], d = bot[i];
+      const ex = fl[2 * j] - fl[2 * i], ey = fl[2 * j + 1] - fl[2 * i + 1], l = Math.hypot(ex, ey) || 1;
+      const nv = d3.rotN([(sg * ey) / l, (-sg * ex) / l, 0]);
+      const k = d3.iso ? 0.86 + 0.14 * clamp1(nv[1] - nv[0]) : 0.84 + 0.16 * clamp1(-0.6 * nv[0] - 0.8 * nv[1]);
+      out.push({ q: [a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]], depth: (a[2] + b[2] + c[2] + d[2]) / 4, k });
+    }
+    return out.sort((p, q) => p.depth - q.depth);
+  }
+  // forma com espessura: a face de longe, os lados e a de perto, na ordem de pintar (no iso, só lados e tampo)
+  function solidParts(model, pose, el, d3) {
+    const quads = sideQuads(model, pose, el, d3);
+    if (d3.iso) return { far: null, quads, near: el };
+    const back = proxy3(el, el.back ? 'bt' : 'tb');
+    return d3.nz >= 0 ? { far: back, quads, near: el } : { far: el, quads, near: back };
+  }
+  // cor dos lados: thickc= ou a cor da forma mais escura
+  function sideColor(el, pr) {
+    if (el.thickc) return el.thickc;
+    const f = pr.c !== undefined ? pr.c : el.fill;
+    return typeof f === 'string' && G.parseHex(f) ? G.lerpColor(f, '#000000', 0.2) : typeof el.inkc === 'string' ? el.inkc : '#555555';
+  }
+  // tira os pontos do meio dos trechos retos (o giro e a perspectiva levam reta em reta): menos lados no bloco
+  // e um SVG menor. Na bola (round=), a reta entorta, então lá isto não é usado.
+  function dropStraight(p) {
+    const n = p.length / 2;
+    if (n < 4) return p;
+    const out = [p[0], p[1]];
+    let k = 0;
+    for (let i = 1; i < n - 1; i++) {
+      // o ponto i pode sair se todos de k até i ficam na reta de k até i+1
+      const ax = p[2 * k], ay = p[2 * k + 1], dx = p[2 * i + 2] - ax, dy = p[2 * i + 3] - ay, l = Math.hypot(dx, dy) || 1;
+      let ok = true;
+      for (let j = k + 1; j <= i && ok; j++) ok = Math.abs((p[2 * j] - ax) * dy - (p[2 * j + 1] - ay) * dx) / l <= 0.05;
+      if (!ok) { out.push(p[2 * i], p[2 * i + 1]); k = i; }
+    }
+    out.push(p[2 * n - 2], p[2 * n - 1]);
+    return out;
+  }
+  // zsort: longe primeiro (no iso, de cima do mapa para baixo); empate fica na ordem do arquivo
+  function zSort(model, pose, items) {
+    return items.map((it, i) => ({ it, i, d: info3(model, pose, it.el).depth })).sort((a, b) => a.d - b.d || a.i - b.i).map((o) => o.it);
+  }
+
   // ---------- morph entre formas quaisquer ----------
   // Formas do mesmo tipo e com o mesmo número de pontos se misturam ponto a ponto. As outras (elipse que
   // vira estrela, boca de 4 pontos que vira uma de 7) viram contornos com MORPH_N pontos espalhados por
@@ -540,7 +770,7 @@
   function geometry(model, pose, el) {
     let g = pose.geo.get(el.id);
     if (g) return g;
-    const pr = pose.props.get(el.id);
+    const pr = pose.props.get(el._pid !== undefined ? el._pid : el.id);
     const mo = pr && pr.shape && pr.shape.from && pr.shape.to ? pr.shape : null;
     let segs = [];
     // bones=: a curva é desenhada parada e depois dobrada ponto a ponto pelos ossos
@@ -591,7 +821,19 @@
       if (el.closed && pts.length > 2 && Math.hypot(pts[0].x - pts[pts.length - 1].x, pts[0].y - pts[pts.length - 1].y) < 1e-6) pts.pop();
       segs = G.polySegs(pts, el.closed);
     }
-    g = { segs, closed: el.closed, _path: null, _flat: null };
+    // 3D: a curva vira pontos (flat2, como desenhada) e cada ponto gira e ganha perspectiva
+    const d3 = el.type !== 'emitter' ? el3(model, pose, el) : null;
+    let flat2 = null;
+    if (d3 && segs.length) {
+      flat2 = G.flatten(segs, 1.5);
+      const n = flat2.length;
+      if (el.closed && n > 6 && Math.hypot(flat2[0] - flat2[n - 2], flat2[1] - flat2[n - 1]) < 1e-6) flat2 = flat2.slice(0, n - 2);
+      if (!d3.curved) flat2 = dropStraight(flat2);
+      const pts = [];
+      for (let i = 0; i < flat2.length; i += 2) { const q = d3.map(flat2[i], flat2[i + 1]); pts.push({ x: q[0], y: q[1] }); }
+      segs = G.polySegs(pts, el.closed);
+    }
+    g = { segs, closed: el.closed, _path: null, _flat: null, flat2 };
     pose.geo.set(el.id, g);
     return g;
   }
@@ -622,7 +864,7 @@
 
   // ---------- tinta: cor ou gradiente ----------
   function gradGeom(model, pose, el, g) {
-    const f = el ? mapper(model, pose, el) : (x, y) => [x, y];
+    const f = el ? fullMap(model, pose, el) : (x, y) => [x, y];
     let lx = (u) => u, ly = (v) => v, rs = 1;
     if (g.box) {
       const b = el ? localBox(el) : { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h };
@@ -1048,6 +1290,8 @@
       const tb = loopD ? t % loopD : t;
       for (let j = 0; j < el.burst; j++) spawn(100000 + j, t - tb);
     }
+    const d3 = el3(model, pose, el);
+    if (d3) for (const p of out) { const q = d3.map(p.x, p.y); p.x = q[0]; p.y = q[1]; }
     return out;
   }
   function drawParticles(ctx, model, pose, el, alpha, R) {
@@ -1108,7 +1352,7 @@
   // ---------- hachura e pontos ----------
   // Linhas geradas no espaço da própria forma, então acompanham osso, componente e tecido.
   function patternLines(model, pose, el, pat) {
-    const f = mapper(model, pose, el), b = localBox(el);
+    const f = fullMap(model, pose, el), b = localBox(el);
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2, R0 = Math.hypot(b.w, b.h) / 2 + pat.gap;
     const lines = [], dots = [];
     if (pat.type === 'hatch') {
@@ -1243,7 +1487,8 @@
       if (lp.show === 0) continue;
       const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
       if (alpha <= 0.001) continue;
-      const items = orderItems(opts.items ? layer.items.filter((it) => opts.items.has(it)) : opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items, pose);
+      let items = orderItems(opts.items ? layer.items.filter((it) => opts.items.has(it)) : opts.filter ? layer.items.filter((it) => opts.filter(it.el)) : layer.items, pose);
+      if (layer.zsort && model.has3d) items = zSort(model, pose, items);
       if (layer.cast && lighting) drawCast(ctx, R, layer, items, alpha);
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
@@ -1360,9 +1605,57 @@
   }
 
   // R: iluminação da camada (null = sem luz). flat: só a silhueta (sombra projetada), sem brilho próprio.
+  // Com 3D: some atrás da bola (round=), mostra o verso (back=) quando vira de costas e monta o bloco (thick=).
   function drawItem(ctx, model, pose, el, part, layer, base, R, flat) {
+    const d3 = model.has3d && !el.hidden ? el3(model, pose, el) : null;
+    if (!d3) { drawItem0(ctx, model, pose, el, part, layer, base, R, flat); return; }
+    if (d3.fade <= 0.001) return;
+    base *= d3.fade;
+    if (el.thick > 0 && el.closed && !el._src && !el.billboard) {
+      const sp = solidParts(model, pose, el, d3);
+      if (part !== 'ink') {
+        if (sp.far) drawItem0(ctx, model, pose, sp.far, part, layer, base, R, flat);
+        drawSides(ctx, model, pose, el, sp.quads, base, R, flat);
+      }
+      drawItem0(ctx, model, pose, sp.near, part, layer, base, R, flat);
+      return;
+    }
+    drawItem0(ctx, model, pose, d3.nz < 0 && el.back ? proxy3(el, 'bk') : el, part, layer, base, R, flat);
+  }
+  // os lados do bloco: primeiro o contorno (fica só por fora), depois o preenchimento de cada lado
+  function drawSides(ctx, model, pose, el, quads, base, R, flat) {
+    const pr = propsOf(pose, el);
+    const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+    if (alpha <= 0.001 || pr.show === 0 || !quads.length) return;
+    let col = sideColor(el, pr);
+    const ink = pr.ink !== undefined ? pr.ink : el.ink;
+    let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
+    if (R) {
+      const b = segsBox(geometry(model, pose, el).segs);
+      col = litColor(col, R.lighting, b.x + b.w / 2, b.y + b.h / 2);
+      inkc = litColor(inkc, R.lighting, b.x + b.w / 2, b.y + b.h / 2, true);
+    }
+    const quad = (q) => { ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[2], q[3]); ctx.lineTo(q[4], q[5]); ctx.lineTo(q[6], q[7]); ctx.closePath(); };
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineJoin = 'round';
+    if (ink > 0 && typeof inkc === 'string' && model.finish.style !== 'flat' && !flat) {
+      ctx.strokeStyle = inkc;
+      ctx.lineWidth = ink;
+      for (const s of quads) { quad(s.q); ctx.stroke(); }
+    }
+    ctx.lineWidth = 1;
+    for (const s of quads) {
+      ctx.fillStyle = ctx.strokeStyle = G.lerpColor(col, '#000000', 1 - s.k);
+      quad(s.q);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawItem0(ctx, model, pose, el, part, layer, base, R, flat) {
     if (el.hidden) return;
-    const pr = pose.props.get(el.id) || NOPROPS;
+    const pr = propsOf(pose, el);
     if (pr.show === 0) return;
     const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001) return;
@@ -1396,6 +1689,16 @@
         if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
         else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
         glowOff(ctx);
+        // cartão virando de lado (3D): mais escuro
+        const d3 = el3(model, pose, el);
+        if (d3 && d3.dark > 0.004) {
+          ctx.save();
+          ctx.globalAlpha = fa * d3.dark;
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = '#000000';
+          ctx.fill(path);
+          ctx.restore();
+        }
         if (L) {
           shadeShape(ctx, L, path, bb, layer, fa);
           lightRaster(ctx, L, path, bb, fa);
@@ -1491,7 +1794,7 @@
     let fill = pr.c !== undefined ? pr.c : el.fill;
     const ink = pr.ink !== undefined ? pr.ink : el.ink;
     let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-    const m = textMatrix(pose, el);
+    const m = textMat(model, pose, el);
     if (R) { fill = litColor(fill, R.lighting, m[4], m[5]); inkc = litColor(inkc, R.lighting, m[4], m[5]); }
     ctx.save();
     ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
@@ -1721,7 +2024,7 @@
 
   // Posição de uma alça (ponto editável) na pose atual.
   function handlePos(model, pose, rec, h) {
-    if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return mapper(model, pose, rec.el)(h.x, h.y);
+    if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return fullMap(model, pose, rec.el)(h.x, h.y);
     if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
       const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
@@ -1741,6 +2044,7 @@
   W.scene = {
     makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
+    el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };
 })(window.Weasel = window.Weasel || {});

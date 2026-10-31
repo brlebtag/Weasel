@@ -1,0 +1,7 @@
+canvas   320 × 200, fundo #20242e
+camadas  2
+  chao             2 item(ns)
+  coisas           7 item(ns)
+formas   9
+animações 1
+  sobe           4 quadros, 12 fps, anima caixa.z

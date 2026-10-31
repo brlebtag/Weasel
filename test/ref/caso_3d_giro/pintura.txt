@@ -1,0 +1,8 @@
+rect frente @0.000 +0.999
+ellipse sol @0.999 +0.581
+text nome @1.580 +0.352
+rect deitada @1.932 +0.734
+shape pipa @2.665 +0.652
+stroke fio @3.317 +0.361
+ellipse placa @3.678 +0.437
+total 4.115

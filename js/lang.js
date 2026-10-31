@@ -19,25 +19,28 @@
   const CLOSED = new Set(['shape', 'ellipse', 'rect']);
   const COMMON = ['c', 'bone', 'bones', 'cloth', 'opacity', 'mirror', 'cut', 'emit'];
   const OUTLINE = ['ink', 'inkc', 'weight', 'inkon'];
+  // 2.5D: profundidade, giro 3D e perspectiva (todas as formas); espessura e verso (formas fechadas)
+  const DEPTH = ['z', 'yaw', 'pitch', 'persp'];
+  const SOLID = ['thick', 'thickc', 'back'];
   const ATTRS = {
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
     unity: ['unit', 'root', 'collider'],
-    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn'],
+    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     anim: ['frames', 'fps', 'mix', 'bones'],
-    use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity'],
+    use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity', 'z'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
     ambient: ['c', 'power'],
     pattern: ['c', 'bg', 'gap', 'w', 'r', 'angle'],
-    shape: [...COMMON, ...OUTLINE, 'smooth'],
-    ellipse: [...COMMON, ...OUTLINE, 'rot'],
-    rect: [...COMMON, ...OUTLINE, 'r', 'rot'],
-    stroke: [...COMMON, 'w', 'taper', 'cap', 'smooth', 'limb', 'hip', 'on', 'foot', 'target', 'bend'],
-    line: [...COMMON, 'w', 'dash'],
-    text: [...COMMON, 'ink', 'inkc', 'size', 'font', 'align', 'rot'],
-    emitter: ['c', 'bone', 'opacity', 'emit', 'rate', 'burst', 'life', 'speed', 'angle', 'spread', 'gravity', 'wind', 'drag', 'size', 'shape', 'area', 'seed'],
+    shape: [...COMMON, ...OUTLINE, 'smooth', ...DEPTH, ...SOLID],
+    ellipse: [...COMMON, ...OUTLINE, 'rot', ...DEPTH, ...SOLID],
+    rect: [...COMMON, ...OUTLINE, 'r', 'rot', ...DEPTH, ...SOLID],
+    stroke: [...COMMON, 'w', 'taper', 'cap', 'smooth', 'limb', 'hip', 'on', 'foot', 'target', 'bend', ...DEPTH],
+    line: [...COMMON, 'w', 'dash', ...DEPTH],
+    text: [...COMMON, 'ink', 'inkc', 'size', 'font', 'align', 'rot', ...DEPTH],
+    emitter: ['c', 'bone', 'opacity', 'emit', 'rate', 'burst', 'life', 'speed', 'angle', 'spread', 'gravity', 'wind', 'drag', 'size', 'shape', 'area', 'seed', 'z'],
     film: ['fps', 'dur', 'lang', 'subs', 'subsize', 'subc'],
     audio: ['at', 'from', 'dur', 'vol', 'lips', 'cues', 'text', 'lang'],
     sub: ['dur', 'lang'],
@@ -45,7 +48,7 @@
     shot: ['dur', 'in'],
     mark: [],
     actor: ['scale', 'rot', 'flip', 'depth', 'anim', 'speed', 'opacity', 'origin', 'variant', 'hide', 'path', 'turn', 'expr'],
-    camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec'],
+    camera: ['zoom', 'rot', 'shake', 'follow', 'offset', 'lag', 'fade', 'fadec', 'lens', 'fog', 'haze'],
     box: ['bone', 'only'],
     point: ['bone'],
     ref: ['scale', 'rot', 'opacity', 'only', 'frames'],
@@ -54,28 +57,30 @@
     tile: ['collision'],
   };
   const FLAGS = {
-    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
-    shape: ['hidden'], stroke: ['hidden'], line: ['hidden'], ellipse: ['hidden'], rect: ['hidden'], text: ['hidden', 'bold', 'italic'], emitter: ['hidden'],
+    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front', 'floor', 'zsort', 'iso'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
+    shape: ['hidden', 'billboard'], stroke: ['hidden', 'billboard'], line: ['hidden', 'billboard'], ellipse: ['hidden', 'billboard'], rect: ['hidden', 'billboard'], text: ['hidden', 'bold', 'italic', 'billboard'], emitter: ['hidden'],
+    use: ['billboard'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
     audio: ['loop'],
     box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
-    tileset: ['auto'],
+    tileset: ['auto', 'iso'],
     tile: ['solid', 'oneway'],
     ref: ['lock', 'hidden', 'front'],
   };
-  const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic']);
+  const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic', 'billboard']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
   // order = above=/below= (pinta logo depois/antes de outra forma ou camada); draw = quanto já foi desenhado (0 a 1)
-  const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape', draw: 'num', above: 'order', below: 'order' };
-  const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free', above: 'order', below: 'order' };
+  const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape', draw: 'num', above: 'order', below: 'order', yaw: 'free', pitch: 'free', z: 'free' };
+  const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free', above: 'order', below: 'order', yaw: 'free', pitch: 'free' };
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
   const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant', along: 'free', expr: 'expr' };
-  // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1
-  const BONE_PROPS = { along: 'free' };
-  const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color' };
+  // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1; osso.yaw / osso.pitch: o giro 3D
+  const BONE_PROPS = { along: 'free', yaw: 'free', pitch: 'free' };
+  // lens = zoom de verdade (aproxima tudo igual); fog = cor da névoa da distância; haze = profundidade com metade de névoa
+  const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color', lens: 'pos', fog: 'color', haze: 'pos' };
   // formas do próprio arquivo do filme (mapas, setas, títulos)
-  const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step' };
+  const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step', yaw: 'free', pitch: 'free', z: 'free' };
   // transições na entrada de um plano: shot nome dur=4s in=fade,0.5s
   const TRANSITIONS = ['fade', 'wipe', 'slide', 'zoom', 'iris'];
   const FILM_W = 1920, FILM_H = 1080;
@@ -455,7 +460,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null,
+      boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null, has3d: false,
       byLine: new Map(),
       errors,
     };
@@ -688,7 +693,7 @@
           const name = ident(st, st.pos[0], 'da camada');
           if (!name) break;
           if (m.layerMap.has(name)) { err(st.line, `camada "${name}" já existe`, st.pos[0].from, st.pos[0].to); break; }
-          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false };
+          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false, yaw: 0, pitch: 0, persp: null, pivot: null, horizon: null, iso: null, floor: false, zsort: false };
           for (const f of st.pos.slice(1)) {
             if (FLAGS.layer.includes(f.text)) Ly[f.text] = true;
             else err(st.line, `opção desconhecida "${f.text}" (use ${FLAGS.layer.join(', ')})`, f.from, f.to, 'warn');
@@ -699,6 +704,17 @@
           if (A.has('only')) Ly.only = A.get('only').text.split(',').filter(Boolean);
           if (A.has('opacity')) Ly.opacity = number(st, A.get('opacity'), 1, 0, 1);
           if (A.has('depth')) Ly.depth = number(st, A.get('depth'), 1, 0.05, 1000);
+          // 2.5D: a camada inteira gira em 3D (yaw/pitch), deita como chão (floor + horizon=) ou vira mapa isométrico (iso)
+          for (const k of ['yaw', 'pitch']) if (A.has(k)) Ly[k] = number(st, A.get(k), 0);
+          if (A.has('persp')) Ly.persp = number(st, A.get('persp'), 0, 0, 100000);
+          if (A.has('pivot')) Ly.pivot = pair(st, A.get('pivot'), null);
+          if (A.has('horizon')) {
+            Ly.horizon = number(st, A.get('horizon'), 0);
+            if (!Ly.floor) bad(st, A.get('horizon'), 'horizon= só vale junto com floor', 'warn');
+          }
+          if (A.has('iso')) Ly.iso = pair(st, A.get('iso'), null) || true;
+          if (Ly.iso && (Ly.yaw || Ly.pitch || Ly.floor)) err(st.line, 'iso não junta com yaw=, pitch= nem floor (vale o iso)', st.cmdTok.from, st.cmdTok.to, 'warn');
+          if (Ly.yaw || Ly.pitch || Ly.floor || Ly.iso) m.has3d = true;
           if (A.has('blend')) {
             const b = A.get('blend').text;
             if (BLENDS.includes(b)) Ly.blend = b === 'normal' ? 'source-over' : b;
@@ -732,6 +748,15 @@
           if (A.has('spring')) b.spring = number(st, A.get('spring'), 0.5, 0, 1) || 0.001;
           if (A.has('path')) { b.pathAt = { st, a: A.get('path') }; b.turn = true; }
           if (A.has('turn')) b.turn = A.get('turn').text !== '0';
+          // 2.5D: o osso gira em 3D (yaw/pitch) em volta do pivô; round= faz das peças dele uma bola (cabeça que vira)
+          for (const k of ['yaw', 'pitch']) if (A.has(k)) b[k] = number(st, A.get(k), 0);
+          if (A.has('persp')) b.persp = number(st, A.get('persp'), 0, 0, 100000);
+          if (A.has('round')) {
+            const a = A.get('round'), v = list(st, a, 1, 3, null);
+            if (v && (v.length === 2 || !(v[0] > 0))) bad(st, a, 'use round=raio ou round=raio,x,y (o centro da bola)');
+            else if (v) b.round = { r: v[0], c: v.length === 3 ? [v[1], v[2]] : null };
+          }
+          if (b.yaw || b.pitch || b.round) m.has3d = true;
           m.bones.set(name, b);
           break;
         }
@@ -1000,6 +1025,16 @@
         if (isNaN(s)) bad(st, a, 'use emit=cor[,força]');
         else if (c) el.emit = { c, s: Math.max(0, Math.min(10, s)) };
       }
+      // 2.5D: profundidade (z, mais o z= do use), giro 3D, perspectiva, espessura, verso e "sempre de frente"
+      if (A.has('z')) el.z = number(st, A.get('z'), 0) * ws;
+      el.zu = ctx.zu || 0;
+      for (const k of ['yaw', 'pitch']) if (A.has(k)) el[k] = number(st, A.get(k), 0);
+      if (A.has('persp')) el.persp = number(st, A.get('persp'), 0, 0, 100000);
+      if (A.has('thick')) el.thick = number(st, A.get('thick'), 0, 0, 10000) * ws;
+      if (A.has('thickc')) el.thickc = plainColor(st, A.get('thickc'));
+      if (A.has('back')) el.backAt = { st, a: A.get('back') };
+      if (ctx.boardXf) { el.billboard = true; el.boardAt = M.apply(ctx.boardXf, 0, 0); } else if (flags.has('billboard')) el.billboard = true;
+      if (el.z || el.zu || el.yaw || el.pitch || el.thick || el.backAt || el.billboard) m.has3d = true;
       const inkColor = pal('ink', ctx);
       const defInk = typeof inkColor === 'string' ? inkColor : '#14141c';
 
@@ -1150,7 +1185,8 @@
       if (depth > 8) { err(st.line, 'componentes demais um dentro do outro (algum use em ciclo?)', st.cmdTok.from, st.cmdTok.to); scope = saved; return; }
       if (!dry) def.uses++;
       const at = st.pos[1] ? posPair(st, st.pos[1], 'a posição', [0, 0]) : [0, 0];
-      for (const f of st.pos.slice(2)) err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn');
+      let board = false;
+      for (const f of st.pos.slice(2)) { if (f.text === 'billboard') board = true; else err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn'); }
       const A = st.attrs;
       let sx = 1, sy = 1, fx = 1, fy = 1;
       if (A.has('scale')) { const v = list(st, A.get('scale'), 1, 2, [1]); sx = v[0]; sy = v.length > 1 ? v[1] : v[0]; }
@@ -1166,7 +1202,10 @@
         xf: parent.xf ? M.mul(parent.xf, local) : local,
         over: new Map(parent.over || []), vars: new Map(parent.vars),
         bone: parent.bone, cloth: parent.cloth, opacity: parent.opacity, inst: dry ? -1 : ++instCount,
+        zu: (parent.zu || 0) + (A.has('z') ? number(st, A.get('z'), 0) : 0), boardXf: parent.boardXf || null,
       };
+      // billboard: o componente inteiro fica de frente, preso no ponto do use
+      if (board) ctx.boardXf = ctx.xf;
       if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) ctx.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) ctx.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
       if (A.has('opacity')) ctx.opacity *= number(st, A.get('opacity'), 1, 0, 1);
@@ -1368,6 +1407,15 @@
         }
         if (!el.cuts.length) el.cuts = null;
       }
+      if (el.backAt) {
+        const { st, a } = el.backAt, b = findNamed(a.text, el.inst);
+        if (!b) bad(st, a, `back: forma "${a.text}" não existe`);
+        else if (!el.closed || !b.closed) bad(st, a, 'back= vale entre formas fechadas (shape, ellipse ou rect)');
+        else if (b !== el) {
+          el.back = b;
+          if (!b.hidden) bad(st, a, `o verso "${a.text}" também aparece sozinho: ponha hidden nele`, 'warn');
+        }
+      }
       if (!el.limb) continue;
       const xf = el.xf;
       const T = (x, y) => (xf ? M.apply(xf, x, y) : [x, y]);
@@ -1423,6 +1471,14 @@
       if (!b.tip || Math.hypot(b.tip[0] - b.pivot[0], b.tip[1] - b.pivot[1]) < 2) b.tip = [b.pivot[0], b.pivot[1] + 30];
     }
 
+    // round= sem centro: o meio das peças presas no osso (a bola da cabeça)
+    for (const b of m.bones.values()) {
+      if (!b.round || b.round.c) continue;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const el of m.elements) if (el.bone === b.name) for (const p of restPoints(el)) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+      b.round.c = x0 === Infinity ? b.pivot.slice() : [(x0 + x1) / 2, (y0 + y1) / 2];
+    }
+
     // path= dos ossos: o nome de uma linha, traço ou forma (o osso anda por ela)
     for (const b of m.bones.values()) {
       if (!b.pathAt) continue;
@@ -1465,6 +1521,7 @@
         if (A.has('normal')) g.normal = number(st, A.get('normal'), 1, 0, 10);
         // rig=bones: a cena sai com esqueleto de verdade (Bone2D); rig=frames (padrão): quadros prontos
         if (A.has('rig')) { const a = A.get('rig'); if (a.text === 'bones' || a.text === 'frames') g.rig = a.text; else bad(st, a, 'rig= aceita frames (quadros prontos) ou bones (esqueleto de verdade)'); }
+        if (g.rig === 'bones' && m.has3d) bad(st, A.get('rig'), 'o esqueleto do Godot não gira em 3D: yaw, pitch, z e iso ficam parados (use rig=frames)', 'warn');
         if (A.has('name')) {
           const a = A.get('name'), v = unq(a.text);
           if (/^[A-Za-z_]\w*$/.test(v)) g.name = v; else bad(st, a, 'name= precisa ser um nome simples (letras, números e _)');
@@ -1476,7 +1533,8 @@
         if (m.tileset) { err(st.line, 'tileset repetido (só um por arquivo)', st.cmdTok.from, st.cmdTok.to); continue; }
         const T = { size: [32, 32], auto: false, tiles: [], line: st.line, cols: 0, rows: 0 };
         if (A.has('size')) { const v = list(st, A.get('size'), 1, 2, [32]); T.size = [Math.max(2, Math.round(v[0])), Math.max(2, Math.round(v.length > 1 ? v[1] : v[0]))]; }
-        for (const f of st.pos) { if (f.text === 'auto') T.auto = true; else err(st.line, `opção desconhecida "${f.text}" (use auto)`, f.from, f.to, 'warn'); }
+        for (const f of st.pos) { if (f.text === 'auto' || f.text === 'iso') T[f.text] = true; else err(st.line, `opção desconhecida "${f.text}" (use auto ou iso)`, f.from, f.to, 'warn'); }
+        if (T.iso && T.size[1] * 2 < T.size[0]) err(st.line, `no iso, o bloco é um losango ${T.size[0]}×${Math.round(T.size[0] / 2)}: use size=${T.size[0]},${Math.round(T.size[0] / 2)} (ou mais alto, para caixas e paredes)`, st.cmdTok.from, st.cmdTok.to, 'warn');
         T.cols = Math.floor(m.canvas.w / T.size[0]);
         T.rows = Math.floor(m.canvas.h / T.size[1]);
         if (!T.cols || !T.rows) err(st.line, `o canvas (${m.canvas.w}×${m.canvas.h}) é menor que um bloco`, st.cmdTok.from, st.cmdTok.to);
@@ -1652,7 +1710,8 @@
       if (!cands.length) { bad(st, a, `"${name}" não é forma, caixa, luz, camada nem osso`); continue; }
       const tgt = cands.find((c) => c.table[prop]);
       if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada', box: 'caixa', bone: 'osso' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
-      if (tgt.kind === 'bone' && !m.bones.get(name).pathAt) { bad(st, a, `o osso "${name}" não tem caminho: use bone ${name} … path=nome_de_uma_linha`); continue; }
+      if (tgt.kind === 'bone' && prop === 'along' && !m.bones.get(name).pathAt) { bad(st, a, `o osso "${name}" não tem caminho: use bone ${name} … path=nome_de_uma_linha`); continue; }
+      if (prop === 'yaw' || prop === 'pitch' || prop === 'z') m.has3d = true;
       const els = tgt.kind === 'el' ? tgt.targets : null;
       const type = tgt.table[prop];
       let v;
@@ -1922,6 +1981,9 @@
       if (A.has('lag')) cam.lag = number(st, A.get('lag'), 0, 0, 10);
       if (A.has('fade')) cam.fade = number(st, A.get('fade'), 0, 0, 1);
       if (A.has('fadec')) cam.fadec = plainColor(st, A.get('fadec')) || cam.fadec;
+      if (A.has('lens')) cam.lens = number(st, A.get('lens'), 1, 0.01, 100);
+      if (A.has('fog')) { const a = A.get('fog'); cam.fog = a.text === 'none' ? null : plainColor(st, a) || cam.fog; }
+      if (A.has('haze')) cam.haze = number(st, A.get('haze'), 6, 1.05, 1000);
       if (A.has('follow')) { const a = A.get('follow'); cam.follow = a.text === 'none' ? null : a.text; cam.followAt = { st, a }; }
     }
 
@@ -1929,7 +1991,7 @@
       for (const st of filmSts.slice(1)) err(st.line, 'film repetido (só um por arquivo)', st.cmdTok.from, st.cmdTok.to);
       const F = {
         fps: 24, dur: null, line: fst.line, names: new Set(),
-        actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000' },
+        actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000', lens: 1, fog: null, haze: 6 },
         shots: [], seq: [], audios: [], subs: [], marks: [],
         lang: 'pt', burn: false, subsize: null, subc: '#ffffff',
       };
@@ -2196,6 +2258,7 @@
         if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else if (m.named.has(name)) { kind = 'shape'; table = SHAPE_AT_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz, camada nem forma deste filme`); continue; }
         const type = table[prop];
         if (type === 'order') { bad(st, a, `${prop}= muda a ordem só numa animação (key), não no at`); continue; }
+        if ((kind === 'shape' || kind === 'layer') && (prop === 'yaw' || prop === 'pitch' || prop === 'z')) m.has3d = true;
         if (!type) { bad(st, a, `"${prop}" não muda com at em ${{ camera: 'camera', actor: 'ator', light: 'luz', layer: 'camada', shape: 'forma' }[kind]} (use ${Object.keys(table).filter((k) => table[k] !== 'order').join(', ')})`); continue; }
         switch (type) {
           case 'xy': {

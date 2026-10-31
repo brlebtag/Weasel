@@ -1,0 +1,16 @@
+# teste: 2.5D — tileset isométrico para o Godot (tileset iso): losango embaixo da célula, caixa alta, colisão em losango
+canvas 192 64 bg=none
+palette ink=#1c1f2b line=2
+
+tileset size=64,64 iso
+
+layer grama iso=32,32
+rect g 0,0 32,32 c=#8bc34a ink=line
+layer caixa iso=96,32
+rect c 0,0 32,32 c=#d7a86e ink=line thick=32
+layer agua iso=160,32
+rect a 0,0 32,32 c=#4fc3f7 ink=line
+
+tile grama 0,0
+tile caixa 1,0 solid
+tile agua 2,0 solid

@@ -1,6 +1,6 @@
 # 10. Filme
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência rápida →](11-referencia.md)
+[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Profundidade (2.5D) →](11-profundidade.md)
 
 Um arquivo que começa com `film` é um **filme**. Ele não desenha personagens: ele **põe em cena** arquivos `.weasel` que já existem (os mesmos do jogo), divide o tempo em **planos** e diz o que muda e quando. Corrigiu o personagem no arquivo dele? A correção vale no jogo e no filme.
 
@@ -141,6 +141,8 @@ camera x,y zoom= rot= follow= offset= lag= shake= fade= fadec=
 | `follow=ator` | segue um ator; `offset=dx,dy` desloca o ponto seguido; `lag=0.5` faz a câmera chegar meio segundo atrasada, macia |
 | `shake=16` | treme, em pixels (um pouso, uma explosão) |
 | `fade=1` | escurece tudo (0 = normal); `fadec=` muda a cor do escurecido (`#ffffff` para um clarão) |
+| `lens=` | a lente: aumenta perto e longe por igual (veja [Profundidade no filme](11-profundidade.md#profundidade-no-filme-lente-e-névoa)) |
+| `fog=cor` `haze=` | névoa da distância: o que está longe (`depth=` maior que 1) some nessa cor; `haze=` é onde ela chega na metade (6) |
 
 A câmera parada no centro do canvas e com `zoom=1` mostra o desenho exatamente como foi feito.
 
@@ -288,6 +290,7 @@ Quando a câmera anda, o que está **longe** deveria andar menos que o que está
 - `layer … screen` fica **preso na tela** (títulos, legendas desenhadas, molduras): não anda com a câmera.
 - `layer … front` põe a camada na frente dos atores da mesma profundidade (a moita na frente do personagem).
 - No arquivo do filme, `only=` de uma camada aceita nomes de **plano**: o título do exemplo só aparece no plano `chegada`.
+- A câmera também tem **lente** (`lens=`) e **névoa da distância** (`fog=`, `haze=`); juntas, dão o efeito do *Vertigo*. Estão em [Profundidade no filme](11-profundidade.md#profundidade-no-filme-lente-e-névoa).
 
 ## Luz no filme
 
@@ -364,4 +367,4 @@ Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 
 O [README](../../README.md#filmes-na-linha-de-comando) tem a lista completa, inclusive como levar o filme para o DaVinci Resolve, o Final Cut ou o Premiere.
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência rápida →](11-referencia.md)
+[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Profundidade (2.5D) →](11-profundidade.md)

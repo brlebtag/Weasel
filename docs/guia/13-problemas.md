@@ -1,6 +1,6 @@
-# 12. Problemas comuns
+# 13. Problemas comuns
 
-[← Referência rápida](11-referencia.md) · [Índice](README.md)
+[← Referência rápida](12-referencia.md) · [Índice](README.md)
 
 O que costuma dar errado, por que acontece e como resolver.
 
@@ -107,6 +107,22 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **O vídeo não sai.** Vídeo pela linha de comando precisa do ffmpeg instalado (no Windows: `winget install ffmpeg`). Sem ele, dá para exportar PNGs (`--frames`) ou GIF.
 
+## Profundidade (2.5D)
+
+**Pus `z=` e nada mudou.** Sem giro, o `z=` não tira nada do lugar: ele vale quando a forma, o osso ou a camada gira, e para a ordem com `zsort`.
+
+**Uma peça aparece por cima do que devia ficar na frente dela.** Sem `zsort`, a ordem é a do código, mesmo com `z=`. Ponha `zsort` na camada. Peças coladas (o desenho na frente de uma carta) precisam de um `z=` um pouco maior que o da carta (`z=1`).
+
+**A carta virou e mostra a frente espelhada.** Sem `back=`, o lado de trás é a própria frente vista por trás. Desenhe o verso numa forma com `hidden` e ligue com `back=verso`.
+
+**O chão acaba antes do horizonte.** O chão com `floor` precisa ser comprido: desenhe até `y=-20000` (e bem largo) para ele chegar no horizonte.
+
+**No mapa `iso`, o chão cobre as caixas.** O chão e as coisas em cima dele estão na mesma camada com `zsort`, e o meio do chão fica "na frente" das caixas do fundo. Ponha o chão numa camada `iso` própria, sem `zsort`, embaixo da camada das coisas.
+
+**As orelhas entram na cara quando a cabeça vira.** Elas estão fora do raio do `round=` e não têm onde ficar na bola. Dê a elas um `z=` próprio (`z=-40`, atrás do meio da cabeça) com `zsort` na camada, ou prenda no osso de cima.
+
+**No Godot, a cabeça não vira.** O esqueleto de verdade (`rig=bones`) não gira em 3D. Exporte com `rig=frames` (o padrão), que leva cada quadro pronto.
+
 ## Exportação
 
 **O GIF ficou grande demais.** Granulado (`grain=`), degradês e muitos quadros pesam. Diminua com `-s 0.5`, use menos quadros, tire o `grain`. Para filmes, prefira MP4.
@@ -115,4 +131,4 @@ O que costuma dar errado, por que acontece e como resolver.
 
 **O `.tres` do Godot não acha a imagem.** O `.tres` aponta para o `.png` pelo nome: os dois precisam ficar na mesma pasta.
 
-[← Referência rápida](11-referencia.md) · [Índice](README.md)
+[← Referência rápida](12-referencia.md) · [Índice](README.md)

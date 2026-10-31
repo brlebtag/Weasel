@@ -21,7 +21,7 @@ O Weasel atende a dois usos, sem um atrapalhar o outro:
 - **Jogo** (Godot, plataforma, top-down…): cada personagem é um arquivo `.weasel` com desenho, ossos e animações (`stand`, `jump`, `dash`…). Sai como [cena pronta do Godot](#godot) — AnimatedSprite2D, colisão, hitbox e hurtbox que mudam a cada quadro, eventos, normal map para a luz 2D e direções espelhadas —, como TileSet, ou em sprite sheet para qualquer motor.
 - **Filme** (animação longa para o YouTube): um arquivo com `film` coloca esses **mesmos arquivos** em cena como atores, divide o tempo em planos (`shot`), diz o que muda e quando (`at`) e para onde a câmera olha, com profundidade (paralaxe). A fala de referência (`audio`) mexe a boca dos personagens (lip sync) e vira legenda. No editor, a **linha do tempo** mostra planos, sons (com a forma de onda) e legendas, e arrastar um bloco muda o tempo no código. Sai em vídeo (com o som de referência) ou sequência de PNG, mais as legendas em `.srt` e a [linha do tempo para o editor de vídeo](#do-weasel-para-o-editor-de-vídeo) (FCPXML/EDL), onde ficam a mixagem final e a montagem.
 
-**Aprendendo a linguagem?** Comece pelo [Guia da linguagem](docs/guia/README.md): doze capítulos, do primeiro círculo até ossos, animação, luz, Godot e filme, com um exemplo em cada passo e a imagem que ele gera.
+**Aprendendo a linguagem?** Comece pelo [Guia da linguagem](docs/guia/README.md): treze capítulos, do primeiro círculo até ossos, animação, luz, Godot, filme e profundidade (2.5D), com um exemplo em cada passo e a imagem que ele gera.
 
 Corrigiu o personagem? A correção vale para o jogo e para o filme. Tudo o que é de filme está em instruções novas, e os [testes de regressão](#testes) (`npm test`) conferem que os desenhos e as exportações de jogo continuam idênticos.
 
@@ -335,6 +335,33 @@ emitter gotas 400,-30 rate=70 life=1.1 speed=640 angle=100 spread=4 area=1000,0 
 
 `rate` (por segundo) ou `burst` (uma rajada a cada volta), `life`, `speed`, `angle` (−90 = para cima), `spread`, `gravity`, `wind`, `drag`, `size=início,fim`, `c=cor_início,cor_fim`, `shape` (dot, soft, square, streak, star), `area` (espalha a origem), `seed` e `bone=` (a origem anda com o osso). O sorteio é fixo, então a animação fecha o loop certinho e a exportação sai igual toda vez.
 
+### Profundidade (2.5D)
+
+As formas continuam chatas, mas podem ser arrumadas num mundo com fundo: uma carta que vira, uma cabeça que olha para os lados, uma estrada que some no horizonte, um mapa isométrico. O [capítulo 11 do guia](docs/guia/11-profundidade.md) mostra cada um com exemplo.
+
+```
+bone carta pivot=200,200
+layer cartas zsort
+rect frente 100,60 200,280 c=#fff6e0 thick=10 back=costas bone=carta
+rect costas 100,60 200,280 c=#2e86ab hidden
+anim gira frames=36
+key 36 carta.yaw=360 ease=linear
+```
+
+| Onde | Para quê |
+|---|---|
+| formas: `z= yaw= pitch= persp= [billboard]` | `z` é a profundidade (positivo = perto de você); `yaw` gira como uma porta e `pitch` deita para trás, em graus, em volta do meio da forma; `persp` é a distância do olho (padrão: o dobro do lado maior do desenho; 0 = sem perspectiva). `billboard` fica sempre de frente. A forma que vira de lado escurece (`shade=` da camada). |
+| formas fechadas: `thick= thickc= back=forma` | Espessura (os lados aparecem quando gira), a cor dos lados e a forma que aparece quando ela fica de costas (com `hidden`). |
+| `bone … yaw= pitch= persp= round=raio[,x,y]` | O osso gira em 3D em volta do pivô, levando as peças dele. Com `round=`, as peças ficam na superfície de uma bola: a cabeça desenhada de frente vira para os lados (os olhos correm e o que vai para trás some). |
+| `use … z= [billboard]` | Profundidade do componente; `billboard` deixa o componente de pé, de frente, no ponto do `use` (árvores num chão). |
+| `layer … yaw= pitch= persp= pivot=x,y` | Gira a camada inteira. |
+| `layer … floor horizon= pivot=x,y` | Deita a camada como **chão**: a linha do pivô (padrão: a de baixo) fica parada e o que está mais acima vai para longe, até o horizonte (padrão: 30% da altura). |
+| `layer … iso=x,y` | **Mapa isométrico**: os quadrados viram losangos, `thick=` levanta blocos e `z=` levanta sem bloco. `x,y` é onde fica o canto (0,0) do mapa. Ponha o chão numa camada `iso` própria, embaixo das coisas. |
+| `layer … zsort` | Pinta de longe para perto a cada quadro, em vez de seguir a ordem do código. |
+
+- Tudo isso anima: `key 12 carta.yaw=180`, `forma.pitch=`, `forma.z=`, `camada.yaw=`; no filme, com `at`.
+- Sem giro, nada sai do lugar: quem não usa o 2.5D vê os desenhos exatamente como antes.
+
 ### Jogo: caixas, Godot e tileset
 
 ```
@@ -354,7 +381,7 @@ event 2 golpe
 | `box nome body\|hit\|hurt rect x,y l,a` | Caixa do jogo: `body` é a colisão do corpo, `hit` é o golpe (hitbox), `hurt` é onde leva dano (hurtbox). Também `circle cx,cy raio` e `capsule cx,cy l,a`. |
 | `box … bone= only= [off]` | `bone=` faz a caixa seguir a posição e a rotação do osso; `only=` liga só nessas animações; `off` começa desligada. `key quadro caixa.show=1` (ou `0`) liga e desliga quadro a quadro. |
 | `godot body=character\|static\|area\|rigid\|node root=x,y name= normal= rig=frames\|bones` | O nó raiz da cena (CharacterBody2D, StaticBody2D, Area2D, RigidBody2D ou Node2D), o ponto que vira a origem (padrão: `unity root=`, ou o meio da base do desenho), o nome do nó e a força do relevo do normal map (padrão 1). `rig=bones` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (experimental). |
-| `tileset size=32 [auto]` | O canvas vira uma folha de blocos (`size=l,a` para blocos retangulares). `auto` cria também um bloco sem colisão para cada célula desenhada que não tem `tile`. |
+| `tileset size=32 [auto] [iso]` | O canvas vira uma folha de blocos (`size=l,a` para blocos retangulares). `auto` cria também um bloco sem colisão para cada célula desenhada que não tem `tile`. `iso` faz um TileSet isométrico (losango de largura × metade embaixo de cada célula; o resto, em cima, é para a altura de caixas e paredes), desenhado com camadas `iso=`. |
 | `tile nome coluna,linha [solid] [oneway] collision=forma` | Um bloco: `solid` colide no quadrado todo, `oneway` só por cima (plataforma), `collision=` usa o formato de uma forma (rampa, meio-bloco). O nome vai junto no bloco (dado `nome`). |
 | `point nome x,y bone=` | Ponto de encaixe que segue a posição e a rotação do osso: de onde sai o tiro, onde a mão segura a arma, onde nasce a poeira do passo. Na cena do Godot vira um `Marker2D` movido quadro a quadro; na sprite sheet, vai no JSON de cada quadro (`points`). |
 
@@ -395,8 +422,8 @@ at 4.5s camera.fade=1 ease=linear
 | `film fps= dur=` | Marca o arquivo como filme. `canvas L A bg=` é o tamanho do quadro (padrão 1920 × 1080) e o fundo. `dur=` só vale sem `shot`. |
 | `actor nome "arquivo.weasel" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= expr= path= turn= [screen] [bg] [hidden] [unlit] [front]` | Põe outro arquivo em cena. `path=linha` faz o ator andar pelo caminho com `at … ator.along=0…1`. `anim=` é a animação que começa tocando, `hide=` esconde camadas do arquivo (o céu que só faz sentido no jogo), `hidden` começa invisível, `bg` desenha o fundo do arquivo. Declarado antes do primeiro `shot`, vale para todos os planos. |
 | `shot nome dur= in=tipo,duração` | Um plano. Os planos tocam em sequência; atores, `camera` e `at` abaixo dele valem só para ele, e cada plano começa com tudo como foi declarado. `in=` é a transição de entrada: `fade` (dissolve), `wipe` (cortina), `slide` (empurra), `zoom` ou `iris` (o círculo de desenho animado), com 0.5s se a duração faltar. O plano anterior fica parado no último quadro durante a troca, e a duração do filme não muda. |
-| `camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=` | Para onde a câmera olha (o centro do quadro). `follow=ator` segue um ator (mais `offset=`), `lag=` (segundos) faz a câmera chegar atrasada e macia, `shake=` treme (px), `fade=1` escurece tudo (`fadec=` muda a cor). |
-| `at tempo alvo.prop=valor … ease=` | Muda algo num momento do plano. Ator: `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`, `expr` e `along`. Câmera: `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`. Luzes do filme: `power`, `radius`, `c`, `glow`, `aim`, `cone`. Camadas do filme: `opacity`, `show` e os efeitos. Formas do arquivo do filme: `draw`, `opacity` e `show` (`at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota de um mapa). |
+| `camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec= lens= fog= haze=` | Para onde a câmera olha (o centro do quadro). `follow=ator` segue um ator (mais `offset=`), `lag=` (segundos) faz a câmera chegar atrasada e macia, `shake=` treme (px), `fade=1` escurece tudo (`fadec=` muda a cor). `zoom=` é a câmera andando (o perto cresce mais que o longe); `lens=` é a lente (tudo cresce igual): os dois juntos, um subindo e o outro descendo, dão o efeito do *Vertigo*. `fog=cor` é a névoa da distância: as camadas com `depth=` maior que 1 somem nessa cor, metade na profundidade `haze=` (6). |
+| `at tempo alvo.prop=valor … ease=` | Muda algo num momento do plano. Ator: `pos`, `x`, `y`, `scale`, `rot`, `opacity`, `depth`, `flip`, `show`, `anim`, `speed`, `variant`, `expr` e `along`. Câmera: `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`, `lens`, `fog`, `haze`. Luzes do filme: `power`, `radius`, `c`, `glow`, `aim`, `cone`. Camadas do filme: `opacity`, `show`, `yaw`, `pitch` e os efeitos. Formas do arquivo do filme: `draw`, `opacity`, `show`, `yaw`, `pitch` e `z` (`at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota de um mapa). |
 | `scene "arquivo.weasel"` | Acrescenta, nesse ponto da sequência, os planos de outro arquivo de filme. |
 | `expr nome osso=… forma.prop=…` | No arquivo do personagem: uma expressão com nome (como uma `key` sem quadro). No filme, `at 3s heroi.expr=bravo` muda aos poucos para ela. |
 | `mark nome tempo` | Um momento com nome; `at trovao`, `at trovao+0.3s` usam o nome. Na linha do tempo do editor, arrastar o marcador reescreve o tempo, e tudo o que depende dele vai junto. |
@@ -637,6 +664,7 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
 - Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.
+- O 2.5D é feito de peças chatas: não há modelo 3D, sombra de uma peça sobre outra nem interseção (duas peças que se cruzam no espaço não se cortam; vale a ordem do `zsort`, pelo meio de cada uma). O esqueleto de verdade do Godot (`rig=bones`) não gira em 3D: com `yaw=`, `pitch=`, `z=` ou `iso`, exporte por quadros (`rig=frames`, o padrão).
 - No Godot, a caixa segue a posição e a rotação do osso, mas não a escala (o formato da colisão é fixo). A cápsula deitada (`l` maior que `a`) vira uma cápsula em pé girada 90°.
 - O normal map é calculado a partir das formas (relevo arredondado), não desenhado à mão; camadas com `clip`, `unlit`, texto e partículas não fazem relevo. Força com `godot normal=`.
 - No tileset, o tamanho do bloco vezes a escala precisa dar um número inteiro de pixels (32 × 0,5 serve; 32 × 0,3 não).

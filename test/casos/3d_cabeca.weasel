@@ -1,0 +1,22 @@
+# teste: 2.5D — cabeça que vira (bone round=): peças na bola, o que vai para trás some, orelhas com z= e zsort
+canvas 240 240 bg=#f4efe6
+palette ink=#1c1f2b line=4 pele=#f2c9a0
+
+bone pescoco pivot=120,220
+bone rosto parent=pescoco pivot=120,200 round=70,120,120
+
+layer cabeca zsort
+ellipse cranio 120,120 70 c=pele ink=line bone=pescoco
+ellipse orelhaE 52,126 11,17 c=pele ink=line bone=rosto z=-25
+ellipse orelhaD 188,126 11,17 c=pele ink=line bone=rosto z=-25
+ellipse olhoE 96,110 7,10 c=ink bone=rosto
+ellipse olhoD 144,110 7,10 c=ink bone=rosto
+shape nariz c=#e0a77e ink=3 bone=rosto : 120,120 128,140 112,140
+stroke boca w=4 bone=rosto : 98,158 120,168 142,158
+
+anim olha frames=8
+key 0 rosto.yaw=-35 rosto.pitch=0
+key 2 rosto.yaw=0 rosto.pitch=-15
+key 4 rosto.yaw=35 rosto.pitch=0
+key 6 rosto.yaw=0 rosto.pitch=15
+key 8 rosto.yaw=-35 rosto.pitch=0

@@ -1,0 +1,11 @@
+canvas   192 × 64, fundo transparente
+camadas  3
+  grama            1 item(ns)
+  caixa            1 item(ns)
+  agua             1 item(ns)
+formas   3
+animações nenhuma
+tileset  blocos de 64×64, 3 × 1 células
+  grama          0,0
+  caixa          1,0 sólido
+  agua           2,0 sólido

@@ -278,6 +278,7 @@
     return {
       x: v('x', c.x), y: v('y', c.y), zoom: Math.max(0.01, v('zoom', c.zoom)), rot: v('rot', c.rot), shake: Math.max(0, v('shake', c.shake)),
       follow: v('follow', c.follow), ox: v('ox', c.offset[0]), oy: v('oy', c.offset[1]), lag: v('lag', c.lag), fade: v('fade', c.fade), fadec: v('fadec', c.fadec),
+      lens: Math.max(0.01, v('lens', c.lens || 1)), fog: v('fog', c.fog || null), haze: Math.max(1.05, v('haze', c.haze || 6)),
     };
   }
   // para onde a câmera quer olhar: o ator seguido (mais o offset) ou a posição dela
@@ -320,14 +321,15 @@
       sx = raw.shake * (0.7 * noise('cx', k) + 0.3 * noise('cx2', k * 2.7));
       sy = raw.shake * (0.7 * noise('cy', k) + 0.3 * noise('cy2', k * 2.7));
     }
-    return { x, y, zoom: raw.zoom, rot: raw.rot, sx, sy, fade: Math.min(1, Math.max(0, raw.fade)), fadec: raw.fadec, follow: raw.follow };
+    return { x, y, zoom: raw.zoom, rot: raw.rot, sx, sy, fade: Math.min(1, Math.max(0, raw.fade)), fadec: raw.fadec, follow: raw.follow, lens: raw.lens, fog: raw.fog, haze: raw.haze };
   }
-  const STILL = { x: null, y: null, zoom: 1, rot: 0, sx: 0, sy: 0, fade: 0 };
+  const STILL = { x: null, y: null, zoom: 1, rot: 0, sx: 0, sy: 0, fade: 0, lens: 1, fog: null };
   // mundo → quadro, para o que está na profundidade d (1 = plano da ação; 2 = duas vezes mais longe;
   // 0.5 = perto da câmera). Na câmera parada (centro do quadro, zoom 1) tudo fica como foi desenhado.
+  // zoom= é a câmera que anda (o perto cresce mais que o longe); lens= é a lente (tudo cresce igual).
   function viewMatrix(cam, d, Wd, Hd) {
     const cx0 = Wd / 2, cy0 = Hd / 2;
-    const zd = Math.pow(cam.zoom, 1 / d);
+    const zd = Math.pow(cam.zoom, 1 / d) * (cam.lens || 1);
     const ex = cx0 + ((cam.x === null ? cx0 : cam.x) - cx0) / d, ey = cy0 + ((cam.y === null ? cy0 : cam.y) - cy0) / d;
     return M.mul(M.translate(cx0 + cam.sx, cy0 + cam.sy), M.mul(M.rotate(-cam.rot), M.mul(M.scale(zd, zd), M.translate(-ex, -ey))));
   }
@@ -353,15 +355,19 @@
     return { amb: stageLighting.amb, lights, rim: rimW > 0 ? { c: null, w: rimW } : null };
   }
 
+  // névoa da distância (camera fog=cor haze=n): nada no plano da ação (1) ou mais perto; metade na profundidade haze
+  const fogAmount = (cam, d) => (cam.fog && d > 1 && d !== Infinity ? 1 - Math.pow(0.5, (d - 1) / (Math.max(1.05, cam.haze || 6) - 1)) : 0);
+
   // efeitos e visibilidade das camadas e luzes do filme que mudam com at
-  const LAYER_BASE = { opacity: 1, show: 1, blur: 0, glow: 0, tint: 0, brightness: 1, saturate: 1, contrast: 1, hue: 0 };
+  const LAYER_BASE = { opacity: 1, show: 1, blur: 0, glow: 0, tint: 0, brightness: 1, saturate: 1, contrast: 1, hue: 0, yaw: 0, pitch: 0 };
+  const SHAPE_3D = new Set(['yaw', 'pitch', 'z']);
   function stagePose(entry, t) {
     const owner = entry.owner, pose = S.timePose(owner, t);
     let lp = null, li = null, pm = null;
     for (const tr of entry.shot.tracks.values()) {
       if (tr.kind === 'shape') {
-        const v = valueAt(tr, t, 1);
         for (const el of owner.named.get(tr.name) || []) {
+          const v = valueAt(tr, t, SHAPE_3D.has(tr.prop) ? el[tr.prop] || 0 : 1);
           const o = (pm || (pm = new Map())).get(el.id) || {};
           o[tr.prop] = v;
           pm.set(el.id, o);
@@ -371,7 +377,7 @@
       if (tr.kind !== 'light' && tr.kind !== 'layer') continue;
       let base;
       if (tr.kind === 'light') base = owner.lights.get(tr.name)[tr.prop];
-      else { const Ly = owner.layerMap.get(tr.name); base = Ly.fx && Ly.fx[tr.prop] !== undefined ? Ly.fx[tr.prop] : LAYER_BASE[tr.prop]; }
+      else { const Ly = owner.layerMap.get(tr.name); base = Ly.fx && Ly.fx[tr.prop] !== undefined ? Ly.fx[tr.prop] : Ly[tr.prop] !== undefined && (tr.prop === 'yaw' || tr.prop === 'pitch') ? Ly[tr.prop] : LAYER_BASE[tr.prop]; }
       const map = tr.kind === 'light' ? (li || (li = new Map())) : (lp || (lp = new Map()));
       const o = map.get(tr.name) || {};
       o[tr.prop] = valueAt(tr, t, base);
@@ -564,13 +570,22 @@
       let v = views.get(g.d);
       if (!v) { v = g.screen ? M.id() : viewMatrix(fs.cam, g.d, fs.W, fs.H); views.set(g.d, v); }
       const m = M.mul(top, M.mul(v, w.mat));
-      const faded = w.opacity < 0.999;
+      const fog = g.screen ? 0 : fogAmount(fs.cam, g.d);
+      const faded = w.opacity < 0.999 || fog > 0.002;
       const x = faded ? alphaLayer(ctx.canvas.width, ctx.canvas.height) : ctx;
       if (!faded) ctx.save();
       setMat(x, m);
       if (g.bg) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
       if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides) });
       if (faded) {
+        if (fog > 0.002) {
+          // a névoa pinta por cima só onde já tem desenho
+          x.setTransform(1, 0, 0, 1, 0, 0);
+          x.globalAlpha = Math.min(1, fog);
+          x.globalCompositeOperation = 'source-atop';
+          x.fillStyle = fs.cam.fog;
+          x.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalAlpha = w.opacity;

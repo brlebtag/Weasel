@@ -306,6 +306,7 @@ tile rampa 2,0 collision=rampa
 - Exporte com `node cli/weasel.js blocos.weasel -f godot -o godot/blocos.tres` (`--normal` acrescenta o normal map). O `.png` e o `.tres` precisam ficar na mesma pasta.
 - O exemplo [`blocos.weasel`](../../exemplos/blocos.weasel) tem grama, terra, pedra em hachura, plataforma, rampa, espinhos, caixa, moeda que brilha e uma nuvem que o `auto` vira blocos.
 - No editor, com **Guias**, aparecem a grade, o nome de cada bloco e a colisão.
+- Para jogos **isométricos**, `tileset size=64,64 iso` faz blocos em losango: veja [Tileset isométrico para o Godot](11-profundidade.md#tileset-isométrico-para-o-godot).
 
 ## Para outros motores: sprite sheet e `unity`
 

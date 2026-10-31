@@ -1,0 +1,249 @@
+{
+  "frames": {
+    "gira_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_01": {
+      "frame": {
+        "x": 90,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_02": {
+      "frame": {
+        "x": 178,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_03": {
+      "frame": {
+        "x": 266,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_04": {
+      "frame": {
+        "x": 354,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_05": {
+      "frame": {
+        "x": 442,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_06": {
+      "frame": {
+        "x": 530,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "gira_07": {
+      "frame": {
+        "x": 618,
+        "y": 2,
+        "w": 86,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "gira": [
+      "gira_00",
+      "gira_01",
+      "gira_02",
+      "gira_03",
+      "gira_04",
+      "gira_05",
+      "gira_06",
+      "gira_07"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_3d_giro.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 706,
+      "h": 68
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 86,
+      "h": 64
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "gira",
+        "from": 0,
+        "to": 7,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 32,
+      "y": 27,
+      "w": 288,
+      "h": 213
+    }
+  }
+}

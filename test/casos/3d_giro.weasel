@@ -1,0 +1,24 @@
+# teste: 2.5D — giro 3D (yaw, pitch) em forma, osso e camada; verso (back=), espessura (thick=), z com zsort,
+# texto, gradiente e hachura girados, traço girado e billboard
+canvas 320 240 bg=#f4efe6
+palette ink=#1c1f2b line=4 frente=#fff6e0 verso=#2e86ab
+gradient brilho linear 0,0 0,1 box : #ffd23f #ff8c42
+pattern riscos hatch c=#1c1f2b gap=5 w=1
+
+bone carta pivot=90,120
+
+layer cartas zsort
+rect frente 40,40 100,150 r=10 c=frente ink=line thick=8 thickc=#d8cbb0 back=costas bone=carta
+rect costas 40,40 100,150 r=10 c=verso ink=line hidden
+ellipse sol 90,100 26 c=brilho ink=3 z=1 bone=carta
+text nome 90,165 "SOL" size=20 align=center c=ink z=1 bone=carta bold
+
+layer soltas pitch=20
+rect deitada 180,30 110,70 c=riscos ink=line pitch=50
+shape pipa c=#e94f37 ink=line yaw=-35 persp=300 : 235,120! 270,160! 235,205! 200,160!
+stroke fio w=3 yaw=30 : 200,215 230,228 260,215
+ellipse placa 295,200 14 c=#4caf50 ink=2 z=20 billboard
+
+anim gira frames=8
+key 0 carta.yaw=0 pipa.yaw=-35 soltas.yaw=0
+key 8 carta.yaw=360 pipa.yaw=325 soltas.yaw=30 ease=linear

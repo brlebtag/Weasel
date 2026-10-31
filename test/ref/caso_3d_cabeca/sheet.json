@@ -1,0 +1,249 @@
+{
+  "frames": {
+    "olha_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_01": {
+      "frame": {
+        "x": 60,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_02": {
+      "frame": {
+        "x": 118,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_03": {
+      "frame": {
+        "x": 176,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_04": {
+      "frame": {
+        "x": 234,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_05": {
+      "frame": {
+        "x": 292,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_06": {
+      "frame": {
+        "x": 350,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "olha_07": {
+      "frame": {
+        "x": 408,
+        "y": 2,
+        "w": 56,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 56,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 56,
+        "h": 46
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "olha": [
+      "olha_00",
+      "olha_01",
+      "olha_02",
+      "olha_03",
+      "olha_04",
+      "olha_05",
+      "olha_06",
+      "olha_07"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_3d_cabeca.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 466,
+      "h": 50
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 56,
+      "h": 46
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "olha",
+        "from": 0,
+        "to": 7,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 26,
+      "y": 44,
+      "w": 188,
+      "h": 152
+    }
+  }
+}

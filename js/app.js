@@ -513,7 +513,7 @@
     for (const a of filmActors()) for (const p of Object.keys(L.ACTOR_PROPS)) out.push({ label: `${a.name}.${p}=`, detail: 'ator' });
     for (const p of Object.keys(L.CAMERA_PROPS)) out.push({ label: `camera.${p}=`, detail: 'câmera' });
     for (const n of m.lights.keys()) for (const p of Object.keys(L.LIGHT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'luz' });
-    for (const n of m.layerMap.keys()) for (const p of ['opacity', 'show']) out.push({ label: `${n}.${p}=`, detail: 'camada' });
+    for (const n of m.layerMap.keys()) for (const p of ['opacity', 'show', 'yaw', 'pitch']) out.push({ label: `${n}.${p}=`, detail: 'camada' });
     for (const n of m.named.keys()) for (const p of Object.keys(L.SHAPE_AT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'forma' });
     out.push({ label: 'ease=' });
     return out;
@@ -625,6 +625,7 @@
     if (cmd === 'key' && idx >= 2) {
       return [
         ...names([...m.bones.keys()].map((b) => b + '='), 'osso: dx,dy,rot,sx,sy'),
+        ...[...m.bones.keys()].flatMap((b) => Object.keys(L.BONE_PROPS).map((p) => ({ label: `${b}.${p}=`, detail: 'osso' }))),
         ...els.flatMap((n) => Object.keys(L.PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'forma' }))),
         ...[...m.lights.keys()].flatMap((n) => Object.keys(L.LIGHT_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'luz' }))),
         ...[...m.layerMap.keys()].flatMap((n) => Object.keys(L.LAYER_PROPS).map((p) => ({ label: `${n}.${p}=`, detail: 'camada' }))),
@@ -637,7 +638,7 @@
     if (cmd === 'use' && idx === 1) return names([...m.defs.keys()], 'componente');
     if (cmd === 'use' && idx >= 2) {
       const def = m.defs.get(ws[1] && ws[1].text);
-      return [...names(L.ATTRS.use.map((a) => a + '='), 'atributo'), ...(def ? names([...def.st.attrs.keys()].map((k) => k + '='), 'parâmetro') : [])];
+      return [...names(L.ATTRS.use.map((a) => a + '='), 'atributo'), ...names(L.FLAGS.use, 'opção'), ...(def ? names([...def.st.attrs.keys()].map((k) => k + '='), 'parâmetro') : [])];
     }
     if (cmd === 'include' && idx === 1) return names([...st.files.keys()].filter((f) => f !== st.current), 'arquivo');
     if ((cmd === 'actor' && idx === 2) || (cmd === 'scene' && idx === 1)) return fileList();
@@ -1515,7 +1516,10 @@
       if (dep === null) return;
       [x, y] = M.apply(M.invert(filmView(dep)), x, y);
     }
-    let [lx, ly] = rec.xf ? M.apply(M.invert(rec.xf), x, y) : [x, y];
+    // 3D (giro, chão, iso): o ponto do código que vai parar debaixo do mouse
+    const pose = currentPose();
+    const f3 = rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner') && S.el3(st.model, pose, rec.el) ? S.fullMap(st.model, pose, rec.el) : null;
+    let [lx, ly] = f3 ? unmap(f3, x, y, h.x, h.y) : rec.xf ? M.apply(M.invert(rec.xf), x, y) : [x, y];
     const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1;
     const dec = k > 1.5 ? 1 : 0;
     let txt;
@@ -1525,6 +1529,20 @@
     if (editor.value.slice(off + h.from, off + h.to) === txt) return;
     const end = off + h.from + txt.length;
     editor.replaceRange(off + h.from, off + h.to, txt, { key: d.key, select: [end, end] });
+  }
+
+  // inversa de um mapa qualquer (o do 3D): Newton a partir do palpite, com a derivada medida
+  function unmap(f, x, y, u, v) {
+    for (let i = 0; i < 16; i++) {
+      const p = f(u, v), ex = x - p[0], ey = y - p[1];
+      if (Math.abs(ex) + Math.abs(ey) < 0.01) break;
+      const a = f(u + 1, v), b = f(u, v + 1);
+      const j00 = a[0] - p[0], j10 = a[1] - p[1], j01 = b[0] - p[0], j11 = b[1] - p[1], det = j00 * j11 - j01 * j10;
+      if (Math.abs(det) < 1e-9) break;
+      u += (j11 * ex - j01 * ey) / det;
+      v += (j00 * ey - j10 * ex) / det;
+    }
+    return [u, v];
   }
 
   view.addEventListener('wheel', (e) => {
