@@ -1374,6 +1374,9 @@
         if (Ly[k] && !m.named.has(Ly[k]) && !m.layerMap.has(Ly[k])) {
           if (st) bad(st, st.attrs.get(k), `${k}: "${Ly[k]}" não é forma nem camada`);
           Ly[k] = null;
+        } else if (Ly[k] && !m.layerMap.has(Ly[k]) && st && !m.named.get(Ly[k]).some((e) => e.closed)) {
+          // um traço ou uma linha não tem lado de dentro: o recorte some com tudo
+          bad(st, st.attrs.get(k), `${k}: "${Ly[k]}" é um traço aberto; o molde precisa ser uma forma fechada (shape, ellipse ou rect) ou uma camada`, 'warn');
         }
       }
       if (Ly.only && st) {

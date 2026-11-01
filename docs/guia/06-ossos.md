@@ -64,7 +64,57 @@ Os pontos vermelhos são os pivôs (camada `guide`, só para mostrar). Os três 
 - o azul **gira** 45° em volta da base;
 - o verde **estica** 1,4 vez na largura e encolhe para 0,6 na altura, e continua apoiado no pivô. É o "amassar" da bola quicando: com o pivô no chão, ela amassa contra o chão.
 
-Não precisa escrever os cinco números sempre:
+A camada `guide` não sai na exportação. No editor, ela aparece com **Guias** ligado (o padrão); na linha de comando, acrescente `--guides`, como foi feito para gerar esta imagem.
+
+**Experimente:** troque `gira=0,0,45` por `gira=0,0,-45` na `key 18`. O azul passa a girar para o outro lado (anti-horário).
+
+### Onde pôr o pivô
+
+O pivô decide **em volta de qual ponto** a peça gira e estica. Aqui, três retângulos iguais giram os mesmos 35°. Só o lugar do pivô muda:
+
+<!-- gerar: img/06_pivo.gif -a gira --guides -s 0.8 -->
+```weasel
+canvas 460 270 bg=#f4efe6
+palette ink=#2b2a33 line=4
+
+bone emCima pivot=110,50
+bone noMeio pivot=230,120
+bone embaixo pivot=350,190
+
+rect a 94,50 32,140 r=10 c=#ff6b4a ink=line bone=emCima
+rect b 214,50 32,140 r=10 c=#4a90d9 ink=line bone=noMeio
+rect c 334,50 32,140 r=10 c=#6cbb3c ink=line bone=embaixo
+
+text t1 110,250 "pivô em cima" size=16 align=center
+text t2 230,250 "pivô no meio" size=16 align=center
+text t3 350,250 "pivô embaixo" size=16 align=center
+
+layer pivos guide
+ellipse p1 110,50 6 c=#c44536 bone=emCima
+ellipse p2 230,120 6 c=#c44536 bone=noMeio
+ellipse p3 350,190 6 c=#c44536 bone=embaixo
+
+anim gira frames=24 fps=12
+key 0 emCima=0,0,0 noMeio=0,0,0 embaixo=0,0,0
+key 12 emCima=0,0,35 noMeio=0,0,35 embaixo=0,0,35
+key 24 emCima=0,0,0 noMeio=0,0,0 embaixo=0,0,0
+```
+
+![Três retângulos iguais giram 35 graus: o vermelho balança como um pêndulo preso em cima, o azul gira no lugar e o verde tomba como uma árvore presa na base](img/06_pivo.gif)
+
+Repare:
+
+- Os retângulos começam em y=50 e têm 140 de altura, então vão de y=50 a y=190.
+- `pivot=110,50` fica na **ponta de cima**. A ponta de cima fica parada e a de baixo faz um arco, como um pêndulo.
+- `pivot=230,120` fica no **meio** (50 + 140 ÷ 2 = 120). O retângulo gira no lugar, como uma hélice.
+- `pivot=350,190` fica na **base**. A base fica parada e o topo tomba, como uma árvore.
+- Os três ossos recebem a mesma `key`: `0,0,35` quer dizer "não anda (0,0) e gira 35 graus no sentido horário".
+
+**Experimente:** mude o pivô do azul para `pivot=230,50` (e o ponto `p2` para `230,50`). Ele passa a balançar igual ao vermelho.
+
+### Quantos números escrever
+
+Não precisa escrever os cinco números sempre. Os que faltam valem o "parado" (`0` para andar e girar, `1` para esticar):
 
 | Você escreve | Vale |
 |---|---|
@@ -73,6 +123,54 @@ Não precisa escrever os cinco números sempre:
 | `osso=0,0,30` | gira 30° |
 | `osso=0,0,0,1.5` | escala 1,5 por igual (largura e altura) |
 | `osso=0,0,0,1.5,0.8` | largura 1,5 e altura 0,8 |
+
+Cada quadrado abaixo usa uma linha da tabela:
+
+<!-- gerar: img/06_numeros.gif -a mostra -s 0.8 -->
+```weasel
+canvas 460 300 bg=#f4efe6
+palette ink=#2b2a33 line=3
+
+bone a pivot=250,40
+bone b pivot=250,95
+bone c pivot=250,150
+bone d pivot=250,205
+bone e pivot=250,260
+
+text n1 20,46 "a=40" size=17 bold
+text n2 20,101 "b=40,-20" size=17 bold
+text n3 20,156 "c=0,0,45" size=17 bold
+text n4 20,211 "d=0,0,0,1.6" size=17 bold
+text n5 20,266 "e=0,0,0,1.6,0.5" size=17 bold
+text x1 330,46 "anda em x" size=14 c=#8a7f6e
+text x2 330,101 "anda em x e y" size=14 c=#8a7f6e
+text x3 330,156 "gira" size=14 c=#8a7f6e
+text x4 330,211 "estica por igual" size=14 c=#8a7f6e
+text x5 330,266 "largura e altura" size=14 c=#8a7f6e
+
+rect qa 235,25 30,30 r=4 c=#ff6b4a ink=line bone=a
+rect qb 235,80 30,30 r=4 c=#ffb000 ink=line bone=b
+rect qc 235,135 30,30 r=4 c=#6cbb3c ink=line bone=c
+rect qd 235,190 30,30 r=4 c=#4a90d9 ink=line bone=d
+rect qe 235,245 30,30 r=4 c=#9b6cd9 ink=line bone=e
+
+anim mostra frames=24 fps=12
+key 0 a=0 b=0 c=0 d=0 e=0
+key 12 a=40 b=40,-20 c=0,0,45 d=0,0,0,1.6 e=0,0,0,1.6,0.5
+key 24 a=0 b=0 c=0 d=0 e=0
+```
+
+![Cinco quadrados coloridos: o primeiro anda para a direita, o segundo anda para a direita e para cima, o terceiro gira, o quarto cresce por igual e o quinto fica largo e baixo](img/06_numeros.gif)
+
+Repare:
+
+- **1 número** (`a=40`): só o `dx`. O quadrado anda 40 pixels para a direita.
+- **2 números** (`b=40,-20`): `dx` e `dy`. Anda 40 para a direita e 20 para cima (y negativo sobe).
+- **3 números** (`c=0,0,45`): o terceiro é o giro, em graus. Para girar sem andar, os dois primeiros ficam `0`.
+- **4 números** (`d=0,0,0,1.6`): o quarto é a escala, e vale para a largura **e** a altura. `1.6` = 60% maior.
+- **5 números** (`e=0,0,0,1.6,0.5`): largura × 1,6 e altura × 0,5 (metade).
+- Todos os pivôs estão no **meio** de cada quadrado, então eles giram e crescem no lugar.
+- `key 0 a=0 …` e `key 24 a=0 …`: um número só, `0`, já quer dizer "parado".
 
 ## Pai e filho: `parent=`
 
@@ -109,6 +207,50 @@ key 48 ombro=0,0,0 cotovelo=0,0,0
 - Os ângulos do filho são **relativos ao pai**: `cotovelo=0,0,-55` quer dizer "55° a mais que o ombro", não "60° em relação à tela". O mesmo vale para o `dx,dy` do filho, que anda na direção do pai já girado.
 - O pivô é sempre escrito na posição de **descanso**, nas coordenadas do desenho (`pivot=220,210`), mesmo que o pai mova tudo depois.
 
+### Com e sem `parent=`
+
+Para ver o que o `parent=` faz, compare dois braços iguais com as mesmas `key`. Só o de baixo tem `parent=`:
+
+<!-- gerar: img/06_sem_pai.gif -a dobra --guides -->
+```weasel
+canvas 440 330 bg=#f4efe6
+palette ink=#2b2a33 line=4 pele=#ffcf9e manga=#4a90d9
+
+bone ombro1 pivot=70,130
+bone cotovelo1 pivot=170,130
+bone ombro2 pivot=70,290
+bone cotovelo2 parent=ombro2 pivot=170,290
+
+text t1 270,136 "sem parent=" size=17 bold
+text t2 270,296 "com parent=ombro2" size=17 bold
+
+rect bracoA 60,118 120,24 r=12 c=manga ink=line bone=ombro1
+rect anteA 164,120 96,20 r=10 c=pele ink=line bone=cotovelo1
+rect bracoB 60,278 120,24 r=12 c=manga ink=line bone=ombro2
+rect anteB 164,280 96,20 r=10 c=pele ink=line bone=cotovelo2
+
+layer pivos guide
+ellipse p1 70,130 6 c=#c44536 bone=ombro1
+ellipse p2 170,130 6 c=#c44536 bone=cotovelo1
+ellipse p3 70,290 6 c=#c44536 bone=ombro2
+ellipse p4 170,290 6 c=#c44536 bone=cotovelo2
+
+anim dobra frames=24 fps=12
+key 0 ombro1=0,0,0 cotovelo1=0,0,0 ombro2=0,0,0 cotovelo2=0,0,0
+key 12 ombro1=0,0,-30 cotovelo1=0,0,-40 ombro2=0,0,-30 cotovelo2=0,0,-40
+key 24 ombro1=0,0,0 cotovelo1=0,0,0 ombro2=0,0,0 cotovelo2=0,0,0
+```
+
+![Dois braços levantam. No de cima, sem parent, o antebraço fica para trás e o braço se separa; no de baixo, com parent, o antebraço vai junto e dobra no cotovelo](img/06_sem_pai.gif)
+
+Repare:
+
+- **Em cima, sem `parent=`**: o ombro sobe 30°, mas o `cotovelo1` não sabe disso. Ele gira os 40° dele em volta do ponto onde estava, e o braço "quebra" no meio.
+- **Embaixo, com `parent=ombro2`**: o cotovelo é carregado pelo ombro (sobe 30°) e ainda gira mais 40° por conta própria. No fim, o antebraço está 70° acima do começo.
+- As `key` dos dois braços são **iguais**. A diferença está só na linha do `bone`.
+
+**Experimente:** apague o `parent=ombro2` da linha do `cotovelo2`. O braço de baixo passa a quebrar igual ao de cima.
+
 ### Como montar o esqueleto de um personagem
 
 A receita que os exemplos usam:
@@ -136,7 +278,7 @@ Alguns movimentos se repetem sem fim: uma flor balançando, um balão subindo e 
 | `bob=pixels,segundos` | sobe e desce | quanto sobe e desce, e o tempo de um vaivém |
 | `jitter=pixels` | treme sem ritmo | o tamanho do tremor |
 
-Um terceiro número em `sway` e `bob` atrasa o começo do vaivém, em graus (`sway=8,2,90`), para dois ossos não balançarem iguais.
+Um terceiro número em `sway` e `bob` muda o ponto do vaivém onde o osso começa (a **fase**, em graus: `sway=8,2,90`), para dois ossos não balançarem iguais. Ele tem um exemplo próprio [mais abaixo](#a-fase-o-terceiro-número).
 
 <!-- gerar: img/06_automaticos.gif -a parado -->
 ```weasel
@@ -166,8 +308,126 @@ anim parado frames=24 fps=12
 ![Uma flor balançando, um balão subindo e descendo e um fantasminha tremendo](img/06_automaticos.gif)
 
 - Os movimentos automáticos só acontecem quando **alguma animação está tocando**. Por isso o exemplo tem `anim parado`, uma animação sem nenhuma `key`. Num filme, eles também andam sem animação, pelo relógio do filme.
-- O tempo do vaivém é ajustado para caber um número inteiro de vezes na animação, então o **loop fecha** sem pulo. Aqui a animação tem 2 segundos (24 quadros a 12 por segundo) e cada vaivém também.
+- O tempo do vaivém é ajustado para caber um número inteiro de vezes na animação, então o **loop fecha** sem pulo. Aqui a animação tem 2 segundos (24 quadros a 12 por segundo) e cada vaivém também. Numa animação `once` (que toca uma vez só, [capítulo 7](07-animacao.md#loop-ou-uma-vez-só-once)), o tempo é exatamente o que você escreveu.
 - Eles **somam** com as `key`: um osso pode balançar sozinho e ainda ser animado.
+
+### Os dois números do `sway` (e do `bob`)
+
+O primeiro número diz **quanto** o osso se mexe; o segundo, **quanto tempo** leva um vaivém (ir e voltar). Três flores, cada uma com um `sway` diferente:
+
+<!-- gerar: img/06_sway.gif -a parado -->
+```weasel
+canvas 460 250 bg=#cfe8f5
+palette ink=#2b2a33 line=4 caule=#3f9a4a petala=#ff8fb1
+
+bone f1 pivot=80,200 sway=10,2
+bone f2 pivot=230,200 sway=30,2
+bone f3 pivot=380,200 sway=10,1
+
+line chao c=caule w=6 : 0,202 460,202
+stroke c1 w=6 c=caule bone=f1 : 80,202 80,90
+ellipse p1 80,80 26 c=petala ink=line bone=f1
+stroke c2 w=6 c=caule bone=f2 : 230,202 230,90
+ellipse p2 230,80 26 c=petala ink=line bone=f2
+stroke c3 w=6 c=caule bone=f3 : 380,202 380,90
+ellipse p3 380,80 26 c=petala ink=line bone=f3
+
+text t1 80,234 "sway=10,2" size=17 bold align=center
+text t2 230,234 "sway=30,2" size=17 bold align=center
+text t3 380,234 "sway=10,1" size=17 bold align=center
+
+anim parado frames=24 fps=12
+```
+
+![Três flores balançando: a da esquerda pouco e devagar, a do meio muito e devagar, a da direita pouco e rápido](img/06_sway.gif)
+
+Repare:
+
+- `sway=10,2` (esquerda): gira até 10 graus para cada lado, e cada vaivém leva 2 segundos.
+- `sway=30,2` (meio): o mesmo tempo, mas vai até 30 graus. Balança **mais**.
+- `sway=10,1` (direita): os mesmos 10 graus, mas um vaivém por segundo. Balança **mais rápido**: faz dois vaivéns enquanto a da esquerda faz um.
+- O `bob` funciona igual, só que o primeiro número são **pixels** para cima e para baixo, em vez de graus.
+
+**Experimente:** troque `sway=` por `bob=` na flor do meio (`bob=30,2`). Ela para de balançar e passa a subir e descer 30 pixels.
+
+### A fase: o terceiro número
+
+Quando várias coisas balançam juntas (um campo de flores, as folhas de uma árvore), fica artificial se todas vão para o mesmo lado ao mesmo tempo. O terceiro número, a **fase**, escolhe em que ponto do vaivém cada osso começa. Ele é medido em graus: um vaivém inteiro vale 360.
+
+<!-- gerar: img/06_fase.gif -a parado -s 0.8 -->
+```weasel
+canvas 460 250 bg=#cfe8f5
+palette ink=#2b2a33 line=4 caule=#3f9a4a
+
+bone f1 pivot=80,200 sway=20,2,0
+bone f2 pivot=230,200 sway=20,2,90
+bone f3 pivot=380,200 sway=20,2,180
+
+line chao c=caule w=6 : 0,202 460,202
+stroke c1 w=6 c=caule bone=f1 : 80,202 80,90
+ellipse p1 80,80 26 c=#ff8fb1 ink=line bone=f1
+stroke c2 w=6 c=caule bone=f2 : 230,202 230,90
+ellipse p2 230,80 26 c=#ffb84d ink=line bone=f2
+stroke c3 w=6 c=caule bone=f3 : 380,202 380,90
+ellipse p3 380,80 26 c=#b48cff ink=line bone=f3
+
+text t1 80,234 "sway=20,2,0" size=17 bold align=center
+text t2 230,234 "sway=20,2,90" size=17 bold align=center
+text t3 380,234 "sway=20,2,180" size=17 bold align=center
+
+anim parado frames=24 fps=12
+```
+
+![Três flores com o mesmo balanço, cada uma em um ponto diferente do vaivém: quando a rosa está em pé, a laranja está toda inclinada, e a roxa vai sempre para o lado contrário da rosa](img/06_fase.gif)
+
+Repare:
+
+- As três têm o mesmo `sway=20,2`: 20 graus para cada lado, 2 segundos por vaivém. Só a fase muda.
+- **Fase `0`** (rosa): começa em pé, indo para a direita (o sentido horário).
+- **Fase `90`** (laranja): começa um quarto de vaivém adiante, já toda inclinada para a direita.
+- **Fase `180`** (roxa): começa em pé, mas indo para a esquerda. Ela é o espelho da rosa: quando uma vai para um lado, a outra vai para o outro.
+- No `bob`, a fase funciona igual (`bob=10,2,90`). Lá, o lado "positivo" é para baixo.
+
+**Experimente:** dê fases diferentes a várias flores (`0`, `40`, `80`, `120`…). O campo parece balançar com o vento, numa onda.
+
+### O tamanho do tremor: `jitter`
+
+O `jitter` serve para medo, frio, raiva ou um motor ligado. Em cada quadro, o osso pula para um lugar sorteado, até essa distância (em pixels) para cada lado:
+
+<!-- gerar: img/06_jitter.gif -a parado -->
+```weasel
+canvas 460 230 bg=#2b2f45
+palette ink=#14141c line=4 fantasma=#f6f4ff
+
+bone s1 pivot=80,170 jitter=1
+bone s2 pivot=230,170 jitter=3
+bone s3 pivot=380,170 jitter=8
+
+shape g1 c=fantasma ink=line bone=s1 : 80,90 112,116 116,170! 44,170! 48,116
+ellipse o1a 68,124 5,8 c=ink bone=s1
+ellipse o1b 92,124 5,8 c=ink bone=s1
+shape g2 c=fantasma ink=line bone=s2 : 230,90 262,116 266,170! 194,170! 198,116
+ellipse o2a 218,124 5,8 c=ink bone=s2
+ellipse o2b 242,124 5,8 c=ink bone=s2
+shape g3 c=fantasma ink=line bone=s3 : 380,90 412,116 416,170! 344,170! 348,116
+ellipse o3a 368,124 5,8 c=ink bone=s3
+ellipse o3b 392,124 5,8 c=ink bone=s3
+
+text t1 80,210 "jitter=1" size=17 bold align=center c=#d8dcef
+text t2 230,210 "jitter=3" size=17 bold align=center c=#d8dcef
+text t3 380,210 "jitter=8" size=17 bold align=center c=#d8dcef
+
+anim parado frames=12 fps=12
+```
+
+![Três fantasminhas tremendo: o da esquerda quase parado, o do meio tremendo um pouco e o da direita tremendo muito](img/06_jitter.gif)
+
+Repare:
+
+- `jitter=1`: um tremor de 1 pixel, quase um arrepio.
+- `jitter=8`: até 8 pixels para cada lado, em x e em y. É susto de verdade.
+- O tremor muda **a cada quadro** da animação. Com mais quadros por segundo (`fps=`), ele fica mais nervoso.
+- O sorteio é sempre o mesmo: rodar de novo dá exatamente o mesmo tremor.
 
 ## Molas: `spring=`
 
@@ -204,8 +464,11 @@ key 48 corpo=0,0,0
 - O bichinho sacode o corpo (as `key` do `corpo`) e para. As antenas não têm `key` nenhuma: quem as mexe é a mola.
 - `spring=` vai de 0 a 1 e diz o quanto a mola é **dura**. Perto de 0, mole: atrasa muito e balança devagar (a antena da esquerda, 0.1). Perto de 1, dura: quase acompanha o pai (a da direita, 0.9).
 - A mola só **gira** o osso, e reage quando o pivô dele é sacudido, quase sempre pelo **pai** (aqui, o corpo sacudindo).
+- Ela reage ao tranco **de lado**, atravessado na peça. Uma antena em pé balança quando o corpo vai para os lados. Já um rabo deitado (na horizontal) não balança se o corpo só anda para a frente e para trás, na direção do próprio rabo; ele balança quando o corpo pula.
 - Molas não precisam de `key` própria, mas podem ter: a mola soma com o que as `key` mandam.
-- Em transições muito rápidas a mola pode exagerar. Se isso acontecer, deixe-a mais dura ou tire a mola daquele osso.
+- Em transições muito rápidas a mola pode exagerar. Se isso acontecer, deixe-a mais dura ou tire a mola daquele osso. O mesmo vale para molas em corrente (um osso com mola filho de outro com mola): uma passa o balanço para a outra, e a ponta pode chicotear demais.
+
+**Experimente:** ponha `spring=0.5` nas duas antenas. Elas passam a balançar iguais, num meio-termo entre as duas de agora.
 
 ## Tecido: `cloth`
 
@@ -240,7 +503,100 @@ key 32 mastro=-70,0
 - A forma diz qual osso a carrega (`bone=mastro`) e qual tecido a faz balançar (`cloth=pano`). Várias formas podem usar o mesmo tecido e balançam juntas, como a capa, as faixas e as dobras do Cavaleiro.
 - `tension=` vai de 0 (pano mole, balança muito) a 1 (duro). Padrão 0.5.
 - `drag=` (padrão 1) é o quanto o ar empurra o pano para trás enquanto o osso anda; `swing=` (padrão 1) é o quanto ele balança com os trancos. Os dois vão de 0 a 10.
-- `bone=` no `cloth` diz qual osso o carrega; sem ele, vale o osso das formas.
+- `bone=` no `cloth` diz **de qual osso o tecido sente o movimento**. Sem ele, vale o osso da primeira forma que usa o tecido (aqui, o `mastro`). Quem **carrega** cada forma continua sendo o `bone=` da própria forma. Há um exemplo [mais abaixo](#bone-no-cloth-vento-com-o-mastro-parado).
+
+### `tension`, `drag` e `swing` lado a lado
+
+Cada linha da imagem compara dois valores de **um** atributo. As seis bandeiras estão no mesmo osso, que vai e volta:
+
+<!-- gerar: img/06_tecido_numeros.gif -a corre -s 0.8 -->
+```weasel
+canvas 460 390 bg=#cfe8f5
+palette ink=#2b2a33 line=3 pau=#7a4a2c
+
+bone mastro pivot=230,380
+
+cloth mole pivot=100,40 tension=0.1 drag=2 swing=2
+cloth duro pivot=300,40 tension=0.9 drag=2 swing=2
+cloth semAr pivot=100,165 drag=0 swing=0
+cloth comAr pivot=300,165 drag=6 swing=0
+cloth semTranco pivot=100,290 drag=0 swing=0
+cloth comTranco pivot=300,290 drag=0 swing=6
+
+layer rotulos
+text r1 100,26 "tension=0.1" size=15 bold
+text r2 300,26 "tension=0.9" size=15 bold
+text r3 100,151 "drag=0" size=15 bold
+text r4 300,151 "drag=6" size=15 bold
+text r5 100,276 "swing=0" size=15 bold
+text r6 300,276 "swing=6" size=15 bold
+
+layer bandeiras
+shape b1 c=#e8443a ink=line bone=mastro cloth=mole : 98,40! 190,48 186,88 98,94!
+rect h1 92,36 8,90 r=4 c=pau bone=mastro
+shape b2 c=#e8443a ink=line bone=mastro cloth=duro : 298,40! 390,48 386,88 298,94!
+rect h2 292,36 8,90 r=4 c=pau bone=mastro
+shape b3 c=#4a90d9 ink=line bone=mastro cloth=semAr : 98,165! 190,173 186,213 98,219!
+rect h3 92,161 8,90 r=4 c=pau bone=mastro
+shape b4 c=#4a90d9 ink=line bone=mastro cloth=comAr : 298,165! 390,173 386,213 298,219!
+rect h4 292,161 8,90 r=4 c=pau bone=mastro
+shape b5 c=#6cbb3c ink=line bone=mastro cloth=semTranco : 98,290! 190,298 186,338 98,344!
+rect h5 92,286 8,90 r=4 c=pau bone=mastro
+shape b6 c=#6cbb3c ink=line bone=mastro cloth=comTranco : 298,290! 390,298 386,338 298,344!
+rect h6 292,286 8,90 r=4 c=pau bone=mastro
+
+anim corre frames=16 fps=12
+key 0 mastro=-50,0
+key 8 mastro=50,0
+key 16 mastro=-50,0
+```
+
+![Seis bandeiras em três linhas indo e voltando juntas. Vermelhas: a mole estica e atrasa mais que a dura. Azuis: a sem ar fica parada como uma placa, a com ar fica para trás. Verdes: a sem tranco não se mexe, a com tranco chacoalha quando o mastro muda de direção](img/06_tecido_numeros.gif)
+
+Repare, linha por linha:
+
+- **Vermelhas, `tension=`** (de 0 a 1): a mole (`0.1`) estica e atrasa muito; a dura (`0.9`) quase não sai do lugar. As duas têm o mesmo `drag=2 swing=2`, para só a tensão mudar.
+- **Azuis, `drag=`** (de 0 a 10): com `drag=0` (e `swing=0`), o pano fica duro como uma placa. Com `drag=6`, o ar empurra o pano para trás **enquanto o mastro anda**: a ponta fica para trás do movimento.
+- **Verdes, `swing=`** (de 0 a 10): com `swing=6`, o pano chacoalha nos **trancos**, quando o mastro freia e muda de direção. No meio do caminho, em velocidade constante, ele quase não reage.
+- Cada bandeira tem o **seu** `cloth`, com o pivô no ponto onde ela prende no pau.
+
+**Experimente:** ponha `tension=0.5 drag=1 swing=1` (os padrões) em todas. As seis passam a balançar igual.
+
+### `bone=` no `cloth`: vento com o mastro parado
+
+Às vezes o pano deve balançar sem que nada se mexa: uma bandeira ao vento, uma cortina numa janela aberta. O truque é um osso **invisível**, que não carrega forma nenhuma, só para o tecido sentir o movimento dele:
+
+<!-- gerar: img/06_vento.gif -a venta -->
+```weasel
+canvas 420 240 bg=#cfe8f5
+palette ink=#2b2a33 line=3 pau=#7a4a2c
+
+bone vento pivot=0,0 bob=30,1
+cloth semOsso pivot=82,50 tension=0.3 drag=2 swing=2
+cloth comOsso pivot=282,50 tension=0.3 drag=2 swing=2 bone=vento
+
+line chao c=#3f9a4a w=6 : 0,226 420,226
+text t1 80,24 "sem bone=" size=16 bold
+text t2 280,24 "bone=vento" size=16 bold
+
+shape b1 c=#e8443a ink=line cloth=semOsso : 80,50! 180,58 176,100 80,106!
+rect h1 74,46 8,180 r=4 c=pau
+shape b2 c=#e8443a ink=line cloth=comOsso : 280,50! 380,58 376,100 280,106!
+rect h2 274,46 8,180 r=4 c=pau
+
+anim venta frames=24 fps=12
+```
+
+![Dois mastros parados. A bandeira da esquerda fica imóvel; a da direita sobe e desce a ponta, como se ventasse](img/06_vento.gif)
+
+Repare:
+
+- `bone vento … bob=30,1`: um osso que sobe e desce 30 pixels, uma vez por segundo. Nenhuma forma tem `bone=vento`, então ele não aparece e não carrega nada.
+- `cloth comOsso … bone=vento`: o tecido da direita **sente** o sobe e desce do `vento` e reage a ele, mas a bandeira continua no lugar, porque ela não tem `bone=`.
+- A bandeira da esquerda não tem osso nenhum: o tecido dela não sente movimento e fica parado.
+- A animação `venta` não tem `key`: ela existe só para o `bob` tocar.
+
+**Experimente:** troque `bob=30,1` por `bob=10,0.5`: um vento mais fraco e mais rápido.
 
 ## Pernas e braços com IK
 
@@ -292,9 +648,87 @@ key 48 corpo=0,0 mao=0,0
 - O comprimento do braço é a distância do ombro (`hip=`) ao pivô da mão no desenho parado. Se a mão for mais longe que isso, o braço estica e aponta para ela, mas não alcança: mantenha a mão ao alcance.
 - Uma forma presa ao osso `mao` (a `palma`) fica na ponta.
 
-**Para que lado dobra** (`bend=`): numa perna que desce do quadril para o pé, `bend=1` (o padrão) joga o joelho para a direita da tela, como num personagem virado para a direita, e `bend=-1` para a esquerda. Num braço que vai para a direita, `bend=1` levanta o cotovelo e `bend=-1` abaixa (é o caso do exemplo). Valores entre 0 e 1 dobram menos.
-
 O membro é desenhado com a cor `c=` (padrão: a cor de tinta) e não precisa de pontos depois do `:`.
+
+**Experimente:** no exemplo de cima, troque o `bend=-1` do braço por `bend=1`. O cotovelo passa a dobrar para cima em vez de para baixo ([mais sobre o `bend=`](#para-que-lado-dobra-bend) logo abaixo).
+
+### Para que lado dobra: `bend=`
+
+Um joelho pode dobrar para a frente ou para trás; um cotovelo, para cima ou para baixo. O `bend=` escolhe o lado. Três pernas iguais, presas no mesmo corpo que agacha:
+
+<!-- gerar: img/06_bend.gif -a agacha -->
+```weasel
+canvas 460 260 bg=#f4efe6
+palette ink=#2b2a33 line=4 roxo=#7a5cc2
+
+bone corpo pivot=230,100
+
+line chao c=#8a7f6e w=3 : 20,230 440,230
+text t1 100,40 "bend=1" size=17 bold align=center
+text t2 230,40 "bend=-1" size=17 bold align=center
+text t3 360,40 "bend=0.4" size=17 bold align=center
+
+stroke perna1 limb=14,18 hip=100,100 on=corpo foot=chao,100 bend=1
+stroke perna2 limb=14,18 hip=230,100 on=corpo foot=chao,230 bend=-1
+stroke perna3 limb=14,18 hip=360,100 on=corpo foot=chao,360 bend=0.4
+rect barra 60,76 340,30 r=15 c=roxo ink=line bone=corpo
+
+anim agacha frames=24 fps=12
+key 0 corpo=0,0
+key 12 corpo=0,60
+key 24 corpo=0,0
+```
+
+![Uma barra roxa desce sobre três pernas: a da esquerda dobra o joelho para a direita, a do meio para a esquerda, e a da direita dobra pouco](img/06_bend.gif)
+
+Repare:
+
+- A barra desce 60 pixels (`corpo=0,60`), e os pés ficam no chão. Sobra perna, e os joelhos dobram.
+- **`bend=1`** (o padrão): numa perna que desce do quadril para o pé, o joelho vai para a **direita** da tela, como num personagem virado para a direita.
+- **`bend=-1`**: o joelho vai para a **esquerda**.
+- **`bend=0.4`**: dobra menos. O joelho sai pouco para o lado e a perna parece encolher. Com `bend=0`, ela fica reta.
+- Valores além de 1 (até 3) dobram igual a 1.
+- Num **braço** que vai para a direita, `bend=1` levanta o cotovelo e `bend=-1` abaixa (é o caso do exemplo de cima).
+
+### O pé num ponto: `foot=x,y`
+
+`foot=chão,x` põe o pé **em cima de uma `line`**. Quando o pé deve ficar num lugar que não é uma linha (um degrau, uma pedra, um galho), use `foot=x,y`, o ponto exato:
+
+<!-- gerar: img/06_degrau.gif -a agacha -->
+```weasel
+canvas 420 260 bg=#f4efe6
+palette ink=#2b2a33 line=5 roxo=#7a5cc2
+
+bone corpo pivot=200,100
+
+line chao c=#8a7f6e w=3 : 20,230 400,230
+rect degrau 240,170 150,60 c=#c9bca8 ink=3
+
+stroke pernaE limb=18,12 hip=180,125 on=corpo foot=chao,165
+stroke pernaD limb=18,12 hip=222,125 on=corpo foot=268,170
+ellipse tronco 200,92 48,40 c=roxo ink=line bone=corpo
+ellipse olhoE 188,80 6,9 c=ink bone=corpo
+ellipse olhoD 214,80 6,9 c=ink bone=corpo
+
+text t1 100,252 "foot=chao,165" size=15 bold align=center
+text t2 315,205 "foot=268,170" size=15 bold align=center
+
+anim agacha frames=24 fps=12
+key 0 corpo=0,0
+key 12 corpo=0,30
+key 24 corpo=0,0
+```
+
+![Um bicho roxo com um pé no chão e o outro em cima de um degrau; ele agacha e os dois joelhos dobram, cada pé no seu lugar](img/06_degrau.gif)
+
+Repare:
+
+- `foot=chao,165`: o pé esquerdo fica na `line` chamada `chao`, em x=165. A altura (y) vem da própria linha. Se a linha for inclinada, como uma rampa, o pé acompanha a altura dela naquele x.
+- `foot=268,170`: o pé direito fica no ponto x=268, y=170, que é o alto do degrau (o `rect degrau` começa em y=170).
+- A perna direita é mais curta (o pé está mais perto do quadril), por isso dobra mais quando o corpo desce.
+- `limb=18,12`: as pernas têm 18 pixels de largura no quadril e afinam até 12 no pé.
+
+**Experimente:** troque `foot=268,170` por `foot=chao,268`. O pé direito desce do degrau e vai para o chão, e a perna passa na frente do degrau (ela é desenhada depois dele).
 
 ## Formas que dobram: `bones=`
 
@@ -324,7 +758,10 @@ key 24 r1=0,0,0 r2=0,0,0 r3=0,0,0
 - Os ossos fazem uma corrente (`r2` é filho de `r1`, `r3` de `r2`), cada um um pouco mais adiante na cauda. Cada um cuida do pedaço entre o pivô dele e o pivô do seguinte.
 - Perto de uma junta, os dois ossos dividem o ponto, e a curva sai lisa. Por isso a forma pode ter poucos pontos: quem dobra é a curva desenhada, não só os pontos do código.
 - A forma de baixo (azul) usa `bone=r1`: gira inteira, sem dobrar.
+- `bones=` precisa de pelo menos dois ossos, e não vale em `text` (para um osso só, use `bone=`).
 - No Godot com esqueleto ([capítulo 9](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), a forma vira uma malha que dobra do mesmo jeito.
+
+**Experimente:** na `key 6`, deixe só o primeiro osso girar: `r1=0,0,-15 r2=0,0,0 r3=0,0,0`. A cauda inteira gira reta, sem curva, porque `r2` e `r3` só seguem o pai. Quem faz a curva é a diferença de ângulo de um osso para o outro.
 
 ## Andar por um caminho: `path=`
 
@@ -353,5 +790,85 @@ key 36 carro.along=1
 - `ease=linear` dá velocidade constante. Num caminho fechado (uma forma), `along` maior que 1 dá mais voltas.
 - As outras `key` do osso continuam valendo por cima: `carro=0,-10` levanta o carro 10 acima da estrada.
 - Num filme, um ator também anda por um caminho do arquivo do filme ([capítulo 10](10-filme.md#andar-por-um-caminho-path)).
+
+### Caminho fechado e `turn=0`
+
+Uma pista de corrida, um aquário, um planeta em órbita: o caminho dá a volta e termina onde começou. Para isso, use uma forma **fechada** (aqui, uma `ellipse`) como caminho. Os dois peixes abaixo nadam na mesma pista; só o da direita tem `turn=0`:
+
+<!-- gerar: img/06_turn.gif -a nada -->
+```weasel
+canvas 460 240 bg=#cfe8f5
+palette ink=#2b2a33 line=3
+
+ellipse pista1 115,120 85,70 c=none ink=12 inkc=#9aa0ad
+ellipse pista2 345,120 85,70 c=none ink=12 inkc=#9aa0ad
+text t1 115,128 "turn=1" size=17 bold align=center
+text t2 345,128 "turn=0" size=17 bold align=center
+
+bone peixe1 pivot=40,20 path=pista1
+bone peixe2 pivot=40,20 path=pista2 turn=0
+shape corpo1 c=#ff8a3d ink=line bone=peixe1 : 58,20 40,9 22,20 40,31
+shape rabo1 c=#ff8a3d ink=line bone=peixe1 : 24,20! 12,10! 12,30!
+shape corpo2 c=#4a90d9 ink=line bone=peixe2 : 58,20 40,9 22,20 40,31
+shape rabo2 c=#4a90d9 ink=line bone=peixe2 : 24,20! 12,10! 12,30!
+
+anim nada frames=24 fps=12
+key 0 peixe1.along=0 peixe2.along=0 ease=linear
+key 24 peixe1.along=1 peixe2.along=1
+```
+
+![Dois peixes dão a volta em pistas ovais: o laranja vira a cabeça seguindo a curva, o azul fica sempre virado para a direita, mesmo andando para trás](img/06_turn.gif)
+
+Repare:
+
+- Os peixes foram desenhados num canto qualquer (perto de `40,20`), **virados para a direita**. O pivô do osso fica no meio do peixe.
+- Numa `ellipse`, o caminho começa na ponta da **direita** e segue no sentido horário (desce primeiro).
+- `along=0` até `along=1`: uma volta inteira em 24 quadros. Como o caminho é fechado, o fim (1) cai no mesmo lugar do começo (0) e o loop fecha sem pulo.
+- **`turn=1`** (o padrão, laranja): o peixe vira junto com a curva e sempre olha para onde vai.
+- **`turn=0`** (azul): o peixe não vira. Ele anda pela pista sempre virado para a direita, de lado ou de ré. Serve para o que não deve girar: um elevador, uma nuvem, um balão.
+
+**Experimente:** troque `along=1` por `along=2` na `key 24`. Os peixes dão **duas** voltas no mesmo tempo, e nadam com o dobro da velocidade.
+
+## Outras coisas que seguem um osso
+
+Formas não são as únicas que andam com um osso. Um **componente inteiro** (`use`, [capítulo 5](05-componentes.md)) também aceita `bone=`: todas as peças dele vão juntas, como se cada uma tivesse o `bone=`.
+
+<!-- gerar: img/06_chapeu.gif -a parado -->
+```weasel
+canvas 360 260 bg=#f4efe6
+palette ink=#2b2a33 line=4
+
+def chapeu cor=#4a6fd8
+ellipse aba 0,0 46,9 c=cor ink=line
+shape copa c=cor ink=line : -26,0! -22,-44! 22,-44! 26,0!
+rect fita -24,-14 48,10 c=#ffd34d ink=3
+end
+
+bone corpo pivot=180,236 sway=10,2
+
+line chao c=#8a7f6e w=3 : 40,238 320,238
+shape bicho c=#9be38c ink=line bone=corpo : 180,110 238,160 242,236! 118,236! 122,160
+ellipse olhoE 164,166 6,9 c=ink bone=corpo
+ellipse olhoD 196,166 6,9 c=ink bone=corpo
+use chapeu 180,112 bone=corpo
+
+anim parado frames=24 fps=12
+```
+
+![Um bicho verde de chapéu azul balança de um lado para o outro, e o chapéu balança junto, sem cair](img/06_chapeu.gif)
+
+Repare:
+
+- O `def chapeu` tem três peças (aba, copa e fita), desenhadas em volta de `0,0`, e nenhuma delas tem `bone=`.
+- `use chapeu 180,112 bone=corpo`: o chapéu é posto no alto da cabeça e preso ao osso `corpo`. As três peças balançam com o bicho.
+- O `bone=` do `use` vale para tudo o que está dentro do componente. Uma peça lá dentro com o próprio `bone=` usa o dela.
+- Não há `key`: o balanço vem do `sway=10,2` do osso. A `anim parado`, vazia, existe só para o balanço tocar.
+
+**Experimente:** troque `bone=corpo` do `use` por nada (apague o atributo). O bicho balança e o chapéu fica parado no ar.
+
+Também seguem um osso, com o mesmo `bone=`:
+
+- uma **luz** (`light … bone=`): a lanterna na mão, o lampião balançando ([capítulo 8](08-luz-efeitos.md#os-três-tipos-de-luz-e-o-ambiente));
+- as **caixas de colisão** (`box … bone=`) e os **pontos de encaixe** (`point … bone=`) de um jogo ([capítulo 9](09-jogo-godot.md)).
 
 [← Contas e componentes](05-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)
