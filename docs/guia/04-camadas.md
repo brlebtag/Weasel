@@ -345,10 +345,80 @@ Repare:
 - Cada furo do queijo ganhou contorno, como o da rosca.
 - A `mordida` é um círculo que fica metade dentro, metade fora do biscoito. Só a parte de dentro vira buraco, e o contorno acompanha a curva da mordida.
 - O molde precisa ser uma forma **fechada** (`shape`, `ellipse` ou `rect`).
-- Use nomes diferentes para os furos. Se dois moldes têm o mesmo nome, o `cut=` de uma forma usa só o primeiro.
-- Não deixe dois furos se encostarem: na imagem PNG, a parte em que eles se cruzam volta a ser pintada.
 
 **Experimente:** mude o raio da mordida de `42` para `70`. A mordida fica enorme e leva um pedaço grande do biscoito, com contorno e tudo.
+
+### Furos com o mesmo nome e furos que se cruzam
+
+Os furos também podem ter **o mesmo nome**: `cut=furo` abre um buraco em cada forma chamada `furo`. E dois furos podem se cruzar: eles viram **um buraco só**, com um contorno só.
+
+<!-- gerar: img/04_furos_juntos.png -->
+```weasel
+canvas 440 200 bg=#cfe8f5
+palette ink=#2b2a33 line=5
+
+# quatro furos com o mesmo nome
+rect queijo 20,40 190,110 r=8 c=#ffd34d ink=line cut=furo
+ellipse furo 60,75 14 hidden
+ellipse furo 100,118 18 hidden
+ellipse furo 145,70 11 hidden
+ellipse furo 178,115 14 hidden
+
+# dois furos que se cruzam: um buraco só, em forma de óculos
+ellipse bolacha 330,95 70 c=#d9a066 ink=line cut=olho1,olho2
+ellipse olho1 310,95 28 hidden
+ellipse olho2 350,95 28 hidden
+
+text t1 115,186 "cut=furo" size=16 align=center
+text t2 330,186 "cut=olho1,olho2" size=16 align=center
+```
+
+![Um queijo amarelo com quatro furos contornados e uma bolacha com um buraco em forma de óculos, de contorno contínuo](img/04_furos_juntos.png)
+
+Repare:
+
+- As quatro elipses se chamam `furo`, e `cut=furo` abre as quatro. É assim que um [`repeat`](05-componentes.md#repetir-repeat) faz dezenas de furos de uma vez: todas as cópias têm o mesmo nome.
+- `olho1` e `olho2` se cruzam no meio. O pedaço em comum também fica vazio, e o contorno segue a borda do buraco inteiro, sem riscar o meio.
+- Dentro de um componente (`def`), `cut=furo` usa os furos da mesma cópia: cada uso do componente tem os seus.
+
+**Experimente:** mude o raio de `olho1` e `olho2` de `28` para `40`. O buraco cresce e passa da borda da bolacha, como a mordida do biscoito.
+
+### Molde com buraco
+
+Uma forma com buraco também pode ser o molde de um `clip=` ou de um `cut=` de camada. O buraco continua buraco:
+
+<!-- gerar: img/04_molde_buraco.png -->
+```weasel
+canvas 440 200 bg=#f4efe6
+palette ink=#2b2a33 line=5
+
+# a calda fica só em cima da massa: não entra no buraco
+layer massa
+ellipse rosca 110,100 75 c=#e0a050 ink=line cut=miolo inkon=contorno
+ellipse miolo 110,100 28 hidden
+layer calda clip=rosca
+rect cobertura 20,20 180,70 c=#d1477a
+
+# a toalha some atrás da rosca, mas aparece pelo buraco dela
+layer massa2
+ellipse rosca2 330,100 75 c=#e0a050 ink=line cut=miolo2
+ellipse miolo2 330,100 28 hidden
+layer toalha cut=massa2
+rect pano 230,80 200,40 c=#3a78c2
+
+layer contorno
+```
+
+![À esquerda, uma rosca com calda rosa só na metade de cima e o buraco limpo; à direita, uma faixa azul que passa atrás da rosca e aparece pelo buraco](img/04_molde_buraco.png)
+
+Repare:
+
+- `clip=rosca`: a calda aparece só onde a rosca tem massa. O buraco do meio (`cut=miolo`) fica sem calda.
+- `cut=massa2`: a toalha some onde está a rosca, mas aparece pelo buraco, como se passasse por trás dela.
+- `miolo2` está na camada `massa2`, mas ele é o molde de um buraco: só empresta o formato e não tapa o buraco.
+- `inkon=contorno` põe o contorno da primeira rosca por cima da calda, como no [exemplo do `inkon=`](#o-contorno-por-cima-inkon).
+
+**Experimente:** apague o `cut=miolo` da primeira rosca. Ela fica inteira, e a calda passa a cobrir o meio também.
 
 ## Outras opções de camada
 

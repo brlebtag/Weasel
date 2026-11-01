@@ -55,7 +55,7 @@ Para aprender: [capítulo 1](01-primeiros-passos.md) (a linha e os erros), [cap�
 | `canvas L A` | `bg=` cor, gradiente ou `none` (`#ffffff`) · `light=x,y` direção da luz do contorno (`-0.6,-0.8`). Tamanho de 1 a 4096 (padrão 800×600; num filme, 1920×1080). |
 | `finish [game\|flat]` | `inner=` opacidade dos traços em camadas com `clip`, 0–1 (1) · `pixel=` 1–32 (1) · `posterize=` 2–64 ou `palette` · `bloom=` 0–3 (0) · `vignette=` 0–1 (0) · `grain=` 0–0.33 (0); os dois últimos aceitam até 3, mas acima disso não muda mais nada |
 | `palette nome=valor …` | cores e números. Já existem: `ink=#14141c` `line=8` `inner=5` `edge=3` |
-| `let nome=valor …` | variáveis para as contas; lidas antes de tudo |
+| `let nome=valor …` | variáveis para as contas; lidas antes de tudo (um `let` pode usar outro, de cima ou de baixo) |
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | cores com posição opcional `cor@0.5` |
 | `gradient nome radial cx,cy raio [fx,fy] [box] : cores` | `fx,fy` = foco |
 | `pattern nome [hatch\|dots] [cross]` | `c=` (cor de tinta) · `bg=` (nenhum) · `gap=` (6) · `w=` (1.2) · `r=` (1.4) · `angle=` (45) |
@@ -108,8 +108,8 @@ Para aprender: [capítulo 3](03-cores.md) (palette, gradientes, hachuras e varia
 
 | Atributo | Padrão | O que faz |
 |---|---|---|
-| `clip=forma\|camada` | — | só aparece dentro |
-| `cut=forma\|camada` | — | só aparece fora |
+| `clip=forma\|camada` | — | só aparece dentro (os buracos do molde continuam buracos) |
+| `cut=forma\|camada` | — | só aparece fora (e pelos buracos do molde) |
 | `only=anim,…` | todas | só nessas animações (`pose` = pose parada; no filme, também nomes de plano) |
 | `opacity=` | 1 | transparência |
 | `blend=` | `normal` | `multiply` `screen` `overlay` `darken` `lighten` `color-dodge` `color-burn` `hard-light` `soft-light` `difference` `exclusion` `hue` `saturation` `color` `luminosity` |
@@ -183,7 +183,7 @@ Para aprender: [capítulo 4](04-camadas.md) (camadas, recortes, `blend=`) e [cap
 
 ## Formas
 
-Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
+Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` (buracos: vale toda forma com esse nome, e buracos que se cruzam viram um só) `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
 
 **2.5D** (todas, menos `emitter`, que só aceita `z=`): `z=` profundidade, positivo = perto (0) · `yaw=` `pitch=` giro 3D em volta do meio (0) · `persp=` (o dobro do lado maior) · `[billboard]` sempre de frente. Só nas fechadas (`shape`, `ellipse`, `rect`): `thick=` espessura (0) · `thickc=` cor dos lados (a da forma, mais escura) · `back=forma` o verso.
 
@@ -235,7 +235,7 @@ Para aprender: [capítulo 2](02-formas.md).
 
 | Instrução | Atributos |
 |---|---|
-| `def nome param=padrão …` … `end` | só formas e `use` dentro; desenho em volta de `0,0`; parâmetro numérico vira variável e espessura, os outros viram cor |
+| `def nome param=padrão …` … `end` | só formas, `use` e `repeat` dentro; desenho em volta de `0,0`; parâmetro numérico vira variável e espessura, os outros viram cor |
 | `use nome x,y` | `scale=s` ou `sx,sy` · `rot=` · `flip=x\|y\|xy` · `bone=` · `cloth=` · `opacity=` · `z=` · `param=valor` · `[billboard]` (o componente fica de frente, de pé no ponto do `use`) |
 
 ### Exemplo: os componentes
@@ -417,7 +417,7 @@ Para aprender: [capítulo 9](09-jogo-godot.md).
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |
 | `sub tempo "texto"` | `dur=` (o tempo de ler) · `lang=` |
 
-**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec lens fog haze` · luz `power radius c glow aim cone` · camada `opacity show yaw pitch` e os efeitos · forma do filme `draw opacity show yaw pitch z`.
+**O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec lens fog haze` · luz `power radius c glow aim cone` · camada `opacity show yaw pitch` e os efeitos · forma do filme `draw opacity show yaw pitch z`. Uma forma ou camada do filme com `hidden` começa escondida e aparece com `show=1`.
 
 ### Exemplo: o filme
 

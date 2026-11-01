@@ -200,7 +200,8 @@ async function exportFilm(model, o, format, source, h) {
     return out;
   };
   const tag = (e) => e.name.replace(/[\\/]+/g, '-');
-  const parts = o.shots ? entries.map((e) => ({ suffix: '_' + tag(e), frames: range([e]) })) : [{ suffix: o.shot ? '_' + tag(entries[0]) : '', frames: range(entries) }];
+  // --shots: um arquivo por plano, com o nome do plano no fim; --shot com -o: o nome que você deu
+  const parts = o.shots ? entries.map((e) => ({ suffix: '_' + tag(e), frames: range([e]) })) : [{ suffix: o.shot && !o.out ? '_' + tag(entries[0]) : '', frames: range(entries) }];
   for (const p of parts) if (!p.frames.length) h.usage(`nenhum quadro no trecho pedido${p.suffix ? ` (${p.suffix.slice(1)})` : ''}`);
   const total = parts.reduce((n, p) => n + p.frames.length, 0);
   const span = (p) => [p.frames[0] / fps, (p.frames[p.frames.length - 1] + 1) / fps];

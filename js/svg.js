@@ -62,9 +62,10 @@
       defs.push(`<clipPath id="${cid}">${els.filter((e) => e.closed).map((e) => `<path d="${elPath(e, P)}"/>`).join('')}</clipPath>`);
       return cid;
     }
-    function maskOut(ds) {
+    // tudo menos os caminhos ds; back: caminhos que voltam a aparecer (os buracos de um molde)
+    function maskOut(ds, back) {
       const mid = id('m'), big = 'x="-100000" y="-100000" width="200000" height="200000"';
-      defs.push(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${big}><rect ${big} fill="#fff"/>${ds.map((d) => `<path d="${d}" fill="#000"/>`).join('')}</mask>`);
+      defs.push(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${big}><rect ${big} fill="#fff"/>${ds.map((d) => `<path d="${d}" fill="#000"/>`).join('')}${(back || []).map((d) => `<path d="${d}" fill="#fff"/>`).join('')}</mask>`);
       return mid;
     }
     const glowFilters = new Map();
@@ -235,7 +236,10 @@
           }
           if (el.cuts) {
             body = `<g mask="url(#${maskOut(el.cuts.map((cu) => elPath(cu, P)))})">${body}</g>`;
-            if (withInk && !dp) body += `<g clip-path="url(#${clipDef([el], P)})">${el.cuts.map((cu) => `<path d="${elPath(cu, P)}" fill="none" ${strokeA(inkc, el, ink, false, Lp)} stroke-linejoin="round"/>`).join('')}</g>`;
+            // contorno dos buracos; buracos que se cruzam: cada um por fora dos outros
+            const ring = (cu) => `<path d="${elPath(cu, P)}" fill="none" ${strokeA(inkc, el, ink, false, Lp)} stroke-linejoin="round"/>`;
+            const apart = S.crossing(model, P, el.cuts);
+            if (withInk && !dp) body += `<g clip-path="url(#${clipDef([el], P)})">${apart ? el.cuts.map((cu) => `<g mask="url(#${maskOut(el.cuts.filter((o) => o !== cu).map((o) => elPath(o, P)))})">${ring(cu)}</g>`).join('') : el.cuts.map(ring).join('')}</g>`;
           }
         } else {
           const color = pr.c !== undefined ? pr.c : el.color;
@@ -309,8 +313,11 @@
       if (layer.zsort && model.has3d) items = S.zSort(model, P, items);
       let attrs = '';
       if (layer.clip) attrs += ` clip-path="url(#${clipDef(S.clipEls(model, layer.clip), P)})"`;
-      if (layer.cut) attrs += ` mask="url(#${maskOut(S.clipEls(model, layer.cut).filter((e) => e.closed).map((e) => elPath(e, P)))})"`;
-      const inner = items.map((it) => item(it.el, it.part, layer, 1, P, lit)).join('');
+      if (layer.cut) attrs += ` mask="url(#${maskOut(S.clipEls(model, layer.cut).filter((e) => e.closed).map((e) => elPath(e, P)), S.moldHoles(model, layer.cut).map((h) => elPath(h, P)))})"`;
+      let inner = items.map((it) => item(it.el, it.part, layer, 1, P, lit)).join('');
+      // os buracos do molde do clip= continuam buracos
+      const holes = layer.clip ? S.moldHoles(model, layer.clip) : [];
+      if (inner && holes.length) inner = `<g mask="url(#${maskOut(holes.map((h) => elPath(h, P)))})">${inner}</g>`;
       return inner ? `<g${attrs}>${inner}</g>` : '';
     }
 

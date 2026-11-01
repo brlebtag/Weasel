@@ -861,6 +861,36 @@
     for (const c of el.cuts) p.addPath(pathOf(geometry(model, pose, c)));
     return p;
   }
+  // Moldes que se cruzam (pelas caixas): num recorte só, a regra par-ímpar pinta de novo onde dois se cruzam,
+  // então cada um recorta à parte. Moldes separados continuam num recorte só (sem emenda entre vizinhos).
+  function crossing(model, pose, els) {
+    if (els.length < 2) return false;
+    const bx = els.map((e) => segsBox(geometry(model, pose, e).segs));
+    const over = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    for (let i = 0; i < bx.length; i++) for (let j = i + 1; j < bx.length; j++) if (over(bx[i], bx[j])) return true;
+    return false;
+  }
+  function clipOutEach(ctx, model, pose, els) {
+    for (const e of els) ctx.clip(inverse(pathOf(geometry(model, pose, e))), 'evenodd');
+  }
+  // os buracos (cut=) das formas de um molde
+  const moldHoles = (model, name) => clipEls(model, name).filter((e) => e.closed && e.cuts).flatMap((e) => e.cuts);
+  // clip= da camada: só dentro do molde; os buracos do molde continuam buracos
+  function clipInto(ctx, model, pose, name) {
+    ctx.clip(clipPath(model, pose, name));
+    clipOutEach(ctx, model, pose, moldHoles(model, name));
+  }
+  // cut= da camada: tudo menos o molde; pelos buracos do molde a camada aparece
+  function clipAway(ctx, model, pose, name) {
+    // o molde de um buraco que está na mesma camada só empresta o formato: não recorta sozinho
+    const holes = moldHoles(model, name), els = clipEls(model, name).filter((e) => e.closed && !holes.includes(e));
+    if (!holes.length && !crossing(model, pose, els)) { ctx.clip(inverse(clipPath(model, pose, name)), 'evenodd'); return; }
+    for (const e of els) {
+      const p = inverse(pathOf(geometry(model, pose, e)));
+      if (e.cuts) for (const h of e.cuts) p.addPath(pathOf(geometry(model, pose, h)));
+      ctx.clip(p, 'evenodd');
+    }
+  }
 
   // ---------- tinta: cor ou gradiente ----------
   function gradGeom(model, pose, el, g) {
@@ -1502,8 +1532,8 @@
   function drawLayer(ctx, R, layer, items, alpha, lit, pose, solo, flat) {
     ctx.save();
     if (!solo) ctx.globalCompositeOperation = layer.blend;
-    if (layer.clip) ctx.clip(clipPath(R.model, pose, layer.clip));
-    if (layer.cut) ctx.clip(inverse(clipPath(R.model, pose, layer.cut)), 'evenodd');
+    if (layer.clip) clipInto(ctx, R.model, pose, layer.clip);
+    if (layer.cut) clipAway(ctx, R.model, pose, layer.cut);
     for (const it of items) drawItem(ctx, R.model, pose, it.el, it.part, layer, alpha, lit ? R : null, flat);
     ctx.restore();
   }
@@ -1607,7 +1637,7 @@
   // R: iluminação da camada (null = sem luz). flat: só a silhueta (sombra projetada), sem brilho próprio.
   // Com 3D: some atrás da bola (round=), mostra o verso (back=) quando vira de costas e monta o bloco (thick=).
   function drawItem(ctx, model, pose, el, part, layer, base, R, flat) {
-    const d3 = model.has3d && !el.hidden ? el3(model, pose, el) : null;
+    const d3 = model.has3d && (!el.hidden || propsOf(pose, el).reveal) ? el3(model, pose, el) : null;
     if (!d3) { drawItem0(ctx, model, pose, el, part, layer, base, R, flat); return; }
     if (d3.fade <= 0.001) return;
     base *= d3.fade;
@@ -1654,8 +1684,9 @@
     ctx.restore();
   }
   function drawItem0(ctx, model, pose, el, part, layer, base, R, flat) {
-    if (el.hidden) return;
     const pr = propsOf(pose, el);
+    // reveal: num filme, at forma.show=1 mostra uma forma com hidden
+    if (el.hidden && !pr.reveal) return;
     if (pr.show === 0) return;
     const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001) return;
@@ -1678,11 +1709,12 @@
       const hasInk = ink > 0 && fin.style !== 'flat' && inkc;
       const withInk = part !== 'fill' && hasInk;
       const cut = el.cuts ? cutPath(model, pose, el) : null;
+      const apart = cut && crossing(model, pose, el.cuts);
       const path = pathOf(g);
       const bb = L ? segsBox(g.segs) : null;
       const dp = dr < 1 ? drawParts(dr) : null;
       if (L && withInk) inkc = litColor(inkc, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2, true);
-      if (cut) { ctx.save(); ctx.clip(inverse(cut), 'evenodd'); }
+      if (cut) { ctx.save(); if (apart) clipOutEach(ctx, model, pose, el.cuts); else ctx.clip(inverse(cut), 'evenodd'); }
       if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
         const fa = dp ? alpha * dp.fill : alpha;
         ctx.globalAlpha = fa;
@@ -1724,15 +1756,18 @@
       } else if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
       if (cut) {
         ctx.restore();
+        // contorno dos buracos, só por dentro da forma; buracos que se cruzam: cada um por fora dos outros
         if (withInk && !dp) {
-          // contorno dos buracos, só por dentro da forma
-          ctx.save();
-          ctx.clip(path);
-          ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
-          ctx.lineWidth = ink;
-          ctx.lineJoin = 'round';
-          ctx.stroke(cut);
-          ctx.restore();
+          for (const h of apart ? el.cuts : [null]) {
+            ctx.save();
+            ctx.clip(path);
+            if (h) clipOutEach(ctx, model, pose, el.cuts.filter((o) => o !== h));
+            ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
+            ctx.lineWidth = ink;
+            ctx.lineJoin = 'round';
+            ctx.stroke(h ? pathOf(geometry(model, pose, h)) : cut);
+            ctx.restore();
+          }
         }
       }
       return;
@@ -2043,7 +2078,7 @@
 
   W.scene = {
     makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
-    flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, findNamed, limbPoints, fillBg,
+    flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
   };

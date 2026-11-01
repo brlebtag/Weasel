@@ -367,9 +367,12 @@
     for (const tr of entry.shot.tracks.values()) {
       if (tr.kind === 'shape') {
         for (const el of owner.named.get(tr.name) || []) {
-          const v = valueAt(tr, t, SHAPE_3D.has(tr.prop) ? el[tr.prop] || 0 : 1);
+          // com hidden, a forma começa escondida e at forma.show=1 mostra (como um ator com hidden)
+          const hid = tr.prop === 'show' && el.hidden;
+          const v = valueAt(tr, t, SHAPE_3D.has(tr.prop) ? el[tr.prop] || 0 : hid ? 0 : 1);
           const o = (pm || (pm = new Map())).get(el.id) || {};
           o[tr.prop] = v;
+          if (hid && v) o.reveal = 1;
           pm.set(el.id, o);
         }
         continue;
@@ -377,7 +380,7 @@
       if (tr.kind !== 'light' && tr.kind !== 'layer') continue;
       let base;
       if (tr.kind === 'light') base = owner.lights.get(tr.name)[tr.prop];
-      else { const Ly = owner.layerMap.get(tr.name); base = Ly.fx && Ly.fx[tr.prop] !== undefined ? Ly.fx[tr.prop] : Ly[tr.prop] !== undefined && (tr.prop === 'yaw' || tr.prop === 'pitch') ? Ly[tr.prop] : LAYER_BASE[tr.prop]; }
+      else { const Ly = owner.layerMap.get(tr.name); base = tr.prop === 'show' && Ly.hidden ? 0 : Ly.fx && Ly.fx[tr.prop] !== undefined ? Ly.fx[tr.prop] : Ly[tr.prop] !== undefined && (tr.prop === 'yaw' || tr.prop === 'pitch') ? Ly[tr.prop] : LAYER_BASE[tr.prop]; }
       const map = tr.kind === 'light' ? (li || (li = new Map())) : (lp || (lp = new Map()));
       const o = map.get(tr.name) || {};
       o[tr.prop] = valueAt(tr, t, base);
@@ -423,8 +426,11 @@
       S.orderLayers(w.model, w.pose).forEach((layer, li) => {
         if (!layer.items.length && !layer.cast) return;
         if (w.ac.hide && w.ac.hide.has(layer.name)) return;
-        // no arquivo do filme, only= também aceita nomes de shot (títulos, letreiros)
-        const ok = w.stage && layer.only ? !layer.hidden && (!layer.guide || vis.guides) && layer.only.includes(fs.shot.name) : S.layerVisible(layer, w.pose, vis);
+        // no arquivo do filme, only= também aceita nomes de shot (títulos, letreiros); uma camada com hidden
+        // que tem at camada.show=… começa escondida e o at decide quando aparece
+        const lp = w.stage && layer.hidden ? w.pose.lprops.get(layer.name) : null;
+        const Ly = lp && lp.show !== undefined ? Object.assign({}, layer, { hidden: false }) : layer;
+        const ok = w.stage && Ly.only ? !Ly.hidden && (!Ly.guide || vis.guides) && Ly.only.includes(fs.shot.name) : S.layerVisible(Ly, w.pose, vis);
         if (!ok) return;
         const screen = screen0 || !!layer.screen;
         list.push({ w, layer, d: screen ? Infinity : w.depth * (layer.depth || 1), screen, front: !!(layer.front || w.ac.front), li });

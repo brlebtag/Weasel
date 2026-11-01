@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/4s" width="200" height="100" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_surge_surge" start="0s" duration="8/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_surge_surge.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_surge">
+      <project name="caso_surge">
+        <sequence format="r1" duration="8/4s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_surge_surge" offset="0s" start="0s" duration="8/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="surge"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>
