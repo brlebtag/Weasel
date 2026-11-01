@@ -68,14 +68,74 @@ Repare:
 
 ### Nomes que já existem
 
-Todo desenho começa com esta `palette`, que você pode mudar:
+Quatro nomes vêm prontos em todo desenho, mesmo sem nenhuma linha `palette`. É como se todo arquivo começasse com esta linha escondida:
 
-| Nome | Valor | Para quê |
+```
+palette ink=#14141c line=8 inner=5 edge=3
+```
+
+| Nome | Valor | O que é |
 |---|---|---|
-| `ink` | `#14141c` | A **cor de tinta**: a cor padrão dos contornos, dos traços, das linhas e do texto. Mude com `palette ink=#…`. |
-| `line` | `8` | espessura de contorno grosso |
-| `inner` | `5` | espessura de traços de dentro (rugas, dobras) |
-| `edge` | `3` | espessura fina |
+| `ink` | `#14141c` (quase preto) | uma **cor**: a cor de tinta |
+| `line` | `8` | um **número**: espessura de contorno grosso (o de fora do personagem) |
+| `inner` | `5` | um número: espessura média (rugas, dobras, detalhes de dentro) |
+| `edge` | `3` | um número: espessura fina |
+
+Eles funcionam de jeitos diferentes:
+
+- **`ink` é usada sozinha.** Quando você não diz a cor, o Weasel usa a cor de tinta: no contorno de quem tem `ink=`, nos `stroke`, `line` e `text` sem `c=`, e numa forma fechada sem `c=` nem `ink=`, que sai pintada inteira dessa cor. O nome também serve como qualquer outra cor: `c=ink`.
+- **`line`, `inner` e `edge` só valem onde você escreve o nome.** Eles são números com nome, prontos para usar em `ink=` e `w=`. Uma forma sem `ink=` continua sem contorno, e um `stroke` sem `w=` continua com 4.
+
+Este exemplo não tem nenhuma `palette` e usa os quatro:
+
+<!-- gerar: img/03_nomes_prontos.png -->
+```weasel
+canvas 480 210 bg=#f4efe6
+
+ellipse grosso 90,90 55 c=#ffd23f ink=line
+ellipse medio 240,90 55 c=#ffd23f ink=inner
+ellipse fino 390,90 55 c=#ffd23f ink=edge
+ellipse olhoE 222,72 6,9 c=ink
+ellipse olhoD 258,72 6,9 c=ink
+stroke boca w=edge : 215,100 240,118 265,100
+
+text t1 90,190 "ink=line" size=20 align=center
+text t2 240,190 "ink=inner" size=20 align=center
+text t3 390,190 "ink=edge" size=20 align=center
+```
+
+- Os três círculos têm contorno de 8, 5 e 3 pixels, todos na cor de tinta, porque nenhum tem `inkc=`.
+- Os olhos usam `c=ink` como cor de preenchimento. A boca (`w=edge`, 3 pixels) e os textos não têm `c=`, então também saem na cor de tinta.
+
+**Mudar um nome muda o desenho inteiro.** Escreva os mesmos nomes numa `palette`, e o valor novo vale em todo lugar que usa o nome. Mesmo desenho, com uma linha a mais no começo:
+
+<!-- gerar: img/03_nomes_mudados.png -->
+```weasel
+canvas 480 210 bg=#f4efe6
+palette ink=#8a3b12 line=14 edge=1
+
+ellipse grosso 90,90 55 c=#ffd23f ink=line
+ellipse medio 240,90 55 c=#ffd23f ink=inner
+ellipse fino 390,90 55 c=#ffd23f ink=edge
+ellipse olhoE 222,72 6,9 c=ink
+ellipse olhoD 258,72 6,9 c=ink
+stroke boca w=edge : 215,100 240,118 265,100
+
+text t1 90,190 "ink=line" size=20 align=center
+text t2 240,190 "ink=inner" size=20 align=center
+text t3 390,190 "ink=edge" size=20 align=center
+```
+
+| Sem `palette` | Com `palette ink=#8a3b12 line=14 edge=1` |
+|---|---|
+| ![Três círculos amarelos com contorno quase preto, grosso, médio e fino; o do meio tem olhos e boca](img/03_nomes_prontos.png) | ![O mesmo desenho com tudo marrom: o primeiro contorno bem mais grosso, a boca e o último contorno bem finos](img/03_nomes_mudados.png) |
+
+- Tudo que estava quase preto ficou marrom: contornos, olhos, boca e textos.
+- O primeiro círculo engrossou (`line` foi de 8 para 14). O último afinou, e a boca também, porque os dois usam `edge`, que foi de 3 para 1. O contorno do meio não mudou, porque `inner` continua 5.
+
+É por isso que vale escrever `ink=line` em vez de `ink=8`. Se o contorno ficar grosso demais, você muda um número só (`palette line=6`), em vez de procurar cada `8` do desenho. Você também pode criar os seus próprios nomes de espessura, como o `fino=3` da casa; estes quatro só já vêm prontos.
+
+> O `inner` da `palette` não é o `inner=` do `finish` (uma opacidade, explicada no [capítulo 4](04-camadas.md)). Aqui, `inner` é só um número de espessura.
 
 ### Variantes: outra versão das cores
 
