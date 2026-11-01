@@ -32,7 +32,7 @@ Linha por linha:
 
 Tudo na carinha depende de `cx`, `cy` e `r`. Mude `r=80` para `r=50` e ela inteira diminui, com os olhos e a boca no lugar certo. Mude `cx` e ela anda.
 
-- `let` aceita várias variáveis na mesma linha, e uma pode usar as anteriores (`olho={r*0.14}`).
+- `let` aceita várias variáveis na mesma linha, e uma pode usar outra (`olho={r*0.14}`). A outra pode vir antes ou depois: `let a={b*2}` em cima de `let b=10` dá `a` = 20, com ou sem `repeat` no arquivo.
 - As linhas `let` são lidas **antes de todo o resto**, então a variável vale no arquivo inteiro, mesmo acima do `let`.
 - Num ponto, cada número pode ter sua conta: `{cx-20},{cy}`. Dentro das chaves, espaço pode (`{cx - 20}`); fora delas, não (`{cx}, {cy}` quebra o ponto em dois).
 - O nome de uma variável começa com letra; depois, letras sem acento, números ou `_`: `r`, `olho`, `altura_porta`.
@@ -597,7 +597,11 @@ Repare:
 - `cor=#4a9eff` é uma **cor**: dentro do `def`, `c=cor` pinta com ela.
 - No `use`, um parâmetro de cor aceita tudo o que `c=` aceita: `#hex`, um nome da `palette` (`vermelho`) ou um gradiente (`ceu`).
 - Um parâmetro que não foi mudado fica com o valor padrão do `def`: o primeiro botão é o "de fábrica".
-- Cuidado com erros de digitação: um nome que o componente não tem (`bordda=10`) é ignorado sem aviso.
+- Cuidado com erros de digitação: um nome que o componente não tem (`bordda=10`) não muda nada, e o Weasel avisa, dizendo os nomes que valem:
+
+```
+aviso: parâmetro desconhecido "bordda": o componente "botao" tem cor, borda (e o use aceita scale, rot, flip, bone, cloth, opacity, z)
+```
 
 ### Tamanho e giro: `scale=` e `rot=`
 
@@ -753,6 +757,43 @@ Repare:
 - Quando a flor muda de tamanho (`scale=1.3`), tudo o que está dentro dela, as pétalas também, muda junto.
 
 **Experimente:** faça uma flor de seis pétalas: seis linhas `use petala`, com `rot=0`, `60`, `120`, `180`, `240` e `300`.
+
+### `repeat` dentro do componente
+
+Cinco linhas `use petala` quase iguais pedem um `repeat`. Ele também vale dentro do `def`:
+
+<!-- gerar: img/05_repeat_def.png -->
+```weasel
+canvas 400 230 bg=#cfe8f5
+palette ink=#2b2a33
+
+def petala cor=#ff6b4a
+ellipse p 0,-26 13,24 c=cor ink=2
+end
+
+# a flor com um repeat: oito pétalas, cada uma giro graus depois da outra
+def flor cor=#ff6b4a giro=45
+stroke caule w=5 c=#4f9a3e : 0,10 -5,60 0,110
+repeat i 0..7
+use petala 0,0 rot={i*giro} cor=cor
+end
+ellipse miolo 0,0 12 c=#ffd34d ink=2
+end
+
+rect grama 0,190 400,40 c=#7cc56a
+use flor 110,95
+use flor 290,95 cor=#4a9eff giro=25
+```
+
+![Duas flores: a vermelha com oito pétalas em volta do miolo, a azul com as oito pétalas juntas de um lado só, como um leque](img/05_repeat_def.png)
+
+Repare:
+
+- `repeat i 0..7` faz as oito pétalas, com `rot=0`, `45`, `90`… até `315`.
+- Nas contas de dentro do `repeat` valem o `i` e os parâmetros do componente: `rot={i*giro}`. A flor azul tem `giro=25`, então as pétalas vão só de 0 a 175 graus e formam um leque.
+- Os limites do `repeat` (`0..7`) são lidos uma vez só, antes de qualquer `use`. Eles aceitam números e variáveis do `let`, mas não os parâmetros do `def`: `repeat i 0..{n-1}` com `n` do `def` dá erro. Para flores com quantidades diferentes de pétalas, faça um `def` para cada uma.
+
+**Experimente:** troque `giro=25` por `giro=90`. A flor azul fica com quatro pétalas em cruz: as oito caem em quatro lugares, duas em cada.
 
 ## Espelho: `mirror=`
 

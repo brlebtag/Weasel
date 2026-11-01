@@ -1,0 +1,4 @@
+filme    400 × 200, 4 fps, 2s (8 quadros, 00:02:00), fundo #20263a
+camadas  base (depth undefined), placa
+planos   1
+  surge            00:00:00      2s      8 quadros  câmera 200,100 · 2 mudança(s) com at

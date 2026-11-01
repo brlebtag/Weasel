@@ -1,0 +1,11 @@
+# teste: forma e camada do filme com hidden começam escondidas e aparecem com at … show=1 (como um ator)
+film fps=4 dur=2s
+canvas 400 200 bg=#20263a
+
+ellipse estrela 100,100 36 c=#ffd34d hidden
+layer placa hidden
+rect fundo 220,60 140,80 r=12 c=#e94f37
+text nome 290,108 "oi" size=36 align=center c=#ffffff
+
+at 1s estrela.show=1
+at 1.5s placa.show=1

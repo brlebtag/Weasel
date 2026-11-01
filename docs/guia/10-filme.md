@@ -696,7 +696,30 @@ at 2s b.opacity=1
 
 - `at 1s a.show=1`: o `show` troca de uma vez, como um interruptor (1 = aparece, 0 = some).
 - `b.opacity` vai de 0 (em 0,5 s) até 1 (em 2 s): o fantasma da direita vai ficando visível.
-- Para uma **forma** ou **camada** do filme que aparece depois, não use `hidden` nela: `hidden` numa forma quer dizer "nunca aparece" (ela só serve de molde). Comece com `at 0s nome.show=0` e mude para `show=1` depois, como a bandeira do exemplo abaixo.
+Uma **forma** ou uma **camada** do arquivo do filme funciona do mesmo jeito: com `hidden`, ela começa invisível, e `at … nome.show=1` faz ela aparecer.
+
+<!-- gerar: img/10_aparece_forma.gif -s 0.6 -->
+```weasel
+film fps=12 dur=2s
+canvas 800 300 bg=#20263a
+
+ellipse lua 200,150 70 c=#f4efe6 hidden
+
+layer placa hidden
+rect fundo 460,100 280,100 r=16 c=#e94f37
+text fim 600,168 "Fim" size=48 align=center bold c=#ffffff
+
+at 0.5s lua.show=1
+at 1.2s placa.show=1
+```
+
+![Num fundo escuro, primeiro aparece uma lua clara à esquerda; depois, de uma vez, uma placa vermelha escrita Fim à direita](img/10_aparece_forma.gif)
+
+- `lua` é uma forma com `hidden`: some até `at 0.5s lua.show=1`.
+- `placa` é uma camada com `hidden`: a camada inteira (o retângulo e o texto) aparece em 1,2 s.
+- Sem nenhum `show=1`, uma forma com `hidden` nunca aparece: ela só serve de molde (para `cut=`, `clip=`, `back=`…). Se um `at` muda a `opacity` ou o `draw` dela sem `show=1`, o Weasel avisa: `aviso: "lua" tem hidden: só aparece com at … lua.show=1`.
+- Também dá para fazer sem `hidden`: `at 0s nome.show=0` esconde no começo, como a bandeira do exemplo abaixo.
+- Isso vale para o filme. Numa animação de jogo (`key`), `hidden` continua querendo dizer "nunca aparece", e o Weasel avisa se uma `key` tenta mostrar a forma ([capítulo 13](13-problemas.md#a-key-de-show-não-faz-a-forma-aparecer)).
 
 ### Camadas e formas do filme
 
@@ -1325,6 +1348,7 @@ salvo render/conversa.fcpxml  FCPXML 1.9: 1 vídeo, 4 sons em 3 trilhas, 1 marca
 ```
 
 - Com `--shots`, cada plano vira um arquivo, com o nome do plano no fim (`conversa_conversa.mov`: o filme `conversa`, o plano `conversa`).
+- Com `--shot` (um plano só), o arquivo sai com o nome que você deu em `-o`: `--shot susto -o susto.gif` salva `susto.gif`. Sem `-o`, o nome do plano vai no fim (`filme_susto.mp4`).
 - "4 sons em 3 trilhas": os grilos em loop viram dois pedaços de 3 segundos, um depois do outro na mesma trilha; a fala e o eco ficam cada um na sua.
 
 O [README](../../README.md#filmes-na-linha-de-comando) tem a lista completa, inclusive como levar o filme para o DaVinci Resolve, o Final Cut ou o Premiere.

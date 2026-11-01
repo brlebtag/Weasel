@@ -176,6 +176,49 @@ palette amarelo=#ffd34d               # ou dê o nome você mesmo...
 ellipse sol 150,100 40 c=amarelo      # ...e use-o
 ```
 
+### O comentário virou "valor solto"
+
+**O que você vê:**
+
+```
+aviso: valor solto "#cafe": parece cor, então não virou comentário (cor é c=#cafe; comentário é "# " com espaço depois)
+  2 | ellipse xicara 150,100 40 c=#ffb000 #cafe com leite
+    |                                     ^^^^^
+```
+
+**Por quê:** um `#` no meio da linha começa comentário, **a não ser** que pareça uma cor. `#cafe` tem quatro letras de 0 a 9 e de `a` a `f`: é uma cor (`#ccaaffee`, com transparência). Então o resto da linha (`#cafe com leite`) virou palavras soltas, que a forma ignora.
+
+**Como resolver:** ponha um espaço depois do `#`:
+
+```
+ellipse xicara 150,100 40 c=#ffb000 #cafe com leite     # errado: "#cafe" é lido como cor
+ellipse xicara 150,100 40 c=#ffb000 # cafe com leite    # certo: "# " começa o comentário
+```
+
+### O padrão não aparece no traço
+
+**O que você vê:**
+
+```
+aviso: o padrão "listra" só preenche formas fechadas (shape, ellipse, rect): o traço sai sem o padrão, só na cor das linhas dele (#c44536)
+```
+
+**Por quê:** um `pattern` (hachura ou pontos) preenche o **lado de dentro** de uma forma. Um `stroke`, uma `line`, um `text` e o contorno (`inkc=`) não têm lado de dentro: eles saem lisos, na cor das linhas do padrão.
+
+**Como resolver:** use o padrão no `c=` de uma forma fechada (`shape`, `ellipse`, `rect`). Para um traço tracejado, use `dash=` numa `line` ([capítulo 2](02-formas.md)).
+
+### `cap=` não muda a ponta do traço
+
+**O que você vê:**
+
+```
+aviso: cap= não vale junto com taper=: o traço afinado sai sempre com as pontas redondas
+```
+
+**Por quê:** `taper=` desenha o traço em pedaços de espessuras diferentes, e cada pedaço tem a ponta redonda. O `cap=` só vale para o traço de espessura igual.
+
+**Como resolver:** escolha um dos dois: `taper=` para afinar as pontas, ou `cap=butt`/`cap=square` para uma ponta reta.
+
 ### A forma ficou redonda (ou fez uma volta) onde eu queria uma ponta
 
 **O que você vê:** você queria um triângulo, e saiu uma gota ou um ovo.
@@ -560,6 +603,65 @@ key 12 bola.opacity=1
 
 **Como resolver:** tire o `opacity=0` da linha da forma e deixe a `key 0 bola.opacity=0` esconder a bola no começo.
 
+### A `key` de `show` não faz a forma aparecer
+
+**O que você vê:**
+
+```
+aviso: "bola" tem hidden e nunca aparece numa animação: show= não muda isso (para começar escondida, tire o hidden e use key 0 bola.show=0)
+```
+
+**Por quê:** numa animação, `hidden` quer dizer "nunca aparece": a forma só serve de molde (`cut=`, `clip=`, `back=`…). Nenhuma `key` muda isso, nem `show=1`, nem `opacity=`. (Num filme é diferente: lá, `at … bola.show=1` mostra uma forma com `hidden`, como no [capítulo 10](10-filme.md#aparecer-show-ou-opacity).)
+
+```
+ellipse bola 150,100 40 hidden      # errado: hidden ganha da key
+anim surge frames=12
+key 6 bola.show=1
+```
+
+**Como resolver:** tire o `hidden` e esconda a forma com uma `key` no quadro 0:
+
+```
+ellipse bola 150,100 40             # certo: sem hidden
+anim surge frames=12
+key 0 bola.show=0
+key 6 bola.show=1
+```
+
+Para uma peça que aparece só numa versão do personagem, use `hidden` com `variant … show=` ([capítulo 3](03-cores.md)): aí a `key` funciona nessa versão.
+
+### A `key` de `tint` não muda a cor
+
+**O que você vê:**
+
+```
+aviso: a camada "corpo" não tem tint=cor,quanto: sem a cor, corpo.tint= não pinta nada
+```
+
+**Por quê:** a `key camada.tint=` muda só o **quanto** da cor (de 0 a 1). A cor vem do `tint=` escrito na linha da camada. Sem ele, não há cor para misturar.
+
+**Como resolver:** ponha a cor na camada, com quanto 0 para começar sem mudança:
+
+```
+layer corpo tint=#ff0000,0          # a cor do piscar; 0 = nada no começo
+anim dano frames=6
+key 0 corpo.tint=0
+key 2 corpo.tint=0.8
+key 6 corpo.tint=0
+```
+
+### O tecido não balança a forma com `bones=`
+
+**O que você vê:**
+
+```
+aviso: cloth= não vale junto com bones=: a forma dobra com os ossos e o tecido fica parado (use um dos dois)
+```
+
+**Por quê:** com `bones=`, cada ponto da forma segue o osso mais perto dele. O `cloth=` também quer mexer nos pontos; os dois não se juntam, e vale o `bones=`.
+
+**Como resolver:** escolha um. `bones=` para uma peça que dobra com o corpo (uma manga, uma cauda com ossos); `cloth=` para uma peça solta que balança sozinha (uma capa, uma bandeira).
+
 ### A perna com IK estica ou dobra demais
 
 O comprimento da perna é a distância do `hip=` ao pé **no desenho parado**. Se o corpo desce mais que isso, a dobra fica exagerada; se sobe mais que isso, a perna fica pendurada. Ajuste o quanto o corpo desce na animação, ou mude o `hip=`.
@@ -579,6 +681,26 @@ erro: {alto}: variável desconhecida "alto"
 **Por quê:** dentro de um `def`, uma conta só conhece os parâmetros declarados na linha `def`, com valor padrão **numérico**.
 
 **Como resolver:** declare o parâmetro com um número: `def arvore alto=60 cor=#4caf50`. Na versão 1.6.1 ou anterior isso dava erro mesmo assim; atualize o Weasel.
+
+Dentro de um `def`, os **limites** de um `repeat` são diferentes: eles são lidos uma vez só, antes de qualquer `use`, e não conhecem os parâmetros.
+
+```
+erro: variável desconhecida "n": dentro de def, os limites do repeat usam números ou variáveis do let (os parâmetros do def só valem nas contas das linhas de dentro)
+```
+
+Use um número (`repeat i 0..7`) ou uma variável do `let`. Nas contas das linhas de dentro do `repeat`, os parâmetros valem normalmente ([capítulo 5](05-componentes.md#repeat-dentro-do-componente)).
+
+### "parâmetro desconhecido" num `use`
+
+**O que você vê:**
+
+```
+aviso: parâmetro desconhecido "rr": o componente "bola" tem cor, r (e o use aceita scale, rot, flip, bone, cloth, opacity, z)
+```
+
+**Por quê:** o nome não é parâmetro do componente (os da linha `def`), nem uma opção do `use`. Quase sempre é erro de digitação: `rr=30` em vez de `r=30`. O valor não muda nada.
+
+**Como resolver:** use um dos nomes da lista. Para o componente ter um parâmetro novo, acrescente-o na linha `def`, com o valor padrão: `def bola cor=#ff6b4a r=20 brilho=0.7`.
 
 ## Arquivos
 
@@ -744,6 +866,18 @@ rect estrada 100,-20000 40,20150 c=#5d5d5d
 | ![A grama e a estrada terminam no meio do caminho, e o céu aparece onde devia haver chão](img/13_chao_curto.png) | ![A grama e a estrada vão até o horizonte](img/13_chao_comprido.png) |
 
 **Como resolver:** desenhe o chão bem comprido e bem largo (até `-20000`).
+
+### O `horizon=` não muda nada
+
+**O que você vê:**
+
+```
+aviso: horizon= não muda nada com persp= e pitch= juntos: o chão já fica decidido pelos dois (use só dois dos três)
+```
+
+**Por quê:** o chão (`floor`) precisa de duas coisas para deitar: o quanto ele deita (`pitch=`), a distância do olho (`persp=`) e onde fica o horizonte (`horizon=`) são três jeitos de dizer isso, e quaisquer **dois** decidem o terceiro. Com `persp=` e `pitch=`, o horizonte já está dado.
+
+**Como resolver:** apague um dos três. Para escolher onde o chão some, fique com `horizon=` e um dos outros dois (ou só `horizon=`).
 
 ### No mapa `iso`, o chão cobre as caixas
 

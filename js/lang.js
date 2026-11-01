@@ -81,6 +81,8 @@
   const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color', lens: 'pos', fog: 'color', haze: 'pos' };
   // formas do próprio arquivo do filme (mapas, setas, títulos)
   const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step', yaw: 'free', pitch: 'free', z: 'free' };
+  // o que só muda a aparência: numa forma ou camada com hidden, não faz nada sem show=1
+  const HIDE_VISUAL = new Set(['opacity', 'draw', 'blur', 'glow', 'tint', 'brightness', 'saturate', 'contrast', 'hue']);
   // transições na entrada de um plano: shot nome dur=4s in=fade,0.5s
   const TRANSITIONS = ['fade', 'wipe', 'slide', 'zoom', 'iris'];
   const FILM_W = 1920, FILM_H = 1080;
@@ -332,12 +334,13 @@
   const REPEAT_MAX = 20000;
   function expandRepeats(lines, vars) {
     if (!lines.some((ln) => /^\s*repeat(\s|$)/.test(ln.text))) return null;
-    const errs = [], pairs = new Map(), stack = [];
+    const errs = [], pairs = new Map(), stack = [], inDef = new Set();
     lines.forEach((ln, i) => {
       const w = splitLine(ln.text).words[0];
       if (!w) return;
       if (w.text === 'repeat' || w.text === 'def') stack.push({ kind: w.text, i });
       else if (w.text === 'end' && stack.length) { const b = stack.pop(); if (b.kind === 'repeat') pairs.set(b.i, i); }
+      if (w.text === 'repeat' && stack.some((b) => b.kind === 'def')) inDef.add(i);
     });
     for (const b of stack) if (b.kind === 'repeat') pairs.set(b.i, -1);
     const out = [];
@@ -352,14 +355,16 @@
         if (end < 0) { fail('repeat sem end'); continue; }
         const name = ws[1], range = ws[2];
         const m = range ? /^(.+?)\.\.(.+)$/.exec(range.text) : null;
-        let a = NaN, b = NaN;
+        let a = NaN, b = NaN, why = null;
         if (m) {
           const all = new Map([...vars, ...scope]);
-          const val = (s) => { try { return evalExpr(s[0] === '{' && s[s.length - 1] === '}' ? s.slice(1, -1) : s, all); } catch (e) { return NaN; } };
+          const val = (s) => { try { return evalExpr(s[0] === '{' && s[s.length - 1] === '}' ? s.slice(1, -1) : s, all); } catch (e) { why = why || e.message; return NaN; } };
           a = Math.round(val(m[1]));
           b = Math.round(val(m[2]));
         }
-        if (!name || !IDENT.test(name.text) || !m || isNaN(a) || isNaN(b)) fail('use: repeat i 0..9  (as linhas até o end se repetem, com i = 0, 1, … 9)', name && !IDENT.test(name.text) ? name : range);
+        // os limites são lidos uma vez só, antes dos usos: num def, os parâmetros dele ainda não valem ali
+        if (name && IDENT.test(name.text) && m && inDef.has(i) && why && why.startsWith('variável desconhecida')) fail(`${why}: dentro de def, os limites do repeat usam números ou variáveis do let (os parâmetros do def só valem nas contas das linhas de dentro)`, range);
+        else if (!name || !IDENT.test(name.text) || !m || isNaN(a) || isNaN(b)) fail('use: repeat i 0..9  (as linhas até o end se repetem, com i = 0, 1, … 9)', name && !IDENT.test(name.text) ? name : range);
         else if (Math.abs(b - a) >= 1000) fail('repeat de no máximo 1000 vezes', range);
         else {
           const step = b >= a ? 1 : -1;
@@ -466,6 +471,8 @@
     };
 
     // ---- let: variáveis para {expressões}, lidas antes de tudo ----
+    // Um let pode usar outro que vem mais abaixo: as linhas são lidas de novo, em ordem, até os valores
+    // pararem de mudar (o que veio antes no arquivo vale; o de baixo, só se ainda não há outro).
     const globals = new Map();
     m.vars = globals;
     const readLets = (report) => L.forEach((ln, i) => {
@@ -482,14 +489,22 @@
         try { globals.set(key, evalExpr(v, globals)); } catch (x) { e(i, `let ${key}: ${x.message}`, w.from + eq + 1, w.to); }
       }
     });
+    const settleLets = () => {
+      const n = L.reduce((k, ln) => k + (/^\s*let(\s|$)/.test(ln.text) ? 1 : 0), 0);
+      for (let pass = 0; pass < Math.min(n, 50); pass++) {
+        const before = [...globals].join(';');
+        readLets(false);
+        if ([...globals].join(';') === before) break;
+      }
+    };
     // repeat: as variáveis do let já valem nos limites (repeat i 0..{n-1})
-    readLets(false);
+    settleLets();
     const RX = expandRepeats(L, globals);
     if (RX) {
       L = RX.lines;
       X.repeated = true;
       for (const e of RX.errs) err(e.at, e.msg, e.from, e.to);
-      globals.clear();
+      settleLets();
     }
     readLets(true);
 
@@ -533,6 +548,10 @@
       if (isCssColor(v)) return v;
       bad(st, a, `cor desconhecida "${v}"`);
       return null;
+    }
+    // padrão (hatch, dots) só preenche forma fechada: num traço, linha, texto ou contorno vira a cor das linhas dele
+    function patOnLine(st, a, c, what) {
+      if (c && c.kind === 'pat') bad(st, a, `o padrão "${c.name}" só preenche formas fechadas (shape, ellipse, rect): ${what} sai sem o padrão, só na cor das linhas dele (${c.c})`, 'warn');
     }
     // só cor simples (#hex, palette): luzes, partículas, efeitos
     function plainColor(st, a, text) {
@@ -711,6 +730,8 @@
           if (A.has('horizon')) {
             Ly.horizon = number(st, A.get('horizon'), 0);
             if (!Ly.floor) bad(st, A.get('horizon'), 'horizon= só vale junto com floor', 'warn');
+            // o chão se decide por dois dos três: com persp= e pitch=, o horizonte já está dado
+            else if (Ly.persp !== null && Ly.pitch) bad(st, A.get('horizon'), 'horizon= não muda nada com persp= e pitch= juntos: o chão já fica decidido pelos dois (use só dois dos três)', 'warn');
           }
           if (A.has('iso')) Ly.iso = pair(st, A.get('iso'), null) || true;
           if (Ly.iso && (Ly.yaw || Ly.pitch || Ly.floor)) err(st.line, 'iso não junta com yaw=, pitch= nem floor (vale o iso)', st.cmdTok.from, st.cmdTok.to, 'warn');
@@ -1017,6 +1038,8 @@
         else { el.bones = names; el.bone = names[0]; }
       }
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) el.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
+      // com bones=, a forma dobra pelos ossos e o tecido não mexe nela
+      if (el.bones && A.has('cloth') && el.cloth) bad(st, A.get('cloth'), 'cloth= não vale junto com bones=: a forma dobra com os ossos e o tecido fica parado (use um dos dois)', 'warn');
       if (A.has('opacity')) el.opacity *= number(st, A.get('opacity'), 1, 0, 1);
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
       if (A.has('emit')) {
@@ -1042,6 +1065,7 @@
         el.ink = (A.has('ink') ? width(st, A.get('ink'), ctx) : 0) * ws;
         el.fill = A.has('c') ? color(st, A.get('c'), ctx) : (el.ink > 0 ? null : defInk);
         el.inkc = A.has('inkc') ? color(st, A.get('inkc'), ctx) : defInk;
+        if (A.has('inkc')) patOnLine(st, A.get('inkc'), el.inkc, 'o contorno');
         el.weight = A.has('weight') ? number(st, A.get('weight'), 0, 0, 3) : 0;
         if (A.has('inkon')) {
           const a = A.get('inkon'), t = m.layerMap.get(a.text);
@@ -1078,16 +1102,19 @@
         el.fill = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
         el.ink = A.has('ink') ? width(st, A.get('ink'), ctx) : 0;
         el.inkc = A.has('inkc') ? color(st, A.get('inkc'), ctx) : defInk;
+        if (A.has('c')) patOnLine(st, A.get('c'), el.fill, 'o texto');
+        if (A.has('inkc')) patOnLine(st, A.get('inkc'), el.inkc, 'o contorno');
         el.bold = flags.has('bold');
         el.italic = flags.has('italic');
         el.cloth = null;
         if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
       } else if (st.cmd === 'stroke') {
         el.color = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
+        if (A.has('c')) patOnLine(st, A.get('c'), el.color, 'o traço');
         el.w = (A.has('w') ? width(st, A.get('w'), ctx) : 4) * ws;
         el.taper = A.has('taper') ? pair(st, A.get('taper'), [0, 0]).map((v) => Math.min(1, Math.max(0, v))) : [0, 0];
         el.cap = A.has('cap') ? A.get('cap').text : 'round';
-        if (!['round', 'butt', 'square'].includes(el.cap)) { bad(st, A.get('cap'), 'cap= aceita round, butt ou square', 'warn'); el.cap = 'round'; }
+        if (!['round', 'butt', 'square'].includes(el.cap)) { bad(st, A.get('cap'), 'cap= aceita round, butt ou square', 'warn'); el.cap = 'round'; } else if (A.has('cap') && (el.taper[0] > 0 || el.taper[1] > 0)) bad(st, A.get('cap'), 'cap= não vale junto com taper=: o traço afinado sai sempre com as pontas redondas', 'warn');
         el.smooth = A.has('smooth') ? number(st, A.get('smooth'), 1, 0, 2) : 1;
         if (A.has('limb') || A.has('hip') || A.has('foot') || A.has('target')) {
           el.limb = A.has('limb') ? list(st, A.get('limb'), 1, 2, [el.w / ws, el.w / ws]) : [el.w / ws, el.w / ws];
@@ -1133,6 +1160,7 @@
         if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
       } else if (st.cmd === 'line') {
         el.color = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
+        if (A.has('c')) patOnLine(st, A.get('c'), el.color, 'a linha');
         el.w = (A.has('w') ? width(st, A.get('w'), ctx) : 1) * ws;
         el.dash = A.has('dash') ? list(st, A.get('dash'), 1, 8, null) : null;
         if (el.dash) el.dash = el.dash.map((v) => v * ws);
@@ -1144,10 +1172,13 @@
           if (p.tan) rec.handles.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
         });
       }
-      const loose = pos.filter((t) => !t.inherited);
-      if (loose.length && !['ellipse', 'rect', 'text', 'emitter'].includes(st.cmd)) err(st.line, `valor solto "${loose[0].text}" (atributos usam nome=valor)`, loose[0].from, loose[0].to, 'warn');
+      // o que sobra depois das posições (elipse e retângulo: 2, texto: posição e "texto", emissor: 1)
+      const loose = pos.slice({ ellipse: 2, rect: 2, text: 2, emitter: 1 }[st.cmd] || 0).filter((t) => !t.inherited);
+      if (loose.length) err(st.line, looseMsg(loose[0]), loose[0].from, loose[0].to, 'warn');
       return el;
     }
+    // um # grudado numa cor (#cafe, #bad) não começa comentário: o resto da linha vira valor solto
+    const looseMsg = (t) => (HEX.test(t.text) ? `valor solto "${t.text}": parece cor, então não virou comentário (cor é c=${t.text}; comentário é "# " com espaço depois)` : `valor solto "${t.text}" (atributos usam nome=valor)`);
 
     // Parâmetro de componente (no def ou no use): número vira variável e espessura; o resto, cor.
     function applyParam(st, a, ctx, parent) {
@@ -1158,11 +1189,25 @@
       if (c !== null || a.text === 'none') ctx.over.set(a.key, c);
     }
 
+    // Lê a linha de novo, com as variáveis de agora (as de cada uso do componente). Numa cópia de repeat,
+    // a variável do repeat também vale, como na primeira leitura.
+    function reread(li, e) {
+      const ln = L[li];
+      if (!ln.vars) return readStatement(ln.text, li, e);
+      const outer = scope;
+      scope = new Map(scope);
+      for (const [k, v] of ln.vars) scope.set(k, v);
+      const st = readStatement(bakeExprs(ln.text, scope, ln.vars.keys()), li, e);
+      scope = outer;
+      if (st) st.repeated = true;
+      return st;
+    }
+
     function instantiate(def, layer, ctx, depth, dry) {
       const saved = scope;
       for (const bst of def.body) {
         scope = ctx.vars;
-        const st = readStatement(L[bst.line].text, bst.line, err);
+        const st = reread(bst.line, err);
         if (!st) continue;
         st.inDef = def;
         if (st.cmd === 'use') buildUse(st, layer, ctx, depth + 1, dry);
@@ -1211,7 +1256,16 @@
       if (A.has('opacity')) ctx.opacity *= number(st, A.get('opacity'), 1, 0, 1);
       for (const a of def.st.attrs.values()) applyParam(def.st, a, ctx, parent);
       scope = parent.vars;
-      for (const a of A.values()) if (!ATTRS.use.includes(a.key)) applyParam(st, a, ctx, parent);
+      for (const a of A.values()) {
+        if (ATTRS.use.includes(a.key)) continue;
+        // além dos parâmetros do def, o use pode trocar um nome da palette, uma variável ou um parâmetro de fora
+        const k = a.key, known = def.st.attrs.has(k) || m.palette.has(k) || m.gradients.has(k) || m.patterns.has(k) || (parent.vars && parent.vars.has(k)) || (parent.over && parent.over.has(k));
+        if (!known && IDENT.test(k)) {
+          const ps = [...def.st.attrs.keys()];
+          bad(st, a, `parâmetro desconhecido "${k}": ${ps.length ? `o componente "${def.name}" tem ${ps.join(', ')}` : `o componente "${def.name}" não tem parâmetros`} (e o use aceita ${ATTRS.use.join(', ')})`, 'warn');
+        }
+        applyParam(st, a, ctx, parent);
+      }
       const prev = m.byLine.get(st.line);
       if (!dry && !(prev && prev.real)) {
         const rec = info(st, { use: def.name, xf: parent.xf, real: true });
@@ -1240,7 +1294,7 @@
       }
       const saved = scope;
       scope = ctx.vars;
-      const srcSt = readStatement(L[src.line].text, src.line, () => {});
+      const srcSt = reread(src.line, () => {});
       scope = saved;
       if (!srcSt) return;
       const attrs = new Map();
@@ -1403,10 +1457,12 @@
       if (el.cutNames) {
         el.cuts = [];
         for (const n of el.cutNames) {
-          const c = findNamed(n, el.inst);
-          if (!c) bad(el.cutAt.st, el.cutAt.a, `cut: forma "${n}" não existe`);
-          else if (!c.closed) bad(el.cutAt.st, el.cutAt.a, `cut: "${n}" precisa ser uma forma fechada`);
-          else if (c !== el) el.cuts.push(c);
+          // todas as formas com esse nome (as de um repeat, por exemplo); num componente, as da mesma cópia
+          const list = m.named.get(n), mine = list ? list.filter((c) => c.inst === el.inst) : [];
+          const cs = (mine.length ? mine : list || []).filter((c) => c !== el);
+          if (!list) bad(el.cutAt.st, el.cutAt.a, `cut: forma "${n}" não existe`);
+          else if (cs.some((c) => !c.closed)) bad(el.cutAt.st, el.cutAt.a, `cut: "${n}" precisa ser uma forma fechada`);
+          for (const c of cs) if (c.closed && !el.cuts.includes(c)) el.cuts.push(c);
         }
         if (!el.cuts.length) el.cuts = null;
       }
@@ -1490,6 +1546,9 @@
       else b.path = el;
     }
 
+    // o hidden escrito na própria linha (antes das variantes mexerem) e as peças que alguma variante mostra
+    const ownHidden = new Set([...m.elements.filter((e) => e.hidden), ...m.layers.filter((l) => l.hidden)]);
+    const variantShown = new Set(variantStmts.flatMap((v) => (v.st.attrs.has('show') ? v.st.attrs.get('show').text.split(',') : [])));
     // variante com show= e hide=: peças (formas ou camadas) que aparecem ou somem nessa versão
     for (const v of variantStmts) {
       for (const k of ['show', 'hide']) {
@@ -1736,6 +1795,12 @@
         v = a.text;
       }
       if (tgt.kind === 'light' && type === 'color' && !v) continue;
+      if (tgt.kind === 'layer' && prop === 'tint') tintKey(st, a, m.layerMap.get(name));
+      if (tgt.kind === 'el' && type === 'color' && (prop === 'inkc' || els.some((e) => !e.closed))) patOnLine(st, a, v, prop === 'inkc' ? 'o contorno' : 'o traço');
+      // numa animação, o hidden ganha de tudo (num filme, at forma.show=1 mostra)
+      if ((prop === 'show' ? v === 1 : HIDE_VISUAL.has(prop)) && (tgt.kind === 'el' || tgt.kind === 'layer') && !variantShown.has(name) && (tgt.kind === 'layer' ? ownHidden.has(m.layerMap.get(name)) : els.every((e) => ownHidden.has(e)))) {
+        bad(st, a, `"${name}" tem hidden e nunca aparece numa animação: ${prop}= não muda isso (para começar escondida, tire o hidden e use key 0 ${name}.show=0)`, 'warn');
+      }
       // above= e below= são a mesma trilha (a ordem): a key seguinte pode trocar uma pela outra
       const tkey = type === 'order' ? `${name}.order` : a.key;
       if (!anim.ptracks.has(tkey)) anim.ptracks.set(tkey, { name, prop: type === 'order' ? 'order' : prop, kind: tgt.kind, type, keys: [], targets: els });
@@ -1805,6 +1870,11 @@
         for (let c = 0; c < reps; c++) for (const e of src.events) { const f = Math.round((e.frame / src.fps) * an.fps + c * period); if (f < an.frames) an.events.push(Object.assign({}, e, { frame: f })); }
       }
       an.events.sort((p, q) => p.frame - q.frame);
+    }
+
+    // key/at camada.tint=: muda só o quanto; a cor vem do tint=cor,quanto da própria camada
+    function tintKey(st, a, Ly) {
+      if (!(Ly.fx && Ly.fx.tintc)) bad(st, a, `a camada "${Ly.name}" não tem tint=cor,quanto: sem a cor, ${a.key}= não pinta nada`, 'warn');
     }
 
     // key forma.above=outra / below=outra (ou camada.above=outra_camada); none volta para a ordem do arquivo
@@ -2134,6 +2204,8 @@
         }
         s.ats = s.ats.filter((x) => x.t !== null);
         for (const { st, t } of s.ats) readAt(st, t, s, actors, F.fps);
+        for (const u of s.hiddenUse || []) if (!s.tracks.has(u.id)) bad(u.st, u.a, `"${u.name}" tem hidden: só aparece com at … ${u.name}.show=1`, 'warn');
+        delete s.hiddenUse;
         if (s.implicit && s.dur === null) {
           const last = Math.max(0, ...s.ats.map((x) => x.t));
           s.dur = last > 0 ? last : 3;
@@ -2261,6 +2333,9 @@
         if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else if (m.named.has(name)) { kind = 'shape'; table = SHAPE_AT_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz, camada nem forma deste filme`); continue; }
         const type = table[prop];
         if (type === 'order') { bad(st, a, `${prop}= muda a ordem só numa animação (key), não no at`); continue; }
+        // forma ou camada com hidden: só aparece com show=1 (conferido no fim do shot, quando todos os at foram lidos)
+        if (type && prop !== 'show' && HIDE_VISUAL.has(prop) && (kind === 'layer' ? m.layerMap.get(name).hidden : kind === 'shape' && m.named.get(name).every((e) => e.hidden))) (shot.hiddenUse || (shot.hiddenUse = [])).push({ st, a, id: `${kind}:${name}.show`, name });
+        if (kind === 'layer' && prop === 'tint') tintKey(st, a, m.layerMap.get(name));
         if ((kind === 'shape' || kind === 'layer') && (prop === 'yaw' || prop === 'pitch' || prop === 'z')) m.has3d = true;
         if (!type) { bad(st, a, `"${prop}" não muda com at em ${{ camera: 'camera', actor: 'ator', light: 'luz', layer: 'camada', shape: 'forma' }[kind]} (use ${Object.keys(table).filter((k) => table[k] !== 'order').join(', ')})`); continue; }
         switch (type) {

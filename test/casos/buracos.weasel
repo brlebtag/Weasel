@@ -1,0 +1,35 @@
+# teste: buracos e recortes. cut= com vários moldes do mesmo nome (de um repeat), buracos que se cruzam,
+# clip= e cut= de camada respeitando os buracos do molde, repeat dentro de def e let que usa um let de baixo
+canvas 360 170 bg=#cfe8f5
+palette ink=#2b2a33 line=4
+let passo={raio*2+6}
+let raio=7
+
+layer queijos
+rect queijo 10,15 100,70 r=6 c=#ffd34d ink=line cut=furo
+repeat i 0..3
+ellipse furo {30+i*20},{35+(i%2)*25} {raio} hidden
+end
+# dois furos que se cruzam viram um buraco só, com um contorno só
+ellipse q 170,50 40 c=#ffd34d ink=line cut=f1,f2
+ellipse f1 157,50 17 hidden
+ellipse f2 183,50 17 hidden
+
+layer massa
+ellipse donut 290,50 45 c=#e0a050 ink=line cut=miolo
+ellipse miolo 290,50 18 hidden
+# a calda só cobre a rosca: pelo buraco do meio aparece o fundo
+layer calda clip=donut
+rect calda 240,0 120,42 c=#d1477a
+# a toalha some atrás da rosca, mas aparece pelo buraco
+layer toalha cut=massa
+rect toalha 230,40 130,30 c=#3a78c2
+
+def fila
+repeat i 0..3
+ellipse conta {i*passo},0 {raio} c=#3a78c2 ink=2
+end
+end
+layer contas
+use fila 20,130
+use fila 200,130 scale=1.5

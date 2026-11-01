@@ -88,7 +88,7 @@
       for (const el of model.elements) {
         if (kind.get(el) === 'world') continue;
         const L = el.layer, molds = [];
-        for (const n of [L.clip, L.cut]) if (n) molds.push(...S.clipEls(model, n));
+        for (const n of [L.clip, L.cut]) if (n) molds.push(...S.clipEls(model, n), ...S.moldHoles(model, n));
         if (el.cuts) molds.push(...el.cuts);
         if (molds.some((mo) => kind.get(mo) === 'world' || motion(mo) !== motion(el) || (kind.get(mo) === 'shape' && kind.get(el) === 'skin'))) kind.set(el, 'world');
         else if (molds.some((mo) => kind.get(mo) === 'shape') && kind.get(el) === 'rigid') kind.set(el, 'shape');

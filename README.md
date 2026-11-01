@@ -231,7 +231,7 @@ ellipse reflexo 218,156 22,14 rot=-30 c=#ffc2ad
 | `rect nome x,y l,a r= rot=` | Retângulo com cantos arredondados. |
 | `text nome x,y "texto" size= font= align= rot= [bold] [italic]` | Texto; `ink=` contorna as letras. |
 
-Todas as formas aceitam `bone=`, `cloth=`, `opacity=`, `cut=forma` (abre um buraco com o formato de outra forma, com contorno) e a opção `hidden` (a forma não aparece, mas serve de molde para `clip`, `cut` e morph).
+Todas as formas aceitam `bone=`, `cloth=`, `opacity=`, `cut=forma` (abre um buraco com o formato de outra forma, com contorno; vale toda forma com esse nome) e a opção `hidden` (a forma não aparece, mas serve de molde para `clip`, `cut` e morph; num filme, `at … forma.show=1` mostra).
 
 **Espelho:** `shape asaD mirror=asaE@400` copia a forma *asaE* refletida na linha x=400 (`@y300` reflete na horizontal; sem `@`, usa o meio do canvas). O que for escrito na linha substitui o da original — por exemplo, `bone=asaD`.
 

@@ -1,0 +1,14 @@
+rect queijo @0.000 +0.825
+ellipse q @0.825 +0.721
+ellipse donut @1.546 +0.764
+rect calda @2.310 +0.818
+rect toalha @3.128 +0.813
+ellipse conta @3.941 +0.301
+ellipse conta @4.242 +0.301
+ellipse conta @4.543 +0.301
+ellipse conta @4.844 +0.301
+ellipse conta @5.145 +0.369
+ellipse conta @5.514 +0.369
+ellipse conta @5.883 +0.369
+ellipse conta @6.252 +0.369
+total 6.621

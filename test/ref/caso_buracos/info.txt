@@ -1,0 +1,11 @@
+canvas   360 × 170, fundo #cfe8f5
+let      raio=7 passo=20
+componentes fila (2×)
+camadas  5
+  queijos          8 item(ns)
+  massa            2 item(ns)
+  calda            1 item(ns)  clip=donut
+  toalha           1 item(ns)  cut=massa
+  contas           8 item(ns)
+formas   20 (7 ocultas)
+animações nenhuma
