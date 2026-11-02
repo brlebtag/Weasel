@@ -2,6 +2,8 @@
 
 # Weasel — desenho por código
 
+**[Abrir o editor online →](https://brlebtag.github.io/Weasel/)** Roda direto no navegador, sem instalar nada.
+
 **[Guia da linguagem →](docs/guia/README.md)** Aprenda passo a passo, com um exemplo e a imagem que ele gera em cada capítulo.
 
 Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, com a **linha do tempo pronta para o editor de vídeo** (FCPXML e EDL), tanto no navegador quanto pela **linha de comando**.
@@ -40,6 +42,14 @@ npm run web
 ```
 
 Depois abra <http://localhost:5317> (o endereço aparece no terminal e dá para clicar). Também mostra o endereço em IPv4 (`127.0.0.1`) e o da rede, para abrir no celular; `npm run web -- --port 8080` usa outra porta. Os arquivos ficam guardados por endereço: `localhost` e `127.0.0.1` não veem os mesmos.
+
+**Opção 3 — na internet, pelo GitHub Pages.** Abra <https://brlebtag.github.io/Weasel/>. É o mesmo `index.html` deste repositório, servido pelo GitHub: não tem servidor nem banco de dados por trás, tudo roda no seu navegador.
+
+- **Funciona tudo o que o editor faz:** desenhar, animar, os exemplos e todas as exportações da janela **Exportar** (PNG, JPG, SVG, GIF, sprite sheet, Godot, sequência PNG, legendas). O vídeo WebM é gravado pelo próprio navegador, sem som, no Chrome e no Edge.
+- **Fica só na [linha de comando](#linha-de-comando):** MP4, ProRes, vídeo com som e o render em paralelo, porque precisam do Node e do ffmpeg no seu computador.
+- **Seus arquivos ficam no navegador de quem abre a página.** Cada pessoa tem a própria cópia, e nada vai para o GitHub. Como os arquivos ficam guardados por endereço, o que você salvou em `localhost:5317` não aparece no site, e vice-versa: use **Baixar todos** num endereço e **Abrir…** no outro para levar os arquivos.
+
+Para publicar a sua cópia (num fork, por exemplo): no GitHub, vá em **Settings → Pages**, escolha **Deploy from a branch**, o branch `master` e a pasta `/ (root)`, e salve. Em um ou dois minutos o editor aparece em `https://<seu-usuário>.github.io/Weasel/`. O arquivo vazio `.nojekyll` avisa o GitHub para publicar os arquivos como estão, sem passar pelo Jekyll.
 
 Os arquivos ficam salvos automaticamente no navegador (localStorage). **Abrir…** aceita vários `.weasel` de uma vez, **Salvar** baixa o arquivo atual e **Baixar todos** junta todos num `.zip`.
 
@@ -633,6 +643,7 @@ cli/video.js        filme na linha de comando: ffmpeg, sequência, GIF, render e
 cli/film-worker.js  thread que renderiza quadros de um filme
 cli/media.js        acha e lê os sons (audio) para a linha de comando
 cli/web.js          servidor local do editor (npm run web), só com o Node
+.nojekyll           arquivo vazio: o GitHub Pages publica o editor como está, sem o Jekyll
 test/regress.js     testes de regressão; test/ref/ guarda as referências; test/casos/ tem um arquivo por função
 exemplos/           os exemplos do menu como arquivos .weasel
 docs/               imagens deste README, geradas pela linha de comando
