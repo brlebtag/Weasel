@@ -547,6 +547,40 @@ Repare:
 
 **Experimente:** tire o `80` do fim da cor (`inkc=#4a90d9`). O contorno fica sólido e cobre a borda do laranja.
 
+### Contorno só por fora
+
+Para o contorno não esconder nada do preenchimento, mande-o para uma camada que é pintada **antes** da forma, com `inkon=camada`. O preenchimento vem depois e cobre a metade de dentro do contorno; sobra só a de fora.
+
+<!-- gerar: img/02_contorno_fora.png --guides -->
+```weasel
+canvas 440 190 bg=#f4efe6
+palette ink=#2b2a33
+
+layer atras
+
+layer bolas
+ellipse normal 110,90 60 c=#ffb000 ink=24 inkc=#4a90d9
+ellipse soFora 320,90 60 c=#ffb000 ink=24 inkc=#4a90d9 inkon=atras
+text t1 110,180 "normal" size=14 align=center
+text t2 320,180 "inkon=atras" size=14 align=center
+
+layer borda guide
+ellipse b1 110,90 60 c=none ink=1.5 inkc=#c44536
+ellipse b2 320,90 60 c=none ink=1.5 inkc=#c44536
+```
+
+![Dois círculos laranja com contorno azul grosso e uma linha vermelha fina na borda; à esquerda o azul cobre a borda do laranja, à direita o laranja vai inteiro até a linha vermelha e o azul fica todo do lado de fora](img/02_contorno_fora.png)
+
+Repare:
+
+- `inkon=atras` manda o contorno de `soFora` para a camada `atras`. Ela vem antes de `bolas` no arquivo, então é pintada primeiro, e o laranja cobre a metade de dentro do contorno. A camada `atras` está vazia no código: ela só recebe esse contorno.
+- À direita, o laranja vai inteiro até a borda vermelha. À esquerda, o azul cobre 12 pixels da borda do laranja.
+- Só a metade de fora aparece: com `ink=24`, o contorno de fora tem 12 pixels. Para ter um contorno de 12 pixels só por fora, escreva o dobro, `ink=24`.
+- A camada que recebe o contorno precisa vir **antes** da camada da forma. Se vier depois, o contorno é pintado por cima, inteiro (é o que o [capítulo 4](04-camadas.md#o-contorno-por-cima-inkon) faz para ele não ser coberto por sombras).
+- No `text` não precisa disso: com preenchimento, o contorno das letras já fica só por fora.
+
+**Experimente:** no `soFora`, mude `ink=24` para `ink=12`. O contorno de fora fica com 6 pixels.
+
 ### Contorno que engrossa no lado da sombra: `weight=`
 
 No desenho à mão, o contorno costuma ser mais grosso do lado oposto à luz. `weight=` faz isso, de 0 (contorno igual em volta toda) até 3. O lado da luz vem do `light=` do `canvas`: um par `x,y` que **aponta para onde a luz está**. O padrão `light=-0.6,-0.8` é uma luz em cima, à esquerda.

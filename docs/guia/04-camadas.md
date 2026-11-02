@@ -280,6 +280,7 @@ layer contorno
 
 - `inkon=` só vale em formas fechadas com contorno (`ink=` maior que 0). Sem `ink=`, o Weasel avisa que não faz sentido.
 - A camada de `inkon=` precisa existir no arquivo, mesmo vazia.
+- Com a camada de `inkon=` **antes** da forma, o contorno fica só por fora: o preenchimento cobre a metade de dentro. Veja o [capítulo 2](02-formas.md#contorno-só-por-fora).
 
 **Experimente:** com `line=10`, o contorno tem 10 pixels de largura e a diferença é fácil de ver. Mude para `line=4`: a perda fica pequena, mas ainda está lá.
 
