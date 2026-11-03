@@ -623,6 +623,8 @@ Repare:
 
 **Experimente:** troque para `light=0,1` (a luz embaixo). O lado grosso passa para cima.
 
+> **Dica do editor:** o `light=` não tem um ponto para arrastar, porque não é um lugar no desenho: é uma direção. No lugar do ponto, ele tem uma **seta**. Ponha o cursor na linha do `canvas`: uma seta amarela sai do centro do quadro e aponta para a luz, com um sol na ponta. Arraste o sol em volta e veja o lado grosso dos contornos girar junto; o `light=` muda no código a cada movimento. Segure **Shift** para girar de 15 em 15 graus (fica fácil acertar `0,-1`, a luz bem em cima). Se a linha do `canvas` ainda não tem `light=`, a seta mostra o padrão (`-0.6,-0.8`), e arrastar escreve o `light=` para você. A barra de baixo do editor diz, em palavras, de que lado a luz vem.
+
 Há ainda `inkon=camada`, que pinta o contorno de uma forma numa **outra camada**, por cima de tudo. Ele resolve um problema que só aparece com camadas e recortes; o exemplo está no [capítulo 4](04-camadas.md#o-contorno-por-cima-inkon).
 
 ## Desenhar por cima de uma imagem: `ref`

@@ -665,7 +665,11 @@
           else { m.canvas.w = Math.round(w); m.canvas.h = Math.round(h); }
           if (A.has('bg')) bgTok = { st, a: A.get('bg') };
           if (A.has('light')) m.canvas.light = pair(st, A.get('light'), m.canvas.light);
-          info(st);
+          // light= é direção, não lugar: a alça é uma seta; sem light=, arrastar a seta escreve um no fim da linha
+          const rec = info(st), La = A.get('light'), endCol = Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...A.values()].map((a) => a.to));
+          rec.handles.push(La
+            ? { kind: 'dir', x: m.canvas.light[0], y: m.canvas.light[1], from: La.vfrom, to: La.to, fixed: La.text.includes('{') }
+            : { kind: 'dir', insert: true, x: m.canvas.light[0], y: m.canvas.light[1], from: endCol, to: endCol, fixed: false });
           break;
         }
         case 'finish': {
@@ -973,7 +977,7 @@
       const v = posPair(st, st.pos[2], type === 'dir' ? 'a direção (dx,dy)' : 'a posição', null);
       if (v && type === 'dir') { Lt.dx = v[0]; Lt.dy = v[1]; } else if (v) { Lt.x = v[0]; Lt.y = v[1]; }
       const rec = info(st, { light: Lt });
-      if (v && type !== 'dir') rec.handles.push({ kind: 'light', light: name, x: Lt.x, y: Lt.y, from: st.pos[2].from, to: st.pos[2].to, fixed: st.pos[2].text.includes('{') });
+      if (v) rec.handles.push({ kind: type === 'dir' ? 'dir' : 'light', light: name, x: v[0], y: v[1], from: st.pos[2].from, to: st.pos[2].to, fixed: st.pos[2].text.includes('{') });
       if (A.has('c')) Lt.c = plainColor(st, A.get('c')) || '#ffffff';
       if (A.has('power')) Lt.power = number(st, A.get('power'), 1, 0, 20);
       if (A.has('radius')) Lt.radius = number(st, A.get('radius'), 300, 1, 100000);
@@ -992,7 +996,8 @@
     const pendingProps = [];
     const baseLayer = () => {
       if (!base) {
-        base = { name: 'base', line: -1, items: [], guide: false, hidden: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', implicit: true };
+        // shade: o mesmo padrão de uma layer escrita; sem ele, uma luz na cena dava NaN no sombreado
+        base = { name: 'base', line: -1, items: [], guide: false, hidden: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', shade: 0.5, implicit: true };
         m.layers.unshift(base);
         if (!m.layerMap.has('base')) m.layerMap.set('base', base);
       }

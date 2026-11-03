@@ -1,0 +1,13 @@
+# teste: luzes numa cena sem nenhuma layer (tudo na camada automática base).
+# Antes da 1.12.0, a base não tinha shade= e o sombreado dava NaN: o desenho parava na primeira forma.
+canvas 440 180 bg=#f4efe6 light=0.87,0.5
+palette ink=#2b2a33
+ambient c=#8090b0 power=0.5
+light sol dir -1,-0.6 c=#ffe0a0 power=0.8
+light lampada point 330,40 c=#ffb860 power=1.4 radius=200 glow=60
+light lanterna spot 60,170 aim=-60 cone=25 c=#a0ffd0 power=1.2 radius=260
+ellipse bola 80,80 50 c=#ffb000 ink=6 weight=0.8
+rect caixa 170,35 100,90 r=10 c=#4a90d9 ink=6 weight=0.8
+shape gota c=#6cbb3c ink=6 weight=0.8 : 360,25! 410,100 360,135 310,100
+stroke risco w=4 c=#c44536 : 20,160 120,150 220,165
+text t 220,170 "sem layer" size=14 align=center

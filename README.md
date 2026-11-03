@@ -176,6 +176,7 @@ Editando pelo desenho e pelo teclado:
 - Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica **laranja**.
 - **Arraste** um ponto para movê-lo (o código é atualizado). Funciona na "pose parada", também dentro de componentes (o código recebe as coordenadas do componente). Pontos cinza vêm de `{contas}` e não arrastam.
 - **Duplo clique** num ponto liga/desliga o canto vivo (`!`). Alças de curva (`~dx,dy`) aparecem em azul e também arrastam.
+- **Direção da luz:** o `light=` do `canvas` e a `light … dir` não são lugares, são direções. Com o cursor numa dessas linhas, uma seta amarela sai do centro do quadro e aponta para a luz, com um sol na ponta. Arraste o sol para girar a seta: o código recebe a direção com duas casas (`-0.6,-0.8`), e **Shift** gira de 15 em 15 graus. Num `canvas` sem `light=`, a seta mostra o padrão, e arrastar escreve o `light=` no fim da linha. A barra de baixo diz de que lado a luz vem.
 - **Ctrl+clique** no desenho escreve a coordenada na posição do cursor.
 - **Alt+arrastar** sobre um número no código muda o valor (Shift deixa 10× mais rápido). **Alt+clique** numa cor `#hex` abre o seletor de cor.
 - Sugestões de comandos, atributos, cores, ossos, camadas, componentes e propriedades aparecem enquanto você digita; **Ctrl+Espaço** abre na hora, **Enter** ou **Tab** aceitam.

@@ -1,0 +1,7 @@
+canvas   440 × 180, fundo #f4efe6
+ambiente #8090b0 × 0.5
+luzes    sol (dir, #ffe0a0 × 0.8), lampada (point, #ffb860 × 1.4), lanterna (spot, #a0ffd0 × 1.2)
+camadas  1
+  base             5 item(ns)
+formas   5
+animações nenhuma

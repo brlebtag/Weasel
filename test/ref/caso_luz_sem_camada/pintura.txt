@@ -1,0 +1,6 @@
+ellipse bola @0.000 +0.806
+rect caixa @0.806 +0.866
+shape gota @1.671 +0.811
+stroke risco @2.483 +0.646
+text t @3.129 +0.352
+total 3.481

@@ -437,7 +437,13 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz' };
+  // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
+  function lightSide(dx, dy) {
+    if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
+    const k = Math.round((Math.atan2(dy, dx) * 4) / Math.PI);
+    return ['da direita', 'de baixo, à direita', 'de baixo', 'de baixo, à esquerda', 'da esquerda', 'de cima, à esquerda', 'de cima', 'de cima, à direita'][(k + 8) % 8];
+  }
   function activeHandle(rec) {
     if (!rec) return -1;
     return rec.handles.findIndex((h) => st.caret.col >= h.from && st.caret.col <= h.to);
@@ -466,7 +472,7 @@
       if (rec.def && rec.st.cmd === 'def') s += ` · usado ${rec.def.uses}×`;
       if (rec.el && rec.el.mirrorOf) s += ` · espelho de ${esc(rec.el.mirrorOf)}`;
       const hi = activeHandle(rec);
-      if (hi >= 0) { const h = rec.handles[hi]; s += ` · ${KIND[h.kind]}${h.kind === 'pt' ? ' ' + (h.idx + 1) : ''} (${h.x}, ${h.y})${h.fixed ? ' · calculado' : ''}`; }
+      if (hi >= 0) { const h = rec.handles[hi]; s += ` · ${KIND[h.kind]}${h.kind === 'pt' ? ' ' + (h.idx + 1) : ''} (${h.x}, ${h.y})${h.kind === 'dir' ? `: a luz vem ${lightSide(h.x, h.y)}${h.insert ? ' (o padrão; arraste a seta para escrever light=)' : ''}` : ''}${h.fixed ? ' · calculado' : ''}`; }
     }
     const err = st.model && st.model.errors.find((e) => e.line === st.caret.line);
     if (err) s += ` · <span style="color:${err.level === 'error' ? 'var(--err)' : 'var(--warn)'}">${esc(err.msg)}</span>`;
@@ -1313,6 +1319,14 @@
     if (Ly) return Ly.screen ? Infinity : Ly.depth || 1;
     return 1;
   }
+  // direção (light= do canvas, light dir): uma seta que sai do centro do quadro e aponta para a luz,
+  // sempre do mesmo tamanho na tela; a alça é a ponta
+  const DIR_LEN = 90;
+  const dirAnchor = (m) => [m.canvas.w / 2, m.canvas.h / 2];
+  function dirTip(m, h) {
+    const c = dirAnchor(m), l = Math.hypot(h.x, h.y) || 1, r = DIR_LEN / st.view.z;
+    return [c[0] + (h.x / l) * r, c[1] + (h.y / l) * r];
+  }
   function handleList(m, pose) {
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
@@ -1320,6 +1334,7 @@
       return {
         rec,
         pts: rec.handles.map((h) => {
+          if (h.kind === 'dir') return dirTip(m, h);
           const d = handleDepth(rec, h);
           if (d === null) return null;
           const p = S.handlePos(m, pose, rec, h);
@@ -1327,7 +1342,7 @@
         }),
       };
     }
-    return { rec, pts: rec.handles.map((h) => S.handlePos(m, pose, rec, h)) };
+    return { rec, pts: rec.handles.map((h) => (h.kind === 'dir' ? dirTip(m, h) : S.handlePos(m, pose, rec, h))) };
   }
 
   function drawHandles(ctx, m, pose, z) {
@@ -1359,6 +1374,35 @@
       ctx.moveTo(2 * p[0] - t[0], 2 * p[1] - t[1]);
       ctx.lineTo(t[0], t[1]);
       ctx.stroke();
+    });
+    // direção da luz: traço do centro até a alça, ponta de seta e raios de sol em volta da alça
+    rec.handles.forEach((h, i) => {
+      if (h.kind !== 'dir' || !pts[i]) return;
+      const c = dirAnchor(m), t = pts[i], a = Math.atan2(t[1] - c[1], t[0] - c[0]), ca = Math.cos(a), sa = Math.sin(a);
+      const head = 17 / z, bx = t[0] - ca * head, by = t[1] - sa * head, wing = 7 / z;
+      const arrow = new Path2D(), sun = new Path2D();
+      arrow.moveTo(c[0], c[1]);
+      arrow.lineTo(bx, by);
+      sun.moveTo(bx - ca * wing - sa * wing, by - sa * wing + ca * wing);
+      sun.lineTo(bx, by);
+      sun.lineTo(bx - ca * wing + sa * wing, by - sa * wing - ca * wing);
+      for (let k = 0; k < 8; k++) {
+        const q = (k * Math.PI) / 4;
+        sun.moveTo(t[0] + Math.cos(q) * (9.5 / z), t[1] + Math.sin(q) * (9.5 / z));
+        sun.lineTo(t[0] + Math.cos(q) * (14 / z), t[1] + Math.sin(q) * (14 / z));
+      }
+      sun.moveTo(c[0] + 3 / z, c[1]);
+      sun.arc(c[0], c[1], 3 / z, 0, Math.PI * 2);
+      // contorno escuro por baixo: a seta aparece em fundo claro e escuro
+      for (const [col, w] of [['#14141c', 4 / z], ['#ffd166', 2 / z]]) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = w;
+        ctx.lineCap = 'round';
+        ctx.setLineDash(col === '#ffd166' ? [6 / z, 4 / z] : []);
+        ctx.stroke(arrow);
+        ctx.setLineDash([]);
+        ctx.stroke(sun);
+      }
     });
     rec.handles.forEach((h, i) => {
       if (i === active || !pts[i]) return;
@@ -1460,8 +1504,11 @@
     }
     if (hi >= 0) {
       const rec = st.model.byLine.get(st.caret.line);
-      if (rec.handles[hi].fixed) { hint('Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
-      if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
+      const h = rec.handles[hi];
+      if (h.fixed) { hint('Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
+      // a direção não muda com a pose: dá para girar com uma animação escolhida, só não tocando
+      if (st.playing || (!isFilm() && st.anim && h.kind !== 'dir')) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
+      if (h.kind === 'dir') hint('Gire a seta: ela aponta para onde a luz está. Com Shift, gira de 15 em 15 graus.', 3200);
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now() };
       return;
     }
@@ -1476,7 +1523,7 @@
     const wp = toWorld(e);
     $('coords').textContent = `x ${Math.round(wp[0])}  y ${Math.round(wp[1])}`;
     if (st.pose) { movePose(e); return; }
-    if (st.drag) { moveHandle(st.drag, x, y); return; }
+    if (st.drag) { moveHandle(st.drag, x, y, e.shiftKey); return; }
     if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
     if (st.pan) {
       st.view.auto = false;
@@ -1507,10 +1554,11 @@
   });
 
   // Arrastar: posição do mouse → coordenadas do código (dentro de um componente, as dele).
-  function moveHandle(d, x, y) {
+  function moveHandle(d, x, y, snap) {
     const rec = st.model.byLine.get(d.line);
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
+    if (h.kind === 'dir') { moveDir(d, h, x, y, snap); return; }
     if (isFilm()) {
       const dep = handleDepth(rec, h);
       if (dep === null) return;
@@ -1525,6 +1573,20 @@
     let txt;
     if (h.kind === 'tan') txt = `${fmtN(lx - h.px, dec)},${fmtN(ly - h.py, dec)}`;
     else txt = `${fmtN(lx, dec)},${fmtN(ly, dec)}${h.kind === 'pt' && h.corner ? '!' : ''}`;
+    const off = editor.lineStart(d.line);
+    if (editor.value.slice(off + h.from, off + h.to) === txt) return;
+    const end = off + h.from + txt.length;
+    editor.replaceRange(off + h.from, off + h.to, txt, { key: d.key, select: [end, end] });
+  }
+
+  // Girar a seta: do centro do quadro até o mouse vira dx,dy de tamanho 1 (com Shift, de 15 em 15 graus).
+  // Sem light= no canvas, a primeira escrita acrescenta o atributo no fim da linha.
+  function moveDir(d, h, x, y, snap) {
+    const c = dirAnchor(st.model);
+    if (Math.hypot(x - c[0], y - c[1]) < 2 / st.view.z) return;
+    let a = Math.atan2(y - c[1], x - c[0]);
+    if (snap) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12);
+    const v = `${fmtN(Math.cos(a), 2)},${fmtN(Math.sin(a), 2)}`, txt = h.insert ? ` light=${v}` : v;
     const off = editor.lineStart(d.line);
     if (editor.value.slice(off + h.from, off + h.to) === txt) return;
     const end = off + h.from + txt.length;

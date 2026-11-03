@@ -97,6 +97,8 @@ Atributos de todas as luzes:
 
 Luzes também animam com `key` (`key 6 lampiao.power=0.4`): `power`, `radius`, `c`, `glow`, `aim` e `cone`.
 
+> **Dica do editor:** com o cursor na linha de uma luz, ela aparece no desenho para você ajustar com o mouse. A `point` e a `spot` têm um **ponto** no lugar da lâmpada: arraste para mudar o `x,y`. A `dir` não tem lugar, só direção; por isso ela tem uma **seta** amarela que sai do centro do quadro e aponta para o sol. Arraste o sol da ponta para girar o `dx,dy` (com **Shift**, de 15 em 15 graus). É a mesma seta do `light=` do `canvas` ([capítulo 2](02-formas.md#contorno-que-engrossa-no-lado-da-sombra-weight)).
+
 As seções abaixo mostram cada uma dessas coisas sozinha, com um exemplo para rodar.
 
 ### Uma cena para testar a luz
