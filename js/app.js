@@ -177,9 +177,12 @@
     const edits = [], tail = sp.code.replace(/\s+$/, '').length;
     const cut = (t) => { let a = t.from; while (a > 0 && /[ \t]/.test(text[a - 1])) a--; edits.push({ from: a, to: t.to, text: '' }); };
     if (ch.pos) {
-      const pt = ws.slice(2).find((t) => !t.text.includes('=') && (t.text.includes(',') || t.text.includes('{')));
+      // ref nome "imagem.png" x,y: o x,y vem depois do arquivo, e o nome do arquivo (entre aspas) pode ter vírgula
+      const file = ws.slice(2).find((t) => t.text[0] === '"');
+      const pt = ws.slice(2).find((t) => t.text[0] !== '"' && !t.text.includes('=') && (t.text.includes(',') || t.text.includes('{')));
+      const after = file || ws[1];
       if (pt) edits.push({ from: pt.from, to: pt.to, text: ch.pos });
-      else if (ws[1]) edits.push({ from: ws[1].to, to: ws[1].to, text: ' ' + ch.pos });
+      else if (after) edits.push({ from: after.to, to: after.to, text: ' ' + ch.pos });
     }
     for (const [k, val] of Object.entries(ch.attrs || {})) {
       const t = ws.find((w) => w.text.startsWith(k + '='));
@@ -268,15 +271,17 @@
         (ok ? `<input type="range" class="op" min="0" max="1" step="0.05" title="Opacidade"><span class="ov"></span>` : `<button type="button" class="load" title="Abrir a imagem neste navegador">abrir ${r.file.split(/[\\/]/).pop()}…</button><span class="ov" hidden></span><input type="range" class="op" hidden>`) +
         `<button type="button" class="lk" title="Travada: não arrasta com o mouse"></button>`;
       row.querySelector('.rn').textContent = r.name + (r.only ? ` · ${r.only.join(',')}` : '');
-      row.querySelector('.rn').addEventListener('click', () => editor.goto(r.line, 0));
-      row.querySelector('.vis').addEventListener('change', (e) => editRef(r, { flags: { hidden: !e.target.checked } }));
-      row.querySelector('.lk').addEventListener('click', () => editRef(r, { flags: { lock: !r.lock } }));
+      // o painel só é refeito quando muda a lista: cada clique lê o ref de agora (o r daqui fica velho depois de editar)
+      const cur = () => st.model.refs.find((x) => x.name === r.name) || r;
+      row.querySelector('.rn').addEventListener('click', () => editor.goto(cur().line, 0));
+      row.querySelector('.vis').addEventListener('change', (e) => editRef(cur(), { flags: { hidden: !e.target.checked } }));
+      row.querySelector('.lk').addEventListener('click', () => { const c = cur(); editRef(c, { flags: { lock: !c.lock } }); });
       const op = row.querySelector('.op');
       let key = '';
       op.addEventListener('pointerdown', () => { key = 'refop' + Date.now(); });
       op.addEventListener('input', () => {
         row.querySelector('.ov').textContent = Math.round(op.value * 100) + '%';
-        editRef(st.model.refs.find((x) => x.name === r.name) || r, { attrs: { opacity: fmtN(+op.value, 2) } }, key || 'refop');
+        editRef(cur(), { attrs: { opacity: fmtN(+op.value, 2) } }, key || 'refop');
       });
       const ld = row.querySelector('.load');
       if (ld) ld.addEventListener('click', () => { refTarget = r.file; $('refIn').click(); });
