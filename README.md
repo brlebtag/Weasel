@@ -175,7 +175,10 @@ Editando pelo desenho e pelo teclado:
 
 - Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica **laranja**.
 - **Arraste** um ponto para movê-lo (o código é atualizado). Funciona na "pose parada", também dentro de componentes (o código recebe as coordenadas do componente). Pontos cinza vêm de `{contas}` e não arrastam.
-- **Duplo clique** num ponto liga/desliga o canto vivo (`!`). Alças de curva (`~dx,dy`) aparecem em azul e também arrastam.
+- **Duplo clique** num ponto liga/desliga o canto vivo (`!`); num ponto com alça, tira a alça.
+- **Alças de curva:** as que existem (`~dx,dy`) aparecem como losangos azuis e arrastam. **Alt+arrastar** um ponto puxa uma alça nova (um `!` daquele ponto sai). Soltar o losango em cima do ponto tira a alça.
+- **Mover a forma inteira:** num `shape`, `stroke` ou `line`, arraste o **✥** do meio dos pontos, ou use **Shift+arrastar** em qualquer ponto. Todos os pontos andam juntos, com os `!` e as alças. Para copiar uma forma, duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia.
+- **Tamanho:** os quadradinhos mudam o raio da `ellipse` (um no círculo, um em cada eixo na elipse, girando com o `rot=`) e a `largura,altura` do `rect` (no canto de baixo, à direita). **Shift** mantém a proporção. O losango azul na borda de cima do `rect` muda o `r=` (e escreve um, se a linha não tem); de volta ao canto, `r=0`.
 - **Direção da luz:** o `light=` do `canvas` e a `light … dir` não são lugares, são direções. Com o cursor numa dessas linhas, uma seta amarela sai do centro do quadro e aponta para a luz, com um sol na ponta. Arraste o sol para girar a seta: o código recebe a direção com duas casas (`-0.6,-0.8`), e **Shift** gira de 15 em 15 graus. Num `canvas` sem `light=`, a seta mostra o padrão, e arrastar escreve o `light=` no fim da linha. A barra de baixo diz de que lado a luz vem.
 - **Ctrl+clique** no desenho escreve a coordenada na posição do cursor.
 - **Alt+arrastar** sobre um número no código muda o valor (Shift deixa 10× mais rápido). **Alt+clique** numa cor `#hex` abre o seletor de cor.

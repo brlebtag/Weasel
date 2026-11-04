@@ -2057,9 +2057,10 @@
     ctx.restore();
   }
 
-  // Posição de uma alça (ponto editável) na pose atual.
+  // Posição de uma alça (ponto editável) na pose atual. As alças da própria forma andam com ela (osso, tecido, 3D).
+  const ELEMENT_HANDLES = new Set(['pt', 'tan', 'center', 'corner', 'size', 'round', 'move']);
   function handlePos(model, pose, rec, h) {
-    if (rec.el && (h.kind === 'pt' || h.kind === 'tan' || h.kind === 'center' || h.kind === 'corner')) return fullMap(model, pose, rec.el)(h.x, h.y);
+    if (rec.el && ELEMENT_HANDLES.has(h.kind)) return fullMap(model, pose, rec.el)(h.x, h.y);
     if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
       const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
@@ -2077,7 +2078,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos,
+    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,

@@ -611,6 +611,11 @@
       m.byLine.set(st.line, rec);
       return rec;
     }
+    // onde termina o código da linha (antes do comentário): é ali que o editor acrescenta um atributo novo
+    const stmtEnd = (st) => Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...st.attrs.values()].map((a) => a.to), ...(st.pts || []).map((p) => p.to));
+    // ponto (x,y) girado deg graus em volta de c: as alças de tamanho de uma forma com rot=
+    const turn = (c, deg, x, y) => (deg ? M.apply(M.mul(M.translate(c[0], c[1]), M.mul(M.rotate(deg), M.translate(-c[0], -c[1]))), x, y) : [x, y]);
+    const plainNum = (t) => /^-?(\d+\.?\d*|\.\d+)$/.test(t);
     // valor de palette: #cor, número, outro nome da palette, nome de cor do CSS
     function paletteValue(st, a) {
       if (!IDENT.test(a.key)) { bad(st, a, `nome inválido "${a.key}"`); return undefined; }
@@ -666,7 +671,7 @@
           if (A.has('bg')) bgTok = { st, a: A.get('bg') };
           if (A.has('light')) m.canvas.light = pair(st, A.get('light'), m.canvas.light);
           // light= é direção, não lugar: a alça é uma seta; sem light=, arrastar a seta escreve um no fim da linha
-          const rec = info(st), La = A.get('light'), endCol = Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...A.values()].map((a) => a.to));
+          const rec = info(st), La = A.get('light'), endCol = stmtEnd(st);
           rec.handles.push(La
             ? { kind: 'dir', x: m.canvas.light[0], y: m.canvas.light[1], from: La.vfrom, to: La.to, fixed: La.text.includes('{') }
             : { kind: 'dir', insert: true, x: m.canvas.light[0], y: m.canvas.light[1], from: endCol, to: endCol, fixed: false });
@@ -1089,12 +1094,29 @@
         else { if (!(pos[1] && pos[1].inherited)) err(st.line, 'use: ellipse nome cx,cy rx,ry (ou um raio só)', pos[1] ? pos[1].from : st.cmdTok.from, pos[1] ? pos[1].to : st.cmdTok.to); el.radius = [10, 10]; }
         el.rot = A.has('rot') ? number(st, A.get('rot'), 0) : 0;
         if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.center[0], y: el.center[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
+        // alças de tamanho: um raio só = uma alça (continua círculo); rx,ry = uma alça em cada eixo
+        if (pos[1] && !pos[1].inherited && !o.noHandles && (r.length === 1 || r.length === 2) && !r.some(isNaN)) {
+          const c = el.center, [rx, ry] = el.radius, base = { kind: 'size', shape: 'ellipse', cx: c[0], cy: c[1], rx, ry, rot: el.rot, one: r.length === 1, from: pos[1].from, to: pos[1].to, fixed: pos[1].text.includes('{') };
+          if (r.length === 1) { const p = turn(c, el.rot, c[0] + rx, c[1]); rec.handles.push(Object.assign({}, base, { axis: 'r', x: p[0], y: p[1], label: `raio ${rx}` })); } else {
+            const px = turn(c, el.rot, c[0] + rx, c[1]), py = turn(c, el.rot, c[0], c[1] + ry);
+            rec.handles.push(Object.assign({}, base, { axis: 'x', x: px[0], y: px[1], label: `raio da largura ${rx} (de ${rx},${ry})` }));
+            rec.handles.push(Object.assign({}, base, { axis: 'y', x: py[0], y: py[1], label: `raio da altura ${ry} (de ${rx},${ry})` }));
+          }
+        }
       } else if (st.cmd === 'rect') {
         el.xy = posPair(st, pos[0], 'o canto', [0, 0]);
         el.size = posPair(st, pos[1], 'o tamanho (largura,altura)', [10, 10]);
         el.r = A.has('r') ? number(st, A.get('r'), 0, 0) : 0;
         el.rot = A.has('rot') ? number(st, A.get('rot'), 0) : 0;
         if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'corner', x: el.xy[0], y: el.xy[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
+        // alça do tamanho no canto de baixo à direita e alça do r= (canto arredondado) na borda de cima
+        if (pos[1] && !pos[1].inherited && !o.noHandles) {
+          const [x, y] = el.xy, [w, h] = el.size, c = [x + w / 2, y + h / 2], p = turn(c, el.rot, x + w, y + h), ra = A.get('r');
+          const base = { shape: 'rect', x0: x, y0: y, w, h, r: el.r, rot: el.rot };
+          rec.handles.push(Object.assign({ kind: 'size', x: p[0], y: p[1], from: pos[1].from, to: pos[1].to, fixed: pos[1].text.includes('{'), label: `largura ${w}, altura ${h}` }, base));
+          const q = turn(c, el.rot, x + Math.min(el.r, Math.abs(w) / 2, Math.abs(h) / 2), y);
+          rec.handles.push(Object.assign({ kind: 'round', x: q[0], y: q[1], from: ra ? ra.vfrom : -1, to: ra ? ra.to : -1, insert: !ra, at: stmtEnd(st), fixed: !!ra && (ra.inherited || !plainNum(ra.text)), label: `canto arredondado r=${el.r}` }, base));
+        }
       } else if (st.cmd === 'text') {
         el.at = posPair(st, pos[0], 'a posição', [0, 0]);
         const s = pos[1];
@@ -1173,9 +1195,14 @@
       }
       if (!o.noHandles) {
         st.pts.forEach((p, i) => {
-          rec.handles.push({ kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, fixed: p.fixed });
+          rec.handles.push({ kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, fixed: p.fixed });
           if (p.tan) rec.handles.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
         });
+        // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
+        if (st.pts.length >= 2) {
+          const xs = st.pts.map((p) => p.x), ys = st.pts.map((p) => p.y);
+          rec.handles.push({ kind: 'move', x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, from: -1, to: -1, fixed: st.pts.some((p) => p.fixed) });
+        }
       }
       // o que sobra depois das posições (elipse e retângulo: 2, texto: posição e "texto", emissor: 1)
       const loose = pos.slice({ ellipse: 2, rect: 2, text: 2, emitter: 1 }[st.cmd] || 0).filter((t) => !t.inherited);

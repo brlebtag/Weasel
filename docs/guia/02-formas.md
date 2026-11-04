@@ -42,6 +42,12 @@ ellipse girada 360,100 64,30 rot=30 c=#6cbb3c ink=4
 
 **Experimente:** troque `rot=30` por `rot=90`: a elipse verde fica em pé. Num círculo, `rot=` não muda nada.
 
+> **Dica do editor:** ponha o cursor na linha de uma elipse. Além da bolinha do centro (arraste para mudar o `cx,cy`), aparecem **quadradinhos** na borda, ligados ao centro por uma linha tracejada. Arraste um quadradinho para mudar o tamanho:
+>
+> - num **círculo** há um só, e ele muda o raio;
+> - numa **elipse** há dois: o da direita muda o primeiro raio (o da largura) e o de baixo, o segundo (o da altura). Segure **Shift** para mudar os dois juntos, sem deformar a elipse;
+> - os quadradinhos giram junto com o `rot=`, então ficam sempre na ponta de cada raio.
+
 ## Retângulo
 
 ```
@@ -67,6 +73,8 @@ text tc 36,40 "30,50" size=13 c=#c44536
 - `largura,altura` é o tamanho.
 - `r=` arredonda os cantos.
 - `rot=` gira em volta do centro do retângulo.
+
+> **Dica do editor:** com o cursor na linha de um `rect`, a bolinha do canto de cima move o retângulo, e o **quadradinho** do canto de baixo, à direita, muda a `largura,altura`. Segure **Shift** ao arrastar o quadradinho para manter a proporção (um quadrado continua quadrado).
 
 ### Cantos redondos: `r=`
 
@@ -96,6 +104,8 @@ Repare:
 - O canto nunca passa da metade do lado menor. Com `r=99`, valeu 30, e o resultado é igual ao de `r=30`.
 
 **Experimente:** num quadrado (`100,100`), use `r=50`. Ele vira um círculo.
+
+> **Dica do editor:** o `r=` também se arrasta. Com o cursor na linha do `rect`, um **losango azul** fica na borda de cima, perto do canto. Arraste-o para a direita e o canto arredonda (o `r=` muda no código). Volte com ele até o canto e o `r=` vira 0. Se a linha ainda não tem `r=`, o losango fica colado no canto, e arrastar escreve o `r=` para você.
 
 ## Formas livres com pontos: `shape`
 
@@ -140,7 +150,11 @@ ellipse c4 310,100 4 c=#c44536
 
 A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só diz **por onde** a linha passa. Para desenhar algo novo, pense nos pontos principais do contorno, comece com poucos, veja o resultado e vá acrescentando. Uma forma precisa de pelo menos 3 pontos.
 
-> No editor, **duplo clique** num ponto liga e desliga o `!`, e **arrastar** um ponto muda o número no código.
+> **Dica do editor:** com o cursor na linha do `shape`, os pontos aparecem no desenho.
+>
+> - **Arrastar** um ponto muda o número dele no código.
+> - **Duplo clique** num ponto liga e desliga o `!`.
+> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia para outro lugar.
 
 ### Quanto a curva arredonda: `smooth=`
 
@@ -226,6 +240,12 @@ Repare:
 - `~90,0`: a curva corre deitada por muito tempo e depois cai de uma vez. O morro parece um "n".
 
 **Experimente:** troque `~50,0` por `~50,30`. A alça fica inclinada (30 pixels para baixo), e a curva passa pelo topo já descendo para a direita: o morro fica torto.
+
+> **Dica do editor:** a alça também se puxa com o mouse.
+>
+> - Segure **Alt** e arraste um ponto: uma alça sai dele e segue o mouse, e o `~dx,dy` é escrito no código. Num ponto com `!`, o `!` sai, porque um ponto não pode ser canto e ter alça ao mesmo tempo.
+> - Uma alça que já existe aparece como um **losango azul** na ponta de uma linha. Arraste o losango para mudar a direção e o tamanho.
+> - Para tirar a alça, solte o losango em cima do próprio ponto, ou dê **duplo clique** no ponto. A curva volta a ser automática.
 
 ## Traço aberto: `stroke`
 
@@ -349,6 +369,8 @@ Repare:
 - **`smooth=0.5`:** as ondas ficam mais apertadas que no liso (o padrão é `smooth=1`).
 
 **Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
+
+> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`.
 
 ## Linha reta: `line`
 
