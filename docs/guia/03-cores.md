@@ -122,8 +122,8 @@ Repare:
 
 - Uma `palette` pode ter **cores e números**. Os números são espessuras: `ink=line` usa o 5 de `line`, e `ink=fino` usa o 3.
 - Pode haver várias linhas `palette`; elas se somam.
-- Um nome da `palette` pode valer outro nome: `palette sombra=cabelo` copia a cor de `cabelo` (com um exemplo [mais abaixo](#um-nome-que-copia-outro-sombracabelo)).
-- O fundo também aceita nome: `bg=ceu`.
+- Um nome da `palette` pode valer outro nome: `palette sombra=cabelo` copia a cor de `cabelo` (com um exemplo [mais abaixo](#um-nome-que-copia-outro-sombracabelo)). Aqui a ordem importa: `cabelo` precisa vir antes.
+- O fundo também aceita nome: `bg=ceu`. Repare que o `canvas` está **acima** da `palette` que cria `ceu`, e funciona. A seção [Antes ou depois](#antes-ou-depois-onde-um-nome-da-palette-vale) explica por que usar pode vir antes e copiar não.
 
 ### Nomes que já existem
 
@@ -196,6 +196,49 @@ text t3 390,190 "ink=edge" size=20 align=center
 
 > Cuidado com o nome repetido: o `inner` da `palette` é uma **espessura** (um número de pixels), e o `inner=` do `finish` é a **opacidade** (de 0 a 1) dos traços que ficam dentro de camadas com `clip`. O [capítulo 4](04-camadas.md#os-dois-inner) mostra os dois lado a lado.
 
+### Antes ou depois: onde um nome da palette vale
+
+Um nome da `palette` pode ser **usado** antes da linha que o cria, mas só pode ser **copiado** depois dela. Parece contraditório, e vem da ordem em que o Weasel lê o arquivo:
+
+1. Primeiro, todas as linhas `let`.
+2. Depois, todas as linhas `palette`, de cima para baixo e, em cada linha, da esquerda para a direita.
+3. Só então o resto: os `gradient` e os `pattern`, a variante escolhida, o fundo do `canvas`, as luzes e as formas.
+
+Quando o passo 3 começa, a `palette` inteira já foi lida, não importa onde ela está no arquivo. Já dentro do passo 2, um nome só existe depois que a linha dele passou. Por isso:
+
+| O que você escreve | O nome precisa vir antes? |
+|---|---|
+| **Usar** um nome: `c=pele`, `ink=line`, `inkc=`, `w=`, o `bg=` do `canvas`, as cores de um `gradient`, de um `pattern` ou de uma `light`, os valores de uma `variant` | **Não.** Vale no arquivo todo, acima ou abaixo da `palette`. |
+| **Copiar** um nome dentro da `palette`: `sobrancelha=cabelo` | **Sim.** `cabelo` precisa ter sido lido antes: numa linha `palette` de cima, ou mais à esquerda na mesma linha. |
+| Criar o **mesmo nome** duas vezes | Vale o último valor, no desenho todo, até nas formas que ficam acima dele. Uma cópia feita no meio fica com o valor que o nome tinha naquela hora. |
+| Os nomes prontos (`ink`, `line`, `inner`, `edge`) | Já existem antes da primeira linha: dá para copiar em qualquer lugar (`palette grosso=line`). |
+
+Para quem já programou: **usar** um nome da `palette` é como chamar uma função no JavaScript, que vale antes da linha onde ela é declarada. **Copiar** é como uma variável no C ou no C++, que só existe da declaração para baixo. O `let` é diferente da `palette`: um `let` pode usar outro de cima ou de baixo ([capítulo 5](05-componentes.md)).
+
+Este arquivo funciona, mesmo com o fundo, o gradiente e a bola usando nomes que só aparecem nas últimas linhas:
+
+<!-- conferir -->
+```weasel
+canvas 300 160 bg=ceu
+gradient brilho radial 0.35,0.3 0.7 box : claro escuro
+ellipse bola 150,80 50 c=brilho ink=grosso inkc=contorno
+
+palette ceu=#bfe3f5 claro=#ffe08a escuro=#e07b00
+palette grosso=5 tinta=#5a2d0c contorno=tinta
+```
+
+- `bg=ceu`, `claro`, `escuro`, `grosso` e `contorno` são **usos**: tanto faz estarem acima da `palette`.
+- `contorno=tinta` é uma **cópia**: funciona porque `tinta` está à esquerda, na mesma linha.
+
+Com a ordem trocada, a cópia falha:
+
+```
+palette sombra=cabelo        ← erro: valor inválido "cabelo"
+palette cabelo=#5e4030
+```
+
+Na linha de cima, `cabelo` ainda não existe. Troque as duas linhas de lugar, ou escreva tudo numa linha só: `palette cabelo=#5e4030 sombra=cabelo`.
+
 ### Variantes: outra versão das cores
 
 A última linha do exemplo é uma **variante**:
@@ -255,7 +298,7 @@ variant ruivo cabelo=#c4512b
 Repare:
 
 - `pele=wheat`: um nome da `palette` também pode receber um nome de cor do CSS.
-- `sobrancelha=cabelo` vem **depois** de `cabelo` (aqui, na linha de baixo; na mesma linha, mais à direita, também vale). O nome copiado precisa já existir: escrito antes, dá o erro `valor inválido "cabelo"`.
+- `sobrancelha=cabelo` vem **depois** de `cabelo` (aqui, na linha de baixo; na mesma linha, mais à direita, também vale). O nome copiado precisa já existir: com `sobrancelha=cabelo` acima de `cabelo`, dá o erro `valor inválido "cabelo"` (veja [Antes ou depois](#antes-ou-depois-onde-um-nome-da-palette-vale)). Já `c=sobrancelha` nas formas valeria em qualquer lugar do arquivo.
 - Na versão `ruivo`, o cabelo mudou e as sobrancelhas **não**. `sobrancelha=cabelo` copiou a cor castanha na hora em que a `palette` foi lida; a variante troca só o nome que ela cita.
 
 **Experimente:** escreva `variant ruivo cabelo=#c4512b sobrancelha=#c4512b`. Agora a variante troca os dois, e as sobrancelhas acompanham o cabelo.
