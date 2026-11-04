@@ -144,9 +144,13 @@
   const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|svg)$/i;
   const IMAGE_TYPE = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', svg: 'image/svg+xml' };
   async function addImage(name, buf, persist) {
-    const img = new Image();
-    img.src = URL.createObjectURL(new Blob([buf], { type: IMAGE_TYPE[name.split('.').pop().toLowerCase()] || 'image/png' }));
-    try { await img.decode(); } catch (e) { URL.revokeObjectURL(img.src); hint(`O navegador não conseguiu ler a imagem "${name}".`, 3000); return null; }
+    const img = new Image(), url = URL.createObjectURL(new Blob([buf], { type: IMAGE_TYPE[name.split('.').pop().toLowerCase()] || 'image/png' }));
+    // espera o load, não o img.decode(): o decode pode nunca terminar (aba ou painel escondido, alguns navegadores
+    // embutidos), e aí a imagem não entrava, sem aviso nenhum
+    try {
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    } catch (e) { URL.revokeObjectURL(url); hint(`O navegador não conseguiu ler a imagem "${name}".`, 3000); return null; }
+    img.onload = img.onerror = null;
     const old = st.images.get(name);
     if (old) URL.revokeObjectURL(old.img.src);
     const info = { name, img, w: img.naturalWidth || 300, h: img.naturalHeight || 150 };
@@ -204,15 +208,17 @@
     editor.replaceRange(off, end, out, { key: key || null, select: sel });
   }
 
-  // uma imagem nova vira uma linha ref: cabendo no desenho, no meio, e só na animação escolhida no player
-  function insertRef(info) {
+  // uma imagem nova vira uma linha ref: cabendo no desenho, e só na animação escolhida no player.
+  // pos: o ponto do desenho onde o meio da imagem fica (onde ela foi solta); sem pos, no meio do desenho.
+  function insertRef(info, pos) {
     const m = st.model, c = m.canvas;
     let base = info.name.split(/[\\/]/).pop().replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9_]/g, '_');
     if (!L.IDENT.test(base)) base = 'guia';
     let name = base, n = 2;
     while (m.refs.some((r) => r.name === name)) name = base + n++;
     const sc = Number(Math.min(1, c.w / info.w, c.h / info.h).toFixed(3));
-    const x = Math.round((c.w - info.w * sc) / 2), y = Math.round((c.h - info.h * sc) / 2);
+    const [cx, cy] = pos || [c.w / 2, c.h / 2];
+    const x = Math.round(cx - (info.w * sc) / 2), y = Math.round(cy - (info.h * sc) / 2);
     const txt = `ref ${name} "${info.name}" ${x},${y}${sc !== 1 ? ` scale=${sc}` : ''} opacity=0.5${st.anim ? ` only=${st.anim}` : ''}`;
     // depois do último ref; senão depois do canvas; senão no começo
     const lines = editor.value.split('\n');
@@ -2041,20 +2047,70 @@
   });
   $('btnNew').addEventListener('click', () => { openFile(uniqueName('desenho.weasel'), W.blankProgram); hint('Arquivo novo criado.', 2000); });
   $('btnOpen').addEventListener('click', () => $('fileIn').click());
-  $('fileIn').addEventListener('change', async (e) => {
+  $('fileIn').addEventListener('change', (e) => {
     const list = [...e.target.files];
     e.target.value = '';
-    if (!list.length) return;
+    if (list.length) openFiles(list);
+  });
+  // Abrir… e arrastar arquivos para a janela: sons e imagens ficam guardados neste navegador, textos viram arquivos.
+  // drop: soltou na janela. Aí as imagens (sem texto junto) já viram linhas ref, abaixo do canvas: o meio da
+  // imagem fica onde ela caiu no desenho (drop.at) ou, solta no código, no meio do desenho.
+  const TEXT_EXT = /\.(weasel|txt|json|tsv)$/i;
+  async function openFiles(list, drop) {
     const sounds = list.filter((f) => AUDIO_EXT.test(f.name)), images = list.filter((f) => IMAGE_EXT.test(f.name));
-    const texts = list.filter((f) => !AUDIO_EXT.test(f.name) && !IMAGE_EXT.test(f.name));
+    const rest = list.filter((f) => !AUDIO_EXT.test(f.name) && !IMAGE_EXT.test(f.name));
+    const texts = drop ? rest.filter((f) => TEXT_EXT.test(f.name)) : rest, skip = rest.filter((f) => !texts.includes(f));
     for (const f of sounds) await addMedia(f.name, await f.arrayBuffer(), true);
-    for (const f of images) await addImage(f.name, await f.arrayBuffer(), true);
+    const infos = [];
+    for (const f of images) { const i = await addImage(f.name, await f.arrayBuffer(), true); if (i) infos.push(i); }
     for (const f of texts) st.files.set(f.name, await f.text());
     fillMediaList();
     if (texts.length) openFile(texts[0].name); else reparse();
-    if (images.length && !texts.length) hint(`${images.length > 1 ? `${images.length} imagens guardadas` : 'Imagem guardada'} neste navegador: use no painel "Imagens" ou com ref nome "${images[0].name}" x,y.`, 4200);
+    if (drop && infos.length && !texts.length && !isFilm()) {
+      const c = st.model.canvas, [x, y] = drop.at || [c.w / 2, c.h / 2];
+      // várias de uma vez: uma um pouco abaixo da outra, para dar para ver que são várias
+      infos.forEach((info, k) => insertRef(info, [x + k * 24, y + k * 24]));
+      if (infos.length > 1) hint(`${infos.length} imagens guia adicionadas, cada uma numa linha ref: arraste para mover, o canto para mudar o tamanho.`, 4200);
+      editor.ta.focus();
+    } else if (images.length && !texts.length) hint(`${images.length > 1 ? `${images.length} imagens guardadas` : 'Imagem guardada'} neste navegador${isFilm() ? ': imagens guia são para desenhos (num filme, não aparecem).' : `: use no painel "Imagens" ou com ref nome "${images[0].name}" x,y.`}`, 4200);
     else if (sounds.length) hint(`${sounds.length} som${sounds.length > 1 ? 's' : ''} aberto${sounds.length > 1 ? 's' : ''}: ficam guardados neste navegador (♪ na barra de arquivos).`, 3600);
     else if (texts.length > 1) hint(`${texts.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
+    else if (skip.length && !texts.length) hint(`Não sei abrir "${skip[0].name}": solte desenhos (.weasel), imagens ou sons.`, 3200);
+  }
+  // Arquivos arrastados por cima da janela: a área onde vão cair fica marcada. Soltar nunca deixa o navegador
+  // trocar a página pelo arquivo (o que perderia o que não foi salvo).
+  const hasFiles = (e) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  const onDrawing = (e) => !!(e.target.closest && e.target.closest('#stage')) && !isFilm() && !st.build;
+  let dropEl = null;
+  const dropMark = (el, label) => {
+    if (dropEl && dropEl !== el) dropEl.classList.remove('drop-on');
+    dropEl = el;
+    if (el) { el.dataset.drop = label; el.classList.add('drop-on'); }
+  };
+  window.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    const items = [...e.dataTransfer.items], pics = items.length && items.every((i) => i.kind === 'file' && /^image\//.test(i.type));
+    const here = onDrawing(e), many = items.length > 1;
+    const label = !pics ? 'Solte para abrir' : isFilm() ? `Solte para guardar ${many ? 'as imagens' : 'a imagem'} (imagens guia são para desenhos)` : here ? `Solte: ${many ? 'as imagens guia ficam' : 'a imagem guia fica'} neste ponto do desenho` : `Solte: ${many ? 'cada imagem vira uma linha' : 'a imagem vira uma linha'} ref, abaixo do canvas`;
+    dropMark(here ? $('stage') : document.querySelector('.code'), label);
+    clearTimeout(dropMark.t);
+    dropMark.t = setTimeout(() => dropMark(null), 250);
+  });
+  window.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    clearTimeout(dropMark.t);
+    dropMark(null);
+    const list = [...e.dataTransfer.files];
+    if (!list.length) return;
+    let at = null;
+    if (onDrawing(e)) {
+      const c = st.model.canvas, p = toWorld(e);
+      at = [Math.min(c.w, Math.max(0, p[0])), Math.min(c.h, Math.max(0, p[1]))];
+    }
+    openFiles(list, { at });
   });
   $('btnSave').addEventListener('click', saveFile);
   function saveFile() {

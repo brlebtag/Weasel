@@ -51,7 +51,7 @@ Depois abra <http://localhost:5317> (o endereço aparece no terminal e dá para 
 
 Para publicar a sua cópia (num fork, por exemplo): no GitHub, vá em **Settings → Pages**, escolha **Deploy from a branch**, o branch `master` e a pasta `/ (root)`, e salve. Em um ou dois minutos o editor aparece em `https://<seu-usuário>.github.io/Weasel/`. O arquivo vazio `.nojekyll` avisa o GitHub para publicar os arquivos como estão, sem passar pelo Jekyll.
 
-Os arquivos ficam salvos automaticamente no navegador (localStorage). **Abrir…** aceita vários `.weasel` de uma vez, **Salvar** baixa o arquivo atual e **Baixar todos** junta todos num `.zip`.
+Os arquivos ficam salvos automaticamente no navegador (localStorage). **Abrir…** aceita vários `.weasel` de uma vez (arrastar os arquivos para a janela faz o mesmo), **Salvar** baixa o arquivo atual e **Baixar todos** junta todos num `.zip`.
 
 ## Linha de comando
 
@@ -162,7 +162,7 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 | **Editor** (esquerda) | Código com cores, números de linha, erros na margem e sugestões enquanto você digita. A barra de baixo mostra os erros (clique para ver a lista) e o que está sob o cursor. |
 | **Desenho** (direita) | Redesenha a cada tecla. Roda do mouse aproxima, arrastar o fundo move a vista, **Ajustar** enquadra de novo. |
 | **Guias / Pontos / Ossos / Papel vegetal / variante** | Mostram as camadas `guide`, as luzes (ícone e alcance), as caixas do jogo e a grade do tileset, os pontos da linha atual, o esqueleto (ossos com mola ou movimento sozinho em amarelo), os quadros vizinhos da animação e escolhem a variante de cores. Com **Ossos** ligado, uma animação escolhida e o player parado, arrastar a bolinha de um osso o move e arrastar a alça verde o gira: o Weasel escreve a `key` daquele quadro. |
-| **Imagens** | O painel das imagens guia (`ref`): **Adicionar imagem…** escreve a linha `ref` e guarda a imagem no navegador; em cada uma, liga/desliga, opacidade e cadeado (`lock`). Uma imagem solta arrasta no desenho (por dentro move, pelo canto muda o tamanho). Não saem na exportação. |
+| **Imagens** | O painel das imagens guia (`ref`): **Adicionar imagem…** escreve a linha `ref` e guarda a imagem no navegador; em cada uma, liga/desliga, opacidade e cadeado (`lock`). Uma imagem solta arrasta no desenho (por dentro move, pelo canto muda o tamanho). Não saem na exportação. Arrastar uma imagem do computador para a janela também escreve o `ref`, abaixo do `canvas` (solta no desenho, fica no ponto onde caiu). |
 | **Player** (embaixo) | Escolhe a animação, toca/pausa, avança quadro a quadro e muda a velocidade. Quadros com `event` aparecem com ⚑. Num filme, escolhe o filme inteiro ou um plano e mostra o tempo (min:seg:quadro), o plano e o tempo dentro dele. |
 | **♪ e CC** (filmes) | Tocam o som dos `audio` junto com o player e mostram as legendas na tela. O botão **♪ N** na barra de arquivos lista os sons guardados no navegador. |
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |

@@ -723,7 +723,7 @@ O erro é **dentro** do arquivo incluído: a mensagem começa com o nome dele e 
 
 ### A imagem guia (`ref`) não aparece
 
-- No **editor web**, a imagem precisa estar guardada no navegador: abra o painel **Imagens** e use **abrir …** ao lado dela (ou **Adicionar imagem…**). O aviso "não achei a imagem" diz qual falta.
+- No **editor web**, a imagem precisa estar guardada no navegador: abra o painel **Imagens** e use **abrir …** ao lado dela (ou **Adicionar imagem…**, ou arraste a imagem para a janela). O aviso "não achei a imagem" diz qual falta.
 - Confira o `only=` e o `frames=`: com uma animação escolhida no player, só aparecem as imagens guia dela, e a pose parada se chama `pose`. Confira também o `hidden` e a caixa **mostrar** do painel.
 - Na **linha de comando**, ela só aparece com `--refs`, e o caminho é relativo ao arquivo `.weasel`.
 - Uma imagem guia escrita num arquivo incluído não aparece: o `ref` só vale no arquivo onde está.

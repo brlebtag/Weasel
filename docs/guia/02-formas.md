@@ -706,6 +706,7 @@ ref nome "imagem.png" x,y scale= rot= opacity= [lock] [hidden] [front]
 **No editor**, o botão **Imagens**, acima do desenho, abre o painel das imagens guia:
 
 - **Adicionar imagem…** escolhe um arquivo do computador e escreve a linha `ref`, com a imagem cabendo no desenho. A imagem fica guardada **neste navegador** (como os sons dos filmes); o código só tem o nome dela.
+- **Arrastar e soltar** faz o mesmo sem abrir o painel: traga a imagem do computador e solte na janela do Weasel. A linha `ref` entra abaixo do `canvas` (depois das outras imagens guia). Solta no **desenho**, o meio da imagem fica no ponto onde ela caiu; solta no **código**, fica no meio do desenho. Várias de uma vez viram uma linha cada, uma um pouco abaixo da outra.
 - Em cada imagem guia: a caixa liga e desliga (`hidden`), o controle muda a opacidade (`opacity=`) e o cadeado trava (`lock`). Clicar no nome leva à linha dela no código. **mostrar** esconde todas de uma vez, sem mexer no código.
 - No desenho, uma imagem **solta** (sem `lock`) tem uma moldura tracejada: arraste por dentro para mover e pelo quadradinho do canto para mudar o tamanho. O Weasel reescreve o `x,y` e o `scale=` (Ctrl+Z desfaz). Uma imagem travada não se mexe: arrastar por cima dela move a vista.
 - Se o código tem um `ref` com uma imagem que este navegador ainda não guardou, o painel mostra **abrir …** ao lado dele.

@@ -177,6 +177,8 @@ main {
 .ed-pop div { display: flex; justify-content: space-between; gap: 18px; padding: 2px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
 .ed-pop div.on, .ed-pop div:hover { background: #24364a; }
 .ed-pop small { color: var(--dim); font: 11px var(--ui); }
+.drop-on::before { content: ""; position: absolute; inset: 6px; z-index: 40; border: 2px dashed var(--accent); border-radius: 10px; background: rgba(255, 138, 31, .08); pointer-events: none; }
+.drop-on::after { content: attr(data-drop); position: absolute; z-index: 41; top: 18px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 48px); padding: 6px 12px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font: 600 13px var(--ui); text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); pointer-events: none; }
 .shape-menu { position: fixed; z-index: 30; max-height: none; outline: none; }
 .shape-menu header { padding: 3px 8px 4px; color: var(--dim); font: 11px var(--ui); border-bottom: 1px solid #2c3d4f; margin-bottom: 3px; }
 body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: none; }
