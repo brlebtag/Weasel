@@ -2309,6 +2309,14 @@
     W.exporter.download(new Blob([editor.value], { type: 'text/plain;charset=utf-8' }), st.current);
   }
 
+  // a versão: a mesma do ?v= dos scripts (muda a cada versão nova); aparece ao lado do nome e na referência
+  const appSrc = (document.querySelector('script[src*="js/app.js"]') || {}).src || '';
+  const version = (/[?&]v=([\w.-]+)/.exec(appSrc) || [])[1];
+  if (version) {
+    $('ver').textContent = 'v' + version;
+    $('helpVer').textContent = 'Weasel ' + version;
+  }
+
   // referência
   const help = $('help');
   const toggleHelp = (on) => { help.hidden = on === undefined ? !help.hidden : !on; };
