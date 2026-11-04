@@ -47,6 +47,8 @@ ellipse girada 360,100 64,30 rot=30 c=#6cbb3c ink=4
 > - num **círculo** há um só, e ele muda o raio;
 > - numa **elipse** há dois: o da direita muda o primeiro raio (o da largura) e o de baixo, o segundo (o da altura). Segure **Shift** para mudar os dois juntos, sem deformar a elipse;
 > - os quadradinhos giram junto com o `rot=`, então ficam sempre na ponta de cada raio.
+>
+> Para girar a elipse, use a **alça de giro**: a bolinha **verde** presa numa haste em cima da forma, com uma seta curva. Arraste-a em volta da elipse, e o `rot=` muda no código. Se a linha ainda não tem `rot=`, arrastar escreve um para você. Com **Shift**, o giro vai de 15 em 15 graus, e um **duplo clique** na bolinha verde volta a `rot=0`. O círculo não tem essa alça, porque girá-lo não muda nada.
 
 ## Retângulo
 
@@ -74,7 +76,7 @@ text tc 36,40 "30,50" size=13 c=#c44536
 - `r=` arredonda os cantos.
 - `rot=` gira em volta do centro do retângulo.
 
-> **Dica do editor:** com o cursor na linha de um `rect`, a bolinha do canto de cima move o retângulo, e o **quadradinho** do canto de baixo, à direita, muda a `largura,altura`. Segure **Shift** ao arrastar o quadradinho para manter a proporção (um quadrado continua quadrado).
+> **Dica do editor:** com o cursor na linha de um `rect`, a bolinha do canto de cima move o retângulo, e o **quadradinho** do canto de baixo, à direita, muda a `largura,altura`. Segure **Shift** ao arrastar o quadradinho para manter a proporção (um quadrado continua quadrado). A bolinha **verde** em cima do retângulo é a alça de giro: arraste-a em volta para mudar o `rot=` (com **Shift**, de 15 em 15 graus; duplo clique volta a `rot=0`), como na elipse.
 
 ### Cantos redondos: `r=`
 
@@ -155,6 +157,7 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 > - **Arrastar** um ponto muda o número dele no código.
 > - **Duplo clique** num ponto liga e desliga o `!`.
 > - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia para outro lugar.
+> - Para **girar a forma inteira**, arraste a bolinha **verde** que fica numa haste em cima dos pontos. O `shape` não tem `rot=`, então o Weasel gira os próprios pontos em volta do meio da forma e reescreve os números (as alças de curva giram junto). Com **Shift**, o giro vai de 15 em 15 graus. Um Ctrl+Z desfaz o giro inteiro.
 
 ### Quanto a curva arredonda: `smooth=`
 
@@ -370,7 +373,7 @@ Repare:
 
 **Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
 
-> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`.
+> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, e a bolinha **verde** de cima para girá-lo. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`.
 
 ## Linha reta: `line`
 
@@ -514,6 +517,8 @@ Repare:
 - `rot=` gira o texto em volta do **ponto de apoio** (os pontinhos escuros), em graus. Negativo gira para cima; positivo, para baixo.
 
 **Experimente:** no primeiro "Oi", acrescente `ink=8 inkc=#ffffff`: um contorno branco e grosso, como nos adesivos.
+
+> **Dica do editor:** com o cursor na linha de um `text`, a bolinha do ponto de apoio move o texto, e a bolinha **verde** em cima das letras gira. Arraste-a em volta do ponto de apoio, e o `rot=` muda no código (ou é escrito, se a linha não tem). Com **Shift**, o giro vai de 15 em 15 graus; um duplo clique na bolinha verde volta a `rot=0`.
 
 ## Contorno: `ink`, `inkc` e `weight`
 
@@ -735,6 +740,11 @@ Repare:
 | `z=` `yaw=` `pitch=` | Profundidade e giro em 3D ([capítulo 11](11-profundidade.md)). |
 
 Cada linha da tabela tem um exemplo no capítulo indicado. As duas primeiras, que valem para qualquer desenho, estão logo abaixo.
+
+E o `rot=`? Ele não está na tabela porque **não vale para toda forma**:
+
+- **Têm `rot=`:** `ellipse`, `rect` e `text`. Cada uma gira em volta de um ponto: o centro da elipse, o centro do retângulo e o ponto de apoio do texto. O `use` de um componente também tem `rot=` ([capítulo 5](05-componentes.md#tamanho-e-giro-scale-e-rot)).
+- **Não têm:** `shape`, `stroke` e `line`. Nelas, cada ponto já diz exatamente onde fica, e girar é escrever outros pontos. No editor, a bolinha verde de giro faz essa conta por você ([veja a dica do `shape`](#formas-livres-com-pontos-shape)). Para girar um desenho feito de várias formas, junte-as num componente e gire o `use`.
 
 ### Transparência: `opacity=`
 

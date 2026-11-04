@@ -2058,7 +2058,7 @@
   }
 
   // Posição de uma alça (ponto editável) na pose atual. As alças da própria forma andam com ela (osso, tecido, 3D).
-  const ELEMENT_HANDLES = new Set(['pt', 'tan', 'center', 'corner', 'size', 'round', 'move']);
+  const ELEMENT_HANDLES = new Set(['pt', 'tan', 'center', 'corner', 'size', 'round', 'move', 'rot']);
   function handlePos(model, pose, rec, h) {
     if (rec.el && ELEMENT_HANDLES.has(h.kind)) return fullMap(model, pose, rec.el)(h.x, h.y);
     if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }

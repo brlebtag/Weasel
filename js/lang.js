@@ -616,6 +616,13 @@
     // ponto (x,y) girado deg graus em volta de c: as alças de tamanho de uma forma com rot=
     const turn = (c, deg, x, y) => (deg ? M.apply(M.mul(M.translate(c[0], c[1]), M.mul(M.rotate(deg), M.translate(-c[0], -c[1]))), x, y) : [x, y]);
     const plainNum = (t) => /^-?(\d+\.?\d*|\.\d+)$/.test(t);
+    // alça de giro: em cima da forma, a reach do pivô c (a borda de cima, sem o giro), virada para o rot=; o editor
+    // ainda a afasta um pouco na tela. Elipse, retângulo e texto: from/to é o número do rot= (ou insert no fim da
+    // linha). Formas de pontos (extra.pts): não há rot=, o editor gira os próprios pontos.
+    const spinHandle = (st, c, deg, reach, extra) => {
+      const ra = st.attrs.get('rot'), p = turn(c, deg, c[0], c[1] - reach);
+      return Object.assign({ kind: 'rot', cx: c[0], cy: c[1], rot: deg, reach, x: p[0], y: p[1], from: ra ? ra.vfrom : -1, to: ra ? ra.to : -1, insert: !ra, at: stmtEnd(st), fixed: !!ra && (ra.inherited || !plainNum(ra.text)), label: `giro rot=${deg}` }, extra);
+    };
     // valor de palette: #cor, número, outro nome da palette, nome de cor do CSS
     function paletteValue(st, a) {
       if (!IDENT.test(a.key)) { bad(st, a, `nome inválido "${a.key}"`); return undefined; }
@@ -1101,6 +1108,8 @@
             const px = turn(c, el.rot, c[0] + rx, c[1]), py = turn(c, el.rot, c[0], c[1] + ry);
             rec.handles.push(Object.assign({}, base, { axis: 'x', x: px[0], y: px[1], label: `raio da largura ${rx} (de ${rx},${ry})` }));
             rec.handles.push(Object.assign({}, base, { axis: 'y', x: py[0], y: py[1], label: `raio da altura ${ry} (de ${rx},${ry})` }));
+            // girar um círculo não muda nada: só a elipse tem alça de giro
+            rec.handles.push(spinHandle(st, c, el.rot, ry));
           }
         }
       } else if (st.cmd === 'rect') {
@@ -1116,6 +1125,7 @@
           rec.handles.push(Object.assign({ kind: 'size', x: p[0], y: p[1], from: pos[1].from, to: pos[1].to, fixed: pos[1].text.includes('{'), label: `largura ${w}, altura ${h}` }, base));
           const q = turn(c, el.rot, x + Math.min(el.r, Math.abs(w) / 2, Math.abs(h) / 2), y);
           rec.handles.push(Object.assign({ kind: 'round', x: q[0], y: q[1], from: ra ? ra.vfrom : -1, to: ra ? ra.to : -1, insert: !ra, at: stmtEnd(st), fixed: !!ra && (ra.inherited || !plainNum(ra.text)), label: `canto arredondado r=${el.r}` }, base));
+          rec.handles.push(spinHandle(st, c, el.rot, Math.abs(h) / 2));
         }
       } else if (st.cmd === 'text') {
         el.at = posPair(st, pos[0], 'a posição', [0, 0]);
@@ -1134,7 +1144,11 @@
         el.bold = flags.has('bold');
         el.italic = flags.has('italic');
         el.cloth = null;
-        if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
+        if (pos[0] && !o.noHandles) {
+          rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
+          // o texto gira em volta da posição (o começo da linha de base); a alça fica acima das letras
+          rec.handles.push(spinHandle(st, el.at, el.rot, el.size * 0.8));
+        }
       } else if (st.cmd === 'stroke') {
         el.color = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
         if (A.has('c')) patOnLine(st, A.get('c'), el.color, 'o traço');
@@ -1201,7 +1215,10 @@
         // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
         if (st.pts.length >= 2) {
           const xs = st.pts.map((p) => p.x), ys = st.pts.map((p) => p.y);
-          rec.handles.push({ kind: 'move', x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, from: -1, to: -1, fixed: st.pts.some((p) => p.fixed) });
+          const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], fixed = st.pts.some((p) => p.fixed);
+          rec.handles.push({ kind: 'move', x: c[0], y: c[1], from: -1, to: -1, fixed });
+          // girar a forma inteira em volta do meio dos pontos (sem rot=: os pontos e as alças de curva giram)
+          rec.handles.push(spinHandle(st, c, 0, (Math.max(...ys) - Math.min(...ys)) / 2, { pts: true, from: -1, to: -1, insert: false, fixed, label: null }));
         }
       }
       // o que sobra depois das posições (elipse e retângulo: 2, texto: posição e "texto", emissor: 1)

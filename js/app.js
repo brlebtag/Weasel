@@ -442,7 +442,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro' };
   // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
   function lightSide(dx, dy) {
     if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
@@ -1340,29 +1340,35 @@
     const p = turn(h.x0 + h.w / 2, h.y0 + h.h / 2, h.rot, h.x0 + r, h.y0);
     return Object.assign({}, h, { x: p[0], y: p[1] });
   }
+  // a alça de giro: SPIN_GAP pixels acima da borda de cima, na direção do giro. Enquanto gira, segue o arraste
+  // (numa forma de pontos o meio dos pontos anda ao girar, e a alça pularia).
+  const SPIN_GAP = 24;
+  function spinSpot(h, gap) {
+    const s = st.drag && st.drag.spin && st.drag.line === st.caret.line ? st.drag.spin : null;
+    const cx = s ? s.cx : h.cx, cy = s ? s.cy : h.cy, deg = s ? s.ang : h.rot, reach = s ? s.reach : h.reach;
+    const p = turn(cx, cy, deg, cx, cy - reach - gap / st.view.z);
+    return Object.assign({}, h, { x: p[0], y: p[1] });
+  }
   function handleList(m, pose) {
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
-    const at = (h) => S.handlePos(m, pose, rec, h.kind === 'round' ? roundShown(h) : h);
-    if (isFilm()) {
-      return {
-        rec,
-        pts: rec.handles.map((h) => {
-          if (h.kind === 'dir') return dirTip(m, h);
-          const d = handleDepth(rec, h);
-          if (d === null) return null;
-          const p = at(h);
-          return M.apply(filmView(d), p[0], p[1]);
-        }),
-      };
-    }
-    return { rec, pts: rec.handles.map((h) => (h.kind === 'dir' ? dirTip(m, h) : at(h))) };
+    // onde uma alça (ou um ponto com o mesmo jeito de alça) aparece na tela
+    const scr = (h) => {
+      if (h.kind === 'dir') return dirTip(m, h);
+      if (!isFilm()) return S.handlePos(m, pose, rec, h);
+      const d = handleDepth(rec, h);
+      if (d === null) return null;
+      const p = S.handlePos(m, pose, rec, h);
+      return M.apply(filmView(d), p[0], p[1]);
+    };
+    const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(h, SPIN_GAP) : h);
+    return { rec, scr, pts: rec.handles.map((h) => scr(shown(h))) };
   }
 
   function drawHandles(ctx, m, pose, z) {
     const hl = handleList(m, pose);
     if (!hl) return;
-    const { rec, pts } = hl;
+    const { rec, pts, scr } = hl;
     const active = st.drag ? st.drag.hi : activeHandle(rec);
     ctx.save();
     const ptIdx = rec.handles.map((h, i) => (h.kind === 'pt' && pts[i] ? i : -1)).filter((i) => i >= 0);
@@ -1431,16 +1437,31 @@
       ctx.stroke();
       ctx.setLineDash([]);
     });
+    // giro: a haste da borda de cima da forma até a alça
+    rec.handles.forEach((h, i) => {
+      if (h.kind !== 'rot' || !pts[i]) return;
+      const b = scr(spinSpot(h, 0));
+      if (!b) return;
+      for (const [col, w] of [['#14141c', 3 / z], ['#8fd16a', 1.4 / z]]) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(b[0], b[1]);
+        ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+      }
+    });
     rec.handles.forEach((h, i) => {
       if (i === active || !pts[i]) return;
       const [x, y] = pts[i];
       const r = 4.5 / z;
       ctx.beginPath();
       // ponto: bolinha (canto vivo: quadrado); alça de curva e r= do retângulo: losango azul;
-      // tamanho: quadrado com um risco na diagonal; mover a forma: bolinha maior com uma cruz
+      // tamanho: quadrado com um risco na diagonal; mover a forma: bolinha maior com uma cruz;
+      // girar: bolinha verde com uma seta curva por cima
       if (h.kind === 'tan' || h.kind === 'round') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); } else if (h.corner || h.kind === 'size') ctx.rect(x - r, y - r, r * 2, r * 2);
-      else ctx.arc(x, y, h.kind === 'move' ? r * 1.6 : r, 0, Math.PI * 2);
-      ctx.fillStyle = h.fixed ? '#9aa6b2' : h.kind === 'tan' || h.kind === 'round' ? '#5cc6d4' : '#ffffff';
+      else ctx.arc(x, y, h.kind === 'move' ? r * 1.6 : h.kind === 'rot' ? r * 1.15 : r, 0, Math.PI * 2);
+      ctx.fillStyle = h.fixed ? '#9aa6b2' : h.kind === 'tan' || h.kind === 'round' ? '#5cc6d4' : h.kind === 'rot' ? '#8fd16a' : '#ffffff';
       ctx.fill();
       ctx.lineWidth = 1.6 / z;
       ctx.strokeStyle = '#14141c';
@@ -1462,6 +1483,24 @@
         }
         ctx.lineWidth = 1.3 / z;
         ctx.stroke();
+      } else if (h.kind === 'rot') {
+        // arco do lado de fora da alça (longe da forma), com uma ponta de seta em cada lado
+        const R = r * 2.4, b = r * 0.75;
+        const base = scr(spinSpot(h, 0)), up = base ? Math.atan2(y - base[1], x - base[0]) : -Math.PI / 2;
+        const arc = new Path2D(), from = up - 0.95, to = up + 0.95;
+        arc.arc(x, y, R, from, to);
+        for (const [a, s] of [[from, -1], [to, 1]]) {
+          const px = x + R * Math.cos(a), py = y + R * Math.sin(a), tx = -Math.sin(a) * s, ty = Math.cos(a) * s, nx = Math.cos(a), ny = Math.sin(a);
+          arc.moveTo(px - tx * b + nx * b * 0.8, py - ty * b + ny * b * 0.8);
+          arc.lineTo(px, py);
+          arc.lineTo(px - tx * b - nx * b * 0.8, py - ty * b - ny * b * 0.8);
+        }
+        for (const [col, w] of [['#14141c', 3 / z], ['#8fd16a', 1.4 / z]]) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = w;
+          ctx.lineCap = 'round';
+          ctx.stroke(arc);
+        }
       }
     });
     if (active >= 0 && pts[active]) S.drawPen(ctx, pts[active][0], pts[active][1], z);
@@ -1553,9 +1592,10 @@
       const rec = st.model.byLine.get(st.caret.line);
       const h = rec.handles[hi];
       // a alça ✥ ou Shift+arrastar um ponto: a forma inteira anda; Alt+arrastar um ponto (ou a alça azul): a curva
-      const mode = h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
+      // a alça verde: girar
+      const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
       const pts = rec.handles.filter((q) => q.kind === 'pt');
-      if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
+      if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' || h.pts ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : mode === 'spin' ? 'O rot= desta forma vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
       // a direção não muda com a pose: dá para girar com uma animação escolhida, só não tocando
       if (st.playing || (!isFilm() && st.anim && h.kind !== 'dir')) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
       if (h.kind === 'dir') hint('Gire a seta: ela aponta para onde a luz está. Com Shift, gira de 15 em 15 graus.', 3200);
@@ -1563,12 +1603,15 @@
       else if (mode === 'tan' && h.kind === 'pt') hint('Puxe a alça da curva. Solte em cima do ponto para tirar a alça.', 3000);
       else if (h.kind === 'size') hint('Com Shift, o tamanho muda sem perder a proporção.', 2400);
       else if (h.kind === 'round') hint('Arraste para o lado: o canto fica mais redondo. De volta ao canto, r=0.', 2600);
+      else if (mode === 'spin') hint(h.pts ? 'Girando a forma inteira em volta do meio dos pontos. Com Shift, de 15 em 15 graus.' : 'Gire em volta do meio. Com Shift, de 15 em 15 graus; duplo clique volta a rot=0.', 3000);
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now(), mode, idx: h.idx };
-      if (mode === 'move') {
+      if (mode === 'move' || mode === 'spin') {
+        // os pontos como estavam no começo: cada movimento parte deles (sem acumular arredondamento)
         st.drag.orig = [];
-        for (const q of pts) st.drag.orig[q.idx] = [q.x, q.y];
-        const [px, py] = toCanvas(e);
-        st.drag.l0 = localOf(rec, h, px, py);
+        for (const q of pts) st.drag.orig[q.idx] = { x: q.x, y: q.y, tan: q.tan };
+        const [px, py] = toCanvas(e), l = localOf(rec, h, px, py);
+        if (mode === 'move') st.drag.l0 = l;
+        else st.drag.spin = { cx: h.cx, cy: h.cy, reach: h.reach, rot0: h.rot, ang: h.rot, a0: l ? Math.atan2(l[1] - h.cy, l[0] - h.cx) : null };
       } else if (mode === 'tan') st.drag.corner = !!(pts.find((q) => q.idx === h.idx) || {}).corner;
       else if (h.kind === 'size') st.drag.orig = { rx: h.rx, ry: h.ry, w: h.w, h: h.h };
       return;
@@ -1603,7 +1646,7 @@
   view.addEventListener('pointercancel', endPointer);
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
 
-  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : 'move');
+  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'rot' ? 'alias' : 'move');
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
@@ -1611,6 +1654,8 @@
     if (hi < 0 || (st.anim && !isFilm())) return;
     const rec = st.model.byLine.get(st.caret.line);
     const h0 = rec.handles[hi];
+    // na alça de giro: volta a rot=0
+    if (h0.kind === 'rot') { if (!h0.pts && !h0.fixed && !h0.insert) writeTok(st.caret.line, h0.from, h0.to, '0'); return; }
     const h = h0.kind === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === h0.idx) : h0;
     if (!h || h.kind !== 'pt' || h.fixed) return;
     const off = editor.lineStart(st.caret.line);
@@ -1625,6 +1670,7 @@
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
     if (h.kind === 'dir') { moveDir(d, h, x, y, snap); return; }
+    if (h.kind === 'rot') { spinShape(d, rec, h, x, y, snap); return; }
     // a alça de curva é achada pelo número do ponto: aparece e some enquanto você arrasta
     const p = d.mode === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx) : h;
     if (!p) { st.drag = null; return; }
@@ -1690,17 +1736,52 @@
   }
   // a forma inteira: cada ponto = onde estava no começo do arraste + o quanto o mouse andou (! e ~alça ficam)
   function moveAll(d, rec, dx, dy, dec) {
+    rewritePts(d, rec, (o) => [o.x + dx, o.y + dy], dec);
+  }
+  // Reescreve todos os pontos da linha de uma vez (um só Ctrl+Z). place(ponto do começo do arraste) dá [x, y] e,
+  // se a alça de curva também muda, [x, y, [dx, dy]]; sem o terceiro, o ~dx,dy fica como está.
+  function rewritePts(d, rec, place, dec) {
     const pts = rec.handles.filter((q) => q.kind === 'pt').sort((a, b) => b.from - a.from);
     if (!pts.length) return;
     const text = lineOf(d.line);
     let out = text;
     for (const q of pts) {
       const o = d.orig[q.idx];
-      if (o) out = out.slice(0, q.from) + `${fmtN(o[0] + dx, dec)},${fmtN(o[1] + dy, dec)}${q.corner ? '!' : ''}` + out.slice(q.to);
+      if (!o) continue;
+      const [x, y, tan] = place(o);
+      let t = `${fmtN(x, dec)},${fmtN(y, dec)}${q.corner ? '!' : ''}`, end = q.to;
+      if (tan && q.tan) { t += `~${fmtN(tan[0], dec)},${fmtN(tan[1], dec)}`; end = q.end; }
+      out = out.slice(0, q.from) + t + out.slice(end);
     }
     if (out === text) return;
     const off = editor.lineStart(d.line), first = off + pts[pts.length - 1].from;
     editor.replaceRange(off, off + text.length, out, { key: d.key, select: [first, first] });
+  }
+  // Girar: o ângulo do mouse em volta do pivô, somado ao giro do começo (com Shift, de 15 em 15 graus).
+  // Elipse, retângulo e texto: escreve o rot= (acrescenta um no fim da linha, se não houver).
+  // shape, stroke e line: gira cada ponto em volta do meio, e cada alça de curva junto.
+  function spinShape(d, rec, h, x, y, snap) {
+    const s = d.spin, l = s && localOf(rec, h, x, y);
+    if (!l || s.a0 === null || Math.hypot(l[0] - s.cx, l[1] - s.cy) * st.view.z < 2) return;
+    let deg = s.rot0 + ((Math.atan2(l[1] - s.cy, l[0] - s.cx) - s.a0) * 180) / Math.PI;
+    deg = snap ? Math.round(deg / 15) * 15 : Math.round(deg);
+    deg = ((((deg + 180) % 360) + 360) % 360) - 180;
+    if (deg === s.ang) return;
+    s.ang = deg;
+    // escrever redesenha; se o código ficou igual (arredondamento), redesenha só para a alça acompanhar o mouse
+    const before = editor.value;
+    if (h.pts) {
+      const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1, dec = k > 1.5 ? 1 : 0;
+      rewritePts(d, rec, (o) => {
+        const p = turn(s.cx, s.cy, deg, o.x, o.y);
+        return o.tan ? [p[0], p[1], turn(0, 0, deg, o.tan[0], o.tan[1])] : p;
+      }, dec);
+      hint(`girando ${deg}°`, 1500);
+    } else {
+      const v = fmtN(deg, 0);
+      if (h.insert) { if (deg !== 0) writeTok(d.line, h.at, h.at, ` rot=${v}`, d.key); } else writeTok(d.line, h.from, h.to, v, d.key);
+    }
+    if (editor.value === before) draw();
   }
 
   // Girar a seta: do centro do quadro até o mouse vira dx,dy de tamanho 1 (com Shift, de 15 em 15 graus).
