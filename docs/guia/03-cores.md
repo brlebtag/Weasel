@@ -529,6 +529,18 @@ Repare:
 
 **Experimente:** acrescente a linha `variant verde claro=#d8f5b0 escuro=#3a8a2a` e exporte com `--variant verde` (ou escolha `verde` no seletor de variante do editor).
 
+### Editando no painel do gradiente
+
+No editor, você não precisa escrever as posições e as cores à mão. Com o cursor numa linha `gradient`, ou numa forma pintada com um gradiente (`c=` ou `inkc=`), abre o painel do gradiente, no canto de cima à esquerda do desenho:
+
+- A **barra** mostra o gradiente. Cada cor é uma **marca** embaixo dela: arraste a marca para mudar a posição (com **Shift**, de 0.05 em 0.05). Ela pode passar por outra, e a ordem na linha acompanha.
+- **Clique na barra** para pôr uma cor nova ali, já com a cor que estava naquele ponto. **Botão direito** numa marca tira a cor (ou o botão **Tirar**).
+- Embaixo ficam a cor, a opacidade e a posição da marca escolhida. No campo de texto vale também um nome da `palette` (**Enter** grava). Mudar a cor ou a opacidade de um nome da palette troca o nome por um `#hex`.
+- Em cima, `linear`/`radial` troca o tipo, e `box` liga e desliga o 0 a 1. Ligar ou desligar `box` faz a conta na primeira forma que usa o gradiente (ou na forma da linha do cursor), e ela continua igual.
+- No desenho, a linha do gradiente aparece tracejada, com uma bolinha de cada cor. No linear, as alças são o começo e o fim (com **Shift**, a direção anda de 45 em 45 graus); no radial, o centro, o raio e o foco. Com `box`, um retângulo tracejado mostra a forma onde o 0 e o 1 caem.
+
+Arrastar uma marca ou uma alça é um **Ctrl+Z** só. Quando você mexe nas posições, todas passam a ficar escritas na linha (menos o `@0` da primeira e o `@1` da última, que já são o padrão). Assim nenhuma cor muda de lugar sozinha.
+
 ## Hachura e pontos: `pattern`
 
 Para estilo de gravura ou nanquim, uma forma pode ser preenchida com **linhas paralelas** ou **pontos**:

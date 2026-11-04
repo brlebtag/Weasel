@@ -389,6 +389,234 @@
   // "abrir…" de um ref sem imagem: guarda com o nome escrito no ref; "Adicionar imagem…": guarda e cria a linha
   let refTarget = null;
 
+  // ---------- editor de gradiente ----------
+  // Aparece com o cursor numa linha gradient, ou numa figura pintada com um gradiente (c= ou inkc=). A barra mostra
+  // as cores: arrastar uma marca muda a posição, clicar na barra põe uma cor nova, botão direito numa marca tira.
+  // Tudo vai para a linha do gradient, e cada arraste é um Ctrl+Z só.
+  const gp = { sig: '', sel: 0, drag: null, closed: '', key: '' };
+  // o gradiente cai na figura que o usa: as coordenadas dele são as dela (com box, de 0 a 1 dentro dela);
+  // sem figura, as do quadro. el = a figura escolhida (senão a primeira que usa o gradiente)
+  const gradUsers = (m, g) => m.elements.filter((e) => e.fill === g || e.inkc === g || e.color === g);
+  function gradFrame(m, pose, g, el) {
+    el = el || gradUsers(m, g)[0] || null;
+    const f = el && el.type !== 'text' ? S.fullMap(m, pose, el) : (x, y) => [x, y];
+    const b = el ? S.localBox(el) : { x: 0, y: 0, w: m.canvas.w, h: m.canvas.h };
+    return { el, f, b, rs: (b.w + b.h) / 2, box: !!g.box };
+  }
+  const gradLocal = (F, u, v) => (F.box ? [F.b.x + u * F.b.w, F.b.y + v * F.b.h] : [u, v]);
+  // a linha do gradient e quem pediu: a própria linha, ou a figura com c=/inkc= dele (via)
+  function gradTarget() {
+    const m = st.model;
+    if (!m || isFilm()) return null;
+    const rec = m.byLine.get(st.caret.line);
+    if (!rec) return null;
+    let g = rec.grad, via = null;
+    if (!g && rec.el && !rec.repeated) {
+      const pick = [['c', rec.el.fill || rec.el.color], ['inkc', rec.el.inkc]].find(([, p]) => p && p.kind === 'grad');
+      if (pick) { g = pick[1]; via = { el: rec.el, attr: pick[0] }; }
+    }
+    if (!g) return null;
+    let line = -1;
+    for (const [l, r] of m.byLine) if (r.grad === g) { line = l; break; }
+    const grec = line >= 0 ? m.byLine.get(line) : null;
+    if (!grec || !grec.gradSrc) return null;
+    return { m, g, line, src: grec.gradSrc, via };
+  }
+  // as cores como estão na linha: o texto da cor (#hex, nome da palette…), se a posição está escrita, onde fica
+  function gradStops(t) {
+    return t.src.stops.map((s, i) => {
+      const k = s.text.lastIndexOf('@'), r = t.g.stops[i] || { at: 0, c: '#000000' };
+      return { ctext: k > 0 ? s.text.slice(0, k) : s.text, explicit: k > 0, at: r.at, c: r.c };
+    });
+  }
+  // escreve sem tirar o cursor do lugar (ele pode estar em outra linha: a da figura)
+  function writeKeep(start, end, txt, key) {
+    const ta = editor.ta, d = txt.length - (end - start);
+    if (editor.value.slice(start, end) === txt) return;
+    const adj = (p) => (p <= start ? p : p >= end ? p + d : Math.min(p, start + txt.length));
+    editor.replaceRange(start, end, txt, { key, select: [adj(ta.selectionStart), adj(ta.selectionEnd)] });
+  }
+  const fmtAt = (v) => String(Number(Math.min(1, Math.max(0, v)).toFixed(3)));
+  function writeStops(t, list, key) {
+    const a = t.src.stops[0], b = t.src.stops[t.src.stops.length - 1], off = editor.lineStart(t.line);
+    // a primeira cor já fica no 0 e a última no 1: nas pontas, @0 e @1 não precisam ser escritos
+    const n = list.length, bare = (s, i) => !s.explicit || (i === 0 && s.at === 0) || (i === n - 1 && n > 1 && s.at === 1);
+    writeKeep(off + a.from, off + b.to, list.map((s, i) => s.ctext + (bare(s, i) ? '' : '@' + fmtAt(s.at))).join(' '), key);
+  }
+  // mexer em posição: todas ficam escritas (senão as do meio, calculadas, pulariam de lugar) e em ordem
+  function placeStops(list, moved) {
+    for (const s of list) s.explicit = true;
+    list.sort((p, q) => p.at - q.at);
+    return moved ? list.indexOf(moved) : -1;
+  }
+  // tipo (linear/radial) e box: reescreve do tipo até o último número, com o box no fim
+  function writeGeom(t, type, p, box, key) {
+    const dec = box ? 3 : 1, f = (v) => fmtN(v, dec);
+    const nums = type === 'linear' ? `${f(p[0])},${f(p[1])} ${f(p[2])},${f(p[3])}` : `${f(p[0])},${f(p[1])} ${f(Math.max(box ? 0.001 : 0.5, p[2]))}${p.length >= 5 ? ` ${f(p[3])},${f(p[4])}` : ''}`;
+    const toks = [t.src.type, ...t.src.vals, t.src.box].filter(Boolean), off = editor.lineStart(t.line);
+    writeKeep(off + t.src.type.from, off + Math.max(...toks.map((q) => q.to)), `${type} ${nums}${box ? ' box' : ''}`, key);
+  }
+  // cor de qualquer jeito (#hex, nome do CSS, rgba) → [r, g, b, a]
+  const colorCtx = document.createElement('canvas').getContext('2d');
+  function rgbaOf(c) {
+    colorCtx.fillStyle = '#000000';
+    colorCtx.fillStyle = c;
+    const v = colorCtx.fillStyle;
+    if (v[0] === '#') return [parseInt(v.slice(1, 3), 16), parseInt(v.slice(3, 5), 16), parseInt(v.slice(5, 7), 16), 1];
+    const p = (/\(([^)]+)\)/.exec(v) || [0, '0,0,0,1'])[1].split(',').map(Number);
+    return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+  }
+  const hx2 = (n) => Math.round(Math.min(255, Math.max(0, n))).toString(16).padStart(2, '0');
+  const hexOf = (c, a) => '#' + hx2(c[0]) + hx2(c[1]) + hx2(c[2]) + (a < 0.995 ? hx2(a * 255) : '');
+  // a cor do gradiente num ponto da barra (para a cor nova nascer igual ao que já estava ali)
+  function gradColorAt(list, at) {
+    let i = list.findIndex((s) => s.at >= at);
+    if (i < 0) i = list.length - 1;
+    if (i === 0 || list[i].at <= at) return rgbaOf(list[i].c);
+    const a = list[i - 1], b = list[i], k = (at - a.at) / Math.max(1e-6, b.at - a.at), ca = rgbaOf(a.c), cb = rgbaOf(b.c);
+    return ca.map((v, j) => v + (cb[j] - v) * k);
+  }
+
+  function fillGradPanel() {
+    const p = $('gradPanel'), t = gradTarget();
+    const where = t ? `${t.line}:${t.g.name}:${st.caret.line}` : '';
+    if (gp.closed && gp.closed !== where) gp.closed = '';
+    if (!t || gp.closed || st.build) { p.hidden = true; gp.sig = ''; gp.drag = null; return; }
+    p.hidden = false;
+    const list = gradStops(t), lockStops = !t.src.ok || t.src.stops.some((s) => s.text.includes('{'));
+    const lockGeom = [...t.src.vals].some((v) => v.text.includes('{'));
+    const sig = [t.line, t.g.name, list.length, lockStops, lockGeom, t.via ? t.via.el.name + t.via.attr : ''].join('|');
+    gp.sel = Math.min(gp.sel, list.length - 1);
+    if (sig !== gp.sig) {
+      gp.sig = sig;
+      p.innerHTML = `<div class="rp-head"><b>Gradiente</b><button type="button" class="gp-name" title="Ir para a linha do gradient"></button><span class="gp-via"></span><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div>
+        <div class="gp-row"><span class="gp-seg"><button type="button" data-type="linear" title="De um ponto a outro">linear</button><button type="button" data-type="radial" title="Do centro para fora">radial</button></span>
+          <label class="tog" title="Com box, as coordenadas vão de 0 a 1 dentro de cada forma que usa o gradiente"><input type="checkbox" class="gp-box"> box</label><small class="gp-on"></small></div>
+        <div class="gp-bar" title="Clique para pôr uma cor aqui"><div class="gp-fill"></div></div>
+        <div class="gp-marks"></div>
+        <div class="gp-stop">
+          <input type="color" class="gp-col" title="Cor"><input type="text" class="gp-hex" spellcheck="false" autocomplete="off" title="Cor: #hex, um nome da palette ou de cor (Enter grava)">
+          <label title="Opacidade desta cor">opac. <input type="range" class="gp-alpha" min="0" max="100" step="1"></label><span class="gp-av"></span>
+          <label title="Posição na barra, de 0 a 1">pos. <input type="number" class="gp-at" min="0" max="1" step="0.01"></label>
+          <button type="button" class="gp-del" title="Tirar esta cor (ou botão direito na marca)">Tirar</button>
+        </div>
+        <small class="gp-tip">${lockStops ? (t.src.ok ? 'As cores têm {conta}: mude no código.' : 'Corrija o erro das cores nesta linha para editar aqui.') : 'Arraste as marcas · clique na barra para pôr uma cor · botão direito numa marca tira'}</small>`;
+      p.classList.toggle('lock-stops', lockStops);
+      p.classList.toggle('lock-geom', lockGeom);
+      const cur = () => { const c = gradTarget(); return c && c.g.name === t.g.name ? c : null; };
+      p.querySelector('.x').addEventListener('click', () => { gp.closed = where; fillGradPanel(); });
+      p.querySelector('.gp-name').addEventListener('click', () => { const c = cur(); if (c) editor.goto(c.line, 0); });
+      p.querySelectorAll('.gp-seg button').forEach((b) => b.addEventListener('click', () => {
+        const c = cur();
+        if (!c || lockGeom || c.g.type === b.dataset.type) return;
+        const q = c.g.p, r = c.g.type === 'linear' ? [(q[0] + q[2]) / 2, (q[1] + q[3]) / 2, Math.hypot(q[2] - q[0], q[3] - q[1]) / 2] : [q[0] - q[2], q[1], q[0] + q[2], q[1]];
+        writeGeom(c, b.dataset.type, r, c.g.box, 'gradtype' + Date.now());
+      }));
+      p.querySelector('.gp-box').addEventListener('change', (e) => {
+        const c = cur();
+        if (!c || lockGeom) return;
+        // as mesmas coordenadas, de pixel para 0 a 1 (ou de volta) dentro da figura de referência: o desenho não muda
+        const F = gradFrame(c.m, currentPose(), c.g, c.via && c.via.el), on = e.target.checked, q = c.g.p, b = F.b;
+        const px = on ? (v) => (v - b.x) / b.w : (v) => b.x + v * b.w, py = on ? (v) => (v - b.y) / b.h : (v) => b.y + v * b.h;
+        const r = c.g.type === 'linear' ? [px(q[0]), py(q[1]), px(q[2]), py(q[3])] : [px(q[0]), py(q[1]), on ? q[2] / F.rs : q[2] * F.rs, ...(q.length >= 5 ? [px(q[3]), py(q[4])] : [])];
+        writeGeom(c, c.g.type, r, on, 'gradbox' + Date.now());
+      });
+      const bar = p.querySelector('.gp-bar'), marks = p.querySelector('.gp-marks');
+      const atOf = (e, snap) => { const r = bar.getBoundingClientRect(), v = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); return snap ? Math.round(v * 20) / 20 : Math.round(v * 100) / 100; };
+      bar.addEventListener('pointerdown', (e) => {
+        const c = cur();
+        if (!c || lockStops || e.button !== 0) return;
+        e.preventDefault();
+        const l = gradStops(c), at = atOf(e, e.shiftKey), col = gradColorAt(l, at), s = { ctext: hexOf(col, col[3]), explicit: true, at };
+        l.push(s);
+        gp.sel = placeStops(l, s);
+        gp.drag = { key: 'gradstop' + Date.now(), x0: e.clientX, at0: at, w: bar.getBoundingClientRect().width, moved: true };
+        writeStops(c, l, gp.drag.key);
+      });
+      marks.addEventListener('pointerdown', (e) => {
+        const mk = e.target.closest('[data-i]');
+        if (!mk || e.button !== 0) return;
+        e.preventDefault();
+        gp.sel = +mk.dataset.i;
+        // a marca anda o quanto o mouse andar (pegar fora do meio dela não dá pulo); só depois de uns pixels
+        const c = cur(), s = c && gradStops(c)[gp.sel];
+        if (!lockStops && s) gp.drag = { key: 'gradstop' + Date.now(), x0: e.clientX, at0: s.at, w: bar.getBoundingClientRect().width, moved: false };
+        fillGradPanel();
+      });
+      marks.addEventListener('contextmenu', (e) => {
+        const mk = e.target.closest('[data-i]');
+        if (!mk) return;
+        e.preventDefault();
+        gp.sel = +mk.dataset.i;
+        removeStop();
+      });
+      const edit = (fn) => {
+        const c = cur();
+        if (!c || lockStops) return;
+        const l = gradStops(c), s = l[gp.sel];
+        if (s && fn(s, l) !== false) writeStops(c, l, gp.key || 'gradedit');
+      };
+      const newKey = () => { gp.key = 'gradedit' + Date.now(); };
+      const col = p.querySelector('.gp-col'), hex = p.querySelector('.gp-hex'), al = p.querySelector('.gp-alpha'), at = p.querySelector('.gp-at');
+      col.addEventListener('click', newKey);
+      col.addEventListener('input', () => edit((s) => { s.ctext = col.value + (rgbaOf(s.c)[3] < 0.995 ? hx2(rgbaOf(s.c)[3] * 255) : ''); }));
+      hex.addEventListener('keydown', (e) => { if (e.key === 'Enter') hex.blur(); });
+      hex.addEventListener('change', () => { newKey(); edit((s) => { const v = hex.value.trim(); if (!v || /[\s@:]/.test(v)) return false; s.ctext = v; }); });
+      al.addEventListener('pointerdown', newKey);
+      al.addEventListener('keydown', newKey);
+      al.addEventListener('input', () => edit((s) => { s.ctext = hexOf(rgbaOf(s.c), al.value / 100); }));
+      at.addEventListener('change', () => { newKey(); edit((s, l) => { s.at = Math.min(1, Math.max(0, +at.value || 0)); gp.sel = placeStops(l, s); }); });
+      p.querySelector('.gp-del').addEventListener('click', removeStop);
+    }
+    // os valores (refeitos a cada mudança, sem perder o campo que está sendo usado)
+    p.querySelector('.gp-name').textContent = t.g.name;
+    p.querySelector('.gp-name').title = `Ir para a linha ${t.line + 1}, a do gradient`;
+    p.querySelector('.gp-via').textContent = t.via ? `${t.via.attr}= de ${t.via.el.name}` : `linha ${t.line + 1}`;
+    p.querySelectorAll('.gp-seg button').forEach((b) => b.classList.toggle('on', b.dataset.type === t.g.type));
+    p.querySelector('.gp-box').checked = t.g.box;
+    const users = [...new Set(gradUsers(t.m, t.g).map((e) => e.name))];
+    if (t.m.canvas.bg === t.g) users.unshift('fundo');
+    p.querySelector('.gp-on').textContent = users.length ? `em ${users.slice(0, 3).join(', ')}${users.length > 3 ? ` e mais ${users.length - 3}` : ''}` : `sem uso: escreva c=${t.g.name} numa forma`;
+    p.querySelector('.gp-fill').style.background = `linear-gradient(to right, ${list.map((s) => `${s.c} ${(s.at * 100).toFixed(1)}%`).join(', ')})`;
+    p.querySelector('.gp-marks').innerHTML = list.map((s, i) => `<i data-i="${i}" class="${i === gp.sel ? 'on' : ''}" style="left:${(s.at * 100).toFixed(2)}%;--c:${esc(s.c)}" title="${esc(s.ctext)} em ${fmtAt(s.at)}"></i>`).join('');
+    const s = list[gp.sel], c = rgbaOf(s.c), act = document.activeElement;
+    const set = (cls, v) => { const el = p.querySelector(cls); if (el !== act) el.value = v; };
+    set('.gp-col', hexOf(c, 1));
+    set('.gp-hex', s.ctext);
+    set('.gp-alpha', Math.round(c[3] * 100));
+    set('.gp-at', fmtAt(s.at));
+    p.querySelector('.gp-av').textContent = Math.round(c[3] * 100) + '%';
+    p.querySelector('.gp-del').disabled = lockStops || list.length <= 2;
+  }
+  function removeStop() {
+    const c = gradTarget();
+    if (!c || !c.src.ok) return;
+    const l = gradStops(c);
+    if (l.length <= 2) { hint('Um gradiente precisa de pelo menos duas cores.', 2400); return; }
+    const gone = l.splice(gp.sel, 1)[0];
+    placeStops(l, null);
+    gp.sel = Math.max(0, Math.min(gp.sel, l.length - 1));
+    writeStops(c, l, 'gradstop' + Date.now());
+    hint(`Cor ${gone.ctext} tirada (Ctrl+Z traz de volta).`, 2200);
+  }
+  // arrastar uma marca da barra: a posição segue o mouse (com Shift, de 0.05 em 0.05); pode passar de outra
+  document.addEventListener('pointermove', (e) => {
+    const d = gp.drag;
+    if (!d) return;
+    const dx = e.clientX - d.x0;
+    if (!d.moved && Math.abs(dx) < 3) return;
+    d.moved = true;
+    const c = gradTarget();
+    if (!c) { gp.drag = null; return; }
+    const l = gradStops(c), s = l[gp.sel];
+    if (!s) return;
+    const v = Math.min(1, Math.max(0, d.at0 + dx / Math.max(1, d.w)));
+    s.at = e.shiftKey ? Math.round(v * 20) / 20 : Math.round(v * 100) / 100;
+    gp.sel = placeStops(l, s);
+    writeStops(c, l, d.key);
+  });
+  document.addEventListener('pointerup', () => { gp.drag = null; });
+
   // ---------- linha do tempo do filme ----------
   // a linha do arquivo onde está um shot, audio ou sub (para o cursor e para reescrever o tempo)
   let srcLines = null;
@@ -522,7 +750,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo', fsize: 'tamanho da letra' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo', fsize: 'tamanho da letra', g1: 'começo do gradiente', g2: 'fim do gradiente', gc: 'centro do gradiente', gr: 'raio do gradiente', gf: 'foco do gradiente' };
   // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
   function lightSide(dx, dy) {
     if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
@@ -583,6 +811,7 @@
       st.frame = rec.frame % rec.anim.frames;
       fillAnimSelect();
     }
+    fillGradPanel();
   }
 
   // ---------- autocompletar ----------
@@ -1440,12 +1669,22 @@
     const [cx, cy] = fsizeCorner(rec.el), p = turn(h.ax, h.ay, h.rot, h.ax + cx, h.ay + cy);
     return Object.assign({}, h, { x: p[0], y: p[1] });
   }
+  // alças do gradiente: no lugar onde ele cai na primeira figura que o usa (o raio, para a direita do centro)
+  function gradScr(m, pose, h) {
+    const g = m.gradients.get(h.grad);
+    if (!g) return null;
+    const F = gradFrame(m, pose, g);
+    if (h.kind === 'gr') { const c = gradLocal(F, h.cx, h.cy); return F.f(c[0] + h.r * (F.box ? F.rs : 1), c[1]); }
+    const l = gradLocal(F, h.x, h.y);
+    return F.f(l[0], l[1]);
+  }
   function handleList(m, pose) {
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
     // onde uma alça (ou um ponto com o mesmo jeito de alça) aparece na tela
     const scr = (h) => {
       if (h.kind === 'dir') return dirTip(m, h);
+      if (h.grad) return isFilm() ? null : gradScr(m, pose, h);
       if (!isFilm()) return S.handlePos(m, pose, rec, h);
       const d = handleDepth(rec, h);
       if (d === null) return null;
@@ -1575,6 +1814,49 @@
         ctx.stroke();
       }
     });
+    // gradiente: a linha do começo ao fim (ou o círculo do raio), com uma bolinha de cada cor no lugar dela;
+    // com box, o retângulo da figura onde 0 e 1 caem
+    if (rec.grad && !isFilm()) {
+      const g = rec.grad, at = (k) => { const i = rec.handles.findIndex((q) => q.kind === k); return i >= 0 ? pts[i] : null; };
+      const a = at(g.type === 'linear' ? 'g1' : 'gc'), b = at(g.type === 'linear' ? 'g2' : 'gr'), fo = at('gf');
+      const guide = new Path2D(), F = gradFrame(m, pose, g);
+      if (g.box) {
+        const q = [[F.b.x, F.b.y], [F.b.x + F.b.w, F.b.y], [F.b.x + F.b.w, F.b.y + F.b.h], [F.b.x, F.b.y + F.b.h]].map(([x, y]) => F.f(x, y));
+        ctx.strokeStyle = 'rgba(255,255,255,.55)';
+        ctx.lineWidth = 1 / z;
+        ctx.setLineDash([3 / z, 3 / z]);
+        ctx.beginPath();
+        q.forEach((v, k) => (k ? ctx.lineTo(v[0], v[1]) : ctx.moveTo(v[0], v[1])));
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if (a && b) {
+        guide.moveTo(a[0], a[1]);
+        guide.lineTo(b[0], b[1]);
+        const R = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (g.type === 'radial') { guide.moveTo(a[0] + R, a[1]); guide.arc(a[0], a[1], R, 0, Math.PI * 2); }
+        if (fo) { guide.moveTo(fo[0], fo[1]); guide.lineTo(a[0], a[1]); }
+        for (const [col, w, dash] of [['#14141c', 3 / z, []], ['#ffffff', 1.3 / z, [5 / z, 4 / z]]]) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = w;
+          ctx.setLineDash(dash);
+          ctx.stroke(guide);
+        }
+        ctx.setLineDash([]);
+        // as cores ao longo da linha (no radial, do foco ou do centro até a borda)
+        const o = g.type === 'radial' && fo ? fo : a;
+        for (const s of g.stops) {
+          ctx.beginPath();
+          ctx.arc(o[0] + (b[0] - o[0]) * s.at, o[1] + (b[1] - o[1]) * s.at, 3.4 / z, 0, Math.PI * 2);
+          ctx.fillStyle = s.c;
+          ctx.fill();
+          ctx.lineWidth = 1.2 / z;
+          ctx.strokeStyle = '#14141c';
+          ctx.stroke();
+        }
+      }
+    }
     // ponto novo: bolinha clara e menor no meio de cada lado, por baixo das outras alças
     rec.handles.forEach((h, i) => {
       if (h.kind !== 'mid' || !pts[i]) return;
@@ -1740,8 +2022,9 @@
       const pts = rec.handles.filter((q) => q.kind === 'pt');
       if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' || h.pts ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : mode === 'spin' ? 'O rot= desta forma vem de uma {expressão}: mude no código.' : h.kind === 'fsize' ? 'O size= deste texto vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
       // a direção não muda com a pose: dá para girar com uma animação escolhida, só não tocando
-      if (st.playing || (!isFilm() && st.anim && h.kind !== 'dir')) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
+      if (st.playing || (!isFilm() && st.anim && h.kind !== 'dir' && !h.grad)) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
       if (h.kind === 'dir') hint('Gire a seta: ela aponta para onde a luz está. Com Shift, gira de 15 em 15 graus.', 3200);
+      else if (h.grad) hint({ g1: 'O começo do gradiente (a primeira cor). Com Shift, a direção anda de 45 em 45 graus.', g2: 'O fim do gradiente (a última cor). Com Shift, a direção anda de 45 em 45 graus.', gc: 'O centro do gradiente. Com Shift, anda em passos.', gr: 'O raio: até onde vai a última cor. Com Shift, em passos.', gf: 'O foco: de onde sai a primeira cor. Com Shift, anda em passos.' }[h.kind], 3000);
       else if (mode === 'move') hint('Movendo a forma inteira: todos os pontos andam juntos.', 2400);
       else if (mode === 'tan' && h.kind === 'pt') hint('Puxe a alça da curva. Solte em cima do ponto para tirar a alça.', 3000);
       else if (h.kind === 'size') hint('Com Shift, o tamanho muda sem perder a proporção.', 2400);
@@ -1958,6 +2241,7 @@
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
     if (h.kind === 'dir') { moveDir(d, h, x, y, snap); return; }
+    if (h.grad) { moveGrad(d, rec, h, x, y, snap); return; }
     if (h.kind === 'rot') { spinShape(d, rec, h, x, y, snap); return; }
     // a alça de curva é achada pelo número do ponto: aparece e some enquanto você arrasta
     const p = d.mode === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx) : h;
@@ -1995,6 +2279,34 @@
     writeTok(d.line, h.from, h.to, `${fmtN(lx, dec)},${fmtN(ly, dec)}${h.kind === 'pt' && h.corner ? '!' : ''}`, d.key);
   }
 
+  // alça do gradiente: o mouse volta para as coordenadas da figura de referência (com box, de 0 a 1 nela)
+  function moveGrad(d, rec, h, x, y, snap) {
+    const g = st.model.gradients.get(h.grad);
+    if (!g) return;
+    const F = gradFrame(st.model, currentPose(), g), k = F.box ? F.rs : 1;
+    const g0 = h.kind === 'gr' ? gradLocal(F, h.cx, h.cy) : gradLocal(F, h.x, h.y);
+    let [lx, ly] = unmap(F.f, x, y, g0[0], g0[1]);
+    const dec = F.box ? 2 : st.view.z > 3 ? 1 : 0;
+    if (h.kind === 'gr') {
+      const c = gradLocal(F, h.cx, h.cy);
+      let r = Math.hypot(lx - c[0], ly - c[1]) / k;
+      if (snap) r = F.box ? Math.round(r * 20) / 20 : Math.round(r / 10) * 10;
+      writeTok(d.line, h.from, h.to, fmtN(Math.max(F.box ? 0.01 : 1, r), dec), d.key);
+      return;
+    }
+    // com Shift: a ponta anda de 45 em 45 graus em volta da outra; o centro e o foco andam em passos (0.05 ou 10 px)
+    if (snap && (h.kind === 'g1' || h.kind === 'g2')) {
+      const o = rec.handles.find((q) => q.kind === (h.kind === 'g1' ? 'g2' : 'g1'));
+      if (o) {
+        const c = gradLocal(F, o.x, o.y), len = Math.hypot(lx - c[0], ly - c[1]), a = Math.round(Math.atan2(ly - c[1], lx - c[0]) / (Math.PI / 4)) * (Math.PI / 4);
+        lx = c[0] + Math.cos(a) * len;
+        ly = c[1] + Math.sin(a) * len;
+      }
+    }
+    let u = F.box ? (lx - F.b.x) / F.b.w : lx, v = F.box ? (ly - F.b.y) / F.b.h : ly;
+    if (snap && (h.kind === 'gc' || h.kind === 'gf')) { const s = F.box ? 0.05 : 10; u = Math.round(u / s) * s; v = Math.round(v / s) * s; }
+    writeTok(d.line, h.from, h.to, `${fmtN(u, dec)},${fmtN(v, dec)}`, d.key);
+  }
   // o mouse nas coordenadas do código da alça: filme (pela câmera), 3D (giro, chão, iso) e dentro de componentes
   function localOf(rec, h, x, y) {
     if (isFilm()) {

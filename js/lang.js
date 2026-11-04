@@ -895,7 +895,17 @@
       if (m.palette.has(name)) err(st.line, `"${name}" já é um nome da palette`, st.pos[0].from, st.pos[0].to, 'warn');
       const g = { kind: 'grad', name, type, p, box, stops };
       m.gradients.set(name, g);
-      info(st, { grad: g });
+      const rec = info(st, { grad: g });
+      // o editor de gradiente: onde está cada pedaço da linha (colunas) e as alças no desenho
+      const tok = (t) => t && { from: t.from, to: t.to, text: t.text };
+      const boxTok = rest.find((t) => t.text === 'box');
+      rec.gradSrc = { type: tok(typeTok), vals: vals.map(tok), box: tok(boxTok), stops: st.raw.map(tok), ok: stops.length === st.raw.length };
+      const gh = (kind, t, x, y, extra) => rec.handles.push(Object.assign({ kind, grad: name, x, y, from: t.from, to: t.to, fixed: t.text.includes('{') }, extra));
+      if (type === 'linear') { gh('g1', vals[0], p[0], p[1]); gh('g2', vals[1], p[2], p[3]); } else {
+        gh('gc', vals[0], p[0], p[1]);
+        gh('gr', vals[1], p[0] + p[2], p[1], { cx: p[0], cy: p[1], r: p[2], label: `raio do gradiente r=${p[2]}` });
+        if (p.length >= 5) gh('gf', vals[2], p[3], p[4]);
+      }
     }
     // padrões de preenchimento: hachura e pontos
     for (const st of lateStmts.filter((s) => s.cmd === 'pattern')) {
