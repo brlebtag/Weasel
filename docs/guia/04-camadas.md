@@ -285,6 +285,47 @@ layer contorno
 
 **Experimente:** com `line=10`, o contorno tem 10 pixels de largura e a diferença é fácil de ver. Mude para `line=4`: a perda fica pequena, mas ainda está lá.
 
+#### Quando a camada recortada encosta na borda toda
+
+No exemplo acima, o reflexo só encosta na borda embaixo, e é só ali que o contorno afina. Se a camada recortada encosta na borda **inteira**, o contorno perde a metade de dentro na volta toda. É o que acontece com um sombreado que escurece as beiradas da forma:
+
+<!-- gerar: img/04_inkon_borda.png -->
+```weasel
+canvas 660 240 bg=#f4efe6
+palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c
+gradient aro radial 0.5,0.5 0.5 box : #c8402c00 #c8402c00@0.6 sombra
+
+layer bolas
+ellipse semNada 110,110 80 c=bola ink=line
+ellipse semInkon 330,110 80 c=bola ink=line
+ellipse comInkon 550,110 80 c=bola ink=line inkon=contorno
+
+layer aro1 clip=semInkon
+ellipse a1 330,110 80 c=aro
+
+layer aro2 clip=comInkon
+ellipse a2 550,110 80 c=aro
+
+layer contorno
+
+layer nomes
+text t1 110,222 "sem sombreado" size=16 align=center
+text t2 330,222 "sombreado" size=16 align=center
+text t3 550,222 "sombreado + inkon=" size=16 align=center
+```
+
+![Três bolas vermelhas com contorno escuro: a primeira sem sombreado; a do meio com as beiradas escurecidas e o contorno mais fino na volta inteira; a terceira com as beiradas escurecidas e o contorno inteiro](img/04_inkon_borda.png)
+
+O contorno é pintado em cima da linha da forma: metade para dentro, metade para fora. O recorte usa o formato da forma, que é essa mesma linha, então a camada recortada só alcança a metade de **dentro**. A metade de fora nunca é coberta.
+
+- O gradiente `aro` é transparente até 60% do raio e escurece até a beirada. Com `box`, ele se ajusta ao tamanho de cada elipse (veja o [capítulo 3](03-cores.md#radial-com-box-o-mesmo-brilho-em-bolas-diferentes)). As elipses `a1` e `a2` têm o tamanho das bolas, então o sombreado chega à borda na volta toda.
+- À esquerda, sem nada por cima, o contorno tem os 8 pixels do `line`.
+- No meio, o contorno parece ter 4 pixels. Como não falta nenhum pedaço, parece que o `line` é que está menor. É o caso mais difícil de notar: a gente procura o erro no `ink=`, e ele está na camada recortada.
+- À direita, `inkon=contorno` pinta o contorno depois do sombreado, e os 8 pixels voltam.
+- Com `opacity=` menor que 1 na camada recortada, a metade de dentro não some de todo: ela fica tingida pela cor de cima. Foi o que aconteceu com a sombra de `opacity=0.8` do [primeiro exemplo de `clip=`](#recortar-por-dentro-clip).
+
+**Experimente:** na `palette`, troque `line=8` por `line=16`. As três bolas engrossam o contorno, mas a do meio continua com metade da largura das outras. Com o contorno grosso, dá para ver a faixa vermelha escura onde estava a metade de dentro: o sombreado sempre a cobre.
+
 ## Recortar por fora: `cut=`
 
 `cut=` é o contrário do `clip=`: a camada aparece em todo lugar, **menos** dentro da forma. Serve para abrir janelas, portas e buracos.

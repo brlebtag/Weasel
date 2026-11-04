@@ -120,7 +120,7 @@ ellipse bola 120,70 50 c=#ff6b4a ink=line
 
 ### O contorno ficou fino de um lado
 
-**O que você vê:** uma sombra ou um reflexo dentro da forma "come" a metade de dentro do contorno.
+**O que você vê:** uma sombra ou um reflexo dentro da forma "come" a metade de dentro do contorno. Se a sombra encosta na borda toda (um sombreado que escurece as beiradas, por exemplo), o contorno fica fino na volta inteira e parece só um `line` menor.
 
 **Por quê:** o contorno é pintado junto com a forma. A camada recortada (`clip=`) vem depois e é pintada por cima dele.
 
