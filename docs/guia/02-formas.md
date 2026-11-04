@@ -170,7 +170,8 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 > - **Arrastar** um ponto muda o número dele no código.
 > - **Duplo clique** num ponto liga e desliga o `!`.
 > - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
-> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia para outro lugar.
+> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**) e arraste a cópia para outro lugar.
+> - **Ctrl+D** dá um nome novo à cópia: `asa` vira `asa_1`, e duplicar de novo dá `asa_2`. Vale para tudo o que tem nome: formas, `ref`, `layer`, `bone`, `anim`, `def`… Duplicando várias linhas de uma vez (selecione todas), o que usa esses nomes muda junto: a forma copiada com `bone=braco` fica presa no `braco_1` copiado, e as `key` da animação copiada mexem nas cópias. As cores (`c=asa` da `palette`) não mudam. Num `def … end` copiado inteiro, só o componente ganha nome novo; as formas de dentro continuam iguais.
 > - Para **girar a forma inteira**, arraste a bolinha **verde** que fica numa haste em cima dos pontos. O `shape` não tem `rot=`, então o Weasel gira os próprios pontos em volta do meio da forma e reescreve os números (as alças de curva giram junto). Com **Shift**, o giro vai de 15 em 15 graus. Um Ctrl+Z desfaz o giro inteiro.
 
 ### Quanto a curva arredonda: `smooth=`
@@ -532,7 +533,12 @@ Repare:
 
 **Experimente:** no primeiro "Oi", acrescente `ink=8 inkc=#ffffff`: um contorno branco e grosso, como nos adesivos.
 
-> **Dica do editor:** com o cursor na linha de um `text`, a bolinha do ponto de apoio move o texto, e a bolinha **verde** em cima das letras gira. Arraste-a em volta do ponto de apoio, e o `rot=` muda no código (ou é escrito, se a linha não tem). Com **Shift**, o giro vai de 15 em 15 graus; um duplo clique na bolinha verde volta a `rot=0`.
+> **Dica do editor:** com o cursor na linha de um `text`, uma caixa tracejada mostra onde as letras estão.
+>
+> - A bolinha do ponto de apoio move o texto.
+> - O **quadradinho** no canto de cima da caixa muda o tamanho das letras: arraste para fora e o `size=` cresce, para dentro e ele diminui. O ponto de apoio fica parado. Se a linha não tem `size=`, arrastar escreve um. Com **Shift**, o tamanho vai de 4 em 4. No `align=right`, o quadradinho fica no canto da esquerda, que é para onde o texto cresce.
+> - A bolinha **verde** em cima das letras gira. Arraste-a em volta do ponto de apoio, e o `rot=` muda no código (ou é escrito, se a linha não tem). Com **Shift**, o giro vai de 15 em 15 graus; um duplo clique na bolinha verde volta a `rot=0`.
+> - **Duplo clique nas letras** abre uma caixinha por cima delas para trocar o texto. **Enter** (ou clicar fora) grava o que está entre as aspas, **Esc** desiste, e um Ctrl+Z desfaz. Uma aspa (`"`) escrita ali vira `”`, porque a aspa reta fecharia o texto no código.
 
 ## Contorno: `ink`, `inkc` e `weight`
 

@@ -1148,6 +1148,10 @@
         el.cloth = null;
         if (pos[0] && !o.noHandles) {
           rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
+          // o tamanho da letra (size=): um quadradinho no canto de cima das letras. A largura do texto só se sabe
+          // medindo no navegador: o editor põe a alça no canto; aqui ela fica na posição (ax, ay)
+          const sa = A.get('size');
+          rec.handles.push({ kind: 'fsize', x: el.at[0], y: el.at[1], ax: el.at[0], ay: el.at[1], rot: el.rot, size: el.size, align: el.align, from: sa ? sa.vfrom : -1, to: sa ? sa.to : -1, insert: !sa, at: stmtEnd(st), fixed: !!sa && (sa.inherited || !plainNum(sa.text)), label: `tamanho da letra size=${el.size}` });
           // o texto gira em volta da posição (o começo da linha de base); a alça fica acima das letras
           rec.handles.push(spinHandle(st, el.at, el.rot, el.size * 0.8));
         }
@@ -2502,5 +2506,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

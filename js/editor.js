@@ -407,8 +407,10 @@
       const [a, b] = this._lineRange();
       const text = this.ta.value.slice(a, b);
       const s = this.ta.selectionStart - a, e = this.ta.selectionEnd - a;
-      this.ta.setRangeText(text + '\n' + text, a, b, 'end');
-      this.ta.setSelectionRange(b + 1 + s, b + 1 + e);
+      // opts.duplicate pode mudar a cópia (o app dá nomes novos): { text, at(posição na original) → posição na cópia }
+      const copy = (this.opts.duplicate && this.opts.duplicate(text)) || { text, at: (i) => i };
+      this.ta.setRangeText(text + '\n' + copy.text, a, b, 'end');
+      this.ta.setSelectionRange(b + 1 + copy.at(s), b + 1 + copy.at(e));
       this._changed(null);
     }
   }

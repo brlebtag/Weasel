@@ -246,6 +246,7 @@ Repare:
 - A sombra de cada lagarta é **uma elipse só**, larga, embaixo. O recorte apara essa elipse no formato dos quatro gomos de uma vez.
 - À esquerda, `clip=corpoE` usa a **camada** `corpoE`: valem todas as formas fechadas dela.
 - À direita, os quatro gomos têm o **mesmo nome**, `gomo`. Aí `clip=gomo` usa todos eles. Dá o mesmo resultado, e os gomos poderiam até dividir a camada com outras formas: só os que se chamam `gomo` contam.
+- No editor, o **Ctrl+D** dá um nome novo à cópia (`gomo_1`). Para ela entrar no grupo, apague o `_1`.
 - Quando um nome é ao mesmo tempo de uma forma e de uma camada, vale a forma.
 
 **Experimente:** à esquerda, troque `clip=corpoE` por `clip=g4`. A sombra só aparece no último gomo, a cabeça.

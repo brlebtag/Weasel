@@ -54,7 +54,81 @@
     onChange: () => reparse(),
     onCaret: (c) => { st.caret = c; updateCaretInfo(); draw(); },
     complete: (c) => complete(c),
+    duplicate: (text) => renameCopy(text),
   });
+
+  // Ctrl+D: na cópia, o nome que a linha cria ganha um número (olho → olho_1; de novo → olho_2): ref, camada, osso,
+  // animação, forma… Copiando várias linhas juntas, as que usam esses nomes passam a usar os novos (um osso copiado
+  // com as formas presas nele: as cópias das formas ficam no osso novo). Linhas sem nome (use, key…) não mudam.
+  const NAMES_NEW = new Set([...L.DRAWABLE, 'def', 'variant', 'layer', 'bone', 'cloth', 'gradient', 'pattern', 'light', 'anim', 'expr', 'box', 'point', 'ref', 'tile', 'actor', 'shot', 'mark', 'audio']);
+  // que tipo de nome cada atributo usa: só esses trocam (c=cloak é a cor da palette, mesmo com uma forma cloak)
+  const DRAWN = [...L.DRAWABLE];
+  const NAME_REFS = { bone: ['bone'], bones: ['bone'], parent: ['bone'], cloth: ['cloth'], clip: DRAWN, cut: DRAWN, mirror: DRAWN, cast: DRAWN, above: DRAWN, below: DRAWN, only: ['anim'], lips: ['actor'] };
+  const PAINTS = ['gradient', 'pattern']; // nas cores (c=, inkc=…), o nome de um gradient ou pattern
+  function renameCopy(block) {
+    const v = editor.value, map = new Map(), lines = block.split('\n'), sps = lines.map((t) => L.splitLine(t));
+    const taken = (n) => new RegExp(`(^|[^\\w-])${n}(?![\\w-])`).test(v) || [...map.values()].some((x) => x.to === n);
+    const decl = new Set(), open = [];
+    for (const sp of sps) {
+      const cmd = sp.words[0] && sp.words[0].text;
+      // def … end copiado inteiro: só o componente ganha nome novo; as formas de dentro são dele e continuam com os
+      // nomes de antes (as keys que mexem nelas, como a do piscar, valem também para a cópia)
+      if (cmd === 'end') open.pop();
+      else if (cmd === 'def' || cmd === 'repeat') open.push(cmd);
+      if (!NAMES_NEW.has(cmd) || (L.DRAWABLE.has(cmd) && open.includes('def'))) continue;
+      // o nome é a primeira palavra solta (sem =) depois da instrução; nas formas, pulando hidden, bold…
+      const pos = sp.words.slice(1).filter((w) => (w.text[0] === '"' || w.text[0] === '{' || !w.text.includes('=')) && !(L.DRAWABLE.has(cmd) && L.DRAW_FLAGS.has(w.text)));
+      const n = pos[0] && pos[0].text;
+      if (!n || !L.IDENT.test(n)) continue;
+      decl.add(pos[0]);
+      if (map.has(n)) continue;
+      const base = n.replace(/_\d+$/, '') || n;
+      let k = 1;
+      while (taken(`${base}_${k}`)) k++;
+      map.set(n, { to: `${base}_${k}`, kind: cmd });
+    }
+    if (!map.size) return null;
+    // troca o nome que a linha cria e, nas outras palavras, os nomes que apontam para ele: alvo.prop= (key, at),
+    // bone=, clip=, only=… conforme o tipo, e o componente do use (fora de textos entre aspas e de cores #hex)
+    const edits = [];
+    const swap = (from, id) => edits.push({ from, to: from + id.length, text: map.get(id).to });
+    const kindOk = (id, kinds) => map.has(id) && (!kinds || kinds.includes(map.get(id).kind));
+    let off = 0;
+    sps.forEach((sp, li) => {
+      const cmd = sp.words[0] && sp.words[0].text;
+      sp.words.slice(1).forEach((w, wi) => {
+        if (decl.has(w)) { swap(off + w.from, w.text); return; }
+        if (w.text[0] === '"') return;
+        if (wi === 0 && cmd === 'use') { if (kindOk(w.text, ['def'])) swap(off + w.from, w.text); return; }
+        const eq = w.text[0] === '{' ? -1 : w.text.indexOf('=');
+        if (eq < 0) return;
+        const key = w.text.slice(0, eq), dot = key.indexOf('.');
+        if (dot > 0 && kindOk(key.slice(0, dot))) swap(off + w.from, key.slice(0, dot));
+        const kinds = dot > 0 ? PAINTS : NAME_REFS[key] || PAINTS;
+        for (const mt of w.text.slice(eq + 1).matchAll(/[A-Za-z_][\w-]*/g)) {
+          const id = mt[0], i = eq + 1 + mt.index, prev = w.text[i - 1];
+          if ((prev && /[\w#.$-]/.test(prev)) || !kindOk(id, kinds)) continue;
+          swap(off + w.from + i, id);
+        }
+      });
+      off += lines[li].length + 1;
+    });
+    edits.sort((a, b) => a.from - b.from);
+    let text = block;
+    for (const e of [...edits].reverse()) text = text.slice(0, e.from) + e.text + text.slice(e.to);
+    // o cursor fica no mesmo lugar da cópia (dentro de um nome trocado, no mesmo ponto dele ou no fim)
+    const at = (i) => {
+      let d = 0;
+      for (const e of edits) {
+        if (e.to <= i) d += e.text.length - (e.to - e.from);
+        else if (e.from < i) return e.from + d + Math.min(i - e.from, e.text.length);
+        else break;
+      }
+      return i + d;
+    };
+    hint(`Na cópia: ${[...map].map(([a, b]) => `${a} → ${b.to}`).join(', ')}.`, 2600);
+    return { text, at };
+  }
 
   const resolveFile = (name) => {
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
@@ -448,7 +522,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo', fsize: 'tamanho da letra' };
   // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
   function lightSide(dx, dy) {
     if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
@@ -1355,6 +1429,17 @@
     const p = turn(cx, cy, deg, cx, cy - reach - gap / st.view.z);
     return Object.assign({}, h, { x: p[0], y: p[1] });
   }
+  // A alça do tamanho da letra: no canto de cima das letras, do lado de onde o texto cresce (no align=right, o
+  // canto da esquerda). Relativo à posição do texto, sem o giro; o texto cresce a partir da posição.
+  function fsizeCorner(el) {
+    const b = S.textBox(el);
+    return [el.align === 'right' ? b.x : b.x + b.w, b.y];
+  }
+  function fsizeShown(h, rec) {
+    if (!rec.el || rec.el.type !== 'text') return h;
+    const [cx, cy] = fsizeCorner(rec.el), p = turn(h.ax, h.ay, h.rot, h.ax + cx, h.ay + cy);
+    return Object.assign({}, h, { x: p[0], y: p[1] });
+  }
   function handleList(m, pose) {
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
@@ -1367,7 +1452,7 @@
       const p = S.handlePos(m, pose, rec, h);
       return M.apply(filmView(d), p[0], p[1]);
     };
-    const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(h, SPIN_GAP) : h);
+    const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(h, SPIN_GAP) : h.kind === 'fsize' ? fsizeShown(h, rec) : h);
     const pts = rec.handles.map((h) => scr(shown(h)));
     // bolinhas de ponto novo: só nos lados que cabem uma na tela (e nunca numa linha repetida)
     const z = st.view.z, ptAt = new Map();
@@ -1444,6 +1529,25 @@
         ctx.stroke(sun);
       }
     });
+    // texto: a caixa das letras, tracejada (a alça do tamanho fica num canto dela)
+    const fi = rec.handles.findIndex((h) => h.kind === 'fsize');
+    if (fi >= 0 && pts[fi] && rec.el && rec.el.type === 'text') {
+      const h = rec.handles[fi], b = S.textBox(rec.el);
+      const box = [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]].map(([u, v]) => {
+        const [x, y] = turn(h.ax, h.ay, h.rot, h.ax + u, h.ay + v);
+        return scr(Object.assign({}, h, { x, y }));
+      });
+      if (box.every(Boolean)) {
+        ctx.strokeStyle = 'rgba(255,138,31,.6)';
+        ctx.lineWidth = 1 / z;
+        ctx.setLineDash([4 / z, 3 / z]);
+        ctx.beginPath();
+        box.forEach((q, k) => (k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
     // raio da elipse: traço fino do centro até cada alça de tamanho
     const ci = rec.handles.findIndex((h) => h.kind === 'center');
     rec.handles.forEach((h, i) => {
@@ -1490,7 +1594,7 @@
       // ponto: bolinha (canto vivo: quadrado); alça de curva e r= do retângulo: losango azul;
       // tamanho: quadrado com um risco na diagonal; mover a forma: bolinha maior com uma cruz;
       // girar: bolinha verde com uma seta curva por cima
-      if (h.kind === 'tan' || h.kind === 'round') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); } else if (h.corner || h.kind === 'size') ctx.rect(x - r, y - r, r * 2, r * 2);
+      if (h.kind === 'tan' || h.kind === 'round') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); } else if (h.corner || h.kind === 'size' || h.kind === 'fsize') ctx.rect(x - r, y - r, r * 2, r * 2);
       else ctx.arc(x, y, h.kind === 'move' ? r * 1.6 : h.kind === 'rot' ? r * 1.15 : r, 0, Math.PI * 2);
       ctx.fillStyle = h.fixed ? '#9aa6b2' : h.kind === 'tan' || h.kind === 'round' ? '#5cc6d4' : h.kind === 'rot' ? '#8fd16a' : '#ffffff';
       ctx.fill();
@@ -1603,6 +1707,8 @@
   }
 
   view.addEventListener('pointerdown', (e) => {
+    // clicar no desenho com a caixinha do texto aberta: grava o que foi escrito (como clicar fora)
+    if (textEd) closeTextEd(true, false);
     view.setPointerCapture(e.pointerId);
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
       const [x, y] = toWorld(e);
@@ -1632,7 +1738,7 @@
       // a alça verde: girar
       const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
       const pts = rec.handles.filter((q) => q.kind === 'pt');
-      if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' || h.pts ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : mode === 'spin' ? 'O rot= desta forma vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
+      if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' || h.pts ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : mode === 'spin' ? 'O rot= desta forma vem de uma {expressão}: mude no código.' : h.kind === 'fsize' ? 'O size= deste texto vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
       // a direção não muda com a pose: dá para girar com uma animação escolhida, só não tocando
       if (st.playing || (!isFilm() && st.anim && h.kind !== 'dir')) { hint(isFilm() ? 'Pause o player para arrastar pontos.' : 'Para arrastar pontos, escolha "pose parada" no player.', 2600); return; }
       if (h.kind === 'dir') hint('Gire a seta: ela aponta para onde a luz está. Com Shift, gira de 15 em 15 graus.', 3200);
@@ -1640,6 +1746,7 @@
       else if (mode === 'tan' && h.kind === 'pt') hint('Puxe a alça da curva. Solte em cima do ponto para tirar a alça.', 3000);
       else if (h.kind === 'size') hint('Com Shift, o tamanho muda sem perder a proporção.', 2400);
       else if (h.kind === 'round') hint('Arraste para o lado: o canto fica mais redondo. De volta ao canto, r=0.', 2600);
+      else if (h.kind === 'fsize') hint('Arraste o canto: as letras crescem ou diminuem (size=). Com Shift, de 4 em 4.', 2600);
       else if (mode === 'spin') hint(h.pts ? 'Girando a forma inteira em volta do meio dos pontos. Com Shift, de 15 em 15 graus.' : 'Gire em volta do meio. Com Shift, de 15 em 15 graus; duplo clique volta a rot=0.', 3000);
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now(), mode, idx: h.idx };
       if (mode === 'move' || mode === 'spin') {
@@ -1691,7 +1798,8 @@
   // ---------- clique numa figura: o cursor do editor vai para a linha dela ----------
   let pickCtx = null;
   // as linhas das figuras sob o mouse, da de cima para a de baixo (cópia de um def: a linha do use)
-  function linesAt(e) {
+  // as figuras sob o mouse, a de cima primeiro
+  function hitsAt(e) {
     const m = st.model;
     if (!m || isFilm() || st.build) return [];
     const pose = currentPose(), [x, y] = toCanvas(e), z = st.view.z;
@@ -1717,8 +1825,12 @@
         if ((!open && ctx.isPointInPath(path, x, y)) || ctx.isPointInStroke(path, x, y)) hits.push(el);
       }
     }
-    const out = [];
-    for (const el of hits.reverse()) {
+    return hits.reverse();
+  }
+  // as linhas das figuras sob o mouse (a cópia de um componente leva à linha do use)
+  function linesAt(e) {
+    const m = st.model, out = [];
+    for (const el of hitsAt(e)) {
       const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i;
       if (line !== undefined && line >= 0 && !out.includes(line)) out.push(line);
     }
@@ -1738,7 +1850,7 @@
   }
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
 
-  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'rot' ? 'alias' : h.kind === 'mid' ? 'copy' : 'move');
+  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'fsize' ? (h.align === 'right' ? 'nwse-resize' : 'nesw-resize') : h.kind === 'rot' ? 'alias' : h.kind === 'mid' ? 'copy' : 'move');
 
   // bolinha do meio de um lado: escreve um ponto ali (logo depois do ponto idx) e já começa a arrastá-lo;
   // inserir e arrastar ficam num Ctrl+Z só
@@ -1757,9 +1869,15 @@
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
     const hi = hitHandle(e);
-    if (hi < 0 || (st.anim && !isFilm())) return;
     const rec = st.model.byLine.get(st.caret.line);
-    const h0 = rec.handles[hi];
+    const h0 = hi >= 0 && rec ? rec.handles[hi] : null;
+    // nas letras de um texto (fora das alças de ponto e de giro): editar o texto ali mesmo
+    if (!h0 || !['rot', 'pt', 'tan'].includes(h0.kind)) {
+      const el = hitsAt(e)[0];
+      if (el && el.type === 'text') editText(el);
+      return;
+    }
+    if (st.anim && !isFilm()) return;
     // na alça de giro: volta a rot=0
     if (h0.kind === 'rot') { if (!h0.pts && !h0.fixed && !h0.insert) writeTok(st.caret.line, h0.from, h0.to, '0'); return; }
     const h = h0.kind === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === h0.idx) : h0;
@@ -1769,6 +1887,70 @@
     const txt = editor.value.slice(off + h.from, off + h.to).replace(/!$/, '') + (h.corner ? '' : '!');
     editor.replaceRange(off + h.from, off + h.to, txt, { select: [off + h.from + txt.length, off + h.from + txt.length] });
   });
+
+  // ---------- duplo clique num texto: editar as letras ali mesmo ----------
+  // Uma caixinha por cima do texto com o que está entre aspas. Enter (ou clicar fora) grava; Esc desiste.
+  // As aspas (") viram ” : o texto do Weasel vai entre aspas, e uma aspa no meio fecharia o texto.
+  let textEd = null, textMeasure = null;
+  // as aspas do text na linha do editor (null se a linha não é um text com "…")
+  function textToken(line) {
+    const sp = L.splitLine(lineOf(line));
+    if (!sp.words.length || sp.words[0].text !== 'text') return null;
+    const q = sp.words.slice(1).find((w) => w.text[0] === '"');
+    return q && q.text.length >= 2 && q.text.endsWith('"') ? q : null;
+  }
+  function editText(el) {
+    const m = st.model, line = m.lineMap ? m.lineMap[el.line] : el.line;
+    const tok = line !== undefined && line >= 0 ? textToken(line) : null;
+    if (!tok || tok.text.slice(1, -1) !== el.str) { hint('Este texto vem de outra linha (mirror=) ou de outro arquivo: mude as letras lá no código.', 3000); return; }
+    editor.goto(line, tok.to);
+    // onde as letras estão na tela: a caixa do texto (com giro, osso e componente) e o tamanho da letra na tela
+    const g = S.geometry(m, currentPose(), el), z = st.view.z;
+    const xs = g.segs.flatMap((sg) => [sg[0], sg[6]]), ys = g.segs.flatMap((sg) => [sg[1], sg[7]]);
+    const b = S.textBox(el), s0 = g.segs[0], scale = b.w > 0 && s0 ? Math.hypot(s0[6] - s0[0], s0[7] - s0[1]) / b.w : 1;
+    const inp = $('textEdit'), stage = $('stage').getBoundingClientRect();
+    const px = Math.min(72, Math.max(13, el.size * scale * z));
+    inp.style.font = S.textFont(Object.assign({}, el, { size: Math.round(px) }));
+    inp.value = el.str;
+    const left = Math.max(4, Math.min(stage.width - 80, Math.min(...xs) * z + st.view.x - 6));
+    const top = Math.max(4, Math.min(stage.height - px - 16, Math.min(...ys) * z + st.view.y - 4));
+    inp.style.left = left + 'px';
+    inp.style.top = top + 'px';
+    inp.dataset.max = Math.max(80, stage.width - left - 8);
+    textEd = { line };
+    inp.hidden = false;
+    fitTextEd();
+    inp.focus();
+    inp.select();
+    hint('Escreva o texto novo: Enter grava, Esc desiste.', 2600);
+  }
+  function fitTextEd() {
+    const inp = $('textEdit');
+    textMeasure = textMeasure || document.createElement('canvas').getContext('2d');
+    textMeasure.font = inp.style.font;
+    inp.style.width = Math.min(+inp.dataset.max, Math.max(80, textMeasure.measureText(inp.value + 'MM').width + 16)) + 'px';
+  }
+  function closeTextEd(save, refocus) {
+    const t = textEd, inp = $('textEdit');
+    if (!t) return;
+    textEd = null;
+    inp.hidden = true;
+    const tok = save ? textToken(t.line) : null;
+    const v = inp.value.replace(/[\r\n]+/g, ' ').replace(/"/g, '”');
+    if (tok && v !== tok.text.slice(1, -1)) {
+      const off = editor.lineStart(t.line), end = off + tok.from + v.length + 2;
+      editor.replaceRange(off + tok.from, off + tok.to, `"${v}"`, { select: [end, end] });
+      hint(v ? `Texto novo: "${v}" (Ctrl+Z desfaz).` : 'Texto vazio: escreva entre as aspas no código.', 2400);
+    }
+    if (refocus) editor.ta.focus();
+  }
+  $('textEdit').addEventListener('input', fitTextEd);
+  $('textEdit').addEventListener('keydown', (e) => {
+    // as teclas ficam na caixinha: Espaço não toca o player, Ctrl+Z não desfaz o código
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); closeTextEd(true, true); } else if (e.key === 'Escape') { e.preventDefault(); closeTextEd(false, true); }
+  });
+  $('textEdit').addEventListener('focusout', () => closeTextEd(true, false));
 
   // Arrastar: posição do mouse → coordenadas do código (dentro de um componente, as dele).
   function moveHandle(d, x, y, snap) {
@@ -1793,6 +1975,16 @@
       return;
     }
     if (h.kind === 'size') { writeTok(d.line, h.from, h.to, sizeText(h, d.orig, lx, ly, snap, dec), d.key); return; }
+    if (h.kind === 'fsize') {
+      // o tamanho que leva o canto das letras até o mouse (o canto anda junto com o size=; a posição fica parada)
+      if (!rec.el || rec.el.type !== 'text') return;
+      const [cx, cy] = fsizeCorner(rec.el), ux = cx / rec.el.size, uy = cy / rec.el.size;
+      const [mx, my] = turn(h.ax, h.ay, -h.rot, lx, ly);
+      const s = Math.max(1, ((mx - h.ax) * ux + (my - h.ay) * uy) / (ux * ux + uy * uy));
+      const txt = snap ? String(Math.max(4, Math.round(s / 4) * 4)) : fmtN(s, dec);
+      if (h.insert) writeTok(d.line, h.at, h.at, ` size=${txt}`, d.key); else writeTok(d.line, h.from, h.to, txt, d.key);
+      return;
+    }
     if (h.kind === 'round') {
       // r= é a distância do canto até onde começa a curva, na borda de cima (sem o giro do rot=)
       const [ux] = turn(h.x0 + h.w / 2, h.y0 + h.h / 2, -h.rot, lx, ly);
