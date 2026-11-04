@@ -174,9 +174,12 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 Editando pelo desenho e pelo teclado:
 
 - Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica **laranja**.
+- **Clique** numa forma do desenho (sem arrastar) e o cursor vai para a linha dela. Clicar de novo no mesmo lugar pega a forma de baixo; numa cópia de um componente, vai para a linha do `use`.
+- **Forma nova:** **Ctrl+I** ou o **botão direito** no desenho abre um menu com `ellipse`, `rect`, `shape`, `stroke`, `line` e `text`. A forma entra na linha de baixo da do cursor, com nome, cor e tamanho prontos, no meio da tela (Ctrl+I) ou onde você clicou (botão direito). O cursor fica nela, com as alças à mão.
 - **Arraste** um ponto para movê-lo (o código é atualizado). Funciona na "pose parada", também dentro de componentes (o código recebe as coordenadas do componente). Pontos cinza vêm de `{contas}` e não arrastam.
 - **Duplo clique** num ponto liga/desliga o canto vivo (`!`); num ponto com alça, tira a alça.
 - **Alças de curva:** as que existem (`~dx,dy`) aparecem como losangos azuis e arrastam. **Alt+arrastar** um ponto puxa uma alça nova (um `!` daquele ponto sai). Soltar o losango em cima do ponto tira a alça.
+- **Ponto novo:** num `shape`, `stroke` ou `line`, uma bolinha clara fica no meio de cada lado. Arraste-a (ou clique) e ela vira um ponto, escrito no código entre os dois vizinhos (entre dois `!`, o novo também é canto). Um Ctrl+Z desfaz.
 - **Mover a forma inteira:** num `shape`, `stroke` ou `line`, arraste o **✥** do meio dos pontos, ou use **Shift+arrastar** em qualquer ponto. Todos os pontos andam juntos, com os `!` e as alças. Para copiar uma forma, duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia.
 - **Tamanho:** os quadradinhos mudam o raio da `ellipse` (um no círculo, um em cada eixo na elipse, girando com o `rot=`) e a `largura,altura` do `rect` (no canto de baixo, à direita). **Shift** mantém a proporção. O losango azul na borda de cima do `rect` muda o `r=` (e escreve um, se a linha não tem); de volta ao canto, `r=0`.
 - **Girar:** a bolinha **verde** numa haste em cima da forma gira. Na `ellipse` (não no círculo), no `rect` e no `text`, muda o `rot=` (e escreve um, se a linha não tem); duplo clique nela volta a `rot=0`. No `shape`, `stroke` e `line`, que não têm `rot=`, gira os próprios pontos (e as alças de curva) em volta do meio. **Shift** gira de 15 em 15 graus.

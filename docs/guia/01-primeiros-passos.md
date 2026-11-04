@@ -92,7 +92,7 @@ text tp 312,226 "300,200" size=17 c=azul bold
 
 O ponto azul está em `300,200`: 300 pixels para a direita e 200 para baixo, contando do canto. Escreva sempre **sem espaço** entre os dois números: `300,200` é um ponto; `300, 200` são duas palavras e dá erro.
 
-> **Dica do editor:** com o cursor numa linha, os pontos dela aparecem no desenho e dá para arrastá-los (o número no código muda junto). **Ctrl+clique** no desenho escreve a coordenada daquele lugar onde está o cursor de texto. É o jeito mais fácil de descobrir "que número é aquele ponto". No [capítulo 2](02-formas.md) aparecem as outras alças: o tamanho das formas, os cantos redondos, as curvas e como mover uma forma inteira de uma vez.
+> **Dica do editor:** com o cursor numa linha, os pontos dela aparecem no desenho e dá para arrastá-los (o número no código muda junto). **Ctrl+clique** no desenho escreve a coordenada daquele lugar onde está o cursor de texto. É o jeito mais fácil de descobrir "que número é aquele ponto". Um clique simples numa forma do desenho leva o cursor até a linha dela, e **Ctrl+I** (ou o botão direito no desenho) abre um menu para criar uma forma nova. No [capítulo 2](02-formas.md) aparecem as outras alças: o tamanho das formas, os cantos redondos, as curvas e como mover uma forma inteira de uma vez.
 
 ### Ângulos: para onde algo aponta
 

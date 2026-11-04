@@ -16,6 +16,19 @@ O Weasel tem sete tipos de forma:
 
 **Fechada** quer dizer que tem lado de dentro: pode ser preenchida (`c=`), ter contorno (`ink=`) e servir de molde para recortes. Traço e linha só têm a cor da própria linha.
 
+> **Dica do editor:** para começar uma forma sem digitar, aperte **Ctrl+I** (de *inserir*) ou clique com o **botão direito** no desenho.
+>
+> - Um menu mostra as seis formas (o `emitter` fica de fora). Escolha uma com o mouse, com as setas e **Enter**, ou pelo número dela.
+> - A forma entra na linha de baixo da do cursor, com um nome novo (`bola1`, `caixa1`…), uma cor e um tamanho que cabem no que está na tela.
+> - Com o botão direito, ela nasce onde você clicou; com Ctrl+I, no meio da tela.
+> - O cursor já fica na linha nova, então as alças aparecem: é só mover, girar e mudar o tamanho. No `text`, a palavra `Texto` vem selecionada para você digitar o seu.
+>
+> Para achar a linha de uma forma que já existe, **clique nela** no desenho. O cursor vai para a linha dela.
+>
+> - Só conta clicar e soltar: arrastar continua movendo a vista.
+> - Com formas uma em cima da outra, clique de novo no mesmo lugar para pegar a de baixo.
+> - Numa cópia de um componente, o clique leva à linha do `use`.
+
 > Nos exemplos deste capítulo, os pontinhos vermelhos e as anotações ficam numa camada `guide`. Uma camada `guide` aparece no editor (com o botão **Guias** ligado) e não sai na exportação; ela está aí só para mostrar onde ficam os pontos. As camadas são explicadas no [capítulo 4](04-camadas.md).
 
 ## Elipse e círculo
@@ -156,6 +169,7 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 >
 > - **Arrastar** um ponto muda o número dele no código.
 > - **Duplo clique** num ponto liga e desliga o `!`.
+> - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
 > - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**), troque o nome e arraste a cópia para outro lugar.
 > - Para **girar a forma inteira**, arraste a bolinha **verde** que fica numa haste em cima dos pontos. O `shape` não tem `rot=`, então o Weasel gira os próprios pontos em volta do meio da forma e reescreve os números (as alças de curva giram junto). Com **Shift**, o giro vai de 15 em 15 graus. Um Ctrl+Z desfaz o giro inteiro.
 
@@ -373,7 +387,7 @@ Repare:
 
 **Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
 
-> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, e a bolinha **verde** de cima para girá-lo. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`.
+> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, e a bolinha **verde** de cima para girá-lo. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela.
 
 ## Linha reta: `line`
 

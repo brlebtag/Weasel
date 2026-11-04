@@ -177,6 +177,8 @@ main {
 .ed-pop div { display: flex; justify-content: space-between; gap: 18px; padding: 2px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
 .ed-pop div.on, .ed-pop div:hover { background: #24364a; }
 .ed-pop small { color: var(--dim); font: 11px var(--ui); }
+.shape-menu { position: fixed; z-index: 30; max-height: none; outline: none; }
+.shape-menu header { padding: 3px 8px 4px; color: var(--dim); font: 11px var(--ui); border-bottom: 1px solid #2c3d4f; margin-bottom: 3px; }
 body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: none; }
 .bad { color: var(--err); text-decoration: underline wavy var(--err); }
 .com { color: var(--com); }

@@ -466,7 +466,7 @@
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
       boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null, has3d: false,
-      byLine: new Map(),
+      byLine: new Map(), lineMap: null,
       errors,
     };
 
@@ -1040,6 +1040,8 @@
       };
       if (pos[0] && IDENT.test(pos[0].text)) { el.name = pos[0].text; pos = pos.slice(1); }
       el.ws = ctx.xf ? Math.sqrt(Math.abs(M.det(ctx.xf))) : 1;
+      // numa cópia de um def: a linha do use de fora (clicar na forma do desenho leva até ela)
+      if (ctx.use !== undefined) el.use = ctx.use;
       const ws = el.ws;
       const prev = m.byLine.get(st.line);
       const real = ctx.inst >= 0;
@@ -1219,6 +1221,16 @@
           rec.handles.push({ kind: 'move', x: c[0], y: c[1], from: -1, to: -1, fixed });
           // girar a forma inteira em volta do meio dos pontos (sem rot=: os pontos e as alças de curva giram)
           rec.handles.push(spinHandle(st, c, 0, (Math.max(...ys) - Math.min(...ys)) / 2, { pts: true, from: -1, to: -1, insert: false, fixed, label: null }));
+          // ponto novo: uma bolinha no meio de cada lado (em cima da curva); arrastá-la escreve um ponto ali,
+          // logo depois do ponto idx (at = onde o texto dele termina). Entre dois cantos vivos, o novo também é canto.
+          if (!el.limb) {
+            const n = st.pts.length, segs = st.cmd === 'line' ? null : W.geom.smoothSegs(st.pts, el.closed, el.smooth);
+            for (let i = 0; i < (el.closed ? n : n - 1); i++) {
+              const p = st.pts[i], q = st.pts[(i + 1) % n], s = segs && segs[i];
+              const x = s ? (s[0] + 3 * s[2] + 3 * s[4] + s[6]) / 8 : (p.x + q.x) / 2, y = s ? (s[1] + 3 * s[3] + 3 * s[5] + s[7]) / 8 : (p.y + q.y) / 2;
+              rec.handles.push({ kind: 'mid', idx: i, x, y, from: -1, to: -1, at: p.to, corner: !!(segs && el.smooth > 0 && p.corner && q.corner), fixed: false, label: `ponto novo entre ${i + 1} e ${((i + 1) % n) + 1}` });
+            }
+          }
         }
       }
       // o que sobra depois das posições (elipse e retângulo: 2, texto: posição e "texto", emissor: 1)
@@ -1295,7 +1307,7 @@
       const ctx = {
         xf: parent.xf ? M.mul(parent.xf, local) : local,
         over: new Map(parent.over || []), vars: new Map(parent.vars),
-        bone: parent.bone, cloth: parent.cloth, opacity: parent.opacity, inst: dry ? -1 : ++instCount,
+        bone: parent.bone, cloth: parent.cloth, opacity: parent.opacity, inst: dry ? -1 : ++instCount, use: parent.use !== undefined ? parent.use : st.line,
         zu: (parent.zu || 0) + (A.has('z') ? number(st, A.get('z'), 0) : 0), boardXf: parent.boardXf || null,
       };
       // billboard: o componente inteiro fica de frente, preso no ponto do use
@@ -2443,6 +2455,8 @@
         e.from = inc ? inc.from : 0;
         e.to = inc ? inc.to : 0;
       }
+      // de cada linha lida (com as dos includes e as cópias dos repeat) para a linha do editor
+      m.lineMap = L.map((o) => (o.file === X.mainFile ? o.line : o.main));
       const nb = new Map();
       for (const [k, rec] of m.byLine) { const o = L[k]; if (o && o.file === X.mainFile) nb.set(o.line, rec); }
       m.byLine = nb;

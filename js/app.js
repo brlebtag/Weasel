@@ -442,7 +442,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo' };
   // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
   function lightSide(dx, dy) {
     if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
@@ -1362,7 +1362,21 @@
       return M.apply(filmView(d), p[0], p[1]);
     };
     const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(h, SPIN_GAP) : h);
-    return { rec, scr, pts: rec.handles.map((h) => scr(shown(h))) };
+    const pts = rec.handles.map((h) => scr(shown(h)));
+    // bolinhas de ponto novo: só nos lados que cabem uma na tela (e nunca numa linha repetida)
+    const z = st.view.z, ptAt = new Map();
+    rec.handles.forEach((h, i) => { if (h.kind === 'pt') ptAt.set(h.idx, i); });
+    rec.handles.forEach((h, i) => {
+      if (h.kind !== 'mid' || !pts[i]) return;
+      const a = pts[ptAt.get(h.idx)], b = pts[ptAt.get((h.idx + 1) % ptAt.size)];
+      if (h.fixed || !a || !b || Math.hypot(a[0] - b[0], a[1] - b[1]) < 26 / z) pts[i] = null;
+    });
+    // numa linha de dois pontos o ✥ cairia em cima da bolinha do meio: desce um pouco
+    const mi = rec.handles.findIndex((h) => h.kind === 'move');
+    if (mi >= 0 && pts[mi] && rec.handles.some((h, i) => h.kind === 'mid' && pts[i] && Math.hypot(pts[i][0] - pts[mi][0], pts[i][1] - pts[mi][1]) < 14 / z)) {
+      pts[mi] = scr(Object.assign({}, rec.handles[mi], { y: rec.handles[mi].y + 26 / z }));
+    }
+    return { rec, scr, pts };
   }
 
   function drawHandles(ctx, m, pose, z) {
@@ -1451,8 +1465,19 @@
         ctx.stroke();
       }
     });
+    // ponto novo: bolinha clara e menor no meio de cada lado, por baixo das outras alças
     rec.handles.forEach((h, i) => {
-      if (i === active || !pts[i]) return;
+      if (h.kind !== 'mid' || !pts[i]) return;
+      ctx.beginPath();
+      ctx.arc(pts[i][0], pts[i][1], 3.4 / z, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      ctx.fill();
+      ctx.lineWidth = 1.2 / z;
+      ctx.strokeStyle = 'rgba(20,20,28,.75)';
+      ctx.stroke();
+    });
+    rec.handles.forEach((h, i) => {
+      if (i === active || !pts[i] || h.kind === 'mid') return;
       const [x, y] = pts[i];
       const r = 4.5 / z;
       ctx.beginPath();
@@ -1523,9 +1548,14 @@
     const hl = handleList(st.model, currentPose());
     if (!hl) return -1;
     const [x, y] = toCanvas(e);
-    let best = -1, bd = 10 / st.view.z;
-    hl.pts.forEach((p, i) => { if (!p) return; const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } });
-    return best;
+    // as bolinhas de ponto novo só ganham quando não há outra alça perto
+    let best = -1, bd = 10 / st.view.z, mid = -1, md = 8 / st.view.z;
+    hl.pts.forEach((p, i) => {
+      if (!p) return;
+      const d = Math.hypot(p[0] - x, p[1] - y);
+      if (hl.rec.handles[i].kind === 'mid') { if (d < md) { md = d; mid = i; } } else if (d < bd) { bd = d; best = i; }
+    });
+    return best >= 0 ? best : mid;
   }
   const fmtN = (v, dec) => String(Number(v.toFixed(dec)));
   // imagem guia solta sob o mouse (as da frente primeiro): mover, ou o canto de baixo à direita para o tamanho
@@ -1591,6 +1621,7 @@
     if (hi >= 0) {
       const rec = st.model.byLine.get(st.caret.line);
       const h = rec.handles[hi];
+      if (h.kind === 'mid') { addPoint(h); return; }
       // a alça ✥ ou Shift+arrastar um ponto: a forma inteira anda; Alt+arrastar um ponto (ou a alça azul): a curva
       // a alça verde: girar
       const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
@@ -1616,10 +1647,8 @@
       else if (h.kind === 'size') st.drag.orig = { rx: h.rx, ry: h.ry, w: h.w, h: h.h };
       return;
     }
-    if (e.button === 0 || e.button === 1) {
-      st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y };
-      stage.classList.add('pan');
-    }
+    // arrastar move a vista; soltar sem ter arrastado (clique simples) escolhe a figura sob o mouse
+    if (e.button === 0 || e.button === 1) st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: e.button === 0, moved: false };
   });
 
   view.addEventListener('pointermove', (e) => {
@@ -1630,6 +1659,10 @@
     if (st.drag) { moveHandle(st.drag, x, y, e.shiftKey); return; }
     if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
     if (st.pan) {
+      // uns pixels de tremida não são arraste: o clique continua sendo clique
+      if (!st.pan.moved && Math.hypot(e.clientX - st.pan.x, e.clientY - st.pan.y) < 4) return;
+      st.pan.moved = true;
+      stage.classList.add('pan');
       st.view.auto = false;
       st.view.x = st.pan.vx + (e.clientX - st.pan.x);
       st.view.y = st.pan.vy + (e.clientY - st.pan.y);
@@ -1642,11 +1675,78 @@
   });
 
   const endPointer = () => { st.drag = null; st.refDrag = null; st.pose = null; st.pan = null; stage.classList.remove('pan'); draw(); };
-  view.addEventListener('pointerup', endPointer);
+  view.addEventListener('pointerup', (e) => {
+    const p = st.pan;
+    endPointer();
+    if (p && p.click && !p.moved) pickShape(e);
+  });
   view.addEventListener('pointercancel', endPointer);
+
+  // ---------- clique numa figura: o cursor do editor vai para a linha dela ----------
+  let pickCtx = null;
+  // as linhas das figuras sob o mouse, da de cima para a de baixo (cópia de um def: a linha do use)
+  function linesAt(e) {
+    const m = st.model;
+    if (!m || isFilm() || st.build) return [];
+    const pose = currentPose(), [x, y] = toCanvas(e), z = st.view.z;
+    if (x < 0 || y < 0 || x > m.canvas.w || y > m.canvas.h) return [];
+    const ctx = pickCtx || (pickCtx = document.createElement('canvas').getContext('2d'));
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const hits = [];
+    for (const layer of S.orderLayers(m, pose)) {
+      if (!S.layerVisible(layer, pose, { guides: st.show.guides })) continue;
+      const lp = pose.lprops.get(layer.name);
+      if (lp && (lp.show === 0 || lp.opacity === 0)) continue;
+      let items = S.orderItems(layer.items, pose);
+      if (layer.zsort && m.has3d) items = S.zSort(m, pose, items);
+      for (const it of items) {
+        const el = it.el, pr = S.propsOf(pose, el);
+        if ((el.hidden && !pr.reveal) || pr.show === 0 || pr.opacity === 0) continue;
+        const g = S.geometry(m, pose, el);
+        if (!g.segs.length) continue;
+        const path = S.pathOf(g), open = el.type === 'stroke' || el.type === 'line';
+        // a borda conta, com uns pixels de folga (um traço fino também dá para pegar)
+        ctx.lineWidth = (open ? el.w || 1 : el.ink || 0) + 10 / z;
+        if ((!open && ctx.isPointInPath(path, x, y)) || ctx.isPointInStroke(path, x, y)) hits.push(el);
+      }
+    }
+    const out = [];
+    for (const el of hits.reverse()) {
+      const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i;
+      if (line !== undefined && line >= 0 && !out.includes(line)) out.push(line);
+    }
+    return out;
+  }
+  // clicar de novo no mesmo lugar pega a figura de baixo (e depois volta para a de cima)
+  function pickShape(e) {
+    const lines = linesAt(e);
+    if (!lines.length) { st.pick = null; return; }
+    const p = st.pick, same = p && Math.hypot(p.x - e.clientX, p.y - e.clientY) < 6 && p.lines.join() === lines.join();
+    const k = same ? (p.k + 1) % lines.length : 0;
+    st.pick = { x: e.clientX, y: e.clientY, lines, k };
+    // o cursor fica no fim do código da linha (antes do comentário)
+    const line = lines[k], text = lineOf(line), sp = L.splitLine(text);
+    editor.goto(line, (sp.comment !== null ? text.slice(0, sp.commentAt) : text).trimEnd().length);
+    if (lines.length > 1) hint(`${k + 1} de ${lines.length} figuras aqui: clique de novo no mesmo lugar para pegar a de baixo.`, 2600);
+  }
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
 
-  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'rot' ? 'alias' : 'move');
+  const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'rot' ? 'alias' : h.kind === 'mid' ? 'copy' : 'move');
+
+  // bolinha do meio de um lado: escreve um ponto ali (logo depois do ponto idx) e já começa a arrastá-lo;
+  // inserir e arrastar ficam num Ctrl+Z só
+  function addPoint(h) {
+    if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para criar pontos.' : 'Para criar pontos, escolha "pose parada" no player.', 2600); return; }
+    const line = st.caret.line, off = editor.lineStart(line), dec = st.view.z > 3 ? 1 : 0, key = 'drag' + Date.now();
+    const txt = ` ${fmtN(h.x, dec)},${fmtN(h.y, dec)}${h.corner ? '!' : ''}`, at = off + h.at;
+    editor.replaceRange(at, at, txt, { key, select: [at + txt.length, at + txt.length] });
+    const rec = st.model.byLine.get(line), hi = rec ? rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === h.idx + 1) : -1;
+    if (hi < 0) return;
+    hint('Ponto novo: arraste para onde quiser. Duplo clique nele liga o canto vivo (!).', 2600);
+    st.drag = { line, hi, key, mode: null, idx: h.idx + 1 };
+    view.style.cursor = 'move';
+  }
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
@@ -1967,6 +2067,111 @@
   $('btnHelp').addEventListener('click', () => toggleHelp());
   $('helpClose').addEventListener('click', () => toggleHelp(false));
 
+  // ---------- menu de formas (Ctrl+I, ou botão direito no desenho) ----------
+  // A forma nasce na linha de baixo da do cursor (numa linha vazia, nela mesma), no meio da tela ou onde o
+  // botão direito foi clicado, com um tamanho que cabe no que está à vista. O cursor fica nela: as alças aparecem.
+  const NEW_SHAPES = [
+    { cmd: 'ellipse', name: 'bola', label: 'círculo', make: (f, x, y, s) => `${f(x)},${f(y)} ${f(s)} c=#4a90d9 ink=4` },
+    { cmd: 'rect', name: 'caixa', label: 'retângulo', make: (f, x, y, s) => `${f(x - s)},${f(y - s * 0.7)} ${f(s * 2)},${f(s * 1.4)} c=#ffb000 ink=4` },
+    { cmd: 'shape', name: 'forma', label: 'forma livre', make: (f, x, y, s) => `c=#6cbb3c ink=4 : ${f(x)},${f(y - s)}! ${f(x + s)},${f(y + s * 0.8)}! ${f(x - s)},${f(y + s * 0.8)}!` },
+    { cmd: 'stroke', name: 'traco', label: 'traço', make: (f, x, y, s) => `c=#ff6b4a w=6 : ${f(x - s)},${f(y + s * 0.4)} ${f(x)},${f(y - s * 0.4)} ${f(x + s)},${f(y + s * 0.4)}` },
+    { cmd: 'line', name: 'linha', label: 'linha reta', make: (f, x, y, s) => `c=#c44536 w=3 : ${f(x - s)},${f(y)} ${f(x + s)},${f(y)}` },
+    { cmd: 'text', name: 'texto', label: 'texto', make: (f, x, y, s) => `${f(x)},${f(y)} "Texto" size=${f(Math.max(8, s * 0.5))} align=center` },
+  ];
+  const shapeMenu = $('shapeMenu');
+  let menu = null;
+  function openShapeMenu(at, cx, cy) {
+    const r = view.getBoundingClientRect(), m = st.model;
+    if (!m) return;
+    // sem lugar escolhido: o meio do que está na tela (dentro do papel)
+    if (!at) {
+      cx = r.left + r.width / 2;
+      cy = r.top + r.height / 2;
+      const p = toWorld({ clientX: cx, clientY: cy });
+      at = [Math.min(m.canvas.w, Math.max(0, p[0])), Math.min(m.canvas.h, Math.max(0, p[1]))];
+    }
+    menu = { at, sel: 0, back: document.activeElement === editor.ta };
+    shapeMenu.innerHTML = `<header>Forma nova ${lineOf(st.caret.line).trim() ? 'abaixo da' : 'na'} linha ${st.caret.line + 1}</header>` + NEW_SHAPES.map((s, i) => `<div data-i="${i}"><span>${s.cmd}</span><small>${s.label} · ${i + 1}</small></div>`).join('');
+    shapeMenu.hidden = false;
+    const w = shapeMenu.offsetWidth, h = shapeMenu.offsetHeight;
+    shapeMenu.style.left = Math.max(4, Math.min(window.innerWidth - w - 4, cx)) + 'px';
+    shapeMenu.style.top = Math.max(4, Math.min(window.innerHeight - h - 4, cy)) + 'px';
+    markMenu();
+    shapeMenu.focus();
+  }
+  function markMenu() { [...shapeMenu.querySelectorAll('[data-i]')].forEach((d, i) => d.classList.toggle('on', i === menu.sel)); }
+  function closeShapeMenu(refocus) {
+    if (!menu) return;
+    const back = menu.back;
+    menu = null;
+    shapeMenu.hidden = true;
+    if (refocus && back) editor.ta.focus();
+  }
+  // um nome que ainda não existe no arquivo: bola1, bola2…
+  function freeName(base) {
+    const v = editor.value;
+    for (let k = 1; ; k++) if (!new RegExp(`(^|[\\s=,])${base}${k}(?![\\w.])`).test(v)) return base + k;
+  }
+  // dentro de def … end as coordenadas são as do componente: o ponto passa pelo avesso da primeira cópia
+  // (sem cópia ainda, 0,0, a posição do use)
+  function defLocal(line, at) {
+    const ls = editor.value.split('\n'), word = (t) => (/^\s*([A-Za-z_]\w*)/.exec(t) || [])[1], stack = [];
+    for (let i = 0; i <= line && i < ls.length; i++) {
+      const w = word(ls[i]);
+      if (w === 'def' || w === 'repeat') stack.push({ w, i }); else if (w === 'end') stack.pop();
+    }
+    const d = stack.find((b) => b.w === 'def');
+    if (!d) return at;
+    let depth = 0, xf = null;
+    for (let i = d.i; i < ls.length && !xf; i++) {
+      const w = word(ls[i]);
+      if (w === 'def' || w === 'repeat') depth++; else if (w === 'end' && --depth === 0) break;
+      const rec = st.model.byLine.get(i);
+      if (rec && rec.el && rec.xf) xf = rec.xf;
+    }
+    return xf ? M.apply(M.invert(xf), at[0], at[1]) : [0, 0];
+  }
+  function insertShape(i) {
+    const item = NEW_SHAPES[i], line = st.caret.line, at = menu && defLocal(line, menu.at);
+    closeShapeMenu(false);
+    if (!item || !at) return;
+    const z = st.view.z, dec = z > 3 ? 1 : 0, f = (v) => fmtN(v, dec), c = st.model.canvas;
+    const s = Math.max(4, Number((Math.min(view.clientWidth / z, view.clientHeight / z, c.w, c.h) * 0.12).toFixed(dec)));
+    const text = lineOf(line), off = editor.lineStart(line), name = freeName(item.name);
+    // dentro de def … end e de repeat, um passo a mais de recuo
+    const indent = /^\s*/.exec(text)[0] + (/^\s*(def|repeat)\b/.test(text) ? '  ' : '');
+    const body = `${indent}${item.cmd} ${name} ${item.make(f, at[0], at[1], s)}`;
+    const blank = !text.trim(), start = blank ? off : off + text.length, txt = blank ? body : '\n' + body;
+    const ls = start + (blank ? 0 : 1);
+    // o cursor logo depois do nome; no texto, o "Texto" fica selecionado para você já digitar o seu
+    const q = body.indexOf('"Texto"'), sel = item.cmd === 'text' && q >= 0 ? [ls + q + 1, ls + q + 6] : [ls + indent.length + item.cmd.length + 1 + name.length, ls + indent.length + item.cmd.length + 1 + name.length];
+    editor.replaceRange(start, start + (blank ? text.length : 0), txt, { select: sel });
+    editor.ta.focus();
+    hint(`${item.cmd} ${name} na linha ${line + (blank ? 1 : 2)}: arraste as alças para mudar.`, 2600);
+  }
+  shapeMenu.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    const row = e.target.closest('[data-i]');
+    if (row) insertShape(+row.dataset.i);
+  });
+  shapeMenu.addEventListener('mousemove', (e) => {
+    const row = e.target.closest('[data-i]');
+    if (row && menu && +row.dataset.i !== menu.sel) { menu.sel = +row.dataset.i; markMenu(); }
+  });
+  shapeMenu.addEventListener('keydown', (e) => {
+    // enquanto o menu está aberto, as teclas são dele (Espaço e as setas não tocam o player)
+    e.stopPropagation();
+    if (!menu) return;
+    const n = NEW_SHAPES.length;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); menu.sel = (menu.sel + (e.key === 'ArrowDown' ? 1 : -1) + n) % n; markMenu(); } else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertShape(menu.sel); } else if (e.key === 'Escape') { e.preventDefault(); closeShapeMenu(true); } else if (/^[1-9]$/.test(e.key) && +e.key <= n) { e.preventDefault(); insertShape(+e.key - 1); } else if (!e.ctrlKey && !e.metaKey && !e.altKey) e.preventDefault();
+  });
+  shapeMenu.addEventListener('focusout', () => setTimeout(() => { if (menu && !shapeMenu.contains(document.activeElement)) closeShapeMenu(false); }, 0));
+  view.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (st.build) return;
+    openShapeMenu(toWorld(e), e.clientX, e.clientY);
+  });
+
   // exportar
   const exportUI = W.exporter.setupDialog({
     model: () => st.model,
@@ -2000,6 +2205,8 @@
     const mod = e.ctrlKey || e.metaKey;
     if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveFile(); return; }
     if (mod && (e.key === 'e' || e.key === 'E')) { e.preventDefault(); $('btnExport').click(); return; }
+    // Ctrl+I (inserir): o menu de formas; Ctrl+Shift+I continua sendo do navegador
+    if (mod && !e.shiftKey && !e.altKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); if (!e.target.closest || !e.target.closest('dialog')) openShapeMenu(null); return; }
     if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; return; }
     const t = e.target;
