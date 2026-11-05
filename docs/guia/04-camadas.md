@@ -326,6 +326,57 @@ O contorno é pintado em cima da linha da forma: metade para dentro, metade para
 
 **Experimente:** na `palette`, troque `line=8` por `line=16`. As três bolas engrossam o contorno, mas a do meio continua com metade da largura das outras. Com o contorno grosso, dá para ver a faixa vermelha escura onde estava a metade de dentro: o sombreado sempre a cobre.
 
+#### O contrário: cobrir o contorno inteiro com um molde maior
+
+E se a ideia for o contrário: a camada de cima cobrir o contorno **inteiro**, as duas metades? Aí a própria forma não serve de molde, porque o recorte para no meio do contorno. O jeito é um molde escondido um pouco maior: o raio da forma **mais metade do contorno**.
+
+<!-- gerar: img/04_clip_contorno.png -->
+```weasel
+canvas 880 250 bg=#f4efe6
+palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c
+gradient aro radial 0.5,0.5 0.5 box : #c8402c00 #c8402c00@0.6 sombra
+
+layer bolas
+ellipse b1 110,110 80 c=bola ink=line
+ellipse b2 330,110 80 c=bola ink=line
+ellipse b3 550,110 80 c=bola ink=line
+ellipse b4 770,110 80 c=bola ink=line
+
+# os moldes: raio da bola + metade do contorno (80 + 8/2)
+ellipse molde2 330,110 84 hidden
+ellipse molde4 770,110 84 hidden
+
+layer x1 clip=b1
+ellipse a1 110,110 80 c=aro
+
+layer x2 clip=molde2
+ellipse a2 330,110 84 c=aro
+
+layer x3 clip=b3
+ellipse s3 590,150 90 c=sombra opacity=0.8
+
+layer x4 clip=molde4
+ellipse s4 810,150 90 c=sombra opacity=0.8
+
+layer nomes
+text t1 110,222 "clip=b1" size=16 align=center
+text t2 330,222 "clip=molde2" size=16 align=center
+text t3 550,222 "clip=b3" size=16 align=center
+text t4 770,222 "clip=molde4" size=16 align=center
+```
+
+![Quatro bolas vermelhas em dois pares. No primeiro par, um sombreado nas beiradas: com clip=b1 o contorno escuro continua aparecendo por fora; com clip=molde2 o sombreado cobre o contorno inteiro. No segundo par, uma sombra deslocada para baixo e para a direita: com clip=b3 ela para no meio do contorno; com clip=molde4 ela cobre o contorno de ponta a ponta](img/04_clip_contorno.png)
+
+- `molde2` e `molde4` têm raio 84: os 80 da bola mais 4, a metade do `line=8`. A opção `hidden` faz a forma não aparecer: ela só empresta o formato (é o mesmo `hidden` dos moldes de `cut=`, [logo abaixo](#buraco-numa-forma-cut-na-forma)).
+- Em cada par, à esquerda, o molde é a própria bola, e a camada de cima para no meio do contorno. À direita, o molde maior deixa a camada cobrir o contorno até a beirada de fora.
+- A sombra deslocada de `molde4` cobre o contorno de ponta a ponta onde passa, e mesmo assim não vaza para fora da bola.
+
+Cuidados com o molde maior:
+
+- Ele é uma forma à parte. Se você mudar o `line` ou o tamanho da bola, ajuste o molde também. Se a bola tem `bone=`, o molde precisa do mesmo `bone=` para ir junto.
+- Numa `shape` feita de pontos, não basta aumentar um raio: a cópia mais larga precisa ser desenhada à mão.
+- Quando a forma de cima tem o mesmo formato e o mesmo lugar da de baixo, como o sombreado `a2`, nem precisa de `clip=`: basta desenhá-la com raio 84 por cima da bola. O molde só faz falta quando a forma de cima passa da borda, como a sombra `s4`.
+
 ## Recortar por fora: `cut=`
 
 `cut=` é o contrário do `clip=`: a camada aparece em todo lugar, **menos** dentro da forma. Serve para abrir janelas, portas e buracos.
