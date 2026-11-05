@@ -1315,7 +1315,7 @@ A fogueira usa `finish game bloom=0.5 vignette=0.6`:
 | `vignette=` | escurece as bordas da imagem e leva o olho para o meio |
 | `grain=` | granulado de filme (pouco já basta: `grain=0.03`) |
 
-Os três vão de 0 a 3. Eles valem para a imagem pronta, então ficam bem em cenas inteiras (cenários, filmes) e pouco fazem num personagem sozinho. O granulado deixa GIFs bem maiores, porque ruído não comprime. Cada um deles, sozinho e lado a lado, está no [capítulo 4](04-camadas.md#acabamentos-de-cinema-bloom-vignette-e-grain).
+O `bloom` vai de 0 a 3, o `vignette` de 0 a 1 e o `grain` de 0 a 0.33. Eles valem para a imagem pronta, então ficam bem em cenas inteiras (cenários, filmes) e pouco fazem num personagem sozinho. O granulado deixa GIFs bem maiores, porque ruído não comprime. Cada um deles, sozinho e lado a lado, está no [capítulo 4](04-camadas.md#acabamentos-de-cinema-bloom-vignette-e-grain).
 
 Eles combinam muito bem com luz: o `bloom` faz as lâmpadas e as janelas acesas "vazarem" de verdade. Aqui está a rua do começo do capítulo (o `rua.weasel` que você guardou), com e sem os dois:
 
