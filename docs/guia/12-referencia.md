@@ -185,7 +185,7 @@ Para aprender: [capítulo 3](03-cores.md) (palette, gradientes, hachuras e varia
 |---|---|---|
 | `clip=forma\|camada` | — | só aparece dentro (os buracos do molde continuam buracos) |
 | `cut=forma\|camada` | — | só aparece fora (e pelos buracos do molde) |
-| `only=anim,…` | todas | só nessas animações (`pose` = pose parada; no filme, também nomes de plano) |
+| `only=anim,…` | todas | só nessas animações (`pose` = pose parada, a primeira opção do player; por isso, evite `anim pose`. No filme, também nomes de plano) |
 | `opacity=` | 1 | transparência |
 | `blend=` | `normal` | `multiply` `screen` `overlay` `darken` `lighten` `color-dodge` `color-burn` `hard-light` `soft-light` `difference` `exclusion` `hue` `saturation` `color` `luminosity` |
 | `blur=` | 0 | desfoque (px) |

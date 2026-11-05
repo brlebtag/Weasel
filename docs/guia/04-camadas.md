@@ -755,7 +755,9 @@ key 12 corpo=0,0
 
 Repare:
 
-- A camada `placa` tem `only=pose`. `pose` é o nome da **pose parada**, o desenho sem nenhuma animação tocando. Ela aparece à esquerda e some no pulo.
+- A camada `placa` tem `only=pose`. `pose` é o nome da **pose parada**: o desenho sem nenhuma animação tocando, exatamente como as coordenadas do código dizem. Ela aparece à esquerda e some no pulo.
+- A `pose` não é criada em nenhuma linha do arquivo: ela sempre existe. No editor, é a primeira opção do menu de animações do player, com o nome "pose parada" (num arquivo sem `anim`, essa opção se chama "sem animações"). Na linha de comando, é a imagem gerada sem `-a`.
+- Como o nome `pose` já tem dono, não o use numa animação: `anim pose` dá aviso, porque `only=pose` passaria a valer nas duas.
 - A camada `poeira` tem `only=pula`: só aparece enquanto a animação `pula` toca.
 - `key 6 corpo=0,-50` sobe o osso `corpo` 50 pixels no quadro 6 (y negativo é para cima). Por isso a bola está no alto à direita.
 - Para mais de uma animação, separe os nomes com vírgula: `only=pose,pula,corre`.

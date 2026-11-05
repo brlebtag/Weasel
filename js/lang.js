@@ -1404,7 +1404,9 @@
         const name = ident(st, st.pos[0], 'da animação');
         if (!name) { curAnim = null; continue; }
         if (m.animMap.has(name)) { err(st.line, `animação "${name}" já existe`, st.pos[0].from, st.pos[0].to); curAnim = null; continue; }
-        const an = { name, line: st.line, frames: 24, fps: 12, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
+        // pose é o nome reservado da pose parada (a primeira opção do player): only=pose valeria nas duas
+        if (name === 'pose') err(st.line, '"pose" já é o nome da pose parada (only=pose valeria nas duas): dê outro nome à animação', st.pos[0].from, st.pos[0].to, 'warn');
+        const an ={ name, line: st.line, frames: 24, fps: 12, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
         if (A.has('mix')) an.mixSpec = { a: A.get('mix'), st };
         if (A.has('frames')) an.frames = Math.round(number(st, A.get('frames'), 24, 1, 600));
         if (A.has('fps')) an.fps = number(st, A.get('fps'), 12, 1, 60);

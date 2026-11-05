@@ -687,7 +687,7 @@ layer frente only=pose,idle_down,walk_down
 ```
 
 - `only=` recebe nomes de animação separados por vírgula.
-- `pose` é a **pose parada** (sem animação): inclua `pose` para a camada aparecer no desenho parado também.
+- `pose` é a **pose parada** (sem animação; no player, a primeira opção do menu): inclua `pose` para a camada aparecer no desenho parado também. Por isso, nenhuma animação deve se chamar `pose`: o Weasel avisa.
 - As caixas de jogo (`box`) aceitam o mesmo `only=`.
 
 Um bicho com duas animações. Parado, ele tem olhos abertos; correndo, aperta os olhos de esforço e deixa riscos de vento para trás. Cada rosto fica numa camada, e cada camada diz em que animações aparece:
