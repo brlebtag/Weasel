@@ -690,7 +690,16 @@
           else if (s) m.finish.style = s;
           if (A.has('inner')) m.finish.inner = number(st, A.get('inner'), 1, 0, 1);
           if (A.has('pixel')) m.finish.pixel = Math.round(number(st, A.get('pixel'), 1, 1, 32));
-          for (const k of ['bloom', 'vignette', 'grain']) if (A.has(k)) m.finish[k] = number(st, A.get(k), 0, 0, 3);
+          if (A.has('bloom')) m.finish.bloom = number(st, A.get('bloom'), 0, 0, 3);
+          // vignette e grain param de mudar em 1 e em 0.33: acima disso, o valor fica, mas avisa que não muda nada
+          for (const [k, top, txt, what] of [['vignette', 1, '1', 'não escurece mais as bordas'], ['grain', 1 / 3, '0.33', 'não aumenta mais o granulado']]) {
+            if (!A.has(k)) continue;
+            const a = A.get(k);
+            let v = number(st, a, 0);
+            if (v < 0) { bad(st, a, `${k}= vai de 0 a ${txt}`, 'warn'); v = 0; }
+            else if (v > top + 1e-3) bad(st, a, `${k}= acima de ${txt} ${what} (vai de 0 a ${txt})`, 'warn');
+            m.finish[k] = v;
+          }
           if (A.has('posterize')) {
             const a = A.get('posterize');
             if (a.text === 'palette') m.finish.posterize = 'palette';

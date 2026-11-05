@@ -128,7 +128,7 @@ Para aprender: [capítulo 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette
 | Instrução | Atributos (padrão) |
 |---|---|
 | `canvas L A` | `bg=` cor, gradiente ou `none` (`#ffffff`) · `light=x,y` direção da luz do contorno (`-0.6,-0.8`). Tamanho de 1 a 4096 (padrão 800×600; num filme, 1920×1080). |
-| `finish [game\|flat]` | `inner=` opacidade dos traços em camadas com `clip`, 0–1 (1) · `pixel=` 1–32 (1) · `posterize=` 2–64 ou `palette` · `bloom=` 0–3 (0) · `vignette=` 0–1 (0) · `grain=` 0–0.33 (0); os dois últimos aceitam até 3, mas acima de 1 (`vignette`) e de 0.33 (`grain`) a imagem não muda mais |
+| `finish [game\|flat]` | `inner=` opacidade dos traços em camadas com `clip`, 0–1 (1) · `pixel=` 1–32 (1) · `posterize=` 2–64 ou `palette` · `bloom=` 0–3 (0) · `vignette=` 0–1 (0) · `grain=` 0–0.33 (0); fora da faixa, o Weasel avisa (acima de 1 no `vignette` e de 0.33 no `grain`, a imagem não muda mais) |
 | `palette nome=valor …` | cores e números. Já existem: `ink=#14141c` `line=8` `inner=5` `edge=3`. Usar um nome (`c=`, `ink=`, `bg=`, cores de `gradient`…) vale no arquivo todo; copiar (`b=a`) só depois do original: acima, ou à esquerda na mesma linha ([cap. 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette-vale)) |
 | `let nome=valor …` | variáveis para as contas; lidas antes de tudo (um `let` pode usar outro, de cima ou de baixo) |
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | cores com posição opcional `cor@0.5` |

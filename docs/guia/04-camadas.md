@@ -950,7 +950,7 @@ rect porta 78,78 20,34 c=#2b2233 ink=line
 | `vignette=` | escurece as bordas e os cantos, e leva o olho para o meio | de 0 a 1: em 1, os cantos ficam pretos (acima de 1 não escurece mais) |
 | `grain=` | granulado de filme, um chuvisco fino por cima de tudo | de 0 a 0.33: `0.03` é sutil, `0.15` é forte (acima de 0.33 não aumenta mais) |
 
-A linha `finish` aceita até 3 nos três, sem aviso. Mas acima do limite de cada um (1 no `vignette`, 0.33 no `grain`) a imagem não muda mais.
+Fora da faixa, o Weasel avisa. No `bloom`, acima de 3, vale 3. No `vignette` e no `grain`, o valor é aceito, mas acima de 1 e de 0.33 a imagem não muda mais.
 
 Os três podem ir juntos na mesma linha: `finish game bloom=0.5 vignette=0.6 grain=0.03`. O [capítulo 8](08-luz-efeitos.md#acabamentos-de-cinema) usa assim numa fogueira animada.
 
