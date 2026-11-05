@@ -200,6 +200,7 @@ A sombra é só uma elipse grande deslocada para baixo e para a direita (`opacit
 - `clip=` aceita o nome de uma **forma fechada** (`shape`, `ellipse`, `rect`) ou de uma **camada** (veja [logo abaixo](#recortar-com-uma-camada-inteira)).
 - Um `stroke` ou uma `line` não servem de molde: eles não têm lado de dentro, e a camada inteira sumiria. O Weasel avisa quando isso acontece.
 - O recorte acompanha a forma quando ela se mexe com um osso.
+- O molde pode estar **antes ou depois** da camada no arquivo: o Weasel procura o nome no arquivo inteiro. Vale o mesmo para o `cut=`: no [exemplo do `cut=`](#recortar-por-fora-cut), `janela` vem antes da camada que a usa, e `furo` vem depois da forma que o usa. O que a ordem muda é só a pintura: a camada recortada precisa vir depois da forma para ficar por cima dela. Veja [a ordem das linhas](12-referencia.md#a-ordem-das-linhas).
 
 **Experimente:** apague o `clip=comClip` da linha `layer aparado`. A bola da direita fica igual à da esquerda, com a sombra vazando.
 

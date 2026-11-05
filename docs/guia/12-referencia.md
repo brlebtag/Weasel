@@ -48,6 +48,81 @@ Repare:
 
 Para aprender: [capítulo 1](01-primeiros-passos.md) (a linha e os erros), [capítulo 2](02-formas.md) (pontos e alças) e [capítulo 5](05-componentes.md) (contas).
 
+### A ordem das linhas
+
+**Usar** um nome não depende da ordem. O Weasel lê o arquivo inteiro antes de ligar cada nome ao que ele aponta, então uma linha pode usar uma forma, uma camada, um osso, uma cor ou um componente que só aparece mais abaixo.
+
+| Onde o nome é usado | O que pode estar mais abaixo no arquivo |
+|---|---|
+| `c=`, `ink=`, `inkc=`, `w=`, `bg=` do `canvas`, cores de `gradient`, `pattern`, `light` e `variant` | o nome da `palette`, o `gradient`, o `pattern` |
+| `clip=` e `cut=` da camada | a forma ou a camada do molde |
+| `cut=` e `back=` na forma | a forma |
+| `mirror=` | a forma espelhada (num `def`, a do mesmo `def`) |
+| `inkon=` | a camada |
+| `bone=` (nas formas, no `use`, na `light` e no `cloth`) e `parent=` | o osso |
+| `cloth=` | o tecido |
+| `path=` do osso | a `line`, o traço ou a forma |
+| `use` | o `def` |
+| `key` e `expr` (`osso=…`, `forma.prop=…`, `above=`, `below=`) | os ossos e as formas |
+| `only=` e `mix=` | as animações |
+| `show=` e `hide=` da `variant` | as formas e as camadas |
+| `cast=` e `from=` da camada | a `line` do chão, as camadas |
+| `{conta}` | as variáveis do `let` |
+| `at`, `follow=` da `camera` e `lips=` do `audio` (filme) | o `actor` do mesmo `shot` (ou do filme), o `mark` |
+
+O que **depende** da posição:
+
+| O quê | Regra |
+|---|---|
+| **Copiar** na `palette` (`sombra=cabelo`) | o original vem antes: numa linha `palette` de cima, ou mais à esquerda na mesma linha ([capítulo 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette-vale)) |
+| O mesmo nome duas vezes na `palette` | vale o último valor, no arquivo todo |
+| A ordem da pintura | as camadas são pintadas na ordem do arquivo e, dentro de cada camada, as formas também: o que vem mais abaixo no arquivo fica por cima no desenho |
+| A camada de uma forma | a `layer` acima dela; antes da primeira `layer`, a camada `base` |
+| `key` e `event` | valem para o `anim` acima |
+| `def` … `end` | as linhas entre os dois são o componente |
+| `actor`, `camera`, `audio`, `sub`, `mark` e `at` (filme) | valem para o `shot` acima, e o tempo conta do começo dele; antes do primeiro `shot`, valem para o filme todo. Um ator criado num `shot` só existe nele |
+| `at +1s` | conta a partir do `at` anterior |
+| `include` | o arquivo incluído entra no lugar da linha, como se estivesse escrito ali |
+
+Em resumo: **usar** um nome pode ser feito de qualquer lugar. O que depende da ordem é o que fica **por cima** no desenho, a **que bloco** uma linha pertence e a **cópia** na `palette`.
+
+<!-- gerar: img/12_ordem.png -->
+```weasel
+# as definições ficam no fim; os usos vêm antes delas
+canvas 320 200 bg=fundo
+
+layer corpo
+ellipse bola 160,100 70 c=laranja ink=line inkon=contorno bone=cabeca
+
+layer sombra clip=bola
+ellipse s 205,145 85 c=escuro
+
+layer rosto
+use olho 135,85 bone=cabeca
+use olho 185,85 bone=cabeca
+
+layer contorno
+
+anim pula frames=12
+key 6 cabeca=0,-12
+
+bone cabeca pivot=160,170
+
+def olho
+ellipse e 0,0 9 c=ink
+end
+
+palette ink=#2b2a33 fundo=#f4efe6 laranja=#ff8a3d escuro=#e0692e
+```
+
+![Uma bola laranja com contorno escuro, sombra embaixo à direita e dois olhos pretos](img/12_ordem.png)
+
+- `fundo`, `laranja`, `escuro` e `ink` só aparecem na `palette` da última linha.
+- `inkon=contorno` usa uma camada que vem depois. `bone=cabeca` e o `key 6 cabeca=…` usam um osso que vem depois. Os dois `use olho` usam um `def` que vem depois.
+- A ordem das camadas é a da pintura: a `sombra` vem depois do `corpo` para ficar por cima da bola, e o `rosto` vem depois da `sombra` para os olhos não ficarem embaixo dela.
+
+Para aprender: [capítulo 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette-vale) (a `palette`), [capítulo 4](04-camadas.md) (a ordem das camadas, `clip=`, `cut=` e `inkon=`), [capítulo 7](07-animacao.md) (`anim` e `key`) e [capítulo 10](10-filme.md) (os `shot`).
+
 ## Configuração
 
 | Instrução | Atributos (padrão) |
