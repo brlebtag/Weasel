@@ -304,6 +304,17 @@
       this._caret(true);
     }
 
+    // põe o cursor sem levar o foco para o código (clique num ponto do desenho: as teclas continuam no desenho)
+    place(line, col) {
+      const off = this.lineStart(line) + (col || 0);
+      this.ta.setSelectionRange(off, off);
+      this._caret(true);
+    }
+
+    // desfazer e refazer com o foco fora do código (no desenho)
+    undo() { this._restore(this.hist.undo()); }
+    redo() { this._restore(this.hist.redo()); }
+
     setErrors(errors) {
       this.errors = errors;
       this._render();

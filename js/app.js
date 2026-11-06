@@ -2016,6 +2016,8 @@
       const rec = st.model.byLine.get(st.caret.line);
       const h = rec.handles[hi];
       if (h.kind === 'mid') { addPoint(h); return; }
+      // clicar num ponto o escolhe (fica laranja): o cursor do código vai para ele, e Delete o apaga
+      if (h.kind === 'pt') editor.place(st.caret.line, h.to);
       // a alça ✥ ou Shift+arrastar um ponto: a forma inteira anda; Alt+arrastar um ponto (ou a alça azul): a curva
       // a alça verde: girar
       const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
@@ -2147,6 +2149,26 @@
     hint('Ponto novo: arraste para onde quiser. Duplo clique nele liga o canto vivo (!).', 2600);
     st.drag = { line, hi, key, mode: null, idx: h.idx + 1 };
     view.style.cursor = 'move';
+  }
+
+  // Delete (ou Backspace) com o foco no desenho: apaga o ponto escolhido (o laranja, o do cursor) e o espaço
+  // antes dele. Depois, nenhum ponto fica escolhido: outro Delete não apaga o vizinho.
+  function deletePoint() {
+    const m = st.model;
+    if (!m || !st.show.points || st.build) return false;
+    const line = st.caret.line, rec = m.byLine.get(line), hi = activeHandle(rec), h = hi >= 0 ? rec.handles[hi] : null;
+    if (!h || h.kind !== 'pt') return false;
+    if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para apagar pontos.' : 'Para apagar pontos, escolha "pose parada" no player.', 2600); return true; }
+    if (h.fixed) { hint('Este ponto vem de uma {expressão}: apague no código.', 2800); return true; }
+    const n = rec.handles.filter((q) => q.kind === 'pt').length, min = rec.el && rec.el.limb ? 0 : rec.st.cmd === 'shape' ? 3 : 2;
+    if (n <= min) { hint(`${rec.st.cmd} precisa de pelo menos ${min} pontos: este não dá para apagar.`, 2800); return true; }
+    const text = lineOf(line), off = editor.lineStart(line);
+    let a = h.from, b = h.end;
+    while (a > 0 && /[ \t]/.test(text[a - 1])) a--;
+    if (a === h.from) while (b < text.length && /[ \t]/.test(text[b])) b++;
+    editor.replaceRange(off + a, off + b, '', { select: [off, off] });
+    hint(`Ponto ${h.idx + 1} apagado (Ctrl+Z desfaz).`, 2400);
+    return true;
   }
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
@@ -2779,6 +2801,10 @@
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; return; }
     const t = e.target;
     if (t.closest && t.closest('textarea, input, select, dialog')) return;
+    // com o foco no desenho: Ctrl+Z e Ctrl+Y desfazem e refazem no código, e Delete apaga o ponto escolhido
+    if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); if (e.shiftKey) editor.redo(); else editor.undo(); return; }
+    if (mod && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); editor.redo(); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
     if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); }
   });
 

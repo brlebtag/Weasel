@@ -178,6 +178,7 @@ Editando pelo desenho e pelo teclado:
 - **Forma nova:** **Ctrl+I** ou o **botão direito** no desenho abre um menu com `ellipse`, `rect`, `shape`, `stroke`, `line` e `text`. A forma entra na linha de baixo da do cursor, com nome, cor e tamanho prontos, no meio da tela (Ctrl+I) ou onde você clicou (botão direito). O cursor fica nela, com as alças à mão.
 - **Arraste** um ponto para movê-lo (o código é atualizado). Funciona na "pose parada", também dentro de componentes (o código recebe as coordenadas do componente). Pontos cinza vêm de `{contas}` e não arrastam.
 - **Duplo clique** num ponto liga/desliga o canto vivo (`!`); num ponto com alça, tira a alça.
+- **Apagar um ponto:** clique num ponto (ele fica laranja) e aperte **Delete** (ou Backspace). Só ele sai do código, com a alça de curva dele. Vale para `shape`, `stroke` e `line`. A forma não fica com menos pontos do que precisa (3 no `shape`, 2 no `stroke` e na `line`), e pontos de `{contas}` não se apagam pelo desenho. Um Ctrl+Z desfaz, mesmo com o foco no desenho.
 - **Alças de curva:** as que existem (`~dx,dy`) aparecem como losangos azuis e arrastam. **Alt+arrastar** um ponto puxa uma alça nova (um `!` daquele ponto sai). Soltar o losango em cima do ponto tira a alça.
 - **Ponto novo:** num `shape`, `stroke` ou `line`, uma bolinha clara fica no meio de cada lado. Arraste-a (ou clique) e ela vira um ponto, escrito no código entre os dois vizinhos (entre dois `!`, o novo também é canto). Um Ctrl+Z desfaz.
 - **Mover a forma inteira:** num `shape`, `stroke` ou `line`, arraste o **✥** do meio dos pontos, ou use **Shift+arrastar** em qualquer ponto. Todos os pontos andam juntos, com os `!` e as alças. Para copiar uma forma, duplique a linha (**Ctrl+D**) e arraste a cópia.
@@ -192,7 +193,7 @@ Editando pelo desenho e pelo teclado:
 - Sugestões de comandos, atributos, cores, ossos, camadas, componentes e propriedades aparecem enquanto você digita; **Ctrl+Espaço** abre na hora, **Enter** ou **Tab** aceitam.
 - Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro; numa linha `at` ou `shot` de um filme, pula para aquele momento. A posição dos atores e a de cada `at … .pos=` aparecem como alças que arrastam, nas duas vistas (as coordenadas do mundo são calculadas de volta pela câmera).
 
-Atalhos: `Ctrl+Z` / `Ctrl+Y` desfazer/refazer, `Ctrl+/` comentar, `Ctrl+D` duplicar linha, `Ctrl+S` salvar, `Ctrl+E` exportar, `Espaço` tocar/pausar e `←` `→` quadro anterior/próximo (com o foco fora do editor).
+Atalhos: `Ctrl+Z` / `Ctrl+Y` desfazer/refazer (também com o foco no desenho), `Ctrl+/` comentar, `Ctrl+D` duplicar linha, `Ctrl+S` salvar, `Ctrl+E` exportar, `Espaço` tocar/pausar e `←` `→` quadro anterior/próximo (com o foco fora do editor).
 
 ## A linguagem
 

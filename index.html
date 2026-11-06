@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.19.0">
+<link rel="stylesheet" href="css/style.css?v=1.20.0">
 </head>
 <body>
 <header class="top">
@@ -239,6 +239,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Clique numa forma do desenho (sem arrastar) e o cursor vai para a linha dela; clique de novo no mesmo lugar para pegar a de baixo.</li>
       <li><kbd>Ctrl</kbd>+<kbd>I</kbd> ou o botão direito no desenho abre o menu de formas: a escolhida entra na linha de baixo, pronta para arrastar (com o botão direito, onde você clicou).</li>
       <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code> (ou tira a alça). Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
+      <li>Clique num ponto para escolhê-lo (ele fica laranja) e aperte <kbd>Delete</kbd> para apagá-lo, com a alça de curva dele. Vale para <code>shape</code>, <code>stroke</code> e <code>line</code>; a forma não fica com menos pontos do que precisa (3 no <code>shape</code>, 2 nos outros).</li>
       <li><kbd>Alt</kbd>+arrastar um ponto puxa uma alça de curva (<code>~dx,dy</code>); o losango azul arrasta a alça, e soltá-lo em cima do ponto a tira.</li>
       <li>A bolinha clara no meio de cada lado de um <code>shape</code>, <code>stroke</code> ou <code>line</code> cria um ponto novo ali (arraste ou clique).</li>
       <li>O <b>✥</b> no meio dos pontos (ou <kbd>Shift</kbd>+arrastar um ponto) move a forma inteira. Para copiar: <kbd>Ctrl</kbd>+<kbd>D</kbd> e arraste a cópia.</li>
@@ -252,7 +253,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Arraste uma imagem do computador para a janela: ela vira uma linha <code>ref</code> abaixo do <code>canvas</code>. Solta no desenho, fica no ponto onde caiu. Um <code>.weasel</code> ou um som solto abre como no <b>Abrir…</b>.</li>
       <li><kbd>Alt</kbd>+arrastar sobre um número muda o valor (com <kbd>Shift</kbd>, 10× mais rápido). <kbd>Alt</kbd>+clique numa cor <code>#hex</code> abre o seletor de cor.</li>
       <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
-      <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha (a cópia ganha nome novo: <code>asa</code> → <code>asa_1</code>; com várias linhas, as referências mudam junto), <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
+      <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha (a cópia ganha nome novo: <code>asa</code> → <code>asa_1</code>; com várias linhas, as referências mudam junto), <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz (também com o foco no desenho).</li>
       <li><kbd>Espaço</kbd> toca/pausa, <kbd>←</kbd> <kbd>→</kbd> trocam de quadro (fora do editor).</li>
       <li>Num filme, o cursor numa linha <code>at</code> ou <code>shot</code> leva o player para aquele momento, e a posição dos atores arrasta também na vista da câmera.</li>
     </ul>
@@ -331,23 +332,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.19.0"></script>
-<script src="js/lang.js?v=1.19.0"></script>
-<script src="js/scene.js?v=1.19.0"></script>
-<script src="js/film.js?v=1.19.0"></script>
-<script src="js/audio.js?v=1.19.0"></script>
-<script src="js/nle.js?v=1.19.0"></script>
-<script src="js/webm.js?v=1.19.0"></script>
-<script src="js/svg.js?v=1.19.0"></script>
-<script src="js/gif.js?v=1.19.0"></script>
-<script src="js/zip.js?v=1.19.0"></script>
-<script src="js/normal.js?v=1.19.0"></script>
-<script src="js/export.js?v=1.19.0"></script>
-<script src="js/godot.js?v=1.19.0"></script>
-<script src="js/rig.js?v=1.19.0"></script>
-<script src="js/editor.js?v=1.19.0"></script>
-<script src="js/examples.js?v=1.19.0"></script>
-<script src="js/timeline.js?v=1.19.0"></script>
-<script src="js/app.js?v=1.19.0"></script>
+<script src="js/geom.js?v=1.20.0"></script>
+<script src="js/lang.js?v=1.20.0"></script>
+<script src="js/scene.js?v=1.20.0"></script>
+<script src="js/film.js?v=1.20.0"></script>
+<script src="js/audio.js?v=1.20.0"></script>
+<script src="js/nle.js?v=1.20.0"></script>
+<script src="js/webm.js?v=1.20.0"></script>
+<script src="js/svg.js?v=1.20.0"></script>
+<script src="js/gif.js?v=1.20.0"></script>
+<script src="js/zip.js?v=1.20.0"></script>
+<script src="js/normal.js?v=1.20.0"></script>
+<script src="js/export.js?v=1.20.0"></script>
+<script src="js/godot.js?v=1.20.0"></script>
+<script src="js/rig.js?v=1.20.0"></script>
+<script src="js/editor.js?v=1.20.0"></script>
+<script src="js/examples.js?v=1.20.0"></script>
+<script src="js/timeline.js?v=1.20.0"></script>
+<script src="js/app.js?v=1.20.0"></script>
 </body>
 </html>

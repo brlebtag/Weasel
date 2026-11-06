@@ -169,6 +169,7 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 >
 > - **Arrastar** um ponto muda o número dele no código.
 > - **Duplo clique** num ponto liga e desliga o `!`.
+> - Para **apagar** um ponto, clique nele (ele fica laranja) e aperte **Delete**. Só esse ponto sai do código, junto com a alça de curva dele, se tiver. A forma não pode ficar com menos de 3 pontos, e um Ctrl+Z traz o ponto de volta.
 > - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
 > - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**) e arraste a cópia para outro lugar.
 > - **Ctrl+D** dá um nome novo à cópia: `asa` vira `asa_1`, e duplicar de novo dá `asa_2`. Vale para tudo o que tem nome: formas, `ref`, `layer`, `bone`, `anim`, `def`… Duplicando várias linhas de uma vez (selecione todas), o que usa esses nomes muda junto: a forma copiada com `bone=braco` fica presa no `braco_1` copiado, e as `key` da animação copiada mexem nas cópias. As cores (`c=asa` da `palette`) não mudam. Num `def … end` copiado inteiro, só o componente ganha nome novo; as formas de dentro continuam iguais.
@@ -388,7 +389,7 @@ Repare:
 
 **Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
 
-> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, e a bolinha **verde** de cima para girá-lo. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela.
+> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, e a bolinha **verde** de cima para girá-lo. Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali, e **Delete** apaga o ponto escolhido (o laranja); o traço precisa de pelo menos 2 pontos. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela.
 
 ## Linha reta: `line`
 
