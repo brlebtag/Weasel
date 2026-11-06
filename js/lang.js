@@ -104,6 +104,8 @@
     atan2: (y, x) => Math.atan2(y, x) * 180 / Math.PI, sqrt: Math.sqrt, abs: Math.abs, min: Math.min, max: Math.max,
     floor: Math.floor, ceil: Math.ceil, round: Math.round, pow: Math.pow,
     lerp: (a, b, t) => a + (b - a) * t, clamp: (v, a, b) => Math.min(b, Math.max(a, v)),
+    // dist(x1,y1,x2,y2): a distância em linha reta entre dois pontos
+    dist: (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1),
     // rand(x) de 0 a 1, rand(x, a, b) de a até b: sempre o mesmo valor para o mesmo x
     rand: (x, a, b) => {
       let h = Math.imul(Math.round(x * 1000) ^ 0x2545f491, 0x9e3779b1) >>> 0;
@@ -145,6 +147,7 @@
           if (s[i] !== ')') fail('falta ")"');
           i++;
           if (!FN[name]) fail(`função desconhecida "${name}"`);
+          if (name === 'dist' && args.length !== 4) fail('dist precisa de 4 números: dist(x1,y1,x2,y2)');
           return FN[name](...args);
         }
         if (name === 'pi') return Math.PI;

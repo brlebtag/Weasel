@@ -60,6 +60,7 @@ E estas **funções** (os exemplos de cada uma estão em [As funções, uma por 
 |---|---|---|
 | `sin(g)` `cos(g)` `tan(g)` | trigonometria, com o ângulo **em graus** | `{cx+cos(45)*r}` |
 | `atan2(y,x)` | o ângulo (em graus) de uma direção | `{atan2(1,1)}` = 45 |
+| `dist(x1,y1,x2,y2)` | a distância em linha reta entre dois pontos | `{dist(0,0,30,40)}` = 50 |
 | `sqrt(v)` `pow(a,b)` `abs(v)` | raiz, potência, valor absoluto | `{sqrt(2)*r}` |
 | `min(a,b,…)` `max(a,b,…)` | menor e maior | `{max(4,r/10)}` |
 | `round(v)` `floor(v)` `ceil(v)` | arredondar, para baixo, para cima | `{round(r/3)}` |
@@ -299,6 +300,40 @@ Repare:
 - Cada olho calcula o seu ângulo, porque cada um vê a mosca de um lugar diferente.
 
 **Experimente:** mude `let mx=300 my=50` para `let mx=40 my=200`. A mosca vai para baixo, à esquerda, e os dois olhos se viram para ela sozinhos.
+
+### Distância: `dist`
+
+`dist(x1,y1,x2,y2)` mede a **distância em linha reta** entre dois pontos: o primeiro em `x1,y1`, o segundo em `x2,y2`. Serve para saber o tamanho de uma corda, até onde uma coisa alcança, ou para pôr uma coisa a uma distância certa de outra.
+
+<!-- gerar: img/05_dist.png -->
+```weasel
+canvas 420 280 bg=#cfe8a8
+palette ink=#2b2a33 line=4
+# a estaca e a cabra
+let ex=170 ey=140 cx=270 cy=190
+# o comprimento da corda: da estaca até a cabra
+let corda={dist(ex,ey,cx,cy)}
+
+# até onde a cabra alcança: um círculo com o raio da corda
+ellipse alcance {ex},{ey} {corda} c=#b8dc8e ink=2
+
+stroke corda w=3 c=#8a6a3a : {ex},{ey} {cx},{cy}
+ellipse estaca {ex},{ey} 7 c=#6b4a2a
+ellipse cabra {cx},{cy} 18,13 c=#ffffff ink=line
+ellipse cabeca {cx+18},{cy-10} 9 c=#ffffff ink=line
+text t {ex},{ey-22} "corda = 112 pixels" size=15 align=center
+```
+
+![Uma estaca no meio de um círculo verde, com uma corda esticada até uma cabra branca na borda do círculo](img/05_dist.png)
+
+Repare:
+
+- Da estaca até a cabra, anda-se 100 pixels na horizontal (`cx-ex`) e 50 na vertical (`cy-ey`). O `dist` junta os dois: √(100² + 50²), uns 111,8 pixels. É o comprimento da corda.
+- O círculo usa esse número como raio. Ele mostra todos os lugares onde a cabra chega com a corda esticada.
+- É a mesma conta que `sqrt((cx-ex)^2+(cy-ey)^2)`, só que mais curta de escrever. A ordem dos pontos não importa: `dist(cx,cy,ex,ey)` dá o mesmo número.
+- O Weasel faz essa mesma conta para medir o comprimento de um braço com IK ([capítulo 6](06-ossos.md#até-onde-o-braço-alcança)).
+
+**Experimente:** mude `cx=270 cy=190` para `cx=230 cy=60`. A cabra vai para cima e o círculo encolhe: a corda agora tem 100 pixels (60 na horizontal e 80 na vertical). A etiqueta continua dizendo 112, porque ela é só um texto.
 
 ### Inclinação: `tan`
 

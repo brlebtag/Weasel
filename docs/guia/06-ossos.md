@@ -639,18 +639,59 @@ key 48 corpo=0,0 mao=0,0
 
 - `hip=x,y` é onde a perna **nasce** (o quadril), e `on=corpo` faz esse ponto andar com o osso.
 - `foot=chao,172` põe o pé na `line` chamada `chao`, na altura dela em x=172. O pé fica parado ali.
-- O **comprimento** da perna é a distância do quadril ao pé no desenho parado. Quando o corpo desce, sobra perna e o joelho dobra. Quando o corpo sobe além do comprimento, a perna estica e **pendura** na direção do pé (o pulo).
+- O **comprimento** da perna é a distância em linha reta do quadril ao pé, no desenho parado. Quando o corpo desce, sobra perna e o joelho dobra. Quando o corpo sobe além do comprimento, a perna estica e **pendura** na direção do pé (o pulo).
 - `limb=16,20` é a largura da perna no quadril e no pé.
 
 **Braços** (`target=`):
 
 - `target=mao` faz a ponta do braço ir atrás do **pivô** do osso `mao`. Anime a mão com `key` (aqui ela desce, sobe e volta), e o braço dobra o cotovelo sozinho.
-- O comprimento do braço é a distância do ombro (`hip=`) ao pivô da mão no desenho parado. Se a mão for mais longe que isso, o braço estica e aponta para ela, mas não alcança: mantenha a mão ao alcance.
+- O comprimento do braço é a distância **em linha reta** do ombro (`hip=`) ao pivô da mão, no desenho parado. Aqui, de 236,140 até 320,190: √(84² + 50²), uns 98 pixels. Se a mão for mais longe que isso, o braço estica e aponta para ela, mas não alcança: mantenha a mão ao alcance ([como ver o alcance](#até-onde-o-braço-alcança)).
 - Uma forma presa ao osso `mao` (a `palma`) fica na ponta.
 
 O membro é desenhado com a cor `c=` (padrão: a cor de tinta) e não precisa de pontos depois do `:`.
 
 **Experimente:** no exemplo de cima, troque o `bend=-1` do braço por `bend=1`. O cotovelo passa a dobrar para cima em vez de para baixo ([mais sobre o `bend=`](#para-que-lado-dobra-bend) logo abaixo).
+
+### Até onde o braço alcança
+
+O comprimento do braço não aparece no desenho. Para ver até onde a mão pode ir, desenhe um círculo em volta do ombro, com esse raio, numa camada `guide` (ela só aparece no editor). A função [`dist`](05-componentes.md#distância-dist) faz a conta:
+
+<!-- gerar: img/06_alcance.gif -a estica --guides -->
+```weasel
+canvas 420 280 bg=#f4efe6
+palette ink=#2b2a33 line=5 roxo=#7a5cc2 pele=#ffcf9e
+
+bone corpo pivot=200,150
+bone mao pivot=320,190
+
+stroke braco limb=12,10 hip=236,140 on=corpo target=mao bend=-1 c=roxo
+ellipse tronco 200,146 52,46 c=roxo ink=line bone=corpo
+ellipse olhoE 186,130 6,9 c=ink bone=corpo
+ellipse olhoD 214,130 6,9 c=ink bone=corpo
+ellipse palma 320,190 13 c=pele ink=line bone=mao
+
+# até onde o braço alcança: um círculo em volta do ombro, só no editor
+layer ajuda guide
+ellipse alcance 236,140 {dist(236,140,320,190)} c=none ink=2 inkc=#c44536 bone=corpo
+
+anim estica frames=48 fps=16
+key 0 mao=0,0
+key 12 mao=-30,-60
+key 24 mao=70,-50
+key 36 mao=0,0
+key 48 mao=0,0
+```
+
+![Um bicho roxo com um círculo vermelho em volta do ombro; a mão sobe dentro do círculo com o cotovelo dobrado, depois sai do círculo, e o braço fica reto, parado na borda](img/06_alcance.gif)
+
+Repare:
+
+- `{dist(236,140,320,190)}` é o comprimento do braço: do ombro (`hip=236,140`) até o pivô da `mao` (320,190), uns 98 pixels.
+- O círculo está preso ao `corpo` (`bone=corpo`), como o ombro (`on=corpo`). Se o corpo andar, o círculo vai junto.
+- Enquanto a mão está dentro do círculo, o cotovelo dobra e o braço chega nela. No caminho para o quadro 24, a mão sai do círculo: o braço fica reto, para na borda, e a mão fica solta no ar.
+- A camada `ajuda` é `guide`: aparece no editor, mas não nas imagens exportadas. Esta imagem foi feita com `--guides`, que desenha as guias também.
+
+**Experimente:** no `key 24`, troque `mao=70,-50` por `mao=-10,-30`. A mão fica dentro do círculo o tempo todo, e o braço sempre chega nela.
 
 ### Para que lado dobra: `bend=`
 

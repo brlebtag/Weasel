@@ -15,7 +15,7 @@ Cada seção termina com um **exemplo que usa quase tudo da tabela de uma vez**,
 | Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça |
 | Cor | `#rgb` `#rgba` `#rrggbb` `#rrggbbaa` · nome da `palette` · `gradient` · `pattern` · nome do CSS · `none` ou `transparent` |
 | Espessura | número · nome numérico da `palette` (`line`, `inner`…) · `none` (0) |
-| Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, variáveis do `let`, de `def` e de `repeat`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp`, `rand(x)` e `rand(x,a,b)` |
+| Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, variáveis do `let`, de `def` e de `repeat`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp`, `dist(x1,y1,x2,y2)`, `rand(x)` e `rand(x,a,b)` |
 | Ângulo | graus; 0 = direita, positivo = horário, 90 = para baixo |
 | Texto | entre aspas: `"Olá"` |
 | Tempo (filme) | `2s` `1.5` `500ms` `48f` `1m30s`; `+1s` = depois do anterior |
