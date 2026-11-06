@@ -70,7 +70,14 @@ teste.weasel:15:7: erro: camada "ceu" já existe
 
 Para pôr mais uma forma numa camada, escreva a linha dentro dela, lá em cima.
 
-Então para que servem as camadas? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: cada linha `layer` funciona como um título de seção no código. No editor, com o cursor numa forma, a barra de baixo diz em que camada ela está (`ellipse iris na camada olhos`), e os nomes das camadas aparecem nas sugestões de `clip=`, `cut=`, `inkon=` e `hide=`. Não há um painel com a lista das camadas: a lista é o próprio código.
+Então para que servem as camadas? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: cada linha `layer` funciona como um título de seção no código. No editor, com o cursor numa forma, a barra de baixo diz em que camada ela está (`ellipse iris na camada olhos`), e os nomes das camadas aparecem nas sugestões de `clip=`, `cut=`, `inkon=` e `hide=`. O botão **Camadas**, em cima do desenho, abre a mesma lista do `--info` em forma de árvore: cada camada, na ordem do código, com as linhas que desenham nela.
+
+> **Dica do editor:** no painel **Camadas**, clique numa linha para escolhê-la. **Ctrl** + clique soma ou tira uma linha, e **Shift** + clique pega um trecho. Clicar no nome de uma camada escolhe todas as linhas dela. No desenho, **Shift** + clique numa forma também soma ou tira.
+>
+> - Com duas linhas ou mais escolhidas, as formas ganham um contorno azul e uma caixa tracejada em volta. Arraste qualquer uma delas (ou o **✥** do meio da caixa) e todas andam juntas.
+> - A bolinha **verde** em cima da caixa gira tudo em volta do meio da caixa (com **Shift**, de 15 em 15 graus). Os pontos do `shape`, do `stroke` e da `line` giram. A `ellipse`, o `rect`, o `text` e o `use` mudam de lugar e ganham `rot=` (ou têm o `rot=` somado). O círculo e o `emitter` só mudam de lugar.
+> - Um arraste inteiro se desfaz com um Ctrl+Z só. **Esc**, um clique fora das formas ou o cursor numa linha de fora soltam a escolha.
+> - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK.
 
 ## A ordem de pintura
 

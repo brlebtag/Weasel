@@ -161,6 +161,28 @@ main {
 /* editor de gradiente: à esquerda (o das imagens fica à direita) */
 .grad-panel { right: auto; left: 8px; width: 340px; padding: 8px 12px 9px; }
 .grad-panel .rp-head { gap: 6px; }
+/* painel das camadas: à esquerda; aberto, empurra o do gradiente para o lado */
+.layer-panel { right: auto; left: 8px; width: 250px; padding: 8px 8px 6px; }
+.stage.lp-open .grad-panel { left: 266px; max-width: calc(100% - 274px); }
+.lp-count { color: var(--dim); }
+.lp-layer { display: flex; align-items: center; gap: 4px; padding: 3px 0 2px; border-top: 1px solid var(--line); }
+.lp-layer .tw { border: none; background: none; padding: 0; width: 18px; color: var(--dim); font-size: 11px; }
+.lp-layer .ln { flex: 1; min-width: 0; text-align: left; border: none; background: none; padding: 2px 5px; border-radius: 4px; font: 600 12px var(--mono); color: var(--kw-setup); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-layer .tw:hover:not(:disabled), .lp-layer .ln:hover:not(:disabled) { background: var(--panel2); }
+.lp-layer.sel .ln, .lp-layer.sel .ln:hover:not(:disabled) { background: rgba(92,198,212,.2); }
+.lp-layer.cur .ln { text-decoration: underline; }
+.lp-tag { font: 10px var(--mono); color: var(--dim); }
+.layer-panel .cnt { color: var(--dim); font: 11px var(--mono); white-space: nowrap; }
+.lp-el { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border: none; background: none; padding: 2px 6px 2px 24px; border-radius: 4px; font: 12px var(--mono); }
+.lp-el .ty { color: var(--dim); }
+.lp-el .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-el:hover:not(:disabled) { background: var(--panel2); }
+.lp-el.sel, .lp-el.sel:hover:not(:disabled) { background: rgba(92,198,212,.22); color: #e3f7fa; }
+.lp-el.cur { box-shadow: inset 2px 0 0 var(--accent); }
+.lp-el.dim .nm { opacity: .5; }
+.lp-el .lno { min-width: 22px; text-align: right; color: var(--dim); opacity: .7; font-size: 10px; }
+.lp-foot { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
+.lp-foot small { display: block; color: var(--dim); line-height: 1.45; }
 .gp-name { border: none; background: none; padding: 0 2px; font: 600 12px var(--mono); color: var(--kw-setup); }
 .gp-name:hover:not(:disabled) { background: none; text-decoration: underline; }
 .gp-via { color: var(--dim); font: 11px var(--mono); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
