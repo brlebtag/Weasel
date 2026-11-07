@@ -710,7 +710,7 @@ ref nome "imagem.png" x,y scale= rot= opacity= [lock] [hidden] [front]
 | `hidden` | Escondida, sem tirar a linha do arquivo. |
 | `front` | Por cima das formas, em vez de por baixo (para conferir o traço). |
 
-**No editor**, o botão **Imagens**, acima do desenho, abre o painel das imagens guia:
+**No editor**, o botão **Referências**, acima do desenho, abre o painel das imagens guia:
 
 - **Adicionar imagem…** escolhe um arquivo do computador e escreve a linha `ref`, com a imagem cabendo no desenho. A imagem fica guardada **neste navegador** (como os sons dos filmes); o código só tem o nome dela.
 - **Arrastar e soltar** faz o mesmo sem abrir o painel: traga a imagem do computador e solte na janela do Weasel. A linha `ref` entra abaixo do `canvas` (depois das outras imagens guia). Solta no **desenho**, o meio da imagem fica no ponto onde ela caiu; solta no **código**, fica no meio do desenho. Várias de uma vez viram uma linha cada, uma um pouco abaixo da outra.

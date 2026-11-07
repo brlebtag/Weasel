@@ -142,7 +142,7 @@
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
     return null;
   };
-  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Imagens" para ela ficar guardada neste navegador', variant: variant || null });
+  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Referências" para ela ficar guardada neste navegador', variant: variant || null });
 
   // ---------- sons (audio) ----------
   // Guardados no navegador (IndexedDB, que aguenta arquivos grandes), pelo nome. O .wav é lido aqui (o lip
@@ -319,7 +319,9 @@
   function fillRefPanel() {
     const m = st.model, film = isFilm(), b = $('refBtn'), p = $('refPanel');
     b.hidden = film;
-    b.textContent = m && m.refs.length ? `Imagens ${m.refs.length}` : 'Imagens';
+    // quantas imagens guia o desenho tem fica no título (o botão diz só Referências)
+    b.textContent = 'Referências';
+    b.title = `Imagens guia${m && m.refs.length ? ` (${m.refs.length} neste desenho)` : ''}: uma referência por baixo para desenhar por cima (não sai na exportação)`;
     b.classList.toggle('on', !p.hidden);
     if (film) p.hidden = true;
     if (p.hidden || !m) return;
@@ -2999,7 +3001,7 @@
       infos.forEach((info, k) => insertRef(info, [x + k * 24, y + k * 24]));
       if (infos.length > 1) hint(`${infos.length} imagens guia adicionadas, cada uma numa linha ref: arraste para mover, o canto para mudar o tamanho.`, 4200);
       editor.ta.focus();
-    } else if (images.length && !texts.length) hint(`${images.length > 1 ? `${images.length} imagens guardadas` : 'Imagem guardada'} neste navegador${isFilm() ? ': imagens guia são para desenhos (num filme, não aparecem).' : `: use no painel "Imagens" ou com ref nome "${images[0].name}" x,y.`}`, 4200);
+    } else if (images.length && !texts.length) hint(`${images.length > 1 ? `${images.length} imagens guardadas` : 'Imagem guardada'} neste navegador${isFilm() ? ': imagens guia são para desenhos (num filme, não aparecem).' : `: use no painel "Referências" ou com ref nome "${images[0].name}" x,y.`}`, 4200);
     else if (sounds.length) hint(`${sounds.length} som${sounds.length > 1 ? 's' : ''} aberto${sounds.length > 1 ? 's' : ''}: ficam guardados neste navegador (♪ na barra de arquivos).`, 3600);
     else if (texts.length > 1) hint(`${texts.length} arquivos abertos — o include encontra os outros pelo nome.`, 3200);
     else if (skip.length && !texts.length) hint(`Não sei abrir "${skip[0].name}": solte desenhos (.weasel), imagens ou sons.`, 3200);
