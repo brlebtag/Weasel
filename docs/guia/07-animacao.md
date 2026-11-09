@@ -574,7 +574,8 @@ anim walk_atk mix=walk,atk bones=braco
 ![O boneco anda balançando a perna e o corpo enquanto o braço dá o golpe com a espada](img/07_mix.gif)
 
 - `mix=walk,atk bones=braco`: tudo vem do `walk`, menos o osso `braco` (e os filhos dele), que vem do `atk`.
-- O tempo é o da ação: 8 quadros, 12 fps e `once`, como o `atk`. Para mudar, escreva `frames=`, `fps=` ou `loop` na linha do `anim`.
+- O tempo é o da ação: 8 quadros, 12 fps e `once`, como o `atk`. Para mudar, escreva `frames=`, `fps=` ou `loop` na linha do `anim`. Os quadros são copiados pelo **tempo**: um quadro da combinada pega o que a origem fazia naquele instante, mesmo com outro `fps=`.
+- Numa combinada em loop, o tempo dela tem de **fechar o ciclo** das animações de onde os ossos vêm (o mesmo tempo, ou um múltiplo). Uma combinada de 1,8 s em cima de um andar de 2,667 s recomeça no meio do passo, e as pernas pulam de volta: o editor avisa e sugere um tempo que fecha (sem `frames=` e `fps=`, vale o tempo da ação).
 - O que é da ação vem junto: a caixa de golpe (presa ao braço e com `only=atk`) liga nos quadros certos, e o evento `golpe` também. As camadas e caixas com `only=walk` ou `only=atk` aparecem na combinada.
 - `key` escritas na própria animação combinada valem por cima.
 - Num jogo top-down, dê o nome com a direção (`walk_attack_right`): no Godot, o lado espelhado sai sozinho.

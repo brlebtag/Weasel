@@ -1919,6 +1919,8 @@
       // em que quadro da animação de origem está o quadro f da nova (pelo tempo)
       const at = (src, f) => { const x = (f / an.fps) * src.fps; return src.loop ? ((x % src.frames) + src.frames) % src.frames : Math.min(x, src.frames); };
       const lerpV = (s) => s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t);
+      // os ossos que, no fim do loop, não voltam para onde estavam no começo (de qual animação vieram)
+      const jumps = new Map();
       for (const b of m.bones.values()) {
         if (an.tracks.has(b.name)) continue;
         const src = set.has(b.name) ? over : base, tr = src.tracks.get(b.name);
@@ -1926,6 +1928,16 @@
         const keys = [];
         for (let f = 0; f <= an.frames; f++) keys.push({ frame: f, v: lerpV(W.geom.segment(tr, at(src, f), src.frames, src.loop)), ease: 'linear' });
         an.tracks.set(b.name, keys);
+        // dx,dy e rot com mais de meio pixel ou meio grau de diferença, ou a escala com mais de 1%
+        const v0 = keys[0].v, v1 = keys[an.frames].v;
+        if (v0.some((x, k) => Math.abs(v1[k] - x) > (k < 3 ? 0.5 : 0.01))) { if (!jumps.has(src)) jumps.set(src, []); jumps.get(src).push(b.name); }
+      }
+      // num loop, o tempo do mix tem de fechar o ciclo de onde os ossos vêm; senão eles pulam de volta ao recomeçar
+      if (an.loop && jumps.size) {
+        const [src, names] = [...jumps][0], sec = (n) => String(Math.round(n * 1000) / 1000).replace('.', ',');
+        const sd = src.frames / src.fps, nf = sd * an.fps, ex = Math.abs(nf - Math.round(nf)) < 1e-6 ? `frames=${Math.round(nf)} fps=${an.fps}` : `frames=${src.frames} fps=${src.fps}`;
+        const who = names.length > 2 ? `${names.slice(0, 2).join(', ')} e mais ${names.length - 2} ossos` : names.join(' e ');
+        bad(st, A.get('frames') || A.get('fps') || a, `o loop de "${an.name}" (${sec(an.frames / an.fps)} s) recomeça no meio de "${src.name}" (${sec(sd)} s): ${who} ${names.length > 1 ? 'pulam' : 'pula'} de volta. Use um tempo que feche o ciclo de "${src.name}" (ou um múltiplo dele), como ${ex}`, 'warn');
       }
       // propriedades: da ação o que é dos ossos dela (formas presas a eles, caixas, o caminho); o resto da base
       const ownsOver = (tr) => (tr.kind === 'el' ? tr.targets.some((e) => e.bone && set.has(e.bone)) : tr.kind === 'box' ? (m.boxes.get(tr.name).bone && set.has(m.boxes.get(tr.name).bone)) || (m.boxes.get(tr.name).only || []).includes(over.name) : tr.kind === 'bone' ? set.has(tr.name) : false);

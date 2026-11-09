@@ -288,7 +288,7 @@ use estrela 452,206 flip=x
 | `bone … path=linha [turn=0]` · `key quadro osso.along=0…1` | O osso anda por uma linha, traço ou forma, e vira junto com a curva (o desenho virado para a direita). |
 | `cloth nome pivot=x,y tension= drag= swing=` | Tecido: os pontos longe do pivô balançam atrasados quando o osso se move. |
 | `anim nome frames= fps= [once]` | Começa uma animação. |
-| `anim nome mix=base,ação bones=ossos` | Junta duas animações: a base inteira, com os ossos listados (e os filhos deles) vindos da ação, como andar e atacar. O tempo, as caixas e os eventos são os da ação. |
+| `anim nome mix=base,ação bones=ossos` | Junta duas animações: a base inteira, com os ossos listados (e os filhos deles) vindos da ação, como andar e atacar. O tempo, as caixas e os eventos são os da ação. Os quadros são copiados pelo tempo: num loop, escolha um tempo que feche o ciclo de onde os ossos vêm, senão eles pulam de volta ao recomeçar (o editor avisa). |
 | `key quadro osso=dx,dy,rot,sx,sy ... ease=` | Pose dos ossos naquele quadro; o resto é interpolado (`smooth`, `linear`, `in`, `out`, `back`, `step`). |
 | `key quadro forma.prop=valor` | Anima uma forma: `opacity`, `c`, `inkc` (cores se misturam), `w`, `ink`, `show` (1/0), `shape` (morph para outra forma: fechada com fechada, traço com traço, de qualquer tipo e número de pontos) e `draw` (0 a 1: desenha aos poucos, do primeiro ponto ao último; num texto, as letras aparecem uma a uma). Camadas: `camada.opacity` e `camada.show`. |
 | `key quadro forma.above=outra` | Muda a ordem de pintura a partir daquele quadro: `above=` pinta logo depois da outra forma (na frente), `below=` logo antes (atrás), `none` volta à ordem do arquivo. Entre formas da mesma camada, ou entre camadas (`bracoD.above=corpo`). |

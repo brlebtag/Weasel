@@ -590,6 +590,18 @@ erro: use mix=base,ação bones=osso1,osso2 (ex.: mix=walk_right,attack_right bo
 
 **Como resolver:** escreva as **duas** animações separadas por vírgula, e em `bones=` os ossos que vêm da ação: `anim anda_atira mix=anda,atira bones=braco`.
 
+### O `mix=` dá um pulo quando recomeça
+
+**O que você vê:** a animação combinada anda bem e, de repente, as pernas (ou o corpo) voltam de uma vez para trás, sempre no mesmo ponto. No editor:
+
+```
+aviso: o loop de "anda_pisca" (1,8 s) recomeça no meio de "anda" (2,667 s): back_right_paw, back_left_paw e mais 3 ossos pulam de volta. Use um tempo que feche o ciclo de "anda" (ou um múltiplo dele), como frames=32 fps=12
+```
+
+**Por quê:** o `mix=` copia os quadros pelo tempo. Com `frames=36 fps=20`, a combinada dura 1,8 s, mas o `anda` (32 quadros a 12 fps) dura 2,667 s: quando a combinada recomeça, o `anda` estava só no quadro 21 de 32, e volta para o 0 de uma vez.
+
+**Como resolver:** dê à combinada um tempo que feche o ciclo da animação de onde os ossos vêm: o mesmo (tire `frames=` e `fps=`, ou use `frames=32 fps=12`) ou um múltiplo (`frames=64 fps=12`, ou `frames=80 fps=20` se o andar tiver dois passos iguais, como esse). Quem só junta uma piscada pode escolher o tempo que fecha os dois ciclos: um andar de 2,667 s com uma piscada de 2 s fecha em 8 s.
+
 ### A `key` de opacidade não faz a forma aparecer
 
 **Por quê:** a `opacity` da `key` **multiplica** a `opacity=` escrita na forma. Com `opacity=0` na forma, qualquer número vezes zero dá zero: ela fica invisível sempre.
