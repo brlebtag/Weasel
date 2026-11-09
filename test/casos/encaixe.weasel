@@ -22,4 +22,4 @@ anim aim_right frames=12 fps=12
 key 0 braco=0,0,0
 key 6 braco=0,0,-35 corpo=0,0,0,1.04,0.96
 key 12 braco=0,0,0
-event 6 tiro
+event 6 tiro cartucho

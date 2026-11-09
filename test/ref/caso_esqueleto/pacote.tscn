@@ -472,8 +472,8 @@ tracks/9/keys = {
 "times": PackedFloat32Array(0.4167),
 "transitions": PackedFloat32Array(1),
 "values": [{
-"args": [&"golpe"],
-"method": &"_weasel_evento"
+"args": [[&"golpe", &"grito"]],
+"method": &"_weasel_eventos"
 }]
 }
 
@@ -827,8 +827,8 @@ tracks/9/keys = {
 "times": PackedFloat32Array(0.4167),
 "transitions": PackedFloat32Array(1),
 "values": [{
-"args": [&"golpe"],
-"method": &"_weasel_evento"
+"args": [[&"golpe", &"grito"]],
+"method": &"_weasel_eventos"
 }]
 }
 

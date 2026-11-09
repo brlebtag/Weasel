@@ -434,7 +434,7 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 
 - O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do sprite, liga, desliga e move as caixas e os pontos quadro a quadro e chama os eventos na hora certa. **Toque as animações pelo AnimationPlayer**, não pelo sprite.
 - `tocar("attack", velocity)` escolhe a direção sozinho: toca `attack_right` ou `attack_left` (ou `_up`, `_down` e as diagonais, se existirem), e só recomeça quando a animação muda.
-- Os eventos chegam pelo sinal `evento(nome)`.
+- Os eventos chegam pelo sinal `evento(nome)`. Dois ou mais no mesmo quadro chegam um depois do outro, na ordem do código.
 - `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado; `--rig` exporta com esqueleto de verdade ([abaixo](#esqueleto-de-verdade-rigbones-experimental)).
 
 Um script de jogo usando a cena:

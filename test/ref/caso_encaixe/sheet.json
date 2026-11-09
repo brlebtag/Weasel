@@ -318,7 +318,8 @@
       },
       "duration": 83,
       "events": [
-        "tiro"
+        "tiro",
+        "cartucho"
       ],
       "boxes": [
         {
@@ -637,6 +638,11 @@
         "animation": "aim_right",
         "frame": 6,
         "name": "tiro"
+      },
+      {
+        "animation": "aim_right",
+        "frame": 6,
+        "name": "cartucho"
       }
     ],
     "sourceRect": {

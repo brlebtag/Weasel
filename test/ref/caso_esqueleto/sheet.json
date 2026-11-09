@@ -1981,7 +1981,8 @@
       },
       "duration": 83,
       "events": [
-        "golpe"
+        "golpe",
+        "grito"
       ],
       "boxes": [
         {
@@ -2304,6 +2305,11 @@
         "animation": "attack_right",
         "frame": 5,
         "name": "golpe"
+      },
+      {
+        "animation": "attack_right",
+        "frame": 5,
+        "name": "grito"
       }
     ],
     "sourceRect": {

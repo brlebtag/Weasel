@@ -530,7 +530,7 @@ Furao (CharacterBody2D)            ← godot body=; a origem é o ponto raiz (os
 ```
 
 - O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do Sprite, liga, desliga e move as caixas quadro a quadro e chama os `event` na hora certa. Toque pelo AnimationPlayer, não pelo Sprite.
-- Os **eventos** chegam pelo sinal `evento(nome)` do AnimationPlayer.
+- Os **eventos** chegam pelo sinal `evento(nome)` do AnimationPlayer. Dois ou mais no mesmo quadro (`event 8 pata_e pata_d`, ou duas linhas `event 8`) chegam um depois do outro, na ordem do código.
 - Os **pontos** (`point`) são `Marker2D` com o nome do ponto: `$saida.global_position` diz de onde sai o tiro e `$saida.global_transform.x`, para onde o osso aponta. Nas animações espelhadas, o ponto e a direção também espelham.
 - **Hitbox** e **Hurtbox** são Area2D: a Hitbox procura (`monitoring`) e a Hurtbox é encontrada (`monitorable`). As duas ficam na camada de colisão 1; num jogo com times, ajuste as camadas e máscaras, e ignore a própria Hurtbox (`area.owner != self`).
 - **`tocar(acao, direcao)`** escolhe a animação pela direção: `tocar("walk", velocity)` toca `walk_down`, `walk_up`, `walk_right` ou `walk_left` (e as diagonais, se existirem) e só recomeça quando a animação muda. Parado (`Vector2.ZERO`), vale a última direção.

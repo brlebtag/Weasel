@@ -629,7 +629,7 @@ Um **evento** marca um quadro com um nome: um passo, um som, o momento do golpe.
 
 - no player do editor, os quadros com evento aparecem com ⚑;
 - na sprite sheet, vão no JSON de cada quadro;
-- na cena do Godot, chegam pelo sinal `evento(nome)` do AnimationPlayer, no quadro certo ([capítulo 9](09-jogo-godot.md)).
+- na cena do Godot, chegam pelo sinal `evento(nome)` do AnimationPlayer, no quadro certo ([capítulo 9](09-jogo-godot.md)). Vários nomes no mesmo quadro (na mesma linha `event` ou em linhas separadas) chegam um depois do outro, na ordem do código.
 
 Um pulo com três momentos marcados: quando sai do chão, quando chega no alto e quando volta ao chão (com dois nomes no mesmo quadro):
 

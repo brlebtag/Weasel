@@ -12,7 +12,7 @@ animações 3
   idle_right     24 quadros, 12 fps, anima olho.shape
   walk_right     16 quadros, 12 fps
   attack_right   10 quadros, 12 fps, once, anima golpe.show
-                 eventos: golpe@5
+                 eventos: golpe@5, grito@5
 godot    character, raiz 100,190, nó Lagarto, esqueleto (Bone2D)
 caixas   2
   corpo_caixa    body rect

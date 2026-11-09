@@ -60,3 +60,4 @@ key 5 braco=0,0,80 corpo=4,0,6 golpe.show=1
 key 7 golpe.show=0
 key 10 braco=0,0,0 corpo=0,0,0
 event 5 golpe
+event 5 grito

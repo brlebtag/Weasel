@@ -79,14 +79,26 @@
       `"values": [${keys.map((k) => k[1]).join(', ')}]`, '}',
     ];
   }
+  // keys = [tempo, nome] ou [tempo, [nomes]]: um nome chama _weasel_evento(nome); vários, _weasel_eventos([nomes])
   function methodTrack(i, path, keys) {
+    const call = (v) => {
+      const names = Array.isArray(v) ? v : [v];
+      return names.length > 1 ? `{\n"args": [[${names.map(sname).join(', ')}]],\n"method": &"_weasel_eventos"\n}` : `{\n"args": [${sname(names[0])}],\n"method": &"_weasel_evento"\n}`;
+    };
     return [
       `tracks/${i}/type = "method"`, `tracks/${i}/imported = false`, `tracks/${i}/enabled = true`, `tracks/${i}/path = NodePath(${quote(path)})`,
       `tracks/${i}/interp = 1`, `tracks/${i}/loop_wrap = true`, `tracks/${i}/keys = {`,
       `"times": PackedFloat32Array(${keys.map((k) => num(k[0])).join(', ')}),`,
       `"transitions": PackedFloat32Array(${keys.map(() => '1').join(', ')}),`,
-      `"values": [${keys.map((k) => `{\n"args": [${sname(k[1])}],\n"method": &"_weasel_evento"\n}`).join(', ')}]`, '}',
+      `"values": [${keys.map((k) => call(k[1])).join(', ')}]`, '}',
     ];
+  }
+  // Os event de uma animação na faixa de métodos: uma key por quadro, com os nomes daquele quadro na ordem do
+  // código. O Godot guarda uma key só por instante: duas no mesmo tempo, e a de antes some.
+  function eventKeys(events, dt) {
+    const by = new Map();
+    for (const e of events) { if (!by.has(e.frame)) by.set(e.frame, []); by.get(e.frame).push(e.name); }
+    return [...by.keys()].sort((p, q) => p - q).map((f) => [f * dt, by.get(f)]);
   }
   // só as keys em que o valor muda (o resto o Godot mantém)
   function changes(values, dt) {
@@ -217,7 +229,7 @@
           add((i) => valueTrack(i, `${pt.node}:position`, changes(prow.map((row) => row[k].pos), dt)));
           add((i) => valueTrack(i, `${pt.node}:rotation`, changes(prow.map((row) => row[k].rot), dt)));
         });
-        if (a.events.length) add((i) => methodTrack(i, 'AnimationPlayer', a.events.map((e) => [e.frame * dt, e.name])));
+        if (a.events.length) add((i) => methodTrack(i, 'AnimationPlayer', eventKeys(a.events, dt)));
       });
     });
     blocks.push(['[sub_resource type="AnimationLibrary" id="AnimationLibrary_weasel"]', '_data = {', animIds.map(([name, id]) => `${sname(name)}: SubResource("${id}")`).join(',\n'), '}'].join('\n'));
@@ -298,6 +310,12 @@ func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 
 func _weasel_evento(nome: StringName) -> void:
 	evento.emit(nome)
+
+
+## Vários event no mesmo quadro (event 8 pata_e pata_d): avisa um de cada vez, na ordem do código.
+func _weasel_eventos(nomes: Array) -> void:
+	for nome in nomes:
+		evento.emit(nome)
 `;
 
   // ---------- TileSet ----------
@@ -420,5 +438,5 @@ func _weasel_evento(nome: StringName) -> void:
     return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length, points: model.points.size };
   }
 
-  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, changes };
+  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, eventKeys, changes };
 })(window.Weasel = window.Weasel || {});

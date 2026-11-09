@@ -6,7 +6,7 @@ formas   4
 ossos    corpo, braco←corpo
 animações 1
   aim_right      12 quadros, 12 fps
-                 eventos: tiro@6
+                 eventos: tiro@6, cartucho@6
 godot    character, raiz 64,122, nó Atirador
 caixas   1
   corpo_caixa    body rect

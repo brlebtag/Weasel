@@ -39,3 +39,9 @@ func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 
 func _weasel_evento(nome: StringName) -> void:
 	evento.emit(nome)
+
+
+## Vários event no mesmo quadro (event 8 pata_e pata_d): avisa um de cada vez, na ordem do código.
+func _weasel_eventos(nomes: Array) -> void:
+	for nome in nomes:
+		evento.emit(nome)

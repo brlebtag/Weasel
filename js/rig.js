@@ -576,7 +576,7 @@
           add((i) => step(i, `${pt.node}:position`, Gd.changes(rowsP[n].map((row) => row[j].pos), dt)));
           add((i) => step(i, `${pt.node}:rotation`, Gd.changes(rowsP[n].map((row) => row[j].rot), dt)));
         });
-        if (a.events.length) add((i) => Gd.methodTrack(i, 'AnimationPlayer', a.events.map((e) => [e.frame * dt, e.name])));
+        if (a.events.length) add((i) => Gd.methodTrack(i, 'AnimationPlayer', Gd.eventKeys(a.events, dt)));
       });
     });
     blocks.push(['[sub_resource type="AnimationLibrary" id="AnimationLibrary_weasel"]', '_data = {', animIds.map(([name, id]) => `${sname(name)}: SubResource("${id}")`).join(',\n'), '}'].join('\n'));
