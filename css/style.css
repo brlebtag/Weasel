@@ -164,6 +164,10 @@ main {
 /* painel das camadas: à esquerda; aberto, empurra o do gradiente para o lado */
 .layer-panel { right: auto; left: 8px; width: 250px; padding: 8px 8px 6px; }
 .stage.lp-open .grad-panel { left: 266px; max-width: calc(100% - 274px); }
+/* com as réguas ligadas, os painéis abrem depois delas */
+.stage.ruled .ref-panel { top: 28px; max-height: calc(100% - 36px); }
+.stage.ruled .layer-panel, .stage.ruled .grad-panel { left: 28px; }
+.stage.ruled.lp-open .grad-panel { left: 286px; max-width: calc(100% - 294px); }
 .lp-count { color: var(--dim); }
 .lp-layer { display: flex; align-items: center; gap: 4px; padding: 3px 0 2px; border-top: 1px solid var(--line); }
 .lp-layer .tw { border: none; background: none; padding: 0; width: 18px; color: var(--dim); font-size: 11px; }

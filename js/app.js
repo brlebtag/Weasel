@@ -22,7 +22,7 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, points: true, bones: false, onion: false, refs: true },
+    show: { guides: true, points: true, bones: false, onion: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
@@ -37,6 +37,14 @@
     selAnchor: -1,
     layerShut: new Set(),
     gdrag: null,
+    // réguas: as linhas guia deste arquivo (v = em pé, em x; h = deitadas, em y), o arraste de uma delas e a que
+    // está grudando agora; medir: ligado, a medida (pontas a e b) e o arraste de uma ponta
+    guides: { v: [], h: [] },
+    guideDrag: null,
+    guideHot: null,
+    measure: false,
+    meas: null,
+    mdrag: null,
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -653,7 +661,7 @@
       if (!lines.has(k.line)) continue;
       for (const el of k.els) {
         const g = S.geometry(m, pose, el);
-        if (g.segs.length) { geo.push(g); for (const s of g.segs) for (let i = 0; i < 8; i += 2) add(s[i], s[i + 1]); } else if (el.at) add(el.at[0], el.at[1]);
+        if (g.segs.length) { geo.push(g); const t = tightBox(g.segs); add(t.x0, t.y0); add(t.x1, t.y1); } else if (el.at) add(el.at[0], el.at[1]);
       }
     }
     if (x0 > x1) return null;
@@ -713,7 +721,7 @@
       p.l0 = localOf(p.rec, p.ref, px, py);
       p.lc = localOf(p.rec, p.ref, b.cx, b.cy);
     }
-    st.gdrag = { mode, key: 'grupo' + Date.now(), plans: ok.filter((p) => p.l0 && p.lc), cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left };
+    st.gdrag = { mode, key: 'grupo' + Date.now(), plans: ok.filter((p) => p.l0 && p.lc), cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left, sn: { self: false, ref: [px, py], box: b } };
     if (left) {
       const why = plans.filter((p) => p.why || (mode === 'spin' && p.noSpin)).map((p) => `linha ${p.line + 1}: ${p.why || p.noSpin}`);
       hint(`${left} ${left > 1 ? 'linhas ficam paradas' : 'linha fica parada'} (${why.slice(0, 2).join('; ')}${why.length > 2 ? '…' : ''}).`, 4200);
@@ -1087,6 +1095,7 @@
     fillRefPanel();
     checkSel();
     fillLayerPanel();
+    syncRulers();
     updateErrors();
     updateCaretInfo();
     draw();
@@ -1523,10 +1532,12 @@
   function fit() {
     const cv = $('view'), m = st.model.canvas;
     const w = cv.clientWidth, h = cv.clientHeight;
-    const z = Math.max(0.05, Math.min((w - 40) / m.w, (h - 40) / m.h));
+    // com as réguas ligadas, o desenho cabe no espaço que sobra ao lado delas
+    const r = rulersOn() ? RULER : 0;
+    const z = Math.max(0.05, Math.min((w - r - 40) / m.w, (h - r - 40) / m.h));
     st.view.z = z;
-    st.view.x = (w - m.w * z) / 2;
-    st.view.y = (h - m.h * z) / 2;
+    st.view.x = r + (w - r - m.w * z) / 2;
+    st.view.y = r + (h - r - m.h * z) / 2;
   }
 
   let checker = null;
@@ -1620,6 +1631,10 @@
     if (st.show.bones) drawBones(ctx, m, pose, z);
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (st.show.points) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); }
+    const ro = rulersOn();
+    if (ro) drawGuides(ctx, dpr);
+    if (st.meas) drawMeasure(ctx, dpr);
+    if (ro) drawRulers(ctx, dpr);
   }
 
   // Filme: na vista da câmera, o quadro como vai sair no vídeo; no mundo, tudo como foi desenhado
@@ -2323,6 +2338,330 @@
     const p = toCanvas(e);
     return isFilm() ? M.apply(M.invert(filmView(1)), p[0], p[1]) : p;
   };
+
+  // ---------- réguas, linhas guia e medir ----------
+  // As réguas (em cima e à esquerda) contam os pixels do desenho. Delas saem linhas guia: arrastar da régua de cima
+  // põe uma linha deitada; da régua da esquerda, uma em pé. Arrastar uma linha a muda de lugar; soltar em cima de uma
+  // régua a apaga; duplo clique no quadradinho do canto apaga todas. Os pontos e as formas arrastados grudam nas
+  // linhas (a menos de 6 pixels na tela; segurando Ctrl, não grudam). As linhas ficam neste navegador, por arquivo,
+  // e não entram no código. Medir: arrastar no desenho mede a distância e o ângulo entre dois pontos.
+  const RULER = 20, SNAP_PX = 6, GUIDE_C = '#ff4fd8', MEAS_C = '#ffd166';
+  const rulersOn = () => st.show.rulers && !!st.model && !isFilm();
+  // em qual régua está o mouse: 'top', 'left', 'corner' (o quadradinho) ou null
+  function rulerAt(e) {
+    if (!rulersOn()) return null;
+    const r = view.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    return x < RULER && y < RULER ? 'corner' : y < RULER ? 'top' : x < RULER ? 'left' : null;
+  }
+  // as linhas guia de cada arquivo: { "nome.weasel": { v: [x, …], h: [y, …] } } (v = em pé, h = deitada)
+  function guideStore() {
+    try { const o = JSON.parse(store.get('weasel.guides') || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; }
+  }
+  function loadGuides(name) {
+    const g = guideStore()[name] || {}, nums = (a) => (Array.isArray(a) ? a.filter(Number.isFinite) : []);
+    st.guides = { v: nums(g.v), h: nums(g.h) };
+  }
+  function saveGuides(name, g) {
+    const all = guideStore();
+    if (g && (g.v.length || g.h.length)) all[name] = { v: g.v, h: g.h }; else delete all[name];
+    store.set('weasel.guides', JSON.stringify(all));
+  }
+  function clearGuides() {
+    const n = st.guides.v.length + st.guides.h.length;
+    if (!n) { hint('Não há linhas guia neste arquivo. Arraste de uma régua para pôr uma.', 2400); return; }
+    st.guides = { v: [], h: [] };
+    saveGuides(st.current, st.guides);
+    hint(n > 1 ? `${n} linhas guia apagadas.` : 'A linha guia foi apagada.', 2000);
+    draw();
+  }
+  // a linha guia sob o mouse (a menos de 4 pixels na tela)
+  function hitGuide(e) {
+    if (!rulersOn()) return null;
+    const [x, y] = toCanvas(e), r = 4 / st.view.z;
+    let best = null, bd = r;
+    for (const axis of ['v', 'h']) st.guides[axis].forEach((g, i) => { const d = Math.abs(g - (axis === 'v' ? x : y)); if (d < bd) { bd = d; best = { axis, i }; } });
+    return best;
+  }
+  const roundTo = (v) => { const q = st.view.z > 3 ? 10 : 1; return Math.round(v * q) / q; };
+  const numBR = (v) => String(Number(v.toFixed(1))).replace('.', ',');
+  // os pontos da forma do cursor, na tela do desenho (para grudar a régua de medir e as linhas guia neles)
+  function shapeSpots() {
+    if (!st.show.points || st.build) return [];
+    const hl = handleList(st.model, currentPose());
+    if (!hl) return [];
+    return hl.pts.filter((p, i) => p && ['pt', 'center', 'corner', 'pos', 'size', 'pivot'].includes(hl.rec.handles[i].kind));
+  }
+  function startGuide(axis, i, e) {
+    st.guideDrag = { axis, i, pos: i >= 0 ? st.guides[axis][i] : 0, out: i < 0 };
+    if (i < 0) hint(axis === 'v' ? 'Arraste para dentro do desenho: uma linha guia em pé.' : 'Arraste para dentro do desenho: uma linha guia deitada.', 2000);
+  }
+  // a linha anda com o mouse, em pixels inteiros; gruda nas bordas e no meio do papel e nos pontos da forma do cursor
+  function moveGuide(d, e) {
+    const r = view.getBoundingClientRect();
+    d.out = !!rulerAt(e) || e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom;
+    if (d.out) { hint(d.i >= 0 ? 'Solte aqui para apagar a linha guia.' : 'Arraste para dentro do desenho.', 1200); draw(); return; }
+    const p = toCanvas(e), k = d.axis === 'v' ? 0 : 1, c = st.model.canvas, size = k ? c.h : c.w;
+    let pos = roundTo(p[k]);
+    if (!(e.ctrlKey || e.metaKey)) {
+      let bd = SNAP_PX / st.view.z;
+      for (const v of [0, size / 2, size].concat(shapeSpots().map((s) => s[k]))) { const dd = Math.abs(v - p[k]); if (dd < bd) { bd = dd; pos = Math.round(v * 10) / 10; } }
+    }
+    d.pos = pos;
+    hint(`linha guia ${d.axis === 'v' ? 'em pé: x' : 'deitada: y'} = ${numBR(pos)}`, 1200);
+    draw();
+  }
+  function endGuide(d) {
+    const list = st.guides[d.axis];
+    if (d.out) { if (d.i >= 0) { list.splice(d.i, 1); hint('A linha guia foi apagada.', 1600); } } else if (d.i >= 0) list[d.i] = d.pos;
+    else list.push(d.pos);
+    saveGuides(st.current, st.guides);
+  }
+  // grudar: o quanto falta para um dos valores (o mais perto) chegar numa linha guia; 0 se nenhuma está perto
+  function snapOff(vals, axis, hot) {
+    let off = 0, bd = SNAP_PX / st.view.z, hit;
+    for (const v of vals) for (const g of st.guides[axis]) { const d = Math.abs(g - v); if (d < bd) { bd = d; off = g - v; hit = g; } }
+    if (hit !== undefined) hot[axis] = hit;
+    return off;
+  }
+  const snapping = (e) => rulersOn() && !(e.ctrlKey || e.metaKey) && (st.guides.v.length > 0 || st.guides.h.length > 0);
+  // o mouse ajustado para que a alça (self) ou as bordas e o meio da forma (box) caiam na linha guia mais perto;
+  // ref = onde estava o que anda quando o mouse está em [x, y] (a forma anda o mesmo que o mouse a partir dali)
+  function snapMouse(sn, x, y, e) {
+    st.guideHot = null;
+    if (!sn || !snapping(e)) return [x, y];
+    const ox = x - sn.ref[0], oy = y - sn.ref[1], b = sn.box, hot = {};
+    const xs = sn.self ? [x] : [], ys = sn.self ? [y] : [];
+    if (b) { xs.push(b.x0 + ox, (b.x0 + b.x1) / 2 + ox, b.x1 + ox); ys.push(b.y0 + oy, (b.y0 + b.y1) / 2 + oy, b.y1 + oy); }
+    x += snapOff(xs, 'v', hot);
+    y += snapOff(ys, 'h', hot);
+    if (hot.v !== undefined || hot.h !== undefined) st.guideHot = hot;
+    return [x, y];
+  }
+  // a caixa justa de curvas (as alças de uma curva podem ficar fora dela); b acumula várias
+  function tightBox(segs, b) {
+    b = b || { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    const add = (x, y) => { b.x0 = Math.min(b.x0, x); b.x1 = Math.max(b.x1, x); b.y0 = Math.min(b.y0, y); b.y1 = Math.max(b.y1, y); };
+    const at = (p0, p1, p2, p3, t) => { const u = 1 - t; return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3; };
+    // onde a curva vira (a derivada zera), entre o começo e o fim
+    const turns = (p0, p1, p2, p3) => {
+      const A = p1 - p0, B = p2 - p1, C = p3 - p2, a = A - 2 * B + C, b2 = 2 * (B - A), out = [];
+      if (Math.abs(a) < 1e-9) { if (Math.abs(b2) > 1e-9) out.push(-A / b2); } else {
+        const disc = b2 * b2 - 4 * a * A;
+        if (disc >= 0) { const r = Math.sqrt(disc); out.push((-b2 + r) / (2 * a), (-b2 - r) / (2 * a)); }
+      }
+      return out.filter((t) => t > 0 && t < 1);
+    };
+    for (const s of segs) {
+      add(s[0], s[1]);
+      add(s[6], s[7]);
+      for (const t of turns(s[0], s[2], s[4], s[6]).concat(turns(s[1], s[3], s[5], s[7]))) add(at(s[0], s[2], s[4], s[6], t), at(s[1], s[3], s[5], s[7], t));
+    }
+    return b;
+  }
+  // a caixa da forma de uma linha, na tela do desenho (dentro de componentes: a dos pontos)
+  function elBox(rec) {
+    const m = st.model, pose = currentPose();
+    if (rec.el && !rec.xf) { const g = S.geometry(m, pose, rec.el); if (g.segs.length) return tightBox(g.segs); }
+    const pts = rec.handles.filter((h) => h.kind === 'pt').map((h) => S.handlePos(m, pose, rec, h));
+    if (!pts.length) return null;
+    const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    for (const [x, y] of pts) { b.x0 = Math.min(b.x0, x); b.x1 = Math.max(b.x1, x); b.y0 = Math.min(b.y0, y); b.y1 = Math.max(b.y1, y); }
+    return b;
+  }
+  // o que gruda num arraste de alça: o ponto em si (pt, size), a forma inteira pelas bordas e pelo meio (✥, Shift)
+  // ou as duas coisas (as alças de posição: center, corner, pos)
+  function snapPlan(rec, h, hi, mode, e) {
+    if (isFilm()) return null;
+    if (mode === 'move') return { self: false, ref: toCanvas(e), box: elBox(rec) };
+    if (mode || h.grad || !['pt', 'center', 'corner', 'pos', 'size'].includes(h.kind)) return null;
+    const hl = handleList(st.model, currentPose()), at = hl && hl.pts[hi];
+    return { self: true, ref: at || toCanvas(e), box: ['center', 'corner', 'pos'].includes(h.kind) && rec.el ? elBox(rec) : null };
+  }
+  // ---- medir ----
+  function setMeasure(on) {
+    st.measure = on;
+    if (!on) { st.meas = null; st.mdrag = null; }
+    $('measureBtn').classList.toggle('on', on);
+    if (on) hint('Medir: arraste no desenho de um ponto a outro. Com Shift, de 45 em 45 graus. As pontas grudam nos pontos da forma e nas linhas guia (segurando Ctrl, não).', 4600);
+    draw();
+  }
+  // a ponta da régua de medir sob o mouse
+  function measureEnd(e) {
+    if (!st.meas) return null;
+    const [x, y] = toCanvas(e), r = 8 / st.view.z;
+    for (const k of ['b', 'a']) if (Math.hypot(st.meas[k][0] - x, st.meas[k][1] - y) < r) return k;
+    return null;
+  }
+  function measurePoint(e, other) {
+    let [x, y] = toCanvas(e);
+    st.guideHot = null;
+    if (e.shiftKey && other) {
+      const dx = x - other[0], dy = y - other[1], len = roundTo(Math.hypot(dx, dy)), a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+      return [Math.round((other[0] + Math.cos(a) * len) * 10) / 10, Math.round((other[1] + Math.sin(a) * len) * 10) / 10];
+    }
+    if (!(e.ctrlKey || e.metaKey)) {
+      let best = null, bd = 8 / st.view.z;
+      for (const p of shapeSpots()) { const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = p; } }
+      if (best) return [Math.round(best[0] * 10) / 10, Math.round(best[1] * 10) / 10];
+      if (snapping(e)) {
+        const hot = {}, ox = snapOff([x], 'v', hot), oy = snapOff([y], 'h', hot);
+        if (hot.v !== undefined || hot.h !== undefined) st.guideHot = hot;
+        return [hot.v !== undefined ? x + ox : roundTo(x), hot.h !== undefined ? y + oy : roundTo(y)];
+      }
+    }
+    return [roundTo(x), roundTo(y)];
+  }
+  function moveMeasure(d, e) {
+    const m = st.meas;
+    m[d.end] = measurePoint(e, d.end === 'a' ? m.b : m.a);
+    draw();
+  }
+  // a distância, o ângulo (como no rot=: em graus, girando no sentido do relógio) e quanto anda em x e em y
+  function measText(m) {
+    const dx = m.b[0] - m.a[0], dy = m.b[1] - m.a[1];
+    return `${numBR(Math.hypot(dx, dy))} px · ${numBR((Math.atan2(dy, dx) * 180) / Math.PI)}° · dx ${numBR(dx)} · dy ${numBR(dy)}`;
+  }
+  // ---- desenho (por cima de tudo, nos pixels da tela) ----
+  function drawGuides(ctx, dpr) {
+    const v = st.view, w = view.clientWidth, h = view.clientHeight, d = st.guideDrag, hot = st.guideHot || {};
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 1;
+    const line = (axis, g, lit) => {
+      const s = Math.round(axis === 'v' ? v.x + g * v.z : v.y + g * v.z) + 0.5;
+      ctx.strokeStyle = lit ? '#ffffff' : GUIDE_C;
+      ctx.globalAlpha = lit ? 1 : 0.8;
+      ctx.beginPath();
+      if (axis === 'v') { ctx.moveTo(s, 0); ctx.lineTo(s, h); } else { ctx.moveTo(0, s); ctx.lineTo(w, s); }
+      ctx.stroke();
+    };
+    for (const axis of ['v', 'h']) st.guides[axis].forEach((g, i) => { if (!(d && d.axis === axis && d.i === i)) line(axis, g, hot[axis] === g); });
+    if (d && !d.out) line(d.axis, d.pos, true);
+    ctx.restore();
+  }
+  function drawMeasure(ctx, dpr) {
+    const m = st.meas, v = st.view;
+    const A = [v.x + m.a[0] * v.z, v.y + m.a[1] * v.z], B = [v.x + m.b[0] * v.z, v.y + m.b[1] * v.z];
+    const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round';
+    // as pontas: um traço de lado (como numa régua)
+    const nx = len ? -(B[1] - A[1]) / len : 0, ny = len ? (B[0] - A[0]) / len : 1;
+    const path = new Path2D();
+    path.moveTo(A[0], A[1]);
+    path.lineTo(B[0], B[1]);
+    for (const P of [A, B]) { path.moveTo(P[0] - nx * 7, P[1] - ny * 7); path.lineTo(P[0] + nx * 7, P[1] + ny * 7); }
+    for (const [c, lw] of [['#14141c', 3.5], [MEAS_C, 1.5]]) { ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.stroke(path); }
+    for (const P of [A, B]) {
+      ctx.beginPath();
+      ctx.arc(P[0], P[1], 3, 0, Math.PI * 2);
+      ctx.fillStyle = MEAS_C;
+      ctx.fill();
+      ctx.strokeStyle = '#14141c';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    if (len >= 1) {
+      const txt = measText(m);
+      ctx.font = '12px ui-monospace, Consolas, monospace';
+      // o rótulo fica ao lado do meio da régua, longe o bastante para a caixa não cobrir a linha
+      const tw = ctx.measureText(txt).width + 14, th = 22, side = ny > 0 ? -1 : 1, off = 10 + (Math.abs(nx) * tw + Math.abs(ny) * th) / 2;
+      let lx = (A[0] + B[0]) / 2 + nx * side * off - tw / 2, ly = (A[1] + B[1]) / 2 + ny * side * off - th / 2;
+      const r0 = rulersOn() ? RULER : 0;
+      lx = Math.max(r0 + 4, Math.min(view.clientWidth - tw - 4, lx));
+      ly = Math.max(r0 + 4, Math.min(view.clientHeight - th - 4, ly));
+      ctx.fillStyle = 'rgba(10,14,19,.9)';
+      ctx.strokeStyle = MEAS_C;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(lx + 0.5, ly + 0.5, tw, th, 5); else ctx.rect(lx + 0.5, ly + 0.5, tw, th);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffe7a8';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(txt, lx + 7.5, ly + th / 2 + 1);
+    }
+    ctx.restore();
+  }
+  // o passo das marcas com número: o menor que fica a pelo menos 50 pixels um do outro na tela
+  const RULER_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 50000];
+  function drawRulers(ctx, dpr) {
+    const v = st.view, z = v.z, w = view.clientWidth, h = view.clientHeight, c = st.model.canvas;
+    const step = RULER_STEPS.find((s) => s * z >= 50) || RULER_STEPS[RULER_STEPS.length - 1];
+    const lead = step / Math.pow(10, Math.floor(Math.log10(step) + 1e-9));
+    const n = (lead === 1 ? [10, 5, 2] : lead === 2 ? [4, 2] : [5]).find((k) => (step / k) * z >= 5) || 1, minor = step / n;
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#18202a';
+    ctx.fillRect(0, 0, w, RULER);
+    ctx.fillRect(0, 0, RULER, h);
+    // o papel aparece mais claro nas réguas
+    ctx.fillStyle = '#243039';
+    ctx.fillRect(Math.max(RULER, v.x), 0, Math.max(0, Math.min(w, v.x + c.w * z) - Math.max(RULER, v.x)), RULER);
+    ctx.fillRect(0, Math.max(RULER, v.y), RULER, Math.max(0, Math.min(h, v.y + c.h * z) - Math.max(RULER, v.y)));
+    ctx.font = '10px system-ui, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineWidth = 1;
+    // as marcas: compridas com número, médias no meio, curtas entre elas
+    const ticks = (o, len0, len1) => {
+      const out = [];
+      for (let i = Math.floor((RULER - o) / z / minor), end = Math.ceil((len1 - o) / z / minor); i <= end; i++) {
+        const s = Math.round(o + i * minor * z) + 0.5;
+        if (s < len0 || s > len1) continue;
+        out.push({ s, val: i * minor, size: i % n === 0 ? RULER : n % 2 === 0 && i % (n / 2) === 0 ? 9 : 5 });
+      }
+      return out;
+    };
+    ctx.strokeStyle = '#6b7885';
+    ctx.fillStyle = '#9aa7b4';
+    ctx.beginPath();
+    for (const t of ticks(v.x, RULER, w)) {
+      ctx.moveTo(t.s, RULER - t.size);
+      ctx.lineTo(t.s, RULER);
+      if (t.size === RULER) ctx.fillText(String(Math.round(t.val)), t.s + 3, 10);
+    }
+    for (const t of ticks(v.y, RULER, h)) {
+      ctx.moveTo(RULER - t.size, t.s);
+      ctx.lineTo(RULER, t.s);
+      if (t.size === RULER) {
+        const txt = String(Math.round(t.val)), tw = ctx.measureText(txt).width;
+        ctx.save();
+        ctx.translate(10, t.s + 3 + tw);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(txt, 0, 0);
+        ctx.restore();
+      }
+    }
+    ctx.stroke();
+    // as linhas guia marcadas nas réguas
+    ctx.fillStyle = GUIDE_C;
+    for (const g of st.guides.v) { const s = v.x + g * z; if (s > RULER && s < w) ctx.fillRect(Math.round(s) - 1, RULER - 4, 3, 4); }
+    for (const g of st.guides.h) { const s = v.y + g * z; if (s > RULER && s < h) ctx.fillRect(RULER - 4, Math.round(s) - 1, 4, 3); }
+    // bordas e o quadradinho do canto
+    ctx.strokeStyle = '#2c3843';
+    ctx.beginPath();
+    ctx.moveTo(0, RULER - 0.5);
+    ctx.lineTo(w, RULER - 0.5);
+    ctx.moveTo(RULER - 0.5, 0);
+    ctx.lineTo(RULER - 0.5, h);
+    ctx.stroke();
+    ctx.fillStyle = '#18202a';
+    ctx.fillRect(0, 0, RULER - 1, RULER - 1);
+    ctx.fillStyle = '#6b7885';
+    ctx.font = '9px system-ui, sans-serif';
+    ctx.fillText('px', 4, 13);
+    ctx.restore();
+  }
+  // liga as réguas e o Medir de acordo com o arquivo (no filme, não há réguas nem Medir)
+  function syncRulers() {
+    const film = isFilm();
+    $('tRulersWrap').hidden = film;
+    $('measureBtn').hidden = film;
+    if (film && st.measure) setMeasure(false);
+    stage.classList.toggle('ruled', rulersOn());
+  }
+
   function hitHandle(e) {
     if (!st.show.points || st.build) return -1;
     const hl = handleList(st.model, currentPose());
@@ -2380,6 +2719,9 @@
     // clicar no desenho com a caixinha do texto aberta: grava o que foi escrito (como clicar fora)
     if (textEd) closeTextEd(true, false);
     view.setPointerCapture(e.pointerId);
+    // numa régua: puxar uma linha guia nova (no quadradinho do canto, só o duplo clique faz algo: apaga todas)
+    const ru = e.button === 0 ? rulerAt(e) : null;
+    if (ru) { if (ru !== 'corner') startGuide(ru === 'top' ? 'h' : 'v', -1, e); return; }
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
       const [x, y] = toWorld(e);
       const ta = editor.ta, s = ta.selectionStart;
@@ -2389,11 +2731,21 @@
       ta.focus();
       return;
     }
+    // medir: arrastar faz uma medida nova; perto de uma das pontas, arrasta essa ponta
+    if (e.button === 0 && st.measure && !isFilm()) {
+      const end = measureEnd(e);
+      if (!end) { const p = measurePoint(e, null); st.meas = { a: p, b: p.slice() }; }
+      st.mdrag = { end: end || 'b' };
+      draw();
+      return;
+    }
     const hb = e.button === 0 ? hitBone(e) : null;
     if (hb) { startPose(hb, e); return; }
     const hg = e.button === 0 ? hitGroup(e) : null;
     if (hg) { startGroup(hg, e); return; }
     const hi = e.button === 0 ? hitHandle(e) : -1;
+    const hgd = e.button === 0 && hi < 0 ? hitGuide(e) : null;
+    if (hgd) { startGuide(hgd.axis, hgd.i, e); return; }
     const hr = e.button === 0 && hi < 0 ? hitRef(e) : null;
     if (hr) {
       const rec = st.model.byLine.get(hr.r.line);
@@ -2424,6 +2776,7 @@
       else if (h.kind === 'fsize') hint('Arraste o canto: as letras crescem ou diminuem (size=). Com Shift, de 4 em 4.', 2600);
       else if (mode === 'spin') hint(h.pts ? 'Girando a forma inteira em volta do meio dos pontos. Com Shift, de 15 em 15 graus.' : 'Gire em volta do meio. Com Shift, de 15 em 15 graus; duplo clique volta a rot=0.', 3000);
       st.drag = { line: st.caret.line, hi, key: 'drag' + Date.now(), mode, idx: h.idx };
+      st.drag.sn = snapPlan(rec, h, hi, mode, e);
       if (mode === 'move' || mode === 'spin') {
         // os pontos como estavam no começo: cada movimento parte deles (sem acumular arredondamento)
         st.drag.orig = [];
@@ -2443,9 +2796,12 @@
     const [x, y] = toCanvas(e);
     const wp = toWorld(e);
     $('coords').textContent = `x ${Math.round(wp[0])}  y ${Math.round(wp[1])}`;
+    if (st.guideDrag) { moveGuide(st.guideDrag, e); return; }
+    if (st.mdrag) { moveMeasure(st.mdrag, e); return; }
     if (st.pose) { movePose(e); return; }
-    if (st.gdrag) { moveGroup(st.gdrag, x, y, e.shiftKey); return; }
-    if (st.drag) { moveHandle(st.drag, x, y, e.shiftKey); return; }
+    // com as réguas ligadas, o que se arrasta gruda nas linhas guia
+    if (st.gdrag) { const [sx, sy] = st.gdrag.mode === 'move' ? snapMouse(st.gdrag.sn, x, y, e) : [x, y]; moveGroup(st.gdrag, sx, sy, e.shiftKey); return; }
+    if (st.drag) { const [sx, sy] = snapMouse(st.drag.sn, x, y, e); moveHandle(st.drag, sx, sy, e.shiftKey); return; }
     if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
     if (st.pan) {
       // uns pixels de tremida não são arraste: o clique continua sendo clique
@@ -2458,14 +2814,22 @@
       draw();
       return;
     }
+    const ru = rulerAt(e);
+    if (ru) { view.style.cursor = ru === 'top' ? 'ns-resize' : ru === 'left' ? 'ew-resize' : 'default'; return; }
+    if (st.measure && !isFilm()) { view.style.cursor = measureEnd(e) ? 'move' : 'crosshair'; return; }
     const hb = hitBone(e), hg = hb ? null : hitGroup(e), hi = hb || hg ? -1 : hitHandle(e);
-    const hr = hb || hg || hi >= 0 ? null : hitRef(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : 'move') : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    const hgd = hb || hg || hi >= 0 ? null : hitGuide(e);
+    const hr = hb || hg || hi >= 0 || hgd ? null : hitRef(e);
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : 'move') : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
-  const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
     const p = st.pan;
+    if (st.guideDrag) endGuide(st.guideDrag);
+    // no Medir, um clique sem arrastar tira a medida
+    const mm = st.meas;
+    if (st.mdrag && mm && mm.a[0] === mm.b[0] && mm.a[1] === mm.b[1]) st.meas = null;
     endPointer();
     if (p && p.click && !p.moved) pickShape(e);
   });
@@ -2576,6 +2940,10 @@
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
+    // duplo clique no quadradinho do canto das réguas: apaga as linhas guia deste arquivo
+    const ru = rulerAt(e);
+    if (ru === 'corner') { clearGuides(); return; }
+    if (ru || (st.measure && !isFilm())) return;
     const hi = hitHandle(e);
     const rec = st.model.byLine.get(st.caret.line);
     const h0 = hi >= 0 && rec ? rec.handles[hi] : null;
@@ -2870,6 +3238,15 @@
   $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
+  $('tRulers').checked = st.show.rulers;
+  $('tRulers').addEventListener('change', (e) => {
+    st.show.rulers = e.target.checked;
+    store.set('weasel.rulers', st.show.rulers ? '1' : '0');
+    syncRulers();
+    if (st.show.rulers && !st.guides.v.length && !st.guides.h.length) hint('Arraste de uma régua para dentro do desenho: sai uma linha guia. O que você arrasta gruda nela (segurando Ctrl, não gruda).', 4200);
+    draw();
+  });
+  $('measureBtn').addEventListener('click', () => setMeasure(!st.measure));
   $('zFit').addEventListener('click', () => { st.view.auto = true; draw(); });
   $('zIn').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25));
   $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
@@ -2918,6 +3295,8 @@
   function openFile(name, src) {
     if (src !== undefined) st.files.set(name, src);
     st.current = name;
+    loadGuides(name);
+    st.meas = null;
     st.anim = '';
     st.shot = '';
     st.frame = 0;
@@ -2941,12 +3320,16 @@
     if (!/\.\w+$/.test(name)) name += '.weasel';
     if (st.files.has(name)) { hint(`Já existe um arquivo "${name}".`, 2600); return; }
     const src = editor.value;
+    // as linhas guia vão junto para o nome novo
+    saveGuides(name, st.guides);
+    saveGuides(st.current, null);
     st.files.delete(st.current);
     openFile(name, src);
   });
   $('fileDel').addEventListener('click', () => {
     if (st.files.size < 2) { hint('Este é o único arquivo.', 2000); return; }
     if (!confirm(`Excluir "${st.current}" deste navegador? (o arquivo baixado, se houver, continua no seu computador)`)) return;
+    saveGuides(st.current, null);
     st.files.delete(st.current);
     openFile([...st.files.keys()].sort()[0]);
   });
@@ -3201,14 +3584,14 @@
     // Ctrl+I (inserir): o menu de formas; Ctrl+Shift+I continua sendo do navegador
     if (mod && !e.shiftKey && !e.altKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); if (!e.target.closest || !e.target.closest('dialog')) openShapeMenu(null); return; }
     if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
-    if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); return; }
+    if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
     const t = e.target;
     if (t.closest && t.closest('textarea, input, select, dialog')) return;
     // com o foco no desenho: Ctrl+Z e Ctrl+Y desfazem e refazem no código, e Delete apaga o ponto escolhido
     if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); if (e.shiftKey) editor.redo(); else editor.undo(); return; }
     if (mod && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); editor.redo(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
-    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); }
+    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); } else if (!mod && !e.altKey && !isFilm() && (e.key === 'r' || e.key === 'R')) $('tRulers').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'm' || e.key === 'M')) $('measureBtn').click();
   });
 
   // ---------- início ----------

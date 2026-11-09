@@ -747,6 +747,18 @@ Repare:
 
 **Experimente:** acrescente `rot=20` à segunda linha `ref`. A imagem gira 20 graus em volta do próprio centro.
 
+## Réguas, linhas guia e medir
+
+Para alinhar formas (os olhos na mesma altura, o pé em cima do chão, duas portas com o mesmo topo), o editor tem réguas e linhas guia, como num programa de desenho. Nada disso entra no código nem na exportação: são só ajudas na tela.
+
+- **Réguas:** ligue a caixa **Réguas**, acima do desenho (ou aperte **R** com o foco fora do código). Aparecem duas réguas, em cima e à esquerda, que contam os pixels do desenho: o `0` é o canto de cima à esquerda do `canvas`, e a parte do papel fica mais clara. Os números acompanham o zoom.
+- **Linha guia:** arraste de uma régua para dentro do desenho. Da régua de cima sai uma linha **deitada** (marca um `y`); da régua da esquerda, uma linha **em pé** (marca um `x`). Enquanto você arrasta, a linha gruda nas bordas e no meio do papel e nos pontos da forma do cursor, e um aviso embaixo do desenho mostra onde ela está (`linha guia em pé: x = 400`).
+- **Mudar e apagar:** arraste uma linha para mudá-la de lugar. Para apagar, solte-a em cima de uma régua. Duplo clique no quadradinho do canto das réguas apaga todas as linhas do arquivo.
+- **Grudar:** com as réguas ligadas, o que você arrasta gruda nas linhas guia quando passa a menos de 6 pixels (da tela) delas, e a linha fica branca enquanto segura. Um ponto gruda nele mesmo; a forma inteira (o **✥**, ou o centro de uma `ellipse`, o canto de um `rect`) gruda pelas bordas e pelo meio; a escolha do painel **Camadas** gruda pela caixa dela. Segure **Ctrl** durante o arraste para não grudar.
+- **Medir:** o botão **Medir** (ou a tecla **M**) liga a régua de medir. Arraste no desenho de um ponto a outro: ela mostra a distância, o ângulo e quanto anda em x e em y (`100 px · -53,1° · dx 60 · dy -80`). O ângulo é como no `rot=`: em graus, positivo gira no sentido do relógio, e `0°` aponta para a direita. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com **Shift**, a régua anda de 45 em 45 graus. Arraste uma ponta para ajustar; um clique (sem arrastar) ou **Esc** tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos: desligue para voltar a editar.
+
+As linhas guia ficam guardadas **neste navegador**, uma lista para cada arquivo (ao renomear o arquivo, vão junto). A caixa **Réguas** desliga tudo de uma vez: réguas, linhas e o grude. Não confunda com a caixa **Guias**, que mostra as camadas `guide` do seu código (linhas de construção que você desenha de propósito, como no [capítulo 4](04-camadas.md#camada-de-construção-guide)). Em filmes, não há réguas nem Medir.
+
 ## Opções que toda forma aceita
 
 | Atributo | O que faz |
