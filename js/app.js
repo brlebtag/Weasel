@@ -647,7 +647,7 @@
     if (s.cmd === 'include') return { why: 'vem de outro arquivo (include): mude lá' };
     if (rec.repeated) return { why: 'vem de um repeat: mude no código' };
     const text = lineOf(line), sp = L.splitLine(text), code = (sp.comment !== null ? text.slice(0, sp.commentAt) : text).trimEnd();
-    const plan = { line, text, rec, pts: [], pos: null, rect: null, rot: null, ref: null, why: '', noSpin: '' };
+    const plan = { line, text, rec, pts: [], pos: null, rect: null, rot: null, ref: null, why: '', noSpin: '', end: code.length };
     // o rot= que já existe (ou onde escrever um)
     const rotOf = () => {
       const a = s.attrs.get('rot');
@@ -747,7 +747,7 @@
     ctx.strokeStyle = 'rgba(92,198,212,.95)';
     ctx.lineWidth = 1.5 / z;
     for (const g of b.geo) ctx.stroke(S.pathOf(g));
-    const pad = 6 / z;
+    const pad = GROUP_PAD / z;
     ctx.setLineDash([5 / z, 4 / z]);
     ctx.lineWidth = 1 / z;
     ctx.strokeRect(b.x0 - pad, b.y0 - pad, b.x1 - b.x0 + 2 * pad, b.y1 - b.y0 + 2 * pad);
@@ -761,38 +761,75 @@
       ctx.lineTo(s.spin[0], s.spin[1]);
       ctx.stroke();
     }
+    // esticar: quadradinhos azuis nos cantos e no meio dos lados
+    const r = 3.3 / z;
+    for (const q of groupKnobs(b, z)) {
+      ctx.beginPath();
+      ctx.rect(q.x - r, q.y - r, r * 2, r * 2);
+      ctx.fillStyle = '#5cc6d4';
+      ctx.fill();
+      ctx.lineWidth = 1.4 / z;
+      ctx.strokeStyle = '#14141c';
+      ctx.stroke();
+    }
     drawKnob(ctx, s.spin[0], s.spin[1], 'rot', -Math.PI / 2, z);
     drawKnob(ctx, s.move[0], s.move[1], 'move', 0, z);
     ctx.restore();
   }
-  // o ✥ ou a bolinha de girar sob o mouse
+  // o ✥, a bolinha de girar ('spin', 'move') ou um quadradinho de esticar ({ k }) sob o mouse
   function hitGroup(e) {
     if (!groupOn()) return null;
     const b = groupBox(st.model, currentPose());
     if (!b) return null;
-    const [x, y] = toCanvas(e), s = groupSpots(b, st.view.z), r = 10 / st.view.z;
+    const [x, y] = toCanvas(e), z = st.view.z, s = groupSpots(b, z), r = 10 / z;
     if (Math.hypot(s.spin[0] - x, s.spin[1] - y) < r) return 'spin';
-    if (Math.hypot(s.move[0] - x, s.move[1] - y) < r) return 'move';
+    let k = null, kd = 9 / z;
+    for (const q of groupKnobs(b, z)) { const d = Math.hypot(q.x - x, q.y - y); if (d < kd) { kd = d; k = q; } }
+    const dm = Math.hypot(s.move[0] - x, s.move[1] - y);
+    if (dm < r && (!k || dm < kd)) return 'move';
+    if (k) return { k };
     // em cima de uma das formas escolhidas: arrastar move todas
     const el = hitsAt(e)[0], m = st.model;
     if (el && !e.shiftKey) { const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i; if (st.sel.has(line)) return 'move'; }
     return null;
   }
-  function startGroup(mode, e) {
-    if (st.playing || st.anim) { hint('Para mover a escolha, escolha "pose parada" no player.', 2600); return; }
+  function startGroup(mode, e, k) {
+    const verb = mode === 'spin' ? 'girar' : mode === 'scale' ? 'esticar' : 'mover';
+    if (st.playing || st.anim) { hint(`Para ${verb} a escolha, escolha "pose parada" no player.`, 2600); return; }
     const plans = [...st.sel.keys()].map(editPlan);
-    const ok = plans.filter((p) => !p.why && !(mode === 'spin' && p.noSpin)), left = plans.length - ok.length;
-    if (!ok.length) { hint(`Nada aqui dá para ${mode === 'spin' ? 'girar' : 'mover'} pelo desenho: ${plans[0].why || plans[0].noSpin}.`, 3200); return; }
+    if (mode === 'scale') for (const p of plans) if (!p.why) p.noScale = scaleInfo(p);
+    const stop = (p) => p.why || (mode === 'spin' && p.noSpin) || (mode === 'scale' && p.noScale) || '';
+    const ok = plans.filter((p) => !stop(p)), left = plans.length - ok.length;
+    if (!ok.length) { hint(`Nada aqui dá para ${verb} pelo desenho: ${stop(plans[0])}.`, 3200); return; }
     const b = groupBox(st.model, currentPose()), [px, py] = toCanvas(e);
     for (const p of ok) {
-      p.l0 = localOf(p.rec, p.ref, px, py);
-      p.lc = localOf(p.rec, p.ref, b.cx, b.cy);
+      if (mode !== 'scale') {
+        p.l0 = localOf(p.rec, p.ref, px, py);
+        p.lc = localOf(p.rec, p.ref, b.cx, b.cy);
+        continue;
+      }
+      // quanto o código da linha anda quando a tela anda um x ou um y (num osso ou componente girado, de viés)
+      const W = Math.max(1, b.x1 - b.x0), H = Math.max(1, b.y1 - b.y0);
+      const o = localOf(p.rec, p.ref, b.x0, b.y0), u = localOf(p.rec, p.ref, b.x0 + W, b.y0), v = localOf(p.rec, p.ref, b.x0, b.y0 + H);
+      if (!o || !u || !v) continue;
+      const J = [(u[0] - o[0]) / W, (v[0] - o[0]) / H, (u[1] - o[1]) / W, (v[1] - o[1]) / H];
+      if (Math.abs(J[0] * J[3] - J[1] * J[2]) < 1e-12) continue;
+      const kx = p.rec.xf ? Math.sqrt(Math.abs(M.det(p.rec.xf))) : 1;
+      Object.assign(p, { J, o, dec: kx > 1.5 || st.view.z > 3 ? 1 : 0 });
     }
-    st.gdrag = { mode, key: 'grupo' + Date.now(), plans: ok.filter((p) => p.l0 && p.lc), cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left, sn: { self: false, ref: [px, py], box: b } };
+    const live = ok.filter((p) => (mode === 'scale' ? p.J : p.l0 && p.lc));
+    st.gdrag = { mode, key: 'grupo' + Date.now(), plans: live, cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left, sn: { self: false, ref: [px, py], box: b } };
+    if (mode === 'scale') {
+      // o lado (ou o canto) que anda gruda nas linhas guia, só no sentido em que ele anda
+      const ex = b.x0 + k.bx * (b.x1 - b.x0), ey = b.y0 + k.by * (b.y1 - b.y0), gx = k.bx === 0.5 ? NaN : ex, gy = k.by === 0.5 ? NaN : ey;
+      st.gdrag.sc = { bx: k.bx, by: k.by, b: { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }, ex, ey, grab: [px - ex, py - ey], said: '' };
+      st.gdrag.sn = { self: false, ref: [px, py], box: { x0: gx, x1: gx, y0: gy, y1: gy } };
+    }
     if (left) {
-      const why = plans.filter((p) => p.why || (mode === 'spin' && p.noSpin)).map((p) => `linha ${p.line + 1}: ${p.why || p.noSpin}`);
+      const why = plans.filter(stop).map((p) => `linha ${p.line + 1}: ${stop(p)}`);
       hint(`${left} ${left > 1 ? 'linhas ficam paradas' : 'linha fica parada'} (${why.slice(0, 2).join('; ')}${why.length > 2 ? '…' : ''}).`, 4200);
     } else if (mode === 'spin') hint('Girando a escolha em volta do meio da caixa. Com Shift, de 15 em 15 graus.', 2600);
+    else if (mode === 'scale') hint('Esticando a escolha. Com Shift, sem perder a proporção; com Alt, a partir do meio. Passar do outro lado espelha.', 3200);
   }
   // cada passo do arraste reescreve as linhas escolhidas de uma vez (um Ctrl+Z só desfaz o arraste inteiro)
   function moveGroup(d, x, y, snap) {
@@ -828,6 +865,163 @@
     for (let i = 0; i < cl; i++) off += next[i].length + 1;
     off += Math.min(st.caret.col, next[cl].length);
     editor.replaceRange(from, to, block, { key, select: [off, off] });
+  }
+
+  // ---------- esticar a escolha ----------
+  // Os quadradinhos da caixa da escolha esticam todas as linhas juntas, a partir do lado de lá (com Alt, do meio).
+  // Em cada linha: os pontos e as alças de curva (shape, stroke, line), o centro e o raio da ellipse, o meio e o
+  // tamanho do rect, o meio e o size= do text (pela altura das letras) e a posição e o scale= do use; o rot= acompanha
+  // e, espelhando, o use ganha flip=. O w=, o ink= e o r= dos cantos não mudam; um emitter só anda.
+  const GROUP_PAD = 6;
+  // o que esticar precisa de cada linha (''), ou por que ela fica parada
+  function scaleInfo(p) {
+    const s = p.rec.st, A = s.attrs, el = p.rec.el;
+    const rotW = () => {
+      const a = A.get('rot');
+      if (!a) return { deg: 0, from: -1, to: -1, at: p.end };
+      if (a.inherited || isNaN(Number(a.text))) return null;
+      return { deg: Number(a.text), from: a.vfrom, to: a.to, at: p.end };
+    };
+    if (p.pts.length) { p.sc = { kind: 'pts' }; return ''; }
+    if (p.rec.use) {
+      const rot = rotW(), sa = A.get('scale'), fa = A.get('flip');
+      if (!rot) return 'o rot= tem {conta}';
+      let sxy = [1, 1];
+      if (sa) {
+        const v = sa.text.split(',').map(Number);
+        if (sa.inherited || v.length > 2 || v.some(isNaN)) return 'o scale= tem {conta}';
+        sxy = [v[0], v.length > 1 ? v[1] : v[0]];
+      }
+      if (fa && (fa.inherited || !['x', 'y', 'xy'].includes(fa.text))) return 'o flip= tem {conta}';
+      p.sc = { kind: 'use', rot, sxy, scale: sa ? { from: sa.vfrom, to: sa.to } : null, flip: fa ? { text: fa.text, from: fa.from, vfrom: fa.vfrom, to: fa.to } : null };
+      return '';
+    }
+    if (el.type === 'ellipse' || el.type === 'rect' || el.type === 'text') {
+      const rot = rotW();
+      if (!rot) return 'o rot= tem {conta}';
+      const h = p.rec.handles.find((q) => q.kind === (el.type === 'text' ? 'fsize' : 'size'));
+      if (!h || h.fixed) return el.type === 'text' ? 'o size= tem {conta}' : el.type === 'rect' ? 'o tamanho tem {conta}' : 'o raio tem {conta}';
+      p.sc = { kind: el.type, rot, h, box: el.type === 'text' ? S.textBox(el) : null };
+      return '';
+    }
+    p.sc = { kind: 'pos' };
+    return '';
+  }
+  // a linha esticada: T = [a, b, c, d] (x' = a·x + b·y, y' = c·x + d·y) nas coordenadas do código, em volta de o
+  function scaleText(p, T, o, dec) {
+    const vec = (x, y) => [T[0] * x + T[1] * y, T[2] * x + T[3] * y];
+    const at = (x, y) => { const v = vec(x - o[0], y - o[1]); return [o[0] + v[0], o[1] + v[1]]; };
+    const xy = (q) => `${fmtN(q[0], dec)},${fmtN(q[1], dec)}`, len = (v) => Math.hypot(v[0], v[1]), cross = (u, v) => u[0] * v[1] - u[1] * v[0];
+    const size = (v, min) => fmtN(Math.max(min, v), v < 10 ? Math.max(1, dec) : dec);
+    const ang = (v) => (Math.atan2(v[1], v[0]) * 180) / Math.PI, norm = (v) => ((((v + 180) % 360) + 360) % 360) - 180;
+    // o ângulo (de meia em meia volta) mais perto do giro de antes: o retângulo e a elipse são iguais virados, e o
+    // texto continua de pé quando espelha
+    const near = (v, ref) => v + Math.round((ref - v) / 180) * 180;
+    // as duas direções da forma (largura ax e altura ay, já giradas) depois de esticar
+    const cols = (deg, ax, ay) => { const r = (deg * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [vec(ax * c, ax * s), vec(-ay * s, ay * c)]; };
+    const sc = p.sc, ed = [];
+    const rotEd = (r, v) => {
+      if (Math.abs(norm(v - r.deg)) < 0.05) return;
+      const t = fmtN(norm(v), 1);
+      if (r.from >= 0) ed.push([r.from, r.to, t]); else if (t !== '0') ed.push([r.at, r.at, ` rot=${t}`]);
+    };
+    for (const q of p.pts) {
+      let t = xy(at(q.x, q.y)) + (q.corner ? '!' : ''), end = q.xyTo;
+      if (q.tan) { t += '~' + xy(vec(q.tan[0], q.tan[1])); end = q.to; }
+      ed.push([q.from, end, t]);
+    }
+    if (sc.kind === 'pos') ed.push([p.pos.from, p.pos.to, xy(at(p.pos.x, p.pos.y))]);
+    else if (sc.kind === 'ellipse') {
+      const el = p.rec.el, th = sc.rot.deg, [c1, c2] = cols(th, el.radius[0], el.radius[1]), n1 = len(c1), n2 = len(c2);
+      ed.push([p.pos.from, p.pos.to, xy(at(p.pos.x, p.pos.y))]);
+      let r1 = n1, r2 = n2, d = ang(c1);
+      if (Math.abs(c1[0] * c2[0] + c1[1] * c2[1]) > 1e-6 * n1 * n2) {
+        // esticada de viés (num osso ou componente girado): os eixos novos da elipse
+        const E = (c1[0] + c2[1]) / 2, F = (c1[0] - c2[1]) / 2, G = (c1[1] + c2[0]) / 2, H = (c1[1] - c2[0]) / 2, Q = Math.hypot(E, H), R = Math.hypot(F, G);
+        r1 = Q + R;
+        r2 = Math.abs(Q - R);
+        d = ((Math.atan2(G, F) + Math.atan2(H, E)) / 2) * (180 / Math.PI);
+      }
+      const t1 = size(r1, 0.5), t2 = size(r2, 0.5), round = sc.h.one && t1 === t2;
+      ed.push([sc.h.from, sc.h.to, round ? t1 : `${t1},${t2}`]);
+      if (!round) rotEd(sc.rot, near(d, th));
+    } else if (sc.kind === 'rect') {
+      // o meio vai para o lugar novo; a largura segue a direção da largura, e a altura guarda a área
+      const r = p.rect, th = sc.rot.deg, c = at(r.x + r.w / 2, r.y + r.h / 2), [c1, c2] = cols(th, r.w, r.h), n1 = len(c1);
+      const w = n1, h = n1 > 1e-9 ? Math.abs(cross(c1, c2)) / n1 : len(c2), tw = size(w, 0.5), thh = size(h, 0.5);
+      ed.push([r.from, r.to, xy([c[0] - Number(tw) / 2, c[1] - Number(thh) / 2])]);
+      ed.push([sc.h.from, sc.h.to, `${tw},${thh}`]);
+      rotEd(sc.rot, near(ang(c1), th));
+    } else if (sc.kind === 'text') {
+      // o meio das letras vai para o lugar novo; o size= muda pela altura (esticar só para o lado não muda as letras)
+      const el = p.rec.el, th = sc.rot.deg, b = sc.box, mx = b.x + b.w / 2, my = b.y + b.h / 2;
+      const q = turn(0, 0, th, mx, my), c = at(el.at[0] + q[0], el.at[1] + q[1]), [c1, c2] = cols(th, 1, 1), n1 = len(c1);
+      const k = n1 > 1e-9 ? Math.abs(cross(c1, c2)) / n1 : 0, tz = size(el.size * k, 1), kk = Number(tz) / el.size, d = near(ang(c1), th);
+      const q2 = turn(0, 0, d, mx * kk, my * kk);
+      ed.push([p.pos.from, p.pos.to, xy([c[0] - q2[0], c[1] - q2[1]])]);
+      if (tz !== fmtN(el.size, 2)) { if (sc.h.insert) ed.push([sc.h.at, sc.h.at, ` size=${tz}`]); else ed.push([sc.h.from, sc.h.to, tz]); }
+      rotEd(sc.rot, d);
+    } else if (sc.kind === 'use') {
+      ed.push([p.pos.from, p.pos.to, xy(at(p.pos.x, p.pos.y))]);
+      const th = sc.rot.deg, f0 = sc.flip ? sc.flip.text : '', fx = f0.includes('x') ? -1 : 1, fy = f0.includes('y') ? -1 : 1;
+      const [c1, c2] = cols(th, sc.sxy[0] * fx, sc.sxy[1] * fy), n1 = len(c1), r = n1 > 1e-9 ? cross(c1, c2) / n1 : 0, d0 = ang(c1);
+      // o mesmo desenho de dois jeitos (girar meia volta = virar nos dois sentidos): o que guarda o flip= de antes ou,
+      // senão, o giro mais perto do de antes
+      const cand = r >= 0 ? [[d0, ''], [d0 + 180, 'xy']] : [[d0, 'y'], [d0 + 180, 'x']], dist = (v) => Math.abs(norm(v - th));
+      const pick = cand.find((q) => q[1] === f0) || (dist(cand[0][0]) <= dist(cand[1][0]) ? cand[0] : cand[1]);
+      const sx = fmtN(Math.max(0.001, n1), 3), sy = fmtN(Math.max(0.001, Math.abs(r)), 3), ts = sx === sy ? sx : `${sx},${sy}`;
+      if (sc.scale) ed.push([sc.scale.from, sc.scale.to, ts]); else if (ts !== '1') ed.push([p.end, p.end, ` scale=${ts}`]);
+      rotEd(sc.rot, pick[0]);
+      if (pick[1] !== f0) {
+        if (!sc.flip) ed.push([p.end, p.end, ` flip=${pick[1]}`]);
+        else if (pick[1]) ed.push([sc.flip.vfrom, sc.flip.to, pick[1]]);
+        else ed.push([sc.flip.from - (p.text[sc.flip.from - 1] === ' ' ? 1 : 0), sc.flip.to, '']);
+      }
+    }
+    ed.sort((a, b) => b[0] - a[0]);
+    let out = p.text;
+    for (const [a, b, t] of ed) out = out.slice(0, a) + t + out.slice(b);
+    return out;
+  }
+  // os quadradinhos na caixa tracejada da escolha (nenhum girando, ou com a caixa pequena demais na tela)
+  function groupKnobs(b, z) {
+    if (st.gdrag && st.gdrag.mode === 'spin') return [];
+    const sw = (b.x1 - b.x0) * z, sh = (b.y1 - b.y0) * z;
+    if (Math.max(sw, sh) < 20) return [];
+    const flatX = sw < 1, flatY = sh < 1, pad = GROUP_PAD / z, out = [];
+    for (const by of [0, 0.5, 1]) for (const bx of [0, 0.5, 1]) {
+      if (bx === 0.5 && by === 0.5) continue;
+      const skip = bx !== 0.5 && by !== 0.5 ? flatX || flatY : bx === 0.5 ? flatY || (!flatX && sw < 40) : flatX || (!flatY && sh < 40);
+      if (skip) continue;
+      const ax = b.x0 + bx * (b.x1 - b.x0), ay = b.y0 + by * (b.y1 - b.y0);
+      out.push({ bx, by, x: ax + (bx * 2 - 1) * pad, y: ay + (by * 2 - 1) * pad, at: [ax, ay] });
+    }
+    return out;
+  }
+  // cada passo parte do texto do começo do arraste: a caixa da tela estica em volta da âncora, e cada linha recebe
+  // a mesma conta passada para as coordenadas dela (J = quanto o código anda por unidade da tela)
+  function scaleGroup(d, x, y, e) {
+    const c = d.sc, b = c.b, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    let ax = e.altKey ? cx : c.bx === 0 ? b.x1 : b.x0, ay = e.altKey ? cy : c.by === 0 ? b.y1 : b.y0;
+    const dx = c.ex - ax, dy = c.ey - ay, mx = x - c.grab[0] - ax, my = y - c.grab[1] - ay;
+    let sx = c.bx === 0.5 || Math.abs(dx) < 1e-9 ? 1 : mx / dx, sy = c.by === 0.5 || Math.abs(dy) < 1e-9 ? 1 : my / dy;
+    if (e.shiftKey) {
+      if (c.bx === 0.5) { sx = Math.abs(sy); ax = cx; } else if (c.by === 0.5) { sy = Math.abs(sx); ay = cy; } else {
+        const s = (mx * dx + my * dy) / (dx * dx + dy * dy || 1);
+        sx = s;
+        sy = s;
+      }
+    }
+    const out = new Map();
+    for (const p of d.plans) {
+      const [j0, j1, j2, j3] = p.J, det = j0 * j3 - j1 * j2, i0 = j3 / det, i1 = -j1 / det, i2 = -j2 / det, i3 = j0 / det;
+      const T = [j0 * sx * i0 + j1 * sy * i2, j0 * sx * i1 + j1 * sy * i3, j2 * sx * i0 + j3 * sy * i2, j2 * sx * i1 + j3 * sy * i3];
+      const o = [p.o[0] + j0 * (ax - b.x0) + j1 * (ay - b.y0), p.o[1] + j2 * (ax - b.x0) + j3 * (ay - b.y0)];
+      out.set(p.line, scaleText(p, T, o, p.dec));
+    }
+    writeLines(out, d.key);
+    const say = `${fmtN(Math.abs((b.x1 - b.x0) * sx), 0)} × ${fmtN(Math.abs((b.y1 - b.y0) * sy), 0)} (${Math.round(Math.abs(sx) * 100)}% × ${Math.round(Math.abs(sy) * 100)}%)${sx < 0 || sy < 0 ? ', espelhada' : ''}${d.left ? ` (${d.left} ${d.left > 1 ? 'linhas paradas' : 'linha parada'})` : ''}`;
+    if (say !== c.said) { c.said = say; hint(`esticando: ${say}`, 1500); }
   }
 
   // ---------- editor de gradiente ----------
@@ -2897,7 +3091,7 @@
     const hb = e.button === 0 ? hitBone(e) : null;
     if (hb) { startPose(hb, e); return; }
     const hg = e.button === 0 ? hitGroup(e) : null;
-    if (hg) { startGroup(hg, e); return; }
+    if (hg) { if (hg.k) startGroup('scale', e, hg.k); else startGroup(hg, e); return; }
     const hs = e.button === 0 ? hitScale(e) : null;
     if (hs) { startScale(hs, e); return; }
     const hi = e.button === 0 ? hitHandle(e) : -1;
@@ -2957,7 +3151,11 @@
     if (st.mdrag) { moveMeasure(st.mdrag, e); return; }
     if (st.pose) { movePose(e); return; }
     // com as réguas ligadas, o que se arrasta gruda nas linhas guia
-    if (st.gdrag) { const [sx, sy] = st.gdrag.mode === 'move' ? snapMouse(st.gdrag.sn, x, y, e) : [x, y]; moveGroup(st.gdrag, sx, sy, e.shiftKey); return; }
+    if (st.gdrag) {
+      const [sx, sy] = st.gdrag.mode !== 'spin' ? snapMouse(st.gdrag.sn, x, y, e) : [x, y];
+      if (st.gdrag.mode === 'scale') scaleGroup(st.gdrag, sx, sy, e); else moveGroup(st.gdrag, sx, sy, e.shiftKey);
+      return;
+    }
     if (st.drag) {
       const [sx, sy] = snapMouse(st.drag.sn, x, y, e);
       if (st.drag.mode === 'scale') scaleShape(st.drag, sx, sy, e); else moveHandle(st.drag, sx, sy, e.shiftKey);
@@ -2981,7 +3179,7 @@
     const hb = hitBone(e), hg = hb ? null : hitGroup(e), hs = hb || hg ? null : hitScale(e), hi = hb || hg || hs ? -1 : hitHandle(e);
     const hgd = hb || hg || hs || hi >= 0 ? null : hitGuide(e);
     const hr = hb || hg || hs || hi >= 0 || hgd ? null : hitRef(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
   const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; stage.classList.remove('pan'); draw(); };
@@ -3104,7 +3302,8 @@
     // duplo clique no quadradinho do canto das réguas: apaga as linhas guia deste arquivo
     const ru = rulerAt(e);
     if (ru === 'corner') { clearGuides(); return; }
-    if (ru || (st.measure && !isFilm()) || hitScale(e)) return;
+    const hgk = hitGroup(e);
+    if (ru || (st.measure && !isFilm()) || hitScale(e) || (hgk && hgk.k)) return;
     const hi = hitHandle(e);
     const rec = st.model.byLine.get(st.caret.line);
     const h0 = hi >= 0 && rec ? rec.handles[hi] : null;

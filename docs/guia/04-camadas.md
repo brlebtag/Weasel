@@ -76,8 +76,17 @@ Então para que servem as camadas? Para dar a um grupo de formas algo que vale p
 >
 > - Com duas linhas ou mais escolhidas, as formas ganham um contorno azul e uma caixa tracejada em volta. Arraste qualquer uma delas (ou o **✥** do meio da caixa) e todas andam juntas.
 > - A bolinha **verde** em cima da caixa gira tudo em volta do meio da caixa (com **Shift**, de 15 em 15 graus). Os pontos do `shape`, do `stroke` e da `line` giram. A `ellipse`, o `rect`, o `text` e o `use` mudam de lugar e ganham `rot=` (ou têm o `rot=` somado). O círculo e o `emitter` só mudam de lugar.
+> - Os quadradinhos **azuis** nos cantos e no meio dos lados da caixa esticam tudo junto, como num programa de desenho. O de um canto muda a largura e a altura; o do meio de um lado, só uma delas. O lado de lá fica parado (com **Alt**, o meio), **Shift** mantém a proporção, e passar para o outro lado espelha. Cada linha muda do seu jeito:
+>   - os pontos e as alças de curva do `shape`, do `stroke` e da `line` esticam;
+>   - a `ellipse` muda o raio, e o círculo vira elipse (`rx,ry`) quando a largura e a altura mudam diferente;
+>   - o `rect` muda a largura e a altura;
+>   - o `text` muda o `size=` pela altura: esticar só para o lado leva as letras junto, sem mudar o tamanho delas;
+>   - o `use` ganha `scale=` e, quando espelha, `flip=`;
+>   - o `emitter` só muda de lugar.
+>
+>   Uma forma girada (`rot=`) esticada de lado não entorta: ganha um giro e um tamanho novos que chegam perto. O `w=`, o `ink=` e o `r=` dos cantos não mudam. Com as réguas, o lado que anda gruda nas linhas guia.
 > - Um arraste inteiro se desfaz com um Ctrl+Z só. **Esc**, um clique fora das formas ou o cursor numa linha de fora soltam a escolha.
-> - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK.
+> - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK. Ao esticar, também ficam paradas as linhas com `{conta}` no tamanho (o raio, a largura e a altura, o `size=`, o `scale=`) ou no `rot=`.
 > - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+H** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor, até com o foco no código): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
 
 ## A ordem de pintura
