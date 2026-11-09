@@ -2108,6 +2108,70 @@
     const p = turn(cx, cy, deg, cx, cy - reach - gap / st.view.z);
     return Object.assign({}, h, { x: p[0], y: p[1] });
   }
+  // ---- esticar as formas de pontos (shape, stroke, line) ----
+  // Uma caixa tracejada em volta da curva, com alças nos cantos e no meio dos lados, uns pixels para fora. Arrastar
+  // uma alça estica os pontos (e as alças de curva) a partir do lado de lá: o canto muda a largura e a altura, o meio
+  // de um lado só uma delas. Com Shift, sem perder a proporção; com Alt, a partir do meio. Passar do outro lado
+  // espelha. O w= e o ink= não mudam. A caixa segue as coordenadas do código (num osso girado, gira junto).
+  const BOX_PAD = 9;
+  // a caixa da curva nas coordenadas do código (null se a linha não é uma forma de pontos que estica)
+  function ptsBox(rec) {
+    const el = rec && rec.el;
+    if (!el || el.limb || !['shape', 'stroke', 'line'].includes(el.type)) return null;
+    const pts = rec.handles.filter((h) => h.kind === 'pt').sort((a, b) => a.idx - b.idx);
+    if (pts.length < 2) return null;
+    if (el.type !== 'line') return tightBox(W.geom.smoothSegs(pts, el.closed, el.smooth));
+    const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    for (const p of pts) { b.x0 = Math.min(b.x0, p.x); b.x1 = Math.max(b.x1, p.x); b.y0 = Math.min(b.y0, p.y); b.y1 = Math.max(b.y1, p.y); }
+    return b;
+  }
+  // a bolinha de girar de uma forma de pontos fica acima da caixa de esticar (e não em cima da alça do meio)
+  function spinOf(rec, h) {
+    const b = h.pts ? ptsBox(rec) : null;
+    return b ? Object.assign({}, h, { reach: h.cy - b.y0 + BOX_PAD / st.view.z }) : h;
+  }
+  // as alças de esticar no desenho; null quando a forma não estica, está girando ou é pequena demais na tela
+  function scaleKnobs(hl) {
+    const { rec, scr, pts } = hl, mi = rec.handles.findIndex((h) => h.kind === 'move');
+    if (mi < 0 || !pts[mi] || (st.drag && st.drag.spin)) return null;
+    const b = ptsBox(rec);
+    if (!b) return null;
+    const mh = rec.handles[mi], at = (x, y) => scr(Object.assign({}, mh, { x, y }));
+    const o = at(b.x0, b.y0), ox = at(b.x0 + 1, b.y0), oy = at(b.x0, b.y0 + 1);
+    if (!o || !ox || !oy) return null;
+    const lx = Math.hypot(ox[0] - o[0], ox[1] - o[1]), ly = Math.hypot(oy[0] - o[0], oy[1] - o[1]);
+    if (lx < 1e-9 || ly < 1e-9) return null;
+    // para onde vão o x e o y do código na tela, e o tamanho de cada lado em pixels
+    const ex = [(ox[0] - o[0]) / lx, (ox[1] - o[1]) / lx], ey = [(oy[0] - o[0]) / ly, (oy[1] - o[1]) / ly];
+    const z = st.view.z, sw = (b.x1 - b.x0) * lx * z, sh = (b.y1 - b.y0) * ly * z;
+    if (Math.max(sw, sh) < 20) return null;
+    // uma linha em pé ou deitada só tem as duas alças que a esticam; o meio de um lado só aparece se o lado couber
+    const flatX = sw < 1, flatY = sh < 1, pad = BOX_PAD / z, knobs = [];
+    const spot = (bx, by) => {
+      const p = at(b.x0 + bx * (b.x1 - b.x0), b.y0 + by * (b.y1 - b.y0)), kx = bx * 2 - 1, ky = by * 2 - 1;
+      return p && [p[0] + (ex[0] * kx + ey[0] * ky) * pad, p[1] + (ex[1] * kx + ey[1] * ky) * pad, p];
+    };
+    for (const by of [0, 0.5, 1]) for (const bx of [0, 0.5, 1]) {
+      if (bx === 0.5 && by === 0.5) continue;
+      const skip = bx !== 0.5 && by !== 0.5 ? flatX || flatY : bx === 0.5 ? flatY || (!flatX && sw < 40) : flatX || (!flatY && sh < 40);
+      const s = skip ? null : spot(bx, by);
+      if (s) knobs.push({ bx, by, x: s[0], y: s[1], at: s[2] });
+    }
+    const quad = flatX || flatY ? null : [[0, 0], [1, 0], [1, 1], [0, 1]].map(([bx, by]) => spot(bx, by));
+    return { rec, mi, b, knobs, quad: quad && quad.every(Boolean) ? quad : null, fixed: !!mh.fixed };
+  }
+  // a alça de esticar sob o mouse (uma alça de verdade mais perto ganha dela)
+  function hitScale(e) {
+    if (!st.model || !st.show.points || st.build) return null;
+    const hl = handleList(st.model, currentPose()), sb = hl && scaleKnobs(hl);
+    if (!sb) return null;
+    const [x, y] = toCanvas(e);
+    let k = null, kd = 9 / st.view.z;
+    for (const q of sb.knobs) { const d = Math.hypot(q.x - x, q.y - y); if (d < kd) { kd = d; k = q; } }
+    if (!k || hl.pts.some((p) => p && Math.hypot(p[0] - x, p[1] - y) < kd)) return null;
+    return { sb, k };
+  }
+  const scaleCursor = (k) => (k.bx === 0.5 ? 'ns-resize' : k.by === 0.5 ? 'ew-resize' : k.bx === k.by ? 'nwse-resize' : 'nesw-resize');
   // A alça do tamanho da letra: no canto de cima das letras, do lado de onde o texto cresce (no align=right, o
   // canto da esquerda). Relativo à posição do texto, sem o giro; o texto cresce a partir da posição.
   function fsizeCorner(el) {
@@ -2143,7 +2207,7 @@
       const p = S.handlePos(m, pose, rec, h);
       return M.apply(filmView(d), p[0], p[1]);
     };
-    const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(h, SPIN_GAP) : h.kind === 'fsize' ? fsizeShown(h, rec) : h);
+    const shown = (h) => (h.kind === 'round' ? roundShown(h) : h.kind === 'rot' ? spinSpot(spinOf(rec, h), SPIN_GAP) : h.kind === 'fsize' ? fsizeShown(h, rec) : h);
     const pts = rec.handles.map((h) => scr(shown(h)));
     // bolinhas de ponto novo: só nos lados que cabem uma na tela (e nunca numa linha repetida)
     const z = st.view.z, ptAt = new Map();
@@ -2177,6 +2241,30 @@
       if (rec.el && rec.el.closed) ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+    // esticar: a caixa tracejada em volta da curva e as alças quadradinhas azuis nos cantos e no meio dos lados
+    const sb = scaleKnobs(hl);
+    if (sb) {
+      if (sb.quad) {
+        ctx.strokeStyle = 'rgba(92,198,212,.7)';
+        ctx.lineWidth = 1 / z;
+        ctx.setLineDash([5 / z, 4 / z]);
+        ctx.beginPath();
+        sb.quad.forEach((q, k) => (k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      const r = 3.3 / z;
+      for (const q of sb.knobs) {
+        ctx.beginPath();
+        ctx.rect(q.x - r, q.y - r, r * 2, r * 2);
+        ctx.fillStyle = sb.fixed ? '#9aa6b2' : '#5cc6d4';
+        ctx.fill();
+        ctx.lineWidth = 1.4 / z;
+        ctx.strokeStyle = '#14141c';
+        ctx.stroke();
+      }
     }
     // alças de curva: linha do ponto até a alça e o reflexo do outro lado
     rec.handles.forEach((h, i) => {
@@ -2255,7 +2343,7 @@
     // giro: a haste da borda de cima da forma até a alça
     rec.handles.forEach((h, i) => {
       if (h.kind !== 'rot' || !pts[i]) return;
-      const b = scr(spinSpot(h, 0));
+      const b = scr(spinSpot(spinOf(rec, h), h.pts ? 4 : 0));
       if (!b) return;
       for (const [col, w] of [['#14141c', 3 / z], ['#8fd16a', 1.4 / z]]) {
         ctx.strokeStyle = col;
@@ -2325,7 +2413,7 @@
       const [x, y] = pts[i];
       if (h.kind === 'move') { drawKnob(ctx, x, y, 'move', 0, z, h.fixed); return; }
       if (h.kind === 'rot') {
-        const base = scr(spinSpot(h, 0));
+        const base = scr(spinSpot(spinOf(rec, h), 0));
         drawKnob(ctx, x, y, 'rot', base ? Math.atan2(y - base[1], x - base[0]) : -Math.PI / 2, z, h.fixed);
         return;
       }
@@ -2810,6 +2898,8 @@
     if (hb) { startPose(hb, e); return; }
     const hg = e.button === 0 ? hitGroup(e) : null;
     if (hg) { startGroup(hg, e); return; }
+    const hs = e.button === 0 ? hitScale(e) : null;
+    if (hs) { startScale(hs, e); return; }
     const hi = e.button === 0 ? hitHandle(e) : -1;
     const hgd = e.button === 0 && hi < 0 ? hitGuide(e) : null;
     if (hgd) { startGuide(hgd.axis, hgd.i, e); return; }
@@ -2850,7 +2940,7 @@
         for (const q of pts) st.drag.orig[q.idx] = { x: q.x, y: q.y, tan: q.tan };
         const [px, py] = toCanvas(e), l = localOf(rec, h, px, py);
         if (mode === 'move') st.drag.l0 = l;
-        else st.drag.spin = { cx: h.cx, cy: h.cy, reach: h.reach, rot0: h.rot, ang: h.rot, a0: l ? Math.atan2(l[1] - h.cy, l[0] - h.cx) : null };
+        else st.drag.spin = { cx: h.cx, cy: h.cy, reach: spinOf(rec, h).reach, rot0: h.rot, ang: h.rot, a0: l ? Math.atan2(l[1] - h.cy, l[0] - h.cx) : null };
       } else if (mode === 'tan') st.drag.corner = !!(pts.find((q) => q.idx === h.idx) || {}).corner;
       else if (h.kind === 'size') st.drag.orig = { rx: h.rx, ry: h.ry, w: h.w, h: h.h };
       return;
@@ -2868,7 +2958,11 @@
     if (st.pose) { movePose(e); return; }
     // com as réguas ligadas, o que se arrasta gruda nas linhas guia
     if (st.gdrag) { const [sx, sy] = st.gdrag.mode === 'move' ? snapMouse(st.gdrag.sn, x, y, e) : [x, y]; moveGroup(st.gdrag, sx, sy, e.shiftKey); return; }
-    if (st.drag) { const [sx, sy] = snapMouse(st.drag.sn, x, y, e); moveHandle(st.drag, sx, sy, e.shiftKey); return; }
+    if (st.drag) {
+      const [sx, sy] = snapMouse(st.drag.sn, x, y, e);
+      if (st.drag.mode === 'scale') scaleShape(st.drag, sx, sy, e); else moveHandle(st.drag, sx, sy, e.shiftKey);
+      return;
+    }
     if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
     if (st.pan) {
       // uns pixels de tremida não são arraste: o clique continua sendo clique
@@ -2884,10 +2978,10 @@
     const ru = rulerAt(e);
     if (ru) { view.style.cursor = ru === 'top' ? 'ns-resize' : ru === 'left' ? 'ew-resize' : 'default'; return; }
     if (st.measure && !isFilm()) { view.style.cursor = measureEnd(e) ? 'move' : 'crosshair'; return; }
-    const hb = hitBone(e), hg = hb ? null : hitGroup(e), hi = hb || hg ? -1 : hitHandle(e);
-    const hgd = hb || hg || hi >= 0 ? null : hitGuide(e);
-    const hr = hb || hg || hi >= 0 || hgd ? null : hitRef(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : 'move') : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    const hb = hitBone(e), hg = hb ? null : hitGroup(e), hs = hb || hg ? null : hitScale(e), hi = hb || hg || hs ? -1 : hitHandle(e);
+    const hgd = hb || hg || hs || hi >= 0 ? null : hitGuide(e);
+    const hr = hb || hg || hs || hi >= 0 || hgd ? null : hitRef(e);
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
   const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; stage.classList.remove('pan'); draw(); };
@@ -3010,7 +3104,7 @@
     // duplo clique no quadradinho do canto das réguas: apaga as linhas guia deste arquivo
     const ru = rulerAt(e);
     if (ru === 'corner') { clearGuides(); return; }
-    if (ru || (st.measure && !isFilm())) return;
+    if (ru || (st.measure && !isFilm()) || hitScale(e)) return;
     const hi = hitHandle(e);
     const rec = st.model.byLine.get(st.caret.line);
     const h0 = hi >= 0 && rec ? rec.handles[hi] : null;
@@ -3252,6 +3346,50 @@
       if (h.insert) { if (deg !== 0) writeTok(d.line, h.at, h.at, ` rot=${v}`, d.key); } else writeTok(d.line, h.from, h.to, v, d.key);
     }
     if (editor.value === before) draw();
+  }
+
+  // Esticar: o começo guarda os pontos e a caixa; cada passo estica a partir deles (sem acumular arredondamento),
+  // e o arraste inteiro é um Ctrl+Z só
+  function startScale(hs, e) {
+    const { sb, k } = hs, rec = sb.rec;
+    if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para esticar formas.' : 'Para esticar formas, escolha "pose parada" no player.', 2600); return; }
+    if (sb.fixed) { hint('Algum ponto desta forma vem de uma {expressão}: mude no código.', 2800); return; }
+    const [px, py] = toCanvas(e), l = localOf(rec, rec.handles[sb.mi], px, py);
+    if (!l) return;
+    const b = sb.b, ex = b.x0 + k.bx * (b.x1 - b.x0), ey = b.y0 + k.by * (b.y1 - b.y0), orig = [];
+    for (const q of rec.handles) if (q.kind === 'pt') orig[q.idx] = { x: q.x, y: q.y, tan: q.tan };
+    st.drag = { line: st.caret.line, hi: -1, mi: sb.mi, key: 'drag' + Date.now(), mode: 'scale', orig, sc: { bx: k.bx, by: k.by, b, ex, ey, grab: [l[0] - ex, l[1] - ey], said: '' } };
+    // com as réguas, o canto (ou o lado) que anda gruda nas linhas guia, só no sentido em que ele anda
+    if (!isFilm()) {
+      const gx = k.bx === 0.5 ? NaN : k.at[0], gy = k.by === 0.5 ? NaN : k.at[1];
+      st.drag.sn = { self: false, ref: [px, py], box: { x0: gx, x1: gx, y0: gy, y1: gy } };
+    }
+    hint('Esticando a forma. Com Shift, sem perder a proporção; com Alt, a partir do meio. Passar do outro lado espelha.', 3200);
+  }
+  function scaleShape(d, x, y, e) {
+    const rec = st.model.byLine.get(d.line), mh = rec && rec.handles[d.mi];
+    if (!mh || mh.kind !== 'move') { st.drag = null; return; }
+    const l = localOf(rec, mh, x, y);
+    if (!l) return;
+    const c = d.sc, b = c.b, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    // o que fica parado: o lado de lá (com Alt, o meio)
+    let ax = e.altKey ? cx : c.bx === 0 ? b.x1 : b.x0, ay = e.altKey ? cy : c.by === 0 ? b.y1 : b.y0;
+    const dx = c.ex - ax, dy = c.ey - ay, mx = l[0] - c.grab[0] - ax, my = l[1] - c.grab[1] - ay;
+    let sx = c.bx === 0.5 || Math.abs(dx) < 1e-9 ? 1 : mx / dx, sy = c.by === 0.5 || Math.abs(dy) < 1e-9 ? 1 : my / dy;
+    if (e.shiftKey) {
+      // a mesma conta nos dois sentidos: no canto, o quanto o mouse andou na diagonal da caixa; no meio de um lado,
+      // o outro sentido acompanha a partir do meio (sem espelhar)
+      if (c.bx === 0.5) { sx = Math.abs(sy); ax = cx; } else if (c.by === 0.5) { sy = Math.abs(sx); ay = cy; } else {
+        const s = (mx * dx + my * dy) / (dx * dx + dy * dy || 1);
+        sx = s;
+        sy = s;
+      }
+    }
+    const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1, dec = k > 1.5 ? 1 : 0;
+    rewritePts(d, rec, (o) => [ax + (o.x - ax) * sx, ay + (o.y - ay) * sy, o.tan && [o.tan[0] * sx, o.tan[1] * sy]], dec);
+    const w = Math.abs((b.x1 - b.x0) * sx), h = Math.abs((b.y1 - b.y0) * sy);
+    const say = `${fmtN(w, dec)} × ${fmtN(h, dec)} (${Math.round(Math.abs(sx) * 100)}% × ${Math.round(Math.abs(sy) * 100)}%)${sx < 0 || sy < 0 ? ', espelhada' : ''}`;
+    if (say !== c.said) { c.said = say; hint(`esticando: ${say}`, 1500); }
   }
 
   // Girar a seta: do centro do quadro até o mouse vira dx,dy de tamanho 1 (com Shift, de 15 em 15 graus).
