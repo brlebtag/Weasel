@@ -837,4 +837,6 @@ Repare:
 
 **Experimente:** apague o `c=#4a90d9` de `furo1` e escreva `hidden` no lugar. As duas roscas ficam iguais.
 
+> **Dica do editor:** com o cursor na linha de uma forma, **Ctrl+H** escreve o `hidden` (ou apaga, se já tem). No painel **Camadas**, o olho no fim de cada linha faz o mesmo, e é por ali que uma forma escondida volta a aparecer, já que ela não se clica no desenho.
+
 [← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e estilos →](03-cores.md)

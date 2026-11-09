@@ -78,6 +78,7 @@ Então para que servem as camadas? Para dar a um grupo de formas algo que vale p
 > - A bolinha **verde** em cima da caixa gira tudo em volta do meio da caixa (com **Shift**, de 15 em 15 graus). Os pontos do `shape`, do `stroke` e da `line` giram. A `ellipse`, o `rect`, o `text` e o `use` mudam de lugar e ganham `rot=` (ou têm o `rot=` somado). O círculo e o `emitter` só mudam de lugar.
 > - Um arraste inteiro se desfaz com um Ctrl+Z só. **Esc**, um clique fora das formas ou o cursor numa linha de fora soltam a escolha.
 > - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK.
+> - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+H** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor, até com o foco no código): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
 
 ## A ordem de pintura
 

@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.22.0">
+<link rel="stylesheet" href="css/style.css?v=1.23.0">
 </head>
 <body>
 <header class="top">
@@ -254,7 +254,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
       <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus.</li>
       <li><b>Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
-      <li><b>Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). Não aparece em filmes.</li>
+      <li><b>Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. <kbd>Ctrl</kbd>+<kbd>H</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (também no código). Não aparece em filmes.</li>
       <li><b>Réguas</b> (tecla <kbd>R</kbd>, fora do código) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (o botão <b>Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
       <li><b>Medir</b> (tecla <kbd>M</kbd>): arraste no desenho de um ponto a outro para ver a distância, o ângulo (como no <code>rot=</code>) e quanto anda em x e em y. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com <kbd>Shift</kbd>, de 45 em 45 graus. Arraste uma ponta para ajustar; um clique ou <kbd>Esc</kbd> tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos.</li>
       <li>Arraste uma imagem do computador para a janela: ela vira uma linha <code>ref</code> abaixo do <code>canvas</code>. Solta no desenho, fica no ponto onde caiu. Um <code>.weasel</code> ou um som solto abre como no <b>Abrir…</b>.</li>
@@ -339,23 +339,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.22.0"></script>
-<script src="js/lang.js?v=1.22.0"></script>
-<script src="js/scene.js?v=1.22.0"></script>
-<script src="js/film.js?v=1.22.0"></script>
-<script src="js/audio.js?v=1.22.0"></script>
-<script src="js/nle.js?v=1.22.0"></script>
-<script src="js/webm.js?v=1.22.0"></script>
-<script src="js/svg.js?v=1.22.0"></script>
-<script src="js/gif.js?v=1.22.0"></script>
-<script src="js/zip.js?v=1.22.0"></script>
-<script src="js/normal.js?v=1.22.0"></script>
-<script src="js/export.js?v=1.22.0"></script>
-<script src="js/godot.js?v=1.22.0"></script>
-<script src="js/rig.js?v=1.22.0"></script>
-<script src="js/editor.js?v=1.22.0"></script>
-<script src="js/examples.js?v=1.22.0"></script>
-<script src="js/timeline.js?v=1.22.0"></script>
-<script src="js/app.js?v=1.22.0"></script>
+<script src="js/geom.js?v=1.23.0"></script>
+<script src="js/lang.js?v=1.23.0"></script>
+<script src="js/scene.js?v=1.23.0"></script>
+<script src="js/film.js?v=1.23.0"></script>
+<script src="js/audio.js?v=1.23.0"></script>
+<script src="js/nle.js?v=1.23.0"></script>
+<script src="js/webm.js?v=1.23.0"></script>
+<script src="js/svg.js?v=1.23.0"></script>
+<script src="js/gif.js?v=1.23.0"></script>
+<script src="js/zip.js?v=1.23.0"></script>
+<script src="js/normal.js?v=1.23.0"></script>
+<script src="js/export.js?v=1.23.0"></script>
+<script src="js/godot.js?v=1.23.0"></script>
+<script src="js/rig.js?v=1.23.0"></script>
+<script src="js/editor.js?v=1.23.0"></script>
+<script src="js/examples.js?v=1.23.0"></script>
+<script src="js/timeline.js?v=1.23.0"></script>
+<script src="js/app.js?v=1.23.0"></script>
 </body>
 </html>

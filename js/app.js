@@ -492,6 +492,56 @@
     if (lines.length > 1) hint(`${lines.length} linhas da camada ${t.layer.name}: arraste uma delas no desenho para mover, a bolinha verde para girar.`, 3200);
   }
 
+  // ---------- esconder: o hidden escrito na linha ----------
+  // O olho do painel e o Ctrl+H ligam e desligam o hidden das formas (shape, stroke, line, ellipse, rect, text),
+  // do emitter, da layer, do ref e do actor. O hidden entra depois da última palavra antes do ":" (ou do comentário).
+  function hiddenTok(line) {
+    if (line < 0) return null;
+    const w = L.splitLine(lineOf(line)).words, cmd = w[0] && w[0].text;
+    if (!cmd || !(L.FLAGS[cmd] || []).includes('hidden')) return null;
+    const tok = w.slice(1).find((t) => t.text === 'hidden') || null;
+    return { cmd, name: w[1] && w[1].text !== 'hidden' ? w[1].text : '', on: !!tok, tok, end: w[w.length - 1].to };
+  }
+  // as linhas do Ctrl+H: as escolhidas no painel; sem escolha, as do cursor (ou do trecho marcado no código)
+  function hiddenTargets() {
+    if (st.sel.size) return [...st.sel.keys()].sort((a, b) => a - b);
+    const ta = editor.ta, v = editor.value, lineAt = (o) => v.slice(0, o).split('\n').length - 1;
+    const a = ta.selectionStart;
+    let b = ta.selectionEnd;
+    if (b > a && v[b - 1] === '\n') b--;
+    const out = [];
+    for (let l = lineAt(a), e = lineAt(b); l <= e; l++) out.push(l);
+    return out;
+  }
+  // se alguma das linhas aparece, todas somem; se todas estão escondidas, todas voltam (um Ctrl+Z desfaz tudo)
+  function toggleHidden(lines, byKey) {
+    const ok = lines.map((l) => [l, hiddenTok(l)]).filter(([, h]) => h);
+    if (!ok.length) {
+      const w = lines.length === 1 ? L.splitLine(lineOf(lines[0])).words : [], cmd = w[0] && w[0].text;
+      hint(!cmd ? 'Ponha o cursor numa forma (ou escolha linhas no painel Camadas) e aperte Ctrl+H.'
+        : cmd === 'use' ? 'O use não aceita hidden: esconda as formas de dentro do def (ou a camada delas).'
+        : cmd === 'include' ? 'O include não aceita hidden: esconda as formas no outro arquivo.'
+        : `${lines.length > 1 ? 'Estas linhas não aceitam' : `"${cmd}" não aceita`} hidden: só as formas (shape, stroke, line, ellipse, rect, text), emitter, layer, ref e actor.`, 3600);
+      return;
+    }
+    const hide = ok.some(([, h]) => !h.on), out = new Map();
+    for (const [l, h] of ok) {
+      if (h.on === hide) continue;
+      const text = lineOf(l);
+      if (hide) { out.set(l, text.slice(0, h.end) + ' hidden' + text.slice(h.end)); continue; }
+      // tira a palavra e o espaço de antes dela
+      let a = h.tok.from;
+      while (a > 0 && /[ \t]/.test(text[a - 1])) a--;
+      out.set(l, text.slice(0, a) + text.slice(h.tok.to));
+    }
+    writeLines(out, 'hidden' + Date.now());
+    const what = ok.length === 1 ? `${ok[0][1].cmd}${ok[0][1].name ? ' ' + ok[0][1].name : ''}` : `${ok.length} linhas`;
+    const left = lines.length - ok.length;
+    hint(`${what}: ${hide ? (ok.length > 1 ? 'escondidas' : 'escondida') + ' (hidden)' : ok.length > 1 ? 'aparecem de novo' : 'aparece de novo'}${left && st.sel.size ? ` · ${left} não ${left > 1 ? 'aceitam' : 'aceita'} hidden` : ''}.${byKey ? ' Ctrl+H de novo desfaz.' : ''}`, 2600);
+  }
+  const EYE_ON = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
+  const EYE_OFF = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><path d="M2.5 13.5 13.5 2.5"/></svg>';
+
   let layerSig = '';
   function fillLayerPanel() {
     const m = st.model, film = isFilm(), p = $('layerPanel');
@@ -505,7 +555,7 @@
     if (sig !== layerSig) {
       layerSig = sig;
       p.innerHTML = '<div class="rp-head"><b>Camadas</b><small class="lp-count"></small><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div><div class="lp-tree"></div>' +
-        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover e a bolinha verde para girar. <kbd>Esc</kbd> solta.</small></div>';
+        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover e a bolinha verde para girar. O olho (ou <kbd>Ctrl</kbd>+<kbd>H</kbd> nas escolhidas) liga e desliga o <code>hidden</code>. <kbd>Esc</kbd> solta.</small></div>';
       const box = p.querySelector('.lp-tree');
       if (!tree.length) box.innerHTML = '<div class="rp-empty">Nada desenhado ainda.</div>';
       tree.forEach((t, i) => {
@@ -515,7 +565,7 @@
         row.className = 'lp-layer';
         row.dataset.li = i;
         row.dataset.name = t.layer.name;
-        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>`;
+        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>${t.line >= 0 ? `<span class="lp-eye" role="button" data-line="${t.line}"></span>` : '<span class="lp-eye na"></span>'}`;
         row.querySelector('.ln').textContent = name;
         box.appendChild(row);
         if (shut) return;
@@ -524,7 +574,7 @@
           el.type = 'button';
           el.className = 'lp-el';
           el.dataset.line = k.line;
-          el.innerHTML = `<span class="ty">${esc(k.type)}</span><span class="nm"></span>${k.els.length > 1 ? `<span class="cnt">${k.els.length} formas</span>` : ''}<span class="lno">${k.line + 1}</span>`;
+          el.innerHTML = `<span class="ty">${esc(k.type)}</span><span class="nm"></span>${k.els.length > 1 ? `<span class="cnt">${k.els.length} formas</span>` : ''}<span class="lno">${k.line + 1}</span><span class="lp-eye" role="button" data-line="${k.line}"></span>`;
           el.querySelector('.nm').textContent = k.name;
           box.appendChild(el);
         }
@@ -548,6 +598,21 @@
       const t = tree[+r.dataset.li];
       r.classList.toggle('sel', !!t && t.kids.length > 0 && t.kids.every((k) => st.sel.has(k.line)));
       r.classList.toggle('cur', !!t && t.line >= 0 && t.line === st.caret.line);
+      r.classList.toggle('off', !!t && t.layer.hidden);
+    });
+    // o olho: aberto, fechado (hidden escrito na linha) ou nenhum (a linha não aceita hidden, como o use)
+    const shut = new Set();
+    for (const t of tree) if (t.layer.hidden) for (const k of t.kids) shut.add(k.line);
+    p.querySelectorAll('.lp-eye[data-line]').forEach((eye) => {
+      const line = +eye.dataset.line, h = hiddenTok(line), state = !h ? 'na' : h.on ? 'off' : 'on';
+      const row = eye.closest('.lp-el');
+      if (row) { row.classList.toggle('off', state === 'off'); row.classList.toggle('under', shut.has(line)); }
+      if (eye.dataset.state === state) return;
+      eye.dataset.state = state;
+      eye.classList.toggle('na', state === 'na');
+      eye.classList.toggle('off', state === 'off');
+      eye.innerHTML = state === 'off' ? EYE_OFF : state === 'on' ? EYE_ON : '';
+      eye.title = state === 'off' ? 'Escondida (hidden): clique para mostrar' : state === 'on' ? 'Esconder (hidden). Com várias escolhidas: Ctrl+H' : '';
     });
     const c = p.querySelector('.lp-count');
     if (c) c.textContent = st.sel.size ? `${st.sel.size} escolhida${st.sel.size > 1 ? 's' : ''}` : '';
@@ -556,6 +621,8 @@
   $('layerPanel').addEventListener('click', (e) => {
     const p = $('layerPanel');
     if (e.target.closest('.x')) { p.hidden = true; fillLayerPanel(); return; }
+    const eye = e.target.closest('.lp-eye[data-line]');
+    if (eye) { if (!eye.classList.contains('na')) toggleHidden([+eye.dataset.line]); return; }
     const tw = e.target.closest('.tw');
     if (tw) {
       const name = tw.closest('.lp-layer').dataset.name;
@@ -3584,6 +3651,8 @@
     // Ctrl+I (inserir): o menu de formas; Ctrl+Shift+I continua sendo do navegador
     if (mod && !e.shiftKey && !e.altKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); if (!e.target.closest || !e.target.closest('dialog')) openShapeMenu(null); return; }
     if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
+    // Ctrl+H: liga e desliga o hidden das linhas escolhidas no painel Camadas (ou da linha do cursor)
+    if (mod && !e.shiftKey && !e.altKey && (e.key === 'h' || e.key === 'H') && (e.target === editor.ta || !(e.target.closest && e.target.closest('textarea, input, select, dialog')))) { e.preventDefault(); toggleHidden(hiddenTargets(), true); return; }
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
     const t = e.target;
     if (t.closest && t.closest('textarea, input, select, dialog')) return;
