@@ -12,6 +12,10 @@ const DIRECOES_8: Array[String] = ["_right", "_down_right", "_down", "_down_left
 ## A última direção pedida a tocar(); vale quando a direção passada é zero (personagem parado).
 var direcao := Vector2.DOWN
 
+## Quantos pixels por segundo o personagem anda em cada animação com feet= para os pés no chão não
+## escorregarem (o Weasel mede nos quadros). Vazio quando nenhuma animação tem feet=.
+@export var velocidades: Dictionary = {}
+
 
 ## Toca "acao" virada para a direção: tocar("walk", velocity) escolhe walk_down, walk_up, walk_right
 ## ou walk_left (e as diagonais, se houver). Sem animações com direção, toca "acao" mesmo.
@@ -35,6 +39,18 @@ func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 	if has_animation(quatro):
 		return StringName(quatro)
 	return StringName(acao)
+
+
+## A velocidade (px/s, na escala da cena) em que o personagem anda na animação "nome" sem os pés
+## escorregarem: velocidade("trote") vale trote ou, sem ela, trote virado para a última direção (como
+## tocar()); velocidade() é a da animação tocando agora. 0 se a animação não tem feet=.
+## Para o passo acompanhar o jogo: speed_scale = absf(velocity.x) / velocidade()
+func velocidade(nome := "") -> float:
+	if nome == "":
+		nome = String(current_animation)
+	if not velocidades.has(nome):
+		nome = String(nome_com_direcao(nome, direcao))
+	return float(velocidades.get(nome, 0.0))
 
 
 func _weasel_evento(nome: StringName) -> void:

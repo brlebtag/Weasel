@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100" viewBox="0 0 200 200">
+<defs><g id="L1"><g><path d="M100 130C100 145.33 100 160.67 100 176" fill="none" stroke="#2a2433" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M113 177C113 179.21 108.97 181 104 181C99.03 181 95 179.21 95 177C95 174.79 99.03 173 104 173C108.97 173 113 174.79 113 177Z" fill="#2a2433"/></g></g>
+<g id="L2"><g><path d="M128 103C128 119.57 115.46 133 100 133C84.54 133 72 119.57 72 103C72 86.43 84.54 73 100 73C115.46 73 128 86.43 128 103Z" fill="#e8a65a"/><path d="M128 103C128 119.57 115.46 133 100 133C84.54 133 72 119.57 72 103C72 86.43 84.54 73 100 73C115.46 73 128 86.43 128 103Z" fill="none" stroke="#2a2433" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M115 94C115 96.21 113.66 98 112 98C110.34 98 109 96.21 109 94C109 91.79 110.34 90 112 90C113.66 90 115 91.79 115 94Z" fill="#2a2433"/></g></g>
+<g id="L3"><g><path d="M100 130C100 145.33 100 160.67 100 176" fill="none" stroke="#2a2433" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M113 177C113 179.21 108.97 181 104 181C99.03 181 95 179.21 95 177C95 174.79 99.03 173 104 173C108.97 173 113 174.79 113 177Z" fill="#2a2433"/></g></g></defs>
+<rect x="0" y="0" width="200" height="200" fill="#f4f1ea"/>
+<g data-layer="perna_atras"><use href="#L1" xlink:href="#L1"/></g>
+<g data-layer="corpo"><use href="#L2" xlink:href="#L2"/></g>
+<g data-layer="perna_frente"><use href="#L3" xlink:href="#L3"/></g>
+</svg>

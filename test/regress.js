@@ -186,6 +186,8 @@ async function drawingCases(file, prefix, svg) {
   // um quadro do meio de cada animação em tamanho maior (pega detalhe que a folha pequena perde)
   for (const a of model.anims) await check(group, `${a.name}_meio.png`, 'png', X.imageCanvas(model, a.name, Math.floor(a.frames / 2), o));
   if (svg) for (const a of model.anims) await check(group, `${a.name}_meio.svg`, 'text', X.svgText(model, a.name, Math.floor(a.frames / 2), { scale: 0.5, transparent: false }));
+  // a trajetória dos pés (anim feet=), como no --trajectory da linha de comando
+  for (const a of model.anims) if (a.feet && a.feet.length) await check(group, `${a.name}_trajetoria.png`, 'png', X.trajectoryCanvas(model, a.name, 0, { scale: 0.5, transparent: false }));
 
   // pacote do Godot (cena, TileSet, normal map) para quem tem caixas, unity, godot ou tileset
   if (model.boxes.size || model.unity || model.godot || model.tileset) {

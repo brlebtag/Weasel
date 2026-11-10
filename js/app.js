@@ -22,7 +22,7 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, points: true, bones: false, onion: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
+    show: { guides: true, points: true, bones: false, onion: false, traj: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
@@ -1554,6 +1554,7 @@
         case 'w': case 'ink': return names(widths, 'espessura');
         case 'bone': case 'on': case 'parent': case 'target': return names([...m.bones.keys()], 'osso');
         case 'bones': return names([...m.bones.keys()], 'osso (separe com vírgula)');
+        case 'feet': return names([...m.points.keys()], 'ponto que é um pé (separe com vírgula)');
         case 'path': return names(els, 'linha, traço ou forma');
         case 'turn': return names(['1', '0'], '1 = vira com a curva');
         case 'mix': return names(m.anims.map((x) => x.name), 'base,ação');
@@ -1890,12 +1891,34 @@
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
     if (st.show.bones) drawBones(ctx, m, pose, z);
+    const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (st.show.points) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); }
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
     if (st.meas) drawMeasure(ctx, dpr);
     if (ro) drawRulers(ctx, dpr);
+    if (gait) drawGaitNote(ctx, dpr, gait);
+  }
+
+  // trajetória com feet=: em cima, à esquerda, quanto o personagem anda e os pés que escorregam
+  function drawGaitNote(ctx, dpr, g) {
+    const t = S.gaitText(g, 1), lines = [`${g.anim.name}: ${t.head}`, ...t.slips];
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = '12px ui-monospace, Consolas, monospace';
+    const r0 = rulersOn() ? RULER : 0, lh = 18, x = r0 + 8, y = r0 + 8;
+    const w = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 16, h = lines.length * lh + 8;
+    ctx.fillStyle = 'rgba(10,14,19,.85)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x + 0.5, y + 0.5, w, h, 5); else ctx.rect(x + 0.5, y + 0.5, w, h);
+    ctx.fill();
+    ctx.textBaseline = 'middle';
+    lines.forEach((l, i) => {
+      ctx.fillStyle = i ? '#ffb000' : '#e8eef5';
+      ctx.fillText(l, x + 8, y + 4 + lh * i + lh / 2);
+    });
+    ctx.restore();
   }
 
   // Filme: na vista da câmera, o quadro como vai sair no vídeo; no mundo, tudo como foi desenhado
@@ -3642,6 +3665,7 @@
   $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
+  $('tTraj').addEventListener('change', (e) => { st.show.traj = e.target.checked; draw(); });
   $('tRulers').checked = st.show.rulers;
   $('tRulers').addEventListener('change', (e) => {
     st.show.rulers = e.target.checked;

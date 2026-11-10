@@ -100,6 +100,14 @@
     for (const e of events) { if (!by.has(e.frame)) by.set(e.frame, []); by.get(e.frame).push(e.name); }
     return [...by.keys()].sort((p, q) => p - q).map((f) => [f * dt, by.get(f)]);
   }
+  // velocidades do ajudante (anim feet=): quanto o personagem anda por segundo em cada animação para os pés no
+  // chão não escorregarem, em px da cena (escala s); as espelhadas andam o mesmo. null sem nenhum feet=.
+  function speedsProp(model, anims, s) {
+    const list = anims.map((p) => [p.name, S.gait(model, p.anim)]).filter(([, g]) => g && g.speed !== null);
+    if (!list.length) return null;
+    const flo = (v) => { const t = num(v); return /[.e]/.test(t) ? t : `${t}.0`; };
+    return `velocidades = {\n${list.map(([n, g]) => `${quote(n)}: ${flo(Math.round(Math.abs(g.speed) * s * 100) / 100)}`).join(',\n')}\n}`;
+  }
   // só as keys em que o valor muda (o resto o Godot mantém)
   function changes(values, dt) {
     const out = [];
@@ -263,6 +271,8 @@
     const player = [`[node name="AnimationPlayer" type="AnimationPlayer" parent="."]`, 'libraries = {\n&"": SubResource("AnimationLibrary_weasel")\n}'];
     if (first) player.push(`autoplay = ${sname(first.name)}`);
     player.push('script = ExtResource("2_script")');
+    const speeds = speedsProp(model, anims, s);
+    if (speeds) player.push(speeds);
     nodes.push(player.join('\n'));
 
     return [`[gd_scene load_steps=${blocks.length + 3} format=3]`, ext.join('\n'), ...blocks, ...nodes].join('\n\n') + '\n';
@@ -282,6 +292,10 @@ const DIRECOES_8: Array[String] = ["_right", "_down_right", "_down", "_down_left
 
 ## A última direção pedida a tocar(); vale quando a direção passada é zero (personagem parado).
 var direcao := Vector2.DOWN
+
+## Quantos pixels por segundo o personagem anda em cada animação com feet= para os pés no chão não
+## escorregarem (o Weasel mede nos quadros). Vazio quando nenhuma animação tem feet=.
+@export var velocidades: Dictionary = {}
 
 
 ## Toca "acao" virada para a direção: tocar("walk", velocity) escolhe walk_down, walk_up, walk_right
@@ -306,6 +320,18 @@ func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 	if has_animation(quatro):
 		return StringName(quatro)
 	return StringName(acao)
+
+
+## A velocidade (px/s, na escala da cena) em que o personagem anda na animação "nome" sem os pés
+## escorregarem: velocidade("trote") vale trote ou, sem ela, trote virado para a última direção (como
+## tocar()); velocidade() é a da animação tocando agora. 0 se a animação não tem feet=.
+## Para o passo acompanhar o jogo: speed_scale = absf(velocity.x) / velocidade()
+func velocidade(nome := "") -> float:
+	if nome == "":
+		nome = String(current_animation)
+	if not velocidades.has(nome):
+		nome = String(nome_com_direcao(nome, direcao))
+	return float(velocidades.get(nome, 0.0))
 
 
 func _weasel_evento(nome: StringName) -> void:
@@ -438,5 +464,5 @@ func _weasel_eventos(nomes: Array) -> void:
     return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length, points: model.points.size };
   }
 
-  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, eventKeys, changes };
+  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, eventKeys, changes, speedsProp };
 })(window.Weasel = window.Weasel || {});

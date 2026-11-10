@@ -638,6 +638,8 @@
     const player = ['[node name="AnimationPlayer" type="AnimationPlayer" parent="."]', 'libraries = {\n&"": SubResource("AnimationLibrary_weasel")\n}'];
     if (first) player.push(`autoplay = ${sname(first.name)}`);
     player.push('script = ExtResource("2_script")');
+    const speeds = Gd.speedsProp(model, anims, k);
+    if (speeds) player.push(speeds);
     nodes.push(player.join('\n'));
     const text = [`[gd_scene load_steps=${blocks.length + ext.length + 1} format=3]`, ext.join('\n'), ...blocks, ...nodes].join('\n\n') + '\n';
 

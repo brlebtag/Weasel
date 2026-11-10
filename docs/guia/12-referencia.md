@@ -349,7 +349,7 @@ Para aprender: [capítulo 5](05-componentes.md).
 |---|---|
 | `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) · `path=linha` (anda pelo caminho com `key osso.along=`) · `turn=1\|0` (1: vira com a curva) · `yaw=` `pitch=` giro 3D em volta do pivô (0) · `persp=` · `round=raio[,x,y]` as peças do osso viram uma bola (centro: o meio delas) |
 | `cloth nome pivot=x,y` | `tension=` 0–1 (0.5) · `drag=` 0–10 (1) · `swing=` 0–10 (1) · `bone=` |
-| `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) · `mix=base,ação bones=ossos` (junta duas animações; o tempo é o da ação) |
+| `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) · `mix=base,ação bones=ossos` (junta duas animações; o tempo é o da ação) · `feet=pontos` (os pés: o Weasel mede quanto o personagem anda sem eles escorregarem) |
 | `key quadro …` | `osso=dx,dy,rot,sx,sy` (padrão `0,0,0,1,1`; 1 número = dx, 4 números = escala igual) · `alvo.prop=valor` · `ease=` (smooth) |
 | `event quadro nome …` | um ou mais nomes |
 | `expr nome …` | uma expressão: `osso=dx,dy,rot` e `forma.prop=valor`, como numa `key` sem quadro (para `at ator.expr=`) |
@@ -541,6 +541,7 @@ Para aprender: [capítulo 10](10-filme.md).
 | `--rig` · `--no-rig` | `.tscn` com esqueleto de verdade · por quadros, mesmo com `rig=bones` |
 | `--guides` | inclui as camadas `guide` (caixas, pontos e grade do tileset só aparecem no editor) |
 | `--refs` | desenha as imagens guia (`ref`) por baixo, para conferir o traço |
+| `--trajectory[=pontos]` | png/jpg: o caminho dos pés (`feet=`) ou dos pontos em todos os quadros, numerado |
 | `--check` · `--info` | só procurar erros · mostrar camadas, ossos, animações e eventos |
 | `--watch` | exportar de novo a cada mudança |
 | `-e "código"` · `-` | código direto (`;` separa linhas) · ler da entrada padrão |

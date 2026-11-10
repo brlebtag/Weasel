@@ -29,7 +29,7 @@
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
-    anim: ['frames', 'fps', 'mix', 'bones'],
+    anim: ['frames', 'fps', 'mix', 'bones', 'feet'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity', 'z'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
     ambient: ['c', 'power'],
@@ -1420,6 +1420,7 @@
         if (name === 'pose') err(st.line, '"pose" já é o nome da pose parada (only=pose valeria nas duas): dê outro nome à animação', st.pos[0].from, st.pos[0].to, 'warn');
         const an ={ name, line: st.line, frames: 24, fps: 12, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
         if (A.has('mix')) an.mixSpec = { a: A.get('mix'), st };
+        if (A.has('feet')) an.feetSpec = { a: A.get('feet'), st };
         if (A.has('frames')) an.frames = Math.round(number(st, A.get('frames'), 24, 1, 600));
         if (A.has('fps')) an.fps = number(st, A.get('fps'), 12, 1, 60);
         for (const f of st.pos.slice(1)) {
@@ -2001,6 +2002,16 @@
       for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
       for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);
       an.events.sort((p, q) => p.frame - q.frame);
+    }
+    // feet=: os pontos que são os pés (o Weasel mede quanto o personagem anda para eles não escorregarem)
+    for (const an of m.anims) {
+      if (!an.feetSpec) continue;
+      const { a, st } = an.feetSpec;
+      an.feet = [];
+      for (const n of a.text.split(',').filter(Boolean)) {
+        if (!m.points.has(n)) bad(st, a, `ponto "${n}" não existe (feet= leva os nomes dos point que são os pés, separados por vírgula)`, 'warn');
+        else if (!an.feet.includes(n)) an.feet.push(n);
+      }
     }
 
     // ---- filme: planos (shot), atores, câmera e o que muda com o tempo (at) ----

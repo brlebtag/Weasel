@@ -1,0 +1,59 @@
+# teste: a passada (anim feet=): quanto o personagem anda para os pés no chão não escorregarem
+# (no --info, no JSON da sprite sheet e no velocidades do Godot, nos quadros e no esqueleto), a trajetória
+# dos pés e o aviso quando um pé escorrega
+canvas 200 200 bg=#f4f1ea
+palette ink=#2a2433 line=4 pele=#e8a65a
+
+godot body=character root=100,180 name=Andador rig=bones
+
+bone corpo pivot=100,110
+bone perna_e pivot=100,130 parent=corpo
+bone perna_d pivot=100,130 parent=corpo
+
+layer guia guide
+line chao c=#b9b2a2 w=1 : 0,180 200,180
+
+layer perna_atras
+stroke coxa_d w=8 c=ink bone=perna_d : 100,130 100,176
+ellipse sapato_d 104,177 9,4 c=ink bone=perna_d
+layer corpo
+ellipse tronco 100,105 28,30 c=pele ink=line bone=corpo
+ellipse olho 112,96 3,4 c=ink bone=corpo
+layer perna_frente
+stroke coxa_e w=8 c=ink bone=perna_e : 100,130 100,176
+ellipse sapato_e 104,177 9,4 c=ink bone=perna_e
+
+point pe_e 100,180 bone=perna_e
+point pe_d 100,180 bone=perna_d
+point mao 126,112 bone=corpo
+box caixa body rect 72,75 56,105
+
+# o pé vai 10 px para trás por quadro enquanto pisa (quadros 0–4 e 4–8) e volta no ar
+anim anda_right frames=8 fps=12 feet=pe_e,pe_d
+key 0 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+key 2 perna_d=0,-12,0 ease=linear
+key 4 perna_e=-20,0,0 perna_d=20,0,0 ease=linear
+key 6 perna_e=0,-12,0 ease=linear
+key 8 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+event 0 passo
+event 4 passo
+
+# o pé direito pisa devagar e depois depressa: escorrega
+anim escorrega_right frames=8 fps=12 feet=pe_e,pe_d,nao_existe
+key 0 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+key 2 perna_d=0,-12,0 ease=linear
+key 4 perna_e=-20,0,0 perna_d=20,0,0 ease=linear
+key 6 perna_e=0,-12,0 perna_d=8,0,0 ease=linear
+key 8 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+
+# parado: o corpo sobe e desce, os pés ficam no lugar (não andam)
+anim parado frames=4 fps=6 feet=pe_e,pe_d
+key 0 corpo=0,0,0 perna_e=0,0,0 perna_d=0,0,0
+key 2 corpo=0,-2,0 perna_e=0,2,0 perna_d=0,2,0
+key 4 corpo=0,0,0 perna_e=0,0,0 perna_d=0,0,0
+
+# pulo: os pés saem do chão (não dá para medir)
+anim pulo frames=4 fps=8 once feet=pe_e,pe_d
+key 0 corpo=0,0,0
+key 2 corpo=0,-20,0
+key 4 corpo=0,-10,0

@@ -1,0 +1,26 @@
+canvas   200 × 200, fundo #f4f1ea
+camadas  4
+  guia             1 item(ns)  guide
+  perna_atras      2 item(ns)
+  corpo            2 item(ns)
+  perna_frente     2 item(ns)
+formas   7
+ossos    corpo, perna_e←corpo, perna_d←corpo
+animações 4
+  anda_right     8 quadros, 12 fps
+                 eventos: passo@0, passo@4
+                 pés: anda 120 px/s para a direita (10 px por quadro a 12 fps)
+  escorrega_right 8 quadros, 12 fps
+                 pés: anda 120 px/s para a direita (10 px por quadro a 12 fps)
+                 aviso: pe_d escorrega: no chão vai para trás de 6 a 14 px por quadro (os outros, 10)
+  parado         4 quadros, 6 fps
+                 pés: parado: os pés no chão não andam (o personagem anda pelo próprio desenho?)
+  pulo           4 quadros, 8 fps, once
+                 pés: nenhum pé fica no chão em dois quadros seguidos: não dá para medir
+godot    character, raiz 100,180, nó Andador, esqueleto (Bone2D)
+caixas   1
+  caixa          body rect
+pontos   3
+  pe_e           100,180 osso perna_e
+  pe_d           100,180 osso perna_d
+  mao            126,112 osso corpo

@@ -43,6 +43,9 @@ Saída:
       --dither            GIF com pontilhado (menos faixas em brilhos e degradês)
       --guides            inclui as camadas "guide"
       --refs              desenha as imagens guia (ref) por baixo, para conferir o traço
+      --trajectory[=pontos]  png/jpg: a trajetória dos pés (anim feet=) em todos os quadros da
+                          animação, numerada, por cima do personagem clarinho; =pe,mao segue
+                          esses pontos
 
 Godot:
   -o personagem.tscn      pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
@@ -179,6 +182,7 @@ function parseArgs(argv) {
       case '--dither': o.dither = true; break;
       case '--guides': o.guides = true; break;
       case '--refs': o.refs = true; break;
+      case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -240,7 +244,7 @@ function report(model, src, name) {
   }
 }
 
-function info(m) {
+function info(m, scale) {
   if (m.film) { console.log(V.filmInfo(m)); return; }
   const c = m.canvas;
   const bg = !c.bg ? 'transparente' : typeof c.bg === 'string' ? c.bg : `gradiente ${c.bg.name}`;
@@ -278,6 +282,12 @@ function info(m) {
     for (const a of m.anims) {
       out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}`);
       if (a.events.length) out.push(`  ${''.padEnd(14)} eventos: ${a.events.map((e) => `${e.name}@${e.frame}`).join(', ')}`);
+      const g = W.scene.gait(m, a);
+      if (g) {
+        const t = W.scene.gaitText(g, scale);
+        out.push(`  ${''.padEnd(14)} pés: ${t.head}`);
+        for (const s of t.slips) out.push(`  ${''.padEnd(14)} aviso: ${s}`);
+      }
     }
   } else out.push('animações nenhuma');
   if (m.unity) out.push(`unity    ${m.unity.unit} px/unidade, raiz ${m.unity.root.join(',')}`);
@@ -328,6 +338,27 @@ function pickAnim(m, name, required) {
 async function exportModel(model, o, format, base, sfx) {
   const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, refs: o.refImages || null, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
+
+  // --trajectory: a trajetória dos pés (ou dos pontos) em todos os quadros, por cima do personagem clarinho
+  if (o.trajectory) {
+    if (format !== 'png' && format !== 'jpg') usage('--trajectory sai em png ou jpg');
+    const anim = pickAnim(model, o.anim, true), a = model.animMap.get(anim);
+    const names = o.trajectory === true ? null : o.trajectory;
+    const have = model.points.size ? ` (tem: ${[...model.points.keys()].join(', ')})` : '';
+    if (names) { for (const n of names) if (!model.points.has(n)) usage(`ponto "${n}" não existe${have}`); }
+    else if (!model.points.size) usage('--trajectory segue os pontos (point): o desenho não tem nenhum');
+    if (o.frame >= a.frames) usage(`--frame ${o.frame} não existe em "${anim}" (quadros 0 a ${a.frames - 1})`);
+    const cv = X.trajectoryCanvas(model, anim, o.frame, opts, names);
+    save(named(o.out || `${base}_${anim}_trajetoria.${format}`), format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), `${cv.width}×${cv.height}, trajetória de ${names ? names.join(', ') : a.feet ? a.feet.join(', ') : 'todos os pontos'}`, o.quiet);
+    const g = W.scene.gait(model, a);
+    if (g && !o.quiet) {
+      const t = W.scene.gaitText(g, o.scale);
+      console.log(`${anim}: ${t.head}`);
+      for (const l of t.feet) console.log(`  ${l}`);
+      for (const s of t.slips) console.log(paint('33', `  aviso: ${s}`));
+    }
+    return;
+  }
 
   if (format === 'png' || format === 'jpg' || format === 'svg') {
     const anim = pickAnim(model, o.anim, o.frames);
@@ -442,7 +473,7 @@ async function run(o) {
   const nErr = model.errors.filter((e) => e.level === 'error').length;
   report(model, source.src, source.name);
 
-  if (o.info) info(model);
+  if (o.info) info(model, o.scale);
   if (o.check) {
     if (!o.quiet) console.log(nErr ? `${nErr} erro(s).` : model.errors.length ? 'sem erros (só avisos).' : 'sem erros.');
     return { code: nErr ? 1 : 0, watched };

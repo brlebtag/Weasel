@@ -1,0 +1,7 @@
+stroke coxa_d @0.000 +0.308
+ellipse sapato_d @0.308 +0.295
+ellipse tronco @0.604 +0.614
+ellipse olho @1.217 +0.212
+stroke coxa_e @1.430 +0.308
+ellipse sapato_e @1.738 +0.295
+total 2.033

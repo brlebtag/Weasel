@@ -333,6 +333,165 @@
     return { point: p, x: c[0], y: c[1], rot: m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0 };
   }
 
+  // ---------- passada (anim feet=) e trajetória dos pontos ----------
+  // Onde o ponto está em cada quadro da animação.
+  function pointPath(model, anim, p) {
+    const pts = [];
+    for (let f = 0; f < anim.frames; f++) { const s = pointState(model, makePose(model, anim.name, f), p); pts.push([s.x, s.y]); }
+    return pts;
+  }
+  const median = (v) => { const s = v.slice().sort((a, b) => a - b), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+  // Personagem que anda no lugar, visto de lado (como numa esteira): cada pé vai para trás enquanto está no chão,
+  // e quem leva o personagem para a frente é o jogo (ou o filme). No chão = perto da altura mais baixa a que
+  // aquele pé chega na animação. Do quanto os pés andam entre dois quadros seguidos no chão sai a velocidade em
+  // que o personagem tem de andar para eles ficarem parados (a mediana: um quadro torto não estraga a conta).
+  // dx = px do desenho por quadro (negativo: os pés vão para a esquerda, o personagem anda para a direita);
+  // speed = px do desenho por segundo, com o sinal da direção em que o personagem anda.
+  // slips: os pés que, no chão, andam diferente dessa velocidade (escorregam).
+  function gait(model, anim) {
+    if (!anim || !anim.feet || !anim.feet.length) return null;
+    model._gait = model._gait || new Map();
+    if (model._gait.has(anim.name)) return model._gait.get(anim.name);
+    const N = anim.frames, feet = [];
+    for (const name of anim.feet) {
+      const p = model.points.get(name);
+      if (!p) continue;
+      const pts = pointPath(model, anim, p), ys = pts.map((q) => q[1]);
+      const ground = Math.max(...ys), tol = Math.max(0.5, (ground - Math.min(...ys)) * 0.2);
+      const on = ys.map((y) => y >= ground - tol);
+      const steps = [];
+      if (N > 1) for (let f = 0; f < (anim.loop ? N : N - 1); f++) { const g = (f + 1) % N; if (on[f] && on[g]) steps.push(pts[g][0] - pts[f][0]); }
+      feet.push({ name, pts, on, ground, steps });
+    }
+    const all = feet.flatMap((ft) => ft.steps);
+    const dx = all.length ? median(all) : null;
+    const r = { anim, feet, dx, speed: dx === null ? null : -dx * anim.fps, slips: [] };
+    if (dx !== null) {
+      const tol = Math.max(0.75, Math.abs(dx) * 0.15);
+      for (const ft of feet) {
+        if (!ft.steps.length) continue;
+        const lo = Math.min(...ft.steps), hi = Math.max(...ft.steps);
+        if (Math.abs(lo - dx) > tol || Math.abs(hi - dx) > tol) r.slips.push({ name: ft.name, min: lo, max: hi });
+      }
+    }
+    model._gait.set(anim.name, r);
+    return r;
+  }
+  // Os quadros em que o pé está no chão, em trechos: "0–12", "3–5, 14–15"
+  function frameRuns(on) {
+    const out = [];
+    for (let f = 0; f < on.length; f++) {
+      if (!on[f]) continue;
+      let e = f;
+      while (e + 1 < on.length && on[e + 1]) e++;
+      out.push(e > f ? `${f}–${e}` : String(f));
+      f = e;
+    }
+    return out.join(', ');
+  }
+  const dec = (v, n) => String(Math.round(v * 10 ** n) / 10 ** n).replace('.', ',');
+  // A passada em palavras: { head, feet: [linhas], slips: [avisos] }; scale = a escala da exportação (1 = o desenho)
+  function gaitText(g, scale) {
+    const k = scale || 1;
+    const feet = g.feet.map((ft) => `${ft.name}: ${ft.on.some(Boolean) ? `no chão nos quadros ${frameRuns(ft.on)}` : 'não pisa'}${ft.steps.length ? '' : ' (nunca em dois quadros seguidos)'}`);
+    let head;
+    if (g.dx === null) head = 'nenhum pé fica no chão em dois quadros seguidos: não dá para medir';
+    else if (Math.abs(g.speed) < 0.05) head = 'parado: os pés no chão não andam (o personagem anda pelo próprio desenho?)';
+    else head = `anda ${dec(Math.abs(g.speed) * k, 1)} px/s para a ${g.speed > 0 ? 'direita' : 'esquerda'}${k !== 1 ? ` na escala ${dec(k, 3)}` : ''} (${dec(Math.abs(g.dx) * k, 2)} px por quadro a ${dec(g.anim.fps, 2)} fps)`;
+    // quanto o pé vai para trás por quadro (negativo: para a frente)
+    const back = (v) => dec((g.dx < 0 ? -v : v) * k, 2);
+    const slips = g.slips.map((s) => `${s.name} escorrega: no chão vai para trás de ${back(g.dx < 0 ? s.max : s.min)} a ${back(g.dx < 0 ? s.min : s.max)} px por quadro (os outros, ${back(g.dx)})`);
+    return { head, feet, slips };
+  }
+
+  // As trajetórias: [{ name, pts, foot }]; foot = a passada daquele pé, quando ele está no feet= da animação.
+  // names = só esses pontos; sem names, os pés da animação ou, sem feet=, todos os pontos.
+  function trajectories(model, anim, names) {
+    const g = gait(model, anim);
+    const list = (names || (g ? anim.feet : [...model.points.keys()])).filter((n) => model.points.has(n));
+    return list.map((name) => {
+      const ft = g && g.feet.find((x) => x.name === name);
+      return { name, pts: ft ? ft.pts : pointPath(model, anim, model.points.get(name)), foot: ft || null };
+    });
+  }
+
+  // A trajetória: o caminho de cada ponto em todos os quadros da animação, numerado. Com feet=, os pés mostram também
+  // os quadros no chão (bolinhas cheias) e a linha onde pisam. Em coordenadas do desenho; z = zoom (as linhas e os
+  // números ficam do mesmo tamanho na tela). o = { names (só esses pontos), frame (o quadro atual, com um anel) }
+  const TRAJ_COLORS = ['#ff4d6d', '#14b8a6', '#f59e0b', '#3b82f6', '#a855f7', '#65a30d'];
+  function drawTrajectory(ctx, model, anim, z, o) {
+    o = o || {};
+    const paths = trajectories(model, anim, o.names);
+    ctx.save();
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.font = `${10 / z}px ui-monospace, Menlo, Consolas, monospace`;
+    const label = (text, x, y, c) => {
+      ctx.lineWidth = 3 / z;
+      ctx.strokeStyle = 'rgba(255,255,255,.9)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = c;
+      ctx.fillText(text, x, y);
+    };
+    paths.forEach(({ name, pts, foot: ft }, i) => {
+      const c = TRAJ_COLORS[i % TRAJ_COLORS.length], N = pts.length;
+      // a linha do chão desse pé, só no trecho em que ele pisa
+      if (ft && ft.steps.length) {
+        const xs = pts.filter((_, f) => ft.on[f]).map((q) => q[0]);
+        ctx.setLineDash([4 / z, 3 / z]);
+        ctx.lineWidth = 1 / z;
+        ctx.strokeStyle = c;
+        ctx.beginPath();
+        ctx.moveTo(Math.min(...xs) - 6 / z, ft.ground);
+        ctx.lineTo(Math.max(...xs) + 6 / z, ft.ground);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.globalAlpha = 0.75;
+      ctx.lineWidth = 1.5 / z;
+      ctx.strokeStyle = c;
+      ctx.beginPath();
+      pts.forEach((q, f) => (f ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+      if (anim.loop && N > 2) ctx.closePath();
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let f = 0; f < N; f++) {
+        const on = ft && ft.on[f];
+        ctx.beginPath();
+        ctx.arc(pts[f][0], pts[f][1], (on ? 3.2 : 2.4) / z, 0, Math.PI * 2);
+        ctx.fillStyle = on ? c : '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 1.2 / z;
+        ctx.strokeStyle = c;
+        ctx.stroke();
+      }
+      if (o.frame !== undefined && N) {
+        const q = pts[((o.frame % N) + N) % N];
+        ctx.beginPath();
+        ctx.arc(q[0], q[1], 6.5 / z, 0, Math.PI * 2);
+        ctx.lineWidth = 2 / z;
+        ctx.strokeStyle = c;
+        ctx.stroke();
+      }
+      // os números dos quadros, sem amontoar: só quando o ponto se afastou do último numerado
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      let last = null;
+      for (let f = 0; f < N; f++) {
+        const q = pts[f];
+        if (last && Math.hypot(q[0] - last[0], q[1] - last[1]) < 16 / z) continue;
+        label(String(f), q[0] + 4 / z, q[1] - 4 / z, c);
+        last = q;
+      }
+      // o nome em cima do ponto mais alto do caminho
+      let top = pts[0];
+      for (const q of pts) if (q[1] < top[1]) top = q;
+      ctx.textAlign = 'center';
+      label(name, top[0], top[1] - 12 / z, c);
+    });
+    ctx.restore();
+    return gait(model, anim);
+  }
+
   // ---------- imagens guia (ref) ----------
   // Só no editor (e na linha de comando com --refs): nunca saem nas exportações. A posição é o canto de cima à
   // esquerda da imagem (já na escala); a rotação gira em volta do centro.
@@ -2078,7 +2237,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,

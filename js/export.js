@@ -47,6 +47,42 @@
     return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides, refs: o.refs });
   }
 
+  // A trajetória (linha de comando --trajectory): o caminho dos pés (anim feet=) ou dos pontos em todos os quadros da
+  // animação, numerado, por cima do personagem clarinho no quadro. A imagem mostra só a região dos caminhos,
+  // ampliada (até uns 1200 px); a escala (o.scale) vale para os números, como na exportação. names = só esses pontos.
+  function trajectoryCanvas(model, animName, frame, o, names) {
+    const anim = model.animMap.get(animName);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of S.trajectories(model, anim, names)) for (const [x, y] of p.pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    let rect = fullRect(model);
+    if (x0 <= x1) {
+      const pad = Math.max(20, 0.15 * Math.max(x1 - x0, y1 - y0));
+      rect = { x: x0 - pad, y: y0 - pad * 1.6, w: x1 - x0 + 2 * pad, h: y1 - y0 + pad * 2.6 };
+    }
+    const z = Math.max(0.25, Math.min(8, 1200 / rect.w, 800 / rect.h)), band = 24, font = '13px ui-monospace, Menlo, Consolas, monospace';
+    const img = S.renderImage(model, S.makePose(model, animName, frame), { scale: z, rect, transparent: true, guides: o.guides });
+    // em cima: a animação e quanto o personagem anda
+    const g = S.gait(model, anim), title = `${animName}${g ? ': ' + S.gaitText(g, o.scale).head : ''}`;
+    const probe = document.createElement('canvas').getContext('2d');
+    probe.font = font;
+    const out = document.createElement('canvas');
+    out.width = Math.max(img.width, Math.ceil(probe.measureText(title).width) + 16);
+    out.height = img.height + band;
+    const ctx = out.getContext('2d');
+    if (!o.transparent) { ctx.fillStyle = solidBg(model); ctx.fillRect(0, 0, out.width, out.height); }
+    ctx.globalAlpha = 0.35;
+    ctx.drawImage(img, 0, band);
+    ctx.globalAlpha = 1;
+    ctx.setTransform(z, 0, 0, z, -rect.x * z, band - rect.y * z);
+    S.drawTrajectory(ctx, model, anim, z, { names, frame });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.font = font;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#222222';
+    ctx.fillText(title, 8, band / 2);
+    return out;
+  }
+
   function svgText(model, animName, frame, o) {
     const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
     return W.svg.render(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
@@ -163,7 +199,11 @@
         json.animations[key].push(id);
         flat++;
       }
-      tags.push({ name: key, from, to: flat - 1, direction: 'forward', fps: anim ? anim.fps : 12, loop: anim ? anim.loop : false });
+      const tag = { name: key, from, to: flat - 1, direction: 'forward', fps: anim ? anim.fps : 12, loop: anim ? anim.loop : false };
+      // anim feet=: quanto o personagem anda por segundo (px da folha) para os pés no chão não escorregarem
+      const g = anim && S.gait(model, anim);
+      if (g && g.speed !== null) tag.groundSpeed = round3(Math.abs(g.speed) * o.scale);
+      tags.push(tag);
     }
     json.meta = {
       app: 'Weasel', version: '1.1', image: o.imageName || 'sprites.png', format: 'RGBA8888',
@@ -545,5 +585,5 @@
     };
   }
 
-  W.exporter = { imageCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, download, setupDialog, BUILD, ALL, solidBg };
+  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, download, setupDialog, BUILD, ALL, solidBg };
 })(window.Weasel = window.Weasel || {});

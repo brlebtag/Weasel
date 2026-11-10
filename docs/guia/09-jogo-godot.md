@@ -298,6 +298,107 @@ Na sprite sheet, os pontos vão no JSON de cada quadro, em pixels do quadro e co
 
 O `rot` só aparece quando o osso está girado: no quadro 0, o ponto `saida` vem só com `x` e `y`. Com `--trim`, os números mudam, porque o quadro passa a começar onde começa o desenho.
 
+## Andar sem escorregar: `feet=`
+
+```
+anim nome … feet=ponto,ponto
+```
+
+Num jogo, o personagem anda **no lugar**, como numa esteira: o corpo fica parado no quadro e cada pé vai para trás enquanto está no chão. Quem leva o personagem pela fase é o jogo, movendo o nó. Se o jogo anda mais depressa (ou mais devagar) do que o pé vai para trás, o pé **escorrega** no chão. `feet=` diz ao Weasel quais pontos são os pés, e ele mede quanto o personagem tem de andar por segundo para os pés no chão ficarem parados.
+
+<!-- gerar: img/09_passada.gif -a anda_right --guides -->
+<!-- gerar: img/09_passada_trajetoria.png -a anda_right --trajectory -->
+```weasel
+canvas 200 200 bg=#e8eef5
+palette ink=#2a2433 line=4 pele=#7cc4e8
+
+godot body=character root=100,180 name=Andador
+
+bone corpo pivot=100,110
+bone perna_e pivot=106,130 parent=corpo
+bone perna_d pivot=94,128 parent=corpo
+
+layer chao guide
+line linha_chao c=#9aa5b1 w=1 : 0,180 200,180
+
+layer perna_atras
+stroke coxa_d w=8 c=ink bone=perna_d : 94,128 94,172
+ellipse sapato_d 98,173 9,4 c=ink bone=perna_d
+layer corpo
+ellipse tronco 100,105 28,30 c=pele ink=line bone=corpo
+ellipse olho 112,96 3,4 c=ink bone=corpo
+layer perna_frente
+stroke coxa_e w=8 c=ink bone=perna_e : 106,130 106,176
+ellipse sapato_e 110,177 9,4 c=ink bone=perna_e
+
+# os pés: um ponto na sola de cada um, preso ao osso da perna (a de trás pisa um
+# pouco mais alto, no lado de longe)
+point pe_e 106,180 bone=perna_e
+point pe_d 94,176 bone=perna_d
+
+# cada pé vai 10 px para trás por quadro enquanto pisa e volta pelo ar
+anim anda_right frames=8 fps=12 feet=pe_e,pe_d
+key 0 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+key 2 perna_d=0,-12,0 ease=linear
+key 4 perna_e=-20,0,0 perna_d=20,0,0 ease=linear
+key 6 perna_e=0,-12,0 ease=linear
+key 8 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+event 0 passo
+event 4 passo
+```
+
+![Um boneco azul anda no lugar: cada perna vai para trás rente à linha do chão e volta pelo ar](img/09_passada.gif)
+
+- Um `point` na sola de cada pé, preso ao osso da perna ([pontos de encaixe](#pontos-de-encaixe-point)).
+- `feet=pe_e,pe_d` no `anim`: os nomes dos pontos, separados por vírgula. Ponha nas animações em que o personagem anda (passo, trote, corrida). Na parada, a medida dá zero.
+- **Como ele mede:** para cada pé, o chão é a altura mais baixa a que aquele pé chega na animação, e o pé está no chão nos quadros perto dela. Entre dois quadros seguidos no chão, o Weasel vê quanto o pé andou para trás e fica com o valor do meio (um quadro torto não estraga a conta). Aqui, 10 px por quadro a 12 fps: o personagem anda 120 px por segundo.
+- Vale para personagens vistos **de lado**, andando para a direita ou para a esquerda.
+
+O `--info` mostra a medida em cada animação com `feet=` (com `-s`, já na escala da exportação):
+
+```
+  anda_right     8 quadros, 12 fps
+                 eventos: passo@0, passo@4
+                 pés: anda 120 px/s para a direita (10 px por quadro a 12 fps)
+```
+
+### A trajetória dos pés
+
+![O caminho de cada pé em todos os quadros, numerado: no chão, bolinhas cheias em linha e igualmente espaçadas; no ar, um arco de volta](img/09_passada_trajetoria.png)
+
+`--trajectory` desenha o caminho de cada pé em todos os quadros da animação, numerado, por cima do personagem clarinho (a imagem acima). As bolinhas cheias são os quadros no chão, e a linha tracejada é onde o pé pisa. No chão, as bolinhas têm de ficar **em linha e igualmente espaçadas**; uma fora do lugar é um escorregão. `--trajectory=mao,pe_e` segue outros pontos (os que não são pés mostram só o caminho).
+
+```bash
+node cli/weasel.js andador.weasel -a anda_right --trajectory -o pes.png
+```
+
+No editor, o botão **Trajetória** mostra o mesmo por cima do desenho, com um anel no quadro atual e a medida no canto. Numa animação sem `feet=`, ele mostra o caminho de todos os pontos.
+
+Quando um pé, no chão, anda diferente dos outros, o `--info`, o `--trajectory` e o editor avisam:
+
+```
+                 aviso: pe_d escorrega: no chão vai para trás de 6 a 14 px por quadro (os outros, 10)
+```
+
+### No jogo
+
+Na cena do Godot, o AnimationPlayer guarda a medida de cada animação em `velocidades` (em px por segundo, já na escala da exportação; as espelhadas andam o mesmo). `velocidade()` devolve a da animação tocando agora, e `velocidade("anda")` a de `anda` virada para a última direção, como o `tocar()`. O jogo escolhe o que fazer com ela: andar na velocidade dos pés, ou acertar o ritmo da animação pela velocidade do jogo.
+
+```gdscript
+func _physics_process(_delta: float) -> void:
+	var dir := Input.get_axis("ui_left", "ui_right")
+	anim.tocar("anda" if dir else "parado", Vector2(dir, 0))
+	velocity.x = dir * anim.velocidade()   # anda na velocidade dos pés
+	move_and_slide()
+```
+
+```gdscript
+	# ou: o jogo manda na velocidade, e o passo acompanha
+	anim.speed_scale = absf(velocity.x) / anim.velocidade() if velocity.x else 1.0
+```
+
+Na sprite sheet, a medida vai no JSON, em `meta.frameTags` (`groundSpeed`, px por segundo na escala da folha).
+
 ## O nó do Godot: `godot`
 
 ```
@@ -435,6 +536,7 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 - O **AnimationPlayer** tem uma animação para cada `anim` (mais as espelhadas). Cada uma troca o quadro do sprite, liga, desliga e move as caixas e os pontos quadro a quadro e chama os eventos na hora certa. **Toque as animações pelo AnimationPlayer**, não pelo sprite.
 - `tocar("attack", velocity)` escolhe a direção sozinho: toca `attack_right` ou `attack_left` (ou `_up`, `_down` e as diagonais, se existirem), e só recomeça quando a animação muda.
 - Os eventos chegam pelo sinal `evento(nome)`. Dois ou mais no mesmo quadro chegam um depois do outro, na ordem do código.
+- Com `feet=`, `velocidade()` diz quanto o personagem anda por segundo na animação tocando agora sem os pés escorregarem ([acima](#no-jogo)).
 - `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado; `--rig` exporta com esqueleto de verdade ([abaixo](#esqueleto-de-verdade-rigbones-experimental)).
 
 Um script de jogo usando a cena:

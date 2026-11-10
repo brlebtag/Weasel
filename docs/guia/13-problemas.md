@@ -580,6 +580,10 @@ erro: o osso "b" não tem caminho: use bone b … path=nome_de_uma_linha
 
 **Como resolver:** `along` (andar pelo caminho, de 0 a 1) só existe num osso com `path=` na linha `bone`, com o nome de uma linha, traço ou forma: `bone b pivot=20,180 path=trilha`.
 
+### Os pés escorregam no jogo
+
+O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou o botão **Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas.
+
 ### O `mix=` dá erro
 
 **O que você vê:**

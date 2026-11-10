@@ -762,7 +762,7 @@ ref pulo "rascunhos/pulo.png" 0,0 only=jump opacity=0.3
 
 ## Vendo e exportando
 
-- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (setas `←` `→` com o foco fora do código). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. O botão **Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador.
+- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (setas `←` `→` com o foco fora do código). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. O botão **Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador. O botão **Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros; com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)).
 - **Na linha de comando:**
 
 ```bash

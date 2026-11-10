@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.25.1">
+<link rel="stylesheet" href="css/style.css?v=1.26.0">
 </head>
 <body>
 <header class="top">
@@ -50,6 +50,7 @@
       <label class="tog"><input type="checkbox" id="tPoints" checked> Pontos</label>
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
+      <label class="tog" title="O caminho dos pés (anim feet=) ou dos pontos (point) em todos os quadros da animação, numerado; com feet=, quanto o personagem anda por segundo para os pés no chão não escorregarem"><input type="checkbox" id="tTraj"> Trajetória</label>
       <label class="tog" id="tRulersWrap" title="Réguas em pixels em cima e à esquerda (tecla R). Arraste de uma régua para pôr uma linha guia: o que você arrasta gruda nela (segurando Ctrl, não gruda)"><input type="checkbox" id="tRulers"> Réguas</label>
       <button id="measureBtn" class="refbtn" type="button" title="Medir (tecla M): arraste no desenho de um ponto a outro para ver a distância, o ângulo e quanto anda em x e em y">Medir</button>
       <button id="layerBtn" class="refbtn" type="button" title="As camadas e o que desenha em cada uma: escolha formas (ou uma camada inteira) para mover e girar juntas">Camadas</button>
@@ -152,6 +153,7 @@
       <tr><td><code>bone … spring=0.4</code></td><td>Mola: o osso gira atrasado quando o pai se mexe (orelhas, antenas, cabelo).</td></tr>
       <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados. <code>tension</code> 0–1 (mole a duro).</td></tr>
       <tr><td><code>anim nome frames= fps= [once]</code></td><td>Começa uma animação. Ela repete, a não ser com <code>once</code>.</td></tr>
+      <tr><td><code>anim nome … feet=pontos</code></td><td>Os pés (pontos na sola): o Weasel mede quanto o personagem anda por segundo para os pés no chão não escorregarem. Sai no <code>--info</code>, no JSON e no Godot (<code>velocidade()</code>); o botão <b>Trajetória</b> mostra o caminho deles.</td></tr>
       <tr><td><code>anim nome mix=base,ação bones=ossos</code></td><td>Junta duas animações: a base inteira, com os ossos listados (e os filhos) vindos da ação. O tempo, as caixas e os eventos são os da ação. Num loop, o tempo tem de fechar o ciclo de onde os ossos vêm, senão eles pulam ao recomeçar (o editor avisa).</td></tr>
       <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose dos ossos naquele quadro; o meio é interpolado. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
       <tr><td><code>key quadro forma.prop=valor</code></td><td>Anima uma forma: <code>opacity</code>, <code>c</code>, <code>inkc</code>, <code>w</code>, <code>ink</code>, <code>show</code> (1/0), <code>shape</code> (morph para outra forma: fechada com fechada, traço com traço) e <code>draw</code> (0 a 1: desenha aos poucos; num texto, as letras aparecem uma a uma). Camadas: <code>camada.opacity</code> e <code>camada.show</code>.</td></tr>
@@ -209,7 +211,7 @@
       <tr><td><code>tile nome coluna,linha [solid] [oneway] collision=forma</code></td><td>Um bloco: <code>solid</code> colide no quadrado todo, <code>oneway</code> só por cima, <code>collision=</code> usa o formato de uma forma (rampa). O nome vai como dado do bloco.</td></tr>
       <tr><td><code>point nome x,y bone=</code></td><td>Ponto de encaixe que segue o osso (posição e rotação): de onde sai o tiro, onde a mão segura, onde nasce a poeira. No Godot vira um <code>Marker2D</code> que o AnimationPlayer move; na sprite sheet, vai no JSON de cada quadro.</td></tr>
     </table>
-    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Guias</b>, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas) e os pontos de encaixe em roxo, com uma seta para onde o osso aponta.</p>
+    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). Com <code>feet=</code>, <code>velocidade()</code> diz quanto o personagem anda por segundo sem os pés escorregarem. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Guias</b>, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas) e os pontos de encaixe em roxo, com uma seta para onde o osso aponta.</p>
 
     <h3>Filme</h3>
     <p>Um arquivo com <code>film</code> vira um filme e sai em vídeo. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo), postos em cena com <code>actor</code>.</p>
@@ -340,23 +342,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.25.1"></script>
-<script src="js/lang.js?v=1.25.1"></script>
-<script src="js/scene.js?v=1.25.1"></script>
-<script src="js/film.js?v=1.25.1"></script>
-<script src="js/audio.js?v=1.25.1"></script>
-<script src="js/nle.js?v=1.25.1"></script>
-<script src="js/webm.js?v=1.25.1"></script>
-<script src="js/svg.js?v=1.25.1"></script>
-<script src="js/gif.js?v=1.25.1"></script>
-<script src="js/zip.js?v=1.25.1"></script>
-<script src="js/normal.js?v=1.25.1"></script>
-<script src="js/export.js?v=1.25.1"></script>
-<script src="js/godot.js?v=1.25.1"></script>
-<script src="js/rig.js?v=1.25.1"></script>
-<script src="js/editor.js?v=1.25.1"></script>
-<script src="js/examples.js?v=1.25.1"></script>
-<script src="js/timeline.js?v=1.25.1"></script>
-<script src="js/app.js?v=1.25.1"></script>
+<script src="js/geom.js?v=1.26.0"></script>
+<script src="js/lang.js?v=1.26.0"></script>
+<script src="js/scene.js?v=1.26.0"></script>
+<script src="js/film.js?v=1.26.0"></script>
+<script src="js/audio.js?v=1.26.0"></script>
+<script src="js/nle.js?v=1.26.0"></script>
+<script src="js/webm.js?v=1.26.0"></script>
+<script src="js/svg.js?v=1.26.0"></script>
+<script src="js/gif.js?v=1.26.0"></script>
+<script src="js/zip.js?v=1.26.0"></script>
+<script src="js/normal.js?v=1.26.0"></script>
+<script src="js/export.js?v=1.26.0"></script>
+<script src="js/godot.js?v=1.26.0"></script>
+<script src="js/rig.js?v=1.26.0"></script>
+<script src="js/editor.js?v=1.26.0"></script>
+<script src="js/examples.js?v=1.26.0"></script>
+<script src="js/timeline.js?v=1.26.0"></script>
+<script src="js/app.js?v=1.26.0"></script>
 </body>
 </html>
