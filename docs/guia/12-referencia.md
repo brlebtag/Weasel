@@ -471,7 +471,7 @@ ellipse vcano 180,100 4 c=#8a4bd0
 
 Repare:
 
-- `box` e `point` **não aparecem** na imagem: no jogo eles viram colisões e marcadores. No editor, você os vê com **Guias** ligado.
+- `box` e `point` **não aparecem** na imagem: no jogo eles viram colisões e marcadores. No editor, você vê as caixas com **Hitboxes** ligado e os pontos com **Guias** ligado.
 - Para mostrar as caixas aqui, copiei cada uma numa camada `guide`. Essa camada só sai na exportação com `--guides`; esta imagem foi feita assim.
 - Verde é o corpo que colide com o chão (`body`), amarelo é onde o boneco leva dano (`hurt`) e vermelho é o golpe (`hit`). O golpe e o `point` têm `bone=braco`: andam com o braço.
 - `root=100,190` fica entre os pés do boneco: esse ponto vira a **origem** (0,0) da cena no Godot.

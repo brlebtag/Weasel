@@ -22,7 +22,7 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, points: true, bones: false, onion: false, traj: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
+    show: { guides: true, boxes: true, points: true, bones: false, onion: false, traj: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
@@ -1887,7 +1887,7 @@
     if (refs) drawRefFrames(ctx, m, pose, z);
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
     if (st.show.guides && m.tileset) drawTileset(ctx, m, z);
-    if (st.show.guides && m.boxes.size) drawBoxes(ctx, m, pose, z);
+    if (m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
     if (st.show.bones) drawBones(ctx, m, pose, z);
@@ -2006,9 +2006,11 @@
 
   // caixas do jogo: corpo em verde, golpe em vermelho, dano em amarelo; desligadas, tracejadas
   const BOX_COLOR = { body: '#3fcf8e', hit: '#ff5a5a', hurt: '#ffd166' };
+  // com Hitboxes desligado, só a caixa da linha do cursor (a que você está mexendo)
   function drawBoxes(ctx, m, pose, z) {
     ctx.save();
     for (const b of m.boxes.values()) {
+      if (!st.show.boxes && (m.lineMap ? m.lineMap[b.line] : b.line) !== st.caret.line) continue;
       const s = S.boxState(m, pose, b);
       ctx.save();
       ctx.translate(s.cx, s.cy);
@@ -3025,10 +3027,11 @@
     ctx.fillText('px', 4, 13);
     ctx.restore();
   }
-  // liga as réguas e o Medir de acordo com o arquivo (no filme, não há réguas nem Medir)
+  // liga as réguas, o Medir e a chave Hitboxes de acordo com o arquivo (no filme, não há nenhum deles)
   function syncRulers() {
     const film = isFilm();
     $('tRulersWrap').hidden = film;
+    $('tBoxesWrap').hidden = film;
     $('measureBtn').hidden = film;
     if (film && st.measure) setMeasure(false);
     stage.classList.toggle('ruled', rulersOn());
@@ -3662,6 +3665,7 @@
 
   // ---------- controles ----------
   $('tGuides').addEventListener('change', (e) => { st.show.guides = e.target.checked; draw(); });
+  $('tBoxes').addEventListener('change', (e) => { st.show.boxes = e.target.checked; draw(); });
   $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
