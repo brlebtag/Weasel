@@ -346,6 +346,45 @@ async function gifCase() {
   await check('_gif', 'gif.txt', 'text', `entrada ${inHash}\nnormal ${h(plain)} ${plain.length}\npontilhado ${h(dith)} ${dith.length}\n`);
 }
 
+// prévia do def (editor): o def sozinho em 0,0 com outros valores, sem mexer no desenho nem nos erros do código
+async function previewCase() {
+  console.log(paint('1', '_previa'));
+  const src = [
+    'canvas 300 200 bg=#e8eef4',
+    'palette pele=#e0b080',
+    'gradient ceu linear 0,0 0,40 : #88ccff #ffffff',
+    'def bola r=20 c=pele cor2=red fundo=ceu',
+    '  ellipse corpo 0,0 {r} c=c ink=2',
+    '  rect nariz {r},0 10,6 c=cor2 cut=furo',
+    '  ellipse furo {r+5},3 2',
+    '  use olho 0,{-r/2}',
+    '  rect placa -10,{r+4} 20,8 c=fundo',
+    'end',
+    'def olho t=4',
+    '  ellipse o 0,0 {t} c=black',
+    'end',
+    'use bola 100,100 r=30',
+    '',
+  ].join('\n');
+  const opts = (preview) => ({ file: 'previa.weasel', resolve: () => null, preview });
+  const plain = W.lang.parse(src, opts(null));
+  const m = W.lang.parse(src, opts({ def: 'bola', params: { r: '40', cor2: 'blue' } }));
+  const errs = (x) => x.errors.map((e) => `${e.line}:${e.msg}`).join('|');
+  record(errs(m) === errs(plain) && m.elements.length === plain.elements.length && m.layers.length === plain.layers.length, '_previa/desenho', 'a prévia mudou o desenho ou os erros do código');
+  record(m.defs.get('bola').uses === 1 && m.defs.get('olho').uses === 1, '_previa/uses', 'a prévia contou como use');
+  const P = m.preview, lines = [`def ${P.def} na linha ${P.line + 1}`];
+  for (const q of P.params) lines.push(`  ${q.key}=${q.text} (${q.kind}, padrão ${q.def}${q.changed ? ', mudou' : ''}) → ${q.value === undefined ? '-' : q.value}`);
+  for (const el of P.elements) lines.push(`  ${el.type} ${el.name} linha ${el.line + 1}${el.use !== undefined ? ` (use da linha ${el.use + 1})` : ''}${el.xf ? ` xf ${el.xf.map((v) => +v.toFixed(2)).join(',')}` : ''}${el.cuts ? ` cut ${el.cuts.map((c) => c.name).join(',')}` : ''}`);
+  for (const i of [4, 5, 7]) {
+    const rec = m.byLine.get(i);
+    lines.push(`  alças da linha ${i + 1}${rec.el && P.elements.includes(rec.el) ? ' (da prévia)' : rec.use ? ' (use)' : ''}: ${rec.handles.map((h) => `${h.kind}${h.fixed ? '!' : ''} ${+h.x.toFixed(2)},${+h.y.toFixed(2)}`).join(' · ')}`);
+  }
+  const bad = W.lang.parse(src, opts({ def: 'bola', params: { c: 'xyzzy' } }));
+  lines.push(`cor errada: ${bad.errors.length} erro(s) no código; na prévia: ${bad.preview.errors.map((e) => `linha ${e.line + 1}: ${e.msg}`).join(' · ')}`);
+  await check('_previa', 'previa.txt', 'text', lines.join('\n') + '\n');
+  await check('_previa', 'previa.png', 'png', W.scene.renderImage(P.model, W.scene.makePose(P.model, null, 0), { rect: { x: -60, y: -50, w: 130, h: 110 }, scale: 2 }));
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -363,6 +402,7 @@ async function main() {
   }
   if (!only.length || only.some((o) => '_gif'.includes(o))) await gifCase();
   if (!only.length || only.some((o) => '_audio'.includes(o))) await audioCase();
+  if (!only.length || only.some((o) => '_previa'.includes(o))) await previewCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

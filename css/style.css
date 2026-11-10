@@ -161,6 +161,27 @@ main {
 /* editor de gradiente: à esquerda (o das imagens fica à direita) */
 .grad-panel { right: auto; left: 8px; width: 340px; padding: 8px 12px 9px; }
 .grad-panel .rp-head { gap: 6px; }
+/* prévia do def: as variáveis, embaixo à direita */
+.def-panel { top: auto; bottom: 8px; width: 300px; }
+.stage.ruled .def-panel { top: auto; }
+.pv-tog { color: #ff7cc4; }
+.dp-name { border: none; background: none; padding: 0 2px; font: 600 12px var(--mono); color: var(--kw); }
+.dp-uses { color: var(--dim); }
+.dp-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-top: 1px solid var(--line); }
+.dp-k { width: 80px; flex: none; font: 12px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: none; }
+.dp-k.scrub { cursor: ew-resize; text-decoration: underline dotted var(--dim); text-underline-offset: 3px; }
+.dp-row.changed .dp-k { color: #ff7cc4; }
+.dp-row input[type=text], .dp-row select { flex: 1; min-width: 0; font: 12px var(--mono); }
+.dp-col { width: 28px; height: 22px; padding: 0 1px; flex: none; }
+.dp-col.none { opacity: .35; }
+.dp-back { padding: 0 6px; border: none; background: none; color: var(--dim); visibility: hidden; }
+.dp-row.changed .dp-back { visibility: visible; }
+.dp-errs { font: 11px var(--mono); line-height: 1.4; }
+.dp-errs:empty { display: none; }
+.dp-errs .error { color: var(--err); }
+.dp-errs .warn { color: var(--warn); }
+.def-panel .rp-foot { margin-top: 4px; }
+.dp-tip { display: block; color: var(--dim); margin-top: 6px; line-height: 1.4; }
 /* painel das camadas: à esquerda; aberto, empurra o do gradiente para o lado */
 .layer-panel { right: auto; left: 8px; width: 250px; padding: 8px 8px 6px; }
 .stage.lp-open .grad-panel { left: 266px; max-width: calc(100% - 274px); }

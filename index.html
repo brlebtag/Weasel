@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.26.3">
+<link rel="stylesheet" href="css/style.css?v=1.27.0">
 </head>
 <body>
 <header class="top">
@@ -52,6 +52,7 @@
       <label class="tog"><input type="checkbox" id="tBones"> Ossos</label>
       <label class="tog" title="Mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion"> Papel vegetal</label>
       <label class="tog" title="O caminho dos pés (anim feet=) ou dos pontos (point) em todos os quadros da animação, numerado; com feet=, quanto o personagem anda por segundo para os pés no chão não escorregarem"><input type="checkbox" id="tTraj"> Trajetória</label>
+      <label class="tog pv-tog" id="tPreviewWrap" hidden><input type="checkbox" id="tPreview"> Prévia do def</label>
       <label class="tog" id="tRulersWrap" title="Réguas em pixels em cima e à esquerda (tecla R). Arraste de uma régua para pôr uma linha guia: o que você arrasta gruda nela (segurando Ctrl, não gruda)"><input type="checkbox" id="tRulers"> Réguas</label>
       <button id="measureBtn" class="refbtn" type="button" title="Medir (tecla M): arraste no desenho de um ponto a outro para ver a distância, o ângulo e quanto anda em x e em y">Medir</button>
       <button id="layerBtn" class="refbtn" type="button" title="As camadas e o que desenha em cada uma: escolha formas (ou uma camada inteira) para mover e girar juntas">Camadas</button>
@@ -75,6 +76,7 @@
       <div id="refPanel" class="ref-panel" hidden></div>
       <div id="layerPanel" class="ref-panel layer-panel" hidden></div>
       <div id="gradPanel" class="ref-panel grad-panel" hidden></div>
+      <div id="defPanel" class="ref-panel def-panel" hidden></div>
     </div>
     <div id="timeline" class="timeline" hidden><canvas id="tlCanvas"></canvas></div>
     <div class="player">
@@ -257,6 +259,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Na linha do <code>canvas</code> ou de uma <code>light … dir</code>, uma seta amarela sai do centro e aponta para a luz: arraste o sol da ponta para girar a direção (com <kbd>Shift</kbd>, de 15 em 15 graus). Sem <code>light=</code> no <code>canvas</code>, arrastar escreve um.</li>
       <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
       <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus.</li>
+      <li>Com o cursor entre <code>def</code> e <code>end</code>, a <b>prévia</b> mostra o componente sozinho, com uma cruz rosa no <code>0,0</code> (o ponto que vai para o x,y do <code>use</code>): na hora, se o <code>def</code> não tem <code>use</code>; com a chave <b>Prévia do def</b>, se tem. No painel <b>Prévia</b>, mude os parâmetros (arraste o nome de um número para os lados) sem mudar o código; <b>Copiar como use</b> copia uma linha <code>use</code> com o que mudou. As alças mudam as linhas do <code>def</code>.</li>
       <li><b>Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
       <li><b>Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. <kbd>Ctrl</kbd>+<kbd>H</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (também no código). Não aparece em filmes.</li>
       <li><b>Réguas</b> (tecla <kbd>R</kbd>, fora do código) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (o botão <b>Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
@@ -343,23 +346,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.26.3"></script>
-<script src="js/lang.js?v=1.26.3"></script>
-<script src="js/scene.js?v=1.26.3"></script>
-<script src="js/film.js?v=1.26.3"></script>
-<script src="js/audio.js?v=1.26.3"></script>
-<script src="js/nle.js?v=1.26.3"></script>
-<script src="js/webm.js?v=1.26.3"></script>
-<script src="js/svg.js?v=1.26.3"></script>
-<script src="js/gif.js?v=1.26.3"></script>
-<script src="js/zip.js?v=1.26.3"></script>
-<script src="js/normal.js?v=1.26.3"></script>
-<script src="js/export.js?v=1.26.3"></script>
-<script src="js/godot.js?v=1.26.3"></script>
-<script src="js/rig.js?v=1.26.3"></script>
-<script src="js/editor.js?v=1.26.3"></script>
-<script src="js/examples.js?v=1.26.3"></script>
-<script src="js/timeline.js?v=1.26.3"></script>
-<script src="js/app.js?v=1.26.3"></script>
+<script src="js/geom.js?v=1.27.0"></script>
+<script src="js/lang.js?v=1.27.0"></script>
+<script src="js/scene.js?v=1.27.0"></script>
+<script src="js/film.js?v=1.27.0"></script>
+<script src="js/audio.js?v=1.27.0"></script>
+<script src="js/nle.js?v=1.27.0"></script>
+<script src="js/webm.js?v=1.27.0"></script>
+<script src="js/svg.js?v=1.27.0"></script>
+<script src="js/gif.js?v=1.27.0"></script>
+<script src="js/zip.js?v=1.27.0"></script>
+<script src="js/normal.js?v=1.27.0"></script>
+<script src="js/export.js?v=1.27.0"></script>
+<script src="js/godot.js?v=1.27.0"></script>
+<script src="js/rig.js?v=1.27.0"></script>
+<script src="js/editor.js?v=1.27.0"></script>
+<script src="js/examples.js?v=1.27.0"></script>
+<script src="js/timeline.js?v=1.27.0"></script>
+<script src="js/app.js?v=1.27.0"></script>
 </body>
 </html>

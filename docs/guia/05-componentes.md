@@ -572,7 +572,7 @@ use arvore 410,206 scale=0.5 copa=#e05a8a
 
 **Definindo** (`def nome parâmetros` … `end`):
 
-- As linhas entre `def` e `end` são o desenho. Elas **não aparecem sozinhas**: só quando alguém usa o componente.
+- As linhas entre `def` e `end` são o desenho. Elas **não aparecem sozinhas**: só quando alguém usa o componente. No editor, a [prévia](#ver-um-componente-sozinho-a-prévia) mostra o componente sozinho enquanto o cursor está nele.
 - O desenho é feito **em volta de `0,0`**. Esse ponto é a "alça" do componente: no `use`, ele vai para a posição pedida. Na árvore, `0,0` é a base do tronco.
 - Os **parâmetros** (`copa=#4caf50 alto=60`) são os valores que cada uso pode mudar. Todo parâmetro precisa de um valor padrão.
   - Parâmetro com **número** vira variável para as contas (`{alto*0.45}`) e também pode ser espessura (`ink=alto`).
@@ -637,6 +637,22 @@ Repare:
 ```
 aviso: parâmetro desconhecido "bordda": o componente "botao" tem cor, borda (e o use aceita scale, rot, flip, bone, cloth, opacity, z)
 ```
+
+### Ver um componente sozinho: a prévia
+
+No editor, com o cursor em qualquer linha entre `def` e `end`, dá para ver o componente sozinho e experimentar valores para os parâmetros:
+
+- Um `def` **sem nenhum `use`** aparece na hora: o desenho dá lugar ao componente, num papel do tamanho dele. Saindo do `def`, o desenho volta como estava.
+- Num `def` **já usado**, o desenho continua; ligue a chave **Prévia do def**, que aparece na barra só com o cursor num `def`. A mesma chave desliga a prévia de um `def` sem `use`.
+- A **cruz rosa** marca o `0,0`: o ponto que vai parar no `x,y` do `use`.
+- O painel **Prévia**, embaixo à direita, tem uma linha para cada parâmetro, começando no valor padrão:
+  - **número**: escreva no campo ou arraste o nome para os lados (com Shift, anda 10× mais);
+  - **cor**: o quadradinho abre o seletor; o campo aceita `#hex`, um nome da `palette`, um nome de cor ou `none`;
+  - **gradiente** ou **padrão**: uma lista com os do arquivo.
+- O painel **não muda o código**: os valores ficam só enquanto a página está aberta. O ↺ de uma linha volta aquele parâmetro ao padrão; **Voltar ao padrão** volta todos. **Copiar como use** copia uma linha pronta com o que você mudou (por exemplo `use botao 0,0 borda=10`): cole e troque o `0,0` pela posição.
+- As **alças** continuam valendo: arrastar uma muda a linha do `def`, nas coordenadas dele.
+- A prévia é parada: sem animação, luzes, caixas e o que vem do desenho em volta (a camada do `use`, `bone=`). Um erro que só acontece com um valor do painel aparece no painel, não no código.
+- **Pintar** pinta só o componente.
 
 ### Tamanho e giro: `scale=` e `rot=`
 
@@ -935,7 +951,7 @@ rect entrada -10,-34 20,34 c=porta ink=line
 end
 ```
 
-Sozinho, ele não desenha nada: um `def` sem `use` não aparece. Agora, um desenho na mesma pasta que usa as peças:
+Sozinho, ele não desenha nada: um `def` sem `use` não aparece. No editor, porém, cada `def` aparece na [prévia](#ver-um-componente-sozinho-a-prévia) quando o cursor entra nele: dá para conferir as peças sem sair deste arquivo. Agora, um desenho na mesma pasta que usa as peças:
 
 <!-- gerar: img/05_include_pecas.png -->
 ```weasel

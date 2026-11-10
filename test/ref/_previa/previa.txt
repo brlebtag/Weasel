@@ -1,0 +1,14 @@
+def bola na linha 4
+  r=40 (num, padrão 20, mudou) → 40
+  c=pele (color, padrão pele) → #e0b080
+  cor2=blue (color, padrão red, mudou) → blue
+  fundo=ceu (grad, padrão ceu) → -
+  ellipse corpo linha 5
+  rect nariz linha 6 cut furo
+  ellipse furo linha 7
+  ellipse o linha 12 (use da linha 8) xf 1,0,0,1,0,-20
+  rect placa linha 9
+  alças da linha 5 (da prévia): center 0,0 · size! 40,0
+  alças da linha 6 (da prévia): corner! 40,0 · size 50,6 · round 40,0 · rot 45,0
+  alças da linha 8 (use): pos! 0,-20
+cor errada: 0 erro(s) no código; na prévia: linha 4: cor desconhecida "xyzzy" · linha 5: cor desconhecida "c"

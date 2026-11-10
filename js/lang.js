@@ -1100,11 +1100,17 @@
     };
     const DRY_LAYER = { name: '(def)', items: [], opacity: 1 };
 
+    // a prévia de um def: as formas vão para a lista dela, todas na camada dela (sem inkon)
+    let sink = null;
     function addElement(el) {
-      el.id = m.elements.length;
-      m.elements.push(el);
-      if (el.name) { if (!m.named.has(el.name)) m.named.set(el.name, []); m.named.get(el.name).push(el); }
-      if (el.inkon && el.ink > 0) {
+      const E = sink || m;
+      el.id = E.elements.length;
+      E.elements.push(el);
+      if (el.name) { if (!E.named.has(el.name)) E.named.set(el.name, []); E.named.get(el.name).push(el); }
+      if (sink) {
+        el.layer = sink.layer;
+        sink.layer.items.push({ el, part: 'all' });
+      } else if (el.inkon && el.ink > 0) {
         el.layer.items.push({ el, part: 'fill' });
         el.inkon.items.push({ el, part: 'ink' });
       } else {
@@ -1128,7 +1134,8 @@
       const ws = el.ws;
       const prev = m.byLine.get(st.line);
       const real = ctx.inst >= 0;
-      const rec = prev && prev.real && prev.el ? { handles: [] } : info(st, { el, xf: ctx.xf, real });
+      // a primeira cópia fica com as alças da linha; na prévia de um def, as linhas dele são da prévia
+      const rec = prev && prev.real && prev.el && !ctx.preview ? { handles: [] } : info(st, { el, xf: ctx.xf, real });
       if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) el.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
       // bones=a,b,c: cada ponto segue os ossos mais perto dele (a forma dobra em vez de girar inteira)
       if (A.has('bones')) {
@@ -1420,7 +1427,7 @@
         applyParam(st, a, ctx, parent);
       }
       const prev = m.byLine.get(st.line);
-      if (!dry && !(prev && prev.real)) {
+      if (!dry && (!(prev && prev.real) || parent.preview)) {
         const rec = info(st, { use: def.name, xf: parent.xf, real: true });
         if (st.pos[1]) rec.handles.push({ kind: 'pos', x: at[0], y: at[1], from: st.pos[1].from, to: st.pos[1].to, fixed: st.pos[1].text.includes('{') });
       }
@@ -1570,9 +1577,9 @@
       if (same >= 0) tr[same] = k; else tr.push(k);
     }
 
-    // forma com esse nome, de preferência da mesma instância de componente
-    function findNamed(name, inst) {
-      const list = m.named.get(name);
+    // forma com esse nome, de preferência da mesma instância de componente (named: os nomes da prévia de um def)
+    function findNamed(name, inst, named) {
+      const list = (named || m.named).get(name);
       if (!list) return null;
       return list.find((e) => e.inst === inst) || list[0];
     }
@@ -1609,12 +1616,14 @@
         }
       }
     }
-    for (const el of m.elements) {
+    for (const el of m.elements) linkEl(el, m.named);
+    // cut=, back= e as pernas: dependem das outras formas já lidas (named: as da cena ou as da prévia de um def)
+    function linkEl(el, named) {
       if (el.cutNames) {
         el.cuts = [];
         for (const n of el.cutNames) {
           // todas as formas com esse nome (as de um repeat, por exemplo); num componente, as da mesma cópia
-          const list = m.named.get(n), mine = list ? list.filter((c) => c.inst === el.inst) : [];
+          const list = named.get(n), mine = list ? list.filter((c) => c.inst === el.inst) : [];
           const cs = (mine.length ? mine : list || []).filter((c) => c !== el);
           if (!list) bad(el.cutAt.st, el.cutAt.a, `cut: forma "${n}" não existe`);
           else if (cs.some((c) => !c.closed)) bad(el.cutAt.st, el.cutAt.a, `cut: "${n}" precisa ser uma forma fechada`);
@@ -1623,7 +1632,7 @@
         if (!el.cuts.length) el.cuts = null;
       }
       if (el.backAt) {
-        const { st, a } = el.backAt, b = findNamed(a.text, el.inst);
+        const { st, a } = el.backAt, b = findNamed(a.text, el.inst, named);
         if (!b) bad(st, a, `back: forma "${a.text}" não existe`);
         else if (!el.closed || !b.closed) bad(st, a, 'back= vale entre formas fechadas (shape, ellipse ou rect)');
         else if (b !== el) {
@@ -1631,7 +1640,7 @@
           if (!b.hidden) bad(st, a, `o verso "${a.text}" também aparece sozinho: ponha hidden nele`, 'warn');
         }
       }
-      if (!el.limb) continue;
+      if (!el.limb) return;
       const xf = el.xf;
       const T = (x, y) => (xf ? M.apply(xf, x, y) : [x, y]);
       const hipLocal = el.hip;
@@ -1646,7 +1655,7 @@
       } else if (a) {
         const parts = a.text.split(',');
         if (parts.length === 2 && IDENT.test(parts[0]) && !isNaN(num(parts[1]))) {
-          const g = (m.named.get(parts[0]) || []).find((e) => e.pts && e.pts.length >= 2);
+          const g = (named.get(parts[0]) || m.named.get(parts[0]) || []).find((e) => e.pts && e.pts.length >= 2);
           if (!g) bad(st, a, `não achei a linha "${parts[0]}" para apoiar o pé`);
           else {
             const wx = T(num(parts[1]), hipLocal[1])[0];
@@ -2559,6 +2568,46 @@
       if (!n) err(st.line, 'at sem mudança (ex.: at 2s heroi.pos=400,560 camera.zoom=1.4)', st.cmdTok.from, st.cmdTok.to);
     }
 
+    // ---- prévia de um def (o editor, com o cursor dentro dele): uma cópia em 0,0, com as variáveis do painel ----
+    // As formas ficam fora do desenho (m.preview), as alças das linhas do def passam a ser as dela e os erros só
+    // dela (de um valor escolhido no painel) vão para m.preview.errors.
+    const pvDef = opts.preview && defs.get(opts.preview.def);
+    if (pvDef) buildPreview(pvDef, opts.preview.params || {});
+    function buildPreview(def, params) {
+      const e0 = errors.length, uses = [...defs.values()].map((d) => [d, d.uses]);
+      const layer = { name: '(prévia)', line: -1, items: [], guide: false, hidden: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', shade: 0.5, implicit: true };
+      const pv = { def: def.name, line: def.st.line, elements: [], named: new Map(), layer, params: [], errors: [], model: null };
+      const ctx = { xf: null, over: new Map(), vars: new Map(globals), bone: null, cloth: null, opacity: 1, inst: ++instCount, zu: 0, boardXf: null, preview: true };
+      const kindOf = (t) => {
+        const v = unq(t), p = m.palette.get(v);
+        if (!isNaN(num(v))) return 'num';
+        if (m.gradients.has(v) || (p && p.kind === 'grad')) return 'grad';
+        if (m.patterns.has(v) || (p && p.kind === 'pat')) return 'pattern';
+        return 'color';
+      };
+      for (const a of def.st.attrs.values()) {
+        const has = Object.prototype.hasOwnProperty.call(params, a.key), text = has ? String(params[a.key]) : a.text;
+        applyParam(def.st, has ? Object.assign({}, a, { text }) : a, ctx, ROOT);
+        const kind = kindOf(a.text), c = ctx.over.get(a.key);
+        pv.params.push({ key: a.key, def: a.text, text, kind, changed: has && text !== a.text, value: kind === 'num' ? ctx.vars.get(a.key) : typeof c === 'string' || c === null ? c : undefined });
+      }
+      sink = pv;
+      instantiate(def, layer, ctx, 0, false);
+      sink = null;
+      for (const el of pv.elements) linkEl(el, pv.named);
+      // a variante escolhida também mostra e esconde as peças do def
+      for (const v of variantStmts) {
+        if (v.name !== opts.variant) continue;
+        for (const k of ['show', 'hide']) {
+          const a = v.st.attrs.get(k);
+          if (a) for (const n of a.text.split(',')) for (const e of pv.named.get(n) || []) e.hidden = k === 'hide';
+        }
+      }
+      for (const [d, n] of uses) d.uses = n;
+      for (let i = e0; i < errors.length; i++) errors[i].preview = true;
+      m.preview = pv;
+    }
+
     // ---- linhas de arquivos incluídos: erros e alças voltam para a linha do include ----
     if (X.files.length || X.repeated) {
       const mainLines = src.split(/\r?\n/);
@@ -2585,6 +2634,16 @@
         const e = errors[i], k = `${e.line}:${e.from}:${e.msg}`;
         if (once.has(k)) errors.splice(i, 1); else once.add(k);
       }
+    }
+    if (m.preview) {
+      const pv = m.preview;
+      for (let i = errors.length - 1; i >= 0; i--) if (errors[i].preview) pv.errors.unshift(errors.splice(i, 1)[0]);
+      if (m.lineMap) pv.line = m.lineMap[pv.line];
+      // o desenho da prévia: o mesmo arquivo, só com as formas do def (sem animação, caixas, luzes e referências)
+      pv.model = Object.assign({}, m, {
+        elements: pv.elements, named: pv.named, layers: [pv.layer], layerMap: new Map([[pv.layer.name, pv.layer]]),
+        anims: [], animMap: new Map(), boxes: new Map(), points: new Map(), lights: new Map(), refs: [], film: null, tileset: null, unity: null, preview: null,
+      });
     }
     scope = null;
     errors.sort((a, b) => a.line - b.line || a.from - b.from);

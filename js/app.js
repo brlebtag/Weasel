@@ -49,6 +49,9 @@
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
   };
+  // prévia do def: ligada/desligada por def (sem entrada, ligada só sem use), os valores do painel por def,
+  // o def mostrado agora e a vista de antes da prévia (volta quando ela some)
+  const pv = { mode: new Map(), params: new Map(), shown: null, view: null, sig: '' };
   let raf = 0, saveTimer = 0;
   const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
   // ---------- filme ----------
@@ -68,7 +71,15 @@
   const editor = new W.Editor($('editor'), {
     onChange: () => reparse(),
     // o cursor indo para uma linha fora da escolha (no código) solta a escolha do painel das camadas
-    onCaret: (c) => { st.caret = c; if (st.sel.size && c.line !== st.selCaret && !st.sel.has(c.line)) clearSel(); updateCaretInfo(); markLayerPanel(); draw(); },
+    onCaret: (c) => {
+      st.caret = c;
+      if (st.sel.size && c.line !== st.selCaret && !st.sel.has(c.line)) clearSel();
+      // entrou num def (ou saiu dele): o desenho troca para a prévia (ou volta)
+      if (st.model && pvWanted() !== (st.model.preview ? st.model.preview.def : null)) { reparse(); return; }
+      updateCaretInfo();
+      markLayerPanel();
+      draw();
+    },
     complete: (c) => complete(c),
     duplicate: (text) => renameCopy(text),
   });
@@ -150,7 +161,11 @@
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
     return null;
   };
-  const parseFor = (variant) => L.parse(editor.value, { file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Referências" para ela ficar guardada neste navegador', variant: variant || null });
+  // want: o def da prévia (com os valores do painel), só para o que aparece no editor
+  const parseFor = (variant, want) => L.parse(editor.value, {
+    file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Referências" para ela ficar guardada neste navegador', variant: variant || null,
+    preview: want ? { def: want, params: Object.fromEntries(pv.params.get(pvKey(want)) || []) } : null,
+  });
 
   // ---------- sons (audio) ----------
   // Guardados no navegador (IndexedDB, que aguenta arquivos grandes), pelo nome. O .wav é lido aqui (o lip
@@ -719,7 +734,7 @@
     return out;
   }
   // a escolha vira uma caixa no desenho quando tem mais de uma linha (com uma só, valem as alças de sempre)
-  const groupOn = () => st.sel.size > 1 && !!st.model && !isFilm() && !st.build && st.show.points;
+  const groupOn = () => st.sel.size > 1 && !!st.model && !isFilm() && !st.build && st.show.points && !pvModel();
   function groupBox(m, pose) {
     const lines = st.sel, geo = [];
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -1336,7 +1351,12 @@
 
   function reparse() {
     st.files.set(st.current, editor.value);
-    st.model = parseFor(st.variant);
+    const want = st.model ? pvWanted() : null;
+    st.model = parseFor(st.variant, want);
+    // o código mudou quem usa o def (um use novo, um apagado): a prévia liga ou desliga já
+    const now = pvWanted();
+    if (now !== want) st.model = parseFor(st.variant, now);
+    pvSwitch();
     editor.setErrors(st.model.errors);
     if (st.anim && !st.model.animMap.has(st.anim)) st.anim = '';
     if (isFilm()) {
@@ -1450,6 +1470,7 @@
       fillAnimSelect();
     }
     fillGradPanel();
+    fillDefPanel();
   }
 
   // ---------- autocompletar ----------
@@ -1656,7 +1677,8 @@
     const m = st.model;
     const want = ['', ...m.anims.map((a) => a.name)];
     const have = [...sel.options].map((o) => o.value);
-    if (want.join('\n') !== have.join('\n')) {
+    // a lista vazia (a página abriu num arquivo sem animações) também precisa do "sem animações"
+    if (want.join('\n') !== have.join('\n') || !have.length) {
       sel.innerHTML = '';
       const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
       add('', m.anims.length ? 'pose parada' : 'sem animações');
@@ -1734,7 +1756,8 @@
     if (st.build) { stopBuild(); draw(); return; }
     if (isFilm()) { hint('A pintura passo a passo é para desenhos; num filme, use o player.', 2600); return; }
     st.playing = false;
-    const plan = S.buildPlan(st.model, { guides: false, speed: st.speed });
+    // na prévia de um def, pinta o def
+    const plan = S.buildPlan(pvModel() || st.model, { guides: false, speed: st.speed });
     if (!plan.order.length) return;
     st.build = { plan, t0: performance.now() };
     $('btnBuild').classList.add('on');
@@ -1787,19 +1810,183 @@
     if (again) kick();
   }
 
+  // ---------- prévia do def ----------
+  // Com o cursor dentro de def … end, o desenho dá lugar ao componente sozinho, em 0,0 (o x,y do use), com as
+  // variáveis do painel. Sem nenhum use, na hora; usado, pela chave "Prévia do def". O painel nunca muda o código:
+  // os valores ficam só enquanto a página está aberta.
+  // o def onde está o cursor (da linha do def até a do end): { name, line } ou null
+  function caretDef() {
+    if (!st.model || isFilm()) return null;
+    const ls = editor.value.split('\n'), line = st.caret.line, stack = [];
+    for (let i = 0; i <= line && i < ls.length; i++) {
+      const w = (/^\s*([A-Za-z_]\w*)/.exec(ls[i]) || [])[1];
+      if (w === 'def' || w === 'repeat') stack.push({ w, i }); else if (w === 'end' && i < line) stack.pop();
+    }
+    const d = stack.find((b) => b.w === 'def'), name = d && (/^\s*def\s+([A-Za-z_]\w*)/.exec(ls[d.i]) || [])[1];
+    return name && st.model.defs.has(name) ? { name, line: d.i } : null;
+  }
+  // a chave e os valores do painel são de cada def de cada arquivo
+  const pvKey = (name) => st.current + '\n' + name;
+  function pvOn(name) { const k = pvKey(name); return pv.mode.has(k) ? pv.mode.get(k) : !st.model.defs.get(name).uses; }
+  // a prévia que o cursor pede agora (o nome do def) ou null
+  function pvWanted() {
+    const d = caretDef();
+    return d && pvOn(d.name) ? d.name : null;
+  }
+  function pvModel() { return (st.model && st.model.preview && st.model.preview.model) || null; }
+  // o papel: o quadro do desenho ou, na prévia, a caixa do componente com uma folga (e o 0,0 sempre dentro)
+  function viewRect() {
+    const P = st.model.preview;
+    if (!P || !P.model) return { x: 0, y: 0, w: st.model.canvas.w, h: st.model.canvas.h };
+    if (!P.rect) {
+      const pm = P.model, pose = S.makePose(pm, null, 0);
+      let b = { x0: 0, y0: 0, x1: 0, y1: 0 };
+      for (const el of pm.elements) {
+        if (el.hidden) continue;
+        const g = S.geometry(pm, pose, el);
+        if (g.segs.length) b = tightBox(g.segs, b);
+      }
+      const pad = Math.max(16, Math.round(Math.max(b.x1 - b.x0, b.y1 - b.y0) * 0.12));
+      const x = Math.floor(b.x0 - pad), y = Math.floor(b.y0 - pad);
+      P.rect = { x, y, w: Math.max(40, Math.ceil(b.x1 + pad) - x), h: Math.max(40, Math.ceil(b.y1 + pad) - y) };
+    }
+    return P.rect;
+  }
+
+  // a prévia apareceu, trocou de def ou sumiu: a vista se ajusta ao def; ao sair, volta a de antes
+  function pvSwitch() {
+    const now = st.model.preview ? st.model.preview.def : null;
+    if (now === pv.shown) return;
+    if (!pv.shown) pv.view = Object.assign({}, st.view);
+    if (now) st.view.auto = true;
+    else if (pv.view) { Object.assign(st.view, pv.view); pv.view = null; }
+    pv.shown = now;
+  }
+  // um valor do painel (igual ao padrão do def: sai da lista)
+  function pvSet(key, text) {
+    const P = st.model.preview, p = P && P.params.find((q) => q.key === key);
+    if (!p) return;
+    let mp = pv.params.get(pvKey(P.def));
+    if (!mp) pv.params.set(pvKey(P.def), (mp = new Map()));
+    if (text === p.def) mp.delete(key); else mp.set(key, text);
+    reparse();
+  }
+  // a chave da prévia (só com o cursor num def) e o painel das variáveis (só com a prévia na tela)
+  function fillDefPanel() {
+    const d = caretDef(), tw = $('tPreviewWrap');
+    tw.hidden = !d;
+    if (d) {
+      $('tPreview').checked = pvOn(d.name);
+      tw.title = `Mostra o def ${d.name} sozinho, com um painel para mudar as variáveis dele (sem mudar o código). ${st.model.defs.get(d.name).uses ? 'Ele tem use, então a prévia só aparece com esta chave ligada' : 'Sem nenhum use, a prévia aparece sozinha; desligue aqui para ver o desenho'}.`;
+    }
+    const p = $('defPanel'), P = st.model.preview;
+    if (!P || !P.model || isFilm()) { p.hidden = true; pv.sig = ''; return; }
+    p.hidden = false;
+    const sig = [P.def, P.line, ...P.params.map((q) => q.key + ':' + q.kind + ':' + q.def)].join('|');
+    if (sig !== pv.sig) {
+      pv.sig = sig;
+      const opts = (list, cur) => [...new Set([...list, cur])].map((n) => `<option${n === cur ? ' selected' : ''}>${esc(n)}</option>`).join('');
+      const colors = ['none', ...[...st.model.palette].filter(([, v]) => typeof v === 'string').map(([k]) => k)];
+      const row = (q) => {
+        const k = esc(q.key), t = esc(q.text);
+        const ctl = q.kind === 'num' ? `<input type="text" class="dp-num" value="${t}" spellcheck="false" autocomplete="off" title="Número (Enter grava); arraste o nome para os lados para mudar (Shift: 10× mais)">`
+          : q.kind === 'grad' ? `<select class="dp-sel">${opts([...st.model.gradients.keys()], q.text)}</select>`
+            : q.kind === 'pattern' ? `<select class="dp-sel">${opts([...st.model.patterns.keys()], q.text)}</select>`
+              : `<input type="color" class="dp-col" title="Escolher a cor"><input type="text" class="dp-txt" list="dpColors" value="${t}" spellcheck="false" autocomplete="off" title="Cor: #hex, um nome da palette, de cor ou none (Enter grava)">`;
+        return `<div class="dp-row" data-k="${k}"><span class="dp-k${q.kind === 'num' ? ' scrub' : ''}">${k}</span>${ctl}<button type="button" class="dp-back" title="Voltar ao padrão do def (${esc(q.def)})">↺</button></div>`;
+      };
+      p.innerHTML = `<div class="rp-head"><b>Prévia</b><button type="button" class="dp-name" title="Ir para a linha do def">def ${esc(P.def)}</button><span class="grow"></span><small class="dp-uses"></small></div>
+        ${P.params.length ? P.params.map(row).join('') : `<div class="rp-empty">O def ${esc(P.def)} não tem variáveis. Elas vêm na linha do def, com o valor padrão: <code>def ${esc(P.def)} r=20 c=red</code>.</div>`}
+        <datalist id="dpColors">${colors.map((n) => `<option value="${esc(n)}">`).join('')}</datalist>
+        <div class="dp-errs"></div>
+        <div class="rp-foot"><button type="button" class="dp-reset">Voltar ao padrão</button><button type="button" class="dp-copy" title="Copia uma linha use com os valores que você mudou">Copiar como use</button></div>
+        <small class="dp-tip">A cruz é o 0,0: o ponto que vai para o x,y do use. Os valores daqui não mudam o código; as alças mudam as linhas do def.</small>`;
+      p.querySelector('.dp-name').addEventListener('click', () => { const P2 = st.model.preview; if (P2) editor.goto(P2.line, 0); });
+      p.querySelector('.dp-reset').addEventListener('click', () => { const P2 = st.model.preview; if (P2) { pv.params.delete(pvKey(P2.def)); reparse(); } });
+      p.querySelector('.dp-copy').addEventListener('click', () => {
+        const P2 = st.model.preview;
+        if (!P2) return;
+        const line = `use ${P2.def} 0,0` + P2.params.filter((q) => q.changed).map((q) => ` ${q.key}=${q.text}`).join('');
+        const done = () => hint(`Copiado: ${line}`, 2600);
+        if (navigator.clipboard) navigator.clipboard.writeText(line).then(done, () => hint(line, 4000)); else hint(line, 4000);
+      });
+      p.querySelectorAll('.dp-row').forEach((r) => {
+        const key = r.dataset.k, q = () => st.model.preview && st.model.preview.params.find((x) => x.key === key);
+        r.querySelector('.dp-back').addEventListener('click', () => { const x = q(); if (x) pvSet(key, x.def); });
+        const sel = r.querySelector('.dp-sel');
+        if (sel) sel.addEventListener('change', () => pvSet(key, sel.value));
+        const txt = r.querySelector('.dp-txt'), col = r.querySelector('.dp-col');
+        if (txt) {
+          txt.addEventListener('keydown', (e) => { if (e.key === 'Enter') txt.blur(); });
+          txt.addEventListener('change', () => { const v = txt.value.trim(); if (v && !/\s/.test(v)) pvSet(key, v); });
+          col.addEventListener('input', () => { txt.value = col.value; pvSet(key, col.value); });
+        }
+        const numIn = r.querySelector('.dp-num');
+        if (numIn) {
+          numIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') numIn.blur(); });
+          numIn.addEventListener('change', () => { const v = numIn.value.trim(); if (v !== '' && !isNaN(Number(v))) pvSet(key, String(Number(v))); });
+          // arrastar o nome: o número anda com o mouse (o passo vem do tamanho do padrão)
+          const k = r.querySelector('.dp-k');
+          k.addEventListener('pointerdown', (e) => {
+            const x = q();
+            if (!x || e.button !== 0) return;
+            e.preventDefault();
+            k.setPointerCapture(e.pointerId);
+            const a = Math.abs(Number(x.def)) || Math.abs(x.value) || 1, step = a >= 20 ? 1 : a >= 2 ? 0.1 : 0.01, dec = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+            const x0 = e.clientX, v0 = x.value;
+            const move = (ev) => {
+              const v = Number((v0 + Math.round((ev.clientX - x0) / 3) * step * (ev.shiftKey ? 10 : 1)).toFixed(dec));
+              if (String(v) !== numIn.value) { numIn.value = String(v); pvSet(key, String(v)); }
+            };
+            const up = () => { k.removeEventListener('pointermove', move); k.removeEventListener('pointerup', up); k.removeEventListener('pointercancel', up); };
+            k.addEventListener('pointermove', move);
+            k.addEventListener('pointerup', up);
+            k.addEventListener('pointercancel', up);
+          });
+        }
+      });
+    }
+    // os valores de agora (sem mexer no campo onde você está escrevendo)
+    for (const q of P.params) {
+      const r = p.querySelector(`.dp-row[data-k="${q.key}"]`);
+      if (!r) continue;
+      r.classList.toggle('changed', q.changed);
+      const f = r.querySelector('.dp-num, .dp-txt, .dp-sel');
+      if (f && f !== document.activeElement && f.value !== q.text) f.value = q.text;
+      const col = r.querySelector('.dp-col');
+      if (col) {
+        const c = typeof q.value === 'string' ? rgbaOf(q.value) : null;
+        if (c && col !== document.activeElement) col.value = hexOf(c, 1);
+        col.classList.toggle('none', !c);
+      }
+    }
+    const uses = st.model.defs.get(P.def).uses;
+    p.querySelector('.dp-uses').textContent = uses ? `usado ${uses}×` : 'sem use';
+    const errs = p.querySelector('.dp-errs');
+    errs.innerHTML = P.errors.slice(0, 4).map((e) => `<div class="${e.level}">linha ${e.line + 1}: ${esc(e.msg)}</div>`).join('');
+    p.querySelector('.dp-reset').disabled = !P.params.some((q) => q.changed);
+  }
+
   function currentPose() {
+    // a prévia é parada: o def como está escrito, sem animação
+    const P = pvModel();
+    if (P) return S.makePose(P, null, 0);
     return S.makePose(st.model, st.build ? '' : st.anim, st.frame);
   }
 
   function fit() {
-    const cv = $('view'), m = st.model.canvas;
+    const cv = $('view'), m = viewRect();
     const w = cv.clientWidth, h = cv.clientHeight;
     // com as réguas ligadas, o desenho cabe no espaço que sobra ao lado delas
     const r = rulersOn() ? RULER : 0;
-    const z = Math.max(0.05, Math.min((w - r - 40) / m.w, (h - r - 40) / m.h));
+    // na prévia, o def fica acima do painel das variáveis
+    const dp = $('defPanel'), ph = pvModel() && !dp.hidden ? Math.min(dp.offsetHeight + 8, (h - r) / 2) : 0;
+    const z = Math.max(0.05, Math.min((w - r - 40) / m.w, (h - r - ph - 40) / m.h, pvModel() ? 4 : Infinity));
     st.view.z = z;
-    st.view.x = r + (w - r - m.w * z) / 2;
-    st.view.y = r + (h - r - m.h * z) / 2;
+    st.view.x = r + (w - r - m.w * z) / 2 - m.x * z;
+    st.view.y = r + (h - r - ph - m.h * z) / 2 - m.y * z;
+    // na prévia, o papel muda de tamanho com o desenho: ajusta uma vez só (F ajusta de novo)
+    if (pvModel()) st.view.auto = false;
   }
 
   let checker = null;
@@ -1825,7 +2012,8 @@
     const cw = Math.max(1, Math.round(cv.clientWidth * dpr)), ch = Math.max(1, Math.round(cv.clientHeight * dpr));
     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
     if (st.view.auto) fit();
-    const m = st.model, c = m.canvas, z = st.view.z;
+    // na prévia de um def, o desenho é o do def sozinho, num papel do tamanho dele (R)
+    const P = isFilm() ? null : pvModel(), m = P || st.model, c = m.canvas, z = st.view.z, R = viewRect();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
     const T = () => ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * st.view.x, dpr * st.view.y);
@@ -1839,14 +2027,14 @@
     ctx.shadowBlur = 26 * dpr;
     ctx.shadowOffsetY = 6 * dpr;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, c.w, c.h);
+    ctx.fillRect(R.x, R.y, R.w, R.h);
     ctx.restore();
-    if (c.bg) S.fillBg(ctx, m, pose, { x: 0, y: 0, w: c.w, h: c.h });
+    if (c.bg) S.fillBg(ctx, m, pose, R);
     else {
       ctx.save();
       ctx.setTransform(dpr, 0, 0, dpr, dpr * st.view.x, dpr * st.view.y);
       ctx.fillStyle = checkerPattern(ctx);
-      ctx.fillRect(0, 0, c.w * z, c.h * z);
+      ctx.fillRect(R.x * z, R.y * z, R.w * z, R.h * z);
       ctx.restore();
     }
 
@@ -1856,12 +2044,12 @@
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, c.w, c.h);
+    ctx.rect(R.x, R.y, R.w, R.h);
     ctx.clip();
     const post = m.finish.pixel > 1 || S.hasPost(m);
     if (refs && !post) S.drawRefs(ctx, m, pose, refs, false);
     const anim = pose.anim;
-    if (st.show.onion && anim && anim.frames > 1 && !st.build) {
+    if (st.show.onion && anim && anim.frames > 1 && !st.build && !P) {
       const s = Math.min(2, z * dpr);
       for (const d of [-1, 1]) {
         const img = S.renderImage(m, S.makePose(m, anim.name, st.frame + d), { scale: s, transparent: true, guides: false });
@@ -1873,9 +2061,9 @@
     if (post) {
       // acabamentos de imagem (pixel, bloom, vinheta, granulado) precisam da imagem pronta
       const cap = m.finish.posterize ? 2 : 4;
-      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter, refs });
+      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter, refs, rect: R });
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(img, 0, 0, c.w, c.h);
+      ctx.drawImage(img, R.x, R.y, R.w, R.h);
       ctx.imageSmoothingEnabled = true;
     } else {
       S.drawScene(ctx, m, pose, { background: false, guides: st.show.guides, filter: bf && bf.filter });
@@ -1890,7 +2078,8 @@
     if (m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
-    if (st.show.bones) drawBones(ctx, m, pose, z);
+    if (st.show.bones && !P) drawBones(ctx, m, pose, z);
+    if (P) drawOrigin(ctx, z);
     const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (st.show.points) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); }
@@ -1899,6 +2088,28 @@
     if (st.meas) drawMeasure(ctx, dpr);
     if (ro) drawRulers(ctx, dpr);
     if (gait) drawGaitNote(ctx, dpr, gait);
+  }
+
+  // prévia do def: a cruz no 0,0, o ponto que vai parar no x,y do use
+  function drawOrigin(ctx, z) {
+    const r = 10 / z;
+    ctx.save();
+    ctx.lineWidth = 1.5 / z;
+    ctx.strokeStyle = '#ff3fa4';
+    ctx.fillStyle = '#ff3fa4';
+    ctx.beginPath();
+    ctx.moveTo(-r, 0);
+    ctx.lineTo(r, 0);
+    ctx.moveTo(0, -r);
+    ctx.lineTo(0, r);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.font = `${11 / z}px system-ui, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.fillText('0,0', r * 0.6, r * 0.6);
+    ctx.restore();
   }
 
   // trajetória com feet=: em cima, à esquerda, quanto o personagem anda e os pés que escorregam
@@ -2961,7 +3172,7 @@
   // o passo das marcas com número: o menor que fica a pelo menos 50 pixels um do outro na tela
   const RULER_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 50000];
   function drawRulers(ctx, dpr) {
-    const v = st.view, z = v.z, w = view.clientWidth, h = view.clientHeight, c = st.model.canvas;
+    const v = st.view, z = v.z, w = view.clientWidth, h = view.clientHeight, R = viewRect();
     const step = RULER_STEPS.find((s) => s * z >= 50) || RULER_STEPS[RULER_STEPS.length - 1];
     const lead = step / Math.pow(10, Math.floor(Math.log10(step) + 1e-9));
     const n = (lead === 1 ? [10, 5, 2] : lead === 2 ? [4, 2] : [5]).find((k) => (step / k) * z >= 5) || 1, minor = step / n;
@@ -2972,8 +3183,9 @@
     ctx.fillRect(0, 0, RULER, h);
     // o papel aparece mais claro nas réguas
     ctx.fillStyle = '#243039';
-    ctx.fillRect(Math.max(RULER, v.x), 0, Math.max(0, Math.min(w, v.x + c.w * z) - Math.max(RULER, v.x)), RULER);
-    ctx.fillRect(0, Math.max(RULER, v.y), RULER, Math.max(0, Math.min(h, v.y + c.h * z) - Math.max(RULER, v.y)));
+    const px0 = v.x + R.x * z, py0 = v.y + R.y * z;
+    ctx.fillRect(Math.max(RULER, px0), 0, Math.max(0, Math.min(w, px0 + R.w * z) - Math.max(RULER, px0)), RULER);
+    ctx.fillRect(0, Math.max(RULER, py0), RULER, Math.max(0, Math.min(h, py0 + R.h * z) - Math.max(RULER, py0)));
     ctx.font = '10px system-ui, sans-serif';
     ctx.textBaseline = 'alphabetic';
     ctx.lineWidth = 1;
@@ -3225,10 +3437,10 @@
   // as linhas das figuras sob o mouse, da de cima para a de baixo (cópia de um def: a linha do use)
   // as figuras sob o mouse, a de cima primeiro
   function hitsAt(e) {
-    const m = st.model;
-    if (!m || isFilm() || st.build) return [];
+    if (!st.model || isFilm() || st.build) return [];
+    const m = pvModel() || st.model, R = viewRect();
     const pose = currentPose(), [x, y] = toCanvas(e), z = st.view.z;
-    if (x < 0 || y < 0 || x > m.canvas.w || y > m.canvas.h) return [];
+    if (x < R.x || y < R.y || x > R.x + R.w || y > R.y + R.h) return [];
     const ctx = pickCtx || (pickCtx = document.createElement('canvas').getContext('2d'));
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -3666,6 +3878,13 @@
   // ---------- controles ----------
   $('tGuides').addEventListener('change', (e) => { st.show.guides = e.target.checked; draw(); });
   $('tBoxes').addEventListener('change', (e) => { st.show.boxes = e.target.checked; draw(); });
+  // prévia do def: a escolha vale para este def (igual ao jeito de sempre dele: volta a seguir os use)
+  $('tPreview').addEventListener('change', (e) => {
+    const d = caretDef();
+    if (!d) return;
+    if (e.target.checked === !st.model.defs.get(d.name).uses) pv.mode.delete(pvKey(d.name)); else pv.mode.set(pvKey(d.name), e.target.checked);
+    reparse();
+  });
   $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
@@ -3895,8 +4114,8 @@
     if (!at) {
       cx = r.left + r.width / 2;
       cy = r.top + r.height / 2;
-      const p = toWorld({ clientX: cx, clientY: cy });
-      at = [Math.min(m.canvas.w, Math.max(0, p[0])), Math.min(m.canvas.h, Math.max(0, p[1]))];
+      const p = toWorld({ clientX: cx, clientY: cy }), R = viewRect();
+      at = [Math.min(R.x + R.w, Math.max(R.x, p[0])), Math.min(R.y + R.h, Math.max(R.y, p[1]))];
     }
     menu = { at, sel: 0, back: document.activeElement === editor.ta };
     shapeMenu.innerHTML = `<header>Forma nova ${lineOf(st.caret.line).trim() ? 'abaixo da' : 'na'} linha ${st.caret.line + 1}</header>` + NEW_SHAPES.map((s, i) => `<div data-i="${i}"><span>${s.cmd}</span><small>${s.label} · ${i + 1}</small></div>`).join('');
@@ -3930,6 +4149,8 @@
     }
     const d = stack.find((b) => b.w === 'def');
     if (!d) return at;
+    // na prévia do def, o desenho já está nas coordenadas dele
+    if (pvModel()) return at;
     let depth = 0, xf = null;
     for (let i = d.i; i < ls.length && !xf; i++) {
       const w = word(ls[i]);
