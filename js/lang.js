@@ -539,9 +539,11 @@
       err(st.line, msg, a ? a.from : st.cmdTok.from, a ? a.to : st.cmdTok.to, level, !!a);
     };
     const pal = (k, ctx) => (ctx && ctx.over && ctx.over.has(k) ? ctx.over.get(k) : m.palette.get(k));
+    // sem cor: none, transparent ou um parâmetro de componente que recebeu um dos dois (fica guardado como null)
+    const noColor = (v, ctx) => v === 'none' || v === 'transparent' || pal(v, ctx) === null;
     function color(st, a, ctx) {
       const v = unq(a.text);
-      if (v === 'none' || v === 'transparent') return null;
+      if (noColor(v, ctx)) return null;
       if (HEX.test(v)) return v;
       const p = pal(v, ctx);
       if (typeof p === 'string' || (p && p.kind === 'grad')) return p;
@@ -556,10 +558,10 @@
     function patOnLine(st, a, c, what) {
       if (c && c.kind === 'pat') bad(st, a, `o padrão "${c.name}" só preenche formas fechadas (shape, ellipse, rect): ${what} sai sem o padrão, só na cor das linhas dele (${c.c})`, 'warn');
     }
-    // só cor simples (#hex, palette): luzes, partículas, efeitos
-    function plainColor(st, a, text) {
+    // só cor simples (#hex, palette): luzes, partículas, efeitos. Com ctx, vale também parâmetro de componente
+    function plainColor(st, a, text, ctx) {
       const sub = text === undefined ? a : Object.assign({}, a, { text });
-      const c = color(st, sub, ROOT);
+      const c = color(st, sub, ctx || ROOT);
       if (c && typeof c !== 'string') { bad(st, a, 'aqui só vale cor simples (sem gradiente ou padrão)'); return null; }
       if (c && !W.geom.parseHex(c)) { bad(st, a, `use uma cor #hex aqui ("${c}")`, 'warn'); return null; }
       return c;
@@ -570,6 +572,7 @@
       if (a.text === 'none') return 0;
       const p = pal(a.text, ctx);
       if (typeof p === 'number') return p;
+      if (p === null) return 0; // parâmetro que recebeu none: igual a ink=none
       bad(st, a, p === undefined ? `espessura desconhecida "${a.text}"` : `"${a.text}" na palette é cor, não número`);
       return 0;
     }
@@ -1084,7 +1087,7 @@
       if (A.has('opacity')) el.opacity *= number(st, A.get('opacity'), 1, 0, 1);
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
       if (A.has('emit')) {
-        const a = A.get('emit'), p = splitTop(a.text, ','), c = plainColor(st, a, p[0]);
+        const a = A.get('emit'), p = splitTop(a.text, ','), c = plainColor(st, a, p[0], ctx);
         const s = p[1] === undefined ? 1 : num(p[1]);
         if (isNaN(s)) bad(st, a, 'use emit=cor[,força]');
         else if (c) el.emit = { c, s: Math.max(0, Math.min(10, s)) };
@@ -1095,7 +1098,7 @@
       for (const k of ['yaw', 'pitch']) if (A.has(k)) el[k] = number(st, A.get(k), 0);
       if (A.has('persp')) el.persp = number(st, A.get('persp'), 0, 0, 100000);
       if (A.has('thick')) el.thick = number(st, A.get('thick'), 0, 0, 10000) * ws;
-      if (A.has('thickc')) el.thickc = plainColor(st, A.get('thickc'));
+      if (A.has('thickc')) el.thickc = plainColor(st, A.get('thickc'), undefined, ctx);
       if (A.has('back')) el.backAt = { st, a: A.get('back') };
       if (ctx.boardXf) { el.billboard = true; el.boardAt = M.apply(ctx.boardXf, 0, 0); } else if (flags.has('billboard')) el.billboard = true;
       if (el.z || el.zu || el.yaw || el.pitch || el.thick || el.backAt || el.billboard) m.has3d = true;
@@ -1222,8 +1225,8 @@
         el.colors = [defInk, defInk];
         if (A.has('c')) {
           const a = A.get('c'), p = splitTop(a.text, ',');
-          const c0 = plainColor(st, a, p[0]) || defInk;
-          el.colors = [c0, p[1] ? plainColor(st, a, p[1]) || c0 : c0];
+          const c0 = plainColor(st, a, p[0], ctx) || defInk;
+          el.colors = [c0, p[1] ? plainColor(st, a, p[1], ctx) || c0 : c0];
         }
         if (el.rate <= 0 && el.burst <= 0) err(st.line, 'o emissor precisa de rate= ou burst=', st.cmdTok.from, st.cmdTok.to, 'warn');
         if (pos[0] && !o.noHandles) rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
@@ -1273,7 +1276,7 @@
       const n = num(a.text);
       if (!isNaN(n)) { ctx.vars.set(a.key, n); ctx.over.set(a.key, n); return; }
       const c = color(st, a, parent);
-      if (c !== null || a.text === 'none') ctx.over.set(a.key, c);
+      if (c !== null || noColor(unq(a.text), parent)) ctx.over.set(a.key, c);
     }
 
     // Lê a linha de novo, com as variáveis de agora (as de cada uso do componente). Numa cópia de repeat,

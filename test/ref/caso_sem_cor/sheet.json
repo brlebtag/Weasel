@@ -1,0 +1,67 @@
+{
+  "frames": {
+    "pose_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 118,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 118,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 118,
+        "h": 44
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "pose": [
+      "pose_00"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_sem_cor.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 122,
+      "h": 48
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 118,
+      "h": 44
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "pose",
+        "from": 0,
+        "to": 0,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 4,
+      "y": 4,
+      "w": 392,
+      "h": 147
+    }
+  }
+}

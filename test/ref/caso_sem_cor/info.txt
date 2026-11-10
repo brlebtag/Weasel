@@ -1,0 +1,7 @@
+canvas   400 × 170, fundo #f4f1ea
+componentes borda (5×), dentro (1×), vazio (1×)
+camadas  2
+  componentes     21 item(ns)
+  direto          21 item(ns)
+formas   42
+animações nenhuma

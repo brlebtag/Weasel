@@ -1,0 +1,49 @@
+# teste: none e transparent como parâmetro de componente saem sem a cor, igual a escrever c=none direto:
+# no use, no padrão do def e passados de um componente para outro, em c=, inkc= e ink= (espessura).
+# A metade da esquerda usa os componentes; a da direita é o mesmo desenho escrito à mão.
+canvas 400 170 bg=#f4f1ea
+palette ink=#2a2433 pele=#e8a65a
+
+def borda cor=#2a2433 tinta=#c33 esp=3
+  rect 0,0 50,36 r=4 c=cor ink=esp inkc=tinta
+  ellipse 25,18 7 c=pele
+  stroke w=3 c=cor : 0,48 50,48
+  line w=2 c=tinta : 0,56 50,56
+end
+def dentro cor2=none
+  use borda 0,0 cor=cor2
+end
+def vazio cor=none
+  rect 0,0 36,36 c=cor ink=2 inkc=#3a6ea5
+end
+
+layer componentes
+use borda 10,10 cor=none
+use borda 75,10 cor=transparent tinta=none
+use borda 140,10 esp=none pele=none
+use dentro 10,90
+use vazio 75,90
+use borda 140,90
+
+layer direto
+rect 210,10 50,36 r=4 c=none ink=3 inkc=#c33
+ellipse 235,28 7 c=pele
+stroke w=3 c=none : 210,58 260,58
+line w=2 c=#c33 : 210,66 260,66
+rect 275,10 50,36 r=4 c=transparent ink=3 inkc=none
+ellipse 300,28 7 c=pele
+stroke w=3 c=transparent : 275,58 325,58
+line w=2 c=none : 275,66 325,66
+rect 340,10 50,36 r=4 c=#2a2433 ink=none inkc=#c33
+ellipse 365,28 7 c=none
+stroke w=3 c=#2a2433 : 340,58 390,58
+line w=2 c=#c33 : 340,66 390,66
+rect 210,90 50,36 r=4 c=none ink=3 inkc=#c33
+ellipse 235,108 7 c=pele
+stroke w=3 c=none : 210,138 260,138
+line w=2 c=#c33 : 210,146 260,146
+rect 275,90 36,36 c=none ink=2 inkc=#3a6ea5
+rect 340,90 50,36 r=4 c=#2a2433 ink=3 inkc=#c33
+ellipse 365,108 7 c=pele
+stroke w=3 c=#2a2433 : 340,138 390,138
+line w=2 c=#c33 : 340,146 390,146
