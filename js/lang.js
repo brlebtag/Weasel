@@ -223,20 +223,23 @@
   }
 
   // ---------- leitura das linhas ----------
+  // espaço em branco, o mesmo do \s das expressões regulares (sem uma regex por letra)
+  const isWs = (c) => c === 32 || (c >= 9 && c <= 13) || (c > 127 && /\s/.test(String.fromCharCode(c)));
   // Palavras separadas por espaço, sem quebrar dentro de "aspas" nem de {expressões}.
   function words(s, off) {
-    const out = [];
+    const out = [], n = s.length;
     let i = 0;
-    while (i < s.length) {
-      while (i < s.length && /\s/.test(s[i])) i++;
-      if (i >= s.length) break;
+    while (i < n) {
+      while (i < n && isWs(s.charCodeAt(i))) i++;
+      if (i >= n) break;
       const start = i;
       let q = false, depth = 0;
-      while (i < s.length && (q || depth > 0 || !/\s/.test(s[i]))) {
-        const ch = s[i];
-        if (ch === '"') q = !q;
-        else if (!q && ch === '{') depth++;
-        else if (!q && ch === '}' && depth > 0) depth--;
+      while (i < n) {
+        const c = s.charCodeAt(i);
+        if (!q && depth === 0 && isWs(c)) break;
+        if (c === 34) q = !q; // "
+        else if (!q && c === 123) depth++; // {
+        else if (!q && c === 125 && depth > 0) depth--; // }
         i++;
       }
       out.push({ text: s.slice(start, i), from: start + off, to: i + off });
@@ -244,9 +247,27 @@
     return out;
   }
 
+  // splitLine guarda o resultado pelo texto da linha. As linhas que não mudaram desde a última leitura,
+  // e as de dentro de um def (lidas de novo na conferência e em cada use), não são separadas outra vez.
+  // O resultado é compartilhado, por isso fica congelado: ninguém pode mexer nas palavras.
+  const SPLIT_CACHE = new Map(), SPLIT_MAX = 20000;
+  function splitLine(text) {
+    let r = SPLIT_CACHE.get(text);
+    if (r) return r;
+    r = splitText(text);
+    for (const w of r.words) Object.freeze(w);
+    for (const p of r.points) Object.freeze(p);
+    Object.freeze(r.words);
+    Object.freeze(r.points);
+    Object.freeze(r);
+    if (SPLIT_CACHE.size >= SPLIT_MAX) SPLIT_CACHE.clear();
+    SPLIT_CACHE.set(text, r);
+    return r;
+  }
+
   // Separa comentário, cabeçalho e lista de pontos (depois do ":"). "#" começa comentário no início
   // da linha ou depois de espaço — a não ser que seja uma cor (#fff, #e4ded3...).
-  function splitLine(text) {
+  function splitText(text) {
     let cut = text.length, comment = null, colon = -1, q = false, depth = 0;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
@@ -322,14 +343,41 @@
       }
     }
     if (st.cmd !== 'gradient') {
-      for (const p of sp.points) {
-        if (p.text.includes('{')) checkExprs(p, li, err);
-        const q = parsePoint(p);
-        if (q) st.pts.push(q);
-        else if (!p.text.includes('{')) err(li, `ponto inválido "${p.text}" (use x,y  x,y!  ou  x,y~dx,dy)`, p.from, p.to);
+      const fixed = fixedPts(sp);
+      if (fixed) {
+        st.pts = fixed.pts.slice();
+        for (const p of fixed.bad) err(li, `ponto inválido "${p.text}" (use x,y  x,y!  ou  x,y~dx,dy)`, p.from, p.to);
+      } else {
+        for (const p of sp.points) {
+          if (p.text.includes('{')) checkExprs(p, li, err);
+          const q = parsePoint(p);
+          if (q) st.pts.push(q);
+          else if (!p.text.includes('{')) err(li, `ponto inválido "${p.text}" (use x,y  x,y!  ou  x,y~dx,dy)`, p.from, p.to);
+        }
       }
     }
     return st;
+  }
+
+  // Os pontos de uma linha sem {contas} não dependem de nada além do texto: são lidos uma vez e guardados
+  // junto do splitLine (congelados, porque são compartilhados). Com {contas}, null: cada leitura faz as contas.
+  const PTS_CACHE = new WeakMap();
+  function fixedPts(sp) {
+    let r = PTS_CACHE.get(sp);
+    if (r !== undefined) return r;
+    r = null;
+    if (!sp.points.some((p) => p.text.includes('{'))) {
+      r = { pts: [], bad: [] };
+      for (const p of sp.points) {
+        const q = parsePoint(p);
+        if (q) {
+          if (q.tan) Object.freeze(q.tan);
+          r.pts.push(Object.freeze(q));
+        } else r.bad.push(p);
+      }
+    }
+    PTS_CACHE.set(sp, r);
+    return r;
   }
 
   // repeat i 0..9 … end: as linhas de dentro se repetem, com a variável valendo 0, 1, … 9 nas {contas}.
@@ -616,6 +664,16 @@
       const rec = Object.assign({ st, handles: [], repeated: !!st.repeated }, extra || {});
       m.byLine.set(st.line, rec);
       return rec;
+    }
+    // Parte das alças só é montada na primeira vez que alguém lê rec.handles: fn acrescenta as dela no fim
+    // da lista, e o que for acrescentado depois entra depois delas (a mesma ordem de quando era na hora).
+    function lazyHandles(rec, fn) {
+      const list = rec.handles;
+      let todo = fn;
+      Object.defineProperty(rec, 'handles', {
+        configurable: true, enumerable: true,
+        get() { if (todo) { const f = todo; todo = null; f(list); } return list; },
+      });
     }
     // onde termina o código da linha (antes do comentário): é ali que o editor acrescenta um atributo novo
     const stmtEnd = (st) => Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...st.attrs.values()].map((a) => a.to), ...(st.pts || []).map((p) => p.to));
@@ -1238,29 +1296,34 @@
         if (el.dash) el.dash = el.dash.map((v) => v * ws);
         if (st.pts.length < 2) err(st.line, 'line precisa de pelo menos 2 pontos depois do ":"', st.cmdTok.from, st.cmdTok.to);
       }
-      if (!o.noHandles) {
-        st.pts.forEach((p, i) => {
-          rec.handles.push({ kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, fixed: p.fixed });
-          if (p.tan) rec.handles.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
-        });
-        // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
-        if (st.pts.length >= 2) {
-          const xs = st.pts.map((p) => p.x), ys = st.pts.map((p) => p.y);
-          const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], fixed = st.pts.some((p) => p.fixed);
-          rec.handles.push({ kind: 'move', x: c[0], y: c[1], from: -1, to: -1, fixed });
-          // girar a forma inteira em volta do meio dos pontos (sem rot=: os pontos e as alças de curva giram)
-          rec.handles.push(spinHandle(st, c, 0, (Math.max(...ys) - Math.min(...ys)) / 2, { pts: true, from: -1, to: -1, insert: false, fixed, label: null }));
-          // ponto novo: uma bolinha no meio de cada lado (em cima da curva); arrastá-la escreve um ponto ali,
-          // logo depois do ponto idx (at = onde o texto dele termina). Entre dois cantos vivos, o novo também é canto.
-          if (!el.limb) {
-            const n = st.pts.length, segs = st.cmd === 'line' ? null : W.geom.smoothSegs(st.pts, el.closed, el.smooth);
-            for (let i = 0; i < (el.closed ? n : n - 1); i++) {
-              const p = st.pts[i], q = st.pts[(i + 1) % n], s = segs && segs[i];
-              const x = s ? (s[0] + 3 * s[2] + 3 * s[4] + s[6]) / 8 : (p.x + q.x) / 2, y = s ? (s[1] + 3 * s[3] + 3 * s[5] + s[7]) / 8 : (p.y + q.y) / 2;
-              rec.handles.push({ kind: 'mid', idx: i, x, y, from: -1, to: -1, at: p.to, corner: !!(segs && el.smooth > 0 && p.corner && q.corner), fixed: false, label: `ponto novo entre ${i + 1} e ${((i + 1) % n) + 1}` });
+      // As alças dos pontos só são montadas quando alguém lê rec.handles: o editor só mostra as da linha do
+      // cursor, e um arquivo grande tem milhares de formas (as bolinhas de ponto novo ainda calculam a curva).
+      if (!o.noHandles && st.pts.length) {
+        const pts = st.pts, closed = el.closed, smooth = el.smooth, limb = el.limb, isLine = st.cmd === 'line';
+        lazyHandles(rec, (out) => {
+          pts.forEach((p, i) => {
+            out.push({ kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, fixed: p.fixed });
+            if (p.tan) out.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
+          });
+          // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
+          if (pts.length >= 2) {
+            const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+            const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], fixed = pts.some((p) => p.fixed);
+            out.push({ kind: 'move', x: c[0], y: c[1], from: -1, to: -1, fixed });
+            // girar a forma inteira em volta do meio dos pontos (sem rot=: os pontos e as alças de curva giram)
+            out.push(spinHandle(st, c, 0, (Math.max(...ys) - Math.min(...ys)) / 2, { pts: true, from: -1, to: -1, insert: false, fixed, label: null }));
+            // ponto novo: uma bolinha no meio de cada lado (em cima da curva); arrastá-la escreve um ponto ali,
+            // logo depois do ponto idx (at = onde o texto dele termina). Entre dois cantos vivos, o novo também é canto.
+            if (!limb) {
+              const n = pts.length, segs = isLine ? null : W.geom.smoothSegs(pts, closed, smooth);
+              for (let i = 0; i < (closed ? n : n - 1); i++) {
+                const p = pts[i], q = pts[(i + 1) % n], s = segs && segs[i];
+                const x = s ? (s[0] + 3 * s[2] + 3 * s[4] + s[6]) / 8 : (p.x + q.x) / 2, y = s ? (s[1] + 3 * s[3] + 3 * s[5] + s[7]) / 8 : (p.y + q.y) / 2;
+                out.push({ kind: 'mid', idx: i, x, y, from: -1, to: -1, at: p.to, corner: !!(segs && smooth > 0 && p.corner && q.corner), fixed: false, label: `ponto novo entre ${i + 1} e ${((i + 1) % n) + 1}` });
+              }
             }
           }
-        }
+        });
       }
       // o que sobra depois das posições (elipse e retângulo: 2, texto: posição e "texto", emissor: 1)
       const loose = pos.slice({ ellipse: 2, rect: 2, text: 2, emitter: 1 }[st.cmd] || 0).filter((t) => !t.inherited);

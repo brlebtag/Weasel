@@ -96,6 +96,8 @@
         else this._closePop();
       });
       ta.addEventListener('scroll', () => { this._sync(); this._closePop(); });
+      // o código mudou de tamanho (janela, divisória): podem aparecer linhas que ainda não foram pintadas
+      if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => this._sync()).observe(ta);
       ta.addEventListener('keydown', (e) => this._key(e));
       ta.addEventListener('blur', () => setTimeout(() => this._closePop(), 150));
       ta.addEventListener('mousedown', (e) => this._altDown(e));
@@ -315,51 +317,80 @@
     undo() { this._restore(this.hist.undo()); }
     redo() { this._restore(this.hist.redo()); }
 
+    // os erros só trocam a marca das linhas: o texto colorido continua o mesmo
     setErrors(errors) {
       this.errors = errors;
-      this._render();
+      this.errLines = null;
+      this._marks();
     }
 
     _caret(force) {
       const c = this.caret();
       if (!force && c.line === this._lastLine && c.col === this._lastCol) return;
       this._lastLine = c.line; this._lastCol = c.col;
-      if (c.line !== this.curLine) {
-        const prev = this.hl.children[this.curLine], next = this.hl.children[c.line];
-        if (prev) prev.classList.remove('cur');
-        if (next) next.classList.add('cur');
-        const gp = this.gutter.children[this.curLine], gn = this.gutter.children[c.line];
-        if (gp) gp.classList.remove('cur');
-        if (gn) gn.classList.add('cur');
-        this.curLine = c.line;
-      }
+      if (c.line !== this.curLine) { this.curLine = c.line; this._marks(); }
       if (this.opts.onCaret) this.opts.onCaret(c);
     }
 
+    // ---------- texto colorido ----------
+    // Só as linhas que aparecem na tela (mais uma margem em cima e embaixo) são pintadas; rolar pinta as
+    // outras. Num arquivo de milhares de linhas, cada mudança (e cada texto novo na página) não obriga o
+    // navegador a refazer o layout de todas elas.
     _render() {
-      const lines = this.ta.value.split('\n');
-      const byLine = new Map();
-      for (const e of this.errors) {
-        const cur = byLine.get(e.line);
-        if (!cur || (cur.level === 'warn' && e.level === 'error')) byLine.set(e.line, e);
-      }
-      const msgs = new Map();
-      for (const e of this.errors) msgs.set(e.line, (msgs.get(e.line) ? msgs.get(e.line) + '\n' : '') + e.msg);
-      const cur = this.caret().line;
-      let hl = '', gut = '';
-      lines.forEach((t, i) => {
-        const e = byLine.get(i);
-        const cls = (e ? ' ' + e.level : '') + (i === cur ? ' cur' : '');
-        hl += `<div class="l${cls}">${highlightLine(t) || ' '}</div>`;
-        gut += `<div class="g${cls}"${e ? ` title="${esc(msgs.get(i))}"` : ''}>${i + 1}</div>`;
-      });
-      this.hl.innerHTML = hl;
-      this.gutter.innerHTML = gut;
-      this.curLine = cur;
+      this.lines = this.ta.value.split('\n');
+      this.curLine = this.caret().line;
+      this._paint(true);
       this._sync();
     }
 
+    // pinta a faixa [first, last) se a parte que aparece saiu dela (ou sempre, com force)
+    _paint(force) {
+      const m = this._metrics(), ta = this.ta, n = this.lines.length;
+      const top = Math.max(0, Math.floor((ta.scrollTop - m.pt) / m.lh));
+      const rows = Math.ceil((ta.clientHeight || 1200) / m.lh) + 1, end = Math.min(n, top + rows);
+      if (!force && this.first !== undefined && top >= this.first && end <= this.last) return;
+      const MARGIN = 40;
+      this.first = Math.max(0, top - MARGIN);
+      this.last = Math.min(n, end + MARGIN);
+      let hl = '', gut = '';
+      for (let i = this.first; i < this.last; i++) {
+        hl += `<div class="l">${highlightLine(this.lines[i]) || ' '}</div>`;
+        gut += `<div class="g">${i + 1}</div>`;
+      }
+      this.hl.innerHTML = hl;
+      this.gutter.innerHTML = gut;
+      this.hl.style.paddingTop = this.gutter.style.paddingTop = m.pt + this.first * m.lh + 'px';
+      this.marks = [];
+      this._marks();
+    }
+
+    // as linhas com erro ou aviso: linha → { level, msg } (o pior nível, as mensagens juntas)
+    _errs() {
+      if (this.errLines) return this.errLines;
+      const out = new Map();
+      for (const e of this.errors) {
+        const cur = out.get(e.line);
+        if (!cur) out.set(e.line, { level: e.level, msg: e.msg });
+        else { if (cur.level === 'warn' && e.level === 'error') cur.level = 'error'; cur.msg += '\n' + e.msg; }
+      }
+      return (this.errLines = out);
+    }
+
+    // as marcas das linhas pintadas: a do cursor, erro ou aviso (e a mensagem no número da linha)
+    _marks() {
+      if (this.first === undefined) return;
+      const errs = this._errs(), hl = this.hl.children, gut = this.gutter.children;
+      for (let i = this.first; i < this.last; i++) {
+        const e = errs.get(i), cls = (e ? ' ' + e.level : '') + (i === this.curLine ? ' cur' : ''), k = i - this.first;
+        if (this.marks[k] === cls) continue;
+        this.marks[k] = cls;
+        if (hl[k]) hl[k].className = 'l' + cls;
+        if (gut[k]) { gut[k].className = 'g' + cls; if (e) gut[k].title = e.msg; else gut[k].removeAttribute('title'); }
+      }
+    }
+
     _sync() {
+      if (this.lines.length) this._paint(false);
       const x = this.ta.scrollLeft, y = this.ta.scrollTop;
       this.hl.style.transform = `translate(${-x}px, ${-y}px)`;
       this.gutter.style.transform = `translateY(${-y}px)`;
