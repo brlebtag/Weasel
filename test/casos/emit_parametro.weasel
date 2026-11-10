@@ -1,0 +1,25 @@
+# teste: parâmetro de componente nas cores simples de uma forma: emit=, o c= do emitter (as duas cores,
+# uma delas none) e thickc=, no padrão do def, trocado no use e com um nome da palette.
+# A metade da esquerda usa os componentes; a da direita é o mesmo desenho escrito à mão.
+canvas 400 100 bg=#2a2433
+palette lado=#3a6ea5
+
+def chama cor=#ff9a4a fim=#ff400000
+  ellipse 0,0 8,12 c=#ffd27a emit=cor,1.5
+  emitter 0,-10 burst=12 life=1 speed=30 angle=-90 spread=40 size=6 c=cor,fim seed=2
+end
+def bloco cor=#8a5a2b
+  rect -14,-14 28,28 c=#d9a066 thick=16 thickc=cor yaw=55 pitch=-20
+end
+
+layer componentes
+use chama 30,60
+use chama 80,60 cor=#7ae0ff fim=none
+use bloco 140,50 cor=lado
+
+layer direto
+ellipse 230,60 8,12 c=#ffd27a emit=#ff9a4a,1.5
+emitter 230,50 burst=12 life=1 speed=30 angle=-90 spread=40 size=6 c=#ff9a4a,#ff400000 seed=2
+ellipse 280,60 8,12 c=#ffd27a emit=#7ae0ff,1.5
+emitter 280,50 burst=12 life=1 speed=30 angle=-90 spread=40 size=6 c=#7ae0ff,none seed=2
+rect 326,36 28,28 c=#d9a066 thick=16 thickc=lado yaw=55 pitch=-20

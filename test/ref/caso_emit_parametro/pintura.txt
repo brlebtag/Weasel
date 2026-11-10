@@ -1,0 +1,11 @@
+ellipse - @0.000 +0.362
+emitter - @0.362 +0.352
+ellipse - @0.714 +0.362
+emitter - @1.076 +0.352
+rect - @1.428 +0.427
+ellipse - @1.855 +0.362
+emitter - @2.217 +0.352
+ellipse - @2.569 +0.362
+emitter - @2.931 +0.352
+rect - @3.283 +0.427
+total 3.710

@@ -1,0 +1,8 @@
+canvas   400 × 100, fundo #2a2433
+componentes chama (2×), bloco (1×)
+camadas  2
+  componentes      5 item(ns)
+  direto           5 item(ns)
+formas   10
+partículas ? (dot, 20/s, rajada 12), ? (dot, 20/s, rajada 12), ? (dot, 20/s, rajada 12), ? (dot, 20/s, rajada 12)
+animações nenhuma

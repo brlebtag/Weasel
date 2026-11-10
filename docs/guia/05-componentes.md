@@ -629,7 +629,7 @@ text t4 375,130 "cor=ceu borda=0" size=14 align=center
 Repare:
 
 - `borda=4` é um **número**: dentro do `def`, `ink=borda` usa ele como espessura do contorno, em pixels. `borda=10` engrossa; `borda=0` tira o contorno.
-- `cor=#4a9eff` é uma **cor**: dentro do `def`, `c=cor` pinta com ela.
+- `cor=#4a9eff` é uma **cor**: dentro do `def`, `c=cor` pinta com ela. O nome vale onde uma forma pede cor: `inkc=cor`, `emit=cor,1`, `thickc=cor` e as cores das partículas (`c=cor,#fff0` num `emitter`). Nesses três últimos, só vale cor simples (`#hex` ou nome da `palette`), sem gradiente.
 - No `use`, um parâmetro de cor aceita tudo o que `c=` aceita: `#hex`, um nome da `palette` (`vermelho`), um gradiente (`ceu`) ou `none` (`transparent` é o mesmo), que tira a cor: `use botao 60,64 cor=none` desenha só o contorno do aro e o brilho.
 - Um parâmetro que não foi mudado fica com o valor padrão do `def`: o primeiro botão é o "de fábrica".
 - Cuidado com erros de digitação: um nome que o componente não tem (`bordda=10`) não muda nada, e o Weasel avisa, dizendo os nomes que valem:
