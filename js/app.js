@@ -342,9 +342,8 @@
   function fillRefPanel() {
     const m = st.model, film = isFilm(), b = $('refBtn'), p = $('refPanel');
     b.hidden = film;
-    // quantas imagens guia o desenho tem fica no título (o botão diz só Referências)
-    b.textContent = 'Referências';
-    b.title = `Imagens guia${m && m.refs.length ? ` (${m.refs.length} neste desenho)` : ''}: uma referência por baixo para desenhar por cima (não sai na exportação)`;
+    // quantas imagens guia o desenho tem fica no título (o botão é só o ícone)
+    b.title = `Referências${m && m.refs.length ? ` (${m.refs.length} neste desenho)` : ''}: imagens guia por baixo para desenhar por cima (não saem na exportação)`;
     b.classList.toggle('on', !p.hidden);
     if (film) p.hidden = true;
     if (p.hidden || !m) return;
@@ -1883,7 +1882,7 @@
     tw.hidden = !d;
     if (d) {
       $('tPreview').checked = pvOn(d.name);
-      tw.title = `Mostra o def ${d.name} sozinho, com um painel para mudar as variáveis dele (sem mudar o código). ${st.model.defs.get(d.name).uses ? 'Ele tem use, então a prévia só aparece com esta chave ligada' : 'Sem nenhum use, a prévia aparece sozinha; desligue aqui para ver o desenho'}.`;
+      tw.title = `Prévia do def: mostra o def ${d.name} sozinho, com um painel para mudar as variáveis dele (sem mudar o código). ${st.model.defs.get(d.name).uses ? 'Ele tem use, então a prévia só aparece com esta chave ligada' : 'Sem nenhum use, a prévia aparece sozinha; desligue aqui para ver o desenho'}.`;
     }
     const p = $('defPanel'), P = st.model.preview;
     if (!P || !P.model || isFilm()) { p.hidden = true; pv.sig = ''; return; }

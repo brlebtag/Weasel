@@ -156,6 +156,8 @@ Com erros, nada é exportado e o código de saída é 1 (`--force` exporta ignor
 
 ## A interface
 
+Os botões das barras mostram só um ícone: pare o mouse em cima de um para ver o nome e o que ele faz. As chaves (Guias, Ossos, Réguas…) são botões que ficam acesos quando estão ligadas.
+
 | Área | O que faz |
 |---|---|
 | **Arquivos** (acima do código) | Troca de arquivo, cria, renomeia e exclui. `include` encontra os outros arquivos da lista pelo nome. |
