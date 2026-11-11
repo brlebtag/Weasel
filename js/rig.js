@@ -73,13 +73,13 @@
       }
     }
     const lit = (el) => (model.lights.size || model.ambient) && !el.layer.unlit && !el.layer.guide && !el.emit;
-    const motion = (el) => (el.limb ? `limb:${el.id}` : el.cloth ? `cloth:${el.cloth}|${el.bone || ''}` : el.bones ? `bones:${el.bones.join(',')}` : `bone:${el.bone || ''}`);
+    const motion = (el) => (el.limb ? `limb:${el.id}` : el.pins ? `pins:${el.id}` : el.cloth ? `cloth:${el.cloth}|${el.bone || ''}` : el.bones ? `bones:${el.bones.join(',')}` : `bone:${el.bone || ''}`);
     const kind = new Map();
     for (const el of model.elements) {
       const L = el.layer;
       let k = 'rigid';
       if (el.type === 'emitter' || L.trail || L.cast || dynLayers.has(L.name) || (lightsMove && lit(el))) k = 'world';
-      else if (el.limb || el.cloth || el.bones) k = shapeT.has(el) || (el.cloth && (el.limb || el.bones)) ? 'world' : 'skin';
+      else if (el.limb || el.cloth || el.bones || el.pins) k = shapeT.has(el) || (el.cloth && (el.limb || el.bones || el.pins)) ? 'world' : 'skin';
       else if (shapeT.has(el)) k = 'shape';
       kind.set(el, k);
     }
@@ -207,6 +207,8 @@
     const first = anims.length ? anims[0] : null;
     const an = analyse(model);
     const rest = S.makePose(model, null, 0);
+    // a pose parada sem o ik: as peças são desenhadas nos ossos de descanso, e o ik vem nas rotações da animação
+    if (model.iks.length) rest.bones = S.matsFrom(model, new Map());
     const strength = model.godot ? model.godot.normal : 1;
 
     // imagens das peças (e o normal map de cada uma, no mesmo tamanho)
@@ -337,6 +339,19 @@
       if (!el.bones || el.cloth) continue;
       part.weights = (x, y) => S.skinWeights(model, el, x, y).map((w, i) => [byName.get(el.bones[i]), w]);
     }
+    // x,y@osso: os pontos presos pesam no osso deles; o resto, no osso da forma (ou num osso parado na raiz)
+    let still = null;
+    for (const part of skins) {
+      const el = part.el;
+      if (!el.pins || el.cloth || el.limb) continue;
+      let base = el.bone ? byName.get(el.bone) : null;
+      if (!base && !still) {
+        still = addBone({ name: 'parado', parent: null, rest: restOf(null, root), pivot: root, len: 10, ang: -Math.PI / 2 });
+        still.sample = () => ({ pos: still.rest, rot: 0, sc: [1, 1] });
+      }
+      if (!base) base = still;
+      part.weights = (x, y) => S.pinWeights(model, el, x, y).map(([b, w]) => [b ? byName.get(b) : base, w]);
+    }
     const chain = (g) => { const out = []; let c = g, guard = 0; while (c && guard++ < 64) { out.unshift(c.node); c = c.parent; } return out; };
     const bonePath = (g) => `Visual/Esqueleto/${chain(g).join('/')}`;
 
@@ -358,7 +373,7 @@
     for (const a of own) {
       const sub = Math.max(1, Math.ceil(RATE / a.fps)), n = a.frames * sub, rows = [], cl = clothAt(a);
       for (let i = 0; i < n; i++) {
-        const f = i / sub, vals = S.boneLocal(model, a, f), ctx = { vals, mats: S.matsFrom(model, vals), cloth: cl(f) };
+        const f = i / sub, vals = S.ikVals(model, S.boneLocal(model, a, f)), ctx = { vals, mats: S.matsFrom(model, vals), cloth: cl(f) };
         const row = new Map(gbones.map((g) => [g, local(g, ctx)]));
         rows.push({ t: i / (a.fps * sub), row });
       }

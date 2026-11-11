@@ -211,7 +211,7 @@ comando nome atributo=valor ... : x,y x,y x,y!
 ```
 
 - `#` começa um comentário.
-- Depois do `:` vêm os pontos. Pontos comuns formam **curvas suaves**; `x,y!` é um **canto vivo**; `x,y~dx,dy` fixa a **alça da curva** naquele ponto (relativa ao ponto; a do outro lado é espelhada).
+- Depois do `:` vêm os pontos. Pontos comuns formam **curvas suaves**; `x,y!` é um **canto vivo**; `x,y~dx,dy` fixa a **alça da curva** naquele ponto (relativa ao ponto; a do outro lado é espelhada). Qualquer ponto de `shape`, `stroke` ou `line` pode terminar em `@osso` (ou `@osso:0.5`, um peso de 0 a 1): só ele segue o osso, e a linha e o preenchimento esticam.
 - Cores: `#rgb`, `#rrggbb`, `#rrggbbaa`, um nome da `palette`, um `gradient` ou `none`. Espessuras: número ou nome numérico da `palette`.
 - Qualquer número pode ser uma conta entre chaves: `{cx+20}`, `{r*1.6}`, `{sin(30)*r}`.
 
@@ -287,6 +287,8 @@ use estrela 452,206 flip=x
 | `bone ... sway=graus,s bob=px,s jitter=px` | Movimento sem keys: balanço, sobe-e-desce e tremor. O período se ajusta para o loop fechar. |
 | `bone ... spring=0.4` | Mola: o osso gira atrasado quando o pai se mexe (orelhas, antenas, cabelo, a espada do Cavaleiro). |
 | `shape … bones=a,b,c` | Forma que dobra: cada ponto segue os ossos mais perto dele (rabo, cobra, tentáculo, corpo que se curva). |
+| `shape … : x,y x,y@osso x,y@osso:0.5` | Pontos presos a um osso: só os marcados andam com o osso (o peso diz quanto), os outros seguem o `bone=` da forma ou ficam parados, e a forma estica entre eles. Vale em `shape`, `stroke` e `line`. |
+| `ik nome bones=raiz,meio,ponta foot=chão,x bend=1\|-1` | IK nos ossos: a raiz e o meio giram para a ponta chegar ao pé (`foot=chão,x` numa linha, `foot=x,y` ou `target=osso`). A ponta fica no ângulo do desenho, e o joelho dobra para o lado em que foi desenhado (`bend=` escolhe). |
 | `bone … path=linha [turn=0]` · `key quadro osso.along=0…1` | O osso anda por uma linha, traço ou forma, e vira junto com a curva (o desenho virado para a direita). |
 | `cloth nome pivot=x,y tension= drag= swing=` | Tecido: os pontos longe do pivô balançam atrasados quando o osso se move. |
 | `anim nome frames= fps= [once]` | Começa uma animação. |
@@ -593,7 +595,8 @@ Lagarto (CharacterBody2D)
 - **Movimento liso:** os ossos são amostrados pelo menos 30 vezes por segundo, e o Godot interpola entre as amostras, também em câmera lenta.
 - **Arquivos menores:** uma imagem por peça em vez de uma por quadro. A folha do Cavaleiro caiu de 1,6 MB para 52 KB, a do Chefe de 1,3 MB para 32 KB e a do Furão de 344 KB para 24 KB.
 - **Mistura de animações e ossos pelo código:** dá para misturar animações no AnimationTree, e um osso que nenhuma animação mexe pode ser girado pelo script do jogo (a cabeça olhando para o mouse, o braço mirando).
-- **O que dobra vira malha com pele (`Polygon2D`):** pernas e braços com IK (o Weasel cria a coxa e a canela), tecido (um osso que balança) e formas com `bones=`.
+- **O que dobra vira malha com pele (`Polygon2D`):** pernas e braços com IK (o Weasel cria a coxa e a canela), tecido (um osso que balança), formas com `bones=` e formas com pontos `@osso` (os pontos soltos ficam num osso parado, `parado`, ou no `bone=` da forma).
+- **`ik` nos ossos** sai calculado: as rotações que o IK dá à raiz e ao meio vão direto para as faixas da animação.
 - **O que muda de forma** troca de imagem: morph, `draw` e cores, presos ao osso (a imagem só troca quando a forma muda); partículas, rastro e sombra no chão, quadro a quadro no mundo.
 - **Normal map** por peça (`--no-normal` tira), **`above=`/`below=`** viram `z_index`, e o que as **luzes animadas** do Weasel iluminam troca de imagem quadro a quadro.
 - Caixas, pontos de encaixe, eventos, `tocar()` e as animações espelhadas funcionam como na cena por quadros.

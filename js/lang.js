@@ -7,7 +7,7 @@
     canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup', ref: 'setup',
     layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
     def: 'comp', end: 'comp', use: 'comp', repeat: 'comp',
-    bone: 'rig', cloth: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
+    bone: 'rig', cloth: 'rig', ik: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
     light: 'fx', ambient: 'fx',
     film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mark: 'film', mouth: 'rig',
     box: 'game', godot: 'game', tileset: 'game', tile: 'game', point: 'game',
@@ -29,6 +29,7 @@
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
+    ik: ['bones', 'foot', 'target', 'bend'],
     anim: ['frames', 'fps', 'mix', 'bones', 'feet'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity', 'z'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
@@ -303,8 +304,20 @@
   }
 
   // Ponto: x,y  |  x,y!  (canto vivo)  |  x,y~dx,dy  (alça da curva, relativa ao ponto)
+  // Qualquer um deles pode terminar em @osso ou @osso:peso: o ponto segue esse osso (o peso, de 0 a 1, é quanto).
+  // to = onde termina o ponto sem o @osso (o editor reescreve só até ali); tokTo = o fim da palavra inteira.
   function parsePoint(p) {
-    let t = p.text, corner = false, tan = null;
+    let t = p.text, corner = false, tan = null, pin = null, pinW = 1, pinFrom = -1;
+    const ai = topIndex(t, '@');
+    if (ai >= 0) {
+      const s = t.slice(ai + 1), ci = topIndex(s, ':');
+      pin = ci >= 0 ? s.slice(0, ci) : s;
+      if (!IDENT.test(pin)) return null;
+      if (ci >= 0) { pinW = num(s.slice(ci + 1)); if (isNaN(pinW)) return null; }
+      pinFrom = p.from + ai;
+      t = t.slice(0, ai);
+    }
+    const end = p.from + t.length;
     const ti = topIndex(t, '~');
     if (ti >= 0) {
       tan = nums(t.slice(ti + 1));
@@ -313,8 +326,14 @@
     } else if (t.endsWith('!')) { corner = true; t = t.slice(0, -1); }
     const v = nums(t);
     if (v.length !== 2 || v.some(isNaN)) return null;
-    return { x: v[0], y: v[1], corner, tan, from: p.from, to: p.to, xyTo: p.from + t.length + (corner ? 1 : 0), tanFrom: ti >= 0 ? p.from + ti + 1 : -1, fixed: p.text.includes('{') };
+    const o = { x: v[0], y: v[1], corner, tan, from: p.from, to: end, tokTo: p.to, xyTo: p.from + t.length + (corner ? 1 : 0), tanFrom: ti >= 0 ? p.from + ti + 1 : -1, fixed: p.text.includes('{') };
+    if (pin) Object.assign(o, { pin, pinW, pinFrom });
+    return o;
   }
+
+  const badPoint = (t) => (t.includes('@')
+    ? `ponto inválido "${t}" (o osso vem depois do @: x,y@osso ou x,y@osso:0.5)`
+    : `ponto inválido "${t}" (use x,y  x,y!  x,y~dx,dy  ou  x,y@osso)`);
 
   function readStatement(text, li, err) {
     const sp = splitLine(text);
@@ -346,13 +365,13 @@
       const fixed = fixedPts(sp);
       if (fixed) {
         st.pts = fixed.pts.slice();
-        for (const p of fixed.bad) err(li, `ponto inválido "${p.text}" (use x,y  x,y!  ou  x,y~dx,dy)`, p.from, p.to);
+        for (const p of fixed.bad) err(li, badPoint(p.text), p.from, p.to);
       } else {
         for (const p of sp.points) {
           if (p.text.includes('{')) checkExprs(p, li, err);
           const q = parsePoint(p);
           if (q) st.pts.push(q);
-          else if (!p.text.includes('{')) err(li, `ponto inválido "${p.text}" (use x,y  x,y!  ou  x,y~dx,dy)`, p.from, p.to);
+          else if (!p.text.includes('{')) err(li, badPoint(p.text), p.from, p.to);
         }
       }
     }
@@ -511,7 +530,7 @@
       gradients: new Map(), patterns: new Map(),
       lights: new Map(), ambient: null,
       layers: [], layerMap: new Map(),
-      bones: new Map(), cloths: new Map(),
+      bones: new Map(), cloths: new Map(), iks: [],
       anims: [], animMap: new Map(),
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
@@ -645,7 +664,10 @@
     const posPair = (st, tok, what, def) => {
       const v = tok ? nums(tok.text) : [];
       if (v.length !== 2 || v.some(isNaN)) {
-        if (!(tok && tok.inherited)) err(st.line, `esperado ${what} no formato x,y`, tok ? tok.from : st.cmdTok.from, tok ? tok.to : st.cmdTok.to);
+        // x,y@osso só existe nos pontos depois do ":" (shape, stroke, line)
+        const pin = tok && DRAWABLE.has(st.cmd) && tok.text[0] !== '"' && topIndex(tok.text, '@') > 0;
+        const msg = pin ? `@osso só vale nos pontos de shape, stroke e line (depois do ":"): para o ${st.cmd} inteiro seguir um osso, use bone=; para ele esticar, reescreva como shape` : `esperado ${what} no formato x,y`;
+        if (!(tok && tok.inherited)) err(st.line, msg, tok ? tok.from : st.cmdTok.from, tok ? tok.to : st.cmdTok.to);
         return def;
       }
       return v;
@@ -676,7 +698,7 @@
       });
     }
     // onde termina o código da linha (antes do comentário): é ali que o editor acrescenta um atributo novo
-    const stmtEnd = (st) => Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...st.attrs.values()].map((a) => a.to), ...(st.pts || []).map((p) => p.to));
+    const stmtEnd = (st) => Math.max(st.cmdTok.to, ...st.pos.map((t) => t.to), ...[...st.attrs.values()].map((a) => a.to), ...(st.pts || []).map((p) => p.tokTo || p.to));
     // ponto (x,y) girado deg graus em volta de c: as alças de tamanho de uma forma com rot=
     const turn = (c, deg, x, y) => (deg ? M.apply(M.mul(M.translate(c[0], c[1]), M.mul(M.rotate(deg), M.translate(-c[0], -c[1]))), x, y) : [x, y]);
     const plainNum = (t) => /^-?(\d+\.?\d*|\.\d+)$/.test(t);
@@ -887,6 +909,40 @@
           m.cloths.set(name, c);
           break;
         }
+        // ik nome bones=raiz,meio,ponta foot=chão,x | foot=x,y | target=osso bend=1|-1: a raiz e o meio giram para
+        // a ponta chegar ao pé (ou ao alvo). Os ossos e o alvo são conferidos depois que os pais já estão lidos.
+        case 'ik': {
+          const name = ident(st, st.pos[0], 'do ik');
+          if (!name) break;
+          if (m.iks.some((k) => k.name === name)) { err(st.line, `ik "${name}" já existe`, st.pos[0].from, st.pos[0].to); break; }
+          const k = { name, line: st.line, st, bones: null, bend: null, foot: null, footAt: null, target: null, targetAt: null };
+          const rec = info(st, { ik: k });
+          const a = A.get('bones');
+          if (!a) err(st.line, 'ik precisa de bones=raiz,meio,ponta (três ossos, cada um filho do anterior; ex.: bones=coxa,canela,pe)', st.cmdTok.from, st.cmdTok.to);
+          else {
+            const ns = a.text.split(',').filter(Boolean);
+            if (ns.length !== 3) bad(st, a, 'o ik usa três ossos: bones=raiz,meio,ponta (ex.: bones=coxa,canela,pe)');
+            else k.bones = ns;
+          }
+          if (A.has('bend')) {
+            const b = A.get('bend'), v = number(st, b, 1);
+            if (v === 0) bad(st, b, 'bend=0 não escolhe lado: use bend=1 ou bend=-1');
+            else {
+              if (Math.abs(v) !== 1) bad(st, b, 'no ik, o bend= só escolhe o lado da dobra: 1 ou -1 (os ossos não encolhem)', 'warn');
+              k.bend = v > 0 ? 1 : -1;
+            }
+          }
+          if (A.has('target')) {
+            k.targetAt = A.get('target');
+            if (A.has('foot')) bad(st, A.get('foot'), 'use foot= ou target=, não os dois (vale o target=)', 'warn');
+          } else if (A.has('foot')) {
+            k.footAt = A.get('foot');
+            const v = nums(k.footAt.text);
+            if (v.length === 2 && !v.some(isNaN)) rec.handles.push({ kind: 'foot', x: v[0], y: v[1], from: k.footAt.vfrom, to: k.footAt.to, fixed: k.footAt.text.includes('{') });
+          } else err(st.line, 'ik precisa de foot=chão,x (o pé numa line), foot=x,y ou target=osso', st.cmdTok.from, st.cmdTok.to);
+          m.iks.push(k);
+          break;
+        }
       }
     }
     for (const st of top) {
@@ -900,6 +956,29 @@
       if (st.cmd === 'cloth' && st.attrs.has('bone')) {
         const a = st.attrs.get('bone');
         if (!m.bones.has(a.text)) { bad(st, a, `osso "${a.text}" não existe`); m.cloths.get(st.pos[0].text).bone = null; }
+      }
+    }
+    // ik: os três ossos fazem uma corrente (o meio é filho da raiz, a ponta é filha do meio), cada osso num ik só,
+    // e o alvo não pode andar junto com a própria perna
+    const ikOf = new Map();
+    const under = (name, root) => { let p = name, guard = 0; while (p && guard++ < 100) { if (p === root) return true; p = m.bones.get(p) && m.bones.get(p).parent; } return false; };
+    for (const k of m.iks) {
+      const st = k.st, a = st.attrs.get('bones');
+      if (k.bones) {
+        const miss = k.bones.find((n) => !m.bones.has(n)), dup = k.bones.find((n) => ikOf.has(n));
+        const [r, mid, tip] = k.bones.map((n) => m.bones.get(n));
+        if (miss) bad(st, a, `osso "${miss}" não existe`);
+        else if (mid.parent !== r.name) bad(st, a, `os ossos do ik fazem uma corrente: o osso ${mid.name} precisa de parent=${r.name}`);
+        else if (tip.parent !== mid.name) bad(st, a, `os ossos do ik fazem uma corrente: o osso ${tip.name} precisa de parent=${mid.name}`);
+        else if (dup) bad(st, a, `o osso "${dup}" já está no ik ${ikOf.get(dup)}`);
+        if (miss || mid.parent !== r.name || tip.parent !== mid.name || dup) k.bones = null;
+        else for (const n of k.bones) ikOf.set(n, k.name);
+      }
+      if (k.targetAt) {
+        const t = k.targetAt.text;
+        if (!m.bones.has(t)) bad(st, k.targetAt, `osso "${t}" não existe`);
+        else if (k.bones && under(t, k.bones[0])) bad(st, k.targetAt, `o alvo "${t}" não pode ser osso da própria perna nem filho dela: ele andaria junto com ela`);
+        else k.target = t;
       }
     }
 
@@ -1146,6 +1225,19 @@
         else if (names.length < 2) bad(st, a, 'bones= precisa de dois ossos ou mais (para um só, use bone=)', 'warn');
         else { el.bones = names; el.bone = names[0]; }
       }
+      // x,y@osso[:peso]: o ponto segue esse osso; os pontos sem @ seguem a forma (bone=, ou ficam parados), e as
+      // linhas e o preenchimento esticam entre eles. el.pins tem um item por ponto: { bone, w } ou null.
+      if (st.pts.some((p) => p.pin) && (st.cmd === 'shape' || st.cmd === 'stroke' || st.cmd === 'line')) {
+        const pins = st.pts.map((p) => {
+          if (!p.pin) return null;
+          if (!m.bones.has(p.pin)) { err(st.line, `osso "${p.pin}" não existe`, p.pinFrom, p.tokTo); return null; }
+          let w = p.pinW;
+          if (w < 0 || w > 1) { err(st.line, 'o peso do @osso vai de 0 (fica com a forma) a 1 (segue o osso)', p.pinFrom, p.tokTo, 'warn'); w = Math.max(0, Math.min(1, w)); }
+          return { bone: p.pin, w };
+        });
+        if (el.bones) err(st.line, '@osso nos pontos não vale junto com bones=: a forma dobra pelos ossos da lista e os @ ficam parados (use um dos dois)', st.pts.find((p) => p.pin).pinFrom, st.pts.find((p) => p.pin).tokTo, 'warn');
+        else if (pins.some(Boolean)) el.pins = pins;
+      }
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) el.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
       // com bones=, a forma dobra pelos ossos e o tecido não mexe nela
       if (el.bones && A.has('cloth') && el.cloth) bad(st, A.get('cloth'), 'cloth= não vale junto com bones=: a forma dobra com os ossos e o tecido fica parado (use um dos dois)', 'warn');
@@ -1309,7 +1401,10 @@
         const pts = st.pts, closed = el.closed, smooth = el.smooth, limb = el.limb, isLine = st.cmd === 'line';
         lazyHandles(rec, (out) => {
           pts.forEach((p, i) => {
-            out.push({ kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, fixed: p.fixed });
+            // com @osso: arrastar reescreve só o x,y (to/end param antes do @); apagar leva a palavra inteira (tokEnd)
+            const h = { kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, tokEnd: p.tokTo || p.to, fixed: p.fixed };
+            if (p.pin) Object.assign(h, { pin: p.pin, label: `ponto ${i + 1} (${p.x}, ${p.y}) preso ao osso ${p.pin}${p.pinW !== 1 ? ` com peso ${p.pinW}` : ''}` });
+            out.push(h);
             if (p.tan) out.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
           });
           // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
@@ -1326,7 +1421,7 @@
               for (let i = 0; i < (closed ? n : n - 1); i++) {
                 const p = pts[i], q = pts[(i + 1) % n], s = segs && segs[i];
                 const x = s ? (s[0] + 3 * s[2] + 3 * s[4] + s[6]) / 8 : (p.x + q.x) / 2, y = s ? (s[1] + 3 * s[3] + 3 * s[5] + s[7]) / 8 : (p.y + q.y) / 2;
-                out.push({ kind: 'mid', idx: i, x, y, from: -1, to: -1, at: p.to, corner: !!(segs && smooth > 0 && p.corner && q.corner), fixed: false, label: `ponto novo entre ${i + 1} e ${((i + 1) % n) + 1}` });
+                out.push({ kind: 'mid', idx: i, x, y, from: -1, to: -1, at: p.tokTo || p.to, corner: !!(segs && smooth > 0 && p.corner && q.corner), fixed: false, label: `ponto novo entre ${i + 1} e ${((i + 1) % n) + 1}` });
               }
             }
           }
@@ -1694,6 +1789,35 @@
       }
       if (!b.tip || Math.hypot(b.tip[0] - b.pivot[0], b.tip[1] - b.pivot[1]) < 2) b.tip = [b.pivot[0], b.pivot[1] + 30];
     }
+
+    // ik: onde fica o pé (foot=chão,x numa line, ou foot=x,y) e para que lado o joelho dobra (sem bend=, o lado
+    // em que ele está no desenho parado). Os de dentro (a raiz mais perto da raiz do esqueleto) são resolvidos antes.
+    for (const k of m.iks) {
+      if (!k.bones) continue;
+      const st = k.st, a = k.footAt;
+      if (a && !k.target) {
+        const parts = a.text.split(',');
+        if (parts.length === 2 && IDENT.test(parts[0]) && !isNaN(num(parts[1]))) {
+          const g = (m.named.get(parts[0]) || []).find((e) => e.pts && e.pts.length >= 2);
+          if (!g) bad(st, a, `não achei a linha "${parts[0]}" para apoiar o pé`);
+          else {
+            const wx = num(parts[1]);
+            k.foot = [wx, yOnLine(g.pts.map((p) => { const q = g.xf ? M.apply(g.xf, p.x, p.y) : [p.x, p.y]; return { x: q[0], y: q[1] }; }), wx)];
+          }
+        } else {
+          const v = nums(a.text);
+          if (v.length === 2 && !v.some(isNaN)) k.foot = v;
+          else bad(st, a, 'use foot=chão,x (nome de uma line) ou foot=x,y');
+        }
+      }
+      if (k.bend === null) {
+        const [H, K, T] = k.bones.map((n) => m.bones.get(n).pivot);
+        const side = (K[0] - H[0]) * (T[1] - H[1]) - (K[1] - H[1]) * (T[0] - H[0]);
+        k.bend = side < -1e-6 ? -1 : 1;
+      }
+    }
+    const boneDepth = (n) => { let d = 0, p = m.bones.get(n) && m.bones.get(n).parent; while (p && d < 100) { d++; p = m.bones.get(p) && m.bones.get(p).parent; } return d; };
+    m.iks = m.iks.filter((k) => k.bones && (k.foot || k.target)).sort((a, b) => boneDepth(a.bones[0]) - boneDepth(b.bones[0]));
 
     // round= sem centro: o meio das peças presas no osso (a bola da cabeça)
     for (const b of m.bones.values()) {

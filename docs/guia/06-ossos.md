@@ -804,6 +804,174 @@ key 24 r1=0,0,0 r2=0,0,0 r3=0,0,0
 
 **Experimente:** na `key 6`, deixe só o primeiro osso girar: `r1=0,0,-15 r2=0,0,0 r3=0,0,0`. A cauda inteira gira reta, sem curva, porque `r2` e `r3` só seguem o pai. Quem faz a curva é a diferença de ângulo de um osso para o outro.
 
+## Pontos presos a um osso: `@osso`
+
+Com `bones=`, **todos** os pontos seguem algum osso. Às vezes você quer o contrário: só alguns pontos andam, e o resto da forma fica onde está. É o caso de uma pata que sai do contorno do corpo, de uma bochecha que estufa ou de um braço de borracha. Escreva `@osso` logo depois do ponto:
+
+```
+shape nome … : x,y x,y@osso x,y!@osso x,y~dx,dy@osso …
+```
+
+<!-- gerar: img/06_pinos.gif -a acena -->
+```weasel
+canvas 420 240 bg=#f4efe6
+palette ink=#2b2a33 line=4 roxo=#7a5cc2
+
+bone mao pivot=334,120
+
+shape bicho c=roxo ink=line : 90,175 105,95 190,68 278,96! 330,104@mao 340,134@mao 288,142! 268,192 180,208
+ellipse olhoE 165,122 7 c=ink
+ellipse olhoD 200,118 7 c=ink
+
+anim acena frames=24 fps=12
+key 0 mao=0,0
+key 6 mao=40,-70
+key 12 mao=0,0
+key 18 mao=50,40
+key 24 mao=0,0
+```
+
+![Um bicho roxo com um braço de borracha: a ponta do braço sobe e desce, o braço estica e afina, e o corpo fica parado](img/06_pinos.gif)
+
+Repare:
+
+- `330,104@mao` e `340,134@mao`: só esses dois pontos seguem o osso `mao`. Os outros ficam parados, porque a forma não tem `bone=`.
+- Entre um ponto preso e um solto, a linha **estica**: quando a mão vai longe, o braço fica comprido e fino.
+- O preenchimento e o contorno vêm junto. A cada quadro, o Weasel refaz a forma com os pontos no lugar novo: sai igual a se você tivesse escrito as coordenadas novas no código.
+- `278,96!` e `288,142!` são cantos vivos na base do braço. É ali que a curva do corpo vira braço, e os cantos seguram esse lugar.
+- Os olhos são formas separadas: eles não sabem dos pontos presos. Uma forma desenhada por cima de um ponto preso precisa do próprio `bone=` (ou dos próprios `@osso`) para ir junto.
+- `@osso` vale nos pontos de `shape`, `stroke` e `line`. Uma `ellipse` ou um `rect` não têm pontos escritos: para esticar, reescreva a forma como `shape`.
+
+**Experimente:** tire o `@mao` do `340,134`. Só um ponto vai junto com a mão, e a ponta do braço vira um bico comprido.
+
+### Os pontos soltos seguem a forma; o peso: `@osso:0.5`
+
+Com `bone=` na forma, os pontos **sem** `@` seguem esse osso, e os pontos com `@` seguem o osso deles. Um número depois de dois-pontos, de 0 a 1, diz **quanto** o ponto segue o osso: `@corpo:0.5` anda metade do caminho.
+
+<!-- gerar: img/06_peso.gif -a estica -->
+```weasel
+canvas 360 240 bg=#f4efe6
+palette ink=#2b2a33 line=4 verde=#5cc28a
+
+bone corpo pivot=180,140
+
+line chao c=#8a7f6e w=3 : 20,202 340,202
+
+shape geleia c=verde ink=line : 110,200! 116,150@corpo:0.5 132,98@corpo 180,78@corpo 228,98@corpo 244,150@corpo:0.5 250,200!
+ellipse olhoE 162,120 7 c=ink bone=corpo
+ellipse olhoD 198,120 7 c=ink bone=corpo
+
+anim estica frames=24 fps=12
+key 0 corpo=0,0
+key 8 corpo=0,-50 ease=out
+key 16 corpo=0,20 ease=in
+key 24 corpo=0,0
+```
+
+![Uma geleia verde presa no chão: o alto dela sobe e desce, os lados acompanham pela metade e a base fica no chão](img/06_peso.gif)
+
+Repare:
+
+- Os pontos de cima (`@corpo`) sobem e descem inteiros com o osso, junto com os olhos (`bone=corpo`).
+- Os dois do meio dos lados (`@corpo:0.5`) andam **metade**: 25 pixels quando o corpo sobe 50. Por isso os lados esticam por igual.
+- Os dois da base não têm `@` e a forma não tem `bone=`: ficam no chão.
+- Peso 1 é o mesmo que não escrever o número. Peso 0 deixa o ponto com a forma, como se não houvesse `@`.
+
+**Experimente:** ponha `bone=corpo` na `geleia` e tire os `@corpo` dos pontos. Agora os pontos soltos seguem o `corpo`, e a geleia pula inteira, base e tudo. Para segurar a base no chão, ela precisaria de um osso que não se mexe: `bone chao_osso pivot=180,200` e `110,200!@chao_osso`.
+
+## IK nos ossos: `ik`
+
+O `stroke limb=` ([lá em cima](#pernas-e-braços-com-ik)) desenha a perna para você. Quando a perna é **sua**, uma pata desenhada no contorno do corpo ou um braço com mão, faça a perna com ossos e diga ao `ik` quais são:
+
+```
+ik nome bones=raiz,meio,ponta foot=chão,x
+ik nome bones=raiz,meio,ponta foot=x,y
+ik nome bones=raiz,meio,ponta target=osso bend=1
+```
+
+<!-- gerar: img/06_ik_ossos.gif -a agacha -->
+```weasel
+canvas 420 280 bg=#f4efe6
+palette ink=#2b2a33 line=4 marrom=#b07a4a
+
+bone corpo pivot=200,130
+bone coxa pivot=240,160 parent=corpo
+bone canela pivot=256,198 parent=coxa
+bone pe pivot=248,240 parent=canela
+
+line chao c=#8a7f6e w=3 : 40,240 380,240
+
+ik pata bones=coxa,canela,pe foot=chao,248
+
+shape bicho c=marrom ink=line bone=corpo : 110,120 160,90 250,95 290,128 272,160 268,198@canela 274,238@pe 230,240@pe 242,198@canela 226,165 140,170 105,150
+ellipse olho 268,114 6 c=ink bone=corpo
+
+anim agacha frames=32 fps=12
+key 0 corpo=0,0
+key 10 corpo=0,34
+key 20 corpo=0,-30 ease=out
+key 26 corpo=0,0 ease=in
+key 32 corpo=0,0
+```
+
+![Um bicho marrom de uma pata só: ele agacha dobrando o joelho para a frente com o pé plano no chão, depois pula e a pata estica e sai do chão](img/06_ik_ossos.gif)
+
+Repare:
+
+- `bones=coxa,canela,pe` são três ossos em corrente: `canela` é filho de `coxa`, e `pe` é filho de `canela`. O `ik` gira a coxa e a canela. A animação só mexe no `corpo`.
+- `foot=chao,248` põe o pivô do `pe` na `line` chamada `chao`, em x=248, como no `limb`. Também vale `foot=x,y`.
+- Os comprimentos vêm do desenho parado: da coxa até a canela, e da canela até o pé. Os ossos não encolhem.
+- Quando o corpo sobe além do alcance, a perna fica reta, apontando para o pé, e a pata sai do chão (o pulo).
+- Sem `bend=`, o joelho dobra para o lado em que ele está no desenho: aqui, o pivô da `canela` está à frente da linha da coxa até o pé, então o joelho vai para a frente.
+- O `pe` não gira junto com a canela: ele fica no ângulo do desenho, como um pé plano no chão. Uma `key` no `pe` ainda gira o pé (dobrar os dedos).
+- A pata faz parte do contorno do corpo: os pontos dela estão presos com `@canela` e `@pe`. Os pontos entre o corpo e o joelho ficam soltos e esticam.
+- Desenhe o pivô do `pe` em cima do chão. Assim a pose parada fica igual ao desenho.
+
+**Experimente:** acrescente `bend=-1` no `ik`. O joelho passa a dobrar para trás, como a perna de um pássaro.
+
+### Braço com alvo: `target=`
+
+Com `target=osso`, a ponta vai atrás do **pivô** desse osso. Anime o alvo, e o braço dobra o cotovelo para chegar nele:
+
+<!-- gerar: img/06_ik_alvo.gif -a pega -->
+```weasel
+canvas 400 260 bg=#f4efe6
+palette ink=#2b2a33 line=4 roxo=#7a5cc2 pele=#ffcf9e
+
+bone corpo pivot=120,160
+bone ombro pivot=150,130 parent=corpo
+bone cotovelo pivot=200,150 parent=ombro
+bone mao pivot=250,130 parent=cotovelo
+bone bola pivot=250,130
+
+ik braco bones=ombro,cotovelo,mao target=bola
+
+ellipse alvo 250,130 18 c=#ff9a4a ink=line bone=bola
+stroke braco w=14 c=roxo : 150,130@ombro 200,150@cotovelo 250,130@mao
+ellipse tronco 115,165 48,62 c=roxo ink=line bone=corpo
+ellipse olho 130,140 6 c=ink bone=corpo
+ellipse palma 250,130 11 c=pele ink=line bone=mao
+
+anim pega frames=36 fps=12
+key 0 bola=0,0
+key 12 bola=-20,-60
+key 24 bola=-20,10
+key 36 bola=0,0
+```
+
+![Um bicho roxo segura uma bola laranja: a bola sobe e desce perto dele, e o braço estica e dobra o cotovelo para a mão ficar na bola](img/06_ik_alvo.gif)
+
+Repare:
+
+- `target=bola`: a mão vai até o pivô da `bola`. A `bola` não é filha de ninguém do braço: o alvo não pode andar junto com o próprio braço (o editor avisa).
+- O braço é um `stroke` com os três pontos presos aos três ossos. Ele dobra no cotovelo porque a curva passa pelos pontos no lugar novo.
+- O cotovelo dobra para baixo porque, no desenho, ele está abaixo da linha do ombro até a mão.
+- A `palma` segue o osso `mao`, que fica sempre no ângulo do desenho.
+
+**Experimente:** na `key 12`, troque `bola=-20,-60` por `bola=60,-60`. A bola sai do alcance: o braço fica reto, apontando para ela, e a mão não chega.
+
+No editor, a raiz e o meio de um `ik` não giram arrastando a bolinha do osso: quem os gira é o `ik`. Mexa no alvo ou no corpo. No Godot com esqueleto ([capítulo 9](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava as rotações da coxa e da canela na animação, e os pontos presos viram pesos da malha.
+
 ## Andar por um caminho: `path=`
 
 Com `path=nome`, o osso anda por uma linha, um traço ou uma forma, e `key quadro osso.along=0 … 1` diz quanto do caminho ele já andou (0 = começo, 1 = fim):

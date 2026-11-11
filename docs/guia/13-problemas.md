@@ -686,6 +686,58 @@ O comprimento da perna é a distância do `hip=` ao pé **no desenho parado**. S
 
 A mão foi mais longe que o comprimento do braço (a distância do `hip=` ao pivô da mão no desenho parado). Mantenha a mão ao alcance: o braço não estica.
 
+### `@osso` numa elipse ou num retângulo
+
+**O que você vê:**
+
+```
+erro: @osso só vale nos pontos de shape, stroke e line (depois do ":"): para o ellipse inteiro seguir um osso, use bone=; para ele esticar, reescreva como shape
+```
+
+**Por quê:** `@osso` prende um **ponto escrito** a um osso. Uma `ellipse` e um `rect` não têm pontos escritos: o centro e o canto deles não são pontos do contorno.
+
+**Como resolver:** para a forma inteira seguir o osso, use `bone=`. Para só um lado dela esticar, reescreva a forma como `shape`, com os pontos do contorno, e prenda os que devem andar ([capítulo 6](06-ossos.md#pontos-presos-a-um-osso-osso)):
+
+```
+ellipse barriga 200,150@corpo 40,30                                  # errado
+shape barriga : 160,150 200,120 240,150@pata 200,180                 # certo: só o lado direito estica
+```
+
+### "@osso nos pontos não vale junto com bones="
+
+**O que você vê:**
+
+```
+aviso: @osso nos pontos não vale junto com bones=: a forma dobra pelos ossos da lista e os @ ficam parados (use um dos dois)
+```
+
+**Por quê:** com `bones=`, todos os pontos já seguem os ossos da lista, misturados pela distância. Os `@osso` não entram nessa conta.
+
+**Como resolver:** escolha um. `bones=` para uma peça que dobra inteira (uma cauda, uma cobra); `@osso` para prender só alguns pontos e deixar o resto parado ou com o `bone=` da forma.
+
+### "os ossos do ik fazem uma corrente"
+
+**O que você vê:**
+
+```
+erro: os ossos do ik fazem uma corrente: o osso canela precisa de parent=coxa
+```
+
+**Por quê:** o `ik` gira a raiz e o meio, e a ponta vai junto porque é filha do meio. Se os ossos não são pai e filho, girar um não leva o outro.
+
+**Como resolver:** escreva os três em ordem, da raiz para a ponta, e dê o `parent=` a cada um:
+
+```
+bone coxa pivot=240,160 parent=corpo
+bone canela pivot=256,198 parent=coxa
+bone pe pivot=248,240 parent=canela
+ik pata bones=coxa,canela,pe foot=chao,248
+```
+
+### A perna do `ik` não gira quando arrasto o osso no editor
+
+A raiz e o meio de um `ik` são girados pelo `ik` em todo quadro: uma `key` de giro neles não aparece, e o editor avisa em vez de escrever a `key`. Mexa no que o `ik` segue: o corpo (o pé fica no chão) ou o osso do `target=`. A ponta continua girando pelas `key` dela.
+
 ### "variável desconhecida" num componente
 
 **O que você vê:**

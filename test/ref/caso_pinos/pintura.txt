@@ -1,0 +1,7 @@
+line chao @0.000 +0.787
+shape bicho @0.787 +0.940
+stroke braco @1.728 +0.352
+ellipse mao @2.080 +0.301
+line corda @2.381 +0.397
+ellipse olho @2.777 +0.227
+total 3.004

@@ -12,7 +12,7 @@ Cada seção termina com um **exemplo que usa quase tudo da tabela de uma vez**,
 |---|---|
 | Linha | `comando nome valores atributo=valor [opções] : pontos` |
 | Comentário | `#` no começo da linha ou depois de um espaço (uma cor `#hex` não é comentário) |
-| Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça |
+| Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça · qualquer um com `@osso` no fim (`x,y@osso`, `x,y!@osso:0.5`): o ponto segue o osso, com o peso de 0 a 1 (1); só em `shape`, `stroke` e `line` |
 | Cor | `#rgb` `#rgba` `#rrggbb` `#rrggbbaa` · nome da `palette` · `gradient` · `pattern` · nome do CSS · `none` ou `transparent` |
 | Espessura | número · nome numérico da `palette` (`line`, `inner`…) · `none` (0) |
 | Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, variáveis do `let`, de `def` e de `repeat`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp`, `dist(x1,y1,x2,y2)`, `rand(x)` e `rand(x,a,b)` |
@@ -349,6 +349,7 @@ Para aprender: [capítulo 5](05-componentes.md).
 |---|---|
 | `bone nome pivot=x,y` | `pivot=` obrigatório · `parent=` · `sway=graus,segundos[,fase]` · `bob=px,segundos[,fase]` · `jitter=px` 0–200 · `spring=` 0–1 (dura perto de 1) · `path=linha` (anda pelo caminho com `key osso.along=`) · `turn=1\|0` (1: vira com a curva) · `yaw=` `pitch=` giro 3D em volta do pivô (0) · `persp=` · `round=raio[,x,y]` as peças do osso viram uma bola (centro: o meio delas) |
 | `cloth nome pivot=x,y` | `tension=` 0–1 (0.5) · `drag=` 0–10 (1) · `swing=` 0–10 (1) · `bone=` |
+| `ik nome bones=raiz,meio,ponta` | IK de ossos: a raiz e o meio giram para a ponta chegar ao pé. Três ossos em corrente (`meio` com `parent=raiz`, `ponta` com `parent=meio`), cada osso num `ik` só · `foot=chão,x` (o pé numa `line`) ou `foot=x,y` ou `target=osso` (o pivô dele; não pode ser osso da própria perna) · `bend=1\|-1` o lado da dobra (o lado em que o meio está no desenho). A ponta fica no ângulo do desenho, mais as `key` dela |
 | `anim nome` | `frames=` 1–600 (24) · `fps=` 1–60 (12) · `[once]` (padrão: loop) · `mix=base,ação bones=ossos` (junta duas animações; o tempo é o da ação) · `feet=pontos` (os pés: o Weasel mede quanto o personagem anda sem eles escorregarem) |
 | `key quadro …` | `osso=dx,dy,rot,sx,sy` (padrão `0,0,0,1,1`; 1 número = dx, 4 números = escala igual) · `alvo.prop=valor` · `ease=` (smooth) |
 | `event quadro nome …` | um ou mais nomes |

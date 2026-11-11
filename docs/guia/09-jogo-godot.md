@@ -650,6 +650,8 @@ Lagarto (CharacterBody2D)
   - **Perna ou braço com IK:** o Weasel cria dois ossos, a coxa e a canela (`pernaE_coxa` e `pernaE_canela`), e a malha dobra no joelho.
   - **Tecido:** um osso a mais (`capa_pano`) balança, e a ponta do tecido segue o balanço; perto do pivô, fica parado.
   - **Formas com `bones=`:** a malha usa os mesmos ossos e os mesmos pesos.
+  - **Pontos presos com `@osso`:** a malha pesa no osso de cada ponto preso, e o resto no osso da forma (sem `bone=`, num osso `parado` na raiz). Entre um ponto preso e um solto, o peso passa de um para o outro como a linha estica no Weasel.
+- **`ik`:** o Weasel calcula o `ik` e grava as rotações da raiz, do meio e da ponta na animação. No Godot fica igual ao Weasel, mas o pé não procura o chão sozinho durante o jogo (uma rampa no meio do caminho não muda a perna).
 - O que **muda de forma** troca de imagem, presa ao osso: morph, `draw` e cores animadas (a imagem só troca quando a forma muda; o olho que pisca tem três imagens). Partículas, rastro e sombra no chão trocam de imagem quadro a quadro, no mundo.
 - **Normal map:** sai junto (`lagarto_normal.png`), uma imagem por peça, para a luz 2D do Godot. `--no-normal` (ou a caixa **Normal map**) tira.
 - **`above=` e `below=`** viram `z_index` das peças, só nos quadros em que a ordem muda.

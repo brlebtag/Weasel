@@ -1,0 +1,353 @@
+{
+  "frames": {
+    "agacha_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_01": {
+      "frame": {
+        "x": 96,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_02": {
+      "frame": {
+        "x": 190,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_03": {
+      "frame": {
+        "x": 284,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_04": {
+      "frame": {
+        "x": 378,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_05": {
+      "frame": {
+        "x": 472,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_06": {
+      "frame": {
+        "x": 566,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_07": {
+      "frame": {
+        "x": 660,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_08": {
+      "frame": {
+        "x": 754,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_09": {
+      "frame": {
+        "x": 848,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_10": {
+      "frame": {
+        "x": 942,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    },
+    "agacha_11": {
+      "frame": {
+        "x": 1036,
+        "y": 2,
+        "w": 92,
+        "h": 50
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 50
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 50
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "agacha": [
+      "agacha_00",
+      "agacha_01",
+      "agacha_02",
+      "agacha_03",
+      "agacha_04",
+      "agacha_05",
+      "agacha_06",
+      "agacha_07",
+      "agacha_08",
+      "agacha_09",
+      "agacha_10",
+      "agacha_11"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_pinos.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1130,
+      "h": 54
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 92,
+      "h": 50
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "agacha",
+        "from": 0,
+        "to": 11,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 6,
+      "y": 35,
+      "w": 308,
+      "h": 165
+    }
+  }
+}

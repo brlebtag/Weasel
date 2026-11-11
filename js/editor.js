@@ -37,8 +37,17 @@
         spans.push([p.from, p.from + c.length, L.HEX.test(c) ? 'col' : 'val', L.HEX.test(c) ? c : null]);
         if (at > 0) spans.push([p.from + at, p.to, 'num']);
       } else if (p.text.includes('{')) spans.push([p.from, p.to, 'expr']);
-      else if (p.text.endsWith('!')) spans.push([p.from, p.to - 1, 'pt'], [p.to - 1, p.to, 'corner']);
-      else if (p.text.includes('~')) { const t = p.text.indexOf('~'); spans.push([p.from, p.from + t, 'pt'], [p.from + t, p.to, 'tan']); } else spans.push([p.from, p.to, 'pt']);
+      else {
+        // x,y@osso[:peso]: o @ e o peso como operador e número, o osso como nome
+        const at = p.text.indexOf('@'), t = at >= 0 ? p.text.slice(0, at) : p.text, end = p.from + t.length;
+        if (t.endsWith('!')) spans.push([p.from, end - 1, 'pt'], [end - 1, end, 'corner']);
+        else if (t.includes('~')) { const ti = t.indexOf('~'); spans.push([p.from, p.from + ti, 'pt'], [p.from + ti, end, 'tan']); } else spans.push([p.from, end, 'pt']);
+        if (at >= 0) {
+          const c = p.text.indexOf(':', at), stop = c >= 0 ? p.from + c : p.to;
+          spans.push([end, end + 1, 'op'], [end + 1, stop, 'name']);
+          if (c >= 0) spans.push([stop, stop + 1, 'op'], [stop + 1, p.to, 'num']);
+        }
+      }
     }
     if (sp.comment !== null) spans.push([sp.commentAt, text.length, 'com']);
     spans.sort((a, b) => a[0] - b[0]);
@@ -91,7 +100,7 @@
       this.sel = 0;
       ta.addEventListener('input', (e) => {
         this._changed('type');
-        if (e.inputType === 'insertText' && /[\w.=-]/.test(e.data || '')) this._suggest(false);
+        if (e.inputType === 'insertText' && /[\w.=@-]/.test(e.data || '')) this._suggest(false);
         else if (e.inputType && e.inputType.startsWith('delete') && !this.pop.hidden) this._suggest(false);
         else this._closePop();
       });
@@ -199,7 +208,7 @@
       const lineText = ta.value.split('\n')[c.line] || '';
       const before = lineText.slice(0, c.col);
       const word = /[\w.-]*$/.exec(before)[0];
-      if (!force && !word && !before.endsWith('=')) return this._closePop();
+      if (!force && !word && !before.endsWith('=') && !before.endsWith('@')) return this._closePop();
       const low = word.toLowerCase();
       const items = this.opts.complete({ text: lineText, before, word, line: c.line })
         .filter((it) => it.label.toLowerCase().startsWith(low) && it.label !== word)

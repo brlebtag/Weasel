@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.27.0">
+<link rel="stylesheet" href="css/style.css?v=1.28.0">
 </head>
 <body>
 <header class="top">
@@ -104,7 +104,7 @@
     <pre class="ex"><b>comando</b> nome atributo=valor … <i>:</i> <u>x,y x,y x,y!</u></pre>
     <ul>
       <li><code>#</code> começa um comentário (no começo da linha ou depois de um espaço).</li>
-      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo; <code>x,y~dx,dy</code> fixa a alça da curva naquele ponto.</li>
+      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo; <code>x,y~dx,dy</code> fixa a alça da curva naquele ponto. Qualquer um pode terminar em <code>@osso</code> (ou <code>@osso:0.5</code>): o ponto segue o osso e a forma estica.</li>
       <li>Cores: <code>#rgb</code>, <code>#rrggbb</code>, <code>#rrggbbaa</code>, um nome da <code>palette</code>, um <code>gradient</code> ou <code>none</code>.</li>
       <li>Espessuras: um número ou um nome numérico da <code>palette</code> (ex.: <code>ink=line</code>).</li>
       <li>Qualquer número pode ser uma conta: <code>{cx+20}</code>, <code>{r*1.6}</code>, <code>{sin(30)*r}</code>.</li>
@@ -152,6 +152,8 @@
       <tr><td><code>bone nome parent= pivot=x,y</code></td><td>Osso. Formas com <code>bone=nome</code> seguem o osso.</td></tr>
       <tr><td><code>bone … sway=graus,s bob=px,s jitter=px</code></td><td>Movimento sem keys: balanço, sobe-e-desce e tremor. O período se ajusta para o loop fechar.</td></tr>
       <tr><td><code>shape … bones=a,b,c</code></td><td>Forma que dobra: cada ponto segue os ossos mais perto dele (rabo, cobra, corpo que se curva).</td></tr>
+      <tr><td><code>shape … : x,y x,y@osso x,y@osso:0.5</code></td><td>Pontos presos a um osso: só eles andam (o peso, de 0 a 1, é quanto), os outros seguem o <code>bone=</code> da forma ou ficam parados, e a linha e o preenchimento esticam entre eles. Vale em <code>shape</code>, <code>stroke</code> e <code>line</code>.</td></tr>
+      <tr><td><code>ik nome bones=raiz,meio,ponta foot=chão,x bend=</code></td><td>IK de ossos: a raiz e o meio giram para a ponta chegar ao pé (<code>foot=chão,x</code> numa <code>line</code>, <code>foot=x,y</code> ou <code>target=osso</code>). Três ossos em corrente; o joelho dobra para o lado do desenho (<code>bend=1|-1</code> escolhe). A ponta fica no ângulo do desenho.</td></tr>
       <tr><td><code>bone … path=linha [turn=0]</code></td><td>O osso anda pelo caminho com <code>key quadro osso.along=0…1</code> e vira junto com a curva (desenho virado para a direita).</td></tr>
       <tr><td><code>bone … spring=0.4</code></td><td>Mola: o osso gira atrasado quando o pai se mexe (orelhas, antenas, cabelo).</td></tr>
       <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados. <code>tension</code> 0–1 (mole a duro).</td></tr>
@@ -346,23 +348,23 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.27.0"></script>
-<script src="js/lang.js?v=1.27.0"></script>
-<script src="js/scene.js?v=1.27.0"></script>
-<script src="js/film.js?v=1.27.0"></script>
-<script src="js/audio.js?v=1.27.0"></script>
-<script src="js/nle.js?v=1.27.0"></script>
-<script src="js/webm.js?v=1.27.0"></script>
-<script src="js/svg.js?v=1.27.0"></script>
-<script src="js/gif.js?v=1.27.0"></script>
-<script src="js/zip.js?v=1.27.0"></script>
-<script src="js/normal.js?v=1.27.0"></script>
-<script src="js/export.js?v=1.27.0"></script>
-<script src="js/godot.js?v=1.27.0"></script>
-<script src="js/rig.js?v=1.27.0"></script>
-<script src="js/editor.js?v=1.27.0"></script>
-<script src="js/examples.js?v=1.27.0"></script>
-<script src="js/timeline.js?v=1.27.0"></script>
-<script src="js/app.js?v=1.27.0"></script>
+<script src="js/geom.js?v=1.28.0"></script>
+<script src="js/lang.js?v=1.28.0"></script>
+<script src="js/scene.js?v=1.28.0"></script>
+<script src="js/film.js?v=1.28.0"></script>
+<script src="js/audio.js?v=1.28.0"></script>
+<script src="js/nle.js?v=1.28.0"></script>
+<script src="js/webm.js?v=1.28.0"></script>
+<script src="js/svg.js?v=1.28.0"></script>
+<script src="js/gif.js?v=1.28.0"></script>
+<script src="js/zip.js?v=1.28.0"></script>
+<script src="js/normal.js?v=1.28.0"></script>
+<script src="js/export.js?v=1.28.0"></script>
+<script src="js/godot.js?v=1.28.0"></script>
+<script src="js/rig.js?v=1.28.0"></script>
+<script src="js/editor.js?v=1.28.0"></script>
+<script src="js/examples.js?v=1.28.0"></script>
+<script src="js/timeline.js?v=1.28.0"></script>
+<script src="js/app.js?v=1.28.0"></script>
 </body>
 </html>

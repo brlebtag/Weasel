@@ -1,0 +1,30 @@
+# teste: pontos presos a ossos (x,y@osso e @osso:peso, em shape, stroke e line) e ik de ossos (foot= numa line e
+# target=), com o esqueleto do Godot (rig=bones): os pontos presos viram pesos da malha e o ik, rotações dos ossos
+canvas 320 220 bg=none
+palette ink=#2b2a33 line=3
+godot body=character root=160,190 rig=bones
+
+bone corpo pivot=150,110
+bone coxa pivot=180,130 parent=corpo
+bone canela pivot=190,160 parent=coxa
+bone pe pivot=186,190 parent=canela
+bone ombro pivot=120,100 parent=corpo
+bone cotovelo pivot=95,120 parent=ombro
+bone mao pivot=70,110 parent=cotovelo
+bone alvo pivot=70,110
+
+line chao c=#8a7f6e w=3 : 10,190 310,190
+
+ik perna bones=coxa,canela,pe foot=chao,186
+ik braco bones=ombro,cotovelo,mao target=alvo
+
+shape bicho c=#c98a4a ink=line bone=corpo : 100,100 140,76 200,80 225,110 205,135 198,160@canela 200,188@pe 175,190@pe 178,160@canela 170,140 120,140@ombro:0.5 95,125
+stroke braco w=8 c=#7a4a2c : 120,100@ombro 95,120@cotovelo 70,110@mao
+ellipse mao 70,110 7 c=#ffcf9e ink=line bone=mao
+line corda c=#c44536 w=2 : 70,110@alvo 40,40
+ellipse olho 210,96 4 c=ink bone=corpo
+
+anim agacha frames=12 fps=12
+key 0 corpo=0,0 alvo=0,0
+key 6 corpo=0,24 alvo=0,14
+key 12 corpo=0,0 alvo=0,0

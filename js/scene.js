@@ -80,6 +80,12 @@
   }
 
   function boneMatrices(model, anim, f, springs, time) {
+    // com ik: os valores de todos os ossos primeiro, o ik gira as correntes, e só então as matrizes
+    if (model.iks && model.iks.length) {
+      const vals = new Map();
+      for (const b of model.bones.values()) vals.set(b.name, boneValues(anim, b, f, springs, time));
+      return matsFrom(model, ikVals(model, vals));
+    }
     const out = new Map();
     const get = (name, depth) => {
       if (out.has(name)) return out.get(name);
@@ -241,6 +247,43 @@
     return out;
   }
 
+  // ---------- ik ----------
+  // Os valores dos ossos (dx, dy, rot, sx, sy) com cada ik resolvido: a raiz e o meio giram para a ponta chegar ao
+  // pé (ou ao pivô do alvo), com o joelho do lado do bend= (1: como no limb, à direita de quem vai do quadril para
+  // o pé). Os comprimentos vêm da pose sem o ik (a escala dos ossos conta). Longe demais, a perna estica e aponta
+  // para o pé. A ponta não gira com a perna: fica no ângulo que teria sem o ik (um pé plano no chão), mais as key
+  // dela. Sem ik, devolve o mesmo mapa.
+  const wrapPi = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a <= -Math.PI) a += 2 * Math.PI; return a; };
+  function ikVals(model, vals) {
+    if (!model.iks || !model.iks.length) return vals;
+    const out = new Map(vals), deg = 180 / Math.PI;
+    const turn = (name, d) => { const v = (out.get(name) || REST).slice(); v[2] += d; out.set(name, v); };
+    for (const k of model.iks) {
+      const mats = matsFrom(model, out);
+      const [A, B, C] = k.bones.map((n) => model.bones.get(n));
+      const at = (b) => M.apply(mats.get(b.name), b.pivot[0], b.pivot[1]);
+      const H = at(A), K = at(B), T = at(C), G = k.target ? at(model.bones.get(k.target)) : k.foot;
+      const L1 = Math.hypot(K[0] - H[0], K[1] - H[1]), L2 = Math.hypot(T[0] - K[0], T[1] - K[1]);
+      const dx = G[0] - H[0], dy = G[1] - H[1], d = Math.hypot(dx, dy);
+      if (L1 < 1e-6 || L2 < 1e-6 || d < 1e-6) continue;
+      const ux = dx / d, uy = dy / d, r = Math.max(Math.abs(L1 - L2), Math.min(L1 + L2, d));
+      // lei dos cossenos no quadril; o joelho sai do rumo do pé para o lado (uy, -ux) com bend=1
+      const c = Math.max(-1, Math.min(1, (L1 * L1 + r * r - L2 * L2) / (2 * L1 * r))), s = Math.sqrt(1 - c * c) * k.bend;
+      const K1 = [H[0] + L1 * (ux * c + uy * s), H[1] + L1 * (uy * c - ux * s)], E = [H[0] + ux * r, H[1] + uy * r];
+      const ang = (p, q) => Math.atan2(q[1] - p[1], q[0] - p[0]);
+      const da = wrapPi(ang(H, K1) - ang(H, K));
+      // girar a raiz leva a ponta junto, em volta do quadril
+      const ca = Math.cos(da), sa = Math.sin(da), T1 = [H[0] + (T[0] - H[0]) * ca - (T[1] - H[1]) * sa, H[1] + (T[0] - H[0]) * sa + (T[1] - H[1]) * ca];
+      const db = wrapPi(ang(K1, E) - ang(K1, T1));
+      // num pai espelhado (escala negativa), girar o filho para um lado gira o desenho para o outro
+      const sign = (name) => { const mm = name ? mats.get(name) : null; return mm && M.det(mm) < 0 ? -1 : 1; };
+      turn(A.name, da * deg * sign(A.parent));
+      turn(B.name, db * deg * sign(A.name));
+      turn(C.name, -(da + db) * deg * sign(B.name));
+    }
+    return out;
+  }
+
   // Expressão (expr) por cima de uma pose: os ossos e as formas que ela diz, misturando de uma expressão para a
   // outra. ex = { from, to, u } (nomes, ou null para nenhuma). Os ossos da expressão substituem os da animação.
   function exprPose(model, pose, ex) {
@@ -258,7 +301,7 @@
         }
         vals.set(b.name, v);
       }
-      bones = matsFrom(model, vals);
+      bones = matsFrom(model, ikVals(model, vals));
     }
     let props = pose.props, b3 = pose.b3;
     const keys = new Set([...(A ? A.ptracks.keys() : []), ...(B ? B.ptracks.keys() : [])]);
@@ -574,13 +617,76 @@
     };
   }
 
-  function mapPts(pts, f) {
-    return pts.map((p) => {
-      const q = f(p.x, p.y);
+  // fs (opcional): um mapa por ponto (os presos com @osso); sem ele, ou num item null, vale f
+  function mapPts(pts, f, fs) {
+    return pts.map((p, i) => {
+      const g = (fs && fs[i]) || f;
+      const q = g(p.x, p.y);
       const o = { x: q[0], y: q[1], corner: p.corner };
-      if (p.tan) { const t = f(p.x + p.tan[0], p.y + p.tan[1]); o.tan = [t[0] - q[0], t[1] - q[1]]; }
+      if (p.tan) { const t = g(p.x + p.tan[0], p.y + p.tan[1]); o.tan = [t[0] - q[0], t[1] - q[1]]; }
       return o;
     });
+  }
+
+  // x,y@osso: o mapa de cada ponto preso (o osso dele, misturado com o mapa f da forma pelo peso); null nos soltos.
+  // Os pontos andam e a curva é refeita por eles: as linhas e o preenchimento esticam entre os presos e os soltos.
+  function pinMaps(model, pose, el, f) {
+    const xf = el.xf;
+    return el.pins.map((p) => {
+      if (!p) return null;
+      const m = pose.bones.get(p.bone), w = p.w;
+      return (x, y) => {
+        let q = xf ? M.apply(xf, x, y) : [x, y];
+        if (m) q = M.apply(m, q[0], q[1]);
+        if (w >= 1) return q;
+        const a = f(x, y);
+        return [a[0] + (q[0] - a[0]) * w, a[1] + (q[1] - a[1]) * w];
+      };
+    });
+  }
+  // o mapa do ponto i (com o 3D): para as alças dos pontos presos
+  function pointMap(model, pose, el, i) {
+    const f = mapper(model, pose, el), g = (el.pins && el.pins[i] && pinMaps(model, pose, el, f)[i]) || f, d3 = el3(model, pose, el);
+    return d3 ? (x, y) => { const q = g(x, y); return d3.map(q[0], q[1]); } : g;
+  }
+
+  // x,y@osso no Godot com esqueleto (rig=bones): o peso de cada osso num lugar qualquer da imagem parada. No
+  // contorno, cada trecho mistura os pesos das duas pontas como a curva mistura os pontos (linha reta: em linha
+  // reta; curva: devagar perto das pontas); dentro da forma, a média dos pesos do contorno, pesada pela distância.
+  // Devolve [[osso ou null (= o da forma), peso], ...].
+  function pinWeights(model, el, x, y) {
+    let S = el._pinw;
+    if (!S) {
+      const T = (p) => (el.xf ? M.apply(el.xf, p.x, p.y) : [p.x, p.y]);
+      const keys = [null, ...new Set(el.pins.filter(Boolean).map((p) => p.bone))];
+      const wv = el.pins.map((p) => keys.map((kk, j) => (p ? (j === 0 ? 1 - p.w : kk === p.bone ? p.w : 0) : j === 0 ? 1 : 0)));
+      const n = el.pts.length, count = el.closed ? n : n - 1, line = el.type === 'line';
+      const pts = el.pts.map((p) => { const q = T(p); const o = { x: q[0], y: q[1], corner: p.corner }; if (p.tan) { const t = T({ x: p.x + p.tan[0], y: p.y + p.tan[1] }); o.tan = [t[0] - q[0], t[1] - q[1]]; } return o; });
+      const segs = line ? G.polySegs(pts, el.closed) : G.smoothSegs(pts, el.closed, el.smooth);
+      const samples = [];
+      for (let i = 0; i < count && i < segs.length; i++) {
+        const s = segs[i], a = wv[i], b = wv[(i + 1) % n];
+        // a alça de cada ponta anda com o ponto dela, a não ser num canto sem alça (fica a 1/3 do caminho)
+        const straight = (j) => line || el.smooth <= 0 || (!pts[j].tan && (pts[j].corner || (!el.closed && (j === 0 || j === n - 1))));
+        const c1 = straight(i) ? a.map((v, q) => (2 * v + b[q]) / 3) : a, c2 = straight((i + 1) % n) ? a.map((v, q) => (v + 2 * b[q]) / 3) : b;
+        const est = Math.hypot(s[6] - s[0], s[7] - s[1]), N = Math.max(2, Math.min(40, Math.ceil(est / 4)));
+        for (let j = 0; j < N; j++) {
+          const t = j / N, u = 1 - t, B0 = u * u * u, B1 = 3 * u * u * t, B2 = 3 * u * t * t, B3 = t * t * t;
+          samples.push({ x: B0 * s[0] + B1 * s[2] + B2 * s[4] + B3 * s[6], y: B0 * s[1] + B1 * s[3] + B2 * s[5] + B3 * s[7], w: keys.map((_, q) => B0 * a[q] + B1 * c1[q] + B2 * c2[q] + B3 * b[q]) });
+        }
+      }
+      S = el._pinw = { keys, samples };
+    }
+    const acc = S.keys.map(() => 0);
+    let sum = 0;
+    for (const p of S.samples) {
+      const d2 = (p.x - x) ** 2 + (p.y - y) ** 2;
+      if (d2 < 0.25) return S.keys.map((kk, q) => [kk, p.w[q]]);
+      const k = 1 / (d2 * d2);
+      sum += k;
+      p.w.forEach((v, q) => { acc[q] += v * k; });
+    }
+    return S.keys.map((kk, q) => [kk, sum ? acc[q] / sum : q === 0 ? 1 : 0]);
   }
 
   function lerpPts(A, B, t, base) {
@@ -970,9 +1076,9 @@
       segs = G.smoothSegs(limbPoints(model, pose, el), false, 1);
     } else {
       const pts = mo ? lerpPts(mo.from.pts, mo.to.pts, mo.t, el.pts) : el.pts;
-      const f = mapOf();
-      if (el.type === 'line') segs = G.polySegs(mapPts(pts, f), false);
-      else if (pts.length >= 2) segs = G.smoothSegs(mapPts(pts, f), el.closed, el.smooth);
+      const f = mapOf(), fs = el.pins && !skin ? pinMaps(model, pose, el, f) : null;
+      if (el.type === 'line') segs = G.polySegs(mapPts(pts, f, fs), false);
+      else if (pts.length >= 2) segs = G.smoothSegs(mapPts(pts, f, fs), el.closed, el.smooth);
     }
     if (skin && segs.length) {
       const fl = G.flatten(segs, 3), pts = [];
@@ -2219,6 +2325,7 @@
   // Posição de uma alça (ponto editável) na pose atual. As alças da própria forma andam com ela (osso, tecido, 3D).
   const ELEMENT_HANDLES = new Set(['pt', 'tan', 'center', 'corner', 'size', 'round', 'move', 'rot', 'mid', 'fsize']);
   function handlePos(model, pose, rec, h) {
+    if (rec.el && (h.kind === 'pt' || h.kind === 'tan') && rec.el.pins && rec.el.pins[h.idx]) return pointMap(model, pose, rec.el, h.idx)(h.x, h.y);
     if (rec.el && ELEMENT_HANDLES.has(h.kind)) return fullMap(model, pose, rec.el)(h.x, h.y);
     if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
@@ -2237,7 +2344,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, matsFrom, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,

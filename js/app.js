@@ -1408,7 +1408,7 @@
     if (!errs.length) list.hidden = true;
   }
 
-  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo', fsize: 'tamanho da letra', g1: 'começo do gradiente', g2: 'fim do gradiente', gc: 'centro do gradiente', gr: 'raio do gradiente', gf: 'foco do gradiente' };
+  const KIND = { pt: 'ponto', tan: 'alça', center: 'centro', corner: 'canto', pivot: 'pivô', hip: 'raiz do membro', foot: 'pé do ik', root: 'raiz', pos: 'posição', light: 'luz', box: 'caixa', point: 'ponto de encaixe', dir: 'direção da luz', size: 'tamanho', round: 'canto', move: 'mover a forma', rot: 'giro', mid: 'ponto novo', fsize: 'tamanho da letra', g1: 'começo do gradiente', g2: 'fim do gradiente', gc: 'centro do gradiente', gr: 'raio do gradiente', gf: 'foco do gradiente' };
   // de que lado vem uma luz de direção (dx,dy aponta para a luz; y cresce para baixo)
   function lightSide(dx, dy) {
     if (!dx && !dy) return 'lugar nenhum (0,0 não tem direção)';
@@ -1478,7 +1478,7 @@
     canvas: 'tamanho e fundo', finish: 'acabamento', unity: 'escala da Unity', palette: 'cores e espessuras', gradient: 'gradiente', let: 'variáveis',
     variant: 'variação de cores', include: 'usar outro arquivo', layer: 'camada', shape: 'forma fechada', stroke: 'traço ou membro', line: 'linha reta',
     ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
-    cloth: 'tecido', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
+    cloth: 'tecido', ik: 'perna ou braço de ossos com IK', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
     light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
     film: 'este arquivo é um filme', shot: 'plano do filme', actor: 'outro arquivo em cena', camera: 'câmera do plano',
     at: 'muda algo num tempo', scene: 'planos de outro filme',
@@ -1501,10 +1501,16 @@
     const m = st.model;
     if (!m) return [];
     const sp = L.splitLine(before);
+    // x,y@osso: depois do @ de um ponto, os ossos
+    if (sp.comment === null && sp.colon >= 0 && /@[\w-]*$/.test(before) && sp.words[0] && ['shape', 'stroke', 'line'].includes(sp.words[0].text)) {
+      return [...m.bones.keys()].map((n) => ({ label: n, detail: 'osso que este ponto segue' }));
+    }
     if (sp.comment !== null || sp.colon >= 0) return [];
     const ws = sp.words;
     const typing = ws.length && !/\s$/.test(before);
     const cur = typing ? ws[ws.length - 1].text : '';
+    // depois de um @ fora dos pontos (mirror=forma@x, A=forma@0.5) não há o que sugerir
+    if (cur.includes('@')) return [];
     const idx = typing ? ws.length - 1 : ws.length;
     const names = (arr, detail) => arr.map((n) => ({ label: String(n), detail }));
     if (idx === 0) return Object.keys(L.KEYWORDS).map((k) => ({ label: k, detail: KDESC[k] || '' }));
@@ -2400,6 +2406,9 @@
     return best;
   }
   function startPose(hb, e) {
+    // a raiz e o meio de um ik são girados por ele: a key de giro deles não aparece
+    const ik = st.model.iks.find((k) => { const i = k.bones.indexOf(hb.bone); return i === 1 || (i === 0 && hb.mode === 'rot'); });
+    if (ik) { hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: mexa ${ik.target ? `no alvo (${ik.target})` : 'no corpo; o pé fica no chão'}.`, 3200); return; }
     const m = st.model, an = m.animMap.get(st.anim), b = m.bones.get(hb.bone), f = st.frame;
     const s = W.geom.segment(an.tracks.get(b.name), f, an.frames, an.loop);
     const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
@@ -3527,7 +3536,7 @@
     const n = rec.handles.filter((q) => q.kind === 'pt').length, min = rec.el && rec.el.limb ? 0 : rec.st.cmd === 'shape' ? 3 : 2;
     if (n <= min) { hint(`${rec.st.cmd} precisa de pelo menos ${min} pontos: este não dá para apagar.`, 2800); return true; }
     const text = lineOf(line), off = editor.lineStart(line);
-    let a = h.from, b = h.end;
+    let a = h.from, b = h.tokEnd || h.end;
     while (a > 0 && /[ \t]/.test(text[a - 1])) a--;
     if (a === h.from) while (b < text.length && /[ \t]/.test(text[b])) b++;
     editor.replaceRange(off + a, off + b, '', { select: [off, off] });

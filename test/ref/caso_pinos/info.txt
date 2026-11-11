@@ -1,0 +1,8 @@
+canvas   320 × 220, fundo transparente
+camadas  1
+  base             6 item(ns)
+formas   6
+ossos    corpo, coxa←corpo, canela←coxa, pe←canela, ombro←corpo, cotovelo←ombro, mao←cotovelo, alvo
+animações 1
+  agacha         12 quadros, 12 fps
+godot    character, raiz 160,190, esqueleto (Bone2D)
