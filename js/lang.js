@@ -1403,7 +1403,7 @@
           pts.forEach((p, i) => {
             // com @osso: arrastar reescreve só o x,y (to/end param antes do @); apagar leva a palavra inteira (tokEnd)
             const h = { kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, tokEnd: p.tokTo || p.to, fixed: p.fixed };
-            if (p.pin) Object.assign(h, { pin: p.pin, label: `ponto ${i + 1} (${p.x}, ${p.y}) preso ao osso ${p.pin}${p.pinW !== 1 ? ` com peso ${p.pinW}` : ''}` });
+            if (p.pin) Object.assign(h, { pin: p.pin, pinW: p.pinW, label: `ponto ${i + 1} (${p.x}, ${p.y}) preso ao osso ${p.pin}${p.pinW !== 1 ? ` com peso ${p.pinW}` : ''}` });
             out.push(h);
             if (p.tan) out.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
           });

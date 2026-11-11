@@ -45,6 +45,9 @@
     measure: false,
     meas: null,
     mdrag: null,
+    // prender: ligada, os pontos escolhidos ("linha:ponto" → a linha sem os @, para conferir depois de editar),
+    // a caixa sendo arrastada, o último clique (para pegar o de baixo) e o peso usado da última vez
+    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1 },
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -2083,10 +2086,13 @@
     if (m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
-    if (st.show.bones && !P) drawBones(ctx, m, pose, z);
+    // na ferramenta Prender, os ossos aparecem mesmo com a chave Ossos desligada
+    const pinning = pinOn();
+    if ((st.show.bones || pinning) && !P) drawBones(ctx, m, pose, z);
     if (P) drawOrigin(ctx, z);
     const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
+    else if (pinning) drawPins(ctx, m, pose, z);
     else if (st.show.points) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); }
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
@@ -2363,7 +2369,7 @@
   // ---------- posar arrastando os ossos ----------
   // Com Ossos ligado, uma animação escolhida e o player parado: arrastar a bolinha de um osso move o osso e
   // arrastar a alça (o traço que sai dele) gira. O Weasel escreve o osso na key daquele quadro (ou cria a key).
-  const posing = () => !!(st.show.bones && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim));
+  const posing = () => !!((st.show.bones || pinOn()) && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim));
   // para onde o osso aponta parado: o meio das formas presas a ele (ou dos ossos filhos); sem nada, para baixo
   function boneDir(m, b) {
     m._boneDir = m._boneDir || new Map();
@@ -3070,10 +3076,317 @@
     const hl = handleList(st.model, currentPose()), at = hl && hl.pts[hi];
     return { self: true, ref: at || toCanvas(e), box: ['center', 'corner', 'pos'].includes(h.kind) && rec.el ? elBox(rec) : null };
   }
+  // ---- prender pontos a um osso (ferramenta Prender, tecla P) ----
+  // Mostra os pontos de todas as formas com pontos escritos (shape, stroke, line), não só os da linha do cursor.
+  // Um clique escolhe todos os pontos que estão naquele lugar (formas coladas dividem o ponto e precisam ir
+  // juntas); clicar de novo no mesmo lugar pega só o de uma forma, a de cima primeiro. Shift soma, Alt tira e
+  // arrastar no fundo faz uma caixa. O botão direito abre o menu dos ossos, que escreve @osso (ou @osso:peso)
+  // depois de cada ponto escolhido, num Ctrl+Z só. Os presos ficam com a cor do osso; os soltos, cinza.
+  const BONE_COLORS = ['#ff6b6b', '#4dabf7', '#8ce99a', '#ffd43b', '#da77f2', '#ff922b', '#3bc9db', '#f783ac', '#c0eb75', '#91a7ff'];
+  function pinOn() { return !!(st.pin.on && st.model && !isFilm() && !pvModel() && !st.build); }
+  let boneCols = null;
+  function boneColor(m, name) {
+    if (!boneCols || boneCols.m !== m) boneCols = { m, map: new Map([...m.bones.keys()].map((n, i) => [n, BONE_COLORS[i % BONE_COLORS.length]])) };
+    return boneCols.map.get(name) || '#9aa6b2';
+  }
+  // a linha sem os @osso: a escolha confere com ela (prender e soltar não desfazem a escolha; mudar o resto, sim)
+  const pinSig = (t) => t.replace(/@\S*/g, '');
+  // os pontos que dá para prender, na pose do quadro: das formas visíveis (com o painel Camadas aberto e linhas
+  // escolhidas nele, só delas). Ficam de fora as cópias de componente (use), as linhas de repeat e de include,
+  // as formas com bones= (os @ não valem junto) e os membros com IK. order: a de cima tem o número maior.
+  let pinCache = null;
+  function pinSpots() {
+    const m = st.model, only = !$('layerPanel').hidden && st.sel.size ? st.sel : null;
+    const key = [st.anim, st.frame, st.show.guides, only ? [...only.keys()].join(',') : ''].join('|');
+    if (pinCache && pinCache.m === m && pinCache.key === key) return pinCache.list;
+    const pose = currentPose(), list = [];
+    let order = 0;
+    for (const layer of S.orderLayers(m, pose)) {
+      if (!S.layerVisible(layer, pose, { guides: st.show.guides })) continue;
+      const lp = pose.lprops.get(layer.name);
+      if (lp && lp.show === 0) continue;
+      let items = S.orderItems(layer.items, pose);
+      if (layer.zsort && m.has3d) items = S.zSort(m, pose, items);
+      for (const it of items) {
+        const el = it.el, pr = S.propsOf(pose, el);
+        if (el.use !== undefined || (el.hidden && !pr.reveal) || pr.show === 0 || el.bones || el.limb) continue;
+        if (el.type !== 'shape' && el.type !== 'stroke' && el.type !== 'line') continue;
+        const line = m.lineMap ? m.lineMap[el.line] : el.line, rec = line >= 0 ? m.byLine.get(line) : null;
+        if (!rec || rec.el !== el || rec.repeated || (only && !only.has(line))) continue;
+        order++;
+        for (const h of rec.handles) {
+          if (h.kind !== 'pt') continue;
+          const p = S.handlePos(m, pose, rec, h);
+          if (p) list.push({ key: `${line}:${h.idx}`, line, idx: h.idx, x: p[0], y: p[1], pin: h.pin || null, w: h.pinW === undefined ? 1 : h.pinW, h, name: el.name || `linha ${line + 1}`, order });
+        }
+      }
+    }
+    pinCache = { m, key, list };
+    return list;
+  }
+  // os pontos escolhidos que ainda valem (a linha deles não mudou, fora os @)
+  function pinChosen() {
+    if (!st.pin.sel.size) return [];
+    const now = new Map(), out = [];
+    for (const s of pinSpots()) {
+      const sig = st.pin.sel.get(s.key);
+      if (sig === undefined) continue;
+      if (!now.has(s.line)) now.set(s.line, pinSig(lineOf(s.line)));
+      if (now.get(s.line) === sig) out.push(s);
+    }
+    return out;
+  }
+  // how: 'set' (só estes), 'add', 'sub' ou 'toggle' (tira se todos já estavam, senão soma)
+  function pinSelect(list, how) {
+    const sel = st.pin.sel;
+    if (how === 'set') sel.clear();
+    if (how === 'toggle') how = list.length && list.every((s) => sel.has(s.key)) ? 'sub' : 'add';
+    const sigs = new Map();
+    for (const s of list) {
+      if (how === 'sub') { sel.delete(s.key); continue; }
+      if (!sigs.has(s.line)) sigs.set(s.line, pinSig(lineOf(s.line)));
+      sel.set(s.key, sigs.get(s.line));
+    }
+  }
+  // os pontos sob o mouse: o mais perto e todos os que estão no mesmo lugar que ele, a forma de cima primeiro
+  function pinsAt(e) {
+    const [x, y] = toCanvas(e), z = st.view.z, spots = pinSpots();
+    let best = null, bd = 8 / z;
+    for (const s of spots) { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; best = s; } }
+    if (!best) return [];
+    return spots.filter((s) => Math.hypot(s.x - best.x, s.y - best.y) <= 1.5 / z).sort((a, b) => b.order - a.order);
+  }
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  function pinCount() {
+    const n = pinChosen().length;
+    hint(n ? `${plural(n, 'ponto escolhido', 'pontos escolhidos')}: o botão direito escolhe o osso.` : 'Nenhum ponto escolhido.', 2400);
+  }
+  function pinLabel(here) {
+    if (here.length > 1) return `${here.length} pontos aqui (${[...new Set(here.map((s) => s.name))].join(', ')})`;
+    const s = here[0];
+    return `${s.name}, ponto ${s.idx + 1}: ${s.pin ? `@${s.pin}${s.w !== 1 ? `:${s.w}` : ''}` : 'solto'}`;
+  }
+  function pinClick(e) {
+    const here = pinsAt(e), how = e.altKey ? 'sub' : e.shiftKey ? 'toggle' : 'set';
+    if (!here.length) {
+      st.pin.pick = null;
+      if (how === 'set' && st.pin.sel.size) { st.pin.sel.clear(); draw(); }
+      return;
+    }
+    // clicar de novo no mesmo lugar: só o ponto de uma forma (a de cima, depois a de baixo…), e de volta a todos
+    const lines = [...new Set(here.map((s) => s.line))];
+    const p = st.pin.pick, same = p && Math.hypot(p.x - e.clientX, p.y - e.clientY) < 6 && p.lines.join() === lines.join();
+    const k = lines.length > 1 && same ? (p.k + 1) % (lines.length + 1) : 0;
+    st.pin.pick = { x: e.clientX, y: e.clientY, lines, k };
+    pinSelect(k ? here.filter((s) => s.line === lines[k - 1]) : here, how);
+    draw();
+    const name = (l) => here.find((s) => s.line === l).name;
+    if (lines.length > 1) hint(k ? `Só o de ${name(lines[k - 1])} (${k} de ${lines.length}): clique de novo para o próximo.` : `${here.length} pontos aqui (${lines.map(name).join(', ')}): clique de novo para pegar só um.`, 3600);
+    else pinCount();
+  }
+  // soltou a caixa: os pontos dentro dela (sem ter arrastado, foi um clique)
+  function pinBoxEnd(b, e) {
+    if (!b.moved) { pinClick(e); return; }
+    const x0 = Math.min(b.a[0], b.b[0]), x1 = Math.max(b.a[0], b.b[0]), y0 = Math.min(b.a[1], b.b[1]), y1 = Math.max(b.a[1], b.b[1]);
+    pinSelect(pinSpots().filter((s) => s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1), b.sub ? 'sub' : b.add ? 'add' : 'set');
+    st.pin.pick = null;
+    draw();
+    pinCount();
+  }
+  // a distância de x,y até um osso, na pose do quadro: até o pedaço do pivô dele ao pivô de cada filho (é o
+  // pedaço que ele gira); um osso sem filho, até o pivô. O pedaço para um pouco antes do filho: um ponto em
+  // volta da junta (a ponta do braço em volta da mão) fica com o filho.
+  function boneReach(m, pose) {
+    const piv = new Map();
+    for (const b of m.bones.values()) { const wm = pose.bones.get(b.name); piv.set(b.name, wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot); }
+    const kids = new Map([...m.bones.keys()].map((n) => [n, []]));
+    for (const b of m.bones.values()) {
+      if (!b.parent || !kids.has(b.parent)) continue;
+      const p = piv.get(b.parent), q = piv.get(b.name);
+      kids.get(b.parent).push([p[0] + (q[0] - p[0]) * 0.85, p[1] + (q[1] - p[1]) * 0.85]);
+    }
+    const seg = (x, y, p, q) => {
+      const dx = q[0] - p[0], dy = q[1] - p[1], l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, ((x - p[0]) * dx + (y - p[1]) * dy) / l2)) : 0;
+      return Math.hypot(x - p[0] - dx * t, y - p[1] - dy * t);
+    };
+    return (name, x, y) => {
+      const p = piv.get(name), ks = kids.get(name);
+      return ks.length ? Math.min(...ks.map((q) => seg(x, y, p, q))) : Math.hypot(x - p[0], y - p[1]);
+    };
+  }
+  function drawPins(ctx, m, pose, z) {
+    const spots = pinSpots(), chosen = new Set(pinChosen().map((s) => s.key));
+    const pivot = (name) => { const b = m.bones.get(name), wm = pose.bones.get(name); return wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot; };
+    ctx.save();
+    // cada osso com a cor dele: um anel em volta da bolinha
+    ctx.lineWidth = 2.5 / z;
+    for (const b of m.bones.values()) {
+      const p = pivot(b.name);
+      ctx.strokeStyle = boneColor(m, b.name);
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], 8.5 / z, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // um ponto escolhido e preso: um fio tracejado até o osso dele
+    ctx.setLineDash([3 / z, 3 / z]);
+    ctx.lineWidth = 1.2 / z;
+    for (const s of spots) {
+      if (!s.pin || !chosen.has(s.key) || !m.bones.has(s.pin)) continue;
+      const p = pivot(s.pin);
+      ctx.strokeStyle = boneColor(m, s.pin);
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(p[0], p[1]);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // os pontos: preso, na cor do osso (com peso menor que 1, mais apagado e com o anel da cor); solto, cinza
+    const r = 3.8 / z;
+    const dot = (s) => {
+      const col = s.pin && m.bones.has(s.pin) ? boneColor(m, s.pin) : null;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, col ? r : r * 0.85, 0, Math.PI * 2);
+      ctx.fillStyle = '#14141c';
+      ctx.fill();
+      ctx.globalAlpha = col ? 0.3 + 0.7 * Math.max(0, Math.min(1, s.w)) : 1;
+      ctx.fillStyle = col || '#c3ccd6';
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = (col && s.w < 1 ? 1.6 : 1.2) / z;
+      ctx.strokeStyle = col && s.w < 1 ? col : '#14141c';
+      ctx.stroke();
+      if (!chosen.has(s.key)) return;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r + 2.8 / z, 0, Math.PI * 2);
+      ctx.lineWidth = 2 / z;
+      ctx.strokeStyle = '#ff8a1f';
+      ctx.stroke();
+    };
+    for (const s of spots) if (!chosen.has(s.key)) dot(s);
+    for (const s of spots) if (chosen.has(s.key)) dot(s);
+    // a caixa sendo arrastada
+    const b = st.pin.box;
+    if (b && b.moved) {
+      const x = Math.min(b.a[0], b.b[0]), y = Math.min(b.a[1], b.b[1]), w = Math.abs(b.a[0] - b.b[0]), h = Math.abs(b.a[1] - b.b[1]);
+      ctx.fillStyle = b.sub ? 'rgba(255,107,107,.08)' : 'rgba(255,138,31,.08)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = b.sub ? '#ff6b6b' : '#ff8a1f';
+      ctx.lineWidth = 1 / z;
+      ctx.setLineDash([4 / z, 3 / z]);
+      ctx.strokeRect(x, y, w, h);
+    }
+    ctx.restore();
+  }
+  function setPin(on) {
+    st.pin.on = on;
+    st.pin.box = null;
+    st.pin.pick = null;
+    if (!on) { st.pin.sel.clear(); closePinMenu(false); }
+    if (on && st.measure) setMeasure(false);
+    $('pinBtn').classList.toggle('on', on);
+    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : 'Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.', 4200);
+    draw();
+  }
+  // o menu dos ossos (botão direito): o osso mais perto dos pontos primeiro, o peso, cada um no mais perto e soltar
+  const pinMenu = $('pinMenu');
+  let pmenu = null;
+  function openPinMenu(cx, cy) {
+    const m = st.model, chosen = pinChosen();
+    if (!chosen.length) { hint('Escolha pontos primeiro: clique num ponto ou arraste uma caixa em volta deles.', 2800); return; }
+    if (!m.bones.size) { hint('Este desenho ainda não tem ossos: escreva uma linha bone antes (capítulo 6 do guia).', 3200); return; }
+    const reach = boneReach(m, currentPose()), n = chosen.length;
+    const mx = chosen.reduce((a, s) => a + s.x, 0) / n, my = chosen.reduce((a, s) => a + s.y, 0) / n;
+    const bones = [...m.bones.keys()].sort((a, b) => reach(a, mx, my) - reach(b, mx, my));
+    const pinned = chosen.filter((s) => s.pin).length, shapes = new Set(chosen.map((s) => s.line)).size;
+    pmenu = { items: bones.map((b) => ({ bone: b })).concat([{ near: true }], pinned ? [{ free: true }] : []), sel: 0, back: document.activeElement === editor.ta };
+    const rows = bones.map((b, i) => {
+      const k = chosen.filter((s) => s.pin === b).length, note = [k ? (k === n ? 'todos já' : `${k} já`) : '', i < 9 ? String(i + 1) : ''].filter(Boolean).join(' · ');
+      return `<div data-i="${i}"><span><i class="pm-dot" style="background:${boneColor(m, b)}"></i>${esc(b)}</span><small>${note}</small></div>`;
+    });
+    pinMenu.innerHTML = `<header>Prender ${plural(n, 'ponto', 'pontos')}${shapes > 1 ? ` de ${shapes} formas` : ''} a</header>${rows.join('')}`
+      + `<label class="pm-w">Peso <input id="pinW" type="number" min="0" max="1" step="0.1" value="${st.pin.w}"><small>1 vai junto; 0.5, metade</small></label>`
+      + `<div data-i="${bones.length}"><span>Cada um no osso mais perto</span><small></small></div>`
+      + (pinned ? `<div data-i="${bones.length + 1}"><span>Soltar (tirar o @)</span><small>${pinned}</small></div>` : '');
+    pinMenu.hidden = false;
+    const w = pinMenu.offsetWidth, h = pinMenu.offsetHeight;
+    pinMenu.style.left = Math.max(4, Math.min(window.innerWidth - w - 4, cx)) + 'px';
+    pinMenu.style.top = Math.max(4, Math.min(window.innerHeight - h - 4, cy)) + 'px';
+    markPinMenu();
+    pinMenu.focus();
+  }
+  function markPinMenu() { [...pinMenu.querySelectorAll('[data-i]')].forEach((d) => d.classList.toggle('on', +d.dataset.i === pmenu.sel)); }
+  function closePinMenu(refocus) {
+    if (!pmenu) return;
+    const back = pmenu.back;
+    pmenu = null;
+    pinMenu.hidden = true;
+    if (refocus && back) editor.ta.focus();
+  }
+  // escreve (ou troca, ou tira) o @osso de cada ponto escolhido, da direita para a esquerda em cada linha
+  function applyPin(item) {
+    if (!item || !pmenu) return;
+    const m = st.model, f = $('pinW'), w0 = f ? parseFloat(String(f.value).replace(',', '.')) : st.pin.w;
+    const w = isNaN(w0) ? 1 : Math.min(1, Math.max(0, w0)), wt = w === 1 ? '' : `:${Number(w.toFixed(3))}`;
+    closePinMenu(true);
+    const chosen = pinChosen();
+    if (!chosen.length) return;
+    st.pin.w = w;
+    const reach = item.near ? boneReach(m, currentPose()) : null, names = [...m.bones.keys()];
+    const boneFor = (s) => (item.free ? '' : item.near ? names.reduce((a, b) => (reach(b, s.x, s.y) < reach(a, s.x, s.y) ? b : a)) : item.bone);
+    const byLine = new Map(), out = new Map(), count = new Map();
+    for (const s of chosen) (byLine.get(s.line) || byLine.set(s.line, []).get(s.line)).push(s);
+    let bad = 0;
+    for (const [line, list] of byLine) {
+      let text = lineOf(line), touched = false;
+      for (const s of list.sort((a, b) => b.h.from - a.h.from)) {
+        const h = s.h, tok = text.slice(h.from, h.tokEnd), tail = text.slice(h.end, h.tokEnd);
+        if (!tok || /\s/.test(tok) || (tail && tail[0] !== '@')) { bad++; continue; }
+        const b = boneFor(s), suf = b ? `@${b}${wt}` : '';
+        count.set(b, (count.get(b) || 0) + 1);
+        if (tail === suf) continue;
+        text = text.slice(0, h.end) + suf + text.slice(h.tokEnd);
+        touched = true;
+      }
+      if (touched) out.set(line, text);
+    }
+    if (out.size) writeLines(out, 'pin' + Date.now());
+    const done = chosen.length - bad, weight = wt ? ` com peso ${Number(w.toFixed(3))}` : '';
+    let msg = item.free ? `${plural(done, 'ponto solto', 'pontos soltos')} (sem @).`
+      : item.near ? `Cada ponto no osso mais perto${weight}: ${[...count].map(([b, k]) => `${b} ${k}`).join(', ')}.`
+      : `${plural(done, 'ponto preso', 'pontos presos')} a ${item.bone}${weight}.`;
+    if (out.size) msg += ' Ctrl+Z desfaz.';
+    if (bad) msg += ` ${plural(bad, 'ponto ficou', 'pontos ficaram')} como estava: o código mudou, escolha de novo.`;
+    hint(msg, 3600);
+  }
+  pinMenu.addEventListener('mousedown', (e) => {
+    const row = e.target.closest('[data-i]');
+    // o campo do peso recebe o foco normalmente
+    if (!row || !pmenu) return;
+    e.preventDefault();
+    applyPin(pmenu.items[+row.dataset.i]);
+  });
+  pinMenu.addEventListener('mousemove', (e) => {
+    const row = e.target.closest('[data-i]');
+    if (row && pmenu && +row.dataset.i !== pmenu.sel) { pmenu.sel = +row.dataset.i; markPinMenu(); }
+  });
+  pinMenu.addEventListener('keydown', (e) => {
+    // enquanto o menu está aberto, as teclas são dele (no campo do peso, os números são do campo)
+    e.stopPropagation();
+    if (!pmenu) return;
+    const n = pmenu.items.length, bones = pmenu.items.filter((it) => it.bone).length;
+    if (e.key === 'Escape') { e.preventDefault(); closePinMenu(true); return; }
+    if (e.key === 'Enter') { e.preventDefault(); applyPin(pmenu.items[pmenu.sel]); return; }
+    if (e.target.id === 'pinW') return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); pmenu.sel = (pmenu.sel + (e.key === 'ArrowDown' ? 1 : -1) + n) % n; markPinMenu(); } else if (/^[1-9]$/.test(e.key) && +e.key <= bones) { e.preventDefault(); applyPin(pmenu.items[+e.key - 1]); } else if (e.key !== 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) e.preventDefault();
+  });
+  pinMenu.addEventListener('focusout', () => setTimeout(() => { if (pmenu && !pinMenu.contains(document.activeElement)) closePinMenu(false); }, 0));
+
   // ---- medir ----
   function setMeasure(on) {
     st.measure = on;
     if (!on) { st.meas = null; st.mdrag = null; }
+    if (on && st.pin.on) setPin(false);
     $('measureBtn').classList.toggle('on', on);
     if (on) hint('Medir: arraste no desenho de um ponto a outro. Com Shift, de 45 em 45 graus. As pontas grudam nos pontos da forma e nas linhas guia (segurando Ctrl, não).', 4600);
     draw();
@@ -3254,6 +3567,8 @@
     $('tBoxesWrap').hidden = film;
     $('measureBtn').hidden = film;
     if (film && st.measure) setMeasure(false);
+    $('pinBtn').hidden = film;
+    if (film && st.pin.on) setPin(false);
     stage.classList.toggle('ruled', rulersOn());
   }
 
@@ -3317,6 +3632,15 @@
     // numa régua: puxar uma linha guia nova (no quadradinho do canto, só o duplo clique faz algo: apaga todas)
     const ru = e.button === 0 ? rulerAt(e) : null;
     if (ru) { if (ru !== 'corner') startGuide(ru === 'top' ? 'h' : 'v', -1, e); return; }
+    // prender: o clique escolhe pontos e arrastar no fundo faz uma caixa (com uma animação escolhida, a bolinha
+    // de um osso ainda posa, para ver os pontos presos irem junto)
+    if (e.button === 0 && pinOn()) {
+      const hb = hitBone(e);
+      if (hb) { startPose(hb, e); return; }
+      const p = toCanvas(e);
+      st.pin.box = { a: p, b: p.slice(), add: e.shiftKey, sub: e.altKey, x: e.clientX, y: e.clientY, moved: false };
+      return;
+    }
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
       const [x, y] = toWorld(e);
       const ta = editor.ta, s = ta.selectionStart;
@@ -3396,6 +3720,14 @@
     if (st.guideDrag) { moveGuide(st.guideDrag, e); return; }
     if (st.mdrag) { moveMeasure(st.mdrag, e); return; }
     if (st.pose) { movePose(e); return; }
+    if (st.pin.box) {
+      const b = st.pin.box;
+      if (!b.moved && Math.hypot(e.clientX - b.x, e.clientY - b.y) < 4) return;
+      b.moved = true;
+      b.b = [x, y];
+      draw();
+      return;
+    }
     // com as réguas ligadas, o que se arrasta gruda nas linhas guia
     if (st.gdrag) {
       const [sx, sy] = st.gdrag.mode !== 'spin' ? snapMouse(st.gdrag.sn, x, y, e) : [x, y];
@@ -3421,6 +3753,13 @@
     }
     const ru = rulerAt(e);
     if (ru) { view.style.cursor = ru === 'top' ? 'ns-resize' : ru === 'left' ? 'ew-resize' : 'default'; return; }
+    if (pinOn()) {
+      // sob o mouse: de que forma é o ponto e a que osso está preso
+      const here = pinsAt(e), hb = here.length ? null : hitBone(e);
+      if (here.length) $('coords').textContent += ` · ${pinLabel(here)}`;
+      view.style.cursor = here.length ? 'pointer' : hb ? (hb.mode === 'rot' ? 'alias' : 'move') : 'crosshair';
+      return;
+    }
     if (st.measure && !isFilm()) { view.style.cursor = measureEnd(e) ? 'move' : 'crosshair'; return; }
     const hb = hitBone(e), hg = hb ? null : hitGroup(e), hs = hb || hg ? null : hitScale(e), hi = hb || hg || hs ? -1 : hitHandle(e);
     const hgd = hb || hg || hs || hi >= 0 ? null : hitGuide(e);
@@ -3428,14 +3767,15 @@
     view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
   });
 
-  const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan;
+    const p = st.pan, pb = st.pin.box;
     if (st.guideDrag) endGuide(st.guideDrag);
     // no Medir, um clique sem arrastar tira a medida
     const mm = st.meas;
     if (st.mdrag && mm && mm.a[0] === mm.b[0] && mm.a[1] === mm.b[1]) st.meas = null;
     endPointer();
+    if (pb) pinBoxEnd(pb, e);
     if (p && p.click && !p.moved) pickShape(e);
   });
   view.addEventListener('pointercancel', endPointer);
@@ -3906,6 +4246,7 @@
     draw();
   });
   $('measureBtn').addEventListener('click', () => setMeasure(!st.measure));
+  $('pinBtn').addEventListener('click', () => setPin(!st.pin.on));
   $('zFit').addEventListener('click', () => { st.view.auto = true; draw(); });
   $('zIn').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25));
   $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
@@ -3956,6 +4297,8 @@
     st.current = name;
     loadGuides(name);
     st.meas = null;
+    st.pin.sel.clear();
+    st.pin.pick = null;
     st.anim = '';
     st.shot = '';
     st.frame = 0;
@@ -4206,6 +4549,13 @@
   view.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     if (st.build) return;
+    if (pinOn()) {
+      // botão direito num ponto que não estava escolhido: ele (com os do mesmo lugar) vira a escolha
+      const here = pinsAt(e);
+      if (here.length && !here.some((s) => st.pin.sel.has(s.key))) { pinSelect(here, 'set'); st.pin.pick = null; draw(); }
+      openPinMenu(e.clientX, e.clientY);
+      return;
+    }
     openShapeMenu(toWorld(e), e.clientX, e.clientY);
   });
 
@@ -4247,14 +4597,17 @@
     if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
     // Ctrl+H: liga e desliga o hidden das linhas escolhidas no painel Camadas (ou da linha do cursor)
     if (mod && !e.shiftKey && !e.altKey && (e.key === 'h' || e.key === 'H') && (e.target === editor.ta || !(e.target.closest && e.target.closest('textarea, input, select, dialog')))) { e.preventDefault(); toggleHidden(hiddenTargets(), true); return; }
+    // Esc: na ferramenta Prender, solta primeiro os pontos escolhidos
+    if (e.key === 'Escape' && pinOn() && st.pin.sel.size && !(e.target.closest && e.target.closest('dialog'))) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
     const t = e.target;
     if (t.closest && t.closest('textarea, input, select, dialog')) return;
     // com o foco no desenho: Ctrl+Z e Ctrl+Y desfazem e refazem no código, e Delete apaga o ponto escolhido
     if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); if (e.shiftKey) editor.redo(); else editor.undo(); return; }
     if (mod && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); editor.redo(); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
-    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); } else if (!mod && !e.altKey && !isFilm() && (e.key === 'r' || e.key === 'R')) $('tRulers').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'm' || e.key === 'M')) $('measureBtn').click();
+    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); } else if (!mod && !e.altKey && !isFilm() && (e.key === 'r' || e.key === 'R')) $('tRulers').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'm' || e.key === 'M')) $('measureBtn').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'p' || e.key === 'P')) $('pinBtn').click();
   });
 
   // ---------- início ----------

@@ -15,7 +15,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 3 | [Cores e estilos](03-cores.md) | cores com transparência, a `palette`, variantes (de cor e de peças), gradientes e hachuras |
 | 4 | [Camadas, recortes e acabamento](04-camadas.md) | `layer`, a ordem de pintura, recortar por dentro e por fora, contorno por cima, buracos e o estilo do desenho inteiro |
 | 5 | [Contas, componentes e arquivos](05-componentes.md) | `let` e `{contas}`, `repeat` e `rand()`, componentes com `def`/`use`, espelho e `include` |
-| 6 | [Ossos](06-ossos.md) | o que é um osso, o pivô, pai e filho, movimentos automáticos, molas, tecido, pernas com IK, formas que dobram (`bones=`), pontos presos a um osso (`@osso`), IK nos ossos (`ik`) e caminhos (`path=`) |
+| 6 | [Ossos](06-ossos.md) | o que é um osso, o pivô, pai e filho, movimentos automáticos, molas, tecido, pernas com IK, formas que dobram (`bones=`), pontos presos a um osso (`@osso`, e a ferramenta Prender do editor), IK nos ossos (`ik`) e caminhos (`path=`) |
 | 7 | [Animação](07-animacao.md) | `anim` e `key`, como os quadros do meio são calculados (`ease`), loop, animar cores e formas, desenhar aos poucos, morph, animações combinadas, posar com o mouse e eventos |
 | 8 | [Luz, efeitos e partículas](08-luz-efeitos.md) | lâmpadas, holofotes, sol e lua, brilho, sombra no chão, efeitos de camada, rastro e partículas |
 | 9 | [Jogo e Godot](09-jogo-godot.md) | caixas de colisão, golpe e dano por quadro, pontos de encaixe, andar sem os pés escorregarem, a cena pronta do Godot, o esqueleto de verdade, direções, tileset e sprite sheet |

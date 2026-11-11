@@ -274,6 +274,11 @@ main {
 .text-edit { position: absolute; z-index: 25; margin: 0; padding: 2px 6px; line-height: 1.25; background: rgba(15, 22, 29, .94); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; outline: none; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
 .shape-menu { position: fixed; z-index: 30; max-height: none; outline: none; }
 .shape-menu header { padding: 3px 8px 4px; color: var(--dim); font: 11px var(--ui); border-bottom: 1px solid #2c3d4f; margin-bottom: 3px; }
+/* o menu da ferramenta Prender: a bolinha da cor de cada osso e o campo do peso */
+.pin-menu .pm-dot { display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; vertical-align: -1px; box-shadow: 0 0 0 1px #14141c; }
+.pin-menu .pm-w { display: flex; align-items: center; gap: 8px; margin: 3px 0; padding: 5px 8px; border-top: 1px solid #2c3d4f; border-bottom: 1px solid #2c3d4f; color: var(--text); font: 12px var(--ui); cursor: default; }
+.pin-menu .pm-w input { width: 58px; padding: 2px 5px; background: #0f161d; color: var(--text); border: 1px solid #2c3d4f; border-radius: 4px; font: 12px var(--mono); }
+.pin-menu .pm-w input:focus { outline: none; border-color: var(--accent); }
 body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: none; }
 .bad { color: var(--err); text-decoration: underline wavy var(--err); }
 .com { color: var(--com); }
@@ -365,10 +370,13 @@ body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: no
   border: 1px solid var(--line);
   color: var(--text);
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 14px;
   font-size: 12px;
   pointer-events: none;
-  white-space: nowrap;
+  /* uma linha só quando cabe; uma dica comprida quebra em vez de sair cortada dos lados */
+  width: max-content;
+  max-width: calc(100% - 24px);
+  text-align: center;
 }
 
 .player .sep { width: 1px; height: 20px; background: var(--line); }

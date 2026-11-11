@@ -879,6 +879,25 @@ Repare:
 
 **Experimente:** ponha `bone=corpo` na `geleia` e tire os `@corpo` dos pontos. Agora os pontos soltos seguem o `corpo`, e a geleia pula inteira, base e tudo. Para segurar a base no chão, ela precisaria de um osso que não se mexe: `bone chao_osso pivot=180,200` e `110,200!@chao_osso`.
 
+### Muitos pontos de uma vez: a ferramenta Prender
+
+Escrever `@osso` ponto por ponto cansa numa forma grande. No editor, a ferramenta **Prender** (o botão da tachinha na barra do desenho, ou a tecla **P**) escreve para você:
+
+1. Com ela ligada, aparecem os pontos de todos os `shape`, `stroke` e `line`, não só os da linha do cursor. Cada osso ganha uma cor (um anel em volta da bolinha dele), e um ponto preso fica com a cor do osso dele; um solto fica cinza. Com peso menor que 1, a cor fica mais apagada.
+2. Escolha os pontos. Um clique escolhe um ponto; **Shift**+clique soma; **Alt**+clique tira. Arrastar no fundo faz uma caixa e escolhe os pontos de dentro (com **Shift**, soma; com **Alt**, tira). Os escolhidos ganham um anel laranja, e os que já estão presos, um fio tracejado até o osso.
+3. Clique com o botão direito. O menu mostra os ossos, o mais perto dos pontos primeiro, e quantos pontos já estão em cada um. Escolher um osso escreve `@osso` depois de cada ponto escolhido (com o **Peso** do campo: `0.5` escreve `@osso:0.5`); um ponto que já tinha outro osso troca. **Cada um no osso mais perto** dá um osso para cada ponto, e **Soltar** tira o `@`. Um **Ctrl+Z** desfaz tudo.
+
+Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso. Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como na chave **Ossos**).
+
+**Formas uma por cima da outra:**
+
+- Duas formas coladas costumam dividir um ponto (o mesmo x,y nas duas). Um clique ali escolhe os dois, porque eles precisam ir juntos: se só um anda, a emenda abre. Clique de novo no mesmo lugar para pegar só o da forma de cima; de novo, só o da de baixo; e mais uma vez, os dois.
+- A caixa pega os pontos de todas as formas dentro dela. Para mexer só em algumas, abra o painel **Camadas** e escolha as formas lá: enquanto ele está aberto, só os pontos delas aparecem.
+
+**Cada um no osso mais perto** mede a distância até o pedaço entre cada osso e os filhos dele (o pedaço que ele gira); um osso sem filho conta pelo pivô. É um palpite: confira as cores depois e troque o que não ficou bom.
+
+Não aparecem: as cópias de um `use` e as linhas de `repeat` e de `include` (escreva o `@` no código delas), as formas com `bones=` (os `@` não valem junto) e os membros com IK de forma (`limb`).
+
 ## IK nos ossos: `ik`
 
 O `stroke limb=` ([lá em cima](#pernas-e-braços-com-ik)) desenha a perna para você. Quando a perna é **sua**, uma pata desenhada no contorno do corpo ou um braço com mão, faça a perna com ossos e diga ao `ik` quais são:
