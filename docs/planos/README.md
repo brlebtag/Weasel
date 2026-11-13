@@ -21,11 +21,12 @@ Você aprovou a análise e a ordem. Ainda falta o "pode fazer" do item 1.
 | 3 | [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro |
 | 4 | [Transições geradas](transicoes.md) | `anim para_galope from=galope to=pisca`; você decide se os quadros extras valem |
 
-## Proposta nova
+## Propostas novas
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026; esperando você ler o capítulo de filme |
+| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, cel shading e outros, a partir do mesmo desenho | análise de 12/11/2026; esperando você escolher os estilos |
 
 ## Para depois
 
