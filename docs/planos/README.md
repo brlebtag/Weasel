@@ -19,7 +19,7 @@ Você aprovou a análise e a ordem. Ainda falta o "pode fazer" do item 1.
 | 1 | [Ajudante do Godot](ajudante-godot.md) | `quadros()`, `fps()`, `mostrar_quadro()` e trocar de animação na mesma fase da passada |
 | 2 | [Contas novas](expressoes.md) | `smoothstep`, comparações, `c ? a : b` e `mod()` dentro de `{}` |
 | 3 | [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro |
-| 4 | [Transições geradas](transicoes.md) | `anim para_galope from=galope to=pisca`; você decide se os quadros extras valem |
+| 4 | [Transições](transicoes.md) | de qualquer animação para qualquer outra: mistura na hora no filme e no Godot com esqueleto; quadros gerados na sprite sheet |
 
 ## Propostas novas
 
