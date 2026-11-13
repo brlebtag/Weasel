@@ -2,10 +2,11 @@
 
 **Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
 
-**Origem:** três perguntas suas:
+**Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
 - dá para um estilo que pareça desenhado à mão, com marcador ou lápis de cor? (A imagem de referência era de marcador, com caneta preta fina no contorno e caneta gel branca nos brilhos.)
 - dá para um estilo de HQ, colorido e preto e branco, antigo e moderno?
+- que outros estilos dá para gerar? (Da resposta saíram os protótipos de recorte de papel, vitral e massinha.)
 
 **Resposta curta:** sim. O Weasel guarda o desenho como formas, e não como uma imagem pronta, então ele pode pintar a mesma cena de outros jeitos.
 
@@ -130,6 +131,36 @@ As quatro partem da cena da noite (`noite.weasel`) desenhada três vezes: com lu
   - a retícula da moderna colorida quase não aparece, porque esta cena tem pouca sombra funda;
   - as imagens foram salvas sem o granulado do papel-jornal: ele quase não se vê e deixava o arquivo 50% mais pesado.
 
+### Recorte de papel, vitral e massinha
+
+![A coruja normal, de recorte de papel (peças com textura de papel, sombra embaixo e o céu em três folhas), de vitral (pedaços de vidro com chumbo, a lua brilhando) e de massinha (peças com volume e marcas de dedo, o céu desfocado atrás)](img/estilos_recorte_vitral_massinha.jpg)
+
+Os três pintam **forma por forma**, como o marcador e o lápis, e usam a luz do `canvas` (`light=`). A imagem está em JPEG, porque as texturas deixavam o PNG com 1 MB.
+
+- **Recorte de papel, como foi feito:**
+  1. o contorno vira corte de tesoura: pequenas retas a cada poucos pixels, um pouco tortas, mantendo as pontas (estrelas, orelhas);
+  2. cada peça tem a sua textura de papel (grão e fibras) e uma sombra macia embaixo, para o lado contrário da luz;
+  3. a beirada do lado da luz fica um pouco mais clara, como a quina do papel;
+  4. os traços viram tiras de papel (o galho e as penas da barriga);
+  5. o degradê do céu vira três folhas, o céu e duas colinas onduladas, e o halo da lua vira dois círculos.
+- **Vitral, como foi feito:**
+  1. cada forma vira vidro, e as grandes são cortadas em pedaços (Voronoi), como o vidreiro faz. O céu virou dezenas de vidros;
+  2. a cor de cada pedaço é a média do desenho dentro dele, mais forte e um pouco diferente da do vizinho;
+  3. o vidro ganha manchas, estrias e a luz de trás, mais forte em cima. As partes claras brilham;
+  4. o chumbo é grosso entre formas diferentes e fino entre pedaços da mesma forma, com um brilho no meio;
+  5. os traços finos (as penas, o graveto) viram pintura escura no vidro, a grisalha dos vitrais de verdade;
+  6. as formas pequenas demais (estrelas, o brilho dos olhos) viram contas de vidro sem chumbo em volta.
+- **Massinha, como foi feito:**
+  1. cada forma vira uma placa de massinha de borda redonda: a altura vem da distância até a borda, e a luz faz o resto, com um brilho leve;
+  2. caroços suaves e duas ou três marcas de dedo nas peças grandes;
+  3. cada peça faz uma sombra de contato na de baixo;
+  4. o fundo e o céu ficam desfocados, como numa foto de *stop motion*, com vinheta e granulado de câmera.
+- **Defeitos e cuidados:**
+  - **papel:** papel não tem contorno, então o que era quase só contorno quase some. As pálpebras ficaram fininhas, e a coruja perdeu um pouco da cara de sono. Os anéis do halo saíram meio cinza; uma cor mais quente ficaria melhor;
+  - **vitral:** na primeira versão, o chumbo engolia as estrelas e o graveto; daí vieram as contas e a grisalha. O corte em pedaços precisa ser calculado uma vez, com a figura parada: recalculado a cada quadro, o chumbo pularia de lugar;
+  - **massinha:** a primeira versão tinha vincos retos no corpo, do jeito de medir a distância até a borda; um desfoque leve na altura resolveu. É a mais lenta das três: 0,8 s por quadro na coruja;
+  - são imagens paradas. Animado, o papel precisa da textura seguindo o osso de cada peça (ver [No Weasel e no jogo](#no-weasel-e-no-jogo)).
+
 ## Os estilos, em três famílias
 
 ### 1. Grade: a imagem pronta é lida em células, e cada célula vira alguma coisa
@@ -196,6 +227,7 @@ Um único mecanismo serve para todos estes estilos. É a família mais fácil.
   - o tremido muda a cada 2 quadros, a "fervura" de linha dos desenhos animados.
   - Combina com o storyboard do seu irmão (ver [bocas por texto](bocas-por-texto.md)).
 - **Marcador e lápis de cor:** pintam cada forma com passadas ou hachuras, como no [protótipo](#marcador-e-lápis-de-cor). Usam a mesma base do esboço.
+- **Recorte de papel, vitral e massinha:** cada forma vira uma peça de papel, um vidro ou uma placa de massinha, como no [protótipo](#recorte-de-papel-vitral-e-massinha). O recorte de papel é o que mais combina com o Weasel, porque animação de recorte é o que ele já faz: peças presas em ossos.
 - **Só contorno:** como um livro de colorir.
 - **Neon:** só o contorno, colorido, com o `bloom` que já existe, num fundo escuro.
 
@@ -222,9 +254,13 @@ Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com 
 - **HQ:** seria uma opção do `finish`, por exemplo `comic=antiga|antiga-pb|moderna|manga`, feita com as mesmas peças do cel shading e da gravura. No jogo, há dois caminhos:
   - **a retícula gravada na sprite sheet:** a folha precisa sair no tamanho final, porque pontos redimensionados formam *moiré*, e os pontos andam junto com o personagem;
   - **um shader no Godot** que aplica os pontos na hora, presos à tela: a sprite sheet sai só em cel shading, e nada muda no Weasel.
+- **Recorte de papel, vitral e massinha no jogo:**
+  - **recorte de papel:** sai direto na sprite sheet. A sombra de cada peça já vem desenhada, então ela não depende da luz do Godot;
+  - **massinha:** também sai na sprite sheet, mas é a mais lenta de gerar (0,8 s por quadro na coruja), e o `normal=` teria de seguir o volume da massinha;
+  - **vitral:** só se o jogo inteiro for de vitral. O corte em pedaços é feito uma vez, na pose parada, e acompanha os ossos depois.
 - **Texturas na animação (esboço, marcador, lápis, gravura, retícula):** a textura pode se comportar de três jeitos.
   - **Parada no papel:** o personagem anda e a textura fica no lugar; parece que ele passa por trás de um vidro canelado. Não recomendo, com uma exceção: a retícula das HQs. Na página impressa, os pontos são da impressão e não do desenho, então ficar parada na tela é o certo.
-  - **Presa à forma:** anda junto com ela; fica limpo, mas parece um adesivo.
+  - **Presa à forma:** anda junto com ela; fica limpo, mas parece um adesivo. No recorte de papel, é o certo: papel de verdade anda junto com a peça.
   - **Redesenhada a cada 2 quadros,** como a fervura do esboço: parece animação desenhada à mão de verdade. Recomendo para o filme e o storyboard.
 - **Peso:** o grão e as passadas comprimem mal; a sprite sheet e o GIF ficam bem mais pesados.
 
@@ -232,12 +268,15 @@ Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com 
 
 1. **Pixel art de verdade:** o voto por bloco, o pontilhado, o contorno de 1 pixel e a folha pequena para o Godot.
 2. **ASCII:** é pequeno, porque aproveita a grade do pixel art.
-3. **Esboço, marcador e lápis de cor:** a mesma base (pintar forma por forma, com fervura), para o storyboard e o filme.
+3. **Esboço, marcador, lápis de cor, recorte de papel e massinha:** a mesma base (pintar forma por forma).
+   - Os três primeiros e a massinha, com fervura, para o storyboard e o filme.
+   - O recorte de papel, com a textura presa a cada peça, serve também para o jogo.
 4. **Cel shading, gravura automática e HQ:** depois. As HQs aproveitam o cel shading (a moderna colorida) e as faixas de tom da gravura (as outras três).
+5. **Vitral:** por último. Serve mais para filme (uma abertura, uma cena de igreja ou castelo) do que para personagem andando.
 
 ## Para decidir
 
 1. Quais estilos interessam, e em que ordem?
-2. Os nomes das opções no `finish` (por exemplo `crisp`, `dither=`, `outline=`, `ascii`, `sketch`, `marker`, `pencil`, `comic=`).
+2. Os nomes das opções no `finish` (por exemplo `crisp`, `dither=`, `outline=`, `ascii`, `sketch`, `marker`, `pencil`, `comic=`, `paper`, `glass`, `clay`).
 3. No pixel art para o jogo: a folha sai sempre no tamanho pequeno, ou só com uma opção?
 4. Nas texturas animadas: redesenhar a cada 2 quadros (fervura) ou deixar presa à forma?
