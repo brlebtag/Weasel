@@ -1,8 +1,10 @@
-# Outros estilos: pixel art, ASCII, esboço e mais
+# Outros estilos: pixel art, ASCII, esboço, marcador e mais
 
-**Situação:** análise e protótipos feitos em 12/11/2026, fora do Weasel. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
 
-**Origem:** a sua pergunta: dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
+**Origem:** duas perguntas suas:
+- dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
+- dá para um estilo que pareça desenhado à mão, com marcador ou lápis de cor? (A imagem de referência era de marcador, com caneta preta fina no contorno e caneta gel branca nos brilhos.)
 
 **Resposta curta:** sim. O Weasel guarda o desenho como formas, e não como uma imagem pronta, então ele pode pintar a mesma cena de outros jeitos.
 
@@ -71,6 +73,33 @@ Feitos fora do Weasel, num script que carrega o motor dele (como a linha de coma
   - as linhas vão todas na mesma direção na tela; numa gravura de verdade, elas acompanham a forma;
   - uma cena muito escura fica pesada no topo; precisaria de um controle de contraste.
 
+### Marcador e lápis de cor
+
+![A coruja normal, de marcador (cor em passadas, sombra numa segunda passada, contorno de nanquim, brilhos de caneta gel e uma mancha rosa atrás) e de lápis de cor (hachuras finas, grão do papel e contorno de lápis escuro)](img/estilos_marcador_lapis.png)
+
+Os dois pintam **forma por forma**, na ordem do desenho e com os recortes das camadas. Usam a direção da luz do `canvas` (`light=`, a mesma do `weight=`). O céu da coruja foi tirado, e o fundo virou papel.
+
+- **Marcador, como foi feito:**
+  1. antes de cada cor, o papel fica em branco onde ela vai. É o que o artista faz, porque um marcador claro não cobre um escuro (a barriga creme sobre o corpo marrom);
+  2. uma camada lisa de cor e, por cima, passadas largas na direção do comprimento da forma, com espaço e força irregulares. Onde duas se cruzam, fica mais escuro;
+  3. a cor fica deslocada 1 ou 2 pixels: num lado sobra um fio de papel, no outro ela passa da linha;
+  4. a sombra é uma segunda passada mais escura, do lado longe da luz: a forma menos ela mesma deslocada para a luz. Nos degradês, a cor mais escura do degradê;
+  5. o contorno do próprio Weasel, em nanquim, por cima;
+  6. os brilhos de caneta gel: um risquinho e um ponto branco no lado da luz das formas grandes;
+  7. uma mancha rosa atrás, em passadas.
+- **Lápis de cor, como foi feito:**
+  1. o grão do papel é um mapa de "morrinhos"; o lápis só pinta onde a pressão vence o grão;
+  2. a cor vem em hachuras finas e inclinadas, mais uma camada leve cruzada;
+  3. a sombra: mais pressão e a cor mais escura, do lado longe da luz;
+  4. o contorno do Weasel vira um lápis escuro, também falhado pelo grão.
+- **Resultado:**
+  - o lápis de cor é o mais convincente: o grão e as hachuras enganam bem de longe;
+  - o marcador já parece desenho de marcador. A primeira versão tinha passadas regulares demais (parecia veludo cotelê); irregulares e mais suaves, ficou melhor.
+- **Defeitos:**
+  - a direção das passadas é uma regra (o comprimento da forma), e não segue o volume como faria o artista: as penas, a curva da barriga;
+  - os brilhos de caneta gel caem sempre no mesmo lugar de cada forma;
+  - é uma imagem parada. Animado, o desenho precisa redesenhar as passadas e o grão a cada 2 quadros (ver [No Weasel e no jogo](#no-weasel-e-no-jogo)).
+
 ## Os estilos, em três famílias
 
 ### 1. Grade: a imagem pronta é lida em células, e cada célula vira alguma coisa
@@ -136,6 +165,7 @@ Um único mecanismo serve para todos estes estilos. É a família mais fácil.
   - as linhas ficam tremidas e passadas duas ou três vezes;
   - o tremido muda a cada 2 quadros, a "fervura" de linha dos desenhos animados.
   - Combina com o storyboard do seu irmão (ver [bocas por texto](bocas-por-texto.md)).
+- **Marcador e lápis de cor:** pintam cada forma com passadas ou hachuras, como no [protótipo](#marcador-e-lápis-de-cor). Usam a mesma base do esboço.
 - **Só contorno:** como um livro de colorir.
 - **Neon:** só o contorno, colorido, com o `bloom` que já existe, num fundo escuro.
 
@@ -158,16 +188,22 @@ Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com 
   - **O `normal=`:** o mapa de relevo também teria de sair pixelado.
 - **Cel shading e gravura no Godot:** a sprite sheet já sai no estilo. Só a luz do próprio Godot (`normal=`) continua suave, porque os degraus vêm da luz do Weasel.
 - **ASCII, esboço e retícula:** servem mais para filme e storyboard. No jogo só fazem sentido se o jogo inteiro for nesse estilo, e aí a sprite sheet sai no estilo, como já acontece hoje.
+- **Texturas na animação (esboço, marcador, lápis, gravura, retícula):** a textura pode se comportar de três jeitos.
+  - **Parada no papel:** o personagem anda e a textura fica no lugar; parece que ele passa por trás de um vidro canelado. Não recomendo.
+  - **Presa à forma:** anda junto com ela; fica limpo, mas parece um adesivo.
+  - **Redesenhada a cada 2 quadros,** como a fervura do esboço: parece animação desenhada à mão de verdade. Recomendo para o filme e o storyboard.
+- **Peso:** o grão e as passadas comprimem mal; a sprite sheet e o GIF ficam bem mais pesados.
 
 ## Ordem sugerida
 
 1. **Pixel art de verdade:** o voto por bloco, o pontilhado, o contorno de 1 pixel e a folha pequena para o Godot.
 2. **ASCII:** é pequeno, porque aproveita a grade do pixel art.
-3. **Esboço com fervura de linha:** para o storyboard.
+3. **Esboço, marcador e lápis de cor:** a mesma base (pintar forma por forma, com fervura), para o storyboard e o filme.
 4. **Cel shading e gravura automática:** depois.
 
 ## Para decidir
 
 1. Quais estilos interessam, e em que ordem?
-2. Os nomes das opções no `finish` (por exemplo `crisp`, `dither=`, `outline=`, `ascii`, `sketch`).
+2. Os nomes das opções no `finish` (por exemplo `crisp`, `dither=`, `outline=`, `ascii`, `sketch`, `marker`, `pencil`).
 3. No pixel art para o jogo: a folha sai sempre no tamanho pequeno, ou só com uma opção?
+4. Nas texturas animadas: redesenhar a cada 2 quadros (fervura) ou deixar presa à forma?
