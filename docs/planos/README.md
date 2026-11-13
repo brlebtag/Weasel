@@ -27,7 +27,7 @@ Você aprovou a análise e a ordem. Ainda falta o "pode fazer" do item 1.
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026; esperando você ler o capítulo de filme |
 | [Virada e metamorfose](metamorfose.md) | um desenho virando outro: o personagem de lado virando de frente (jogo) e a aranha virando jacaré (filme) | análise e protótipo da virada de 13/11/2026; esperando você decidir |
-| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, cel shading e outros, a partir do mesmo desenho | análise e protótipos de 12 e 13/11/2026; esperando você escolher os estilos |
+| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, cel shading, HQ e outros, a partir do mesmo desenho | análise e protótipos de 12 e 13/11/2026; esperando você escolher os estilos |
 
 ## Para depois
 
