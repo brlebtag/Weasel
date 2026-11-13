@@ -35,7 +35,8 @@ Sem uma letra, vale a mais parecida.
 mouth bico A=bico B=bicoAberto@0.3 D=bicoAberto
 ```
 
-- **Limite 1:** cada boca é uma variação (morph) da mesma forma, com o mesmo tipo e o mesmo número de pontos. Não dá para desenhar uma boca com dentes ou com língua.
+- **Limite 1:** cada boca é um morph da forma da boca: muda só o contorno. O número de pontos pode ser diferente; só o tipo precisa combinar (forma fechada com forma fechada, traço com traço). Mas a cor continua a da boca, então não dá para ter dentes ou língua, que são outras formas, com outras cores.
+  - *Correção de 13/11/2026:* a primeira versão deste plano dizia que precisava do mesmo número de pontos. O código não exige. A linha do [capítulo 10](../guia/10-filme.md#som-legendas-e-lip-sync) que fala da boca e o comentário de `readMouth` em js/lang.js dizem o mesmo engano e devem ser corrigidos junto.
 - **Limite 2:** a boca só se mexe num filme, a partir de um som (`audio … lips=coruja`) ou das deixas do Rhubarb (`cues=`). Num jogo, `mouth` não faz nada.
 - **Limite 3:** um `mouth` por arquivo.
 
@@ -78,13 +79,21 @@ O Weasel lê o texto em português por regras de pronúncia. Isso funciona porqu
 ### 2. Boca desenhada de verdade (troca, além do morph)
 
 ```
+shape bocaAberta c=labio ink=line bone=cabeca hidden : …
+layer bocaD hidden
+shape labiosD c=labio ink=line bone=cabeca : …
+shape dentesD c=#ffffff bone=cabeca : …
+shape linguaD c=#d9606a bone=cabeca : …
+layer bocaO hidden
+…
 mouth boca A=boca B=bocaAberta@0.3 C=bocaAberta@0.6 D=bocaD E=bocaO G=bocaF
 ```
 
-- `bocaAberta` tem os mesmos pontos da `boca`, então continua sendo morph, como hoje.
-- `bocaD`, `bocaO` e `bocaF` não combinam com a `boca`. Elas viram **troca**: a boca normal some e aparece o outro desenho. Ele pode ser uma forma ou uma camada inteira, com lábios, dentes e língua, escondida (`hidden`) fora da fala.
-- Hoje uma boca que não combina dá erro. Por isso nenhum arquivo existente muda de sentido.
-- A expressão do filme já troca uma forma por outra (`boca.shape=sorriso`, mesmo com outro número de pontos). A troca da boca deve seguir o mesmo caminho.
+- Uma letra que aponta para uma **forma** continua sendo morph, como hoje, com qualquer número de pontos.
+- Uma letra que aponta para uma **camada** (`bocaD`, `bocaO` e `bocaF` acima) vira **troca**: a boca normal some e a camada aparece, com lábios, dentes e língua, cada um com a sua cor. Fora da fala, a camada fica escondida (`hidden`).
+- Hoje apontar para uma camada dá erro ("forma não existe"). Por isso nenhum arquivo existente muda de sentido.
+- **Por que não "a forma que não combina vira troca"** (a primeira versão deste plano): formas com outro número de pontos já fazem morph hoje. Trocar isso mudaria o sentido de arquivos que já funcionam.
+- A expressão do filme (`boca.shape=sorriso`) também é morph: só o contorno muda, e a cor fica a da boca. Por isso dentes e língua precisam da troca.
 
 ### 3. Painel "Bocas" no editor
 
@@ -125,3 +134,4 @@ Os itens 1 e 2 podem sair juntos (1.30.0), e o painel logo depois.
    - Para exportar essa fala num GIF, faltaria algo como `anim … fala="texto"`.
 3. **Línguas:** só português no começo? O inglês por regras sai bem mais grosseiro. Para voz gravada, o Rhubarb continua valendo.
 4. **Jogo:** fica para depois, como sugeri?
+5. **Como pedir a troca:** apontando para uma camada (`D=bocaD`, como acima), ou com um sinal na forma (algo como `D=bocaD!`)?
