@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço e mais
 
-**Situação:** análise feita em 12/11/2026. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
+**Situação:** análise e protótipos feitos em 12/11/2026, fora do Weasel. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
 
 **Origem:** a sua pergunta: dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
 
@@ -28,6 +28,48 @@ Tudo no `finish` ([capítulo 4](../guia/04-camadas.md#acabamento-finish)):
   3. em cada bloco de 8×8, fica a cor que **mais aparece**;
   4. o contorno ganha quando cobre um quarto do bloco, para não sumir.
 - **Resultado:** nenhuma cor inventada, contorno contínuo, fundo certo.
+
+## Protótipos do esboço, do cel shading e da gravura
+
+Feitos fora do Weasel, num script que carrega o motor dele (como a linha de comando faz) e usa as formas, os ossos e a luz da cena. Mostram o resultado esperado; a versão de verdade corrigiria os defeitos anotados.
+
+### Esboço com a linha fervendo
+
+![O Cavaleiro na animação stand, desenhado a lápis: linhas tremidas que mudam a cada 2 quadros, cor de marcador fora do lugar e hachura nas partes escuras](img/estilos_esboco.gif)
+
+- **Como foi feito:**
+  1. a cor vem do desenho sem contorno (`finish flat`), mais clara e deslocada uns pixels, como marcador;
+  2. cada forma é passada duas vezes a lápis, com um tremido suave (ondas ao longo da linha), começando num ponto qualquer e passando um pouco do fim;
+  3. as partes escuras ganham hachura a lápis;
+  4. o tremido, o deslocamento da cor e a hachura mudam a cada 2 quadros: é a fervura.
+- **Defeito:** o lápis é desenhado por cima de todas as cores, então aparecem linhas que no desenho normal ficam escondidas atrás de outra forma (os laços na capa). Na versão de verdade, cada forma pintaria a cor e o lápis na ordem certa.
+- **Peso:** com o granulado do papel, o GIF passa de 1,7 MB; sem ele (este aqui), 0,5 MB.
+
+### Cel shading
+
+![A cena da noite com a luz normal do Weasel e com a luz em degraus: a máscara em dois tons com divisa nítida, o halo do lampião em anéis e a sombra no chão com borda definida](img/estilos_cel.png)
+
+- **Como foi feito:**
+  1. desenha a cena duas vezes: com a luz e sem a luz;
+  2. a divisão das duas dá quanto de luz cada ponto recebeu, e de que cor;
+  3. essa quantidade vai para o degrau mais perto (0.32, 0.62, 1, 1.35, 2.1 e 3.3 vezes);
+  4. o contorno e o que é quase preto ficam como estão.
+- **Resultado:** a máscara ficou em dois tons, o halo do lampião virou anéis e a sombra no chão ganhou borda definida.
+- **Limite:** depende de `light` e `ambient`. Um desenho sem luz, como o Cavaleiro sozinho, não muda.
+
+### Gravura automática
+
+![A cena da noite em gravura: hachura cruzada no céu, prédios em nanquim sólido, a máscara em papel com hachura no lado longe do lampião e a chuva em branco](img/estilos_gravura_noite.png)
+
+![O Cavaleiro em gravura: máscara em papel, capa com hachura cruzada, corpo e olhos em nanquim sólido](img/estilos_gravura_cavaleiro.png)
+
+- **Como foi feito:**
+  1. o quanto cada ponto é escuro escolhe a hachura: claro fica papel; depois entram linhas a 45°, a −45°, horizontais e mais linhas a 45°; quase preto vira nanquim sólido;
+  2. os tons são esticados (3% mais claros e 3% mais escuros), porque a cena da noite é toda escura;
+  3. o contorno vem da diferença entre o desenho com e sem contorno, e vira traço de nanquim.
+- **Defeitos:**
+  - as linhas vão todas na mesma direção na tela; numa gravura de verdade, elas acompanham a forma;
+  - uma cena muito escura fica pesada no topo; precisaria de um controle de contraste.
 
 ## Os estilos, em três famílias
 
@@ -114,6 +156,7 @@ Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com 
   - **O tamanho da folha:** hoje ela sai grande (800×640, em blocos de 8×8). Funciona, mas pesa 64 vezes mais e borra se o Godot aumentar a imagem com suavização. O certo é exportar no tamanho pequeno de verdade (100×80) e configurar a cena para não suavizar (`texture_filter` em *nearest*).
   - **O tremido:** quando um osso gira, os pixels tremem de um quadro para o outro. É o problema clássico de girar pixel art. O voto por bloco diminui o tremido, mas não acaba com ele.
   - **O `normal=`:** o mapa de relevo também teria de sair pixelado.
+- **Cel shading e gravura no Godot:** a sprite sheet já sai no estilo. Só a luz do próprio Godot (`normal=`) continua suave, porque os degraus vêm da luz do Weasel.
 - **ASCII, esboço e retícula:** servem mais para filme e storyboard. No jogo só fazem sentido se o jogo inteiro for nesse estilo, e aí a sprite sheet sai no estilo, como já acontece hoje.
 
 ## Ordem sugerida
