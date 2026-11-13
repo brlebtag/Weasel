@@ -240,7 +240,46 @@ Um único mecanismo serve para todos estes estilos. É a família mais fácil.
 
 ### Não recomendo
 
-Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com cara de filtro.
+Aquarela realista, *low-poly* e pintura realista. São difíceis, e o resultado fica com cara de filtro.
+
+A **aquarela simples**, de livro infantil, saiu desta lista em 13/11/2026: depois dos protótipos do marcador e do lápis, ela ficou possível (ver [abaixo](#outros-estilos-possíveis-ainda-sem-protótipo)).
+
+## Outros estilos possíveis, ainda sem protótipo
+
+Da resposta à pergunta "que outros estilos dá para gerar?" (13/11/2026). Os três que mais combinavam com o Weasel viraram [protótipo](#recorte-de-papel-vitral-e-massinha); estes ficaram só como ideia.
+
+### Recomendados
+
+- **Paletas retrô em cima do pixel art:** o pixel art do plano, com as cores trocadas por uma paleta pronta:
+  - Game Boy (4 tons de verde);
+  - NES;
+  - PICO-8;
+  - 1 bit: só preto e branco com pontilhado, como no Playdate ou no Mac antigo.
+
+  É o que mais serve para jogo, e é pequeno depois que o pixel art existir.
+- **Risografia ou serigrafia (pôster):** 2 ou 3 tintas de cor forte (rosa, azul-petróleo, amarelo) que se sobrepõem, com o registro torto e o grão. Aproveita quase tudo da [HQ antiga colorida](#hq-antiga-e-moderna), trocando a tabela de 64 cores por 2 ou 3 tintas.
+- **Aquarela simples (de livro infantil):** pintada forma por forma, como o marcador:
+  - a borda da mancha mais escura, onde a água secou;
+  - a cor vazando um pouco da linha;
+  - o pigmento granulado e o papel de aquarela.
+
+### Variações do que já existe no plano
+
+| Estilo | Vem de | Como sairia |
+|---|---|---|
+| Giz de cera | lápis de cor | traço mais grosso e mais falhado, com a cera acumulando nas beiradas |
+| Giz no quadro-negro | lápis de cor | traço claro sobre verde-escuro; bom para cena de escola ou explicação em vídeo |
+| Xilogravura ou linogravura | gravura | preto e branco forte, com sulcos brancos largos e cortes mais toscos |
+| Bordado | marcador | pontos de linha na direção da forma, com o brilho do fio |
+| Tricô ou crochê | a grade do pixel art | cada célula vira um "V" de ponto |
+| Estêncil ou grafite | retícula e posterização | 2 ou 3 tons chapados, com respingo de spray nas bordas |
+
+### Efeitos de tela, para filme
+
+Não são estilos de desenho: vão por cima de qualquer estilo.
+- **Filme antigo / cinema mudo:** sépia ou preto e branco, riscos, poeira, a luz piscando e a imagem tremendo um pouco. É muito fácil e combina com os filmes do YouTube.
+- **VHS, CRT e *glitch*:** linhas de TV, cores separadas e falhas.
+- **No jogo:** ficam melhor como um shader no Godot, por cima da tela inteira, e não na sprite sheet.
 
 ## No Weasel e no jogo
 
@@ -266,13 +305,15 @@ Aquarela, *low-poly* e pintura realista. São difíceis, e o resultado fica com 
 
 ## Ordem sugerida
 
-1. **Pixel art de verdade:** o voto por bloco, o pontilhado, o contorno de 1 pixel e a folha pequena para o Godot.
+1. **Pixel art de verdade:** o voto por bloco, o pontilhado, o contorno de 1 pixel e a folha pequena para o Godot. As paletas retrô (Game Boy, NES, PICO-8, 1 bit) saem logo depois, quase de graça.
 2. **ASCII:** é pequeno, porque aproveita a grade do pixel art.
 3. **Esboço, marcador, lápis de cor, recorte de papel e massinha:** a mesma base (pintar forma por forma).
    - Os três primeiros e a massinha, com fervura, para o storyboard e o filme.
    - O recorte de papel, com a textura presa a cada peça, serve também para o jogo.
 4. **Cel shading, gravura automática e HQ:** depois. As HQs aproveitam o cel shading (a moderna colorida) e as faixas de tom da gravura (as outras três).
 5. **Vitral:** por último. Serve mais para filme (uma abertura, uma cena de igreja ou castelo) do que para personagem andando.
+
+Os [outros estilos possíveis](#outros-estilos-possíveis-ainda-sem-protótipo) entram junto da base que eles aproveitam: a aquarela, o giz e o bordado no item 3; a risografia, a xilogravura e o estêncil no item 4. Os efeitos de tela (filme antigo, VHS) são pequenos e podem entrar a qualquer momento.
 
 ## Para decidir
 
