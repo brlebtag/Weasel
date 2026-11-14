@@ -3279,25 +3279,31 @@
       },
     };
   }
-  // o passe das peças: cada forma com uma cor sorteada, e cada pedaço das fileiras também (S.ids: 1 numa fileira)
+  // o passe das peças: cada forma com uma cor sorteada, e cada pedaço das fileiras também (S.ids: 1 numa fileira).
+  // S.keys: o número de cada peça para o sorteio dos tons, o da forma (it.key) mais a ordem da peça dentro dela; não
+  // muda quando uma forma de antes some ou ganha pastilhas no contorno, ao contrário da cor da peça neste passe
   function mosaicIds(S, art, g) {
     const sz = mosaicSize(art, g);
     let n = 0;
     S.ids = new Map();
+    S.keys = new Map();
     S.light = [-0.6, -0.8];
-    const col = (row) => {
-      const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
+    const sub = new Map();
+    const col = (row, key) => {
+      const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff, kk = key | 0, j = sub.get(kk) || 0;
+      sub.set(kk, j + 1);
       S.ids.set(v, row);
+      S.keys.set(v, Math.imul(kk ^ Math.imul(j + 1, 0x9e3779b1), 0x85ebca6b));
       return `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
     };
     return {
       glow: false,
-      fill(ctx, it) { S.light = it.light; ctx.fillStyle = col(0); ctx.fill(it.path); },
-      ink(ctx, it) { if (it.hasInk && it.ink > 0) tileRow(ctx, ptsOf(it.poly), true, it.ink, sz, () => col(1), null); },
+      fill(ctx, it) { S.light = it.light; ctx.fillStyle = col(0, it.key); ctx.fill(it.path); },
+      ink(ctx, it) { if (it.hasInk && it.ink > 0) tileRow(ctx, ptsOf(it.poly), true, it.ink, sz, () => col(1, it.key), null); },
       line(ctx, it) {
-        if (mosaicSlim(it, sz)) { tileRow(ctx, lineEdges(it).pts, false, it.ws ? Math.max(...it.ws) : it.w, sz, () => col(1), dashAt(it.el.dash)); return true; }
+        if (mosaicSlim(it, sz)) { tileRow(ctx, lineEdges(it).pts, false, it.ws ? Math.max(...it.ws) : it.w, sz, () => col(1, it.key), dashAt(it.el.dash)); return true; }
         ctx.save();
-        ctx.fillStyle = ctx.strokeStyle = col(0);
+        ctx.fillStyle = ctx.strokeStyle = col(0, it.key);
         it.body(ctx);
         ctx.restore();
         return true;
@@ -3313,15 +3319,15 @@
     src.content(IX.ctx, m, { unlit: true, stroke: mosaicIds(S, art, g) });
     IX.ctx.restore();
     const { P, own } = piecesOf(IX.ctx.getImageData(0, 0, Wd, Hd).data, S.ids, Wd, Hd);
-    // cada peça num número pequeno (slot; 0 é o fundo), a caixa dela e a cor sorteada dela (pid: não muda de um
-    // quadro para o outro, ao contrário do slot)
+    // cada peça num número pequeno (slot; 0 é o fundo), a caixa dela e o número dela para o sorteio (pid, de S.keys:
+    // não muda de um quadro para o outro, ao contrário do slot)
     const slot = new Int32Array(N), bx = [Infinity], by = [Infinity], ex = [-Infinity], ey = [-Infinity], isRow = [0], pid = [0], of = new Map();
     for (let y = 0, i = 0; y < Hd; y++) {
       for (let x = 0; x < Wd; x++, i++) {
         const p = P[i];
         if (p < 0) { slot[i] = 0; continue; }
         let s = of.get(p);
-        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isRow.push(S.ids.get(p)); pid.push(p); }
+        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isRow.push(S.ids.get(p)); pid.push(S.keys.get(p)); }
         slot[i] = s;
         if (x < bx[s]) bx[s] = x;
         if (x > ex[s]) ex[s] = x;

@@ -249,6 +249,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#ponto-cruz-mosaico-e
 - **`crt`:** umas 240 linhas (no mínimo 2 pontos cada), a máscara mais fraca nas imagens pequenas (com 1 ponto por cor, ela virava listras), a curva de 8% e os cantos de 2,5% a 7% do lado menor.
 - **As exportações de jogo:** a folha de quadros, o atlas do TileSet e o recorte (`--trim`) saem sem os efeitos de tela (`screen: false`); a janela de exportar e a linha de comando avisam na folha, no Godot e no SVG.
 - **Tempo:** no Cavaleiro (escala 0,6), uns 60 ms no `stitch`, 125 no `mosaic` e 140 no `knit`. Os efeitos de tela, num quadro de 1920 × 1080, de 30 ms (`glitch`) a 140 ms (`crt`) cada; os quatro juntos, uns 390 ms.
+- **Corrigido na 1.37.2, `mosaic`:** o tom sorteado de cada pastilha vinha de um contador que andava a cada peça pintada (cada pastilha do contorno contava uma). Quando uma forma de antes sumia em alguns quadros (`show=0`, `opacity=0`) ou tinha o contorno desenhado aos poucos (`draw=`), o contador andava menos, e as pastilhas de todas as formas seguintes trocavam de tom (no teste, 81% de uma caixa parada mudava). Agora o sorteio vem do número da forma (o mesmo do vitral e dos outros estilos com textura) e da ordem da peça dentro dela. Os cortes não mudaram; os tons das pastilhas, sim.
 
 ## O que já existe
 
