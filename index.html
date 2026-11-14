@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.38.0">
+<link rel="stylesheet" href="css/style.css?v=1.38.1">
 </head>
 <body>
 <header class="top">
@@ -285,6 +285,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e o <code>SpriteFrames</code> (.tres) e, com as opções, o normal map para a luz 2D e a cena pronta (.tscn) com AnimatedSprite2D, colisão, hitbox e hurtbox por quadro, eventos e direções espelhadas. Num arquivo com <code>tileset</code>, sai o TileSet.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
+      <li>A sprite sheet, o Godot e o GIF são feitos em segundo plano, com uma barra de progresso: a página não trava enquanto isso, e mudar uma opção ou fechar a janela cancela.</li>
       <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt); em <b>Editor de vídeo</b>, a linha do tempo para o DaVinci Resolve, Final Cut ou Premiere (.fcpxml, .edl e .srt). Vídeo com som: linha de comando; <code>weasel filme.weasel -o filme.mov --shots --fcpxml --edl</code> faz um vídeo por plano e a linha do tempo com cada som na sua trilha.</li>
     </ul>
   </div>
@@ -348,30 +349,31 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
   </div>
   <div class="dlg-foot">
+    <progress id="expProg" class="exp-prog" hidden></progress>
     <span id="expInfo" class="exp-info"></span>
     <button id="expDownloadPng" type="button">Só o PNG</button>
     <button id="expDownload" type="button" class="primary">Baixar</button>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.38.0"></script>
-<script src="js/lang.js?v=1.38.0"></script>
-<script src="js/art.js?v=1.38.0"></script>
-<script src="js/scene.js?v=1.38.0"></script>
-<script src="js/film.js?v=1.38.0"></script>
-<script src="js/audio.js?v=1.38.0"></script>
-<script src="js/nle.js?v=1.38.0"></script>
-<script src="js/webm.js?v=1.38.0"></script>
-<script src="js/svg.js?v=1.38.0"></script>
-<script src="js/gif.js?v=1.38.0"></script>
-<script src="js/zip.js?v=1.38.0"></script>
-<script src="js/normal.js?v=1.38.0"></script>
-<script src="js/export.js?v=1.38.0"></script>
-<script src="js/godot.js?v=1.38.0"></script>
-<script src="js/rig.js?v=1.38.0"></script>
-<script src="js/editor.js?v=1.38.0"></script>
-<script src="js/examples.js?v=1.38.0"></script>
-<script src="js/timeline.js?v=1.38.0"></script>
-<script src="js/app.js?v=1.38.0"></script>
+<script src="js/geom.js?v=1.38.1"></script>
+<script src="js/lang.js?v=1.38.1"></script>
+<script src="js/art.js?v=1.38.1"></script>
+<script src="js/scene.js?v=1.38.1"></script>
+<script src="js/film.js?v=1.38.1"></script>
+<script src="js/audio.js?v=1.38.1"></script>
+<script src="js/nle.js?v=1.38.1"></script>
+<script src="js/webm.js?v=1.38.1"></script>
+<script src="js/svg.js?v=1.38.1"></script>
+<script src="js/gif.js?v=1.38.1"></script>
+<script src="js/zip.js?v=1.38.1"></script>
+<script src="js/normal.js?v=1.38.1"></script>
+<script src="js/export.js?v=1.38.1"></script>
+<script src="js/godot.js?v=1.38.1"></script>
+<script src="js/rig.js?v=1.38.1"></script>
+<script src="js/editor.js?v=1.38.1"></script>
+<script src="js/examples.js?v=1.38.1"></script>
+<script src="js/timeline.js?v=1.38.1"></script>
+<script src="js/app.js?v=1.38.1"></script>
 </body>
 </html>

@@ -4600,6 +4600,8 @@
     variants: () => st.model.variants,
     variant: () => st.variant,
     state: () => ({ anim: st.anim, frame: st.frame, shot: st.shot }),
+    // o código e os outros arquivos do projeto: o worker da exportação lê o desenho de novo, longe da página
+    source: () => ({ text: editor.value, file: st.current, files: [...st.files].map(([k, v]) => [k, k === st.current ? editor.value : v]) }),
     baseName,
   });
   $('btnExport').addEventListener('click', () => { st.playing = false; fillAnimSelect(); exportUI.open(); });

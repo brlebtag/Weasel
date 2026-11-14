@@ -1,0 +1,11 @@
+sheet {"anim":"pisca"}: contas_sheet.zip · 1154 × 192 px · 4 quadros de 286 × 188 · PNG 8 KB · só o PNG: contas_pisca.png
+  contas_pisca.png contas_pisca.json
+godot {"anim":"pisca","normal":true,"scene":true,"mirror":true}: contas_godot.zip · 1154 × 192 px · 4 quadros de 286 × 188 · 0 caixas · só o PNG: contas.png
+  contas.png contas_normal.png contas.tres contas.tscn weasel_anim.gd
+godot {"anim":"pisca","normal":false,"scene":false}: contas_godot.zip · 1154 × 192 px · 4 quadros de 286 × 188 · PNG 8 KB · só o PNG: contas_pisca.png
+  contas_pisca.png contas_pisca.tres
+gif {"anim":"pisca"}: contas_pisca.gif · 286 × 188 px · 4 quadros · 6 KB
+  contas_pisca.gif
+gif {"anim":"__build__"}: contas_pintura.gif · 286 × 188 px · 109 quadros · 95 KB
+  contas_pintura.gif
+avisos de progresso: recorte 17, quadros 125, normal 4

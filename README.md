@@ -518,6 +518,8 @@ sub +0.2s "Cuidado com o fantasma…" dur=1.6s
 
 Num filme, PNG e JPG exportam o quadro que está no player; GIF, vídeo e sequência exportam o filme inteiro ou um plano e só são gerados ao clicar (fechar a janela cancela).
 
+Num desenho, a sprite sheet, o Godot e o GIF são feitos em segundo plano (um Web Worker, `js/worker.js`), com uma barra de progresso: o editor continua respondendo, e mudar uma opção ou fechar a janela cancela o que estava sendo feito. Num navegador sem `OffscreenCanvas`, eles são feitos na própria página, como antes.
+
 Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre todos os quadros da animação, então os quadros ficam alinhados. Com variantes, dá para exportar uma ou todas de uma vez (num `.zip`).
 
 | Padrão | `variant neve` | `variant fogo` |
@@ -663,6 +665,7 @@ js/editor.js        editor com cores, sugestões, Alt+arrastar números, seletor
 js/gif.js           codificador de GIF animado (median cut + LZW)
 js/zip.js           .zip simples para a sprite sheet
 js/export.js        PNG, JPG, GIF, SVG, sprite sheet, Godot, vídeo e a janela de exportação
+js/worker.js        a folha, o Godot e o GIF da janela de exportação, em segundo plano (Web Worker)
 js/examples.js      exemplos do menu
 js/app.js           a interface: arquivos, editor, desenho ao vivo, arrastar pontos, player
 cli/weasel.js       linha de comando (usa os mesmos arquivos de js/)

@@ -3,6 +3,8 @@
   'use strict';
   const S = W.scene;
   const BUILD = '__build__', ALL = '__all__';
+  // o endereço deste arquivo (com o ?v= da página): o worker da exportação, js/worker.js, fica ao lado dele
+  const SELF = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : null;
 
   const frameIdx = (model, name) => {
     const a = name ? model.animMap.get(name) : null;
@@ -10,12 +12,16 @@
   };
 
   // Retângulo (em unidades do canvas) que contém tudo o que é desenhado nas animações dadas.
-  function contentRect(model, names, margin) {
+  // progress(fase, i, n): a cada quadro (a janela de exportar mostra a barra)
+  function contentRect(model, names, margin, progress) {
     const c = model.canvas;
     const s = Math.min(1, 640 / Math.max(c.w, c.h));
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const total = progress ? names.reduce((n, name) => n + frameIdx(model, name).length, 0) : 0;
+    let done = 0;
     for (const name of names) {
       for (const f of frameIdx(model, name)) {
+        if (progress) progress('recorte', ++done, total);
         const img = S.renderImage(model, S.makePose(model, name, f), { scale: s, transparent: true, screen: false });
         const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
         for (let y = 0; y < img.height; y++) {
@@ -38,7 +44,10 @@
   }
 
   const fullRect = (model) => ({ x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
-  const toBlob = (canvas, type, q) => new Promise((res) => canvas.toBlob(res, type, q));
+  // o PNG/JPG de um canvas: o da página, o OffscreenCanvas (no worker da exportação) ou o da linha de comando
+  const toBlob = (canvas, type, q) => (canvas.convertToBlob ? canvas.convertToBlob(q === undefined ? { type } : { type, quality: q })
+    : canvas.toBlob ? new Promise((res) => canvas.toBlob(res, type, q))
+      : Promise.resolve(new Blob([canvas.toBuffer(type)], { type })));
   const solidBg = (model) => { const bg = model.canvas.bg; return typeof bg === 'string' ? bg : bg && bg.stops ? bg.stops[0].c : '#ffffff'; };
 
   // As funções *Canvas / *Bytes / *Text não dependem do navegador: a linha de comando usa as mesmas.
@@ -105,12 +114,13 @@
     let fps, d;
     let preview = null;
     if (source === BUILD) {
-      const rect = o.trim ? contentRect(model, [null], o.margin) : fullRect(model);
+      const rect = o.trim ? contentRect(model, [null], o.margin, o.progress) : fullRect(model);
       const plan = S.buildPlan(model, { speed: o.speed || 1, guides: o.guides });
       const pose = S.makePose(model, null, 0);
       fps = 20;
       const n = Math.ceil(plan.total * fps) + 1;
       for (let i = 0; i <= n; i++) {
+        if (o.progress) o.progress('quadros', i + 1, n + 1);
         const bf = S.buildFilter(plan, i / fps);
         const cv = S.renderImage(model, pose, {
           scale: o.scale, rect, transparent: o.transparent, filter: bf.filter,
@@ -122,10 +132,12 @@
       d = delays(frames.length, fps);
       d[d.length - 1] = 200;
     } else {
-      const rect = o.trim ? contentRect(model, [source], o.margin) : fullRect(model);
+      const rect = o.trim ? contentRect(model, [source], o.margin, o.progress) : fullRect(model);
       const anim = model.animMap.get(source);
       fps = anim ? anim.fps : 12;
-      for (const f of frameIdx(model, source)) {
+      const all = frameIdx(model, source);
+      for (const f of all) {
+        if (o.progress) o.progress('quadros', f + 1, all.length);
         const cv = S.renderImage(model, S.makePose(model, source, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, refs: o.refs });
         frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
         if (!preview) preview = cv;
@@ -151,7 +163,7 @@
     const list = names.length ? names : [null];
     // art pixel … small: a folha sai com 1 pixel por bloco, e o recorte cai na grade do pixel art
     if (W.art && W.art.small(model)) o = Object.assign({}, o, { scale: W.art.smallScale(model, o.scale) });
-    const rect0 = o.trim ? contentRect(model, list, o.margin) : fullRect(model);
+    const rect0 = o.trim ? contentRect(model, list, o.margin, o.progress) : fullRect(model);
     const rect = W.art ? W.art.snapRect(model, rect0) : rect0;
     const fw = Math.max(1, Math.round(rect.w * o.scale)), fh = Math.max(1, Math.round(rect.h * o.scale));
     const pad = o.padding || 0;
@@ -184,6 +196,7 @@
       json.animations[key] = [];
       for (const f of frameIdx(model, name)) {
         const c = cells[flat];
+        if (o.progress) o.progress('quadros', flat + 1, cells.length);
         // a folha é para o jogo: sem os efeitos de tela
         const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, screen: false });
         ctx.drawImage(cv, c.x, c.y);
@@ -264,6 +277,67 @@
   const kb = (n) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
   const bytesOf = async (blob) => new Uint8Array(await blob.arrayBuffer());
 
+  // ---------- a folha, o Godot e o GIF de um desenho ----------
+  // Desenham todos os quadros, por isso a janela de exportar os manda para o worker (js/worker.js), e a página não
+  // trava; sem worker, rodam na própria página. Não usam a página: tudo o que a janela escolheu vem em o (anim: a
+  // animação; normal, rig, scene e mirror: as caixas do Godot; progress(fase, i, n): a barra).
+  // Devolve os arquivos prontos (blob), a prévia (o blob da imagem principal) e o resumo.
+  async function buildFiles(model, kind, o, suffix) {
+    // a folha, o Godot e o SVG saem sem os efeitos de tela (oldfilm, vhs, crt, glitch): o aviso vai junto
+    const screen = (info) => { const n = S.screenNote(model); return n ? `${info} · ${n}` : info; };
+    const v = o.anim || '';
+    if (kind === 'gif') {
+      const x = await gif(model, v, o);
+      return { files: [{ name: `${o.baseName}${suffix}_${v === BUILD ? 'pintura' : v}.gif`, blob: x.blob }], preview: x.blob, info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
+    }
+    const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
+    const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
+    const png = async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) });
+    // Godot com esqueleto de verdade (Bone2D): a folha de peças, o normal map, a cena e o ajudante
+    const rig = !model.tileset && (o.rig || (model.godot && model.godot.rig === 'bones'));
+    if (kind === 'godot' && rig) {
+      const pkg = W.rig.packageFiles(model, { base: o.baseName + suffix, scale: o.scale, mirror: o.mirror, normal: o.normal, names });
+      const files = await Promise.all(pkg.files.map(png));
+      const main = pkg.files[0].canvas;
+      const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.skinned ? ` · ${pkg.skinned} que dobra${pkg.skinned === 1 ? '' : 'm'}` : ''}${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+      return { files, preview: files[0].blob, info: screen(`${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}`) };
+    }
+    // Godot completo: cena, normal map, ajudante; ou o TileSet
+    if (kind === 'godot' && (model.tileset || o.scene || o.normal)) {
+      const pkg = W.godot.packageFiles(model, { base: model.tileset || o.scene ? o.baseName + suffix : `${o.baseName}_${tag}`, scale: o.scale, normal: o.normal, scene: o.scene, mirror: o.mirror, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin, trim: o.trim || o.scene, names: model.tileset ? null : names, progress: o.progress });
+      const files = await Promise.all(pkg.files.map(png));
+      const main = pkg.files[0].canvas;
+      const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${o.scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
+      return { files, preview: files[0].blob, info: screen(`${main.width} × ${main.height} px · ${what}`) };
+    }
+    o.imageName = `${o.baseName}_${tag}.png`;
+    const x = await sheet(model, names, o);
+    const files = [{ name: o.imageName, blob: x.png, png: true }];
+    if (kind === 'sheet') files.push({ name: `${o.baseName}_${tag}.json`, blob: new Blob([x.json], { type: 'application/json' }) });
+    else files.push({ name: `${o.baseName}_${tag}.tres`, blob: new Blob([godotText(model, x, o.imageName)], { type: 'text/plain' }) });
+    return { files, preview: x.png, info: screen(`${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}`) };
+  }
+
+  // Uma exportação da janela (folha, Godot ou GIF): cada variante (parse(v) lê o desenho dela), num .zip quando sai
+  // mais de um arquivo. all: todas as variantes (o "Só o PNG" não vale).
+  async function exportJob(kind, o, parse, variants, all) {
+    const files = [];
+    let first = null;
+    for (const v of variants) {
+      const r = await buildFiles(parse(v), kind, Object.assign({}, o), v ? '_' + v : '');
+      if (!first) first = r;
+      files.push(...r.files);
+    }
+    let blob, name;
+    if (files.length === 1) ({ blob, name } = files[0]);
+    else {
+      blob = W.zip(await Promise.all(files.map(async (f) => ({ name: f.name, data: await bytesOf(f.blob) }))));
+      name = `${o.baseName}_${kind}${all ? '_variantes' : ''}.zip`;
+    }
+    const png = files.find((f) => f.png);
+    return { blob, name, png: png && !all ? { blob: png.blob, name: png.name } : null, preview: first.preview, info: first.info, count: files.length, names: files.map((f) => f.name) };
+  }
+
   // ---------- janela de exportação ----------
   function setupDialog(app) {
     const dlg = document.getElementById('exportDlg');
@@ -281,6 +355,8 @@
     $('expDownloadPng').addEventListener('click', () => save(true));
 
     const isSheet = () => kind === 'sheet' || kind === 'godot';
+    // a folha, o Godot e o GIF de um desenho desenham todos os quadros: vão para o worker
+    const isJob = () => !isFilm() && (isSheet() || kind === 'gif');
     const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg' || kind === 'txt';
     const isFilm = () => !!app.model().film;
     // o .txt sai do art ascii (num filme, de um quadro todo em ascii)
@@ -336,10 +412,10 @@
       refresh();
     }
 
-    // Gera os arquivos de uma variante.
+    // Gera os arquivos de uma variante (os quadros soltos e o filme; a folha, o Godot e o GIF estão no buildFiles).
     async function produce(model, o, suffix) {
       const base = o.baseName + suffix;
-      // a folha, o Godot e o SVG saem sem os efeitos de tela (oldfilm, vhs, crt, glitch): o aviso vai junto
+      // o SVG sai sem os efeitos de tela (oldfilm, vhs, crt, glitch): o aviso vai junto
       const screen = (info) => { const n = S.screenNote(model); return n ? `${info} · ${n}` : info; };
       const st = app.state();
       if (model.film && kind === 'nle') {
@@ -411,45 +487,71 @@
         const blob = new Blob([s], { type: 'image/svg+xml' });
         return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: screen(`SVG vetorial · ${kb(blob.size)}${model.art ? ` · sem o estilo (art ${model.art.style})` : ''}`) };
       }
-      if (kind === 'gif') {
-        const src = $('expAnim').value;
-        const x = await gif(model, src, o);
-        return { files: [{ name: `${base}_${src === BUILD ? 'pintura' : src}.gif`, blob: x.blob }], previewUrl: URL.createObjectURL(x.blob), info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
-      }
-      const v = $('expAnim').value;
-      const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
-      const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
-      // Godot com esqueleto de verdade (Bone2D): a folha de peças, o normal map, a cena e o ajudante
-      const normal = $('expNormal').checked;
-      const rig = !model.tileset && ($('expRig').checked || (model.godot && model.godot.rig === 'bones'));
-      if (kind === 'godot' && rig) {
-        const pkg = W.rig.packageFiles(model, { base: o.baseName + suffix, scale: o.scale, mirror: $('expMirror').checked, normal, names });
-        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
-        const main = pkg.files[0].canvas;
-        const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.skinned ? ` · ${pkg.skinned} que dobra${pkg.skinned === 1 ? '' : 'm'}` : ''}${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
-        return { files, preview: main.toDataURL(), info: screen(`${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}`) };
-      }
-      // Godot completo: cena, normal map, ajudante; ou o TileSet
-      const scene = $('expGodotScene').checked;
-      if (kind === 'godot' && (model.tileset || scene || normal)) {
-        const pkg = W.godot.packageFiles(model, { base: model.tileset || scene ? o.baseName + suffix : `${o.baseName}_${tag}`, scale: o.scale, normal, scene, mirror: $('expMirror').checked, padding: o.padding, layout: o.layout, cols: o.cols, margin: o.margin, trim: o.trim || scene, names: model.tileset ? null : names });
-        const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
-        const main = pkg.files[0].canvas;
-        const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
-        return { files, preview: main.toDataURL(), info: screen(`${main.width} × ${main.height} px · ${what}`) };
-      }
-      o.imageName = `${o.baseName}_${tag}.png`;
-      const x = await sheet(model, names, o);
-      const files = [{ name: o.imageName, blob: x.png, png: true }];
-      if (kind === 'sheet') files.push({ name: `${o.baseName}_${tag}.json`, blob: new Blob([x.json], { type: 'application/json' }) });
-      else files.push({ name: `${o.baseName}_${tag}.tres`, blob: new Blob([godotText(model, x, o.imageName)], { type: 'text/plain' }) });
-      return { files, preview: x.canvas.toDataURL(), info: screen(`${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}`) };
+      throw new Error(`exportação desconhecida "${kind}"`);
+    }
+
+    // ---------- o worker da exportação ----------
+    // Um por vez: mudar uma opção, trocar o tipo ou fechar a janela o encerra na hora (stopJob). Sem worker (navegador
+    // sem OffscreenCanvas, ou a página aberta como arquivo), o trabalho roda na página, como antes.
+    const workerUrl = SELF ? SELF.replace(/export\.js(?=[?#]|$)/, 'worker.js') : null;
+    let useWorker = !!workerUrl && typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined';
+    let stopJob = null;
+    const cancelJob = () => { if (stopJob) stopJob(); };
+    const PHASES = { recorte: 'Medindo o recorte', quadros: 'Desenhando', normal: 'Normal map' };
+    function progress(phase, i, n) {
+      const p = $('expProg');
+      p.hidden = false;
+      p.max = n;
+      p.value = i;
+      $('expInfo').textContent = `${PHASES[phase] || 'Gerando'}: quadro ${i} de ${n}…`;
+    }
+    function runJob(o, variants, all) {
+      cancelJob();
+      const p = $('expProg');
+      p.hidden = false;
+      p.removeAttribute('value');
+      if (!useWorker) return exportJob(kind, o, (v) => app.parseFor(v), variants, all);
+      const src = app.source();
+      return new Promise((res, rej) => {
+        let w;
+        try { w = new Worker(workerUrl); } catch (e) { useWorker = false; res(runJob(o, variants, all)); return; }
+        const end = () => { w.terminate(); if (stopJob === stop) stopJob = null; };
+        const stop = () => { end(); res(null); };
+        stopJob = stop;
+        w.onmessage = (e) => {
+          const m = e.data;
+          // a janela fechou (sem depender do evento close, que nem todo navegador entrega na hora): para tudo
+          if (!dlg.open) { stop(); $('expProg').hidden = true; return; }
+          if (m.type === 'progress') { if (stopJob === stop) progress(m.phase, m.i, m.n); return; }
+          end();
+          if (m.type === 'done') res(m.result); else rej(new Error(m.message));
+        };
+        // o worker não abriu (sem OffscreenCanvas, scripts bloqueados…): faz na página
+        w.onerror = (e) => { e.preventDefault(); end(); useWorker = false; res(runJob(o, variants, all)); };
+        w.postMessage({ kind, o, text: src.text, file: src.file, files: src.files, variants, all });
+      });
+    }
+
+    // mostra o resultado: a prévia, o resumo e os botões de baixar
+    function show(r, transparent) {
+      result = { blob: r.blob, name: r.name, png: r.png };
+      const img = $('expImg');
+      if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+      img.dataset.url = r.previewUrl || '';
+      img.src = r.previewUrl || r.preview;
+      img.classList.toggle('checker', transparent);
+      $('expInfo').textContent = r.info + (r.count > 1 ? ` · ${r.count} arquivos no .zip` : '');
+      $('expDownload').textContent = r.count > 1 ? 'Baixar .zip' : `Baixar .${r.name.split('.').pop()}`;
+      $('expDownload').disabled = false;
+      $('expDownloadPng').disabled = !r.png;
     }
 
     async function refresh() {
       $('expSpeedWrap').hidden = !(kind === 'gif' && $('expAnim').value === BUILD);
       const my = ++busy;
+      cancelJob();
       result = null;
+      $('expProg').hidden = true;
       $('expInfo').textContent = 'Gerando…';
       $('expDownload').disabled = $('expDownloadPng').disabled = true;
       await new Promise((r) => setTimeout(r, 30));
@@ -482,6 +584,14 @@
       const vsel = $('expVariant').value;
       const variants = vsel === ALL ? ['', ...app.variants()] : [vsel];
       try {
+        if (isJob()) {
+          // a folha, o Godot e o GIF: no worker (a página não trava), com a barra de progresso
+          const r = await runJob(Object.assign(o, { anim: $('expAnim').value, normal: $('expNormal').checked, rig: $('expRig').checked, scene: $('expGodotScene').checked, mirror: $('expMirror').checked }), variants, vsel === ALL);
+          if (my !== busy || !r) return;
+          $('expProg').hidden = true;
+          show(Object.assign(r, { previewUrl: URL.createObjectURL(r.preview) }), o.transparent);
+          return;
+        }
         const all = [];
         let first = null;
         for (const v of variants) {
@@ -497,18 +607,10 @@
         }
         if (my !== busy) return;
         const png = all.find((f) => f.png);
-        result = { blob, name, png: png && vsel !== ALL ? png : null };
-        const img = $('expImg');
-        if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
-        img.dataset.url = first.previewUrl || '';
-        img.src = first.previewUrl || first.preview;
-        img.classList.toggle('checker', o.transparent);
-        $('expInfo').textContent = first.info + (all.length > 1 ? ` · ${all.length} arquivos no .zip` : '');
-        $('expDownload').textContent = all.length > 1 ? 'Baixar .zip' : `Baixar .${name.split('.').pop()}`;
-        $('expDownload').disabled = false;
-        $('expDownloadPng').disabled = !result.png;
+        show({ blob, name, png: png && vsel !== ALL ? png : null, info: first.info, count: all.length, previewUrl: first.previewUrl, preview: first.preview }, o.transparent);
       } catch (e) {
         if (my !== busy) return;
+        $('expProg').hidden = true;
         $('expInfo').textContent = 'Não deu para exportar: ' + e.message;
       }
     }
@@ -587,7 +689,7 @@
       else download(result.blob, result.name);
     }
 
-    dlg.addEventListener('close', () => { busy++; });
+    dlg.addEventListener('close', () => { busy++; cancelJob(); $('expProg').hidden = true; });
     return {
       open(k) {
         kind = k || kind;
@@ -599,5 +701,5 @@
     };
   }
 
-  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, download, setupDialog, BUILD, ALL, solidBg };
+  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, solidBg };
 })(window.Weasel = window.Weasel || {});

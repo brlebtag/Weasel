@@ -485,6 +485,8 @@ pre.ex u { color: var(--num); text-decoration: none; }
 }
 .dlg-foot { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
 .exp-info { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--dim); font: 12px var(--mono); }
+.exp-prog { flex: none; width: 120px; height: 8px; accent-color: var(--accent); }
+.exp-prog[hidden] { display: none; }
 
 @media (max-width: 860px) {
   body { grid-template-rows: auto minmax(0, 1fr); }

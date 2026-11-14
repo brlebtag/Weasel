@@ -421,6 +421,28 @@ async function exprCase() {
   await check('_contas', 'contas.txt', 'text', lines.join('\n') + '\n');
 }
 
+// a janela de exportar (folha, Godot e GIF): o mesmo trabalho que o worker do navegador faz (exportJob, js/worker.js),
+// com os nomes dos arquivos e o resumo; a folha sai igual à da função de sempre
+async function jobCase() {
+  console.log(paint('1', '_janela'));
+  const src = fs.readFileSync(path.join(CASES, 'contas.weasel'), 'utf8');
+  const parse = (v) => W.lang.parse(src, { file: 'contas.weasel', resolve: () => null, variant: v || null });
+  const base = { scale: 1, transparent: true, trim: true, margin: 8, layout: 'rows', cols: 0, padding: 2, baseName: 'contas', speed: 1, dither: false };
+  const ticks = {};
+  const progress = (p, i, n) => { ticks[p] = (ticks[p] || 0) + 1; if (i > n || i < 1) ticks.fora = (ticks.fora || 0) + 1; };
+  const lines = [];
+  const jobs = [['sheet', { anim: 'pisca' }], ['godot', { anim: 'pisca', normal: true, scene: true, mirror: true }], ['godot', { anim: 'pisca', normal: false, scene: false }], ['gif', { anim: 'pisca' }], ['gif', { anim: X.BUILD }]];
+  for (const [kind, extra] of jobs) {
+    const r = await X.exportJob(kind, Object.assign({}, base, extra, { format: kind, progress }), parse, [''], false);
+    lines.push(`${kind} ${JSON.stringify(extra)}: ${r.name} · ${r.info}${r.png ? ` · só o PNG: ${r.png.name}` : ''}`, `  ${r.names.join(' ')}`);
+  }
+  lines.push(`avisos de progresso: ${Object.entries(ticks).map(([k, n]) => `${k} ${n}`).join(', ')}`);
+  await check('_janela', 'janela.txt', 'text', lines.join('\n') + '\n');
+  const r = await X.exportJob('sheet', Object.assign({}, base, { anim: 'pisca', format: 'sheet' }), parse, [''], false);
+  const direct = X.sheetCanvas(parse(''), ['pisca'], Object.assign({}, base, { imageName: 'contas_pisca.png' }));
+  record(Buffer.from(await r.png.blob.arrayBuffer()).equals(direct.canvas.toBuffer('image/png')), '_janela/folha', 'a folha da janela não é a da função de sempre');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -440,6 +462,7 @@ async function main() {
   if (!only.length || only.some((o) => '_audio'.includes(o))) await audioCase();
   if (!only.length || only.some((o) => '_previa'.includes(o))) await previewCase();
   if (!only.length || only.some((o) => '_contas'.includes(o))) await exprCase();
+  if (!only.length || only.some((o) => '_janela'.includes(o))) await jobCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

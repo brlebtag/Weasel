@@ -301,11 +301,12 @@
     out.height = r.canvas.height;
     const ctx = out.getContext('2d');
     const color = r.canvas.getContext('2d');
-    for (const c of r.cells) {
+    r.cells.forEach((c, i) => {
+      if (o && o.progress) o.progress('normal', i + 1, r.cells.length);
       const alpha = color.getImageData(c.x, c.y, r.fw, r.fh).data;
       const n = frame(model, S.makePose(model, c.name, c.f), { rect: r.rect, scale: r.scale, strength: o && o.strength, alpha });
       ctx.drawImage(n, c.x, c.y);
-    }
+    });
     return out;
   }
 

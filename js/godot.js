@@ -455,10 +455,11 @@ func _weasel_eventos(nomes: Array) -> void:
       return { files, kind: 'tileset', tiles: ts.tiles.length, size: [atlas.width, atlas.height] };
     }
     const names = o.names || (model.anims.length ? model.anims.map((a) => a.name) : [null]);
-    const r = X.sheetCanvas(model, names, { scale: o.scale, transparent: true, trim: o.trim !== false, margin: o.margin !== undefined ? o.margin : 8, layout: o.layout || 'grid', cols: o.cols || 0, padding: o.padding !== undefined ? o.padding : 2, imageName: `${base}.png` });
+    // o.progress(fase, i, n): a barra da janela de exportar
+    const r = X.sheetCanvas(model, names, { scale: o.scale, transparent: true, trim: o.trim !== false, margin: o.margin !== undefined ? o.margin : 8, layout: o.layout || 'grid', cols: o.cols || 0, padding: o.padding !== undefined ? o.padding : 2, imageName: `${base}.png`, progress: o.progress });
     files.push({ name: `${base}.png`, canvas: r.canvas });
     let normalPath = null;
-    if (o.normal) { normalPath = `${base}_normal.png`; files.push({ name: normalPath, canvas: W.normal.sheet(model, r, { strength }) }); }
+    if (o.normal) { normalPath = `${base}_normal.png`; files.push({ name: normalPath, canvas: W.normal.sheet(model, r, { strength, progress: o.progress }) }); }
     files.push({ name: `${base}.tres`, text: spriteFramesText(model, r, `${base}.png`, normalPath) });
     if (o.scene !== false) {
       files.push({ name: `${base}.tscn`, text: sceneText(model, r, { framesPath: `${base}.tres`, scriptPath: 'weasel_anim.gd', name: o.name || (model.godot && model.godot.name) || pascal(base), mirror: o.mirror }) });
