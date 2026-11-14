@@ -2193,7 +2193,8 @@
   }
   // Passe de textura: a forma recebe a textura do estilo (T.tile, d pontos por unidade, repetida), presa a ela:
   // anda e gira com o osso. A escala é a da tela (T.px pontos por unidade), para a textura ter sempre o mesmo
-  // tamanho, mesmo num ator pequeno. T.off: o deslocamento da textura (boil, seed).
+  // tamanho, mesmo num ator pequeno. T.off: o deslocamento da textura (boil, seed). T.turn(key): o giro da
+  // textura em cada forma (um ângulo a partir do número da forma), para cada uma ter a sua direção.
   function texFill(ctx, model, pose, el, g, path) {
     const T = PASS.tex, f = fullMap(model, pose, el), b = localBox(el);
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = Math.max(1, Math.max(b.w, b.h) / 2);
@@ -2202,7 +2203,10 @@
     A[4] = p0[0] - A[0] * cx - A[2] * cy;
     A[5] = p0[1] - A[1] * cx - A[3] * cy;
     const m = matOf(ctx), t = M.mul(m, A), k = T.px / (Math.sqrt(Math.abs(M.det(t))) || 1);
-    const pm = M.mul([t[0] * k, t[1] * k, t[2] * k, t[3] * k, t[4], t[5]], [1 / T.d, 0, 0, 1 / T.d, -T.off[0], -T.off[1]]);
+    let S0 = [t[0] * k, t[1] * k, t[2] * k, t[3] * k, t[4], t[5]];
+    const turn = T.turn ? T.turn(hashKey(el.id)) : 0;
+    if (turn) S0 = M.mul(S0, [Math.cos(turn), Math.sin(turn), -Math.sin(turn), Math.cos(turn), 0, 0]);
+    const pm = M.mul(S0, [1 / T.d, 0, 0, 1 / T.d, -T.off[0], -T.off[1]]);
     const bb = segsBox(g.segs), inv = M.invert(pm);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const [x, y] of [[bb.x, bb.y], [bb.x + bb.w, bb.y], [bb.x, bb.y + bb.h], [bb.x + bb.w, bb.y + bb.h]]) {
@@ -2395,7 +2399,7 @@
           if (!model.canvas.bg && !opts.matte) x.fillRect(R.x, R.y, R.w, R.h);
           fillBg(x, model, pose, R, opts.matte);
         },
-      }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model), lit: !!sceneLights(model, pose), frame: pose.frame || 0 });
+      }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model), bare: !model.canvas.bg && !opts.matte, lit: !!sceneLights(model, pose), frame: pose.frame || 0 });
       if (opts.after) { octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale); opts.after(octx, scale); octx.setTransform(1, 0, 0, 1, 0, 0); }
       if (!opts.noPost) postFx(out, model, pose.frame);
       if (r.text) out.artText = r.text;

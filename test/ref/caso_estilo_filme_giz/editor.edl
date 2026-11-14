@@ -1,0 +1,11 @@
+TITLE: caso_estilo_filme_giz
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:01:00 01:00:00:00 01:00:01:00
+* FROM CLIP NAME: caso_estilo_filme_giz_todo.mov
+
+002  AX       V     C        00:00:00:00 00:00:01:00 01:00:01:00 01:00:02:00
+* FROM CLIP NAME: caso_estilo_filme_giz_quadro.mov
+
+003  AX       V     C        00:00:00:00 00:00:01:00 01:00:02:00 01:00:03:00
+* FROM CLIP NAME: caso_estilo_filme_giz_misto.mov

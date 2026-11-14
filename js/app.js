@@ -1657,6 +1657,8 @@
         { label: 'riso', detail: 'risografia: 2 ou 3 tintas em grão' }, { label: 'stencil', detail: 'estêncil: poucos tons e spray' },
         { label: 'silhouette', detail: 'silhueta de uma cor só' }, { label: 'sketch', detail: 'esboço: lápis tremido e cor fora do lugar' },
         { label: 'marker', detail: 'marcador: passadas de caneta e nanquim' }, { label: 'pencil', detail: 'lápis de cor: hachura e grão do papel' },
+        { label: 'crayon', detail: 'giz de cera: passadas de vai-e-vem e grão' }, { label: 'chalk', detail: 'giz no quadro-negro' },
+        { label: 'watercolor', detail: 'aquarela: aguada e linha de caneta' },
         { label: 'lines', detail: 'só o contorno (livro de colorir)' }, { label: 'neon', detail: 'contornos de neon num fundo escuro' },
         { label: 'none', detail: 'sem estilo' },
       ];

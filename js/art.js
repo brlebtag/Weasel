@@ -1237,21 +1237,24 @@
   }
 
   // ---------- os desenhados à mão (sketch, marker, pencil) ----------
-  // O fundo do canvas é pintado no estilo (P.bg), as formas por cima (o passe stroke), o pós (o grão do lápis) e,
+  // O fundo do canvas é pintado no estilo (P.bg; P.paper: o papel do estilo, sem paper=), as formas por cima (o passe stroke), o pós (o grão do lápis) e,
   // com luz na cena, a luz entra por cima, comparando o desenho com luz (l) e sem luz (u), canal a canal: onde a
   // luz escurece, o ponto é multiplicado por l/u; onde ela clareia, ele anda para o branco na mesma proporção que
   // u andou até l (assim o brilho de uma lâmpada num céu escuro fica suave, sem estourar).
   function handDraw(make, post) {
     return (ctx, base, g, src, art, info, m) => {
-      const P = make(art, info, g), pp = rgbOf(art.paper || PAPER);
+      const P = make(art, info, g), pp = rgbOf(art.paper || P.paper || PAPER);
       const C = work('art_c', g.Wd, g.Hd);
       const B0 = src.bg ? bgShot(g, src, m) : null;
       if (B0) {
         C.ctx.fillStyle = hexOf(pp);
         C.ctx.fillRect(0, 0, g.Wd, g.Hd);
-        C.ctx.save();
-        P.bg(C.ctx, B0, g, m);
-        C.ctx.restore();
+        // sem bg no canvas (info.bare), o fundo branco da imagem fica de fora: o papel aparece
+        if (!info.bare) {
+          C.ctx.save();
+          P.bg(C.ctx, B0, g, m);
+          C.ctx.restore();
+        }
       }
       C.ctx.save();
       src.content(C.ctx, m, { unlit: true, stroke: P });
@@ -1264,6 +1267,11 @@
         I.ctx.save();
         src.content(I.ctx, m, { unlit: true, stroke: P.inkPass });
         I.ctx.restore();
+        if (P.inkPost) {
+          const id = I.ctx.getImageData(0, 0, g.Wd, g.Hd);
+          P.inkPost(id.data, g);
+          I.ctx.putImageData(id, 0, 0);
+        }
         C.ctx.putImageData(ci, 0, 0);
         C.ctx.drawImage(I.canvas, 0, 0);
         ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd);
@@ -1562,12 +1570,13 @@
     let b = Math.round(N * Math.sin(r));
     while (gcd(a, b) !== 1) b += b >= 0 ? 1 : -1;
     const len = Math.hypot(a, b), [m0, n0] = bezout(a, b), L = TP * len, cells = Math.max(1, Math.round(L / seg));
-    return { a, b, len, spr: TP / len, shift: ((-b * m0 + a * n0) * TP) / len, L, cells, cell: L / cells, salt };
+    const gper = Math.max(1, Math.round(L / 5));
+    return { a, b, len, spr: TP / len, shift: ((-b * m0 + a * n0) * TP) / len, L, cells, cell: L / cells, salt, gper, ga: L / gper };
   }
   // O valor (0 a 1) da família F no ponto (x, y) do azulejo, em unidades: 1 no meio de um traço, 0 longe. As
   // linhas ondulam (um ruído que também se repete a cada TP), e cada traço sai um pouco do lugar e entorta; por
-  // isso o ponto olha a linha mais perto e as duas vizinhas.
-  function hatchAt(F, x, y) {
+  // isso o ponto olha a linha mais perto e as duas vizinhas. S (opcional): onde o ponto está no traço mais forte.
+  function hatchAt(F, x, y, S) {
     const t = (F.a * x + F.b * y) / TP + 0.3 * (noiseP(x / 32, y / 32, TP / 32, F.salt + 7) - 0.5), k0 = Math.round(t);
     let best = 0;
     for (let k = k0 - 1; k <= k0 + 1; k++) {
@@ -1585,24 +1594,40 @@
       const u = pos / (len - gap), taper = Math.min(1, 0.3 + u / 0.12, 0.3 + (1 - u) / 0.12);
       const off = (rnd(j, F.salt + 2) - 0.5) * 0.3 + (rnd(j, F.salt + 3) - 0.5) * 0.4 * (u - 0.5);
       const v = (0.6 + 0.4 * rnd(j, F.salt + 1)) * taper * (1 - 2 * Math.abs(t - k - off));
-      if (v > best) best = v;
+      if (v > best) {
+        best = v;
+        if (S) { S.s = sAl; S.j = j; S.fr = t - k - off; }
+      }
     }
     return best;
   }
-  function pencilTile(sp1, sp2, seg, k) {
-    const n = Math.max(TP, Math.round(TP * k)), HR = n / TP, key = [sp1, sp2, seg, n].map((v) => v.toFixed(3)).join(',');
+  // Os riscos secos de um traço largo (o giz que pulou): um ruído comprido ao longo do traço (ga unidades) e
+  // estreito na largura (nb faixas por traço); 1 fora dos traços.
+  const streakOf = (F, S, nb) => (S.j < 0 ? 1 : noiseP(S.s / F.ga, (S.fr + 0.5) * nb + S.j * 8, F.gper, F.salt + 9));
+  // fams: as duas famílias [ângulo, espaço, tamanho dos traços, sal] (R e G do azulejo); nb: com os riscos secos
+  // do traço mais forte (B), em nb faixas por traço
+  function hatchTile(fams, k, nb) {
+    const n = Math.max(TP, Math.round(TP * k)), HR = n / TP, key = fams.flat().concat([n, nb || 0]).map((v) => v.toFixed(3)).join(',');
     if (pencilTiles.has(key)) return pencilTiles.get(key);
-    // guarda poucos azulejos (cada tamanho de canvas e escala faz o seu)
-    if (pencilTiles.size > 6) pencilTiles.delete(pencilTiles.keys().next().value);
+    // guarda poucos azulejos (cada estilo, tamanho de canvas e escala faz o seu)
+    if (pencilTiles.size > 8) pencilTiles.delete(pencilTiles.keys().next().value);
     const c = document.createElement('canvas');
     c.width = c.height = n;
     const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
-    const F1 = hatchFamily(-60, sp1, seg, 51), F2 = hatchFamily(30, sp2, seg * 0.8, 61);
+    const F1 = hatchFamily(...fams[0]), F2 = hatchFamily(...fams[1]), S1 = {}, S2 = {};
     for (let py = 0, o = 0; py < n; py++) {
       for (let px = 0; px < n; px++, o += 4) {
         const ux = (px + 0.5) / HR, uy = (py + 0.5) / HR;
-        D[o] = Math.round(255 * hatchAt(F1, ux, uy));
-        D[o + 1] = Math.round(255 * hatchAt(F2, ux, uy));
+        if (nb) {
+          S1.j = S2.j = -1;
+          const v1 = hatchAt(F1, ux, uy, S1), v2 = hatchAt(F2, ux, uy, S2);
+          D[o] = Math.round(255 * v1);
+          D[o + 1] = Math.round(255 * v2);
+          D[o + 2] = Math.round(255 * (v1 >= v2 ? streakOf(F1, S1, nb) : streakOf(F2, S2, nb)));
+        } else {
+          D[o] = Math.round(255 * hatchAt(F1, ux, uy));
+          D[o + 1] = Math.round(255 * hatchAt(F2, ux, uy));
+        }
         D[o + 3] = 255;
       }
     }
@@ -1611,6 +1636,7 @@
     pencilTiles.set(key, T);
     return T;
   }
+  const pencilTile = (sp1, sp2, seg, k) => hatchTile([[-60, sp1, seg, 51], [30, sp2, seg * 0.8, 61]], k);
   // A cor vira hachura (o azulejo, preso a cada forma pelo passe tex; no fundo, nos traços e com boil=screen,
   // parado na tela) e ganha o grão do papel. A força (o quanto a cor se afasta do papel, no canal que mais
   // escureceu) fecha a hachura: no escuro, ela vira cor cheia.
@@ -1651,6 +1677,420 @@
     }
   }
 
+  // ---------- crayon, chalk e watercolor ----------
+  // a textura da forma: o azulejo T preso a cada forma pelo passe tex (turn: o giro dela em cada forma); com
+  // boil=screen, null (o azulejo fica parado na tela)
+  function shapeTex(g, src, m, art, info, T, turn) {
+    if (art.boil === 'screen') return null;
+    const X = work('art_tu', g.Wd, g.Hd);
+    X.ctx.save();
+    src.content(X.ctx, m, { tex: { tile: T.canvas, d: T.hr, px: 1 / g.cw, off: texOff(art, info), turn } });
+    X.ctx.restore();
+    return X.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+  }
+  // o valor do azulejo no ponto o (px, py) da imagem de trabalho, em V[0] e V[1]: o da forma (tx) ou, fora das
+  // formas (o fundo, os traços), o azulejo parado na tela
+  function tileAt(V, T, tx, o, px, py, k, off) {
+    if (tx && tx[o + 3] >= 128) { V[0] = tx[o] / 255; V[1] = tx[o + 1] / 255; V[2] = tx[o + 2] / 255; return; }
+    const n = T.n;
+    let ix = Math.floor((px / k + off[0]) * T.hr) % n, iy = Math.floor((py / k + off[1]) * T.hr) % n;
+    if (ix < 0) ix += n;
+    if (iy < 0) iy += n;
+    const q = (iy * n + ix) * 4;
+    V[0] = T.data[q] / 255; V[1] = T.data[q + 1] / 255; V[2] = T.data[q + 2] / 255;
+  }
+  // a cobertura das formas e dos traços (o alfa), sem o fundo
+  const COVER = {
+    glow: false,
+    fill(ctx, it) { ctx.fillStyle = '#ffffff'; ctx.fill(it.path); },
+    ink() {},
+    line(ctx, it) { ctx.fillStyle = ctx.strokeStyle = '#ffffff'; it.body(ctx); return true; },
+  };
+  function coverOf(g, src, m) {
+    const X = work('art_cov', g.Wd, g.Hd);
+    X.ctx.save();
+    src.content(X.ctx, m, { unlit: true, stroke: COVER });
+    X.ctx.restore();
+    return X.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+  }
+  // o grão do papel (0 a 1), parado na tela: um ruído suave de gs pontos e um sorteio por ponto (wr: o peso dele)
+  const grainAt = (px, py, gs, salt, wr) => (1 - wr) * noiseP(px / gs, py / gs, 4096, salt) + wr * rnd(px + salt * 7919, py);
+  // um campo suave (fn(px, py), devagar na tela) calculado a cada st pontos e misturado entre eles: bem mais rápido
+  // que o ruído ponto a ponto
+  function lowField(Wd, Hd, st, fn) {
+    const gw = Math.ceil(Wd / st) + 2, gh = Math.ceil(Hd / st) + 2, F = new Float32Array(gw * gh);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) F[j * gw + i] = fn(i * st, j * st);
+    return (px, py) => {
+      const x = px / st, y = py / st, i = x | 0, j = y | 0, fx = x - i, fy = y - j, o = j * gw + i;
+      const a = F[o], b = F[o + 1], c = F[o + gw], d = F[o + gw + 1];
+      return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+    };
+  }
+  // o giro das passadas em cada forma: sorteado pelo número da forma (e de novo, um pouco, a cada boil)
+  const turnOf = (art, info) => {
+    const step = boilStep(art, info);
+    return (key) => rnd(key, (art.seed | 0) * 31 + 5) * Math.PI + (step ? (rnd(key, step * 977 + (art.seed | 0)) - 0.5) * 0.35 : 0);
+  };
+  const eraseWith = (ctx, draw) => { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = ctx.strokeStyle = '#000000'; draw(); ctx.restore(); };
+  // um traço fino (sem o corpo): uma passada tremida no meio dele, da largura dele (no mínimo w0)
+  function thinLine(ctx, it, R, w0, o) {
+    const E = lineEdges(it), wmax = it.ws ? Math.max(...it.ws) : it.w;
+    ctx.save();
+    ctx.lineWidth = Math.max(w0, wmax);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    wobble(ctx, E.pts, false, R, o);
+    ctx.restore();
+  }
+  // a sombra: a cor multiplicada por ela mesma (k: a força), na faixa do lado longe da luz
+  function bandShade(ctx, it, k) {
+    const U = unitOf(it.canvas), bb = it.box, a0 = ctx.globalAlpha;
+    ctx.save();
+    if (clipBand(ctx, it, 0.3)) {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = a0 * k;
+      ctx.fillStyle = it.fillStyle;
+      ctx.fillRect(bb.x - 4 * U, bb.y - 4 * U, bb.w + 8 * U, bb.h + 8 * U);
+    }
+    ctx.restore();
+  }
+  // o grão num passe de contornos (d: os pontos da imagem de trabalho): onde o papel tem um morro alto, o giz pula
+  function grainInk(d, g, gs, lo, soft, salt) {
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!d[o + 3]) continue;
+        d[o + 3] = Math.round(d[o + 3] * cl((lo - grainAt(px, py, gs, salt, 0.25)) / soft));
+      }
+    }
+  }
+
+  // crayon (giz de cera): em dois passes, como o lápis. No primeiro, o papel limpo sob cada cor, a cor lisa, mais
+  // forte na borda (quem pinta contorna a forma antes de encher) e na faixa de sombra. Depois, ponto a ponto
+  // (crayonPost), a cor vira passadas largas de vai-e-vem, numa direção sorteada para cada forma, com o grão do
+  // papel aparecendo em pontinhos claros onde a cera não pegou. No segundo passe, por cima: o contorno, grosso e
+  // tremido, também com o grão.
+  function crayonPaint(art, info) {
+    const step = boilStep(art, info), pp = art.paper || PAPER;
+    const thin = (it) => (it.ws ? Math.max(...it.ws) : it.w) <= 2.6 * unitOf(it.canvas);
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), has = it.hasInk && it.ink > 0;
+        const own = has ? null : specRGB(it.fillSpec);
+        if (!has && !own) return;
+        ctx.save();
+        ctx.strokeStyle = has ? it.inkStyle : hexOf(own.map((v) => v * 0.7));
+        ctx.lineWidth = has ? Math.min(3.4 * U, Math.max(1.5 * U, it.ink * 0.6)) : 1.1 * U;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.globalAlpha *= has ? 0.95 : 0.7;
+        wobble(ctx, ptsOf(it.poly), true, rng(seedOf(art, step, it, it.hole ? 21 : 11)), { amp: 0.6 * U, wave: 24 * U, over: 0.05, step: 2 * U });
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas);
+        if (thin(it)) { ctx.save(); ctx.strokeStyle = it.lineStyle; thinLine(ctx, it, rng(seedOf(art, step, it, 13)), 1.5 * U, { amp: 0.4 * U, wave: 24 * U, step: 2 * U }); ctx.restore(); }
+        else eraseWith(ctx, () => it.body(ctx));
+        return true;
+      },
+    };
+    return {
+      inkPass,
+      inkPost: (d, g) => grainInk(d, g, Math.max(1, (1.2 * Math.min(2, Math.max(1, bgUnit(g)))) / g.cw), 0.8, 0.08, 43),
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), a0 = ctx.globalAlpha;
+        ctx.save();
+        ctx.fillStyle = pp;
+        ctx.fill(it.path);
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        // a cera junta na borda: uma faixa por dentro, mais forte
+        ctx.clip(it.path);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.globalAlpha = a0 * 0.4;
+        ctx.strokeStyle = it.fillStyle;
+        ctx.lineWidth = 5 * U;
+        ctx.lineJoin = 'round';
+        ctx.stroke(it.path);
+        ctx.restore();
+        bandShade(ctx, it, 0.5);
+      },
+      ink() {},
+      line(ctx, it) {
+        if (!thin(it)) { ctx.save(); ctx.fillStyle = ctx.strokeStyle = it.lineStyle; it.body(ctx); ctx.restore(); }
+        return true;
+      },
+    };
+  }
+  // As passadas do giz de cera: duas famílias de traços largos e longos, quase na mesma direção (a ida e a volta).
+  // A força (o quanto a cor se afasta do papel) alarga as passadas; o grão do papel, grosso, fica claro onde a
+  // pressão é pouca; onde as duas passadas se cruzam, a cera junta e a cor fica mais forte.
+  function crayonPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw, Up = Math.min(2, Math.max(1, bgUnit(g)));
+    const sp = Math.max(3.2 * Up, 2.8 / k);
+    const T = hatchTile([[-55, sp, 64 * Up, 71], [-47, sp * 1.2, 56 * Up, 81]], k, 3);
+    const tx = shapeTex(g, src, m, art, info, T, turnOf(art, info)), off = texOff(art, info), V = [0, 0, 0];
+    const s1 = 2 / (T.spr1 * k), s2 = 2 / (T.spr2 * k), gs = Math.max(1, 1.2 * Up * k);
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!c[o + 3]) continue;
+        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        if (f <= 0.01) continue;
+        tileAt(V, T, tx, o, px, py, k, off);
+        const D = Math.min(1, f * 1.15);
+        const m1 = cl((V[0] - (0.62 - 0.55 * D)) / s1 + 0.5), m2 = cl((V[1] - (0.72 - 0.5 * D)) / s2 + 0.5) * (0.35 + 0.5 * D);
+        // o grão: a cera pega nos morros do papel e pula os vales (pontinhos claros), mais onde a pressão é pouca
+        const s = 1 - (1 - m1) * (1 - m2), z = 0.8 * grainAt(px, py, gs, 43, 0.15) + 0.2 * V[2];
+        const base = 0.3 - 0.25 * D + 0.5 * D * D, mm = (base + (1 - base) * s) * cl((0.42 + 0.52 * D - z) / 0.07), wax = 1 - 0.18 * m1 * m2;
+        for (let ch = 0; ch < 3; ch++) c[o + ch] = Math.max(0, pp[ch] + (c[o + ch] * wax - pp[ch]) * mm);
+      }
+    }
+  }
+
+  // chalk (giz no quadro): o papel é o quadro (verde-escuro). Cada forma vira giz da cor dela, mais clara (um
+  // pastel), e mais cheio onde a cor é mais clara: as cores escuras ficam quase só o quadro. Passadas largas, numa
+  // direção por forma, com pó entre elas e o grão do quadro. O contorno vira giz branco, por cima; sem contorno,
+  // uma linha leve da cor da forma. O fundo do canvas vira giz mais leve (meio apagado).
+  const BOARD = '#29382f', CHALK = '#f2efe6';
+  function chalkPaint(art, info) {
+    const step = boilStep(art, info), board = art.paper || BOARD;
+    const thin = (it) => (it.ws ? Math.max(...it.ws) : it.w) <= 2.6 * unitOf(it.canvas);
+    const pastel = (rgb, t) => hexOf(rgb.map((v) => v + (255 - v) * t));
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), has = it.hasInk && it.ink > 0;
+        const own = has ? null : specRGB(it.fillSpec);
+        if (!has && !own) return;
+        ctx.save();
+        ctx.strokeStyle = has ? CHALK : pastel(own, 0.6);
+        ctx.lineWidth = has ? Math.min(3 * U, Math.max(1.2 * U, it.ink * 0.5)) : 1 * U;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.globalAlpha *= has ? 0.9 : 0.5;
+        wobble(ctx, ptsOf(it.poly), true, rng(seedOf(art, step, it, it.hole ? 21 : 11)), { amp: 0.5 * U, wave: 26 * U, over: 0.04, step: 2 * U });
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas);
+        if (thin(it)) {
+          const col = specRGB(it.lineSpec);
+          ctx.save();
+          ctx.strokeStyle = col ? pastel(col, 0.4) : CHALK;
+          thinLine(ctx, it, rng(seedOf(art, step, it, 13)), 1.2 * U, { amp: 0.4 * U, wave: 24 * U, step: 2 * U });
+          ctx.restore();
+        } else eraseWith(ctx, () => it.body(ctx));
+        return true;
+      },
+    };
+    return {
+      paper: BOARD,
+      inkPass,
+      inkPost: (d, g) => grainInk(d, g, Math.max(1, (1.1 * Math.min(2, Math.max(1, bgUnit(g)))) / g.cw), 0.66, 0.14, 47),
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        ctx.save();
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.restore();
+        bandShade(ctx, it, 0.5);
+      },
+      ink() {},
+      line(ctx, it) {
+        if (!thin(it)) { ctx.save(); ctx.fillStyle = ctx.strokeStyle = it.lineStyle; it.body(ctx); ctx.restore(); }
+        return true;
+      },
+    };
+  }
+  // A cor de cada ponto vira giz: a quantidade vem da claridade (o valor mais alto e a claridade, juntos), a cor é
+  // a mesma, mais clara. Nas formas, passadas largas (com os riscos secos, onde o giz pulou) e um pouco de pó
+  // entre elas; o grão do quadro decide onde o giz pegou. O fundo do canvas é só pó, mais leve.
+  function chalkPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw, Up = Math.min(2, Math.max(1, bgUnit(g)));
+    const sp = Math.max(6 * Up, 4 / k);
+    const T = hatchTile([[-50, sp, 80 * Up, 73], [-42, sp * 1.25, 70 * Up, 83]], k, 4);
+    const tx = shapeTex(g, src, m, art, info, T, turnOf(art, info)), off = texOff(art, info), V = [0, 0, 0];
+    const cv = coverOf(g, src, m);
+    const s1 = 2 / (T.spr1 * k), s2 = 2 / (T.spr2 * k), gs = Math.max(1, 1.2 * k), b0 = Math.max(0.12, lum3(pp[0], pp[1], pp[2]) + 0.06);
+    const Ub = bgUnit(g), cs = 120 * Ub * k, ds = 30 * Ub * k, CK = rgbOf(CHALK);
+    const OLD = lowField(Wd, Hd, Math.max(2, Math.round(cs / 8)), (x, y) => 0.036 * noiseP(x / cs, y / cs, 4096, 48) + 0.024 * noiseP((x / cs) * 2.3 + 17.3, (y / cs) * 2.3, 4096, 50));
+    const DUST = lowField(Wd, Hd, Math.max(2, Math.round(ds / 6)), (x, y) => 0.6 * noiseP(x / ds, y / ds, 4096, 49) + 0.4 * noiseP((0.8 * x + 0.6 * y) / (0.45 * ds), (0.8 * y - 0.6 * x) / (0.45 * ds), 4096, 51));
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!c[o + 3]) continue;
+        const r = c[o], gg = c[o + 1], b = c[o + 2];
+        const a = cl(((0.55 * Math.max(r, gg, b)) / 255 + 0.45 * lum3(r, gg, b) - b0) / 0.6);
+        // o resto de giz apagado no quadro (nuvens bem leves, paradas na tela)
+        const old = OLD(px, py);
+        if (a <= 0.005) { for (let ch = 0; ch < 3; ch++) c[o + ch] = pp[ch] + (CK[ch] - pp[ch]) * old; continue; }
+        const z = grainAt(px, py, gs, 47, 0.15), w = cv[o + 3] / 255;
+        // o fundo: pó de giz esfregado, em nuvens
+        let cov = old + 0.28 * a * (0.6 + 0.8 * (DUST(px, py) - 0.5)) * (0.8 + 0.2 * cl((0.6 - z) / 0.3));
+        if (w > 0) {
+          tileAt(V, T, tx, o, px, py, k, off);
+          const th = 0.45 - 0.4 * a, p1 = cl((V[0] - th) / s1 + 0.5), p2 = cl((V[1] - th - 0.1) / s2 + 0.5) * 0.9;
+          const p = 1 - (1 - p1) * (1 - p2), dry = 1 - 0.45 * cl((V[2] - (0.35 + 0.5 * a)) / 0.25), dust = 0.25 + 0.45 * a;
+          const sc = (dust + (1 - dust) * p * dry) * (0.75 + 0.25 * cl((0.4 + 0.5 * a - z) / 0.3)) * (0.35 + 0.65 * a);
+          cov += (sc - cov) * w;
+        }
+        c[o] = pp[0] + (r + (255 - r) * 0.4 - pp[0]) * cov;
+        c[o + 1] = pp[1] + (gg + (255 - gg) * 0.4 - pp[1]) * cov;
+        c[o + 2] = pp[2] + (b + (255 - b) * 0.4 - pp[2]) * cov;
+      }
+    }
+  }
+
+  // watercolor (aquarela, caneta e aguada): o papel limpo sob cada forma e a cor numa aguada transparente, mais
+  // clara; na borda da mancha, a tinta junta (mais escura) e vaza um pouco para fora da linha, tremida. A sombra
+  // é uma segunda aguada. Depois, ponto a ponto (watercolorPost), a tinta fica desigual na mancha (mais e menos
+  // pigmento, preso à forma), granula no papel e o papel tem a sua textura. No segundo passe: o contorno vira
+  // uma linha fina de caneta, um pouco irregular, por cima.
+  function watercolorPaint(art, info) {
+    const step = boilStep(art, info), pp = art.paper || PAPER;
+    const thin = (it) => (it.ws ? Math.max(...it.ws) : it.w) <= 2.2 * unitOf(it.canvas);
+    // A borda da mancha. Na forma: do lado de fora, a aguada que vazou um pouco da linha, tremida e com a borda
+    // dura; do lado de dentro, a tinta que juntou na borda ao secar (mais escura). Num buraco, ao contrário.
+    const edge = (ctx, it) => {
+      const U = unitOf(it.canvas), a0 = ctx.globalAlpha, pts = ptsOf(it.poly), salt = it.hole ? 22 : 12;
+      const band = (clip, alpha, w, R, o) => {
+        ctx.save();
+        if (clip) ctx.clip(it.path); else ctx.clip(inversePath(it.path), 'evenodd');
+        ctx.globalAlpha = a0 * alpha;
+        ctx.lineWidth = w;
+        wobble(ctx, pts, true, R, o);
+        ctx.restore();
+      };
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.strokeStyle = it.fillStyle;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      band(!!it.hole, 0.7, 2.4 * U, rng(seedOf(art, step, it, salt)), { amp: 0.9 * U, wave: 22 * U, over: 0.02, step: 2 * U });
+      band(!it.hole, 0.35, 1.6 * U, rng(seedOf(art, step, it, salt + 1)), { amp: 0.4 * U, wave: 14 * U, over: 0.02, step: 2 * U });
+      ctx.restore();
+    };
+    // nos traços largos: as duas bordas, metade para fora e metade para dentro
+    const sides = (ctx, it, E, n, salt, sgn) => {
+      const U = unitOf(it.canvas);
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.strokeStyle = it.lineStyle;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.globalAlpha *= 0.45;
+      ctx.lineWidth = 1.6 * U;
+      wobble(ctx, E.pts, false, rng(seedOf(art, step, it, salt)), { amp: 0.6 * U, wave: 18 * U, step: 2 * U, shiftOf: (i) => sgn * E.half(i, n) });
+      ctx.restore();
+    };
+    const pen = { amp: 0.3, wave: 34, over: 0.02 };
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) {
+        if (!(it.hasInk && it.ink > 0)) return;
+        const U = unitOf(it.canvas);
+        ctx.save();
+        ctx.strokeStyle = it.inkStyle;
+        ctx.lineWidth = Math.min(1.6 * U, Math.max(0.6 * U, it.ink * 0.32));
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.globalAlpha *= 0.92;
+        wobble(ctx, ptsOf(it.poly), true, rng(seedOf(art, step, it, it.hole ? 21 : 11)), { amp: pen.amp * U, wave: pen.wave * U, over: pen.over, step: 2 * U });
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas);
+        if (thin(it)) { ctx.save(); ctx.strokeStyle = it.lineStyle; ctx.globalAlpha *= 0.92; thinLine(ctx, it, rng(seedOf(art, step, it, 13)), 0.6 * U, { amp: pen.amp * U, wave: pen.wave * U, step: 2 * U }); ctx.restore(); }
+        else eraseWith(ctx, () => it.body(ctx));
+        return true;
+      },
+    };
+    return {
+      inkPass,
+      bg(ctx, B0) { ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.82; ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        const a0 = ctx.globalAlpha;
+        ctx.save();
+        ctx.fillStyle = pp;
+        ctx.fill(it.path);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.globalAlpha = a0 * 0.85;
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.restore();
+        bandShade(ctx, it, 0.4);
+      },
+      ink(ctx, it) { if (it.fillStyle) edge(ctx, it); },
+      line(ctx, it) {
+        if (thin(it)) return true;
+        const U = unitOf(it.canvas), a0 = ctx.globalAlpha;
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.globalAlpha = a0 * 0.85;
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        const E = lineEdges(it), n = resample(E.pts, false, 2 * U).length;
+        sides(ctx, it, E, n, 12, 1);
+        sides(ctx, it, E, n, 32, -1);
+        return true;
+      },
+    };
+  }
+  // O azulejo da aguada: R, o quanto de pigmento (um ruído suave em três tamanhos); G, as marcas onde a água
+  // voltou (as cristas de um ruído). Ele se repete a cada TP unidades, sem emenda.
+  const washTiles = new Map();
+  function washTile(k) {
+    const n = Math.max(TP, Math.round(TP * k)), HR = n / TP;
+    if (washTiles.has(n)) return washTiles.get(n);
+    if (washTiles.size > 3) washTiles.delete(washTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
+    for (let py = 0, o = 0; py < n; py++) {
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = (px + 0.5) / HR, v = (py + 0.5) / HR;
+        const d = 0.5 * noiseP(u / 16, v / 16, TP / 16, 91) + 0.3 * noiseP(u / 8, v / 8, TP / 8, 92) + 0.2 * noiseP(u / 4, v / 4, TP / 4, 93);
+        const r = 1 - Math.abs(2 * noiseP(u / 16, v / 16, TP / 16, 94) - 1);
+        D[o] = Math.round(255 * d);
+        D[o + 1] = Math.round(255 * r);
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: HR };
+    washTiles.set(n, T);
+    return T;
+  }
+  function watercolorPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw;
+    const T = washTile(k), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0];
+    const gs = Math.max(1, 0.8 * k), gb = 3 * k, ws = 50 * k;
+    const BIG = lowField(Wd, Hd, Math.max(2, Math.round(ws / 8)), (x, y) => 0.65 * noiseP(x / ws, y / ws, 4096, 96) + 0.35 * noiseP((x / ws) * 2.7 + 9.1, (y / ws) * 2.7, 4096, 98));
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!c[o + 3]) continue;
+        // o papel: morrinhos (o papel de aquarela), um pouco mais escuros nos vales
+        const bump = noiseP(px / gb, py / gb, 4096, 95);
+        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        let s = 1;
+        if (f > 0.01) {
+          tileAt(V, T, tx, o, px, py, k, off);
+          // mais e menos pigmento na mancha, as marcas da água e a granulação (o pigmento cai nos vales do papel)
+          const z = grainAt(px, py, gs, 97, 0.4);
+          const d = 0.5 * V[0] + 0.5 * BIG(px, py);
+          s = (0.8 + (0.45 * (d - 0.5) + 0.12 * (V[1] - 0.5)) * (1 - 0.4 * f)) * (1 + 0.35 * f * (z - 0.5) + 0.2 * (0.5 - bump));
+        }
+        const sh = 1 - 0.035 * bump;
+        for (let ch = 0; ch < 3; ch++) c[o + ch] = Math.max(0, Math.min(255, (pp[ch] + (c[o + ch] - pp[ch]) * s) * sh));
+      }
+    }
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -1669,6 +2109,9 @@
     sketch: tone(handDraw(sketchPaint), true),
     marker: tone(handDraw(markerPaint), true),
     pencil: tone(handDraw(pencilPaint, pencilPost), true),
+    crayon: tone(handDraw(crayonPaint, crayonPost), true),
+    chalk: tone(handDraw(chalkPaint, chalkPost), true),
+    watercolor: tone(handDraw(watercolorPaint, watercolorPost), true),
     lines: tone(linesDraw, false),
     neon: tone(neonDraw, true),
   };

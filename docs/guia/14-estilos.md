@@ -2,7 +2,7 @@
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, só nos contornos, em neon e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, em giz de cera, em giz no quadro, em aquarela, só nos contornos, em neon e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
 
 | O desenho normal | `art pixel` | `art ascii color` |
 |---|---|---|
@@ -58,7 +58,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 - Um `art` por arquivo. Sem `art`, nada muda. `art none` desliga o estilo (serve no filme, mais abaixo).
 - A linha pode ficar em qualquer lugar do arquivo; o costume é logo depois do `canvas`, como o `finish`.
 
-Nesta versão existem dezesseis estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`) e os cinco [estilos de traço](#os-estilos-de-traço-sketch-marker-pencil-lines-e-neon) (`sketch`, `marker`, `pencil`, `lines` e `neon`). Os outros do plano (`crayon`, `watercolor`, `cutout`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
+Nesta versão existem dezenove estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`) e os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`). Os outros do plano (`cutout`, `clay`, `glass`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
 
 **No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
@@ -528,9 +528,9 @@ A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pon
 
 | `boil=` | A textura | Padrão de |
 |---|---|---|
-| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw` |
+| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw`, `watercolor` |
 | `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone`, `comic`, `comic old`, `manga`, `riso` |
-| `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | `sketch`, `marker`, `pencil` |
+| `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | `sketch`, `marker`, `pencil`, `crayon`, `chalk` |
 
 <!-- gerar: img/14_boil.png -f sheet -a all -s 1 -->
 ```weasel
@@ -776,9 +776,9 @@ Repare:
 
 **Experimente:** troque para `inks=#ff48b0` (uma tinta só) ou para `size=3`.
 
-## Os estilos de traço: `sketch`, `marker`, `pencil`, `lines` e `neon`
+## Os estilos de traço
 
-Os estilos de tom olham para a imagem pronta, ponto a ponto. Estes cinco mudam o **traço**: pintam forma por forma, na ordem do desenho, como alguém que passa o lápis, o marcador ou a caneta em cada uma. Por isso o contorno treme, a cor sai do lugar e cada forma ganha a sua textura.
+Os estilos de tom olham para a imagem pronta, ponto a ponto. Estes oito mudam o **traço**: pintam forma por forma, na ordem do desenho, como alguém que passa o lápis, o marcador ou a caneta em cada uma. Por isso o contorno treme, a cor sai do lugar e cada forma ganha a sua textura.
 
 | `art sketch` | `art marker` | `art pencil` |
 |---|---|---|
@@ -908,6 +908,98 @@ Repare:
 
 **Experimente:** troque a vila para `art lines w=1.5`, ou para `art neon c=#40e0ff`.
 
+### Giz de cera, giz e aquarela: `art crayon`, `art chalk` e `art watercolor`
+
+```
+art crayon paper= boil= seed=
+art chalk paper= boil= seed=
+art watercolor paper= boil= seed=
+```
+
+| `art crayon` | `art chalk` | `art watercolor` |
+|---|---|---|
+| ![O Cavaleiro em giz de cera: a capa em passadas largas e inclinadas, com pontinhos claros do papel, e o contorno grosso e encerado](img/14_traco_crayon.png) | ![O Cavaleiro em giz num quadro-negro verde: a máscara em giz branco com passadas, a capa escura quase só o quadro, e o contorno em giz branco](img/14_traco_chalk.png) | ![O Cavaleiro em aquarela: a capa numa aguada azul desigual, com a borda mais escura, e o contorno numa linha fina de caneta](img/14_traco_watercolor.png) |
+| ![A vila em giz de cera: o céu em passadas azuis inclinadas, a casa vermelha e o morro verde](img/14_vila_crayon.png) | ![A vila em giz: o céu escuro vira o quadro, a lua em giz amarelo-claro, a casa em giz vermelho com o contorno branco](img/14_vila_chalk.png) | ![A vila em aquarela: o céu numa aguada azul que clareia para o laranja, a casa vermelha e o morro verde, com a linha de caneta](img/14_vila_watercolor.png) |
+
+<details>
+<summary>Código dos seis</summary>
+
+<!-- gerar: img/14_traco_crayon.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art crayon
+```
+
+<!-- gerar: img/14_traco_chalk.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art chalk
+```
+
+<!-- gerar: img/14_traco_watercolor.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art watercolor
+```
+
+<!-- gerar: img/14_vila_crayon.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art crayon
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_chalk.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art chalk
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_watercolor.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art watercolor
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+</details>
+
+Repare:
+
+- **`crayon` (giz de cera):** a cor vira passadas largas de vai-e-vem, cada forma numa direção sorteada (a direção anda e gira com a forma). Quanto mais forte a cor, mais largas as passadas; onde elas se cruzam, a cera junta e a cor fica mais forte, e na borda de cada forma também (quem pinta contorna antes de encher). O papel aparece em pontinhos claros, onde a cera não pegou. O contorno sai grosso e tremido, também com o grão.
+- **`chalk` (giz no quadro):** o papel é um quadro-negro verde-escuro, com o resto de giz apagado em nuvens. Cada forma vira giz da cor dela, mais clara, e mais cheio onde a cor é mais clara: o amarelo e o branco viram giz forte; as cores escuras ficam quase só o quadro. O giz vai em passadas largas, com riscos onde ele pulou e pó entre elas. O contorno vira giz branco; a forma sem contorno ganha uma linha leve da cor dela. O fundo do `canvas` vira só pó, mais leve.
+- **`watercolor` (aquarela):** a cor vira uma aguada transparente e desigual (mais e menos tinta na mancha), mais escura na borda, onde a tinta junta ao secar, e que vaza um pouco para fora da linha. A tinta granula no papel de aquarela, que tem a sua textura. O contorno vira uma linha fina de caneta, um pouco irregular, por cima (caneta e aguada); a forma sem contorno fica só a mancha. A sombra é uma segunda aguada.
+- Como no `sketch`, no `marker` e no `pencil`: a sombra existe mesmo sem luz, a luz da cena entra por cima, e os textos e as partículas saem como sempre.
+- **Ferve:** o `crayon` e o `chalk` fervem a cada 2 quadros (`boil=2`), como os outros desenhados à mão. A `watercolor` fica parada (`boil=0`), porque uma aquarela não se refaz a cada quadro; `boil=2` faz ela ferver também.
+- **`paper=`:** no `crayon` e na `watercolor`, o papel (padrão `#f6f2ea`); no `chalk`, a cor do quadro (padrão `#29382f`, verde-escuro; `paper=#202224` dá um quadro preto). Com `bg=none`, o papel (ou o quadro) aparece onde não há forma.
+
+| Opção | O que faz |
+|---|---|
+| `paper=` | O papel (no `chalk`, o quadro). |
+| `boil=2` | A cada quantos quadros o desenho muda (padrão 2; na `watercolor`, 0). |
+| `seed=` | Outro sorteio. |
+
+**Experimente:** troque a vila para `art chalk paper=#202224`, ou a noite para `art watercolor`.
+
 ## No filme: o filme, a cena, o plano e o ator
 
 No filme ([capítulo 10](10-filme.md)), o `art` vale em quatro níveis. O mais específico ganha:
@@ -962,6 +1054,6 @@ Repare:
 
 - **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
-- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker` e `pencil`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
+- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk` e `watercolor`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)

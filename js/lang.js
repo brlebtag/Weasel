@@ -95,8 +95,8 @@
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
   // art: estilos de arte (a imagem pronta pintada de outro jeito). ART_LATER = os que ainda vão chegar.
-  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'lines', 'neon'];
-  const ART_LATER = ['stitch', 'mosaic', 'knit', 'crayon', 'chalk', 'watercolor', 'cutout', 'clay', 'glass', 'embroidery'];
+  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon'];
+  const ART_LATER = ['stitch', 'mosaic', 'knit', 'cutout', 'clay', 'glass', 'embroidery'];
   // boil= e seed= só aparecem (no autocompletar) nos estilos com textura
   const ART_OPTS = {
     pixel: { attrs: ['size', 'palette', 'dither'], flags: ['outline', 'small'] },
@@ -113,14 +113,18 @@
     sketch: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     marker: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     pencil: { attrs: ['paper', 'boil', 'seed'], flags: [] },
+    crayon: { attrs: ['paper', 'boil', 'seed'], flags: [] },
+    chalk: { attrs: ['paper', 'boil', 'seed'], flags: [] },
+    watercolor: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     lines: { attrs: ['w', 'c', 'paper'], flags: [] },
     neon: { attrs: ['w', 'c', 'paper'], flags: [] },
     none: { attrs: [], flags: [] },
   };
   // o boil= de cada estilo quando não é escrito: screen = a textura fica parada na tela (como a retícula impressa).
   // Na comic old bw, as linhas são do desenhista, e não da impressão: ficam presas à forma.
-  // Nos desenhados à mão (sketch, marker, pencil), as passadas fervem: mudam a cada 2 quadros.
-  const ART_BOIL = { halftone: 'screen', comic: 'screen', manga: 'screen', riso: 'screen', sketch: 2, marker: 2, pencil: 2 };
+  // Nos desenhados à mão (sketch, marker, pencil, crayon, chalk), as passadas fervem: mudam a cada 2 quadros. A
+  // aquarela (watercolor) fica parada.
+  const ART_BOIL = { halftone: 'screen', comic: 'screen', manga: 'screen', riso: 'screen', sketch: 2, marker: 2, pencil: 2, crayon: 2, chalk: 2 };
   const artBoil = (a) => (a.style === 'comic' && a.bw ? 0 : ART_BOIL[a.style] || 0);
   const RISO_INKS = ['#ff48b0', '#00838a', '#ffe800'];
   const ART_COMMON = ['boil', 'seed', 'actor'];
@@ -789,6 +793,7 @@
     // art toon steps=3 shadow=0.3 · art engraving gap=5 levels=0.05,0.7 paper=#f6f2ea · art halftone size=6 angle=45 color
     // art stencil tones=3 c=#2a1f3d · art silhouette c=#000000 · art woodcut gap=8 · art comic old bw size=5 shadow=0.3
     // art manga size=4 tones=3 · art riso inks=#ff48b0,#00838a size=1 shift=1.5 · art sketch · art marker · art pencil
+    // art crayon · art chalk paper=#203028 · art watercolor
     // paper=#f6f2ea · art lines w=3 c=#000000 · art neon w=3 c=#ff40c0 (boil=número|screen e seed= nos que têm textura)
     function readArt(st) {
       const A = st.attrs, t = st.pos[0];

@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)); faltam `crayon`, `chalk` e `watercolor` (1.34.0) e as fases 5 e 6.
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)), e `crayon`, `chalk` e `watercolor` na 1.34.0 (ver [Decisões da 1.34.0](#decisões-da-1340-14112026) e [Como o giz e a aquarela ficaram](#como-o-giz-e-a-aquarela-ficaram-1340)); faltam as fases 5 e 6.
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -96,6 +96,13 @@ art cutout boil=0
 - **O fundo no estilo:** o fundo do `canvas` é pintado no estilo (as passadas do marcador, o lápis); com `bg=none`, o papel aparece.
 - **Detalhes:** o `marker` tem os brilhos de caneta gel, mas não a mancha rosa do protótipo; o `lines` e o `neon` também têm `paper=` (e `boil=` e `seed=` avisam, porque não há textura); os textos e as partículas saem como sempre.
 
+### Decisões da 1.34.0 (14/11/2026)
+
+- **Giz no quadro (`chalk`):** cada forma vira giz da cor dela, mais clara, e mais cheio onde a cor é mais clara; as cores escuras ficam quase só o quadro, com o contorno em giz branco. O quadro é verde-escuro por padrão; `paper=` muda.
+- **Giz de cera (`crayon`):** passadas de vai-e-vem, numa direção sorteada para cada forma, presa a ela (anda e gira com o osso).
+- **Aquarela (`watercolor`):** o contorno fica como uma linha fina de caneta, um pouco irregular, por cima ("caneta e aguada"), e a mancha de cor vaza um pouco para fora da linha.
+- **Ferve:** o `crayon` e o `chalk` fervem a cada 2 quadros (`boil=2`); a `watercolor` fica parada (`boil=0`).
+
 ## Como a fase 1 ficou (1.30.0)
 
 O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
@@ -142,7 +149,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#as-combinações-de-
 
 ## Como os estilos de traço ficaram (1.33.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço-sketch-marker-pencil-lines-e-neon), mais as escolhas feitas no caminho.
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço), mais as escolhas feitas no caminho.
 
 - **O passe `stroke`:** o estilo recebe cada forma fechada (o preenchimento, o contorno e o contorno de cada buraco) e cada traço aberto, na ordem do desenho, com os recortes das camadas, e pinta do jeito dele. Ele recebe o caminho, os pontos, a caixa, as cores prontas, o osso (para a textura andar com a forma) e um número da forma (para o sorteio). As guias e as formas desenhando aos poucos (`draw=`) saem como sempre.
 - **O brilho do `emit=`** é feito como uma sombra colorida; no passe `stroke`, ele sai uma vez só, antes do estilo (senão cada passada do estilo somaria o brilho). No `lines`, sai sem ele.
@@ -155,6 +162,18 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço
 - **`lines`:** o papel em cada forma e o contorno por cima; o traço com mais de 3 vezes a espessura vira o contorno dele (o corpo crescido em 8 direções, e o corpo de novo em papel por cima); até 1,2 vez, fica como é; no meio, uma linha só no centro.
 - **`neon`:** a cor de cada forma (a do preenchimento ou a da `ink`) com a saturação no mínimo 0,75 e a claridade entre 0,58 e 0,68; o miolo a 70% do caminho até o branco; o brilho é o desenho borrado (7 e 2,5 unidades) somado por cima.
 - **Tempo** (escala 1): no Cavaleiro (800×640), de 4 a 22 ms (`pencil`, uns 45); na noite (com luzes), de 30 a 90 ms; no cenário (1920×1080), de 5 a 110 ms.
+
+## Como o giz e a aquarela ficaram (1.34.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#giz-de-cera-giz-e-aquarela-art-crayon-art-chalk-e-art-watercolor), mais as escolhas feitas no caminho.
+
+- **Como o `pencil`:** os três pintam em dois passes. No primeiro, a cor lisa (e a faixa de sombra); depois, ponto a ponto, ela vira a textura do estilo; no segundo passe, por cima, os contornos e os traços finos.
+- **As passadas** (`crayon` e `chalk`) usam o azulejo de hachura do `pencil`, com traços mais largos e mais compridos, em duas famílias quase na mesma direção (a ida e a volta). O azulejo ganhou um terceiro canal: os riscos secos, um ruído comprido ao longo de cada traço (onde o giz pulou). A direção de cada forma vem de um giro novo no passe `tex` (`turn`), sorteado pelo número da forma.
+- **`crayon`:** a força da cor (o quanto ela se afasta do papel) alarga as passadas; o grão do papel, parado na tela, deixa pontinhos claros, mais onde a pressão é pouca; onde a pressão é pouca, um véu leve de cera (senão a cor clara vira uma chuva de riscos). Na borda de cada forma, uma faixa da cor multiplicada por dentro (a cera junta). O contorno: a linha grossa e tremida, com o grão.
+- **`chalk`:** a quantidade de giz vem da claridade (o maior canal e a claridade, juntos), descontada a do quadro; a cor é a da forma 40% mais perto do branco. Uma imagem da cobertura das formas separa o fundo: nas formas, as passadas; no fundo, só pó em nuvens. O quadro tem o resto de giz apagado (nuvens bem leves). A primeira versão passava o fundo claro do Cavaleiro pelo mesmo giz das formas, e o quadro sumia sob listras.
+- **`watercolor`:** a cor multiplicada sobre o papel a 85%; na borda, do lado de fora, a aguada que vazou (uma faixa tremida a 70%, com a borda dura) e, do lado de dentro, a tinta que juntou (mais escura); a sombra é uma segunda aguada a 40%. A mancha desigual vem de um azulejo de ruído (preso à forma) somado a um ruído grande, parado na tela (com o azulejo sozinho, a repetição aparecia num céu grande). A granulação e o papel de aquarela ficam parados na tela.
+- **`bg=none`:** na 1.33.0, o `sketch`, o `marker` e o `pencil` pintavam o fundo branco da imagem quando o canvas não tinha `bg` (numa imagem; no filme, o papel já aparecia). Agora o papel aparece, como o guia dizia; só a referência do teste `estilo_pencil` mudou.
+- **Tempo** (escala 1): no Cavaleiro (800×640), de 80 a 100 ms; no cenário (1920×1080), de 170 a 200 ms (os ruídos grandes são calculados numa grade e misturados, para não pesar ponto a ponto).
 
 ## O que já existe
 
