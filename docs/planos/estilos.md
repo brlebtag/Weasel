@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)); faltam as fases 4 a 6.
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)); faltam `crayon`, `chalk` e `watercolor` (1.34.0) e as fases 5 e 6.
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -70,9 +70,9 @@ art cutout boil=0
 1. **1.30.0:** a linha `art`, os quatro níveis do filme, a chave Estilo, as exportações, `boil=` e `seed=`, e os estilos `pixel` e `ascii`.
 2. **1.31.0, tom (as bases):** `toon`, `halftone`, `engraving`, `stencil` e `silhouette`.
 3. **1.32.0, tom (as combinações):** `woodcut`, `comic`, `comic old`, `comic old bw`, `manga` e `riso`.
-4. **1.33.0, traço:** `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`.
-5. **1.34.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
-6. **1.35.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
+4. **1.33.0, traço (o passe forma por forma):** `sketch`, `marker`, `pencil`, `lines` e `neon`. **1.34.0, traço (os outros):** `crayon`, `chalk` e `watercolor`.
+5. **1.35.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
+6. **1.36.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
 
 ### Decisões da fase 2 (14/11/2026)
 
@@ -87,6 +87,14 @@ art cutout boil=0
 - **Mangá:** a retícula vem em poucos tons fixos (`tones=3`), como as folhas coladas à mão, e não com o ponto seguindo o tom.
 - **Risografia:** as tintas viram grão (pontinhos soltos sorteados), e não pontos em grade.
 - **Registro torto:** a opção `shift=` (padrão 1.5 unidades, na direção sorteada pelo `seed=`; `shift=0` deixa no lugar), na `comic old` e na `riso`.
+
+### Decisões da fase 4 (14/11/2026)
+
+- **Duas versões:** a fase de traço foi dividida em duas (acima). A 1.33.0 traz o passe que pinta forma por forma e os cinco estilos que só precisam dele; a 1.34.0, os que pedem textura de papel e tinta molhada.
+- **A luz entra por cima:** o estilo pinta o desenho sem luz; com `light` na cena, a luz vem depois, pela comparação entre o desenho com luz e sem luz.
+- **Ferve:** `boil=2` é o padrão do `sketch`, do `marker` e do `pencil`, como o desenho à mão animado quadro a quadro.
+- **O fundo no estilo:** o fundo do `canvas` é pintado no estilo (as passadas do marcador, o lápis); com `bg=none`, o papel aparece.
+- **Detalhes:** o `marker` tem os brilhos de caneta gel, mas não a mancha rosa do protótipo; o `lines` e o `neon` também têm `paper=` (e `boil=` e `seed=` avisam, porque não há textura); os textos e as partículas saem como sempre.
 
 ## Como a fase 1 ficou (1.30.0)
 
@@ -131,6 +139,22 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#as-combinações-de-
 - **`riso`:** a mistura das tintas é calculada no modelo da impressão (em cada canal, o papel vezes `1 − x·(1 − tinta)` de cada tinta), uma tinta por vez (com as outras paradas, a conta é exata), e guardada para cada cor. O quase papel (até 8% de tinta) fica papel. O grão é um ruído suave com um valor por célula de `size=`; uma tabela corrige o limiar para a cobertura sair certa. Cada tinta sai do lugar numa direção (a do `seed=` mais 1/3 de volta para cada tinta).
 - **Peças comuns:** a retícula de números inteiros, o ponto com o quase branco e o quase preto, a luz em degraus e o contorno medido pela diferença com e sem `ink` viraram funções da 1.31.0 que todos usam; as saídas da 1.31.0 continuam iguais.
 - **Tempo** (Cavaleiro, 800×640, escala 1): `comic` uns 35 ms; `manga`, `comic old bw` e `comic old` de 50 a 70 ms; `woodcut` uns 80 ms; `riso` de 70 a 110 ms. A noite (com luzes) leva de 140 a 230 ms.
+
+## Como os estilos de traço ficaram (1.33.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço-sketch-marker-pencil-lines-e-neon), mais as escolhas feitas no caminho.
+
+- **O passe `stroke`:** o estilo recebe cada forma fechada (o preenchimento, o contorno e o contorno de cada buraco) e cada traço aberto, na ordem do desenho, com os recortes das camadas, e pinta do jeito dele. Ele recebe o caminho, os pontos, a caixa, as cores prontas, o osso (para a textura andar com a forma) e um número da forma (para o sorteio). As guias e as formas desenhando aos poucos (`draw=`) saem como sempre.
+- **O brilho do `emit=`** é feito como uma sombra colorida; no passe `stroke`, ele sai uma vez só, antes do estilo (senão cada passada do estilo somaria o brilho). No `lines`, sai sem ele.
+- **A luz por cima:** onde a luz escurece (o desenho com luz mais escuro que sem luz, canal a canal), o ponto é multiplicado pela razão; onde clareia, ele anda para o branco na mesma proporção. A primeira tentativa multiplicava sempre, e o brilho da lanterna num céu escuro estourava num disco amarelo.
+- **A grossura** dos traços segue o tamanho do canvas (1 num canvas de 500 de largura ou altura, de 0,4 a 4).
+- **`sketch`:** a cor sai de 1 a 2 unidades do lugar, com o papel por cima a 28%; o fundo a 80%. Hachura a 45° em traços curtos onde a cor é escura (abaixo de 50% de claridade) e na faixa de sombra. O contorno: duas passadas tremidas (`#2b2a30`, ou a `ink` da forma quando ela é escura), começando num ponto sorteado e passando 7% do fim.
+- **`marker`:** a cor lisa a 60% e duas camadas de passadas no comprimento da caixa parada da forma, por cima (sem multiplicar, para o escuro não virar preto); a sombra é a cor multiplicada a 40%. O fundo: a cor a 72% e passadas largas da cor dele.
+- **`pencil`:** em dois passes. No primeiro, a cor lisa (e a faixa de sombra multiplicada); depois, ponto a ponto, ela vira hachura: um azulejo de 128 unidades guarda o quanto cada ponto está perto do meio de um traço, em duas famílias (a −60° e a cruzada, a 30°). As linhas têm direção inteira no azulejo, então ele se repete sem emenda; com a direção sem divisor comum, as linhas viram uma linha só que dá voltas no azulejo, cortada em traços de tamanhos diferentes (com o mesmo tamanho, os buracos se alinhavam e faziam faixas). O azulejo é preso a cada forma pelo passe `tex`. A força (o canal que mais se afasta do papel) alarga o traço e fecha a hachura; o grão do papel fica parado na tela. No segundo passe, por cima e sem hachura, os contornos e os traços finos (cada forma apaga o que ficou atrás dela).
+- **Por que o `pencil` não risca traço por traço:** a primeira versão riscava cada linha da hachura no canvas, como o `sketch`. Ficava bonita num canvas de 800, mas num de 1920 os traços ficavam grossos e a conta passava de meio segundo por quadro. Riscar muitas linhas num caminho só era ainda pior (10 vezes mais lento que uma por vez).
+- **`lines`:** o papel em cada forma e o contorno por cima; o traço com mais de 3 vezes a espessura vira o contorno dele (o corpo crescido em 8 direções, e o corpo de novo em papel por cima); até 1,2 vez, fica como é; no meio, uma linha só no centro.
+- **`neon`:** a cor de cada forma (a do preenchimento ou a da `ink`) com a saturação no mínimo 0,75 e a claridade entre 0,58 e 0,68; o miolo a 70% do caminho até o branco; o brilho é o desenho borrado (7 e 2,5 unidades) somado por cima.
+- **Tempo** (escala 1): no Cavaleiro (800×640), de 4 a 22 ms (`pencil`, uns 45); na noite (com luzes), de 30 a 90 ms; no cenário (1920×1080), de 5 a 110 ms.
 
 ## O que já existe
 

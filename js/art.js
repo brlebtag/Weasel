@@ -922,6 +922,735 @@
     return {};
   }
 
+  // ---------- estilos de traço (sketch, marker, pencil, lines, neon) ----------
+  // Pintam forma por forma, na ordem do desenho e com os recortes das camadas: o passe stroke (ver strokeInfo, no
+  // scene.js) chama o estilo para o preenchimento (fill), o contorno (ink) e os traços abertos (line) de cada forma.
+  // A textura (passadas, hachura, tremido) é sorteada por forma, pelo seed= e, com boil=N, de novo a cada N
+  // quadros; ela é feita no espaço parado da forma, então anda e gira com o osso (boil=screen: no da tela).
+  // A grossura dos traços segue o tamanho do canvas (U: 1 num canvas de 500).
+  const unitOf = (cv) => Math.min(4, Math.max(0.4, Math.max(cv.w, cv.h) / 500));
+  // sorteio: uma sequência de números de 0 a 1 a partir de uma semente
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), a | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const boilStep = (art, info) => (typeof art.boil === 'number' && art.boil > 0 ? Math.floor((info.frame || 0) / art.boil) : 0);
+  const seedOf = (art, step, it, salt) => (Math.imul(it.key ^ Math.imul(art.seed + 1, 7919), 2654435761) ^ Math.imul(step + 1, 104729) ^ Math.imul(salt + 1, 40503)) >>> 0;
+  // a cor (ou a cor do meio do degradê) de uma especificação de preenchimento
+  function specRGB(spec) {
+    if (!spec) return null;
+    if (typeof spec === 'string') return rgbOf(spec);
+    if (spec.kind === 'pat') return rgbOf(spec.c);
+    const st = spec.stops || [];
+    if (!st.length) return null;
+    const acc = [0, 0, 0];
+    let n = 0;
+    for (const s of st) { const c = rgbOf(s.c); if (c) { acc[0] += c[0]; acc[1] += c[1]; acc[2] += c[2]; n++; } }
+    return n ? acc.map((v) => v / n) : null;
+  }
+  const ptsOf = (flat) => { const p = []; for (let i = 0; i + 1 < flat.length; i += 2) p.push([flat[i], flat[i + 1]]); return p; };
+  // os pontos de uma linha a cada step unidades (closed: volta ao começo)
+  function resample(pts, closed, step) {
+    const P = closed ? pts.concat([pts[0]]) : pts, out = [];
+    let carry = 0;
+    for (let i = 0; i + 1 < P.length; i++) {
+      const a = P[i], b = P[i + 1], d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      let t = carry;
+      while (t < d) { out.push([a[0] + ((b[0] - a[0]) * t) / d, a[1] + ((b[1] - a[1]) * t) / d]); t += step; }
+      carry = t - d;
+    }
+    if (!closed && P.length) out.push(P[P.length - 1]);
+    return out;
+  }
+  // a normal (para fora, numa forma em sentido horário na tela) em cada ponto
+  function normals(pts, closed) {
+    const n = pts.length, out = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[closed ? (i - 1 + n) % n : Math.max(0, i - 1)], b = pts[closed ? (i + 1) % n : Math.min(n - 1, i + 1)];
+      const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      out.push([dy / l, -dx / l]);
+    }
+    return out;
+  }
+  // Uma passada de lápis: a linha tremida (amp, a cada wave unidades), começando num ponto sorteado e passando um
+  // pouco do fim (over, em fração do comprimento). shift: a distância para o lado (a borda de um traço largo).
+  function wobble(ctx, pts, closed, R, o) {
+    if (pts.length < 2) return;
+    const step = o.step || 2.5, q = resample(pts, closed, step), n = q.length;
+    if (n < 2) return;
+    const N = normals(q, closed), ph = R() * TAU, ph2 = R() * TAU, wl = o.wave / step, sh = o.shift || [];
+    const start = closed ? Math.floor(R() * n) : 0, len = closed ? Math.round(n * (1 + (o.over || 0))) : n;
+    ctx.beginPath();
+    for (let j = 0; j < len; j++) {
+      const i = (start + j) % n, s = o.shiftOf ? o.shiftOf(i) : 0;
+      const d = s + o.amp * (0.7 * Math.sin(ph + (j / wl) * TAU) + 0.3 * Math.sin(ph2 + (j / wl) * TAU * 2.7));
+      const x = q[i][0] + N[i][0] * d, y = q[i][1] + N[i][1] * d;
+      if (j) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // a parte do desenho que aparece no ctx (a caixa da forma, menos o que fica fora da imagem), com uma folga
+  function viewRect(ctx, box, pad) {
+    let x0 = box.x - pad, y0 = box.y - pad, x1 = box.x + box.w + pad, y1 = box.y + box.h + pad;
+    const T = ctx.getTransform(), det = T.a * T.d - T.b * T.c;
+    if (det) {
+      const w = ctx.canvas.width, h = ctx.canvas.height, xs = [], ys = [];
+      for (const [px, py] of [[0, 0], [w, 0], [0, h], [w, h]]) {
+        const X = px - T.e, Y = py - T.f;
+        xs.push((T.d * X - T.c * Y) / det);
+        ys.push((-T.b * X + T.a * Y) / det);
+      }
+      x0 = Math.max(x0, Math.min(...xs) - pad); x1 = Math.min(x1, Math.max(...xs) + pad);
+      y0 = Math.max(y0, Math.min(...ys) - pad); y1 = Math.min(y1, Math.max(...ys) + pad);
+    }
+    return [x0, y0, x1, y1];
+  }
+  // As linhas de uma hachura no espaço parado da forma (ângulo deg, a cada sp unidades), levadas para o desenho.
+  // seg: cada linha em traços de seg unidades (com U), cada um um pouco fora da linha (wob, em fração de sp) e um
+  // pouco torto (tilt); sem seg, a linha atravessa a forma (tilt: o quanto ela entorta). Cada traço é riscado
+  // sozinho (muitos num caminho só deixam o canvas muito lento), e os de fora da imagem são pulados (os sorteios
+  // são os mesmos, para a textura não mudar quando a forma anda).
+  function hatchLines(ctx, it, art, deg, sp, R, o) {
+    const screen = art.boil === 'screen', f = screen ? (x, y) => [x, y] : it.map(), b = screen ? it.box : it.lbox();
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = Math.hypot(b.w, b.h) / 2 + sp;
+    const r = (deg * Math.PI) / 180, dx = Math.cos(r), dy = Math.sin(r), nx = -dy, ny = dx;
+    const jit = o.jitter || 0, off = R() * sp, U = unitOf(it.canvas), seg = o.seg ? o.seg * U : 0;
+    const V = viewRect(ctx, it.box, sp * 2 + (ctx.lineWidth || 1) * 2);
+    const draw = (x0, y0, x1, y1) => {
+      const p0 = f(x0, y0), p1 = f(x1, y1);
+      if (Math.max(p0[0], p1[0]) < V[0] || Math.min(p0[0], p1[0]) > V[2] || Math.max(p0[1], p1[1]) < V[1] || Math.min(p0[1], p1[1]) > V[3]) return;
+      ctx.beginPath();
+      ctx.moveTo(p0[0], p0[1]);
+      ctx.lineTo(p1[0], p1[1]);
+      ctx.stroke();
+    };
+    for (let t = -h + off; t <= h; t += sp * (1 + (R() - 0.5) * jit)) {
+      if (!seg) {
+        const a = (R() - 0.5) * (o.tilt || 0), ex = dx + nx * a, ey = dy + ny * a;
+        const ox = cx + nx * t, oy = cy + ny * t, l0 = h * (o.cut ? 1 - R() * o.cut : 1), l1 = h * (o.cut ? 1 - R() * o.cut : 1);
+        draw(ox - ex * l0, oy - ey * l0, ox + ex * l1, oy + ey * l1);
+        continue;
+      }
+      for (let s = -h - R() * seg; s < h; ) {
+        const L = seg * (0.6 + R() * 0.8), a = (R() - 0.5) * (o.tilt || 0), tt = t + (R() - 0.5) * (o.wob || 0) * sp;
+        const ex = dx + nx * a, ey = dy + ny * a, ox = cx + nx * tt + dx * s, oy = cy + ny * tt + dy * s;
+        draw(ox, oy, ox + ex * L, oy + ey * L);
+        s += L * (0.8 + R() * 0.3);
+      }
+    }
+  }
+  // a faixa de sombra (a forma menos ela mesma empurrada para o light= do canvas): recorta o ctx nela.
+  // Devolve false nas formas quase do tamanho do canvas (o chão, o céu), que ficam sem.
+  function clipBand(ctx, it, k) {
+    const bb = it.box, cv = it.canvas;
+    if (bb.w >= cv.w * 0.9 || bb.h >= cv.h * 0.9) return false;
+    const l = it.light, ll = Math.hypot(l[0], l[1]) || 1, lx = l[0] / ll, ly = l[1] / ll;
+    const d = k * (Math.abs(lx) * bb.w + Math.abs(ly) * bb.h);
+    if (d < 0.25) return false;
+    ctx.clip(it.path);
+    ctx.translate(lx * d, ly * d);
+    ctx.clip(inversePath(it.path), 'evenodd');
+    ctx.translate(-lx * d, -ly * d);
+    return true;
+  }
+  function inversePath(path) {
+    const p = new Path2D();
+    p.rect(-1e5, -1e5, 2e5, 2e5);
+    p.addPath(path);
+    return p;
+  }
+  // o contorno de um traço largo: as duas bordas (meia largura para cada lado)
+  function lineEdges(it) {
+    const pts = ptsOf(it.poly), ws = it.ws;
+    return { pts, half: (i, n) => (ws ? ws[Math.min(ws.length - 1, Math.round((i / Math.max(1, n - 1)) * (ws.length - 1)))] : it.w) / 2 };
+  }
+  // O traço aberto desenhado como um contorno (a borda do corpo dele, de lw de largura): o corpo em c, crescido
+  // em 8 direções, e o corpo de novo em fill por cima.
+  function outlineBody(ctx, it, c, fill, lw) {
+    ctx.save();
+    ctx.fillStyle = ctx.strokeStyle = c;
+    for (let i = 0; i < 8; i++) {
+      const a = (i * TAU) / 8;
+      ctx.save();
+      ctx.translate(Math.cos(a) * lw, Math.sin(a) * lw);
+      it.body(ctx);
+      ctx.restore();
+    }
+    ctx.fillStyle = ctx.strokeStyle = fill;
+    it.body(ctx);
+    ctx.restore();
+  }
+
+  // ---------- lines (só o contorno, como livro de colorir) ----------
+  // As cores viram papel (cada forma esconde o que está atrás dela) e cada forma ganha o contorno, em c= (a ink),
+  // com a espessura w= (sem w=, a do contorno da forma). O fundo do canvas vira papel.
+  function linesPaint(art, info) {
+    const c = art.c || firstInk(info), pp = art.paper || '#ffffff';
+    return {
+      glow: false,
+      fill(ctx, it) { ctx.fillStyle = pp; ctx.fill(it.path); },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), w = art.w || (it.hasInk && it.ink > 0 ? it.ink : 2 * U);
+        ctx.save();
+        ctx.strokeStyle = c;
+        ctx.lineWidth = w;
+        ctx.lineJoin = 'round';
+        ctx.stroke(it.path);
+        ctx.restore();
+      },
+      line(ctx, it) {
+        // o traço largo (um braço, uma perna) vira o contorno dele; o fino, uma linha só, no meio
+        const U = unitOf(it.canvas), lw = art.w || 2 * U, wmax = it.ws ? Math.max(...it.ws) : it.w;
+        if (wmax > lw * 3) outlineBody(ctx, it, c, pp, lw);
+        else if (wmax <= lw * 1.2) { ctx.save(); ctx.fillStyle = ctx.strokeStyle = c; it.body(ctx); ctx.restore(); }
+        else {
+          ctx.save();
+          ctx.strokeStyle = c;
+          ctx.lineWidth = lw;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          const p = it.poly;
+          ctx.beginPath();
+          for (let i = 0; i + 1 < p.length; i += 2) { if (i) ctx.lineTo(p[i], p[i + 1]); else ctx.moveTo(p[i], p[i + 1]); }
+          ctx.stroke();
+          ctx.restore();
+        }
+        return true;
+      },
+    };
+  }
+  function linesDraw(ctx, base, g, src, art, info, m) {
+    const C = work('art_c', g.Wd, g.Hd);
+    if (src.bg) { C.ctx.fillStyle = art.paper || '#ffffff'; C.ctx.fillRect(0, 0, g.Wd, g.Hd); }
+    C.ctx.save();
+    src.content(C.ctx, m, { unlit: true, stroke: linesPaint(art, info) });
+    C.ctx.restore();
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- neon ----------
+  // Só o contorno, na cor de cada forma (c=: uma cor só), mais clara e mais forte, com um miolo quase branco e um
+  // brilho em volta, num fundo escuro (paper=). Cada forma esconde o que está atrás dela.
+  function hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    if (mx === mn) return [0, 0, l];
+    const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    const h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h / 6, s, l];
+  }
+  function rgbHsl(h, s, l) {
+    const f = (n) => { const k = (n + h * 12) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); };
+    return [f(0), f(8), f(4)];
+  }
+  const hexOf = (c) => '#' + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  function neonOf(rgb) {
+    const [h, s, l] = hsl(rgb[0], rgb[1], rgb[2]);
+    return rgbHsl(h, Math.max(s, 0.75), Math.min(0.68, Math.max(l, 0.58)));
+  }
+  function neonPaint(art, info) {
+    const pp = art.paper || '#0b0a14', one = art.c ? rgbOf(art.c) : null;
+    const tube = (ctx, col, w, draw) => {
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = ctx.fillStyle = hexOf(col);
+      ctx.lineWidth = w;
+      draw(w, hexOf(col));
+      // o miolo, quase branco
+      const core = col.map((v) => v + (255 - v) * 0.7);
+      ctx.strokeStyle = ctx.fillStyle = hexOf(core);
+      ctx.lineWidth = w * 0.4;
+      draw(w * 0.4, hexOf(core));
+      ctx.restore();
+    };
+    return {
+      fill(ctx, it) { ctx.fillStyle = pp; ctx.fill(it.path); },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), col = one || neonOf(specRGB(it.fillSpec) || (it.inkc ? specRGB(it.inkc) : null) || [255, 64, 192]);
+        tube(ctx, col, art.w || 2.5 * U, () => ctx.stroke(it.path));
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas), lw = art.w || 2.5 * U, col = one || neonOf(specRGB(it.lineSpec) || [255, 64, 192]);
+        const wide = (it.ws ? Math.max(...it.ws) : it.w) > lw * 2.5;
+        tube(ctx, col, lw, (w, c) => { if (wide) outlineBody(ctx, it, c, pp, w); else it.body(ctx); });
+        return true;
+      },
+    };
+  }
+  // o desenho borrado (r pontos), numa imagem de trabalho: com o filter do canvas quando ele existe; sem ele,
+  // reduzindo e aumentando de volta aos poucos (metade de cada vez), com suavização
+  function soften(cv, r, name) {
+    const O = work(name, cv.width, cv.height);
+    if (W.scene && W.scene.canFilter && W.scene.canFilter()) {
+      O.ctx.filter = `blur(${r.toFixed(1)}px)`;
+      O.ctx.drawImage(cv, 0, 0);
+      O.ctx.filter = 'none';
+      return O.canvas;
+    }
+    let src = cv, w = cv.width, h = cv.height, i = 0;
+    const steps = [];
+    while (w > 2 && h > 2 && (cv.width / w) * 1.2 < r) {
+      w = Math.max(1, Math.round(w / 2));
+      h = Math.max(1, Math.round(h / 2));
+      const S = work('art_soft' + i++, w, h);
+      S.ctx.imageSmoothingEnabled = true;
+      S.ctx.imageSmoothingQuality = 'high';
+      S.ctx.drawImage(src, 0, 0, w, h);
+      steps.push(S);
+      src = S.canvas;
+    }
+    for (let j = steps.length - 2; j >= 0; j--) {
+      const S = steps[j];
+      S.ctx.clearRect(0, 0, S.canvas.width, S.canvas.height);
+      S.ctx.drawImage(src, 0, 0, S.canvas.width, S.canvas.height);
+      src = S.canvas;
+    }
+    O.ctx.imageSmoothingEnabled = true;
+    O.ctx.imageSmoothingQuality = 'high';
+    O.ctx.drawImage(src, 0, 0, cv.width, cv.height);
+    return O.canvas;
+  }
+  function neonDraw(ctx, base, g, src, art, info, m) {
+    const C = work('art_c', g.Wd, g.Hd);
+    if (src.bg) { C.ctx.fillStyle = art.paper || '#0b0a14'; C.ctx.fillRect(0, 0, g.Wd, g.Hd); }
+    C.ctx.save();
+    src.content(C.ctx, m, { unlit: true, stroke: neonPaint(art, info) });
+    C.ctx.restore();
+    // o brilho: o desenho borrado (largo e estreito), somado por cima
+    const k = 1 / g.cw, U = bgUnit(g);
+    C.ctx.save();
+    C.ctx.globalCompositeOperation = 'lighter';
+    C.ctx.globalAlpha = 0.9;
+    C.ctx.drawImage(soften(C.canvas, 7 * k * U, 'art_glow'), 0, 0);
+    C.ctx.globalAlpha = 0.7;
+    C.ctx.drawImage(soften(C.canvas, 2.5 * k * U, 'art_glow2'), 0, 0);
+    C.ctx.restore();
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- os desenhados à mão (sketch, marker, pencil) ----------
+  // O fundo do canvas é pintado no estilo (P.bg), as formas por cima (o passe stroke), o pós (o grão do lápis) e,
+  // com luz na cena, a luz entra por cima, comparando o desenho com luz (l) e sem luz (u), canal a canal: onde a
+  // luz escurece, o ponto é multiplicado por l/u; onde ela clareia, ele anda para o branco na mesma proporção que
+  // u andou até l (assim o brilho de uma lâmpada num céu escuro fica suave, sem estourar).
+  function handDraw(make, post) {
+    return (ctx, base, g, src, art, info, m) => {
+      const P = make(art, info, g), pp = rgbOf(art.paper || PAPER);
+      const C = work('art_c', g.Wd, g.Hd);
+      const B0 = src.bg ? bgShot(g, src, m) : null;
+      if (B0) {
+        C.ctx.fillStyle = hexOf(pp);
+        C.ctx.fillRect(0, 0, g.Wd, g.Hd);
+        C.ctx.save();
+        P.bg(C.ctx, B0, g, m);
+        C.ctx.restore();
+      }
+      C.ctx.save();
+      src.content(C.ctx, m, { unlit: true, stroke: P });
+      C.ctx.restore();
+      let ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data;
+      if (post) post(c, g, art, info, pp, src, m);
+      if (P.inkPass) {
+        // o segundo passe (os contornos, por cima do primeiro já pronto)
+        const I = work('art_ink', g.Wd, g.Hd);
+        I.ctx.save();
+        src.content(I.ctx, m, { unlit: true, stroke: P.inkPass });
+        I.ctx.restore();
+        C.ctx.putImageData(ci, 0, 0);
+        C.ctx.drawImage(I.canvas, 0, 0);
+        ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd);
+        c = ci.data;
+      }
+      if (info.lit !== false) {
+        const l = shot('art_l', g, src, m, undefined, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+        const u = shot('art_u', g, src, m, { unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+        for (let o = 0; o < c.length; o += 4) {
+          if (!c[o + 3] || !u[o + 3]) continue;
+          for (let ch = 0; ch < 3; ch++) {
+            const uc = u[o + ch], lc = l[o + ch], cc = c[o + ch];
+            c[o + ch] = lc >= uc ? cc + ((lc - uc) * (255 - cc)) / Math.max(1, 255 - uc) : (cc * lc) / uc;
+          }
+        }
+      }
+      C.ctx.putImageData(ci, 0, 0);
+      blit(ctx, base, g, C.canvas);
+      return {};
+    };
+  }
+  // a unidade dos traços no fundo (a área de trabalho no lugar do canvas)
+  const bgUnit = (g) => unitOf({ w: g.gw * g.cw, h: g.gh * g.ch });
+  // o fundo (B0, já na imagem de trabalho) colorindo uma máscara de traços desenhada por draw(x) em pontos
+  function bgMasked(ctx, B0, g, draw, alpha, op) {
+    const M = work('art_mask', g.Wd, g.Hd);
+    M.ctx.save();
+    draw(M.ctx);
+    M.ctx.restore();
+    M.ctx.globalCompositeOperation = 'source-in';
+    M.ctx.drawImage(B0, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (op) ctx.globalCompositeOperation = op;
+    ctx.drawImage(M.canvas, 0, 0);
+    ctx.restore();
+  }
+  // a claridade de uma cor de preenchimento (de 0, preto, a 1, branco)
+  const specLum = (spec) => { const c = specRGB(spec); return c ? lum3(c[0], c[1], c[2]) : 0.5; };
+
+  // sketch (esboço): a cor mais clara e um pouco fora do lugar, como marcador; cada forma passada duas vezes a
+  // lápis, tremida, começando num ponto qualquer e passando um pouco do fim; hachura a lápis no escuro e no lado
+  // longe da luz.
+  const GRAPHITE = '#2b2a30';
+  function sketchPaint(art, info) {
+    const step = boilStep(art, info), pp = art.paper || PAPER;
+    const pencilLines = (ctx, it, pts, closed, w, col, salt, shiftOf) => {
+      const U = unitOf(it.canvas);
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = w;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      for (let p = 0; p < 2; p++) {
+        ctx.globalAlpha = 0.78;
+        wobble(ctx, pts, closed, rng(seedOf(art, step, it, salt + p)), { amp: 0.7 * U, wave: 22 * U, over: 0.07, step: 2 * U, shiftOf });
+      }
+      ctx.restore();
+    };
+    return {
+      bg(ctx, B0) { ctx.globalAlpha = 0.8; ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), R = rng(seedOf(art, step, it, 1)), a = R() * TAU, s = (1 + R()) * U;
+        ctx.save();
+        ctx.translate(Math.cos(a) * s, Math.sin(a) * s);
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.globalAlpha *= 0.28;
+        ctx.fillStyle = pp;
+        ctx.fill(it.path);
+        ctx.restore();
+        // a hachura a lápis: no escuro e na faixa de sombra
+        const dark = cl((0.5 - specLum(it.fillSpec)) / 0.4);
+        ctx.save();
+        ctx.strokeStyle = GRAPHITE;
+        ctx.lineWidth = 0.6 * U;
+        ctx.lineCap = 'round';
+        if (dark > 0.05) {
+          ctx.save();
+          ctx.clip(it.path);
+          ctx.globalAlpha *= 0.25 + 0.4 * dark;
+          hatchLines(ctx, it, art, 45, (5.5 - 2.5 * dark) * U, rng(seedOf(art, step, it, 2)), { jitter: 0.5, tilt: 0.08, seg: 28, wob: 0.35 });
+          ctx.restore();
+        }
+        ctx.save();
+        if (clipBand(ctx, it, 0.3)) {
+          ctx.globalAlpha *= 0.45;
+          hatchLines(ctx, it, art, 45, 3.2 * U, rng(seedOf(art, step, it, 3)), { jitter: 0.5, tilt: 0.08, seg: 22, wob: 0.35 });
+        }
+        ctx.restore();
+        ctx.restore();
+      },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), w = it.hasInk && it.ink > 0 ? Math.min(2.2 * U, Math.max(0.8 * U, it.ink * 0.3)) : 0.8 * U;
+        const col = it.hasInk && typeof it.inkStyle === 'string' && specLum(it.inkStyle) < 0.4 ? it.inkStyle : GRAPHITE;
+        pencilLines(ctx, it, ptsOf(it.poly), true, w, col, it.hole ? 20 : 10);
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas), R = rng(seedOf(art, step, it, 1)), a = R() * TAU, s = (1 + R()) * U;
+        ctx.save();
+        ctx.translate(Math.cos(a) * s, Math.sin(a) * s);
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        ctx.globalAlpha *= 0.8;
+        it.body(ctx);
+        ctx.restore();
+        const E = lineEdges(it), wmax = it.ws ? Math.max(...it.ws) : it.w;
+        if (wmax > 3 * U) {
+          const n = resample(E.pts, false, 2 * U).length;
+          pencilLines(ctx, it, E.pts, false, 0.8 * U, GRAPHITE, 10, (i) => E.half(i, n));
+          pencilLines(ctx, it, E.pts, false, 0.8 * U, GRAPHITE, 30, (i) => -E.half(i, n));
+        } else pencilLines(ctx, it, E.pts, false, Math.max(0.6 * U, Math.min(wmax, 1.6 * U)), GRAPHITE, 10);
+        return true;
+      },
+    };
+  }
+
+  // marker (marcador): o papel fica limpo sob cada cor; uma camada lisa e passadas largas e irregulares no
+  // comprimento da forma, que escurecem onde se cruzam; a cor 1 ou 2 pontos fora do lugar; a sombra numa segunda
+  // passada do lado longe da luz; o contorno em nanquim e os brilhos de caneta gel nas formas grandes.
+  function markerPaint(art, info) {
+    const step = boilStep(art, info), pp = art.paper || PAPER;
+    // as passadas no espaço parado da forma, no sentido do comprimento dela
+    const strokes = (ctx, it, R, wide, a0) => {
+      const b = art.boil === 'screen' ? it.box : it.lbox();
+      const deg = (b.w >= b.h ? 0 : 90) + (R() - 0.5) * 16;
+      const U = unitOf(it.canvas), pw = Math.max(3 * U, Math.min(wide, 14 * U));
+      ctx.lineWidth = pw;
+      ctx.lineCap = 'round';
+      const R2 = rng(seedOf(art, step, it, 7));
+      for (let i = 0; i < 2; i++) {
+        ctx.globalAlpha = a0 * (0.25 + R2() * 0.25);
+        hatchLines(ctx, it, art, deg + (R2() - 0.5) * 6, pw * (0.75 + R2() * 0.5), R2, { jitter: 0.6, tilt: 0.05, cut: 0.12 });
+      }
+    };
+    return {
+      bg(ctx, B0, g) {
+        ctx.globalAlpha = 0.72;
+        ctx.drawImage(B0, 0, 0);
+        const R = rng(seedOf(art, 0, { key: 99 }, 0)), pw = (18 * bgUnit(g)) / g.cw;
+        bgMasked(ctx, B0, g, (x) => {
+          x.strokeStyle = '#ffffff';
+          x.lineCap = 'round';
+          x.lineWidth = pw;
+          for (let y = -pw; y < g.Hd + pw; y += pw * (0.6 + R() * 0.5)) {
+            x.globalAlpha = 0.2 + R() * 0.3;
+            x.beginPath();
+            x.moveTo(-pw - R() * pw * 4, y + (R() - 0.5) * pw);
+            x.lineTo(g.Wd + pw - R() * pw * 4, y + (R() - 0.5) * pw);
+            x.stroke();
+          }
+        }, 1);
+      },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), R = rng(seedOf(art, step, it, 1)), a = R() * TAU, s = (0.8 + R() * 0.8) * U;
+        const bb = it.box, wide = Math.min(bb.w, bb.h) / 2.5;
+        ctx.save();
+        ctx.translate(Math.cos(a) * s, Math.sin(a) * s);
+        // o papel limpo, a camada lisa e as passadas
+        ctx.fillStyle = pp;
+        ctx.fill(it.path);
+        ctx.clip(it.path);
+        const a0 = ctx.globalAlpha;
+        ctx.globalAlpha = 0.6 * a0;
+        ctx.fillStyle = it.fillStyle;
+        ctx.fillRect(bb.x - 4 * U, bb.y - 4 * U, bb.w + 8 * U, bb.h + 8 * U);
+        ctx.strokeStyle = it.fillStyle;
+        strokes(ctx, it, R, wide, a0);
+        ctx.restore();
+        // a sombra: uma segunda passada da mesma cor (multiplicada, fica mais escura)
+        ctx.save();
+        ctx.translate(Math.cos(a) * s, Math.sin(a) * s);
+        if (clipBand(ctx, it, 0.3)) {
+          const a0 = ctx.globalAlpha;
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.globalAlpha = 0.4 * a0;
+          ctx.fillStyle = it.fillStyle;
+          ctx.fillRect(bb.x - 4 * U, bb.y - 4 * U, bb.w + 8 * U, bb.h + 8 * U);
+          ctx.strokeStyle = it.fillStyle;
+          strokes(ctx, it, R, wide * 0.7, a0 * 0.8);
+        }
+        ctx.restore();
+      },
+      ink(ctx, it) {
+        if (it.hasInk) it.drawInk();
+        if (it.hole) return;
+        // os brilhos de caneta gel: um risquinho e um ponto do lado da luz, nas formas grandes e não muito claras
+        const U = unitOf(it.canvas), bb = it.box, sz = Math.min(bb.w, bb.h), cv = it.canvas;
+        if (sz < Math.min(cv.w, cv.h) * 0.08 || bb.w >= cv.w * 0.9 || bb.h >= cv.h * 0.9 || specLum(it.fillSpec) > 0.85) return;
+        const l = it.light, ll = Math.hypot(l[0], l[1]) || 1, lx = -l[0] / ll, ly = -l[1] / ll, tx = -ly, ty = lx;
+        const cx = bb.x + bb.w / 2 + lx * bb.w * 0.3, cy = bb.y + bb.h / 2 + ly * bb.h * 0.3, r = sz * 0.12;
+        ctx.save();
+        ctx.clip(it.path);
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = ctx.fillStyle = '#ffffff';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = Math.max(1.2 * U, sz * 0.025);
+        ctx.beginPath();
+        ctx.moveTo(cx - tx * r, cy - ty * r);
+        ctx.quadraticCurveTo(cx + lx * r * 0.25, cy + ly * r * 0.25, cx + tx * r * 0.4, cy + ty * r * 0.4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx + tx * r * 0.85, cy + ty * r * 0.85, ctx.lineWidth * 0.6, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas), R = rng(seedOf(art, step, it, 1)), a = R() * TAU, s = (0.8 + R() * 0.8) * U;
+        ctx.save();
+        ctx.translate(Math.cos(a) * s, Math.sin(a) * s);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.globalAlpha *= 0.85;
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+
+  // pencil (lápis de cor): em dois passes. No primeiro, o papel limpo sob cada cor, a cor lisa e, na faixa do lado
+  // longe da luz, mais escura; os traços largos (braços, pernas) também. Depois, ponto a ponto, a cor vira hachura
+  // de lápis (pencilPost): traços finos e inclinados e uma camada leve cruzada, mais fechados onde a cor é mais
+  // forte, e o grão do papel. No segundo passe (inkPass), por cima e sem hachura: o contorno, um lápis tremido
+  // (sem contorno, uma linha leve da cor da forma), e os traços finos; cada forma apaga ali o que ficou atrás dela.
+  function pencilPaint(art, info) {
+    const step = boilStep(art, info), pp = art.paper || PAPER;
+    const thin = (it) => (it.ws ? Math.max(...it.ws) : it.w) <= 2.2 * unitOf(it.canvas);
+    const erase = (ctx, draw) => { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = ctx.strokeStyle = '#000000'; draw(); ctx.restore(); };
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { erase(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) {
+        const U = unitOf(it.canvas), has = it.hasInk && it.ink > 0;
+        const own = has ? null : specRGB(it.fillSpec);
+        if (!has && !own) return;
+        ctx.save();
+        ctx.strokeStyle = has ? it.inkStyle : hexOf(own.map((v) => v * 0.72));
+        ctx.lineWidth = has ? Math.min(2.6 * U, Math.max(0.9 * U, it.ink * 0.4)) : 0.7 * U;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.globalAlpha *= has ? 0.92 : 0.6;
+        wobble(ctx, ptsOf(it.poly), true, rng(seedOf(art, step, it, it.hole ? 21 : 11)), { amp: 0.35 * U, wave: 30 * U, over: 0.03, step: 2 * U });
+        ctx.restore();
+      },
+      line(ctx, it) {
+        if (thin(it)) { ctx.save(); ctx.globalAlpha *= 0.9; ctx.fillStyle = ctx.strokeStyle = it.lineStyle; it.body(ctx); ctx.restore(); }
+        else erase(ctx, () => it.body(ctx));
+        return true;
+      },
+    };
+    return {
+      inkPass,
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), bb = it.box, a0 = ctx.globalAlpha;
+        ctx.save();
+        ctx.fillStyle = pp;
+        ctx.fill(it.path);
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.restore();
+        // a sombra: mais força (a cor multiplicada por ela mesma)
+        ctx.save();
+        if (clipBand(ctx, it, 0.3)) {
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.globalAlpha = a0 * 0.5;
+          ctx.fillStyle = it.fillStyle;
+          ctx.fillRect(bb.x - 4 * U, bb.y - 4 * U, bb.w + 8 * U, bb.h + 8 * U);
+        }
+        ctx.restore();
+      },
+      ink() {},
+      line(ctx, it) {
+        if (!thin(it)) { ctx.save(); ctx.fillStyle = ctx.strokeStyle = it.lineStyle; it.body(ctx); ctx.restore(); }
+        return true;
+      },
+    };
+  }
+  // O azulejo da hachura do lápis (TP unidades de lado, hr pontos por unidade, os mesmos da imagem de trabalho: um
+  // azulejo mais fino, reduzido no desenho, faria listras de interferência): cada ponto guarda o quanto está
+  // perto do meio de um traço (R: a hachura inclinada; G: a cruzada). As linhas têm direção inteira (a, b) no
+  // azulejo, então ele se repete sem emenda; e, com a e b sem divisor comum, as linhas do azulejo são uma linha
+  // só, que dá voltas nele: ela é cortada em traços, cada um com a sua força, um pouco fora do lugar e torto,
+  // afinando nas pontas.
+  const pencilTiles = new Map();
+  const gcd = (x, y) => { x = Math.abs(x); y = Math.abs(y); while (y) [x, y] = [y, x % y]; return x; };
+  // m, n com a·m + b·n = 1
+  function bezout(a, b) {
+    let [r0, r1, s0, s1, t0, t1] = [a, b, 1, 0, 0, 1];
+    while (r1) { const q = Math.floor(r0 / r1); [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; [t0, t1] = [t1, t0 - q * t1]; }
+    return r0 < 0 ? [-s0, -t0] : [s0, t0];
+  }
+  function hatchFamily(deg, sp, seg, salt) {
+    const r = ((deg + 90) * Math.PI) / 180, N = TP / sp;
+    const a = Math.round(N * Math.cos(r));
+    let b = Math.round(N * Math.sin(r));
+    while (gcd(a, b) !== 1) b += b >= 0 ? 1 : -1;
+    const len = Math.hypot(a, b), [m0, n0] = bezout(a, b), L = TP * len, cells = Math.max(1, Math.round(L / seg));
+    return { a, b, len, spr: TP / len, shift: ((-b * m0 + a * n0) * TP) / len, L, cells, cell: L / cells, salt };
+  }
+  // O valor (0 a 1) da família F no ponto (x, y) do azulejo, em unidades: 1 no meio de um traço, 0 longe. As
+  // linhas ondulam (um ruído que também se repete a cada TP), e cada traço sai um pouco do lugar e entorta; por
+  // isso o ponto olha a linha mais perto e as duas vizinhas.
+  function hatchAt(F, x, y) {
+    const t = (F.a * x + F.b * y) / TP + 0.3 * (noiseP(x / 32, y / 32, TP / 32, F.salt + 7) - 0.5), k0 = Math.round(t);
+    let best = 0;
+    for (let k = k0 - 1; k <= k0 + 1; k++) {
+      let sAl = ((-F.b * x + F.a * y) / F.len - k * F.shift) % F.L;
+      if (sAl < 0) sAl += F.L;
+      // os traços têm tamanhos diferentes (o começo de cada um sai do lugar), senão os buracos entre eles se
+      // alinham de uma linha para a outra e fazem faixas
+      const at = (j) => (j + 0.8 * (rnd(((j % F.cells) + F.cells) % F.cells, F.salt + 4) - 0.5)) * F.cell;
+      let jj = Math.floor(sAl / F.cell);
+      if (sAl < at(jj)) jj--;
+      else if (sAl >= at(jj + 1)) jj++;
+      const j = ((jj % F.cells) + F.cells) % F.cells, len = at(jj + 1) - at(jj), pos = sAl - at(jj);
+      const gap = len * (0.03 + 0.1 * rnd(j, F.salt));
+      if (pos > len - gap) continue;
+      const u = pos / (len - gap), taper = Math.min(1, 0.3 + u / 0.12, 0.3 + (1 - u) / 0.12);
+      const off = (rnd(j, F.salt + 2) - 0.5) * 0.3 + (rnd(j, F.salt + 3) - 0.5) * 0.4 * (u - 0.5);
+      const v = (0.6 + 0.4 * rnd(j, F.salt + 1)) * taper * (1 - 2 * Math.abs(t - k - off));
+      if (v > best) best = v;
+    }
+    return best;
+  }
+  function pencilTile(sp1, sp2, seg, k) {
+    const n = Math.max(TP, Math.round(TP * k)), HR = n / TP, key = [sp1, sp2, seg, n].map((v) => v.toFixed(3)).join(',');
+    if (pencilTiles.has(key)) return pencilTiles.get(key);
+    // guarda poucos azulejos (cada tamanho de canvas e escala faz o seu)
+    if (pencilTiles.size > 6) pencilTiles.delete(pencilTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
+    const F1 = hatchFamily(-60, sp1, seg, 51), F2 = hatchFamily(30, sp2, seg * 0.8, 61);
+    for (let py = 0, o = 0; py < n; py++) {
+      for (let px = 0; px < n; px++, o += 4) {
+        const ux = (px + 0.5) / HR, uy = (py + 0.5) / HR;
+        D[o] = Math.round(255 * hatchAt(F1, ux, uy));
+        D[o + 1] = Math.round(255 * hatchAt(F2, ux, uy));
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: HR, spr1: F1.spr, spr2: F2.spr };
+    pencilTiles.set(key, T);
+    return T;
+  }
+  // A cor vira hachura (o azulejo, preso a cada forma pelo passe tex; no fundo, nos traços e com boil=screen,
+  // parado na tela) e ganha o grão do papel. A força (o quanto a cor se afasta do papel, no canal que mais
+  // escureceu) fecha a hachura: no escuro, ela vira cor cheia.
+  function pencilPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw, Up = Math.min(2, Math.max(1, bgUnit(g)));
+    const sp1 = Math.max(1.6 * Up, 1.8 / k);
+    const T = pencilTile(sp1, sp1 * 1.4, 26 * Up, k), off = texOff(art, info), n = T.n, td = T.data, HR = T.hr;
+    let tx = null;
+    if (art.boil !== 'screen') {
+      const X = work('art_tu', Wd, Hd);
+      X.ctx.save();
+      src.content(X.ctx, m, { tex: { tile: T.canvas, d: HR, px: k, off } });
+      X.ctx.restore();
+      tx = X.ctx.getImageData(0, 0, Wd, Hd).data;
+    }
+    const s1 = 2 / (T.spr1 * k), s2 = 2 / (T.spr2 * k), gs = Math.max(1, 0.9 * k);
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!c[o + 3]) continue;
+        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        if (f <= 0.01) continue;
+        let v1, v2;
+        if (tx && tx[o + 3] >= 128) { v1 = tx[o] / 255; v2 = tx[o + 1] / 255; } else {
+          let ix = Math.floor((px / k + off[0]) * HR) % n, iy = Math.floor((py / k + off[1]) * HR) % n;
+          if (ix < 0) ix += n;
+          if (iy < 0) iy += n;
+          const q = (iy * n + ix) * 4;
+          v1 = td[q] / 255; v2 = td[q + 1] / 255;
+        }
+        // o traço fica mais largo com a força (no escuro, quase fecha); a camada cruzada só aparece com força
+        const D = Math.min(1, f * 1.1);
+        const m1 = cl((v1 - (0.82 - 0.72 * D)) / s1 + 0.5), m2 = cl((v2 - (0.85 - 0.6 * D)) / s2 + 0.5) * 0.3 * D;
+        // o grão: onde a força é pouca, o lápis pula os buracos do papel; a cor fica num véu leve (base) entre os traços
+        const z = 0.6 * noiseP(px / gs, py / gs, 4096, 41) + 0.4 * rnd(px, py);
+        const base = 0.08 + 0.5 * D * D, mm = (base + (1 - base) * (1 - (1 - m1) * (1 - m2))) * cl((f * 1.6 + 0.25 - z) / 0.35) * 1.15;
+        c[o] = Math.max(0, pp[0] + (c[o] - pp[0]) * mm); c[o + 1] = Math.max(0, pp[1] + (c[o + 1] - pp[1]) * mm); c[o + 2] = Math.max(0, pp[2] + (c[o + 2] - pp[2]) * mm);
+      }
+    }
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -937,6 +1666,11 @@
     riso: tone(risoDraw, true),
     stencil: tone(stencilDraw, true),
     silhouette: tone(silhouetteDraw, false),
+    sketch: tone(handDraw(sketchPaint), true),
+    marker: tone(handDraw(markerPaint), true),
+    pencil: tone(handDraw(pencilPaint, pencilPost), true),
+    lines: tone(linesDraw, false),
+    neon: tone(neonDraw, true),
   };
   const heavy = (art) => !!(art && STYLES[art.style] && STYLES[art.style].heavy);
 
@@ -1022,7 +1756,7 @@
       if (a.color) p.push('color');
     } else if (a.style === 'stencil') {
       if (a.tones !== 3) p.push(`tones=${a.tones}`);
-    }
+    } else if ((a.style === 'lines' || a.style === 'neon') && a.w) p.push(`w=${a.w}`);
     if (a.c) p.push(`c=${a.c}`);
     if (a.shift !== undefined && a.shift !== 1.5) p.push(`shift=${a.shift}`);
     if (a.levels && (a.levels[0] !== 0 || a.levels[1] !== 1)) p.push(`levels=${a.levels.join(',')}`);

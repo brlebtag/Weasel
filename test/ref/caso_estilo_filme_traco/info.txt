@@ -1,0 +1,12 @@
+filme    320 × 180, 4 fps, 5s (20 quadros, 00:05:00), fundo #1d2b53
+art      sketch
+ambiente #8090b0 × 0.6
+luzes    lamp (point, #ffd9a0 × 1.3)
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   5
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  neon             00:01:00      1s      4 quadros  câmera 160,90 · art neon
+  misto            00:02:00      1s      4 quadros  câmera 160,90 · art de b: pencil
+  linhas           00:03:00      1s      4 quadros  câmera 160,90 · art lines
+  marcador         00:04:00      1s      4 quadros  câmera 160,90 · art marker

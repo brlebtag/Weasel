@@ -1773,7 +1773,8 @@
   // Passes dos estilos de arte (opts.pass): o mesmo desenho de outro jeito, para o estilo comparar.
   //   unlit: sem luz · noInk: sem o contorno (ink) · toon: { shadow, c }: a faixa de sombra de cada forma, do
   //   lado oposto ao light= do canvas · tex: { tile, d, px, off }: cada forma recebe a textura do estilo presa a
-  //   ela (sem luz, sem contorno, sem traços, textos, partículas nem efeitos de camada).
+  //   ela (sem luz, sem contorno, sem traços, textos, partículas nem efeitos de camada) · stroke: { fill, ink,
+  //   line }: o estilo pinta cada forma e cada traço, na ordem do desenho (ver strokeInfo).
   // Sem opts.pass, o desenho é o de sempre (e um drawScene de dentro herda o passe de quem chamou).
   let PASS = null;
   function drawScene(ctx, model, pose, opts) {
@@ -1892,6 +1893,19 @@
     ctx.shadowOffsetY = 0;
   }
   function glowOff(ctx) { ctx.shadowColor = 'rgba(0,0,0,0)'; ctx.shadowBlur = 0; }
+  // Passe stroke: só o brilho do emit= (a sombra colorida), uma vez, sem o desenho (ele vai para longe e a sombra
+  // volta para o lugar); depois o estilo pinta sem sombra (com ela, cada passada do estilo somaria o brilho).
+  function glowOnly(ctx, SP, draw) {
+    if (ctx.shadowBlur && SP.glow !== false) {
+      const T = ctx.getTransform(), D = 1e4;
+      ctx.save();
+      ctx.setTransform(T.a, T.b, T.c, T.d, T.e - D, T.f);
+      ctx.shadowOffsetX = D;
+      draw(ctx);
+      ctx.restore();
+    }
+    glowOff(ctx);
+  }
 
   // ---------- desenhar aos poucos (key forma.draw=0 … 1) ----------
   // Traços e contornos andam do começo ao fim; numa forma fechada, o preenchimento aparece no fim.
@@ -1994,11 +2008,15 @@
       const bb = L ? segsBox(g.segs) : null;
       const dp = dr < 1 ? drawParts(dr) : null;
       if (L && withInk) inkc = litColor(inkc, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2, true);
+      // passe stroke: o estilo pinta a forma (menos as guias e as formas desenhando aos poucos)
+      const SP = PASS && PASS.stroke && !layer.guide && !dp ? PASS.stroke : null;
+      const sinfo = SP ? strokeInfo(ctx, model, pose, el, g, true, { path, fill, ink, inkc, hasInk: ink > 0 && !!inkc && fin.style !== 'flat', alpha }) : null;
       if (cut) { ctx.save(); if (apart) clipOutEach(ctx, model, pose, el.cuts); else ctx.clip(inverse(cut), 'evenodd'); }
       if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
         const fa = dp ? alpha * dp.fill : alpha;
         ctx.globalAlpha = fa;
         if (tex) texFill(ctx, model, pose, el, g, path);
+        else if (SP) { glowOnly(ctx, SP, (x) => { x.fillStyle = sinfo.fillStyle; x.fill(path); }); SP.fill(ctx, sinfo); }
         else if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
         else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
         glowOff(ctx);
@@ -2035,7 +2053,7 @@
           ctx.strokeStyle = paint(ctx, model, pose, el, fill);
           if (q.length >= 4) strokePoly(ctx, q, 3 * (el.ws || 1), 'round');
         }
-      } else if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
+      } else if (SP) { if (part !== 'fill') { ctx.globalAlpha = alpha; SP.ink(ctx, sinfo); } } else if (withInk) drawInk(ctx, model, pose, g, el, ink, inkc);
       if (cut) {
         ctx.restore();
         // contorno dos buracos, só por dentro da forma; buracos que se cruzam: cada um por fora dos outros
@@ -2044,10 +2062,18 @@
             ctx.save();
             ctx.clip(path);
             if (h) clipOutEach(ctx, model, pose, el.cuts.filter((o) => o !== h));
-            ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
-            ctx.lineWidth = ink;
-            ctx.lineJoin = 'round';
-            ctx.stroke(h ? pathOf(geometry(model, pose, h)) : cut);
+            if (SP) {
+              // no passe stroke, o contorno de cada buraco é pintado pelo estilo
+              for (const c of h ? [h] : el.cuts) {
+                const hg = geometry(model, pose, c);
+                if (hg.segs.length) SP.ink(ctx, strokeInfo(ctx, model, pose, el, hg, true, { path: pathOf(hg), fill, ink, inkc, hasInk: true, alpha, hole: true }));
+              }
+            } else {
+              ctx.strokeStyle = paint(ctx, model, pose, el, inkc);
+              ctx.lineWidth = ink;
+              ctx.lineJoin = 'round';
+              ctx.stroke(h ? pathOf(geometry(model, pose, h)) : cut);
+            }
             ctx.restore();
           }
         }
@@ -2063,6 +2089,20 @@
     const pre = dr < 1 ? G.polyPrefix(flatOf(g), dr) : null;
     if (pre && pre.length < 4) { glowOff(ctx); return; }
     if (el.type === 'line') {
+      const body = (x) => {
+        x.lineWidth = w;
+        x.lineCap = 'butt';
+        x.lineJoin = 'round';
+        if (el.dash) x.setLineDash(el.dash);
+        x.stroke(pathOf(g));
+        x.setLineDash([]);
+      };
+      if (PASS && PASS.stroke && !layer.guide && !pre) {
+        const li = strokeInfo(ctx, model, pose, el, g, false, { color, w, ws: null, body, alpha: ctx.globalAlpha });
+        glowOnly(ctx, PASS.stroke, (x) => { x.fillStyle = x.strokeStyle = li.lineStyle; body(x); });
+        if (PASS.stroke.line(ctx, li)) return;
+      }
+      ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, color);
       ctx.lineWidth = w;
       ctx.lineCap = 'butt';
       ctx.lineJoin = 'round';
@@ -2073,6 +2113,22 @@
       return;
     }
     if (layer.clip && !el.limb) ctx.globalAlpha *= fin.inner;
+    if (PASS && PASS.stroke && !layer.guide && !pre) {
+      // passe stroke: o estilo pinta o traço; body() desenha o corpo dele com o fillStyle/strokeStyle de agora
+      const p = el.limb || el.taper[0] > 0 || el.taper[1] > 0 ? flatOf(g) : null;
+      const ws = !p ? null : el.limb ? G.taperWidths(p, el.limb[0] * (w / (el.w || 1)), el.limb[1] * (w / (el.w || 1)), [0, 0]) : G.taperWidths(p, w, w, el.taper);
+      const body = (x) => {
+        if (ws) { G.drawVar(x, p, ws); return; }
+        x.lineWidth = w;
+        x.lineCap = el.cap;
+        x.lineJoin = 'round';
+        x.stroke(pathOf(g));
+      };
+      const li = strokeInfo(ctx, model, pose, el, g, false, { color, w, ws, body, alpha: ctx.globalAlpha });
+      glowOnly(ctx, PASS.stroke, (x) => { x.fillStyle = x.strokeStyle = li.lineStyle; body(x); });
+      if (PASS.stroke.line(ctx, li)) return;
+      ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, color);
+    }
     if (el.limb) {
       const p = flatOf(g);
       const s = w / (el.w || 1);
@@ -2091,6 +2147,31 @@
     }
     glowOff(ctx);
   }
+
+  // Passe stroke: o que o estilo recebe de cada forma (closed) ou traço. poly: os pontos [x,y,x,y…]; path: a forma;
+  // box: a caixa no desenho; style(spec): a cor ou o degradê pronto para pintar; fillStyle/inkStyle/lineStyle: os
+  // da forma; key: um número da forma (para sortear); map/lbox: o osso (do desenho parado para o desenho) e a caixa
+  // parada, para a textura andar com a forma; light: o light= do canvas; drawInk(): o contorno de sempre.
+  function strokeInfo(ctx, model, pose, el, g, closed, o) {
+    const info = Object.assign({ el, g, closed, poly: flatOf(g), box: segsBox(g.segs), key: hashKey(el.id), light: model.canvas.light, canvas: model.canvas }, o);
+    info.style = (spec) => paint(ctx, model, pose, el, spec);
+    if (closed) {
+      info.fillStyle = o.fill ? paint(ctx, model, pose, el, o.fill) : null;
+      info.fillSpec = o.fill || null;
+      info.inkStyle = o.inkc ? paint(ctx, model, pose, el, o.inkc) : null;
+      info.drawInk = () => {
+        if (o.hole) { ctx.strokeStyle = info.inkStyle; ctx.lineWidth = o.ink; ctx.lineJoin = 'round'; ctx.stroke(o.path); return; }
+        drawInk(ctx, model, pose, g, el, o.ink, o.inkc);
+      };
+    } else {
+      info.lineStyle = paint(ctx, model, pose, el, o.color);
+      info.lineSpec = o.color;
+    }
+    info.map = () => fullMap(model, pose, el);
+    info.lbox = () => localBox(el);
+    return info;
+  }
+  const hashKey = (id) => { const s = String(id); let h = 7; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
 
   // Passe toon: a faixa de sombra da forma, do lado oposto ao light= do canvas (a forma menos ela mesma
   // deslocada para a luz). Formas do tamanho do canvas (o chão, o céu) ficam sem.

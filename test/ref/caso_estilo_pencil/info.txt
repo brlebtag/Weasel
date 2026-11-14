@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo transparente
+art      pencil paper=#f3ecdf boil=0
+camadas  2
+  chao             1 item(ns)
+  coisas           8 item(ns)
+formas   9 (1 ocultas)
+ossos    bola
+animações 1
+  gira           4 quadros, 6 fps

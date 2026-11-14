@@ -1,0 +1,5 @@
+quadros 20 fps 4
+   0 00:00:00 todo cam=160,90 z1 | a=90,170 | b=220,170 flip
+   6 00:01:02 neon cam=160,90 z1 | a=90,170 | b=220,170 flip
+  12 00:03:00 linhas cam=160,90 z1 | a=90,170 | b=220,170 flip
+  18 00:04:02 marcador cam=160,90 z1 | a=90,170 | b=220,170 flip

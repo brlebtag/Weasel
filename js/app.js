@@ -1580,7 +1580,7 @@
       if (cmd === 'palette' || cmd === 'variant' || cmd === 'def') return colorList();
       switch (key) {
         case 'c': case 'inkc': case 'bg': return colorList();
-        case 'w': case 'ink': return names(widths, 'espessura');
+        case 'w': case 'ink': return cmd === 'art' ? names(['2', '3', '4'], 'espessura da linha') : names(widths, 'espessura');
         case 'bone': case 'on': case 'parent': case 'target': return names([...m.bones.keys()], 'osso');
         case 'bones': return names([...m.bones.keys()], 'osso (separe com vírgula)');
         case 'feet': return names([...m.points.keys()], 'ponto que é um pé (separe com vírgula)');
@@ -1655,7 +1655,10 @@
         { label: 'woodcut', detail: 'xilogravura: sulcos brancos no preto' }, { label: 'halftone', detail: 'retícula de pontos (color: quatro cores)' },
         { label: 'comic', detail: 'HQ (old: gibi antigo; old bw: tira de jornal)' }, { label: 'manga', detail: 'mangá: preto chapado e retícula' },
         { label: 'riso', detail: 'risografia: 2 ou 3 tintas em grão' }, { label: 'stencil', detail: 'estêncil: poucos tons e spray' },
-        { label: 'silhouette', detail: 'silhueta de uma cor só' }, { label: 'none', detail: 'sem estilo' },
+        { label: 'silhouette', detail: 'silhueta de uma cor só' }, { label: 'sketch', detail: 'esboço: lápis tremido e cor fora do lugar' },
+        { label: 'marker', detail: 'marcador: passadas de caneta e nanquim' }, { label: 'pencil', detail: 'lápis de cor: hachura e grão do papel' },
+        { label: 'lines', detail: 'só o contorno (livro de colorir)' }, { label: 'neon', detail: 'contornos de neon num fundo escuro' },
+        { label: 'none', detail: 'sem estilo' },
       ];
     }
     if (cmd === 'art' && idx >= 2) {

@@ -1,0 +1,9 @@
+rect solo @0.000 +1.060
+ellipse sol @1.060 +0.394
+ellipse b @1.455 +0.664
+rect caixa @2.119 +0.652
+shape folha @2.771 +0.387
+stroke galho @3.158 +0.333
+line fio @3.491 +0.674
+text nome @4.165 +0.352
+total 4.517
