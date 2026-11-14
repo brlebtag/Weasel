@@ -16,7 +16,7 @@
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const name of names) {
       for (const f of frameIdx(model, name)) {
-        const img = S.renderImage(model, S.makePose(model, name, f), { scale: s, transparent: true });
+        const img = S.renderImage(model, S.makePose(model, name, f), { scale: s, transparent: true, screen: false });
         const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
         for (let y = 0; y < img.height; y++) {
           for (let x = 0; x < img.width; x++) {
@@ -60,7 +60,7 @@
       rect = { x: x0 - pad, y: y0 - pad * 1.6, w: x1 - x0 + 2 * pad, h: y1 - y0 + pad * 2.6 };
     }
     const z = Math.max(0.25, Math.min(8, 1200 / rect.w, 800 / rect.h)), band = 24, font = '13px ui-monospace, Menlo, Consolas, monospace';
-    const img = S.renderImage(model, S.makePose(model, animName, frame), { scale: z, rect, transparent: true, guides: o.guides });
+    const img = S.renderImage(model, S.makePose(model, animName, frame), { scale: z, rect, transparent: true, guides: o.guides, screen: false });
     // em cima: a animação e quanto o personagem anda
     const g = S.gait(model, anim), title = `${animName}${g ? ': ' + S.gaitText(g, o.scale).head : ''}`;
     const probe = document.createElement('canvas').getContext('2d');
@@ -184,7 +184,8 @@
       json.animations[key] = [];
       for (const f of frameIdx(model, name)) {
         const c = cells[flat];
-        const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
+        // a folha é para o jogo: sem os efeitos de tela
+        const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, screen: false });
         ctx.drawImage(cv, c.x, c.y);
         const id = `${key}_${String(f).padStart(2, '0')}`;
         const root = model.unity ? model.unity.root : [rect.x + rect.w / 2, rect.y + rect.h];
@@ -338,6 +339,8 @@
     // Gera os arquivos de uma variante.
     async function produce(model, o, suffix) {
       const base = o.baseName + suffix;
+      // a folha, o Godot e o SVG saem sem os efeitos de tela (oldfilm, vhs, crt, glitch): o aviso vai junto
+      const screen = (info) => { const n = S.screenNote(model); return n ? `${info} · ${n}` : info; };
       const st = app.state();
       if (model.film && kind === 'nle') {
         // linha do tempo para o editor de vídeo (EDL, FCPXML) e as legendas, apontando para os vídeos
@@ -406,7 +409,7 @@
       if (kind === 'svg') {
         const s = svgText(model, st.anim, st.frame, o);
         const blob = new Blob([s], { type: 'image/svg+xml' });
-        return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: `SVG vetorial · ${kb(blob.size)}${model.art ? ` · sem o estilo (art ${model.art.style})` : ''}` };
+        return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: screen(`SVG vetorial · ${kb(blob.size)}${model.art ? ` · sem o estilo (art ${model.art.style})` : ''}`) };
       }
       if (kind === 'gif') {
         const src = $('expAnim').value;
@@ -424,7 +427,7 @@
         const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
         const main = pkg.files[0].canvas;
         const what = `esqueleto: ${pkg.bones} osso${pkg.bones === 1 ? '' : 's'} · ${pkg.rigid} peça${pkg.rigid === 1 ? '' : 's'} presas aos ossos${pkg.skinned ? ` · ${pkg.skinned} que dobra${pkg.skinned === 1 ? '' : 'm'}` : ''}${pkg.framed ? ` · ${pkg.framed} quadro a quadro` : ''}${pkg.boxes ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}` : ''}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
-        return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}` };
+        return { files, preview: main.toDataURL(), info: screen(`${main.width} × ${main.height} px · ${what}${pkg.notes.length ? ` · ${pkg.notes.join('; ')}` : ''}`) };
       }
       // Godot completo: cena, normal map, ajudante; ou o TileSet
       const scene = $('expGodotScene').checked;
@@ -433,14 +436,14 @@
         const files = await Promise.all(pkg.files.map(async (f) => ({ name: f.name, blob: f.canvas ? await toBlob(f.canvas, 'image/png') : new Blob([f.text], { type: 'text/plain' }), png: !!f.canvas && !/_normal\.png$/.test(f.name) })));
         const main = pkg.files[0].canvas;
         const what = pkg.kind === 'tileset' ? `TileSet com ${pkg.tiles} blocos` : `${pkg.sheet.frames} quadros de ${pkg.sheet.fw} × ${pkg.sheet.fh}${scene ? ` · ${pkg.boxes} caixa${pkg.boxes === 1 ? '' : 's'}${pkg.points ? ` · ${pkg.points} ponto${pkg.points === 1 ? '' : 's'}` : ''}` : ''}${pkg.mirrored.length ? ` · espelhadas: ${pkg.mirrored.join(', ')}` : ''}`;
-        return { files, preview: main.toDataURL(), info: `${main.width} × ${main.height} px · ${what}` };
+        return { files, preview: main.toDataURL(), info: screen(`${main.width} × ${main.height} px · ${what}`) };
       }
       o.imageName = `${o.baseName}_${tag}.png`;
       const x = await sheet(model, names, o);
       const files = [{ name: o.imageName, blob: x.png, png: true }];
       if (kind === 'sheet') files.push({ name: `${o.baseName}_${tag}.json`, blob: new Blob([x.json], { type: 'application/json' }) });
       else files.push({ name: `${o.baseName}_${tag}.tres`, blob: new Blob([godotText(model, x, o.imageName)], { type: 'text/plain' }) });
-      return { files, preview: x.canvas.toDataURL(), info: `${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}` };
+      return { files, preview: x.canvas.toDataURL(), info: screen(`${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}`) };
     }
 
     async function refresh() {

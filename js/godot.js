@@ -442,7 +442,7 @@ func _weasel_eventos(nomes: Array) -> void:
         throw new Error(`com escala ${o.scale} o bloco de ${T.size[0]}×${T.size[1]} não fica com tamanho inteiro`);
       }
       const rect = { x: 0, y: 0, w: T.cols * T.size[0], h: T.rows * T.size[1] };
-      const atlas = S.renderImage(model, S.makePose(model, null, 0), { scale: o.scale, rect, transparent: true });
+      const atlas = S.renderImage(model, S.makePose(model, null, 0), { scale: o.scale, rect, transparent: true, screen: false });
       files.push({ name: `${base}.png`, canvas: atlas });
       let normalPath = null;
       if (o.normal) {

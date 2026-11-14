@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/4s" width="160" height="90" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_estilo_filme_tecido_todo" start="0s" duration="4/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_estilo_filme_tecido_todo.mov"/>
+    </asset>
+    <asset id="r3" name="caso_estilo_filme_tecido_trico" start="0s" duration="4/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_estilo_filme_tecido_trico.mov"/>
+    </asset>
+    <asset id="r4" name="caso_estilo_filme_tecido_misto" start="0s" duration="4/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_estilo_filme_tecido_misto.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_estilo_filme_tecido">
+      <project name="caso_estilo_filme_tecido">
+        <sequence format="r1" duration="12/4s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_estilo_filme_tecido_todo" offset="0s" start="0s" duration="4/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="todo"/>
+            </asset-clip>
+            <asset-clip ref="r3" name="caso_estilo_filme_tecido_trico" offset="4/4s" start="0s" duration="4/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="trico"/>
+            </asset-clip>
+            <asset-clip ref="r4" name="caso_estilo_filme_tecido_misto" offset="8/4s" start="0s" duration="4/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="misto"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

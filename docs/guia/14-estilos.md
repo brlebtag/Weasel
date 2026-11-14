@@ -2,7 +2,7 @@
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, em giz de cera, em giz no quadro, em aquarela, só nos contornos, em neon, em recorte de papel, em massinha, em vitral, em bordado e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, em giz de cera, em giz no quadro, em aquarela, só nos contornos, em neon, em recorte de papel, em massinha, em vitral, em bordado, em ponto-cruz, em mosaico e em tricô. Para isso serve a linha `art`.
 
 | O desenho normal | `art pixel` | `art ascii color` |
 |---|---|---|
@@ -58,7 +58,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 - Um `art` por arquivo. Sem `art`, nada muda. `art none` desliga o estilo (serve no filme, mais abaixo).
 - A linha pode ficar em qualquer lugar do arquivo; o costume é logo depois do `canvas`, como o `finish`.
 
-Nesta versão existem vinte e três estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`) e os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`) e os quatro [estilos de peças](#os-estilos-de-peças) (`cutout`, `clay`, `glass` e `embroidery`). Os outros do plano (`stitch`, `mosaic`, `knit`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
+Nesta versão existem vinte e seis estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`), os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`), os quatro [estilos de peças](#os-estilos-de-peças) (`cutout`, `clay`, `glass` e `embroidery`) e os três de casinhas, [ponto-cruz, mosaico e tricô](#ponto-cruz-mosaico-e-tricô) (`stitch`, `mosaic` e `knit`).
 
 **No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
@@ -524,11 +524,11 @@ Repare:
 
 ### A textura presa à forma: `boil=` e `seed=`
 
-A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pontos da retícula, das HQs e do mangá, o grão da risografia, o tremido, as passadas e a hachura dos estilos de traço, e a borda de tesoura, os caroços, os cortes do vidro e os pontos do bordado dos estilos de peças são uma **textura**. O `boil=` diz como ela se move:
+A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pontos da retícula, das HQs e do mangá, o grão da risografia, o tremido, as passadas e a hachura dos estilos de traço, e a borda de tesoura, os caroços, os cortes do vidro e os pontos do bordado dos estilos de peças e as pastilhas do mosaico são uma **textura**. O `boil=` diz como ela se move:
 
 | `boil=` | A textura | Padrão de |
 |---|---|---|
-| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw`, `watercolor`, `cutout`, `clay`, `glass`, `embroidery` |
+| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw`, `watercolor`, `cutout`, `clay`, `glass`, `embroidery`, `mosaic` |
 | `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone`, `comic`, `comic old`, `manga`, `riso` |
 | `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | `sketch`, `marker`, `pencil`, `crayon`, `chalk` |
 
@@ -553,7 +553,7 @@ Repare:
 - A hachura **dentro** da bola gira com ela, junto com o olho. A do fundo fica parada: onde não há forma (o fundo do `canvas`, os traços, os textos), a textura é sempre a da tela.
 - A textura tem sempre o mesmo tamanho na tela: um ator pequeno no filme tem a hachura do mesmo tamanho que um grande.
 - O `seed=` sorteia outra versão da textura (outro lugar para as linhas e os salpicos).
-- O `toon`, o `silhouette`, o `lines`, o `neon`, o `pixel` e o `ascii` não têm textura: neles, `boil=` e `seed=` não mudam nada (o Weasel avisa).
+- O `toon`, o `silhouette`, o `lines`, o `neon`, o `stitch`, o `knit`, o `pixel` e o `ascii` não têm textura: neles, `boil=` e `seed=` não mudam nada (o Weasel avisa).
 
 **No jogo:** a sprite sheet e o Godot saem com cada quadro pintado no estilo. No esqueleto de verdade (`godot rig=bones`), cada peça sai pintada na pose parada, e a textura gira com ela no Godot.
 
@@ -1157,6 +1157,102 @@ Repare:
 
 **Experimente:** troque a noite para `art glass frame`, ou ponha `size=40` no vitral da vila (pedaços do dobro do tamanho).
 
+## Ponto-cruz, mosaico e tricô
+
+Estes três são parentes do pixel art: o desenho vira casinhas do mesmo tamanho (`size=`), cada uma com uma cor só. No ponto-cruz, cada casa é um X de linha bordado num pano; no tricô, um V de lã; no mosaico, uma pastilha de cerâmica com rejunte em volta.
+
+```
+art stitch size= paper=
+art mosaic size= grout= paper= boil= seed=
+art knit size= paper=
+```
+
+| `art stitch size=10` | `art mosaic` | `art knit size=12` |
+|---|---|---|
+| ![O Cavaleiro em ponto-cruz: a máscara em X de linha branca, a capa em X azul-escuros, o contorno em pesponto escuro e o fundo em etamine tingido de bege](img/14_casas_stitch.png) | ![O Cavaleiro em mosaico: o fundo claro em pastilhas com rejunte, a máscara em pastilhas brancas e o contorno numa fileira de pastilhas pretas](img/14_casas_mosaic.png) | ![O Cavaleiro em tricô: a máscara em V de lã branca, o contorno em V pretos e o fundo também tricotado, em lã bege](img/14_casas_knit.png) |
+| ![A vila em ponto-cruz: o céu é o pano tingido do azul-escuro ao laranja, com a trama aparecendo; a lua, o morro e a casa em X de linha, com o contorno em pesponto](img/14_vila_stitch.png) | ![A vila em mosaico: o céu em pastilhas do azul-escuro ao laranja, a lua clara, o morro e a casa em pastilhas, e o contorno em fileiras de pastilhas escuras](img/14_vila_mosaic.png) | ![A vila em tricô: o céu tricotado em faixas do azul-escuro ao laranja, a lua, o morro e a casa em V de lã](img/14_vila_knit.png) |
+
+<details>
+<summary>Código dos seis</summary>
+
+<!-- gerar: img/14_casas_stitch.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art stitch size=10
+```
+
+<!-- gerar: img/14_casas_mosaic.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art mosaic
+```
+
+<!-- gerar: img/14_casas_knit.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art knit size=12
+```
+
+<!-- gerar: img/14_vila_stitch.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art stitch
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_mosaic.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art mosaic
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_knit.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art knit
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+</details>
+
+Repare:
+
+- **`stitch` (ponto-cruz):** a grade fica presa ao `canvas`, e cada casa coberta pela metade (ou mais) vira um X de linha, da cor que mais aparece nela. As duas pernas do X são de linha torcida, e a de cima faz sombra na de baixo.
+- **O contorno no ponto-cruz:** vira um pesponto (backstitch) fino da cor da `ink`, por cima dos X, de nó em nó da grade, em pontos retos e diagonais. Os traços finos também viram pesponto (o `dash=` vale); os largos viram X.
+- **O pano:** no ponto-cruz, o fundo do `canvas` não é bordado. Ele vira o pano (o etamine, com os furos da trama aparecendo), tingido na cor do fundo; o degradê do céu da vila fica no pano. Sem fundo (`bg=none`), o pano é da cor do `paper=` (o padrão é `#f1ece0`, o etamine cru); na imagem transparente, saem só as linhas.
+- **`knit` (tricô):** cada casa, um pouco mais larga que alta, vira um V de lã da cor que mais aparece nela, e as pontas do V de baixo passam por trás. Aqui o fundo também é tricotado. O contorno e os traços finos ganham a casa quando cobrem um terço dela (como o contorno de 1 bloco do pixel art); os traços largos viram lã. Sem fundo, o papel (`paper=`) aparece onde não há forma.
+- **`mosaic` (mosaico):** como no vitral, cada forma e o fundo do `canvas` viram pastilhas, de uns `size=` de lado, em fileiras levemente onduladas e cortadas na borda da forma. Cada pastilha tem a cor média do que cobre, um pouco diferente da vizinha, e um chanfro com brilho do lado da luz (o `light=` do `canvas`). Entre elas, o rejunte claro (`grout=`). O contorno vira uma fileira de pastilhas escuras da cor da `ink`; os traços finos, uma fileira na cor deles; as formas muito pequenas ficam numa pastilha só.
+- **A grade e o movimento:** no ponto-cruz e no tricô, a grade é a do `canvas` (como no pixel art): o desenho anda por baixo dela, e as casas mudam de cor. No mosaico, as pastilhas ficam presas à forma (`boil=0`) e andam e giram com o osso; `boil=2` assenta as pastilhas de novo a cada 2 quadros.
+- **Os três:** a luz da cena entra por cima, casa por casa (cada X, V ou pastilha fica com uma cor só), e os textos e as partículas saem nítidos, por cima.
+
+| Opção | O que faz |
+|---|---|
+| `size=` | O tamanho da casa. No `stitch`, o lado do X, de 2 a 64 (padrão 6); no `knit`, a largura do V, de 2 a 64 (padrão 8); no `mosaic`, o lado da pastilha, de 2 a 200 (o padrão acompanha o canvas: 2,4% do lado maior). |
+| `grout=` | Só no `mosaic`: a largura do rejunte, de 0 a 32 (o padrão é 12% da pastilha). |
+| `paper=` | Onde não há forma nem fundo: no `stitch`, a cor do pano (`#f1ece0`); no `knit` e no `mosaic`, o papel. |
+| `boil=0`, `seed=` | Só no `mosaic`: a cada quantos quadros as pastilhas mudam (padrão 0: paradas) e outro sorteio delas. |
+
+**Experimente:** na vila, troque `art knit` por `art knit size=16` (pontos do dobro do tamanho), ou ponha `grout=0` no mosaico (as pastilhas encostadas, sem rejunte).
+
 ## No filme: o filme, a cena, o plano e o ator
 
 No filme ([capítulo 10](10-filme.md)), o `art` vale em quatro níveis. O mais específico ganha:
@@ -1209,8 +1305,8 @@ Repare:
 
 ## Junto com o resto
 
-- **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
+- **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta, e os [efeitos de tela](04-camadas.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch) (`oldfilm=`, `vhs=`, `crt=` e `glitch=`) por último. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
-- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `cutout`, `clay`, `glass` e `embroidery`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
+- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `cutout`, `clay`, `glass`, `embroidery` e `mosaic`); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)

@@ -1661,6 +1661,8 @@
         { label: 'watercolor', detail: 'aquarela: aguada e linha de caneta' },
         { label: 'cutout', detail: 'recorte de papel: peças com sombra' }, { label: 'clay', detail: 'massinha: peças com volume' },
         { label: 'glass', detail: 'vitral: vidros com chumbo (frame: moldura)' }, { label: 'embroidery', detail: 'bordado à mão no linho' },
+        { label: 'stitch', detail: 'ponto-cruz: um X em cada casa' }, { label: 'mosaic', detail: 'mosaico: pastilhas com rejunte' },
+        { label: 'knit', detail: 'tricô: um V de lã em cada casa' },
         { label: 'lines', detail: 'só o contorno (livro de colorir)' }, { label: 'neon', detail: 'contornos de neon num fundo escuro' },
         { label: 'none', detail: 'sem estilo' },
       ];
@@ -2088,7 +2090,7 @@
     if (st.show.onion && anim && anim.frames > 1 && !st.build && !P) {
       const s = Math.min(2, z * dpr);
       for (const d of [-1, 1]) {
-        const img = S.renderImage(m, S.makePose(m, anim.name, st.frame + d), { scale: s, transparent: true, guides: false, art: artOn });
+        const img = S.renderImage(m, S.makePose(m, anim.name, st.frame + d), { scale: s, transparent: true, guides: false, art: artOn, screen: false });
         ctx.globalAlpha = 0.22;
         ctx.drawImage(img, 0, 0, c.w, c.h);
       }

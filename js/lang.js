@@ -24,8 +24,8 @@
   const SOLID = ['thick', 'thickc', 'back'];
   const ATTRS = {
     canvas: ['bg', 'light'],
-    finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
-    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'levels', 'paper', 'boil', 'seed', 'actor'],
+    finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize', 'oldfilm', 'vhs', 'crt', 'glitch'],
+    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'grout', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
@@ -95,8 +95,8 @@
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
   // art: estilos de arte (a imagem pronta pintada de outro jeito). ART_LATER = os que ainda vão chegar.
-  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery'];
-  const ART_LATER = ['stitch', 'mosaic', 'knit'];
+  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery', 'stitch', 'mosaic', 'knit'];
+  const ART_LATER = [];
   // boil= e seed= só aparecem (no autocompletar) nos estilos com textura
   const ART_OPTS = {
     pixel: { attrs: ['size', 'palette', 'dither'], flags: ['outline', 'small'] },
@@ -120,6 +120,9 @@
     clay: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     glass: { attrs: ['size', 'lead', 'paper', 'boil', 'seed'], flags: ['frame'] },
     embroidery: { attrs: ['paper', 'boil', 'seed'], flags: [] },
+    stitch: { attrs: ['size', 'paper'], flags: [] },
+    mosaic: { attrs: ['size', 'grout', 'paper', 'boil', 'seed'], flags: [] },
+    knit: { attrs: ['size', 'paper'], flags: [] },
     lines: { attrs: ['w', 'c', 'paper'], flags: [] },
     neon: { attrs: ['w', 'c', 'paper'], flags: [] },
     none: { attrs: [], flags: [] },
@@ -127,8 +130,9 @@
   // o boil= de cada estilo quando não é escrito: screen = a textura fica parada na tela (como a retícula impressa).
   // Na comic old bw, as linhas são do desenhista, e não da impressão: ficam presas à forma.
   // Nos desenhados à mão (sketch, marker, pencil, crayon, chalk), as passadas fervem: mudam a cada 2 quadros. A
-  // aquarela (watercolor), o recorte (cutout), a massinha (clay), o vitral (glass) e o bordado (embroidery) ficam
-  // parados.
+  // aquarela (watercolor), o recorte (cutout), a massinha (clay), o vitral (glass), o bordado (embroidery) e o
+  // mosaico (mosaic) ficam parados. O ponto-cruz (stitch) e o tricô (knit) são uma grade parada no canvas, como o
+  // pixel art: não têm boil=.
   const ART_BOIL = { halftone: 'screen', comic: 'screen', manga: 'screen', riso: 'screen', sketch: 2, marker: 2, pencil: 2, crayon: 2, chalk: 2 };
   const artBoil = (a) => (a.style === 'comic' && a.bw ? 0 : ART_BOIL[a.style] || 0);
   const RISO_INKS = ['#ff48b0', '#00838a', '#ffe800'];
@@ -799,7 +803,7 @@
     // art stencil tones=3 c=#2a1f3d · art silhouette c=#000000 · art woodcut gap=8 · art comic old bw size=5 shadow=0.3
     // art manga size=4 tones=3 · art riso inks=#ff48b0,#00838a size=1 shift=1.5 · art sketch · art marker · art pencil
     // art crayon · art chalk paper=#203028 · art watercolor · art cutout · art clay · art glass size=40 lead=4 frame
-    // art embroidery
+    // art embroidery · art stitch size=6 · art mosaic size=12 grout=1.5 · art knit size=8
     // paper=#f6f2ea · art lines w=3 c=#000000 · art neon w=3 c=#ff40c0 (boil=número|screen e seed= nos que têm textura)
     function readArt(st) {
       const A = st.attrs, t = st.pos[0];
@@ -900,6 +904,14 @@
         // size=: o tamanho de um pedaço; lead=: a espessura do chumbo grosso (sem eles, medidas pelo tamanho do canvas)
         a.size = A.has('size') ? number(st, A.get('size'), 40, 4, 400) : null;
         a.lead = A.has('lead') ? number(st, A.get('lead'), 3, 0.5, 32) : null;
+      } else if (style === 'stitch' || style === 'knit') {
+        // size=: a casa da grade (um X no ponto-cruz, um V no tricô), presa à origem do canvas
+        const s0 = style === 'stitch' ? 6 : 8;
+        a.size = A.has('size') ? number(st, A.get('size'), s0, 2, 64) : s0;
+      } else if (style === 'mosaic') {
+        // size=: o tamanho de uma pastilha; grout=: a largura do rejunte (sem eles, medidas pelo tamanho do canvas)
+        a.size = A.has('size') ? number(st, A.get('size'), 12, 2, 200) : null;
+        a.grout = A.has('grout') ? number(st, A.get('grout'), 1, 0, 32) : null;
       } else if (style === 'lines' || style === 'neon') {
         // w=: a espessura da linha (sem w=, a do contorno de cada forma no lines, e uma só no neon)
         a.w = A.has('w') ? number(st, A.get('w'), 3, 0.5, 64) : null;
@@ -967,6 +979,9 @@
             if (a.text === 'palette') m.finish.posterize = 'palette';
             else m.finish.posterize = Math.round(number(st, a, 0, 2, 64));
           }
+          // os efeitos de tela (filme antigo, fita VHS, tela de tubo, falha digital), de 0 a 1: só no filme, no vídeo,
+          // no GIF e no PNG (a folha de sprites e o Godot saem sem eles)
+          for (const k of ['oldfilm', 'vhs', 'crt', 'glitch']) if (A.has(k)) m.finish[k] = number(st, A.get(k), 0, 0, 1);
           info(st);
           break;
         }

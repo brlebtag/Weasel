@@ -1,0 +1,9 @@
+canvas   480 × 270, fundo #87b5e0
+acabamento vhs=0.5 crt=0.8 glitch=1
+camadas  2
+  chao             1 item(ns)
+  coisas           4 item(ns)
+formas   5
+ossos    bola
+animações 1
+  pula           4 quadros, 8 fps

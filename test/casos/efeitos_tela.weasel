@@ -1,0 +1,21 @@
+# teste: os efeitos de tela do finish (crt, vhs, glitch): a pose e o quadro do meio saem com eles (o glitch só em
+# alguns quadros); a folha de sprites e o Godot saem sem eles
+canvas 480 270 bg=#87b5e0
+finish crt=0.8 vhs=0.5 glitch=1
+palette ink=#1d1b26 line=4 ball=#e8734a
+
+bone bola pivot=150,170
+
+layer chao
+rect solo 0,200 480,70 c=#5f9a3c
+
+layer coisas
+ellipse sol 400,60 28 c=#ffe27a
+ellipse b 150,170 44 c=ball ink=line bone=bola
+rect caixa 270,120 90,80 r=8 c=#4a90d9 ink=line
+text nome 240,245 "WEASEL" size=22 align=center c=#ffffff bold
+
+anim pula frames=4 fps=8
+key 0 bola=0,0,0
+key 2 bola=0,-30,0
+key 4 bola=0,0,0

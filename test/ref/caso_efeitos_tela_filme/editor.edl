@@ -1,0 +1,8 @@
+TITLE: caso_efeitos_tela_filme
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:01:00 01:00:00:00 01:00:01:00
+* FROM CLIP NAME: caso_efeitos_tela_filme_todo.mov
+
+002  AX       V     C        00:00:00:00 00:00:01:00 01:00:01:00 01:00:02:00
+* FROM CLIP NAME: caso_efeitos_tela_filme_perto.mov

@@ -1,0 +1,6 @@
+rect solo @0.000 +1.400
+ellipse sol @1.400 +0.603
+ellipse b @2.003 +0.756
+rect caixa @2.759 +0.821
+text nome @3.580 +0.352
+total 3.932

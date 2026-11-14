@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/4s" width="160" height="90" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_efeitos_tela_filme_todo" start="0s" duration="4/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_efeitos_tela_filme_todo.mov"/>
+    </asset>
+    <asset id="r3" name="caso_efeitos_tela_filme_perto" start="0s" duration="4/4s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_efeitos_tela_filme_perto.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_efeitos_tela_filme">
+      <project name="caso_efeitos_tela_filme">
+        <sequence format="r1" duration="8/4s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_efeitos_tela_filme_todo" offset="0s" start="0s" duration="4/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="todo"/>
+            </asset-clip>
+            <asset-clip ref="r3" name="caso_efeitos_tela_filme_perto" offset="4/4s" start="0s" duration="4/4s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/4s" value="perto"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

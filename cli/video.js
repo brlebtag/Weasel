@@ -377,7 +377,7 @@ function filmInfo(m) {
   const secs = (s) => `${Math.round(s * 100) / 100}s`;
   const bg = !m.canvas.bg ? 'transparente' : typeof m.canvas.bg === 'string' ? m.canvas.bg : `gradiente ${m.canvas.bg.name}`;
   out.push(`filme    ${m.canvas.w} × ${m.canvas.h}, ${F.fps} fps, ${secs(tl.duration)} (${tl.frames} quadros, ${W.film.timecode(tl.frames, F.fps)}), fundo ${bg}`);
-  const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize, pixel: m.finish.pixel > 1 && m.finish.pixel }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
+  const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize, oldfilm: m.finish.oldfilm, vhs: m.finish.vhs, crt: m.finish.crt, glitch: m.finish.glitch, pixel: m.finish.pixel > 1 && m.finish.pixel }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
   if (fin.length) out.push(`acabamento ${fin.join(' ')}`);
   // art: o do filme todo e o dos atores (o de cada plano vai na linha dele)
   const artText = (a) => (a.style === 'none' ? 'none' : W.art.describe(a));

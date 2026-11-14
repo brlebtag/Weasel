@@ -259,7 +259,7 @@ function info(m, scale) {
   if (m.defs.size) out.push(`componentes ${[...m.defs.values()].map((d) => `${d.name} (${d.uses}×)`).join(', ')}`);
   if (m.ambient) out.push(`ambiente ${m.ambient.c} × ${m.ambient.power}`);
   if (m.lights.size) out.push(`luzes    ${[...m.lights.values()].map((l) => `${l.name} (${l.type}, ${l.c} × ${l.power}${l.bone ? `, osso ${l.bone}` : ''}${l.flicker ? ', tremula' : ''})`).join(', ')}`);
-  const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
+  const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize, oldfilm: m.finish.oldfilm, vhs: m.finish.vhs, crt: m.finish.crt, glitch: m.finish.glitch }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
   if (fin.length) out.push(`acabamento ${fin.join(' ')}`);
   out.push(`camadas  ${m.layers.length}`);
   for (const L of m.layers) {
@@ -365,6 +365,7 @@ async function exportModel(model, o, format, base, sfx) {
     if (format === 'txt' && !(model.art && model.art.style === 'ascii')) usage('o .txt sai do estilo ascii (ponha "art ascii" no arquivo)');
     // o SVG é feito de formas: o estilo (art) é pintado na imagem pronta, então não vai junto
     if (format === 'svg' && model.art && !o.quiet) console.error(paint('33', 'aviso') + `: o SVG sai sem o estilo (art ${model.art.style}), só com as formas; para o estilo, use png`);
+    if (format === 'svg' && W.scene.screenNote(model) && !o.quiet) console.error(paint('33', 'aviso') + `: ${W.scene.screenNote(model)}`);
     const anim = pickAnim(model, o.anim, o.frames);
     const a = anim ? model.animMap.get(anim) : null;
     const one = (f) => {
@@ -392,6 +393,9 @@ async function exportModel(model, o, format, base, sfx) {
     save(named(o.out || `${base}_${format === 'build' ? 'pintura' : source}.gif`), Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros`, o.quiet);
     return;
   }
+
+  // a folha e o Godot são para o jogo: sem os efeitos de tela (oldfilm, vhs, crt, glitch)
+  if (W.scene.screenNote(model) && !o.quiet) console.error(paint('33', 'aviso') + `: ${W.scene.screenNote(model)}`);
 
   // Godot: cena pronta (.tscn) ou TileSet
   if (format === 'tscn' || (format === 'godot' && model.tileset)) {

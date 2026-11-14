@@ -698,9 +698,10 @@
       const sx = small.getContext('2d');
       sx.setTransform(scale / px, 0, 0, scale / px, 0, 0);
       drawFrame(sx, model, frame, o);
-      if (!opts.noPost) S.postFx(small, post, frame);
+      if (!opts.noPost) S.postFx(small, post, frame, { screen: false });
       octx.imageSmoothingEnabled = false;
       octx.drawImage(small, 0, 0, W2, H2);
+      if (!opts.noPost) S.postFx(out, post, frame, { base: false });
     } else {
       octx.setTransform(scale, 0, 0, scale, 0, 0);
       const fs = drawFrame(octx, model, frame, o);

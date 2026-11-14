@@ -1,0 +1,12 @@
+canvas   240 × 160, fundo gradiente ceu
+art      mosaic size=8 grout=1 seed=3
+gradientes ceu (linear)
+ambiente #8090b0 × 0.6
+luzes    lamp (point, #ffd9a0 × 1.4)
+camadas  2
+  chao             1 item(ns)
+  coisas          10 item(ns)
+formas   11 (1 ocultas)
+ossos    bola
+animações 1
+  gira           4 quadros, 6 fps

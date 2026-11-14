@@ -793,7 +793,7 @@ O [capítulo 7](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-on
 `finish` muda o estilo do desenho **inteiro** de uma vez. A linha `finish` pode ficar em qualquer lugar do arquivo (o costume é logo depois do `canvas`):
 
 ```
-finish game|flat inner= pixel= posterize= bloom= vignette= grain=
+finish game|flat inner= pixel= posterize= bloom= vignette= grain= oldfilm= vhs= crt= glitch=
 ```
 
 | | `game` (padrão) | `finish flat` | `pixel=4` | `posterize=4` |
@@ -866,6 +866,7 @@ Os quatro códigos são iguais, menos a linha `finish`. Repare:
 | `pixel=4` | Desenha em blocos de 4×4 pixels (pixel art), de 1 a 32 (padrão 1, sem blocos). |
 | `posterize=4` | Reduz cada canal de cor a 4 níveis (de 2 a 64). `posterize=palette` reduz às cores da `palette` ([exemplo](#só-as-cores-da-palette-posterizepalette)). |
 | `bloom=` `vignette=` `grain=` | Brilho que vaza do claro, bordas escurecidas e granulado de filme (padrão 0 nos três). Cada um tem a sua faixa: `bloom` de 0 a 3, `vignette` de 0 a 1 e `grain` de 0 a 0.33 ([detalhes e exemplo](#acabamentos-de-cinema-bloom-vignette-e-grain)). |
+| `oldfilm=` `vhs=` `crt=` `glitch=` | Efeitos de tela: filme antigo, fita VHS, televisão de tubo e falha digital, de 0 a 1 (padrão 0). Só no filme, no vídeo, no GIF e no PNG; a sprite sheet e o Godot saem sem eles ([detalhes e exemplo](#efeitos-de-tela-oldfilm-vhs-crt-e-glitch)). |
 
 **Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
 
@@ -976,6 +977,89 @@ Os três podem ir juntos na mesma linha: `finish game bloom=0.5 vignette=0.6 gra
 > O granulado é ruído, e ruído não comprime: um GIF ou PNG com `grain=` fica bem maior.
 
 **Experimente:** no código do `bloom`, mude a cor da lua para `c=#8a7a4a`, um amarelo apagado. O brilho em volta dela some: o `bloom` só pega o que é bem claro. A janela, que continua clara, continua brilhando.
+
+### Efeitos de tela: `oldfilm=`, `vhs=`, `crt=` e `glitch=`
+
+Estes quatro imitam o caminho da imagem até quem assiste: o filme antigo no projetor, a fita de vídeo, a televisão de tubo e o arquivo digital quebrando. Cada um vai de 0 a 1 (1 é o mais forte) e muda a cada quadro, sempre do mesmo jeito: o vídeo sai igual toda vez.
+
+| `oldfilm=1` | `vhs=1` | `crt=1` | `glitch=1` |
+|---|---|---|---|
+| ![Uma casinha de dia em sépia, com grão, as bordas escuras e um risco claro de cima a baixo](img/04_tela_oldfilm.png) | ![A mesma casinha com a cor borrada e atrasada, chiado e uma faixa de linhas brancas atravessando a imagem](img/04_tela_vhs.png) | ![A mesma casinha numa tela de tubo: linhas de varredura, a imagem curva e os cantos redondos e escuros](img/04_tela_crt.png) | ![A mesma casinha com faixas da imagem deslocadas de lado e o vermelho e o azul separados](img/04_tela_glitch.png) |
+
+<details>
+<summary>Código dos quatro</summary>
+
+<!-- gerar: img/04_tela_oldfilm.png -s 2 -->
+```weasel
+canvas 200 140 bg=#9fd0f0
+finish oldfilm=1
+palette ink=#141320 line=4
+rect chao 0,110 200,30 c=#6aa84f
+ellipse sol 156,36 17 c=#ffe27a
+rect casa 26,58 84,54 c=#e8d9b5 ink=line
+shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
+rect janela 42,72 22,22 c=#7fc8f0 ink=line
+rect porta 78,78 20,34 c=#8a5a3c ink=line
+```
+
+<!-- gerar: img/04_tela_vhs.png -s 2 -->
+```weasel
+canvas 200 140 bg=#9fd0f0
+finish vhs=1
+palette ink=#141320 line=4
+rect chao 0,110 200,30 c=#6aa84f
+ellipse sol 156,36 17 c=#ffe27a
+rect casa 26,58 84,54 c=#e8d9b5 ink=line
+shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
+rect janela 42,72 22,22 c=#7fc8f0 ink=line
+rect porta 78,78 20,34 c=#8a5a3c ink=line
+```
+
+<!-- gerar: img/04_tela_crt.png -s 2 -->
+```weasel
+canvas 200 140 bg=#9fd0f0
+finish crt=1
+palette ink=#141320 line=4
+rect chao 0,110 200,30 c=#6aa84f
+ellipse sol 156,36 17 c=#ffe27a
+rect casa 26,58 84,54 c=#e8d9b5 ink=line
+shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
+rect janela 42,72 22,22 c=#7fc8f0 ink=line
+rect porta 78,78 20,34 c=#8a5a3c ink=line
+```
+
+<!-- gerar: img/04_tela_glitch.png -s 2 -->
+```weasel
+canvas 200 140 bg=#9fd0f0
+finish glitch=1
+palette ink=#141320 line=4
+rect chao 0,110 200,30 c=#6aa84f
+ellipse sol 156,36 17 c=#ffe27a
+rect casa 26,58 84,54 c=#e8d9b5 ink=line
+shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
+rect janela 42,72 22,22 c=#7fc8f0 ink=line
+rect porta 78,78 20,34 c=#8a5a3c ink=line
+```
+
+</details>
+
+| Atributo | O que faz |
+|---|---|
+| `oldfilm=` | filme antigo: sépia, a luz piscando, o quadro tremendo de leve, o grão, as bordas escuras, riscos que duram uns quadros, poeira e, às vezes, um fio de cabelo |
+| `vhs=` | fita VHS: as linhas tremendo de lado, a cor borrada e atrasada, o preto lavado, o chiado, a faixa do tracking descendo devagar e a faixa torta embaixo |
+| `crt=` | televisão de tubo: as linhas de varredura, a máscara de cor (vermelho, verde e azul lado a lado) e a imagem curva, com os cantos redondos e escuros; a curva cresce com o valor, e em 1 só uma faixa fina da borda some |
+| `glitch=` | falha digital: em alguns quadros, em rajadas, faixas da imagem pulam de lado (algumas com as cores trocadas), o vermelho e o azul se separam e uns blocos se repetem fora do lugar; quanto maior o valor, mais vezes e mais forte |
+
+Repare:
+
+- **São para o filme e o vídeo**, e valem também no GIF e no PNG. A sprite sheet e o Godot saem **sem eles** (um personagem de jogo não deve levar a tela de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG também sai sem eles.
+- Eles entram por último: depois do estilo (`art`), do `bloom`, do `vignette`, do `grain` e do `posterize`. Com `pixel=`, entram depois dos blocos.
+- Podem ir juntos: `finish crt=0.6 vhs=0.4` é uma fita velha passando numa televisão de tubo.
+- Na imagem transparente, eles mexem só no desenho: o que é transparente continua transparente.
+
+> Como no granulado, o chiado, o grão e a poeira não comprimem: o vídeo e o GIF ficam maiores.
+
+**Experimente:** no código do `crt=1`, mude para `crt=0.3`. As linhas ficam leves, e a imagem quase não curva.
 
 ### Os dois `inner`
 

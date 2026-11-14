@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "pula_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 144,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 73
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "pula_01": {
+      "frame": {
+        "x": 148,
+        "y": 2,
+        "w": 144,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 73
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "pula_02": {
+      "frame": {
+        "x": 294,
+        "y": 2,
+        "w": 144,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 73
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "pula_03": {
+      "frame": {
+        "x": 440,
+        "y": 2,
+        "w": 144,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 73
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    }
+  },
+  "animations": {
+    "pula": [
+      "pula_00",
+      "pula_01",
+      "pula_02",
+      "pula_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_efeitos_tela.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 586,
+      "h": 77
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 144,
+      "h": 73
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "pula",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 0,
+      "y": 28,
+      "w": 480,
+      "h": 242
+    }
+  }
+}

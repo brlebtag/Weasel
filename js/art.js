@@ -1260,7 +1260,7 @@
       src.content(C.ctx, m, { unlit: true, stroke: P });
       C.ctx.restore();
       let ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data;
-      if (post) post(c, g, art, info, pp, src, m);
+      if (post) post(c, g, art, info, pp, src, m, P);
       if (P.inkPass) {
         // o segundo passe (os contornos, por cima do primeiro já pronto)
         const I = work('art_ink', g.Wd, g.Hd);
@@ -1278,9 +1278,13 @@
         c = ci.data;
       }
       if (info.lit !== false) {
-        const l = shot('art_l', g, src, m, undefined, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
-        const u = shot('art_u', g, src, m, { unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
-        for (let o = 0; o < c.length; o += 4) {
+        // P.lightPass: as formas da luz (sem o contorno e os traços que o estilo tira do lugar); P.lightCells: a luz
+        // aplicada por casa (nos estilos de grade), e não ponto a ponto
+        const LP = P.lightPass;
+        const l = shot('art_l', g, src, m, LP ? { stroke: LP } : undefined, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+        const u = shot('art_u', g, src, m, LP ? { unlit: true, stroke: LP } : { unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+        if (P.lightCells) P.lightCells(c, l, u, B0 ? B0.getContext('2d').getImageData(0, 0, g.Wd, g.Hd).data : null);
+        else for (let o = 0; o < c.length; o += 4) {
           if (!c[o + 3] || !u[o + 3]) continue;
           for (let ch = 0; ch < 3; ch++) {
             const uc = u[o + ch], lc = l[o + ch], cc = c[o + ch];
@@ -3142,6 +3146,605 @@
     }
   }
 
+  // ---------- peças separadas (o mosaico) ----------
+  // as regiões ligadas com a mesma chave (4 vizinhos): o número de cada uma em L (-1 onde a chave é -1). Duas peças
+  // com a mesma chave em lugares diferentes (o azulejo se repete) ficam separadas.
+  function regions(key, Wd, Hd) {
+    const N = Wd * Hd, L = new Int32Array(N).fill(-1), st = new Int32Array(N);
+    let n = 0;
+    for (let i = 0; i < N; i++) {
+      if (L[i] >= 0 || key[i] < 0) continue;
+      const kk = key[i];
+      let sp = 0;
+      st[sp++] = i;
+      L[i] = n;
+      while (sp) {
+        const j = st[--sp], x = j % Wd;
+        if (x > 0 && L[j - 1] < 0 && key[j - 1] === kk) { L[j - 1] = n; st[sp++] = j - 1; }
+        if (x < Wd - 1 && L[j + 1] < 0 && key[j + 1] === kk) { L[j + 1] = n; st[sp++] = j + 1; }
+        if (j >= Wd && L[j - Wd] < 0 && key[j - Wd] === kk) { L[j - Wd] = n; st[sp++] = j - Wd; }
+        if (j + Wd < N && L[j + Wd] < 0 && key[j + Wd] === kk) { L[j + Wd] = n; st[sp++] = j + Wd; }
+      }
+      n++;
+    }
+    return { L, n };
+  }
+
+  // ---------- mosaic (mosaico) ----------
+  // O azulejo das pastilhas (que emenda): MM fileiras de MM pastilhas; as fileiras ondulam um pouco e ficam
+  // desencontradas, e as juntas ficam um pouco tortas. Cada ponto guarda a fileira (R, de 16 em 16), a pastilha na
+  // fileira (G, de 16 em 16) e a distância até a beirada dela (B, em 1/MB do tamanho de uma pastilha).
+  const MM = 16, MB = 500;
+  const mosaicTiles = new Map();
+  function mosaicTile(k, sz) {
+    const n = Math.min(1024, Math.max(64, Math.round(MM * sz * k))), key = n + ':' + sz.toFixed(3);
+    if (mosaicTiles.has(key)) return mosaicTiles.get(key);
+    if (mosaicTiles.size > 3) mosaicTiles.delete(mosaicTiles.keys().next().value);
+    const R = rng(5113), fr = [], ph = [], am = [], off = [], jt = [], jb = [];
+    for (let j = 0; j < MM; j++) {
+      fr.push(1 + Math.floor(R() * 2));
+      ph.push(R() * TAU);
+      am.push(0.03 + 0.05 * R());
+      off.push(R());
+      for (let i = 0; i < MM; i++) { jt.push((R() - 0.5) * 0.34); jb.push((R() - 0.5) * 0.34); }
+    }
+    const md = (a) => ((a % MM) + MM) % MM;
+    // a beirada de cima da fileira j, no ponto u
+    const yb = (j, u) => { const q = md(j); return j + am[q] * Math.sin((TAU * u * fr[q]) / MM + ph[q]); };
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
+    for (let py = 0, o = 0; py < n; py++) {
+      const v = ((py + 0.5) / n) * MM;
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = ((px + 0.5) / n) * MM;
+        let j = Math.floor(v);
+        while (v < yb(j, u)) j--;
+        while (v >= yb(j + 1, u)) j++;
+        const y0 = yb(j, u), y1 = yb(j + 1, u), t = (v - y0) / (y1 - y0), q = md(j);
+        // a junta i da fileira: de cima para baixo, ela entorta de jt para jb
+        const xo = (i) => { const r = q * MM + md(i); return i + off[q] + jt[r] * (1 - t) + jb[r] * t; };
+        let i = Math.floor(u - off[q]);
+        while (u < xo(i)) i--;
+        while (u >= xo(i + 1)) i++;
+        const sA = jb[q * MM + md(i)] - jt[q * MM + md(i)], sB = jb[q * MM + md(i + 1)] - jt[q * MM + md(i + 1)];
+        const dx = Math.min((u - xo(i)) / Math.hypot(1, sA), (xo(i + 1) - u) / Math.hypot(1, sB)), dy = Math.min(v - y0, y1 - v);
+        D[o] = q * 16 + 8;
+        D[o + 1] = md(i) * 16 + 8;
+        D[o + 2] = Math.min(255, Math.round(Math.min(dx, dy) * MB));
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: n / (MM * sz) };
+    mosaicTiles.set(key, T);
+    return T;
+  }
+  // as medidas do mosaico, em unidades: o tamanho das pastilhas (size=; sem ele, uns 40 na largura do canvas) e a
+  // largura do rejunte (grout=; sem ele, 12% de uma pastilha)
+  const mosaicSize = (art, g) => art.size || 12 * bgUnit(g);
+  const mosaicGrout = (art, g) => (art.grout !== null && art.grout !== undefined ? art.grout : 0.12 * mosaicSize(art, g));
+  // o traço fino vira uma fileira de pastilhas ao longo dele (como o contorno); o largo vira pastilhas cortadas
+  const mosaicSlim = (it, sz) => (it.ws ? Math.max(...it.ws) : it.w) < 1.5 * sz;
+  // A fileira de pastilhas ao longo de um caminho (o contorno, um traço fino): um pedaço a cada 0,9 pastilha, de
+  // w de largura (no mínimo três quartos de pastilha); style(i) dá a cor de cada pedaço; on(s): o dash= do traço.
+  function tileRow(ctx, pts, closed, w, sz, style, on) {
+    const L = 0.9 * sz, q = resample(pts, closed, L), n = closed ? q.length : q.length - 1;
+    ctx.save();
+    ctx.lineWidth = Math.max(w, 0.75 * sz);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      if (on && !on((i + 0.5) * L)) continue;
+      const a = q[i], b = q[(i + 1) % q.length];
+      ctx.strokeStyle = style(i);
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // O mosaic: como o vitral, cada forma (e o fundo do canvas) é cortada em pedaços, as pastilhas, presas à forma; a
+  // cor de cada uma é a média do desenho nela. O contorno e os traços finos viram uma fileira de pastilhas ao longo
+  // deles, da cor deles. Entre as pastilhas, o rejunte claro; cada pastilha tem a beirada mais clara do lado da luz.
+  function mosaicPaint(art, info, g) {
+    const sz = mosaicSize(art, g);
+    return {
+      lightPass: lightOf((it) => mosaicSlim(it, sz)),
+      inkPass: {
+        glow: false,
+        fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+        ink() {},
+        line(ctx, it) { eraseWith(ctx, () => it.body(ctx)); return true; },
+      },
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) { ctx.fillStyle = it.fillStyle; ctx.fill(it.path); },
+      ink(ctx, it) { if (it.hasInk && it.ink > 0 && it.inkStyle) tileRow(ctx, ptsOf(it.poly), true, it.ink, sz, () => it.inkStyle, null); },
+      line(ctx, it) {
+        if (mosaicSlim(it, sz)) { tileRow(ctx, lineEdges(it).pts, false, it.ws ? Math.max(...it.ws) : it.w, sz, () => it.lineStyle, dashAt(it.el.dash)); return true; }
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // o passe das peças: cada forma com uma cor sorteada, e cada pedaço das fileiras também (S.ids: 1 numa fileira)
+  function mosaicIds(S, art, g) {
+    const sz = mosaicSize(art, g);
+    let n = 0;
+    S.ids = new Map();
+    S.light = [-0.6, -0.8];
+    const col = (row) => {
+      const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
+      S.ids.set(v, row);
+      return `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
+    };
+    return {
+      glow: false,
+      fill(ctx, it) { S.light = it.light; ctx.fillStyle = col(0); ctx.fill(it.path); },
+      ink(ctx, it) { if (it.hasInk && it.ink > 0) tileRow(ctx, ptsOf(it.poly), true, it.ink, sz, () => col(1), null); },
+      line(ctx, it) {
+        if (mosaicSlim(it, sz)) { tileRow(ctx, lineEdges(it).pts, false, it.ws ? Math.max(...it.ws) : it.w, sz, () => col(1), dashAt(it.el.dash)); return true; }
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = col(0);
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  const GROUT = [210, 204, 193];
+  function mosaicPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, N = Wd * Hd, k = 1 / g.cw, sz = mosaicSize(art, g), gr = mosaicGrout(art, g);
+    const S = {};
+    const IX = work('art_id', Wd, Hd);
+    IX.ctx.save();
+    src.content(IX.ctx, m, { unlit: true, stroke: mosaicIds(S, art, g) });
+    IX.ctx.restore();
+    const { P, own } = piecesOf(IX.ctx.getImageData(0, 0, Wd, Hd).data, S.ids, Wd, Hd);
+    // cada peça num número pequeno (slot; 0 é o fundo), a caixa dela e a cor sorteada dela (pid: não muda de um
+    // quadro para o outro, ao contrário do slot)
+    const slot = new Int32Array(N), bx = [Infinity], by = [Infinity], ex = [-Infinity], ey = [-Infinity], isRow = [0], pid = [0], of = new Map();
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        const p = P[i];
+        if (p < 0) { slot[i] = 0; continue; }
+        let s = of.get(p);
+        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isRow.push(S.ids.get(p)); pid.push(p); }
+        slot[i] = s;
+        if (x < bx[s]) bx[s] = x;
+        if (x > ex[s]) ex[s] = x;
+        if (y < by[s]) by[s] = y;
+        if (y > ey[s]) ey[s] = y;
+      }
+    }
+    // inteira (sem corte): as fileiras e as formas menores que uma pastilha; conta: pequena demais para o rejunte
+    const ns = bx.length, whole = new Uint8Array(ns), bead = new Uint8Array(ns);
+    for (let s = 1; s < ns; s++) {
+      const mn = Math.min(ex[s] - bx[s], ey[s] - by[s]) + 1;
+      whole[s] = isRow[s] || mn < 1.2 * sz * k ? 1 : 0;
+      bead[s] = mn < 3 * gr * k ? 1 : 0;
+    }
+    const Dt = new Float32Array(N).fill(1e9);
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        const s = slot[i];
+        if (x < Wd - 1 && slot[i + 1] !== s && !bead[s] && !bead[slot[i + 1]]) Dt[i] = Dt[i + 1] = 0;
+        if (y < Hd - 1 && slot[i + Wd] !== s && !bead[s] && !bead[slot[i + Wd]]) Dt[i] = Dt[i + Wd] = 0;
+      }
+    }
+    chamfer(Dt, Wd, Hd);
+    // a pastilha de cada ponto e a distância até a beirada dela (sem bg no canvas, o fundo fica de fora: é o papel)
+    const T = mosaicTile(k, sz), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0, 0];
+    const bare = !!info.bare, key = new Int32Array(N).fill(-1), Dc = new Float32Array(N), seed = new Int32Array(N), sd0 = art.seed | 0;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const s = slot[i];
+        if (!c[o + 3] || (s === 0 && bare)) continue;
+        tileAt(V, T, tx, o, px, py, k, off);
+        const cut = !whole[s] && !bead[s];
+        const tid = cut ? ((Math.round((V[0] * 255 - 8) / 16) & 15) << 4) | (Math.round((V[1] * 255 - 8) / 16) & 15) : 256;
+        key[i] = s * 257 + tid;
+        Dc[i] = cut ? Math.min(Dt[i], ((V[2] * 255) / MB) * sz * k) : Dt[i];
+        seed[i] = Math.imul(pid[s] + 1, 2654435761) ^ Math.imul(tid + 1, 40503) ^ Math.imul(sd0 + 1, 7919);
+      }
+    }
+    const { L, n } = regions(key, Wd, Hd);
+    // a cor de cada pastilha: a média (só dos pontos que são mesmo da peça), um pouco mais forte e diferente da vizinha
+    const sum = new Float64Array(n * 3), all = new Float64Array(n * 3), cnt = new Int32Array(n * 2), sd = new Int32Array(n);
+    for (let i = 0, o = 0; i < N; i++, o += 4) {
+      const q = L[i];
+      if (q < 0) continue;
+      all[q * 3] += c[o]; all[q * 3 + 1] += c[o + 1]; all[q * 3 + 2] += c[o + 2]; cnt[q * 2 + 1]++;
+      if (own[i] || slot[i] === 0) { sum[q * 3] += c[o]; sum[q * 3 + 1] += c[o + 1]; sum[q * 3 + 2] += c[o + 2]; cnt[q * 2]++; }
+      sd[q] = seed[i];
+    }
+    const col = new Float32Array(n * 3);
+    for (let q = 0; q < n; q++) {
+      const n0 = cnt[q * 2], A = n0 ? sum : all, nn = n0 || cnt[q * 2 + 1] || 1;
+      let r = A[q * 3] / nn, gg = A[q * 3 + 1] / nn, b = A[q * 3 + 2] / nn;
+      const l = 0.3 * r + 0.59 * gg + 0.11 * b, f = 0.93 + 0.14 * rnd(sd[q], 5);
+      r = (l + (r - l) * 1.1) * f * (0.975 + 0.05 * rnd(sd[q], 6));
+      gg = (l + (gg - l) * 1.1) * f * (0.975 + 0.05 * rnd(sd[q], 7));
+      b = (l + (b - l) * 1.1) * f * (0.975 + 0.05 * rnd(sd[q], 8));
+      col[q * 3] = r; col[q * 3 + 1] = gg; col[q * 3 + 2] = b;
+    }
+    // o rejunte (cada pastilha com a sua largura de junta) e a beirada de cada pastilha, clara do lado da luz
+    const lv = S.light, ll = Math.hypot(lv[0], lv[1]) || 1, lx = lv[0] / ll, ly = lv[1] / ll;
+    const gh = 0.5 * gr * k, bw = Math.max(1, 0.22 * sz * k);
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const q = L[i];
+        if (q < 0) continue;
+        const sq = sd[q], d = Dc[i] - gh * (0.75 + 0.5 * rnd(sq, 9)), gc = gh > 0 ? cl(0.5 - d) : 0;
+        let sh = 1 + 0.1 * (rnd(sq, 10) - 0.5), sp = 0;
+        if (d < bw) {
+          const t = 1 - Math.max(0, d) / bw, t2 = t * t;
+          let nx = (px > 0 ? Dc[i - 1] : Dc[i]) - (px < Wd - 1 ? Dc[i + 1] : Dc[i]), ny = (py > 0 ? Dc[i - Wd] : Dc[i]) - (py < Hd - 1 ? Dc[i + Wd] : Dc[i]);
+          const nl = Math.hypot(nx, ny);
+          if (nl > 1e-6) {
+            nx /= nl; ny /= nl;
+            const lit = nx * lx + ny * ly;
+            sh += 0.3 * t2 * lit - 0.05 * t;
+            if (lit > 0) sp = 0.25 * t2 * lit * lit;
+          }
+        }
+        let r = col[q * 3] * sh, gg = col[q * 3 + 1] * sh, b = col[q * 3 + 2] * sh;
+        r += (255 - r) * sp; gg += (255 - gg) * sp; b += (255 - b) * sp;
+        if (gc > 0) { r += (GROUT[0] - r) * gc; gg += (GROUT[1] - gg) * gc; b += (GROUT[2] - b) * gc; }
+        c[o] = r; c[o + 1] = gg; c[o + 2] = b;
+      }
+    }
+  }
+
+  // ---------- stitch (ponto-cruz) e knit (tricô) ----------
+  // Os dois usam uma grade de casas presa à origem do canvas (ou do quadro do filme), como o pixel art: cada casa
+  // fica com a cor que mais aparece nela. A imagem de trabalho tem k pontos por unidade; a casa, size·k pontos.
+  // a cor das casas: a que mais aparece (em 4 bits por canal) entre os pontos de d com alfa; cover(i, n): a casa vale?
+  function cellVote(d, Wd, Hd, o0, sw, shh, on) {
+    const cx0 = Math.floor(o0[0] / sw), cy0 = Math.floor(o0[1] / shh), cx1 = Math.floor((o0[0] + Wd - 1) / sw), cy1 = Math.floor((o0[1] + Hd - 1) / shh);
+    const cw = cx1 - cx0 + 1, chn = cy1 - cy0 + 1, ok = new Uint8Array(cw * chn), col = new Float32Array(cw * chn * 3);
+    const cnt = new Int32Array(4096), sr = new Float64Array(4096), sg = new Float64Array(4096), sb = new Float64Array(4096), used = [];
+    for (let cy = cy0; cy <= cy1; cy++) {
+      const ya = Math.max(0, Math.ceil(cy * shh - o0[1] - 0.5)), yb = Math.min(Hd, Math.ceil((cy + 1) * shh - o0[1] - 0.5));
+      for (let cx = cx0; cx <= cx1; cx++) {
+        const xa = Math.max(0, Math.ceil(cx * sw - o0[0] - 0.5)), xb = Math.min(Wd, Math.ceil((cx + 1) * sw - o0[0] - 0.5));
+        let tot = 0, cov = 0;
+        used.length = 0;
+        for (let y = ya; y < yb; y++) {
+          for (let x = xa, o = (y * Wd + xa) * 4; x < xb; x++, o += 4) {
+            tot++;
+            if (d[o + 3] < 128) continue;
+            cov++;
+            const kk = ((d[o] >> 4) << 8) | ((d[o + 1] >> 4) << 4) | (d[o + 2] >> 4);
+            if (!cnt[kk]) used.push(kk);
+            cnt[kk]++; sr[kk] += d[o]; sg[kk] += d[o + 1]; sb[kk] += d[o + 2];
+          }
+        }
+        const ci = (cy - cy0) * cw + (cx - cx0);
+        if (tot && cov && on(cov, tot)) {
+          let best = used[0], bn = 0;
+          for (const kk of used) if (cnt[kk] > bn) { bn = cnt[kk]; best = kk; }
+          ok[ci] = 1;
+          col[ci * 3] = sr[best] / bn; col[ci * 3 + 1] = sg[best] / bn; col[ci * 3 + 2] = sb[best] / bn;
+        }
+        for (const kk of used) { cnt[kk] = 0; sr[kk] = sg[kk] = sb[kk] = 0; }
+      }
+    }
+    return { cx0, cy0, cw, chn, ok, col };
+  }
+  // a escadinha (um passo de lado e um de pé, com um dos dois sozinho) vira um passo na diagonal; um canto de verdade
+  // (dois lados compridos) fica
+  function unstair(nd) {
+    const n = nd.length;
+    if (n < 3) return nd;
+    const dx = (i) => nd[i + 1][0] - nd[i][0], dy = (i) => nd[i + 1][1] - nd[i][1];
+    const eq = (i, j) => dx(i) === dx(j) && dy(i) === dy(j);
+    const straight = (i) => (dx(i) === 0) !== (dy(i) === 0);
+    const out = [nd[0]];
+    let skip = false;
+    for (let i = 1; i + 1 < n; i++) {
+      const a = i - 1, b = i;
+      if (!skip && straight(a) && straight(b) && dx(a) * dx(b) + dy(a) * dy(b) === 0) {
+        let r0 = 1, r1 = 1;
+        while (a - r0 >= 0 && eq(a - r0, a)) r0++;
+        while (b + r1 + 1 < n && eq(b + r1, b)) r1++;
+        if (Math.min(r0, r1) === 1) { skip = true; continue; }
+      }
+      skip = false;
+      out.push(nd[i]);
+    }
+    out.push(nd[n - 1]);
+    return out;
+  }
+  // O pesponto pela grade: o caminho (pts, nas unidades do ctx) vai para os nós da grade (a cada s pontos da imagem
+  // de trabalho, contados de -o0), e cada passo de um nó para o vizinho (de lado ou na diagonal) vira um ponto de
+  // linha. on(s): o dash= (s em unidades do caminho).
+  function gridStitch(ctx, pts, closed, s, o0, rgb, light, on) {
+    const T = ctx.getTransform(), st = s / 4 / pxOf(ctx), q = resample(pts, closed, st);
+    if (closed && q.length) q.push(q[0]);
+    const out = [];
+    const add = (nd) => {
+      const L = out.length;
+      // a ida e volta (o caminho correndo junto da grade) sai
+      if (L >= 2 && out[L - 2][0] === nd[0] && out[L - 2][1] === nd[1]) { out.pop(); return; }
+      out.push(nd);
+    };
+    for (let i = 0; i < q.length; i++) {
+      const x = T.a * q[i][0] + T.c * q[i][1] + T.e, y = T.b * q[i][0] + T.d * q[i][1] + T.f;
+      const fx = (x + o0[0]) / s, fy = (y + o0[1]) / s, last = out[out.length - 1];
+      // um caminho bem no meio entre dois nós não fica pulando de um para o outro
+      const nx = last && Math.abs(fx - last[0]) < 0.62 ? last[0] : Math.round(fx), ny = last && Math.abs(fy - last[1]) < 0.62 ? last[1] : Math.round(fy);
+      if (last && last[0] === nx && last[1] === ny) continue;
+      const ok = !on || on(i * st);
+      if (last) {
+        // de um nó ao outro, de vizinho em vizinho
+        const dx = nx - last[0], dy = ny - last[1], n = Math.max(Math.abs(dx), Math.abs(dy)), x0 = last[0], y0 = last[1];
+        for (let j = 1; j < n; j++) add([x0 + Math.round((dx * j) / n), y0 + Math.round((dy * j) / n), ok]);
+      }
+      add([nx, ny, ok]);
+    }
+    const nd = unstair(out);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.lineCap = 'round';
+    const w = Math.max(1.6, 0.3 * s), gp = 0.1 * s;
+    for (let i = 1; i < nd.length; i++) {
+      const a = nd[i - 1], b = nd[i];
+      if (!b[2]) continue;
+      const ax = a[0] * s - o0[0], ay = a[1] * s - o0[1], bx = b[0] * s - o0[0], by = b[1] * s - o0[1];
+      const d = Math.hypot(bx - ax, by - ay) || 1, ux = ((bx - ax) / d) * gp, uy = ((by - ay) / d) * gp;
+      threadStitch(ctx, [ax + ux, ay + uy], [bx - ux, by - uy], w, rgb, light);
+    }
+    ctx.restore();
+  }
+  // a luz por casa: a média da imagem com luz (l) e sem luz (u) em cada casa, aplicada em todos os pontos dela, como
+  // um ganho (assim as sombras dos pontos ficam, e uma cor quase branca não estoura num canal só)
+  // (on: as casas do estilo, marcadas pelo pós; fora delas, o tecido ou o papel, vale só a luz do fundo: a média nos
+  // pontos em que a imagem sem luz é o próprio fundo, b; sem fundo, nada)
+  function cellLight(c, l, u, Wd, Hd, o0, sw, shh, on, b) {
+    const cx0 = Math.floor(o0[0] / sw), cy0 = Math.floor(o0[1] / shh), cw = Math.floor((o0[0] + Wd - 1) / sw) - cx0 + 1, chn = Math.floor((o0[1] + Hd - 1) / shh) - cy0 + 1;
+    const S = new Float64Array(cw * chn * 7), F = new Float64Array(cw * chn * 7), cell = new Int32Array(Wd * Hd);
+    for (let py = 0, i = 0, o = 0; py < Hd; py++) {
+      const cy = Math.floor((o0[1] + py + 0.5) / shh) - cy0;
+      for (let px = 0; px < Wd; px++, i++, o += 4) {
+        const ci = cy * cw + Math.floor((o0[0] + px + 0.5) / sw) - cx0;
+        cell[i] = ci;
+        if (!u[o + 3]) continue;
+        const q = ci * 7;
+        S[q] += l[o]; S[q + 1] += l[o + 1]; S[q + 2] += l[o + 2]; S[q + 3] += u[o]; S[q + 4] += u[o + 1]; S[q + 5] += u[o + 2]; S[q + 6]++;
+        if (on && b && b[o + 3] && Math.abs(u[o] - b[o]) + Math.abs(u[o + 1] - b[o + 1]) + Math.abs(u[o + 2] - b[o + 2]) <= 6) {
+          F[q] += l[o]; F[q + 1] += l[o + 1]; F[q + 2] += l[o + 2]; F[q + 3] += u[o]; F[q + 4] += u[o + 1]; F[q + 5] += u[o + 2]; F[q + 6]++;
+        }
+      }
+    }
+    for (let i = 0, o = 0; i < Wd * Hd; i++, o += 4) {
+      const q = cell[i] * 7, T = on && !on[cell[i]] ? F : S, n = T[q + 6];
+      if (!c[o + 3] || !n) continue;
+      for (let ch = 0; ch < 3; ch++) {
+        const uc = T[q + 3 + ch] / n, lc = T[q + ch] / n, cc = c[o + ch];
+        c[o + ch] = ((cc + 16) * (lc + 16)) / (uc + 16) - 16;
+      }
+    }
+  }
+  // as formas da luz: as formas e os traços largos, sem o contorno e sem os traços finos (thin)
+  const lightOf = (thin) => ({
+    fill(ctx, it) { ctx.fillStyle = it.fillStyle; ctx.fill(it.path); },
+    ink() {},
+    line(ctx, it) {
+      if (thin(it)) return true;
+      ctx.save();
+      ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+      it.body(ctx);
+      ctx.restore();
+      return true;
+    },
+  });
+  // a cor de um ponto de linha de duas pernas torcidas: p (0 no meio, 1 na beirada), sd (o lado), t (ao longo do
+  // ponto, de 0 a 1), n (quantas torções), sh (o brilho pela direção), f (mais escura embaixo)
+  const TH = [0, 0, 0];
+  function threadAt(r, g, b, p, sd, t, n, sh, f) {
+    const pc = Math.min(1, p), st = (((t * n + pc * sd * 0.6) % 1) + 1) % 1, ply = Math.sin(Math.PI * st);
+    const shade = f * (0.5 + 0.32 * Math.sqrt(1 - pc * pc) + 0.22 * ply), hl = sh * 0.3 * (1 - pc * pc) * (1 - pc * pc) * ply * ply;
+    TH[0] = r * shade + (255 - r * shade) * hl;
+    TH[1] = g * shade + (255 - g * shade) * hl;
+    TH[2] = b * shade + (255 - b * shade) * hl;
+    return TH;
+  }
+  // o etamine: um bloco de trama em cada casa (3 fios para cada lado) e um furo em cada canto, onde a agulha passa
+  function aidaAt(u, v) {
+    const du = Math.min(u, 1 - u), dv = Math.min(v, 1 - v), dh = Math.hypot(du, dv);
+    if (dh < 0.14) return 0.6 + (0.4 * dh) / 0.14;
+    const fu = (u * 3) % 1, fv = (v * 3) % 1, warp = (Math.floor(u * 3) + Math.floor(v * 3)) & 1;
+    const w = 0.9 + 0.14 * Math.sin(Math.PI * (warp ? fu : fv));
+    return Math.min(du, dv) < 0.05 ? w * 0.93 : w;
+  }
+  const AIDA = '#f1ece0';
+  const crossThin = (it, size) => (it.ws ? Math.max(...it.ws) : it.w) < 0.8 * size;
+  // O stitch: cada casa da grade coberta pelo desenho vira um X de linha, da cor que mais aparece nela; o resto é o
+  // etamine (o tecido do ponto-cruz), tingido na cor do fundo (sem bg, a do paper=). O contorno e os traços finos
+  // viram um pesponto pela grade (de nó em nó), da cor deles. Os textos e as partículas saem por cima, como sempre.
+  function crossPaint(art, info, g) {
+    const L = { light: [-0.6, -0.8] }, s = art.size / g.cw, o0 = [g.gx0, g.gy0];
+    return {
+      paper: AIDA,
+      text: false,
+      L,
+      lightPass: lightOf((it) => crossThin(it, art.size)),
+      lightCells(c, l, u, b) { cellLight(c, l, u, g.Wd, g.Hd, o0, s, s, this.on, b); },
+      inkPass: {
+        glow: false,
+        fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+        ink(ctx, it) { if (it.hasInk && it.ink > 0) gridStitch(ctx, ptsOf(it.poly), true, s, o0, specRGB(it.inkc) || [20, 20, 28], it.light, null); },
+        line(ctx, it) {
+          if (!crossThin(it, art.size)) { eraseWith(ctx, () => it.body(ctx)); return true; }
+          gridStitch(ctx, lineEdges(it).pts, false, s, o0, specRGB(it.lineSpec) || [40, 30, 24], it.light, dashAt(it.el.dash));
+          return true;
+        },
+      },
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) { L.light = it.light; ctx.fillStyle = it.fillStyle; ctx.fill(it.path); },
+      ink() {},
+      line(ctx, it) {
+        if (crossThin(it, art.size)) return true;
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  function crossPost(c, g, art, info, pp, src, m, HP) {
+    const { Wd, Hd } = g, s = art.size / g.cw, o0 = [g.gx0, g.gy0];
+    const P = crossPaint(art, info, g);
+    const xd = shot('art_xc', g, src, m, { unlit: true, stroke: P }).ctx.getImageData(0, 0, Wd, Hd).data;
+    const B0 = src.bg && !info.bare ? bgShot(g, src, m) : null, bd = B0 ? B0.getContext('2d').getImageData(0, 0, Wd, Hd).data : null, fab = !!src.bg;
+    const V = cellVote(xd, Wd, Hd, o0, s, s, (cov, tot) => cov * 2 >= tot);
+    if (HP) HP.on = V.ok;
+    const l = P.L.light, shA = sheen(-Math.PI / 4, l), shB = sheen(Math.PI / 4, l), hw0 = 0.23 * s, R2 = Math.SQRT1_2;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const Y = (o0[1] + py + 0.5) / s, cy = Math.floor(Y), v = Y - cy;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const X = (o0[0] + px + 0.5) / s, cx = Math.floor(X), u = X - cx;
+        // o tecido: a cor do fundo (ou o papel) e a trama do etamine; sem fundo (a imagem sem fundo), só as linhas
+        let r = 0, gg = 0, b = 0, a = 0;
+        if (fab) {
+          const wv = aidaAt(u, v);
+          if (bd) { r = bd[o] * wv; gg = bd[o + 1] * wv; b = bd[o + 2] * wv; } else { r = pp[0] * wv; gg = pp[1] * wv; b = pp[2] * wv; }
+          a = 255;
+        }
+        const ci = (cy - V.cy0) * V.cw + (cx - V.cx0);
+        if (V.ok[ci]) {
+          const cr = V.col[ci * 3], cg = V.col[ci * 3 + 1], cb = V.col[ci * 3 + 2];
+          // o X: a perna de baixo (A, de baixo à esquerda para cima à direita) e a de cima (B), mais finas nas pontas
+          const dA = Math.abs(u + v - 1) * R2 * s, tA = (u + 1 - v) / 2, hA = hw0 * (0.6 + 0.4 * Math.sin(Math.PI * tA));
+          const dB = Math.abs(u - v) * R2 * s, tB = (u + v) / 2, hB = hw0 * (0.6 + 0.4 * Math.sin(Math.PI * tB));
+          // a sombra das linhas no tecido
+          const occ = 0.32 * Math.max(cl(1 - (dA - hA) / (0.6 * hw0)), cl(1 - (dB - hB) / (0.6 * hw0)));
+          r *= 1 - occ; gg *= 1 - occ; b *= 1 - occ;
+          const aA = cl(hA - dA + 0.5), aB = cl(hB - dB + 0.5);
+          if (aA > 0) {
+            const t = threadAt(cr, cg, cb, dA / hA, u + v > 1 ? 1 : -1, tA, 3, shA, 0.84 * (1 - 0.3 * cl(1 - (dB - hB) / (0.5 * hw0))));
+            r += (t[0] - r) * aA; gg += (t[1] - gg) * aA; b += (t[2] - b) * aA; a = Math.max(a, 255 * aA);
+          }
+          if (aB > 0) {
+            const t = threadAt(cr, cg, cb, dB / hB, u > v ? 1 : -1, tB, 3, shB, 1);
+            r += (t[0] - r) * aB; gg += (t[1] - gg) * aB; b += (t[2] - b) * aB; a = Math.max(a, 255 * aB);
+          }
+        }
+        c[o] = r; c[o + 1] = gg; c[o + 2] = b; c[o + 3] = a;
+      }
+    }
+  }
+
+  // O knit: cada casa da grade (mais larga que alta) vira um ponto de meia, um V de lã da cor que mais aparece nela;
+  // o fundo do canvas também. O contorno e os traços finos ganham a casa quando cobrem um terço dela (como o
+  // outline do pixel art). As pontas de cima de cada V passam por trás do V de cima.
+  const KH = 0.78;
+  const knitThin = (it, size) => (it.ws ? Math.max(...it.ws) : it.w) < 0.75 * size;
+  function knitPaint(art, info, g) {
+    const sw = art.size / g.cw;
+    return {
+      text: false,
+      lightPass: lightOf((it) => knitThin(it, art.size)),
+      lightCells(c, l, u, b) { cellLight(c, l, u, g.Wd, g.Hd, [g.gx0, g.gy0], sw, sw * KH, this.on, b); },
+      inkPass: {
+        glow: false,
+        fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+        ink() {},
+        line(ctx, it) { eraseWith(ctx, () => it.body(ctx)); return true; },
+      },
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) { ctx.fillStyle = it.fillStyle; ctx.fill(it.path); },
+      ink() {},
+      line(ctx, it) {
+        if (knitThin(it, art.size)) return true;
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // o passe do contorno e dos traços finos (com as formas da frente apagando o que fica atrás delas)
+  function knitInk(art, L) {
+    return {
+      glow: false,
+      text: false,
+      fill(ctx, it) { L.light = it.light; eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) { if (it.hasInk && it.ink > 0) it.drawInk(); },
+      line(ctx, it) {
+        ctx.save();
+        if (knitThin(it, art.size)) { ctx.fillStyle = ctx.strokeStyle = it.lineStyle; it.body(ctx); } else eraseWith(ctx, () => it.body(ctx));
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // as duas pernas do V (em casas: x de 0 a 1, y de 0 a 1 para baixo), passando um pouco da casa por cima
+  const KLEG = [[0.1, -0.16, 0.5, 0.9], [0.9, -0.16, 0.5, 0.9]];
+  // a lã de uma perna no ponto (x, y), em pontos: a cobertura em KN[0] e a cor em KN[1..3]
+  const KN = [0, 0, 0, 0];
+  function knitLeg(x, y, leg, sw, shh, hw0, r, g, b, side, fz) {
+    const ax = leg[0] * sw, ay = leg[1] * shh, vx = leg[2] * sw - ax, vy = leg[3] * shh - ay, L2 = vx * vx + vy * vy;
+    const t = cl(((x - ax) * vx + (y - ay) * vy) / L2), dx = x - ax - vx * t, dy = y - ay - vy * t, d = Math.hypot(dx, dy);
+    const hw = hw0 * (0.72 + 0.28 * Math.sin(Math.PI * t)), a = cl(hw - d + 0.5);
+    KN[0] = a;
+    if (a <= 0) return KN;
+    const p = Math.min(1, d / hw), sd = dx * vy - dy * vx > 0 ? side : -side, st = (((t * 4 + p * sd * 0.45) % 1) + 1) % 1;
+    const ply = Math.sin(Math.PI * st), shade = (0.42 + 0.38 * Math.sqrt(1 - p * p) + 0.2 * ply) * fz, hl = 0.07 * (1 - p * p) * ply;
+    KN[1] = r * shade + (255 - r * shade) * hl; KN[2] = g * shade + (255 - g * shade) * hl; KN[3] = b * shade + (255 - b * shade) * hl;
+    return KN;
+  }
+  function knitPost(c, g, art, info, pp, src, m, HP) {
+    const { Wd, Hd } = g, k = 1 / g.cw, sw = art.size * k, shh = art.size * KH * k, o0 = [g.gx0, g.gy0];
+    const L = { light: [-0.6, -0.8] };
+    const kd = shot('art_ki', g, src, m, { unlit: true, stroke: knitInk(art, L) }).ctx.getImageData(0, 0, Wd, Hd).data;
+    // as casas de tricô: todas, quando o fundo é tricotado; senão, as cobertas pelo desenho
+    const all = !!src.bg && !info.bare, cov = all ? null : coverOf(g, src, m);
+    const C = cellVote(c, Wd, Hd, o0, sw, shh, () => true), K = cellVote(kd, Wd, Hd, o0, sw, shh, (n, tot) => n * 3 >= tot);
+    const on = all ? C.ok : cellVote(cov, Wd, Hd, o0, sw, shh, (n, tot) => n * 2 >= tot).ok;
+    if (HP) HP.on = on;
+    const colAt = (ci, out) => {
+      const S = K.ok[ci] ? K.col : C.col;
+      out[0] = S[ci * 3]; out[1] = S[ci * 3 + 1]; out[2] = S[ci * 3 + 2];
+      return out;
+    };
+    const A = [0, 0, 0], Bc = [0, 0, 0], hw0 = 0.25 * sw, P0 = src.bg ? [pp[0], pp[1], pp[2], 255] : [0, 0, 0, 0];
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const Y = (o0[1] + py + 0.5) / shh, cy = Math.floor(Y), v = Y - cy;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const X = (o0[0] + px + 0.5) / sw, cx = Math.floor(X), u = X - cx;
+        const ci = (cy - C.cy0) * C.cw + (cx - C.cx0), cb = ci + C.cw, here = !!on[ci], below = cy + 1 - C.cy0 < C.chn && !!on[cb];
+        // fora do tricô (sem fundo): o papel, ou nada (na imagem sem fundo)
+        if (!here && !below) { c[o] = P0[0]; c[o + 1] = P0[1]; c[o + 2] = P0[2]; c[o + 3] = P0[3]; continue; }
+        const fz = 0.95 + 0.1 * rnd(o0[0] + px, o0[1] + py);
+        let r = P0[0], gg = P0[1], b = P0[2], a = P0[3];
+        if (here) { colAt(ci, A); r = A[0] * 0.3; gg = A[1] * 0.3; b = A[2] * 0.3; a = 255; }
+        // as pontas do V de baixo (por trás), depois a perna direita e a esquerda deste
+        const x = u * sw, y = v * shh;
+        if (below) {
+          colAt(cb, Bc);
+          for (let s = 1; s >= 0; s--) {
+            const q = knitLeg(x, y - shh, KLEG[s], sw, shh, hw0, Bc[0], Bc[1], Bc[2], s ? -1 : 1, fz);
+            if (q[0] > 0) { r += (q[1] - r) * q[0]; gg += (q[2] - gg) * q[0]; b += (q[3] - b) * q[0]; a = Math.max(a, 255 * q[0]); }
+          }
+        }
+        if (here) {
+          for (let s = 1; s >= 0; s--) {
+            const q = knitLeg(x, y, KLEG[s], sw, shh, hw0, A[0], A[1], A[2], s ? -1 : 1, fz);
+            if (q[0] > 0) { r += (q[1] - r) * q[0]; gg += (q[2] - gg) * q[0]; b += (q[3] - b) * q[0]; }
+          }
+        }
+        c[o] = r; c[o + 1] = gg; c[o + 2] = b; c[o + 3] = a;
+      }
+    }
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -3167,6 +3770,9 @@
     clay: tone(handDraw(clayPaint, clayPost), true),
     glass: tone(handDraw(glassPaint, glassPost), true),
     embroidery: tone(handDraw(embroideryPaint, embroideryPost), true),
+    stitch: tone(handDraw(crossPaint, crossPost), true),
+    mosaic: tone(handDraw(mosaicPaint, mosaicPost), true),
+    knit: tone(handDraw(knitPaint, knitPost), true),
     lines: tone(linesDraw, false),
     neon: tone(neonDraw, true),
   };
@@ -3258,7 +3864,12 @@
       if (a.size) p.push(`size=${a.size}`);
       if (a.lead) p.push(`lead=${a.lead}`);
       if (a.frame) p.push('frame');
-} else if ((a.style === 'lines' || a.style === 'neon') && a.w) p.push(`w=${a.w}`);
+    } else if (a.style === 'stitch' || a.style === 'knit') {
+      if (a.size !== (a.style === 'stitch' ? 6 : 8)) p.push(`size=${a.size}`);
+    } else if (a.style === 'mosaic') {
+      if (a.size) p.push(`size=${a.size}`);
+      if (a.grout !== null && a.grout !== undefined) p.push(`grout=${a.grout}`);
+    } else if ((a.style === 'lines' || a.style === 'neon') && a.w) p.push(`w=${a.w}`);
     if (a.c) p.push(`c=${a.c}`);
     if (a.shift !== undefined && a.shift !== 1.5) p.push(`shift=${a.shift}`);
     if (a.levels && (a.levels[0] !== 0 || a.levels[1] !== 1)) p.push(`levels=${a.levels.join(',')}`);

@@ -1,0 +1,7 @@
+filme    320 × 180, 4 fps, 2s (8 quadros, 00:02:00), fundo #9fc4de
+acabamento oldfilm=1
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   2
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  perto            00:01:00      1s      4 quadros  câmera 160,120 · zoom 1.6

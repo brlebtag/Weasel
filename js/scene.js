@@ -1989,7 +1989,9 @@
     ctx.globalAlpha = alpha;
     ctx.setLineDash([]);
     const tex = !!(PASS && PASS.tex);
-    if (tex && (el.type === 'text' || el.type === 'emitter')) return;
+    // no passe tex, e num passe stroke com text: false (o estilo põe os textos e as partículas num passe por cima),
+    // sem os textos e as partículas
+    if ((tex || (PASS && PASS.stroke && PASS.stroke.text === false)) && (el.type === 'text' || el.type === 'emitter')) return;
     const emit = el.emit && !flat && !tex;
     if (emit) glowOn(ctx, el.emit);
     if (el.type === 'text') { drawText(ctx, model, pose, el, pr, L, dr); glowOff(ctx); return; }
@@ -2273,7 +2275,8 @@
   }
 
   // ---------- acabamentos da imagem inteira ----------
-  const hasPost = (model) => { const f = model.finish; return !!(f.bloom || f.vignette || f.grain || f.posterize); };
+  const hasBase = (f) => !!(f.bloom || f.vignette || f.grain || f.posterize);
+  const hasPost = (model) => hasBase(model.finish) || hasScreen(model);
   const noiseCache = new Map();
   function noiseTile(seed) {
     const k = ((seed % 8) + 8) % 8;
@@ -2318,9 +2321,15 @@
     }
     x.putImageData(img, 0, 0);
   }
-  // bloom, vinheta, granulado e posterização, aplicados na imagem pronta
-  function postFx(cv, model, seed) {
-    if (!hasPost(model)) return;
+  // bloom, vinheta, granulado e posterização, aplicados na imagem pronta, e depois os efeitos de tela. o.base ===
+  // false: só os de tela (a imagem pixelada já passou pelos outros); o.screen === false: sem os de tela
+  function postFx(cv, model, seed, o) {
+    o = o || {};
+    const f = model.finish;
+    if (o.base !== false && hasBase(f)) baseFx(cv, model, seed);
+    if (o.screen !== false && hasScreen(model)) screenFx(cv, f, seed || 0);
+  }
+  function baseFx(cv, model, seed) {
     const f = model.finish, W = cv.width, H = cv.height, x = cv.getContext('2d');
     x.save();
     x.setTransform(1, 0, 0, 1, 0, 0);
@@ -2356,7 +2365,210 @@
     if (f.posterize) posterize(x, W, H, model);
   }
 
-  // Imagem pronta de um quadro: escala, recorte, acabamentos e pixelado.
+  // ---------- efeitos de tela (finish oldfilm= vhs= glitch= crt=, de 0 a 1) ----------
+  // Imitam o meio por onde a imagem passa: o filme antigo, a fita VHS, a imagem digital quebrando e a tela de tubo.
+  // Valem no filme, no vídeo, no GIF e no PNG; a folha de sprites e o Godot saem sem eles (renderImage com
+  // screen: false). seed: o número do quadro (o risco, a poeira e o tremido mudam de um quadro para o outro, mas
+  // sempre do mesmo jeito). Os tamanhos andam com a altura da imagem (u: 1 em 540 pontos de altura).
+  const SCREEN_FX = ['oldfilm', 'vhs', 'glitch', 'crt'], TAU = Math.PI * 2;
+  const hasScreen = (model) => SCREEN_FX.some((k) => model.finish[k] > 0);
+  // o aviso das exportações de jogo (null: sem efeitos de tela)
+  const screenNote = (model) => {
+    const on = SCREEN_FX.filter((k) => model.finish[k] > 0);
+    return on.length ? `os efeitos de tela do finish (${on.map((k) => k + '=').join(', ')}) ficam de fora: eles são para o filme, o vídeo, o GIF e o PNG` : null;
+  };
+  // um número de 0 a 1 que só depende de (a, b, c)
+  const hsh = (a, b, c) => {
+    let h = (Math.imul(a | 0, 0x27d4eb2d) ^ Math.imul(b | 0, 0x165667b1) ^ Math.imul((c | 0) + 0x3c6ef372, 0x85ebca6b)) >>> 0;
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+    h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+    return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+  };
+  // a cor em (x, y) (bilinear, sem escurecer a borda do que é transparente; fora da imagem, a borda)
+  function sampleAt(s, W, H, x, y, out) {
+    x = Math.min(W - 0.5, Math.max(0.5, x)) - 0.5;
+    y = Math.min(H - 0.5, Math.max(0.5, y)) - 0.5;
+    const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1);
+    let r = 0, g = 0, b = 0, a = 0;
+    for (let j = 0; j < 4; j++) {
+      const o = ((j < 2 ? y0 : y1) * W + (j & 1 ? x1 : x0)) * 4, w = (j & 1 ? fx : 1 - fx) * (j < 2 ? 1 - fy : fy) * s[o + 3];
+      r += s[o] * w; g += s[o + 1] * w; b += s[o + 2] * w; a += w;
+    }
+    if (a > 0) { out[0] = r / a; out[1] = g / a; out[2] = b / a; } else out[0] = out[1] = out[2] = 0;
+    out[3] = a;
+    return out;
+  }
+  // filme antigo: sépia, a luz piscando, o quadro tremendo no projetor, o grão, as bordas escuras, os riscos (cada
+  // um dura uns quadros), a poeira e, às vezes, um fio de cabelo
+  const SEPIA = [[34, 22, 12], [150, 112, 72], [246, 232, 204]];
+  function oldFilm(x, W, H, v, seed) {
+    const img = x.getImageData(0, 0, W, H), d = img.data, s = new Uint8ClampedArray(d), u = H / 540, q = [0, 0, 0, 0];
+    const R = (k) => hsh(seed, k, 11);
+    const jx = (R(1) - 0.5) * 1.6 * v * u, jy = (R(2) - 0.5) * 4 * v * u, fl = 1 + (R(3) - 0.5) * 0.18 * v;
+    const sep = Math.min(1, 1.5 * v), gr = 26 * v;
+    for (let py = 0, o = 0; py < H; py++) {
+      const ny = (py + 0.5) / H - 0.5;
+      for (let px = 0; px < W; px++, o += 4) {
+        sampleAt(s, W, H, px + 0.5 - jx, py + 0.5 - jy, q);
+        if (!q[3]) { d[o + 3] = 0; continue; }
+        const L = (0.299 * q[0] + 0.587 * q[1] + 0.114 * q[2]) / 255, lo = L < 0.5, a = lo ? SEPIA[0] : SEPIA[1], b = lo ? SEPIA[1] : SEPIA[2], t = lo ? L * 2 : L * 2 - 1;
+        const nx = (px + 0.5) / W - 0.5, r2 = (nx * nx + ny * ny) * 2;
+        const k = fl * (1 - 0.55 * v * Math.max(0, r2 - 0.2) ** 1.5), n = (hsh(px, py, seed) - 0.5) * gr;
+        for (let ch = 0; ch < 3; ch++) d[o + ch] = (q[ch] + (a[ch] + (b[ch] - a[ch]) * t - q[ch]) * sep) * k + n;
+        d[o + 3] = q[3];
+      }
+    }
+    x.putImageData(img, 0, 0);
+    x.save();
+    x.globalCompositeOperation = 'source-atop';
+    x.lineCap = 'round';
+    const al = Math.min(1, 1.5 * v);
+    for (let j = 0, ns = Math.ceil(3 * v); j < ns; j++) {
+      const life = 6 + Math.floor(hsh(j, 1, 21) * 20), t0 = Math.floor(hsh(j, 2, 21) * life), ep = Math.floor((seed + t0) / life), age = (seed + t0) % life;
+      if (hsh(j, ep, 22) > 0.6) continue;
+      const X0 = hsh(j, ep, 23) * W + age * (hsh(j, ep, 24) - 0.5) * 3 * u;
+      const ya = hsh(j, ep, 25) < 0.6 ? 0 : hsh(j, ep, 26) * H * 0.6, yb = Math.min(H, ya + (0.4 + 0.6 * hsh(j, ep, 27)) * H);
+      const A = (0.25 + 0.35 * hsh(j, seed, 29)) * al;
+      x.strokeStyle = hsh(j, ep, 28) < 0.7 ? `rgba(255,248,230,${A})` : `rgba(20,12,6,${A})`;
+      x.lineWidth = Math.max(1, (0.6 + hsh(j, ep, 30)) * u);
+      x.beginPath();
+      for (let y = ya; y <= yb + 1e-6; y += 6 * u) x.lineTo(X0 + Math.sin((y / H) * 5 + j) * 1.5 * u + (hsh(j, Math.floor(y), seed) - 0.5) * 0.7 * u, y);
+      x.stroke();
+    }
+    for (let i = 0, nd = Math.round(hsh(seed, 3, 31) * 9 * v); i < nd; i++) {
+      const cx = hsh(seed, i, 33) * W, cy = hsh(seed, i, 34) * H, r = (0.6 + 2 * hsh(seed, i, 35)) * u, dark = hsh(seed, i, 36) < 0.8;
+      x.fillStyle = dark ? `rgba(15,10,5,${0.75 * al})` : `rgba(255,250,235,${0.6 * al})`;
+      for (let b = 0; b < 3; b++) {
+        x.beginPath();
+        x.arc(cx + (hsh(i, b, seed + 37) - 0.5) * r * 1.4, cy + (hsh(i, b, seed + 38) - 0.5) * r * 1.4, r * (0.5 + 0.5 * hsh(i, b, seed + 39)), 0, TAU);
+        x.fill();
+      }
+    }
+    if (hsh(seed, 4, 32) < 0.25 * v) {
+      const cx = hsh(seed, 5, 32) * W, cy = hsh(seed, 6, 32) * H, L = (20 + 40 * hsh(seed, 7, 32)) * u, a = hsh(seed, 8, 32) * TAU;
+      x.strokeStyle = `rgba(15,10,5,${0.7 * al})`;
+      x.lineWidth = Math.max(1, 0.8 * u);
+      x.beginPath();
+      x.moveTo(cx, cy);
+      x.quadraticCurveTo(cx + Math.cos(a + 1.2) * L * 0.7, cy + Math.sin(a + 1.2) * L * 0.7, cx + Math.cos(a) * L, cy + Math.sin(a) * L);
+      x.stroke();
+    }
+    x.restore();
+  }
+  // fita VHS: as linhas tremendo de lado, a cor borrada e atrasada, o preto lavado, o chiado, a faixa do tracking
+  // descendo devagar e a troca de cabeça (a faixa torta embaixo)
+  function vhs(x, W, H, v, seed) {
+    const img = x.getImageData(0, 0, W, H), d = img.data, s = new Uint8ClampedArray(d), u = H / 540, q = [0, 0, 0, 0];
+    const Y = new Float32Array(W), I = new Float32Array(W), Q = new Float32Array(W), A = new Float32Array(W), PI = new Float64Array(W + 1), PQ = new Float64Array(W + 1);
+    const rc = Math.max(1, Math.round(3.5 * u * v)), cs = 2.5 * u * v, sat = 1 - 0.2 * v;
+    const bh = (8 + 14 * v) * u, by = ((seed * 1.7 * u + hsh(7, 0, 41) * H) % (H + 4 * bh)) - 2 * bh, hh = (3 + 6 * v) * u;
+    for (let py = 0; py < H; py++) {
+      let ox = Math.sin(py / (37 * u) + seed * 0.9) * 0.5 * u * v + (hsh(py, seed, 42) - 0.5) * 0.9 * u * v;
+      const tb = Math.abs(py + 0.5 - by) < bh ? 1 - Math.abs(py + 0.5 - by) / bh : 0, hb = py + 0.5 > H - hh ? (py + 0.5 - (H - hh)) / hh : 0;
+      if (tb) ox += (hsh(py >> 1, seed, 43) - 0.5) * 18 * u * v * tb;
+      if (hb) ox += hb * hb * 24 * u * v;
+      for (let px = 0; px < W; px++) {
+        sampleAt(s, W, H, px + 0.5 - ox, py + 0.5, q);
+        Y[px] = 0.299 * q[0] + 0.587 * q[1] + 0.114 * q[2];
+        I[px] = 0.596 * q[0] - 0.274 * q[1] - 0.322 * q[2];
+        Q[px] = 0.211 * q[0] - 0.523 * q[1] + 0.312 * q[2];
+        A[px] = q[3];
+        PI[px + 1] = PI[px] + I[px];
+        PQ[px + 1] = PQ[px] + Q[px];
+      }
+      for (let px = 0, o = py * W * 4; px < W; px++, o += 4) {
+        const xc = px - cs, a = Math.max(0, Math.min(W - 1, Math.round(xc - rc))), b = Math.max(a, Math.min(W - 1, Math.round(xc + rc))), n = b - a + 1;
+        const ci = ((PI[b + 1] - PI[a]) / n) * sat, cq = ((PQ[b + 1] - PQ[a]) / n) * sat;
+        let y = Y[px] * (1 - 0.35 * v) + (Y[Math.max(0, px - 1)] + Y[Math.min(W - 1, px + 1)]) * 0.175 * v;
+        y = y * (1 - 0.1 * v) + 14 * v + (hsh(px, py, seed) - 0.5) * 22 * v;
+        if (tb && hsh(px >> 2, py, seed + 1) < 0.18 * tb) y = 225;
+        if (hsh(px, py, seed + 2) < 0.0015 * v) y = 255;
+        d[o] = y + 0.956 * ci + 0.621 * cq;
+        d[o + 1] = y - 0.272 * ci - 0.647 * cq;
+        d[o + 2] = y - 1.106 * ci + 1.703 * cq;
+        d[o + 3] = A[px];
+      }
+    }
+    x.putImageData(img, 0, 0);
+  }
+  // falha digital: só em alguns quadros (em rajadas); faixas da imagem pulam de lado (algumas com as cores trocadas), o
+  // vermelho e o azul se separam, e uns blocos se repetem fora do lugar
+  function glitch(x, W, H, v, seed) {
+    // as falhas vêm em rajadas de uns quadros
+    if (hsh(Math.floor((seed + 1) / 3), 0, 51) > 0.08 + 0.27 * v) return;
+    const img = x.getImageData(0, 0, W, H), d = img.data, s = new Uint8ClampedArray(d), u = H / 540;
+    const R = (k) => hsh(seed, k, 52), wrap = (i) => ((i % W) + W) % W;
+    const split = Math.round((0.004 + 0.012 * v) * W * (R(1) < 0.5 ? -1 : 1));
+    const bands = [];
+    for (let j = 0, nb = 1 + Math.floor(R(2) * (2 + 6 * v)); j < nb; j++) {
+      const y0 = R(10 + j) * H;
+      bands.push({ y0, y1: y0 + (0.01 + 0.07 * R(20 + j)) * H, sh: Math.round((R(30 + j) - 0.5) * 2 * (0.03 + 0.15 * v) * W), swap: R(40 + j) < 0.2 });
+    }
+    for (let py = 0, o = 0; py < H; py++) {
+      let sh = 0, swap = false;
+      for (const b of bands) if (py >= b.y0 && py < b.y1) { sh = b.sh; swap = b.swap; }
+      const row = py * W;
+      for (let px = 0; px < W; px++, o += 4) {
+        const xs = px - sh, oR = (row + wrap(xs - split)) * 4, oG = (row + wrap(xs)) * 4, oB = (row + wrap(xs + split)) * 4;
+        const r = s[oR], g = s[oG + 1], b = s[oB + 2];
+        if (swap) { d[o] = b; d[o + 1] = r; d[o + 2] = g; } else { d[o] = r; d[o + 1] = g; d[o + 2] = b; }
+        d[o + 3] = Math.max(s[oR + 3], s[oG + 3], s[oB + 3]);
+      }
+    }
+    // os blocos: copiados de outro lugar, em degraus de 8u
+    const st = Math.max(2, Math.round(8 * u)), c = new Uint8ClampedArray(d);
+    for (let k = 0, nm = Math.floor(R(3) * 5 * v); k < nm; k++) {
+      const bw = Math.round(((0.03 + 0.08 * R(60 + k)) * W) / st) * st, bh = Math.round(((0.02 + 0.06 * R(70 + k)) * H) / st) * st;
+      const dx = Math.floor((R(80 + k) * W) / st) * st, dy = Math.floor((R(90 + k) * H) / st) * st, sx = Math.floor((R(100 + k) * W) / st) * st, sy = Math.floor((R(110 + k) * H) / st) * st;
+      for (let j = 0; j < bh; j++) {
+        if (dy + j >= H || sy + j >= H) break;
+        for (let i = 0; i < bw; i++) {
+          if (dx + i >= W || sx + i >= W) break;
+          const o = ((dy + j) * W + dx + i) * 4, p = ((sy + j) * W + sx + i) * 4;
+          d[o] = c[p]; d[o + 1] = c[p + 1]; d[o + 2] = c[p + 2]; d[o + 3] = c[p + 3];
+        }
+      }
+    }
+    x.putImageData(img, 0, 0);
+  }
+  // tela de tubo: a imagem curva (mais curva quanto maior o valor; com crt=1, só uma faixa fina da borda some), os
+  // cantos redondos e escuros, as linhas de varredura, a máscara de cor (R, G e B lado a lado) e as bordas escuras
+  function crt(x, W, H, v, seed) {
+    const img = x.getImageData(0, 0, W, H), d = img.data, s = new Uint8ClampedArray(d), u = H / 540, q = [0, 0, 0, 0];
+    let opaque = true;
+    for (let o = 3; o < s.length; o += 4) if (s[o] < 255) { opaque = false; break; }
+    const cv = 0.08 * v, rr = (0.025 + 0.045 * v) * Math.min(W, H), P = Math.max(2, Math.round(H / 240)), T = Math.max(3, Math.round(3 * u)) / 3;
+    const ms = 0.2 * v * Math.min(1, u), sl = 0.55 * v, gain = 1 + 0.25 * v, soft = 1.2 * Math.max(1, u);
+    for (let py = 0, o = 0; py < H; py++) {
+      const ny = ((py + 0.5) / H) * 2 - 1;
+      for (let px = 0; px < W; px++, o += 4) {
+        const nx = ((px + 0.5) / W) * 2 - 1, sx = nx * (1 + cv * ny * ny), sy = ny * (1 + cv * nx * nx);
+        const X = ((sx + 1) / 2) * W, Yy = ((sy + 1) / 2) * H;
+        const qx = Math.abs(X - W / 2) - (W / 2 - rr), qy = Math.abs(Yy - H / 2) - (H / 2 - rr);
+        const dist = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr, m = Math.min(1, Math.max(0, -dist / soft));
+        if (m <= 0) { d[o] = d[o + 1] = d[o + 2] = 0; d[o + 3] = opaque ? 255 : 0; continue; }
+        sampleAt(s, W, H, X, Yy, q);
+        const L = (0.299 * q[0] + 0.587 * q[1] + 0.114 * q[2]) / 255, f = 0.5 - 0.5 * Math.cos((TAU * Yy) / P);
+        const k = (1 - sl * (1 - f) * (1 - 0.6 * L)) * (1 - 0.3 * v * ((sx * sx + sy * sy) / 2) ** 2) * gain * (opaque ? m : 1), col = Math.floor(px / T) % 3;
+        for (let ch = 0; ch < 3; ch++) d[o + ch] = q[ch] * k * (ch === col ? 1 + 2 * ms : 1 - ms);
+        d[o + 3] = opaque ? 255 : q[3] * m;
+      }
+    }
+    x.putImageData(img, 0, 0);
+  }
+  const SCREEN_RUN = { oldfilm: oldFilm, vhs, glitch, crt };
+  function screenFx(cv, f, seed) {
+    const x = cv.getContext('2d');
+    x.save();
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalAlpha = 1;
+    x.globalCompositeOperation = 'source-over';
+    for (const k of SCREEN_FX) if (f[k] > 0) SCREEN_RUN[k](x, cv.width, cv.height, Math.min(1, f[k]), seed | 0);
+    x.restore();
+  }
+
+  // Imagem pronta de um quadro: escala, recorte, acabamentos e pixelado. opts.screen === false: sem os efeitos de
+  // tela (oldfilm, vhs, glitch, crt), nas exportações de jogo.
   function renderImage(model, pose, opts) {
     opts = opts || {};
     const scale = opts.scale || 1;
@@ -2405,7 +2617,7 @@
         },
       }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model), bare: !model.canvas.bg && !opts.matte, lit: !!sceneLights(model, pose), frame: pose.frame || 0 });
       if (opts.after) { octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale); opts.after(octx, scale); octx.setTransform(1, 0, 0, 1, 0, 0); }
-      if (!opts.noPost) postFx(out, model, pose.frame);
+      if (!opts.noPost) postFx(out, model, pose.frame, { screen: opts.screen });
       if (r.text) out.artText = r.text;
       return out;
     }
@@ -2414,12 +2626,13 @@
       small.width = Math.max(1, Math.round(W2 / px));
       small.height = Math.max(1, Math.round(H2 / px));
       draw(small.getContext('2d'), scale / px);
-      if (!opts.noPost) postFx(small, model, pose.frame);
+      if (!opts.noPost) postFx(small, model, pose.frame, { screen: false });
       octx.imageSmoothingEnabled = false;
       octx.drawImage(small, 0, 0, W2, H2);
+      if (!opts.noPost) postFx(out, model, pose.frame, { base: false, screen: opts.screen });
     } else {
       draw(octx, scale);
-      if (!opts.noPost) postFx(out, model, pose.frame);
+      if (!opts.noPost) postFx(out, model, pose.frame, { screen: opts.screen });
     }
     return out;
   }
@@ -2526,6 +2739,6 @@
     makePose, timePose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
-    sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, canFilter,
+    sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,
   };
 })(window.Weasel = window.Weasel || {});
