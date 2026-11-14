@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)), e `crayon`, `chalk` e `watercolor` na 1.34.0 (ver [Decisões da 1.34.0](#decisões-da-1340-14112026) e [Como o giz e a aquarela ficaram](#como-o-giz-e-a-aquarela-ficaram-1340)); faltam as fases 5 e 6.
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)), e `crayon`, `chalk` e `watercolor` na 1.34.0 (ver [Decisões da 1.34.0](#decisões-da-1340-14112026) e [Como o giz e a aquarela ficaram](#como-o-giz-e-a-aquarela-ficaram-1340)). A fase 5 também virou duas versões (ver [Decisões da fase 5](#decisões-da-fase-5-14112026)): `cutout` e `clay` saíram na 1.35.0 (ver [Como o recorte e a massinha ficaram](#como-o-recorte-e-a-massinha-ficaram-1350)); faltam `glass` e `embroidery` (1.36.0) e a fase 6 (1.37.0).
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -71,8 +71,8 @@ art cutout boil=0
 2. **1.31.0, tom (as bases):** `toon`, `halftone`, `engraving`, `stencil` e `silhouette`.
 3. **1.32.0, tom (as combinações):** `woodcut`, `comic`, `comic old`, `comic old bw`, `manga` e `riso`.
 4. **1.33.0, traço (o passe forma por forma):** `sketch`, `marker`, `pencil`, `lines` e `neon`. **1.34.0, traço (os outros):** `crayon`, `chalk` e `watercolor`.
-5. **1.35.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
-6. **1.36.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
+5. **1.35.0, peças:** `cutout` e `clay`. **1.36.0, peças (as outras):** `glass` e `embroidery`.
+6. **1.37.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
 
 ### Decisões da fase 2 (14/11/2026)
 
@@ -102,6 +102,14 @@ art cutout boil=0
 - **Giz de cera (`crayon`):** passadas de vai-e-vem, numa direção sorteada para cada forma, presa a ela (anda e gira com o osso).
 - **Aquarela (`watercolor`):** o contorno fica como uma linha fina de caneta, um pouco irregular, por cima ("caneta e aguada"), e a mancha de cor vaza um pouco para fora da linha.
 - **Ferve:** o `crayon` e o `chalk` fervem a cada 2 quadros (`boil=2`); a `watercolor` fica parada (`boil=0`).
+
+### Decisões da fase 5 (14/11/2026)
+
+- **Duas versões:** a fase de peças foi dividida em duas (acima). A 1.35.0 traz o `cutout` e o `clay`; a 1.36.0, o `glass` e o `embroidery`. O `stitch`, o `mosaic`, o `knit` e os efeitos de tela passam para a 1.37.0.
+- **O contorno no recorte (`cutout`):** vira um papel escuro, da cor da `ink`, um pouco maior, por baixo de cada peça; a cor dele aparece em volta, como uma borda.
+- **Massinha (`clay`):** parada (`boil=0`), porque as peças são as mesmas de um quadro para o outro; `boil=2` remexe.
+- **Bordado (`embroidery`, para a 1.36.0):** à mão, no linho. O fundo vira linho com a trama aparecendo (`paper=` muda a cor); cada forma em ponto cheio (satin) na direção dela, com o brilho da linha, e em fileiras desencontradas nas formas grandes; o contorno vira um pesponto (backstitch) da cor da `ink`.
+- **O contorno na massinha:** não foi perguntado. Ficou como no recorte: uma tira de massinha da cor da `ink`, por baixo de cada peça. Dá para mudar (por exemplo, um sulco riscado na massinha, sem cor própria).
 
 ## Como a fase 1 ficou (1.30.0)
 
@@ -174,6 +182,19 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#giz-de-cera-giz-e-aq
 - **`watercolor`:** a cor multiplicada sobre o papel a 85%; na borda, do lado de fora, a aguada que vazou (uma faixa tremida a 70%, com a borda dura) e, do lado de dentro, a tinta que juntou (mais escura); a sombra é uma segunda aguada a 40%. A mancha desigual vem de um azulejo de ruído (preso à forma) somado a um ruído grande, parado na tela (com o azulejo sozinho, a repetição aparecia num céu grande). A granulação e o papel de aquarela ficam parados na tela.
 - **`bg=none`:** na 1.33.0, o `sketch`, o `marker` e o `pencil` pintavam o fundo branco da imagem quando o canvas não tinha `bg` (numa imagem; no filme, o papel já aparecia). Agora o papel aparece, como o guia dizia; só a referência do teste `estilo_pencil` mudou.
 - **Tempo** (escala 1): no Cavaleiro (800×640), de 80 a 100 ms; no cenário (1920×1080), de 170 a 200 ms (os ruídos grandes são calculados numa grade e misturados, para não pesar ponto a ponto).
+
+## Como o recorte e a massinha ficaram (1.35.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-peças-cutout-e-clay), mais as escolhas feitas no caminho.
+
+- **Como o `pencil`:** os dois pintam forma por forma, no passe `stroke`, e depois ponto a ponto. As sombras das peças são a sombra do próprio canvas (`shadowBlur`), para o lado longe do `light=` do `canvas`.
+- **`cutout`, a peça:** o contorno da forma refeito em cortes retos (de 1,5 a 5 unidades, conforme o tamanho da forma), com um tremido pequeno; os cantos ficam no lugar. Por baixo, com sombra, o papel escuro do contorno: a peça com um traço em volta, da largura do contorno (de 0,8 a 6 unidades para fora). Por cima, a beirada clara: a peça menos ela mesma empurrada para o lado da luz, em branco a 22%.
+- **`cutout`, o degradê:** três folhas da mesma peça, em degraus do degradê, cada uma com a sua sombra. A forma que brilha (`emit=`) ganha dois anéis de papel 35% mais claro que a cor do brilho.
+- **`cutout`, o fundo:** o tom do fundo em três níveis, e cada nível vira uma folha da cor média dele; a folha mais alta na tela fica atrás. A borda entre as folhas lê o tom um pouco ao lado (até 5 unidades, em ondas de 30), para ondular como papel rasgado. A primeira versão somava um ruído ao tom: num degradê lento (um céu), a borda virava ilhas e escadinhas.
+- **`cutout`, o papel:** um azulejo de fibras (420 curvas curtas, claras e escuras, desenhadas também do outro lado da borda, para emendar), grão e manchas leves, preso a cada peça pelo passe `tex`; clareia e escurece a cor em até 16%.
+- **`clay`, três passes:** a cor (com a sombra de contato e a tira do contorno por baixo), a altura e as peças. Na altura, cada forma é preta, com ela mesma borrada em branco por cima (recortada nela): 0,5 na borda e 1 lá dentro, numa borda redonda de 1,5 a 12 unidades. A tira do contorno e os traços são rolinhos (quatro larguras, cada uma mais alta). As covinhas de dedo são manchas escuras e rasas, sorteadas por forma, nas formas com mais de 28 unidades. Nas peças, cada forma tem uma cor sorteada (24 bits), para o volume não passar de uma peça para a outra; a mistura de duas, na borda, fica com a de um vizinho.
+- **`clay`, ponto a ponto:** os caroços (um azulejo de ruído em 16, 8 e 4 unidades, maiores num canvas maior, preso à forma); a altura alisada em números, só dentro de cada peça (com os 8 bits do canvas, a luz fazia listras numa rampa lenta, como a do chão do cenário); a inclinação pela diferença de altura dos vizinhos da mesma peça; a luz do `light=` do `canvas`, difusa (de 0,6 a 1) e com um brilho leve. O fundo é desfocado 1,5 unidade, por cima dele mesmo nítido (só o desfocado deixava a beirada da imagem mais clara).
+- **Tempo** (escala 1): no Cavaleiro (800×640), uns 55 ms no `cutout` e 80 no `clay`; na noite (com luzes), uns 210 ms; no cenário (1920×1080), uns 130 ms no `cutout` e 300 no `clay`.
 
 ## O que já existe
 

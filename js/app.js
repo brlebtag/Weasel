@@ -1659,6 +1659,7 @@
         { label: 'marker', detail: 'marcador: passadas de caneta e nanquim' }, { label: 'pencil', detail: 'lápis de cor: hachura e grão do papel' },
         { label: 'crayon', detail: 'giz de cera: passadas de vai-e-vem e grão' }, { label: 'chalk', detail: 'giz no quadro-negro' },
         { label: 'watercolor', detail: 'aquarela: aguada e linha de caneta' },
+        { label: 'cutout', detail: 'recorte de papel: peças com sombra' }, { label: 'clay', detail: 'massinha: peças com volume' },
         { label: 'lines', detail: 'só o contorno (livro de colorir)' }, { label: 'neon', detail: 'contornos de neon num fundo escuro' },
         { label: 'none', detail: 'sem estilo' },
       ];

@@ -2,7 +2,7 @@
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, em giz de cera, em giz no quadro, em aquarela, só nos contornos, em neon e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta, em esboço, em marcador, em lápis de cor, em giz de cera, em giz no quadro, em aquarela, só nos contornos, em neon, em recorte de papel, em massinha e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
 
 | O desenho normal | `art pixel` | `art ascii color` |
 |---|---|---|
@@ -58,7 +58,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 - Um `art` por arquivo. Sem `art`, nada muda. `art none` desliga o estilo (serve no filme, mais abaixo).
 - A linha pode ficar em qualquer lugar do arquivo; o costume é logo depois do `canvas`, como o `finish`.
 
-Nesta versão existem dezenove estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`) e os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`). Os outros do plano (`cutout`, `clay`, `glass`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
+Nesta versão existem vinte e um estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`) e os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`) e os dois [estilos de peças](#os-estilos-de-peças-cutout-e-clay) (`cutout` e `clay`). Os outros do plano (`glass`, `embroidery`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
 
 **No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
@@ -524,11 +524,11 @@ Repare:
 
 ### A textura presa à forma: `boil=` e `seed=`
 
-A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pontos da retícula, das HQs e do mangá, o grão da risografia e o tremido, as passadas e a hachura dos estilos de traço são uma **textura**. O `boil=` diz como ela se move:
+A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pontos da retícula, das HQs e do mangá, o grão da risografia, o tremido, as passadas e a hachura dos estilos de traço, e a borda de tesoura e os caroços dos estilos de peças são uma **textura**. O `boil=` diz como ela se move:
 
 | `boil=` | A textura | Padrão de |
 |---|---|---|
-| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw`, `watercolor` |
+| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw`, `watercolor`, `cutout`, `clay` |
 | `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone`, `comic`, `comic old`, `manga`, `riso` |
 | `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | `sketch`, `marker`, `pencil`, `crayon`, `chalk` |
 
@@ -1000,6 +1000,79 @@ Repare:
 
 **Experimente:** troque a vila para `art chalk paper=#202224`, ou a noite para `art watercolor`.
 
+## Os estilos de peças: `cutout` e `clay`
+
+Os estilos de traço desenham cada forma à mão. Estes dois montam o desenho com **peças**: cada forma vira um pedaço de papel recortado (`cutout`) ou de massinha (`clay`), posto em cima do que está atrás, com uma sombra embaixo. É o jeito das animações de recorte e de massinha (o stop motion).
+
+```
+art cutout paper= boil= seed=
+art clay paper= boil= seed=
+```
+
+| `art cutout` | `art clay` |
+|---|---|
+| ![O Cavaleiro em recorte de papel: a máscara branca e a capa em papel com a borda de tesoura, cada peça com sombra, e o contorno em papel escuro por baixo](img/14_pecas_cutout.png) | ![O Cavaleiro em massinha: a máscara branca com volume, borda redonda e brilho leve, o contorno numa tira de massinha escura por baixo](img/14_pecas_clay.png) |
+| ![A vila em recorte de papel: o céu em duas folhas, uma escura em cima e uma roxa no horizonte, com a borda rasgada; o morro, a casa e a lua em papel com sombra](img/14_vila_cutout.png) | ![A vila em massinha: o céu um pouco desfocado, a lua, o morro e a casa em massinha com volume e sombra](img/14_vila_clay.png) |
+
+<details>
+<summary>Código dos quatro</summary>
+
+<!-- gerar: img/14_pecas_cutout.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art cutout
+```
+
+<!-- gerar: img/14_pecas_clay.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art clay
+```
+
+<!-- gerar: img/14_vila_cutout.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art cutout
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_clay.png -s 1.5 -->
+```weasel
+canvas 240 160 bg=ceu
+art clay
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+</details>
+
+Repare:
+
+- **`cutout` (recorte de papel):** cada forma vira um papel da cor dela, com a borda de tesoura (cortes curtos e retos, com os cantos no lugar) e uma sombra embaixo, para o lado longe da luz. O contorno vira um papel escuro, um pouco maior, por baixo da peça: a cor dele aparece em volta, como uma borda. Um degradê vira três folhas na mesma peça, uma em cima da outra, cada uma com a sua sombra; o fundo do `canvas` também vira folhas, com a borda rasgada (o céu da vila). A forma que brilha (`emit=`) ganha anéis de papel mais claro em volta. O lado da peça virado para a luz ganha uma beirada clara, e tudo tem o grão e as fibras do papel. Os traços viram tiras de papel.
+- **`clay` (massinha):** cada forma vira uma placa de massinha de borda redonda, com caroços leves e, nas maiores, covinhas de dedo; embaixo, uma sombra de contato. O contorno vira uma tira de massinha da cor dele, por baixo da peça (como no recorte). Os traços viram rolinhos. A luz do `canvas` (`light=`) faz o volume de cada peça, com um brilho leve; o fundo do `canvas` fica um pouco desfocado, como numa foto de stop motion.
+- Como nos estilos de traço: a sombra existe mesmo sem luz, a luz da cena entra por cima, e os textos e as partículas saem como sempre.
+- **Parados:** os dois ficam com `boil=0`, porque as peças são as mesmas de um quadro para o outro: a peça anda e gira com o osso, e a textura vai junto. `boil=2` sorteia de novo a borda de tesoura (no `cutout`) e as covinhas (no `clay`) a cada 2 quadros, como num stop motion em que as peças são remexidas.
+- **`paper=`:** o papel onde não há forma, quando o `canvas` não tem fundo (`bg=none`); o padrão é `#f6f2ea`.
+
+| Opção | O que faz |
+|---|---|
+| `paper=` | O papel, onde não há forma e nem fundo. |
+| `boil=0` | A cada quantos quadros as peças mudam (padrão 0: paradas). |
+| `seed=` | Outro sorteio (a borda de tesoura, as covinhas). |
+
+**Experimente:** troque a noite para `art cutout`, ou ponha `light=0.8,-0.6` no `canvas` do Cavaleiro em `art clay` (a luz vem da direita, e o volume vira junto).
+
 ## No filme: o filme, a cena, o plano e o ator
 
 No filme ([capítulo 10](10-filme.md)), o `art` vale em quatro níveis. O mais específico ganha:
@@ -1054,6 +1127,6 @@ Repare:
 
 - **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
-- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk` e `watercolor`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
+- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `cutout` e `clay`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)

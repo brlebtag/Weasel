@@ -1,0 +1,11 @@
+canvas   240 × 160, fundo #e9eef0
+art      clay seed=2
+ambiente #8090b0 × 0.6
+luzes    lamp (point, #ffd9a0 × 1.4)
+camadas  2
+  chao             1 item(ns)
+  coisas           8 item(ns)
+formas   9 (1 ocultas)
+ossos    bola
+animações 1
+  gira           4 quadros, 6 fps

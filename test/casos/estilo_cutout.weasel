@@ -1,0 +1,29 @@
+# teste: art cutout — recorte de papel: cada forma vira uma peça com borda de tesoura e sombra; o contorno vira um
+# papel escuro por baixo; o degradê vira folhas sobrepostas (o céu também); o sol ganha anéis de papel; o furo
+# mostra o papel escuro na borda; a luz entra por cima; parado (boil=0, o padrão)
+canvas 240 160 bg=ceu light=-0.6,-0.8
+gradient ceu linear 0,0 0,160 : #9fd0f0@0 #f6e7c8@1
+gradient pera linear 0,60 0,120 : #ffd27a@0 #e0603a@1
+palette ink=#1d1b26 line=4 ball=#ff8a5c leaf=#6cbb3c
+ambient c=#8090b0 power=0.6
+light lamp point 200,30 c=#ffd9a0 power=1.4 radius=220
+art cutout
+
+bone bola pivot=80,90
+
+layer chao
+rect solo 0,128 240,32 c=#b9ad98
+
+layer coisas
+ellipse sol 212,26 12 c=#fff3b0 emit=#ffd060,1
+ellipse b 80,90 34 c=pera ink=line bone=bola
+rect caixa 150,70 50,58 r=6 c=#4a90d9 ink=line cut=furo
+ellipse furo 175,99 9 hidden
+shape folha c=leaf ink=line : 80,56! 96,40 104,52 92,64
+stroke galho w=12 c=#6b4a2b taper=0,0.5 : 14,128 34,108 58,100
+line fio c=#333333 w=2 dash=6,4 : 10,142 230,142
+text nome 120,156 "OI" size=12 align=center c=ink bold
+
+anim gira frames=4 fps=6
+key 0 bola=0,0,0
+key 4 bola=0,0,60

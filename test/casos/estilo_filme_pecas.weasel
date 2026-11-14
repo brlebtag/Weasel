@@ -1,0 +1,23 @@
+# teste: cutout e clay num filme — o filme em clay (com a luz da cena por cima), um plano em cutout com paper=
+# (o papel quando não há fundo), um ator em cutout (desenhado à parte, na ordem de profundidade)
+film fps=4
+canvas 320 180 bg=#9fc4de
+art clay
+ambient c=#a0b0d0 power=0.7
+light lamp point 260,40 c=#ffd9a0 power=1.2 radius=260
+
+actor a "rosto.weasel" 90,170 scale=0.8
+actor b "rosto.weasel" 220,170 scale=0.8 flip=x
+
+layer fundo
+rect chao 0,150 320,30 c=#6aa84f
+ellipse sol 280,36 18 c=#fff1a8
+
+shot todo dur=1s
+at 1s a.pos=110,170
+
+shot recorte dur=1s
+art cutout paper=#e8dcc4
+
+shot misto dur=1s
+art cutout actor=b

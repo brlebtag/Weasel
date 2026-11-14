@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "gira_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 72,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 48
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    },
+    "gira_01": {
+      "frame": {
+        "x": 76,
+        "y": 2,
+        "w": 72,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 48
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    },
+    "gira_02": {
+      "frame": {
+        "x": 150,
+        "y": 2,
+        "w": 72,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 48
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    },
+    "gira_03": {
+      "frame": {
+        "x": 224,
+        "y": 2,
+        "w": 72,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 48
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    }
+  },
+  "animations": {
+    "gira": [
+      "gira_00",
+      "gira_01",
+      "gira_02",
+      "gira_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_estilo_cutout.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 298,
+      "h": 52
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 72,
+      "h": 48
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "gira",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 6,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 0,
+      "y": 0,
+      "w": 240,
+      "h": 160
+    }
+  }
+}

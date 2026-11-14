@@ -2091,6 +2091,550 @@
     }
   }
 
+  // ---------- cutout (recorte de papel) ----------
+  // os pontos por unidade do ctx agora (para a sombra, que é medida em pontos)
+  const pxOf = (ctx) => { const T = ctx.getTransform(); return Math.sqrt(Math.abs(T.a * T.d - T.b * T.c)) || 1; };
+  // a direção contrária à luz do canvas (para onde vai a sombra)
+  const shadeDir = (it) => { const l = it.light, ll = Math.hypot(l[0], l[1]) || 1; return [-l[0] / ll, -l[1] / ll]; };
+  // a sombra macia de uma peça: dist e blur em unidades, para o lado contrário da luz
+  function dropShadow(ctx, it, dist, blur, alpha) {
+    const s = pxOf(ctx), a = shadeDir(it);
+    ctx.shadowColor = `rgba(24,18,12,${alpha})`;
+    ctx.shadowBlur = blur * s;
+    ctx.shadowOffsetX = a[0] * dist * s;
+    ctx.shadowOffsetY = a[1] * dist * s;
+  }
+  // O contorno cortado à tesoura: retas de st unidades (pelo tamanho da forma), um pouco tortas, mantendo as
+  // pontas (onde o contorno vira de repente).
+  function scissorPath(flat, U, R) {
+    const P = ptsOf(flat), n = P.length, out = [];
+    if (n < 3) return null;
+    let per = 0;
+    for (let i = 0; i < n; i++) per += Math.hypot(P[(i + 1) % n][0] - P[i][0], P[(i + 1) % n][1] - P[i][1]);
+    const st = Math.min(5 * U, Math.max(1.5 * U, per / 14)), j = Math.min(0.45 * U, st * 0.12);
+    let acc = 0;
+    for (let i = 0; i < n; i++) {
+      const a = P[(i - 1 + n) % n], p = P[i], b = P[(i + 1) % n];
+      const ux = p[0] - a[0], uy = p[1] - a[1], vx = b[0] - p[0], vy = b[1] - p[1];
+      const lu = Math.hypot(ux, uy) || 1, lv = Math.hypot(vx, vy) || 1;
+      acc += lu;
+      if ((ux * vx + uy * vy) / (lu * lv) < 0.85) { out.push([p[0], p[1]]); acc = 0; } else if (acc >= st) {
+        const s = (R() - 0.5) * 2 * j;
+        out.push([p[0] - (uy / lu) * s, p[1] + (ux / lu) * s]);
+        acc = 0;
+      }
+      // um lado comprido e reto: cortado em retas também
+      const k = Math.floor(lv / st);
+      for (let q = 1; q < k; q++) {
+        const t = q / k, s = (R() - 0.5) * 2 * j;
+        out.push([p[0] + vx * t - (vy / lv) * s, p[1] + vy * t + (vx / lv) * s]);
+      }
+      if (k > 1) acc = 0;
+    }
+    if (out.length < 3) return null;
+    const path = new Path2D();
+    out.forEach((q, i) => (i ? path.lineTo(q[0], q[1]) : path.moveTo(q[0], q[1])));
+    path.closePath();
+    return path;
+  }
+  // um degradê em n faixas de cor lisa (as folhas); from: só da faixa from em diante (as outras transparentes)
+  function bandSpec(spec, n, from) {
+    const st = (spec.stops || []).filter((s) => rgbOf(s.c));
+    if (st.length < 2) return null;
+    const colorAt = (t) => {
+      let i = 0;
+      while (i < st.length - 2 && st[i + 1].at < t) i++;
+      const a = st[i], b = st[i + 1], u = b.at > a.at ? cl((t - a.at) / (b.at - a.at)) : 0, A = rgbOf(a.c), B = rgbOf(b.c);
+      return hexOf(A.map((v, j) => v + (B[j] - v) * u));
+    };
+    const stops = [];
+    for (let i = 0; i < n; i++) {
+      const c = i < from ? 'rgba(0,0,0,0)' : colorAt((i + 0.5) / n);
+      stops.push({ at: i / n, c }, { at: (i + 1) / n, c });
+    }
+    return Object.assign({}, spec, { stops });
+  }
+  // A cutout: cada forma vira uma peça de papel cortada à tesoura, com uma sombra macia embaixo (para o lado
+  // contrário da luz) e a quina do lado da luz um pouco mais clara. O contorno (ink) vira uma folha de papel da
+  // cor dele, um pouco maior, colada atrás da peça. Um degradê vira folhas de cor lisa, uma sobre a outra; o
+  // brilho do emit= vira dois círculos de papel. Os traços viram tiras de papel. Depois, ponto a ponto
+  // (cutoutPost), cada peça ganha a textura do papel (grão e fibras), presa a ela.
+  function cutoutPaint(art, info) {
+    const step = boilStep(art, info);
+    return {
+      glow: false,
+      bg(ctx, B0, g) { paperSheets(ctx, B0, g); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), a0 = ctx.globalAlpha, R = rng(seedOf(art, step, it, 1));
+        const piece = scissorPath(it.poly, U, R) || it.path, has = it.hasInk && it.ink > 0;
+        const lw = has ? 2 * Math.min(6 * U, Math.max(0.8 * U, it.ink * 0.55)) : 0;
+        const e = it.el.emit;
+        if (e && !it.hole) {
+          // o brilho: dois círculos de papel, da cor dele, mais claros
+          const c = specRGB(e.c), col = c ? hexOf(c.map((v) => v + (255 - v) * 0.35)) : '#fff6d0';
+          for (const [r, a] of [[11 * e.s, 0.45], [5.5 * e.s, 0.7]]) {
+            ctx.save();
+            dropShadow(ctx, it, 1.4 * U, 3 * U, 0.3);
+            ctx.globalAlpha = a0 * a;
+            ctx.fillStyle = ctx.strokeStyle = col;
+            ctx.lineWidth = 2 * r;
+            ctx.lineJoin = 'round';
+            ctx.fill(piece);
+            ctx.stroke(piece);
+            ctx.restore();
+          }
+        }
+        // a sombra e o papel escuro de trás (o contorno)
+        ctx.save();
+        dropShadow(ctx, it, 2 * U, 3.5 * U, 0.48);
+        if (has) {
+          ctx.fillStyle = ctx.strokeStyle = it.inkStyle;
+          ctx.lineWidth = lw;
+          ctx.lineJoin = 'miter';
+          ctx.miterLimit = 2.5;
+          ctx.fill(piece);
+          ctx.stroke(piece);
+        } else {
+          ctx.fillStyle = it.fillStyle;
+          ctx.fill(piece);
+        }
+        ctx.restore();
+        // a peça (o degradê: uma folha por faixa, cada uma com a sua sombra)
+        ctx.save();
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(piece);
+        const spec = it.fillSpec;
+        if (spec && typeof spec === 'object' && spec.stops) {
+          for (let i = 1; i < 3; i++) {
+            const bs = bandSpec(spec, 3, i);
+            if (!bs) break;
+            ctx.save();
+            ctx.clip(piece);
+            dropShadow(ctx, it, 0, 3 * U, 0.3);
+            ctx.fillStyle = it.style(bs);
+            ctx.fill(piece);
+            ctx.restore();
+          }
+        }
+        ctx.restore();
+        // a quina do lado da luz, mais clara
+        const a = shadeDir(it), d = 1.1 * U, bb = it.box;
+        ctx.save();
+        ctx.clip(piece);
+        ctx.translate(a[0] * d, a[1] * d);
+        ctx.clip(inversePath(piece), 'evenodd');
+        ctx.translate(-a[0] * d, -a[1] * d);
+        ctx.globalAlpha = a0 * 0.22;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(bb.x - 4 * U, bb.y - 4 * U, bb.w + 8 * U, bb.h + 8 * U);
+        ctx.restore();
+      },
+      ink(ctx, it) {
+        // o contorno de um buraco: o papel escuro de trás aparece na beirada dele
+        if (!it.hole || !(it.hasInk && it.ink > 0)) return;
+        const U = unitOf(it.canvas);
+        ctx.save();
+        ctx.strokeStyle = it.inkStyle;
+        ctx.lineWidth = 2 * Math.min(6 * U, Math.max(0.8 * U, it.ink * 0.55));
+        ctx.lineJoin = 'miter';
+        ctx.stroke(it.path);
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas);
+        ctx.save();
+        dropShadow(ctx, it, 1.2 * U, 2.4 * U, 0.35);
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // O fundo do canvas em folhas de papel: com um degradê, a cor é dividida em 3 faixas de claridade, com o corte
+  // ondulado; cada folha é colada sobre a de cima dela na tela (como colinas), com uma sombra macia em volta.
+  // Um fundo liso fica uma folha só.
+  function paperSheets(ctx, B0, g) {
+    const { Wd, Hd } = g, d = B0.getContext('2d').getImageData(0, 0, Wd, Hd).data;
+    let lo = 1, hi = 0;
+    for (let o = 0; o < d.length; o += 4) {
+      if (d[o + 3] < 128) continue;
+      const l = lum3(d[o], d[o + 1], d[o + 2]);
+      if (l < lo) lo = l;
+      if (l > hi) hi = l;
+    }
+    if (hi - lo < 0.06) { ctx.drawImage(B0, 0, 0); return; }
+    const N = 3, k = 1 / g.cw, U = bgUnit(g), lev = new Uint8Array(Wd * Hd), tv = new Float32Array(Wd * Hd), S = [];
+    for (let i = 0; i < N; i++) S.push([0, 0, 0, 0, 0]);
+    // a borda rasgada: o tom lido um pouco ao lado (até A pontos, em ondas de ws pontos), para a linha entre as
+    // folhas ondular sem virar ilhas
+    const L = new Float32Array(Wd * Hd);
+    for (let i = 0, o = 0; i < L.length; i++, o += 4) L[i] = lum3(d[o], d[o + 1], d[o + 2]);
+    const lumAt = (x, y) => {
+      x = Math.max(0, Math.min(Wd - 1.001, x));
+      y = Math.max(0, Math.min(Hd - 1.001, y));
+      const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, i = y0 * Wd + x0;
+      return (L[i] * (1 - fx) + L[i + 1] * fx) * (1 - fy) + (L[i + Wd] * (1 - fx) + L[i + Wd + 1] * fx) * fy;
+    };
+    const ws = 30 * U * k, A = 5 * U * k, st = Math.max(2, Math.round(ws / 10));
+    const wave = (s) => (x, y) => noiseP(x / ws, y / ws, 4096, s) - 0.5 + 0.2 * (noiseP((x / ws) * 3.1 + 5.3, (y / ws) * 3.1, 4096, s + 1) - 0.5);
+    const WX = lowField(Wd, Hd, st, wave(61)), WY = lowField(Wd, Hd, st, wave(63));
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const l = lumAt(px + 2 * A * WX(px, py), py + 2 * A * WY(px, py));
+        const t = ((l - lo) / (hi - lo)) * N, q = Math.max(0, Math.min(N - 1, Math.floor(t)));
+        tv[i] = t;
+        lev[i] = q;
+        const s = S[q];
+        s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; s[3] += py; s[4]++;
+      }
+    }
+    // a ordem: a folha mais alta na tela fica atrás
+    const order = [...Array(N).keys()].filter((q) => S[q][4]).sort((a, b) => S[a][3] / S[a][4] - S[b][3] / S[b][4]);
+    const X = work('art_sheet', Wd, Hd), img = X.ctx.createImageData(Wd, Hd), D = img.data;
+    // a borda de cada folha, suave: a parte do nível que cai no ponto (t ± w/2, w: o quanto t muda de um ponto
+    // para o vizinho)
+    const cover = (q, a, b) => Math.max(0, Math.min(b, q === N - 1 ? Infinity : q + 1) - Math.max(a, q === 0 ? -Infinity : q)) / (b - a);
+    order.forEach((q, j) => {
+      const cs = S[q], col = [cs[0] / cs[4], cs[1] / cs[4], cs[2] / cs[4]], from = order.slice(j);
+      for (let i = 0, o = 0, px = 0; i < lev.length; i++, o += 4, px = px + 1 === Wd ? 0 : px + 1) {
+        let on = 1;
+        if (j) {
+          const t = tv[i], w = Math.max(1e-4, Math.abs((px + 1 < Wd ? tv[i + 1] : tv[i - 1]) - t), Math.abs((i + Wd < tv.length ? tv[i + Wd] : tv[i - Wd]) - t));
+          on = 0;
+          for (const f of from) on += cover(f, t - w / 2, t + w / 2);
+        }
+        D[o] = col[0]; D[o + 1] = col[1]; D[o + 2] = col[2]; D[o + 3] = Math.round(255 * Math.min(1, on));
+      }
+      X.ctx.putImageData(img, 0, 0);
+      ctx.save();
+      if (j) { ctx.shadowColor = 'rgba(24,18,12,0.35)'; ctx.shadowBlur = 4 * U * k; ctx.shadowOffsetY = -0.6 * U * k; }
+      ctx.drawImage(X.canvas, 0, 0);
+      ctx.restore();
+    });
+  }
+  // O azulejo do papel: grão fino, manchas leves e fibras (curvas curtas, claras e escuras), que se repete a cada
+  // TP unidades, sem emenda (cada fibra é desenhada também do outro lado da borda).
+  const paperTiles = new Map();
+  function paperTile(k) {
+    const n = Math.max(TP, Math.round(TP * k)), HR = n / TP;
+    if (paperTiles.has(n)) return paperTiles.get(n);
+    if (paperTiles.size > 3) paperTiles.delete(paperTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), R = rng(977);
+    x.fillStyle = '#808080';
+    x.fillRect(0, 0, n, n);
+    x.lineCap = 'round';
+    for (let i = 0; i < 420; i++) {
+      const px = R() * n, py = R() * n, a = R() * TAU, len = (4 + R() * 10) * HR, bend = (R() - 0.5) * 0.8;
+      x.strokeStyle = R() < 0.6 ? '#ffffff' : '#000000';
+      x.globalAlpha = 0.05 + R() * 0.1;
+      x.lineWidth = (0.12 + R() * 0.25) * HR;
+      const ex = Math.cos(a) * len, ey = Math.sin(a) * len, cx = -Math.sin(a) * len * bend, cy = Math.cos(a) * len * bend;
+      for (const ox of [-n, 0, n]) {
+        for (const oy of [-n, 0, n]) {
+          x.beginPath();
+          x.moveTo(px + ox, py + oy);
+          x.quadraticCurveTo(px + ox + ex / 2 + cx, py + oy + ey / 2 + cy, px + ox + ex, py + oy + ey);
+          x.stroke();
+        }
+      }
+    }
+    const img = x.getImageData(0, 0, n, n), D = img.data;
+    for (let py = 0, o = 0; py < n; py++) {
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = (px + 0.5) / HR, v = (py + 0.5) / HR;
+        const t = D[o] / 255 + 0.14 * (noiseP(u * 1.5, v * 1.5, TP * 1.5, 99) - 0.5) + 0.1 * (noiseP(u / 16, v / 16, TP / 16, 98) - 0.5);
+        D[o] = D[o + 1] = D[o + 2] = Math.round(255 * cl(t));
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: HR };
+    paperTiles.set(n, T);
+    return T;
+  }
+  function cutoutPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw, T = paperTile(k), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0, 0];
+    for (let py = 0, o = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!c[o + 3]) continue;
+        tileAt(V, T, tx, o, px, py, k, off);
+        const f = 1 + 0.32 * (V[0] - 0.5);
+        c[o] = Math.min(255, c[o] * f); c[o + 1] = Math.min(255, c[o + 1] * f); c[o + 2] = Math.min(255, c[o + 2] * f);
+      }
+    }
+  }
+
+  // ---------- clay (massinha) ----------
+  // a largura do papel/massinha de trás (o contorno), em unidades (lw: a largura do traço que faz a borda)
+  const rimOf = (it, U) => (it.hasInk && it.ink > 0 ? 2 * Math.min(6 * U, Math.max(0.8 * U, it.ink * 0.55)) : 0);
+  // A clay: cada forma vira uma placa de massinha de borda redonda, com caroços leves e marcas de dedo nas
+  // grandes, e uma sombra de contato na peça de baixo. O contorno (ink) vira uma tira de massinha da cor dele,
+  // atrás da peça. Os traços viram rolinhos. O fundo do canvas fica um pouco desfocado, como numa foto de stop
+  // motion. Depois, ponto a ponto (clayPost), a altura de cada peça (passe clayHeight) e a luz do canvas fazem o
+  // volume, com um brilho leve.
+  function clayPaint(art, info) {
+    return {
+      // o desfocado por cima do nítido (na beirada da imagem, o desfocado fica meio transparente)
+      bg(ctx, B0, g) { ctx.drawImage(B0, 0, 0); ctx.drawImage(soften(B0, 1.5 * bgUnit(g) / g.cw, 'art_glow'), 0, 0); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), lw = rimOf(it, U);
+        ctx.save();
+        dropShadow(ctx, it, 1.4 * U, 4 * U, 0.5);
+        ctx.lineJoin = 'round';
+        if (lw) {
+          ctx.fillStyle = ctx.strokeStyle = it.inkStyle;
+          ctx.lineWidth = lw;
+          ctx.fill(it.path);
+          ctx.stroke(it.path);
+        } else {
+          ctx.fillStyle = it.fillStyle;
+          ctx.fill(it.path);
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.restore();
+      },
+      ink(ctx, it) {
+        if (!it.hole || !(it.hasInk && it.ink > 0)) return;
+        ctx.save();
+        ctx.strokeStyle = it.inkStyle;
+        ctx.lineWidth = rimOf(it, unitOf(it.canvas));
+        ctx.lineJoin = 'round';
+        ctx.stroke(it.path);
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas);
+        ctx.save();
+        dropShadow(ctx, it, 1.2 * U, 3 * U, 0.45);
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // O passe da altura (cinza: 0 embaixo, 1 no alto) e o das peças (cada uma com a sua cor, para o volume não
+  // passar de uma peça para a outra). Na altura, a peça é a forma borrada recortada nela mesma: 0,5 na borda,
+  // 1 lá dentro (a borda redonda tem R unidades); a tira de trás é baixa e lisa; os rolinhos são círculos de
+  // larguras diferentes, um dentro do outro. S guarda a luz do canvas.
+  function clayHeight(art, info, S) {
+    const step = boilStep(art, info);
+    return {
+      glow: false,
+      fill(ctx, it) {
+        const U = unitOf(it.canvas), lw = rimOf(it, U), bb = it.box, s = pxOf(ctx);
+        S.light = it.light;
+        ctx.save();
+        ctx.lineJoin = 'round';
+        if (lw) {
+          for (const [fr, v] of [[1, 40], [0.75, 75], [0.5, 100], [0.25, 115]]) {
+            ctx.fillStyle = ctx.strokeStyle = `rgb(${v},${v},${v})`;
+            ctx.lineWidth = lw * fr;
+            ctx.fill(it.path);
+            ctx.stroke(it.path);
+          }
+        }
+        ctx.fillStyle = '#000000';
+        ctx.fill(it.path);
+        ctx.clip(it.path);
+        const R = Math.max(1.5 * U, Math.min(12 * U, 0.32 * Math.min(bb.w, bb.h))), T = ctx.getTransform(), D = 1e4;
+        ctx.save();
+        ctx.setTransform(T.a, T.b, T.c, T.d, T.e - D, T.f);
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = R * s;
+        ctx.shadowOffsetX = D;
+        ctx.fillStyle = '#ffffff';
+        ctx.fill(it.path);
+        ctx.restore();
+        // as marcas de dedo: covinhas rasas, nas peças grandes (presas à forma)
+        const lb = it.lbox(), f = it.map();
+        if (Math.min(bb.w, bb.h) > 28 * U) {
+          const Rr = rng(seedOf(art, step, it, 5)), n = 1 + Math.floor(Rr() * 2.5);
+          const q = f(lb.x + lb.w * 0.5 + 1, lb.y + lb.h * 0.5), o = f(lb.x + lb.w * 0.5, lb.y + lb.h * 0.5), a0 = Math.atan2(q[1] - o[1], q[0] - o[0]);
+          for (let i = 0; i < n; i++) {
+            const p = f(lb.x + lb.w * (0.2 + 0.6 * Rr()), lb.y + lb.h * (0.2 + 0.6 * Rr())), r0 = (5 + Rr() * 3) * U;
+            const G = ctx.createRadialGradient(0, 0, 0, 0, 0, r0);
+            G.addColorStop(0, 'rgba(0,0,0,0.2)');
+            G.addColorStop(0.6, 'rgba(0,0,0,0.12)');
+            G.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.save();
+            ctx.translate(p[0], p[1]);
+            ctx.rotate(a0 + Rr() * TAU);
+            ctx.scale(1, 0.75);
+            ctx.fillStyle = G;
+            ctx.beginPath();
+            ctx.arc(0, 0, r0, 0, TAU);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+        ctx.restore();
+      },
+      ink() {},
+      line(ctx, it) {
+        const U = unitOf(it.canvas), E = lineEdges(it), n = E.pts.length;
+        S.light = it.light;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for (const [fr, v] of [[1, 128], [0.75, 212], [0.5, 237], [0.25, 250]]) {
+          ctx.strokeStyle = `rgb(${v},${v},${v})`;
+          if (!it.ws) {
+            ctx.lineWidth = Math.max(0.3 * U, it.w * fr);
+            ctx.beginPath();
+            E.pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+            ctx.stroke();
+            continue;
+          }
+          for (let i = 0; i + 1 < n; i++) {
+            ctx.lineWidth = Math.max(0.3 * U, (E.half(i, n) + E.half(i + 1, n)) * fr);
+            ctx.beginPath();
+            ctx.moveTo(E.pts[i][0], E.pts[i][1]);
+            ctx.lineTo(E.pts[i + 1][0], E.pts[i + 1][1]);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  function clayIds(S) {
+    let n = 0;
+    S.ids = new Set();
+    const col = () => {
+      const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
+      S.ids.add(v);
+      return `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
+    };
+    return {
+      glow: false,
+      fill(ctx, it) {
+        const lw = rimOf(it, unitOf(it.canvas));
+        ctx.save();
+        ctx.lineJoin = 'round';
+        if (lw) {
+          ctx.fillStyle = ctx.strokeStyle = col();
+          ctx.lineWidth = lw;
+          ctx.fill(it.path);
+          ctx.stroke(it.path);
+        }
+        ctx.fillStyle = col();
+        ctx.fill(it.path);
+        ctx.restore();
+      },
+      ink() {},
+      line(ctx, it) { ctx.save(); ctx.fillStyle = ctx.strokeStyle = col(); it.body(ctx); ctx.restore(); return true; },
+    };
+  }
+  // os caroços da massinha (R): morrinhos de 16, 7 e 3 unidades, maiores num canvas maior (U), num azulejo
+  // de TP·U unidades que emenda
+  const clayTiles = new Map();
+  function clayTile(k, U) {
+    const n = Math.min(1024, Math.max(TP, Math.round(TP * k * U))), key = n + ':' + U.toFixed(3);
+    if (clayTiles.has(key)) return clayTiles.get(key);
+    if (clayTiles.size > 3) clayTiles.delete(clayTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
+    for (let py = 0, o = 0; py < n; py++) {
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = ((px + 0.5) / n) * TP, v = ((py + 0.5) / n) * TP;
+        const d = 0.55 * noiseP(u / 16, v / 16, TP / 16, 81) + 0.3 * noiseP(u / 8, v / 8, TP / 8, 82) + 0.15 * noiseP(u / 4, v / 4, TP / 4, 83);
+        D[o] = Math.round(255 * d);
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: n / (TP * U) };
+    clayTiles.set(key, T);
+    return T;
+  }
+  // a média de r pontos para cada lado, ao longo de cada linha (ou coluna) de A, só entre os vizinhos da mesma
+  // peça (P) em sequência: lines linhas de len pontos, st o passo dentro da linha, ls o passo de uma para a outra
+  function runBlur(A, P, len, lines, r, st, ls) {
+    const S = new Float64Array(len + 1), B = new Float32Array(len);
+    for (let l = 0; l < lines; l++) {
+      const b = l * ls;
+      let s = 0;
+      while (s < len) {
+        const p = P[b + s * st];
+        let e = s + 1;
+        while (e < len && P[b + e * st] === p) e++;
+        if (p >= 0 && e - s > 1) {
+          S[s] = 0;
+          for (let x = s; x < e; x++) S[x + 1] = S[x] + A[b + x * st];
+          for (let x = s; x < e; x++) {
+            const lo = Math.max(s, x - r), hi = Math.min(e - 1, x + r);
+            B[x] = (S[hi + 1] - S[lo]) / (hi - lo + 1);
+          }
+          for (let x = s; x < e; x++) A[b + x * st] = B[x];
+        }
+        s = e;
+      }
+    }
+  }
+  function clayPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, k = 1 / g.cw, U = bgUnit(g), S = { light: [-0.6, -0.8] };
+    const HX = work('art_h', Wd, Hd);
+    HX.ctx.fillStyle = '#000000';
+    HX.ctx.fillRect(0, 0, Wd, Hd);
+    HX.ctx.save();
+    src.content(HX.ctx, m, { unlit: true, stroke: clayHeight(art, info, S) });
+    HX.ctx.restore();
+    const h = HX.ctx.getImageData(0, 0, Wd, Hd).data;
+    const IX = work('art_id', Wd, Hd);
+    IX.ctx.save();
+    src.content(IX.ctx, m, { unlit: true, stroke: clayIds(S) });
+    IX.ctx.restore();
+    const id = IX.ctx.getImageData(0, 0, Wd, Hd).data;
+    const T = clayTile(k, U), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0, 0];
+    // a altura de cada ponto (com os caroços) e a peça dele (-1: nenhuma; a mistura de duas na borda fica com
+    // a de um vizinho)
+    const H = new Float32Array(Wd * Hd), P = new Int32Array(Wd * Hd);
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        if (!id[o + 3]) { P[i] = -1; continue; }
+        const v = (id[o] << 16) | (id[o + 1] << 8) | id[o + 2];
+        P[i] = S.ids.has(v) ? v : -2;
+        tileAt(V, T, tx, o, px, py, k, off);
+        H[i] = h[o] / 255 + 0.1 * (V[0] - 0.5);
+      }
+    }
+    for (let i = 0; i < P.length; i++) if (P[i] === -2) { const px = i % Wd; P[i] = px > 0 && P[i - 1] >= 0 ? P[i - 1] : i >= Wd && P[i - Wd] >= 0 ? P[i - Wd] : -2; }
+    for (let i = P.length - 1; i >= 0; i--) if (P[i] === -2) { const px = i % Wd; P[i] = px < Wd - 1 && P[i + 1] >= 0 ? P[i + 1] : i + Wd < P.length && P[i + Wd] >= 0 ? P[i + Wd] : -1; }
+    // alisada em números (sem os degraus de 8 bits, que viram listras na luz), só dentro de cada peça
+    const rb = Math.max(1, Math.round(1.2 * k));
+    for (let rep = 0; rep < 2; rep++) {
+      runBlur(H, P, Wd, Hd, rb, 1, Wd);
+      runBlur(H, P, Hd, Wd, rb, Wd, 1);
+    }
+    const l = S.light, l2 = Math.hypot(l[0], l[1]) || 1, ll = Math.hypot(0.8, 1.1), L = [(0.8 * l[0]) / l2 / ll, (0.8 * l[1]) / l2 / ll, 1.1 / ll];
+    const hv = Math.hypot(L[0], L[1], L[2] + 1), Hv = [L[0] / hv, L[1] / hv, (L[2] + 1) / hv];
+    const Z = 7 * U * k, spec0 = Math.pow(Hv[2], 24);
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const p = P[i];
+        if (!c[o + 3] || p < 0) continue;
+        const hc = H[i];
+        const hl = px > 0 && P[i - 1] === p ? H[i - 1] : hc, hr = px < Wd - 1 && P[i + 1] === p ? H[i + 1] : hc;
+        const hu = py > 0 && P[i - Wd] === p ? H[i - Wd] : hc, hd = py < Hd - 1 && P[i + Wd] === p ? H[i + Wd] : hc;
+        let nx = -(hr - hl) * 0.5 * Z, ny = -(hd - hu) * 0.5 * Z;
+        const nl = Math.hypot(nx, ny, 1);
+        nx /= nl; ny /= nl;
+        const nz = 1 / nl, dif = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
+        const shade = 0.6 + (0.4 * dif) / L[2], sp = 0.28 * Math.max(0, Math.pow(Math.max(0, nx * Hv[0] + ny * Hv[1] + nz * Hv[2]), 24) - spec0);
+        for (let ch = 0; ch < 3; ch++) c[o + ch] = Math.max(0, Math.min(255, c[o + ch] * shade + 255 * sp));
+      }
+    }
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -2112,6 +2656,8 @@
     crayon: tone(handDraw(crayonPaint, crayonPost), true),
     chalk: tone(handDraw(chalkPaint, chalkPost), true),
     watercolor: tone(handDraw(watercolorPaint, watercolorPost), true),
+    cutout: tone(handDraw(cutoutPaint, cutoutPost), true),
+    clay: tone(handDraw(clayPaint, clayPost), true),
     lines: tone(linesDraw, false),
     neon: tone(neonDraw, true),
   };
