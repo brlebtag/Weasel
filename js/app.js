@@ -107,7 +107,7 @@
       else if (cmd === 'def' || cmd === 'repeat') open.push(cmd);
       if (!NAMES_NEW.has(cmd) || (L.DRAWABLE.has(cmd) && open.includes('def'))) continue;
       // o nome é a primeira palavra solta (sem =) depois da instrução; nas formas, pulando hidden, bold…
-      const pos = sp.words.slice(1).filter((w) => (w.text[0] === '"' || w.text[0] === '{' || !w.text.includes('=')) && !(L.DRAWABLE.has(cmd) && L.DRAW_FLAGS.has(w.text)));
+      const pos = sp.words.slice(1).filter((w) => (w.text[0] === '"' || L.topIndex(w.text, '=') < 0) && !(L.DRAWABLE.has(cmd) && L.DRAW_FLAGS.has(w.text)));
       const n = pos[0] && pos[0].text;
       if (!n || !L.IDENT.test(n)) continue;
       decl.add(pos[0]);
@@ -130,7 +130,7 @@
         if (decl.has(w)) { swap(off + w.from, w.text); return; }
         if (w.text[0] === '"') return;
         if (wi === 0 && cmd === 'use') { if (kindOk(w.text, ['def'])) swap(off + w.from, w.text); return; }
-        const eq = w.text[0] === '{' ? -1 : w.text.indexOf('=');
+        const eq = L.topIndex(w.text, '=');
         if (eq < 0) return;
         const key = w.text.slice(0, eq), dot = key.indexOf('.');
         if (dot > 0 && kindOk(key.slice(0, dot))) swap(off + w.from, key.slice(0, dot));
@@ -291,7 +291,7 @@
     if (ch.pos) {
       // ref nome "imagem.png" x,y: o x,y vem depois do arquivo, e o nome do arquivo (entre aspas) pode ter vírgula
       const file = ws.slice(2).find((t) => t.text[0] === '"');
-      const pt = ws.slice(2).find((t) => t.text[0] !== '"' && !t.text.includes('=') && (t.text.includes(',') || t.text.includes('{')));
+      const pt = ws.slice(2).find((t) => t.text[0] !== '"' && L.topIndex(t.text, '=') < 0 && (t.text.includes(',') || t.text.includes('{')));
       const after = file || ws[1];
       if (pt) edits.push({ from: pt.from, to: pt.to, text: ch.pos });
       else if (after) edits.push({ from: after.to, to: after.to, text: ' ' + ch.pos });
@@ -1521,7 +1521,7 @@
     const widths = [...m.palette].filter(([, v]) => typeof v === 'number').map(([k]) => k);
     const els = [...m.named.keys()];
     const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), ...names([...m.patterns.keys()], 'padrão'), { label: 'none' }];
-    const eq = cur.indexOf('=');
+    const eq = L.topIndex(cur, '=');
     const actorOf = (name) => filmActors().find((a) => a.name === name);
     const fileList = () => names([...st.files.keys()].filter((f) => f !== st.current).map((f) => `"${f}"`), 'arquivo');
     if (eq > 0) {

@@ -19,7 +19,8 @@
     const cmd = sp.words[0] && sp.words[0].text;
     sp.words.forEach((w, i) => {
       if (i === 0) { const g = L.KEYWORDS[w.text]; spans.push([w.from, w.to, g ? 'kw-' + g : 'bad']); return; }
-      const eq = w.text[0] === '"' ? -1 : w.text.indexOf('=');
+      // o = do atributo fica fora das chaves: em {i>=12}, o = é da conta
+      const eq = w.text[0] === '"' ? -1 : L.topIndex(w.text, '=');
       if (eq > 0) {
         const v = w.text.slice(eq + 1);
         spans.push([w.from, w.from + eq, 'attr'], [w.from + eq, w.from + eq + 1, 'op']);

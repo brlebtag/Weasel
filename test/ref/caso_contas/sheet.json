@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "pisca_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 83,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 83,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 83,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 250
+    },
+    "pisca_01": {
+      "frame": {
+        "x": 87,
+        "y": 2,
+        "w": 83,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 83,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 83,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 250
+    },
+    "pisca_02": {
+      "frame": {
+        "x": 172,
+        "y": 2,
+        "w": 83,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 83,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 83,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 250
+    },
+    "pisca_03": {
+      "frame": {
+        "x": 257,
+        "y": 2,
+        "w": 83,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 83,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 83,
+        "h": 54
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 250
+    }
+  },
+  "animations": {
+    "pisca": [
+      "pisca_00",
+      "pisca_01",
+      "pisca_02",
+      "pisca_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_contas.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 342,
+      "h": 58
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 83,
+      "h": 54
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "pisca",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 4,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 8,
+      "y": 6,
+      "w": 278,
+      "h": 180
+    }
+  }
+}

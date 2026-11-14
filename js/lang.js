@@ -153,6 +153,15 @@
     lerp: (a, b, t) => a + (b - a) * t, clamp: (v, a, b) => Math.min(b, Math.max(a, v)),
     // dist(x1,y1,x2,y2): a distância em linha reta entre dois pontos
     dist: (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1),
+    // smoothstep(a,b,x): de 0 a 1, com começo e fim suaves, enquanto x anda de a até b (antes de a, 0; depois de b, 1;
+    // com a maior que b, vai de 1 a 0; com a igual a b, um degrau)
+    smoothstep: (a, b, x) => {
+      if (a === b) return x < a ? 0 : 1;
+      const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+      return t * t * (3 - 2 * t);
+    },
+    // mod(x,n): o resto que não fica negativo (o % segue o sinal de x: -7%3 dá -1; mod(-7,3) dá 2)
+    mod: (x, n) => ((x % n) + n) % n,
     // rand(x) de 0 a 1, rand(x, a, b) de a até b: sempre o mesmo valor para o mesmo x
     rand: (x, a, b) => {
       let h = Math.imul(Math.round(x * 1000) ^ 0x2545f491, 0x9e3779b1) >>> 0;
@@ -162,6 +171,10 @@
       return b === undefined ? r : a + (b - a) * r;
     },
   };
+  // as funções que precisam de um número certo de valores (com menos, a conta daria NaN sem dizer por quê)
+  const FN_ARGS = { dist: 'dist(x1,y1,x2,y2)', smoothstep: 'smoothstep(a,b,x)', mod: 'mod(x,n)' };
+  // Do que vale menos para o que vale mais: c ? a : b; == e !=; < <= > >=; + e -; * / e %; o sinal; ^.
+  // As comparações dão 1 (verdade) ou 0 (falso); no ? :, qualquer número que não seja 0 vale como verdade.
   function evalExpr(s, vars) {
     let i = 0;
     const ws = () => { while (i < s.length && /\s/.test(s[i])) i++; };
@@ -194,7 +207,8 @@
           if (s[i] !== ')') fail('falta ")"');
           i++;
           if (!FN[name]) fail(`função desconhecida "${name}"`);
-          if (name === 'dist' && args.length !== 4) fail('dist precisa de 4 números: dist(x1,y1,x2,y2)');
+          const need = FN_ARGS[name];
+          if (need && args.length !== need.split(',').length) fail(`${name} precisa de ${need.split(',').length} números: ${need}`);
           return FN[name](...args);
         }
         if (name === 'pi') return Math.PI;
@@ -216,7 +230,7 @@
         v = op === '*' ? v * r : op === '/' ? v / r : v % r;
       }
     }
-    function expr() {
+    function sum() {
       let v = term();
       for (;;) {
         ws();
@@ -227,8 +241,47 @@
         v = op === '+' ? v + r : v - r;
       }
     }
+    // < <= > >=
+    function order() {
+      let v = sum();
+      for (;;) {
+        ws();
+        const op = s[i];
+        if (op !== '<' && op !== '>') return v;
+        const eq = s[i + 1] === '=';
+        i += eq ? 2 : 1;
+        const r = sum();
+        v = (op === '<' ? (eq ? v <= r : v < r) : (eq ? v >= r : v > r)) ? 1 : 0;
+      }
+    }
+    // == e !=
+    function same() {
+      let v = order();
+      for (;;) {
+        ws();
+        const two = s.slice(i, i + 2);
+        if (two !== '==' && two !== '!=') return v;
+        i += 2;
+        const r = order();
+        v = (two === '==' ? v === r : v !== r) ? 1 : 0;
+      }
+    }
+    // c ? a : b (as duas contas são feitas, para os erros de qualquer uma aparecerem; vale a que o c escolhe)
+    function expr() {
+      const c = same();
+      ws();
+      if (s[i] !== '?') return c;
+      i++;
+      const a = expr();
+      ws();
+      if (s[i] !== ':') fail('falta ":" (use c ? a : b)');
+      i++;
+      const b = expr();
+      return c !== 0 ? a : b;
+    }
     const v = expr();
     ws();
+    if (s[i] === '=') fail('para comparar, use == (dois iguais)');
     if (i < s.length) fail(`símbolo inesperado "${s[i]}"`);
     if (!Number.isFinite(v)) fail('o resultado não é um número');
     return v;
@@ -3043,5 +3096,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, ART_STYLES, ART_OPTS, ART_BOIL, artBoil, RISO_INKS, ART_PALETTES, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, topIndex, KEYWORDS, ATTRS, FLAGS, ART_STYLES, ART_OPTS, ART_BOIL, artBoil, RISO_INKS, ART_PALETTES, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

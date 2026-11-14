@@ -1,0 +1,9 @@
+canvas   300 × 200, fundo #f4efe6
+let      n=12 alto=1 m=9
+componentes gota (1×)
+camadas  1
+  base            15 item(ns)
+formas   15
+ossos    b
+animações 1
+  pisca          4 quadros, 4 fps, anima caixa.opacity

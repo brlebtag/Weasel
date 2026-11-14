@@ -1,0 +1,34 @@
+{smoothstep(10,20,5)} → 0
+{smoothstep(10,20,15)} → 0.5
+{smoothstep(10,20,25)} → 1
+{smoothstep(10,20,i)} → 0.104
+{smoothstep(20,10,12)} → 0.896
+{smoothstep(5,5,4)} → 0
+{smoothstep(5,5,5)} → 1
+{i<12} → 0
+{i<=12} → 1
+{i>12} → 0
+{i>=12} → 1
+{i==12} → 1
+{i!=12} → 0
+{1+2<4} → 1
+{1<2==1} → 1
+{i<6 ? 0 : 30} → 30
+{i<13 ? 0 : 30} → 0
+{0 ? 1 : 2 ? 3 : 4} → 3
+{1 ? 2 : 3+10} → 2
+{max(i>5 ? 3 : 1, 2)} → 3
+{(i>=12)*5} → 5
+{mod(-3,12)} → 9
+{mod(f-3,12)} → 9
+{mod(-7,3)} → 2
+{mod(7,3)} → 1
+{mod(7.5,2)} → 1.5
+{i=12} → erro: para comparar, use == (dois iguais)
+{1 ? 2} → erro: falta ":" (use c ? a : b)
+{i<} → erro: expressão incompleta
+{mod(5)} → erro: mod precisa de 2 números: mod(x,n)
+{smoothstep(1,2)} → erro: smoothstep precisa de 3 números: smoothstep(a,b,x)
+{mod(5,0)} → erro: o resultado não é um número
+
+no arquivo: 0 erro(s); rect r em 10,3 opacity 0.5; 3 ellipse e em 0,0 10,50 20,0

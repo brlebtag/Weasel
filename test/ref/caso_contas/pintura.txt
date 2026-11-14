@@ -1,0 +1,16 @@
+ellipse bola @0.000 +0.322
+ellipse bola @0.322 +0.254
+ellipse bola @0.576 +0.322
+ellipse bola @0.898 +0.254
+ellipse bola @1.152 +0.322
+ellipse bola @1.473 +0.254
+ellipse bola @1.727 +0.322
+ellipse bola @2.049 +0.254
+ellipse bola @2.303 +0.322
+ellipse bola @2.625 +0.254
+ellipse bola @2.879 +0.322
+ellipse bola @3.201 +0.254
+shape morro @3.455 +1.046
+ellipse g @4.501 +0.341
+rect caixa @4.842 +0.498
+total 5.340

@@ -41,7 +41,7 @@ Tudo na carinha depende de `cx`, `cy` e `r`. Mude `r=80` para `r=50` e ela intei
 
 ### O que vale dentro das chaves
 
-As quatro operações, com parênteses, mais duas: `%` (o **resto** de uma divisão) e `^` (**potência**). Estes são resultados de verdade do Weasel, com `r=80` e `cx=200`:
+As quatro operações, com parênteses, mais duas: `%` (o **resto** de uma divisão) e `^` (**potência**). E as comparações, que dão 1 ou 0, e a escolha `c ? a : b`. Estes são resultados de verdade do Weasel, com `r=80` e `cx=200`:
 
 | Conta | Dá | Por quê |
 |---|---|---|
@@ -50,9 +50,12 @@ As quatro operações, com parênteses, mais duas: `%` (o **resto** de uma divis
 | `{10/4}` | 2.5 | a divisão dá número com vírgula (que no Weasel se escreve com ponto) |
 | `{2+3*4}` | 14 | vezes e dividido vêm antes de mais e menos |
 | `{(2+3)*4}` | 20 | os parênteses vêm primeiro |
-| `{7%3}` | 1 | 7 dividido por 3 dá 2 e **sobra 1**. Com número negativo, o resto também sai negativo (`{-7%3}` dá −1) |
+| `{7%3}` | 1 | 7 dividido por 3 dá 2 e **sobra 1**. Com número negativo, o resto também sai negativo (`{-7%3}` dá −1); para o resto que nunca sai negativo, use [`mod`](#o-resto-que-não-fica-negativo-mod) |
 | `{2^3}` | 8 | 2 × 2 × 2. Cuidado: `{-2^2}` dá −4 (a potência vem antes do sinal) |
 | `{cx-20}` | 180 | variável do `let` |
+| `{r>50}` | 1 | comparação: dá 1 quando é verdade e 0 quando não é ([mais abaixo](#comparar-e-escolher)) |
+| `{r==50}` | 0 | `==` (dois iguais) pergunta se é igual; `!=`, se é diferente |
+| `{r>50 ? 10 : 20}` | 10 | escolhe: se a conta antes do `?` não dá 0, vale o número antes do `:`; se dá 0, o de depois |
 
 E estas **funções** (os exemplos de cada uma estão em [As funções, uma por uma](#as-funções-uma-por-uma), depois do `repeat`, porque com ele fica fácil ver vários valores lado a lado):
 
@@ -64,7 +67,9 @@ E estas **funções** (os exemplos de cada uma estão em [As funções, uma por 
 | `sqrt(v)` `pow(a,b)` `abs(v)` | raiz, potência, valor absoluto | `{sqrt(2)*r}` |
 | `min(a,b,…)` `max(a,b,…)` | menor e maior | `{max(4,r/10)}` |
 | `round(v)` `floor(v)` `ceil(v)` | arredondar, para baixo, para cima | `{round(r/3)}` |
+| `mod(x,n)` | o resto da divisão que nunca sai negativo | `{mod(-3,12)}` = 9 |
 | `lerp(a,b,t)` | o valor a `t` do caminho entre `a` e `b` | `{lerp(100,300,0.25)}` = 150 |
+| `smoothstep(a,b,x)` | vai de 0 a 1, com começo e fim suaves, enquanto `x` anda de `a` até `b` | `{smoothstep(10,20,15)}` = 0.5 |
 | `clamp(v,a,b)` | prende `v` entre `a` e `b` | `{clamp(r,10,50)}` |
 | `rand(x)` `rand(x,a,b)` | um número "sorteado" de 0 a 1 (ou de `a` a `b`), sempre o mesmo para o mesmo `x` | `{rand(i,-4,4)}` |
 | `pi` | 3,14159… | `{2*pi*r}` |
@@ -490,6 +495,38 @@ Repare:
 
 **Experimente:** mude `repeat i 0..14` para `repeat i 0..11`. São 12 ladrilhos: duas linhas cheias e uma com só dois.
 
+### O resto que não fica negativo: `mod`
+
+O `%` segue o sinal do número: `{-7%3}` dá −1. Isso atrapalha quando a conta pode ficar negativa, como `(i-3)%12` com o `i` começando do 0. O `mod(x,n)` dá o resto **sempre de 0 até n** (sem chegar no n). Com o `i` indo de −8 a 9, as duas fileiras sobem em degraus de 0 a 3, como os dentes de uma serra:
+
+<!-- gerar: img/05_mod.png -->
+```weasel
+canvas 470 310 bg=#f4efe6
+palette ink=#2b2a33
+line zero w=2 c=#b8b2a8 dash=5,5 : 230,10 230,300
+line base1 w=1 c=#d2cabd : 30,120 450,120
+line base2 w=1 c=#d2cabd : 30,290 450,290
+
+repeat i -8..9
+ellipse resto {230+i*24},{120-(i%4)*18} 7 c=#ff6b4a
+ellipse sempre {230+i*24},{290-mod(i,4)*18} 7 c=#4a9eff
+end
+
+text t1 12,28 "i%4" size=16
+text t2 12,205 "mod(i,4)" size=16
+```
+
+![Duas fileiras de bolinhas em degraus, com uma linha tracejada vertical no meio e uma linha de base fina em cada fileira. Em cima, vermelha, os degraus da esquerda descem abaixo da linha de base; embaixo, azul, a serra é igual dos dois lados](img/05_mod.png)
+
+Repare:
+
+- À direita da linha tracejada (o `i=0`), as duas fileiras são iguais: 0, 1, 2, 3, 0, 1, 2, 3…
+- À esquerda, o `%` dá −1, −2, −3, 0, −1…: os dentes da serra vermelha descem, abaixo da linha de base.
+- O `mod` continua a mesma serra: da esquerda para a direita, 0, 1, 2, 3, 0, 1… dos dois lados do zero.
+- O `%` não mudou: o que já estava escrito com ele dá o mesmo resultado de antes.
+
+**Experimente:** troque `mod(i,4)` por `mod(i,3)`. Os dentes ficam com três degraus.
+
 ### No meio do caminho: `lerp`
 
 `lerp(a,b,t)` serve para achar um valor **entre** dois outros. Com `t=0`, dá `a`; com `t=1`, dá `b`; com `t=0.5`, dá o meio. Com ele, dá para espalhar coisas num caminho e fazer elas mudarem aos poucos.
@@ -519,6 +556,78 @@ Repare:
 - Por isso as bolinhas andam em linha reta de A até B, crescendo e ficando mais fortes juntas.
 
 **Experimente:** troque `lerp(6,22,k/8)` por `lerp(22,6,k/8)`. Agora as bolinhas encolhem enquanto sobem.
+
+### Começo e fim suaves: `smoothstep`
+
+`smoothstep(a,b,x)` vai de 0 a 1 enquanto `x` anda de `a` até `b`, como o `k/8` do `lerp`. A diferença é o jeito: ele sai devagar, acelera no meio e chega devagar. Antes de `a`, dá 0; depois de `b`, dá 1. Aqui estão as 11 posições de uma bolinha, uma por quadro:
+
+<!-- gerar: img/05_smoothstep.png -->
+```weasel
+canvas 440 200 bg=#f4efe6
+palette ink=#2b2a33
+
+line trilho1 w=2 c=#b8b2a8 dash=6,5 : 40,70 400,70
+line trilho2 w=2 c=#b8b2a8 dash=6,5 : 40,160 400,160
+repeat k 0..10
+ellipse reta {lerp(40,400,k/10)},70 9 c=#ff6b4a opacity={lerp(0.3,1,k/10)}
+ellipse suave {lerp(40,400,smoothstep(0,10,k))},160 9 c=#4a9eff opacity={lerp(0.3,1,k/10)}
+end
+
+text t1 40,40 "k/10" size=16
+text t2 40,130 "smoothstep(0,10,k)" size=16
+```
+
+![Duas fileiras de 11 bolinhas. Em cima, vermelhas, espaçadas por igual; embaixo, azuis, juntinhas nas duas pontas e espaçadas no meio](img/05_smoothstep.png)
+
+Repare:
+
+- Em cima, com `k/10`, a bolinha anda o mesmo tanto a cada quadro. Ela começa e para de repente.
+- Embaixo, com `smoothstep(0,10,k)`, as posições ficam juntas nas pontas e espaçadas no meio: a bolinha sai devagar, corre no meio e chega devagar.
+- `smoothstep(10,20,i)` fica em 0 até o 10, sobe até o 20 e fica em 1 depois dele. Com `a` maior que `b` (`smoothstep(20,10,i)`), vai de 1 a 0.
+
+**Experimente:** troque `smoothstep(0,10,k)` por `smoothstep(3,7,k)`. As quatro primeiras bolinhas ficam paradas no começo, e as quatro últimas, no fim.
+
+### Comparar e escolher
+
+Uma comparação (`<`, `<=`, `>`, `>=`, `==` ou `!=`) dá **1** quando é verdade e **0** quando não é. O `? :` escolhe entre dois números: `{c ? a : b}` dá `a` se o `c` não é 0, e `b` se é 0. Com eles, dá para ligar uma coisa a partir de um número, ou fazer uma a cada tantas diferente das outras:
+
+<!-- gerar: img/05_comparar.png -->
+```weasel
+canvas 440 150 bg=#2b2a33
+palette ink=#14141c
+let acesas=7
+
+rect fio 20,38 400,4 c=#5a5866
+repeat i 0..11
+line cabo w=2 c=#5a5866 : {35+i*34},40 {35+i*34},{80-(i%3==0 ? 13 : 9)}
+ellipse brilho {35+i*34},80 {i%3==0 ? 26 : 18} c=#ffd34d opacity={i<acesas ? 0.25 : 0}
+ellipse lampada {35+i*34},80 {i%3==0 ? 13 : 9} c=#5a5866 ink=2
+ellipse luz {35+i*34},80 {i%3==0 ? 13 : 9} c=#ffd34d opacity={i<acesas}
+end
+```
+
+![Uma fileira de 12 lâmpadas penduradas num fio, cada uma no seu cabo, num fundo escuro: as sete primeiras acesas, amarelas e com brilho em volta, e as cinco últimas apagadas, cinzas. Uma a cada três é maior](img/05_comparar.png)
+
+Repare:
+
+- `i<acesas` dá 1 nas sete primeiras (`i` de 0 a 6) e 0 nas outras. Como opacidade, acende a luz das sete.
+- `i%3==0 ? 13 : 9`: quando o resto de `i` por 3 é 0 (`i` é 0, 3, 6 ou 9), a lâmpada tem raio 13; nas outras, 9.
+- O brilho em volta usa o `? :` para escolher a opacidade: 0.25 nas acesas e 0 nas apagadas.
+
+| Conta | Dá 1 quando |
+|---|---|
+| `a<b` `a<=b` | `a` é menor que `b` (ou igual, no `<=`) |
+| `a>b` `a>=b` | `a` é maior que `b` (ou igual, no `>=`) |
+| `a==b` | `a` é igual a `b` (dois sinais de igual: um sozinho é erro) |
+| `a!=b` | `a` é diferente de `b` |
+
+E as regras:
+
+- As comparações vêm **depois** das outras contas: `{i+1<5}` é `(i+1)<5`. O `? :` vem por último: `{i<6 ? 0 : 30}`.
+- Um `? :` pode ficar dentro de outro: `{i<4 ? 10 : i<8 ? 20 : 30}` dá 10, 20 ou 30.
+- Para juntar duas condições, use contas: **e** é multiplicar (`{(i>2)*(i<8)}` dá 1 só de 3 a 7); **ou** é o `max` (`{max(i<2,i>9)}`); **não** é `1-` (`{1-(i<5)}`).
+
+**Experimente:** mude `let acesas=7` para `let acesas=12`. Todas acendem.
 
 ### `pi`
 

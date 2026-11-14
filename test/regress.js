@@ -398,6 +398,29 @@ async function previewCase() {
   await check('_previa', 'previa.png', 'png', W.scene.renderImage(P.model, W.scene.makePose(P.model, null, 0), { rect: { x: -60, y: -50, w: 130, h: 110 }, scale: 2 }));
 }
 
+// contas dentro de {}: as de antes dão o mesmo resultado; as novas (smoothstep, comparações, c ? a : b e mod), os
+// erros delas e o leitor da linha (o = de dentro das chaves não vira atributo)
+async function exprCase() {
+  console.log(paint('1', '_contas'));
+  const vars = new Map([['i', 12], ['f', 0], ['r', 80], ['cx', 200]]);
+  const run = (s) => { try { return String(+W.lang.evalExpr(s, vars).toFixed(6)); } catch (e) { return `erro: ${e.message}`; } };
+  const old = [['200+40', '240'], ['r*1.5', '120'], ['10/4', '2.5'], ['2+3*4', '14'], ['(2+3)*4', '20'], ['7%3', '1'], ['-7%3', '-1'], ['(f-3)%12', '-3'],
+    ['2^3', '8'], ['-2^2', '-4'], ['cx-20', '180'], ['lerp(100,300,0.25)', '150'], ['dist(0,0,30,40)', '50'], ['atan2(1,1)', '45'], ['clamp(r,10,50)', '50'],
+    ['round(2.5)', '3'], ['rand(3)', '0.763092'], ['rand(7,-4,4)', '-3.34165']];
+  const bad = old.filter(([s, want]) => run(s) !== want);
+  record(!bad.length, '_contas/antigas', bad.map(([s]) => `{${s}} deu ${run(s)}`).join('; '));
+  const novas = ['smoothstep(10,20,5)', 'smoothstep(10,20,15)', 'smoothstep(10,20,25)', 'smoothstep(10,20,i)', 'smoothstep(20,10,12)', 'smoothstep(5,5,4)', 'smoothstep(5,5,5)',
+    'i<12', 'i<=12', 'i>12', 'i>=12', 'i==12', 'i!=12', '1+2<4', '1<2==1', 'i<6 ? 0 : 30', 'i<13 ? 0 : 30', '0 ? 1 : 2 ? 3 : 4', '1 ? 2 : 3+10', 'max(i>5 ? 3 : 1, 2)', '(i>=12)*5',
+    'mod(-3,12)', 'mod(f-3,12)', 'mod(-7,3)', 'mod(7,3)', 'mod(7.5,2)',
+    'i=12', '1 ? 2', 'i<', 'mod(5)', 'smoothstep(1,2)', 'mod(5,0)'];
+  const lines = novas.map((s) => `{${s}} → ${run(s)}`);
+  const src = 'canvas 100 100\nlet a={3>=2 ? 10 : 20} b={mod(-1,4)}\nrect r {a},{b} 10,10 opacity={a!=10 ? 1 : 0.5}\nrepeat i 0..{a>5 ? 2 : 0}\nellipse e {i*10},{i==1 ? 50 : 0} 3\nend\n';
+  const m = W.lang.parse(src, { file: 'contas.weasel', resolve: () => null });
+  const R = m.named.get('r')[0], E = m.named.get('e') || [];
+  lines.push('', `no arquivo: ${m.errors.length} erro(s); rect r em ${R.xy} opacity ${R.opacity}; ${E.length} ellipse e em ${E.map((e) => e.center.join(',')).join(' ')}`);
+  await check('_contas', 'contas.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -416,6 +439,7 @@ async function main() {
   if (!only.length || only.some((o) => '_gif'.includes(o))) await gifCase();
   if (!only.length || only.some((o) => '_audio'.includes(o))) await audioCase();
   if (!only.length || only.some((o) => '_previa'.includes(o))) await previewCase();
+  if (!only.length || only.some((o) => '_contas'.includes(o))) await exprCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

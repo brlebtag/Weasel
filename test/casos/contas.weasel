@@ -1,0 +1,25 @@
+# teste: as contas novas dentro de {} (1.38.0): smoothstep, as comparações (< <= > >= == !=, que dão 1 ou 0),
+# c ? a : b e mod(); nos limites do repeat, no let, nos pontos (com ! e @osso), nos parâmetros do use e nas keys
+canvas 300 200 bg=#f4efe6
+palette ink=#2b2a33 line=3
+let n=12 alto={n>=10 ? 1 : 0} m={mod(-3,n)}
+bone b pivot=150,100
+
+# as bolinhas sobem suaves entre a 3 e a 8; as pares são maiores; a 4 fica clarinha
+repeat i 0..{n>5 ? 11 : 3}
+ellipse bola {20+i*22},{100-smoothstep(3,8,i)*60} {i%2==0 ? 8 : 5} c=#4a9eff opacity={i!=4 ? 1 : 0.2}
+end
+
+shape morro c=#ff6b4a ink=line : 20,180! {m*10},{alto>0 ? 150 : 190}@b 280,180!
+
+def gota r=6
+  ellipse g 0,0 {r>5 ? r : 5} c=#7cc56a
+end
+use gota 250,40 r={1<2 ? 9 : 2}
+
+# mod(-1,3) dá 2: a caixa fica em x=20; ela some no quadro 2
+rect caixa {mod(-1,3)*10},10 30,30 c=#c44536 opacity={alto==1}
+
+anim pisca frames=4 fps=4
+key 0 caixa.opacity={1>0}
+key 2 caixa.opacity={1<0 ? 1 : 0}

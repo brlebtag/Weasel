@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.37.2">
+<link rel="stylesheet" href="css/style.css?v=1.38.0">
 </head>
 <body>
 <header class="top">
@@ -118,7 +118,7 @@
       <tr><td><code>canvas L A bg= light=x,y</code></td><td>Tamanho, fundo (cor, gradiente ou <code>none</code>) e direção da luz, que engrossa o contorno do lado da sombra.</td></tr>
       <tr><td><code>finish game|flat inner= pixel= bloom= vignette= grain= posterize=</code></td><td><code>flat</code> tira os contornos. <code>inner</code> = opacidade dos traços dentro de camadas com <code>clip</code>. <code>pixel=4</code> deixa pixelado. <code>bloom</code> faz o claro vazar em brilho, <code>vignette</code> escurece as bordas, <code>grain</code> põe granulado, <code>posterize=palette</code> (ou um número) reduz às cores da palette.</td></tr>
       <tr><td><code>palette nome=valor …</code></td><td>Cores e espessuras com nome. <code>ink</code> é a cor padrão dos contornos. Usar um nome (<code>c=</code>, <code>bg=</code>, cores de <code>gradient</code>…) vale no arquivo todo, acima ou abaixo da <code>palette</code>; copiar um nome em outro (<code>sombra=cabelo</code>) só depois do original: numa <code>palette</code> de cima, ou à esquerda na mesma linha.</td></tr>
-      <tr><td><code>let nome=valor …</code></td><td>Variáveis para as contas: <code>let cx=400 r={cx/8}</code>. Funções: sin, cos, tan (em graus), sqrt, abs, min, max, round, floor, ceil, pow, lerp, clamp, atan2, <code>dist(x1,y1,x2,y2)</code> (a distância em linha reta), <code>rand(x)</code> e <code>rand(x,a,b)</code> (um número "sorteado", sempre o mesmo para o mesmo x); <code>pi</code>.</td></tr>
+      <tr><td><code>let nome=valor …</code></td><td>Variáveis para as contas: <code>let cx=400 r={cx/8}</code>. Funções: sin, cos, tan (em graus), sqrt, abs, min, max, round, floor, ceil, pow, lerp, clamp, atan2, <code>smoothstep(a,b,x)</code> (de 0 a 1 com começo e fim suaves), <code>mod(x,n)</code> (o resto que não fica negativo), <code>dist(x1,y1,x2,y2)</code> (a distância em linha reta), <code>rand(x)</code> e <code>rand(x,a,b)</code> (um número "sorteado", sempre o mesmo para o mesmo x); <code>pi</code>. Comparações <code>&lt; &lt;= &gt; &gt;= == !=</code> (dão 1 ou 0) e <code>c ? a : b</code>.</td></tr>
       <tr><td><code>repeat i 0..29</code> … <code>end</code></td><td>Repete as linhas, com <code>i</code> valendo 0, 1, … 29 nas contas (até 1000 vezes).</td></tr>
       <tr><td><code>gradient nome linear x1,y1 x2,y2 [box] : cores</code></td><td>Gradiente. Cores com posição opcional: <code>: #fff@0 #889@1</code> ou <code>: pena penad</code>. Com <code>box</code>, as coordenadas vão de 0 a 1 dentro de cada forma.</td></tr>
       <tr><td><code>gradient nome radial cx,cy r [fx,fy] [box] : cores</code></td><td>Gradiente circular (com foco opcional). Use o nome em <code>c=</code>, <code>inkc=</code> ou <code>bg=</code>.</td></tr>
@@ -354,24 +354,24 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.37.2"></script>
-<script src="js/lang.js?v=1.37.2"></script>
-<script src="js/art.js?v=1.37.2"></script>
-<script src="js/scene.js?v=1.37.2"></script>
-<script src="js/film.js?v=1.37.2"></script>
-<script src="js/audio.js?v=1.37.2"></script>
-<script src="js/nle.js?v=1.37.2"></script>
-<script src="js/webm.js?v=1.37.2"></script>
-<script src="js/svg.js?v=1.37.2"></script>
-<script src="js/gif.js?v=1.37.2"></script>
-<script src="js/zip.js?v=1.37.2"></script>
-<script src="js/normal.js?v=1.37.2"></script>
-<script src="js/export.js?v=1.37.2"></script>
-<script src="js/godot.js?v=1.37.2"></script>
-<script src="js/rig.js?v=1.37.2"></script>
-<script src="js/editor.js?v=1.37.2"></script>
-<script src="js/examples.js?v=1.37.2"></script>
-<script src="js/timeline.js?v=1.37.2"></script>
-<script src="js/app.js?v=1.37.2"></script>
+<script src="js/geom.js?v=1.38.0"></script>
+<script src="js/lang.js?v=1.38.0"></script>
+<script src="js/art.js?v=1.38.0"></script>
+<script src="js/scene.js?v=1.38.0"></script>
+<script src="js/film.js?v=1.38.0"></script>
+<script src="js/audio.js?v=1.38.0"></script>
+<script src="js/nle.js?v=1.38.0"></script>
+<script src="js/webm.js?v=1.38.0"></script>
+<script src="js/svg.js?v=1.38.0"></script>
+<script src="js/gif.js?v=1.38.0"></script>
+<script src="js/zip.js?v=1.38.0"></script>
+<script src="js/normal.js?v=1.38.0"></script>
+<script src="js/export.js?v=1.38.0"></script>
+<script src="js/godot.js?v=1.38.0"></script>
+<script src="js/rig.js?v=1.38.0"></script>
+<script src="js/editor.js?v=1.38.0"></script>
+<script src="js/examples.js?v=1.38.0"></script>
+<script src="js/timeline.js?v=1.38.0"></script>
+<script src="js/app.js?v=1.38.0"></script>
 </body>
 </html>
