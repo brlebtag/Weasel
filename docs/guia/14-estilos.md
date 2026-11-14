@@ -2,7 +2,7 @@
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII) e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em retícula de jornal, em estêncil, em silhueta e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
 
 | O desenho normal | `art pixel` | `art ascii color` |
 |---|---|---|
@@ -58,7 +58,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 - Um `art` por arquivo. Sem `art`, nada muda. `art none` desliga o estilo (serve no filme, mais abaixo).
 - A linha pode ficar em qualquer lugar do arquivo; o costume é logo depois do `canvas`, como o `finish`.
 
-Nesta versão existem dois estilos: `pixel` e `ascii`. Os outros do plano (`sketch`, `comic`, `toon`, `cutout`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
+Nesta versão existem sete estilos: `pixel` e `ascii` (logo abaixo) e os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`). Os outros do plano (`sketch`, `comic`, `woodcut`, `cutout`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
 
 **No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
@@ -276,6 +276,287 @@ Repare:
 
 **Experimente:** troque para `chars=" .oO@"`, ou use `size=8` para letras maiores.
 
+## Estilos de tom: `toon`, `engraving`, `halftone`, `stencil` e `silhouette`
+
+Estes cinco estilos olham o **tom** de cada ponto (o claro e o escuro) e a luz da cena. Eles pintam na resolução da imagem final, sem blocos nem letras; o tamanho da hachura e dos pontos é medido em unidades do desenho, como todo o resto.
+
+| `art toon` | `art engraving` | `art halftone` |
+|---|---|---|
+| ![O Cavaleiro em cel shading: cores chapadas, com uma faixa de sombra dura embaixo e à direita de cada forma](img/14_tom_toon.png) | ![O Cavaleiro em gravura: papel creme, hachuras finas no fundo e na capa, e o contorno preto](img/14_tom_engraving.png) | ![O Cavaleiro em retícula: pontos pretos numa grade inclinada, maiores na capa escura](img/14_tom_halftone.png) |
+
+| `art stencil` | `art silhouette` |
+|---|---|
+| ![O Cavaleiro em estêncil: três tons chapados de tinta escura sobre o papel, com salpicos na troca de tom](img/14_tom_stencil.png) | ![O Cavaleiro todo escuro, de uma cor só, sobre o fundo bege](img/14_tom_silhouette.png) |
+
+<details>
+<summary>Código dos cinco</summary>
+
+<!-- gerar: img/14_tom_toon.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art toon
+```
+
+<!-- gerar: img/14_tom_engraving.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art engraving
+```
+
+<!-- gerar: img/14_tom_halftone.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art halftone
+```
+
+<!-- gerar: img/14_tom_stencil.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art stencil
+```
+
+<!-- gerar: img/14_tom_silhouette.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art silhouette
+```
+
+</details>
+
+**No editor:** estes estilos (menos o `silhouette`) pesam mais que os outros. Enquanto você arrasta uma alça, o desenho aparece normal; quando você solta, o estilo volta.
+
+### Cel shading: `art toon`
+
+```
+art toon steps= shadow=
+```
+
+| A noite, sem `art` | A noite com `art toon` |
+|---|---|
+| ![A cena da noite normal: o Cavaleiro na chuva, a luz do lampião se espalhando aos poucos](img/14_noite.png) | ![A mesma cena em cel shading: o halo do lampião vira um disco, a luz no Cavaleiro vira faixas duras, e cada forma tem uma sombra dura](img/14_toon_noite.png) |
+
+<details>
+<summary>Código dos dois</summary>
+
+<!-- gerar: img/14_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+```
+
+<!-- gerar: img/14_toon_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art toon
+```
+
+</details>
+
+Repare:
+
+- Cada forma ganha uma **faixa de sombra** dura, do lado oposto à luz do `canvas` (o `light=`, o mesmo que engrossa o contorno com `weight=`). A faixa é a forma menos ela mesma empurrada para a luz: numa bola, ela vira uma lua crescente.
+- Formas quase do tamanho do canvas (o chão, o céu) e as camadas `unlit` ficam sem faixa.
+- Com luzes (`light` e `ambient`, do [capítulo 4](04-camadas.md)), a luz também vira **degraus**: o Weasel desenha a cena com luz e sem luz e arredonda a diferença. O halo do lampião vira um disco, e a luz espalhada no Cavaleiro vira faixas.
+- Sem luzes, só a faixa de sombra muda o desenho (o Cavaleiro de cima).
+
+| Opção | O que faz |
+|---|---|
+| `steps=3` | Os degraus da luz, de 2 a 8 (padrão 3). Mais degraus, luz mais suave. Só vale com luzes. |
+| `shadow=0.3` | A largura da faixa de sombra, em fração do tamanho da forma, de 0 a 1 (padrão 0.3). `shadow=0` tira a faixa. |
+
+**Experimente:** na noite, troque para `art toon steps=6 shadow=0.5`.
+
+### Gravura: `art engraving`
+
+```
+art engraving gap= levels= paper=
+```
+
+<!-- gerar: img/14_gravura_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art engraving levels=0.05,0.7
+```
+
+![A noite em gravura: hachuras cruzadas no céu e no chão, o Cavaleiro claro com hachura leve no lado escuro, e o contorno preto](img/14_gravura_noite.png)
+
+Repare:
+
+- O tom de cada ponto vira hachura: primeiro linhas a 45°, depois cruzadas a −45°, depois horizontais, depois outras a 45° entre as primeiras. No mais escuro, preto chapado. As linhas engrossam aos poucos com o tom.
+- O tom vem do desenho **sem o contorno**; o contorno (a `ink` das formas) sai inteiro, em preto, por cima da hachura.
+- O papel é creme (`#f6f2ea`) e a tinta, quase preta. O `paper=` troca o papel.
+- A noite é quase toda escura: com o padrão, ela sairia quase preta. O **`levels=escuro,claro`** abre os tons: o tom `0.05` (e o que for mais escuro) vira preto, e o tom `0.7` (e o que for mais claro) vira papel. Os tons vão de 0 (preto) a 1 (branco), e o padrão `levels=0,1` não muda nada.
+- A hachura fica **presa às formas**: quando um osso gira, as linhas da forma giram junto (veja [`boil=`](#a-textura-presa-à-forma-boil-e-seed) mais abaixo).
+
+| Opção | O que faz |
+|---|---|
+| `gap=5` | A distância entre as linhas, de 2 a 64 (padrão 5). |
+| `levels=0,1` | O tom que vira preto e o tom que vira papel, de 0 a 1 (padrão `0,1`). |
+| `paper=#f6f2ea` | A cor do papel. |
+
+**Experimente:** troque para `gap=3`, ou para `levels=0.1,0.5`.
+
+### Retícula: `art halftone`
+
+```
+art halftone size= angle= color levels= paper=
+```
+
+| A vila de dia, sem `art` | `art halftone size=5` | `art halftone size=5 color` |
+|---|---|---|
+| ![A vila de dia: céu azul-claro, sol amarelo, morro verde e uma casinha vermelha](img/14_dia.png) | ![A vila de dia em pontos pretos: pontos pequenos no céu claro e maiores no morro e na casa](img/14_vila_halftone.png) | ![A vila de dia em pontos de quatro cores: ciano no céu, amarelo e ciano no morro, magenta e amarelo na casa](img/14_vila_halftone_cor.png) |
+
+<details>
+<summary>Código dos três</summary>
+
+<!-- gerar: img/14_dia.png -->
+```weasel
+canvas 240 160 bg=ceu
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_halftone.png -->
+```weasel
+canvas 240 160 bg=ceu
+art halftone size=5
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_halftone_cor.png -->
+```weasel
+canvas 240 160 bg=ceu
+art halftone size=5 color
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+</details>
+
+Repare:
+
+- Os pontos ficam numa grade inclinada e crescem onde é mais escuro, como a foto do jornal. O quase branco fica papel, e o quase preto fica chapado.
+- Com `color`, são quatro grades: ciano a 15°, magenta a 75°, amarelo a 0° e preto a 45°. As cores se misturam no papel, como na impressão colorida.
+- A retícula fica **parada na tela** (o padrão dela é `boil=screen`): numa animação, o desenho anda por baixo dos pontos, como um papel impresso. `boil=0` prende os pontos às formas.
+
+| Opção | O que faz |
+|---|---|
+| `size=6` | O tamanho da célula de cada ponto, de 2 a 64 (padrão 6). |
+| `angle=45` | O ângulo da grade, em graus (padrão 45). Com `color`, cada cor tem o seu. |
+| `color` | Quatro cores (ciano, magenta, amarelo e preto) em vez de só preto. |
+| `levels=`, `paper=` | Como na gravura. |
+
+**Experimente:** troque para `size=8 angle=0`.
+
+### Estêncil: `art stencil`
+
+```
+art stencil tones= c= levels= paper=
+```
+
+<!-- gerar: img/14_vila_stencil.png -->
+```weasel
+canvas 240 160 bg=ceu
+art stencil
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+![A vila de dia em três tons: o papel, um cinza e a tinta escura, com salpicos de spray onde o céu muda de tom](img/14_vila_stencil.png)
+
+Repare:
+
+- Poucos tons chapados de uma cor só (`c=`) sobre o papel, como tinta spray num molde recortado. Aqui são 3 (o padrão): o papel, a tinta pela metade e a tinta.
+- Na troca de um tom para outro, o spray salpica um tom no outro (o degradê do céu). Os salpicos ficam presos às formas, e `boil=2` sorteia outros a cada 2 quadros.
+
+| Opção | O que faz |
+|---|---|
+| `tones=3` | Quantos tons, de 2 a 6 (padrão 3), contando o papel. |
+| `c=` | A cor da tinta (padrão: a `ink` da `palette`). |
+| `levels=`, `paper=` | Como na gravura. |
+
+### Silhueta: `art silhouette`
+
+```
+art silhouette c=
+```
+
+<!-- gerar: img/14_vila_silhouette.png -->
+```weasel
+canvas 240 160 bg=ceu
+art silhouette c=#1a1226
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=3
+ellipse lua 190,38 16 c=#fff3c4
+shape morro c=#2b4a3a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#5a2a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#c44536 ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+![A vila no pôr do sol: o céu em degradê continua, e o morro, a casa e a lua viram uma silhueta escura](img/14_vila_silhouette.png)
+
+Repare:
+
+- Tudo o que é desenho vira uma cor só (`c=`, que tem como padrão a `ink` da `palette`); o fundo do `canvas` fica como é. A lua também é uma forma, então também vira silhueta.
+- A luz da cena não entra, e o estilo não tem textura.
+- Serve para cena de pôr do sol e teatro de sombras, e para conferir se uma pose se entende só pelo contorno.
+
+### A textura presa à forma: `boil=` e `seed=`
+
+A hachura da gravura, os salpicos do estêncil e os pontos da retícula são uma **textura**. O `boil=` diz como ela se move:
+
+| `boil=` | A textura | Padrão de |
+|---|---|---|
+| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `stencil` |
+| `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone` |
+| `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | |
+
+<!-- gerar: img/14_boil.png -f sheet -a all -s 1 -->
+```weasel
+canvas 120 120 bg=#e9e2d4
+art engraving gap=4
+palette ink=#1d1b26
+gradient bolaG radial 46,44 56 : #ffffff@0 #c09060@0.55 #3a2a20@1
+bone bola pivot=60,60
+ellipse b 60,60 40 c=bolaG ink=3 bone=bola
+ellipse olho 76,52 6,9 c=ink bone=bola
+anim gira frames=4 fps=8
+key 0 bola=0,0,0
+key 4 bola=0,0,90
+```
+
+![Quatro quadros da bola girando em gravura: a hachura dentro da bola gira junto com o olho, e a do fundo fica parada](img/14_boil.png)
+
+Repare:
+
+- A hachura **dentro** da bola gira com ela, junto com o olho. A do fundo fica parada: onde não há forma (o fundo do `canvas`, os traços, os textos), a textura é sempre a da tela.
+- A textura tem sempre o mesmo tamanho na tela: um ator pequeno no filme tem a hachura do mesmo tamanho que um grande.
+- O `seed=` sorteia outra versão da textura (outro lugar para as linhas e os salpicos).
+- O `toon`, o `silhouette`, o `pixel` e o `ascii` não têm textura: neles, `boil=` e `seed=` não mudam nada (o Weasel avisa).
+
+**No jogo:** a sprite sheet e o Godot saem com cada quadro pintado no estilo. No esqueleto de verdade (`godot rig=bones`), cada peça sai pintada na pose parada, e a textura gira com ela no Godot.
+
 ## No filme: o filme, a cena, o plano e o ator
 
 No filme ([capítulo 10](10-filme.md)), o `art` vale em quatro níveis. O mais específico ganha:
@@ -330,6 +611,6 @@ Repare:
 
 - **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
-- **`boil=` e `seed=`:** valem em todos os estilos. O `boil=2` redesenha a textura a cada 2 quadros, como a linha que "ferve" num desenho à mão; o `seed=` sorteia outra versão do mesmo desenho. O `pixel` e o `ascii` não têm textura, então os dois ainda não mudam nada neles (o Weasel avisa); eles servem para os estilos das próximas versões.
+- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `halftone` e `stencil`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)

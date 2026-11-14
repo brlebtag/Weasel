@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo #fff6e0
+art      halftone size=7 angle=30 levels=0,0.95 paper=#ffffff boil=0
+gradientes bolaG (radial)
+camadas  1
+  coisas           3 item(ns)
+formas   3
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

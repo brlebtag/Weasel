@@ -1,0 +1,18 @@
+# teste: art engraving — a hachura pelo tom (sem o contorno), o contorno preto, levels= e paper=; a hachura
+# fica presa à forma (boil=0): na animação, ela gira com o osso
+canvas 240 160 bg=fundo light=-0.6,-0.8
+gradient fundo linear 0,0 0,160 : #f4efe6@0 #8a8070@1
+palette ink=#1d1b26 line=4
+art engraving gap=4 levels=0.05,0.9 paper=#f2ead8
+
+bone bola pivot=90,86
+
+layer coisas
+ellipse b 90,86 40 c=bolaG ink=line bone=bola
+gradient bolaG radial 76,72 50 : #ffffff@0 #c09060@0.6 #3a2a20@1
+rect caixa 160,60 54,70 r=6 c=#4a6a99 ink=line
+ellipse olho 104,78 6,9 c=ink bone=bola
+
+anim gira frames=3 fps=6
+key 0 bola=0,0,0
+key 3 bola=0,0,60

@@ -1,0 +1,4 @@
+quadros 16 fps 4
+   0 00:00:00 todo cam=160,90 z1 | a=90,170 | b=220,170 flip
+   6 00:01:02 gravura cam=160,90 z1 | a=90,170 | b=220,170 flip
+  12 00:03:00 sombra cam=160,90 z1 | a=90,170 | b=220,170 flip

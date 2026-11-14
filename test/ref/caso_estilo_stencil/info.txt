@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo gradiente fundo
+art      stencil tones=4 c=#2a1f3d boil=2
+gradientes fundo (linear), bolaG (radial)
+camadas  1
+  coisas           2 item(ns)
+formas   2
+ossos    bola
+animações 1
+  gira           4 quadros, 6 fps

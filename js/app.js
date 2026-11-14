@@ -1595,6 +1595,8 @@
         case 'rig': return [{ label: 'frames', detail: 'quadros prontos (padrão)' }, { label: 'bones', detail: 'esqueleto de verdade: Bone2D e peças' }];
         case 'palette': return cmd === 'art' ? [{ label: 'own', detail: 'as cores do desenho (padrão)' }, { label: 'gameboy', detail: '4 verdes' }, { label: 'nes', detail: 'Nintendo 8 bits' }, { label: 'pico8', detail: '16 cores' }, { label: 'mono', detail: 'preto e branco (1 bit)' }] : [];
         case 'dither': return [{ label: 'bayer', detail: 'pontilhado nos degradês e na luz' }, { label: 'none', detail: 'sem pontilhado' }];
+        case 'paper': return colorList();
+        case 'boil': return cmd === 'art' ? [{ label: 'screen', detail: 'a textura fica parada na tela' }, { label: '0', detail: 'presa à forma, sem mudar' }, { label: '2', detail: 'presa à forma, sorteada de novo a cada 2 quadros' }] : [];
         case 'actor': return names(filmActors().map((a) => a.name), 'ator (separe com vírgula)');
         case 'collision': return names(els.filter((n) => m.named.get(n)[0].closed), 'forma');
         case 'lips': return names(filmActors().filter((a) => a.model && a.model.mouth).map((a) => a.name), 'ator com boca');
@@ -1646,7 +1648,14 @@
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
     if (cmd === 'light' && idx === 2) return names(['point', 'spot', 'dir']);
     if (cmd === 'pattern' && idx === 2) return names(['hatch', 'dots']);
-    if (cmd === 'art' && idx === 1) return [{ label: 'pixel', detail: 'pixel art nítido' }, { label: 'ascii', detail: 'letras (sai também em .txt)' }, { label: 'none', detail: 'sem estilo' }];
+    if (cmd === 'art' && idx === 1) {
+      return [
+        { label: 'pixel', detail: 'pixel art nítido' }, { label: 'ascii', detail: 'letras (sai também em .txt)' },
+        { label: 'toon', detail: 'cel shading: sombra dura e luz em degraus' }, { label: 'engraving', detail: 'gravura: hachura pelo tom' },
+        { label: 'halftone', detail: 'retícula de pontos (color: quatro cores)' }, { label: 'stencil', detail: 'estêncil: poucos tons e spray' },
+        { label: 'silhouette', detail: 'silhueta de uma cor só' }, { label: 'none', detail: 'sem estilo' },
+      ];
+    }
     if (cmd === 'art' && idx >= 2) {
       const o = L.ART_OPTS[ws[1] && ws[1].text];
       if (o) return [...names([...o.attrs, ...(isFilm() ? ['actor'] : [])].map((a) => a + '='), 'atributo'), ...names(o.flags, 'opção')];

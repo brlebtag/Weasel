@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo #fff6e0
+art      halftone size=5 color
+gradientes bolaG (radial)
+camadas  1
+  coisas           3 item(ns)
+formas   3
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

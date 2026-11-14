@@ -1,0 +1,22 @@
+# teste: art toon com luzes — a faixa de sombra de cada forma (do lado oposto ao light= do canvas) e a luz
+# em degraus (a razão entre o desenho com luz e sem luz); a bola gira no osso e a faixa acompanha a luz
+canvas 240 160 bg=#e9e4da light=-0.6,-0.8
+palette ink=#1d1b26 line=4 ball=#ff8a5c leaf=#6cbb3c
+ambient c=#8090b0 power=0.6
+light lamp point 200,30 c=#ffd9a0 power=1.4 radius=220 glow=40
+art toon steps=4 shadow=0.35
+
+bone bola pivot=80,90
+
+layer chao
+rect solo 0,128 240,32 c=#b9ad98
+
+layer coisas
+ellipse b 80,90 34 c=ball ink=line bone=bola
+rect caixa 150,70 50,58 r=6 c=#4a90d9 ink=line
+shape folha c=leaf ink=line : 80,56! 96,40 104,52 92,64
+stroke risco w=3 c=#c44536 : 20,150 120,140 220,152
+
+anim gira frames=3 fps=6
+key 0 bola=0,0,0
+key 3 bola=0,0,90

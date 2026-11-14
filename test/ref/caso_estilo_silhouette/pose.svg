@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="80" viewBox="0 0 240 160">
+<defs><linearGradient id="g1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="240" y2="0"><stop offset="0" stop-color="#e8e2d4"/><stop offset="1" stop-color="#7d8aa0"/></linearGradient>
+<radialGradient id="g2" gradientUnits="userSpaceOnUse" cx="66" cy="70" r="52" fx="66" fy="70"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#d07050"/><stop offset="1" stop-color="#40202a"/></radialGradient>
+<g id="L3"><g><path d="M120 86C120 108.09 102.09 126 80 126C57.91 126 40 108.09 40 86C40 63.91 57.91 46 80 46C102.09 46 120 63.91 120 86Z" fill="url(#g2)"/><path d="M120 86C120 108.09 102.09 126 80 126C57.91 126 40 108.09 40 86C40 63.91 57.91 46 80 46C102.09 46 120 63.91 120 86Z" fill="none" stroke="#1d1b26" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M158 56C171.33 56 184.67 56 198 56C202.42 56 206 59.58 206 64C206 83.33 206 102.67 206 122C206 126.42 202.42 130 198 130C184.67 130 171.33 130 158 130C153.58 130 150 126.42 150 122C150 102.67 150 83.33 150 64C150 59.58 153.58 56 158 56Z" fill="#88a0c0"/><path d="M158 56C171.33 56 184.67 56 198 56C202.42 56 206 59.58 206 64C206 83.33 206 102.67 206 122C206 126.42 202.42 130 198 130C184.67 130 171.33 130 158 130C153.58 130 150 126.42 150 122C150 102.67 150 83.33 150 64C150 59.58 153.58 56 158 56Z" fill="none" stroke="#1d1b26" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></g></g></defs>
+<rect x="0" y="0" width="240" height="160" fill="url(#g1)"/>
+<g data-layer="coisas"><use href="#L3" xlink:href="#L3"/></g>
+</svg>

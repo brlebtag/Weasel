@@ -1,0 +1,4 @@
+ellipse b @0.000 +0.721
+rect caixa @0.721 +0.701
+ellipse olho @1.421 +0.313
+total 1.734

@@ -1,0 +1,17 @@
+# teste: art stencil — tons chapados de c= sobre o papel, com spray na troca de tom (o ruído preso à forma);
+# boil=2 sorteia o ruído de novo a cada 2 quadros
+canvas 240 160 bg=fundo light=-0.6,-0.8
+gradient fundo linear 0,0 240,0 : #e8e2d4@0 #7d8aa0@1
+palette ink=#1d1b26 line=4
+art stencil tones=4 c=#2a1f3d boil=2
+
+bone bola pivot=80,86
+
+layer coisas
+ellipse b 80,86 40 c=bolaG ink=line bone=bola
+gradient bolaG radial 66,70 52 : #ffffff@0 #d07050@0.6 #40202a@1
+rect caixa 150,56 56,74 r=8 c=#88a0c0 ink=line
+
+anim gira frames=4 fps=6
+key 0 bola=0,0,0
+key 4 bola=0,0,40

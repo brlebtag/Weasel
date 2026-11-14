@@ -1770,10 +1770,23 @@
   // opts.items: só esses itens das camadas (o esqueleto do Godot desenha cada peça à parte);
   // opts.layers: só essas camadas (filme: cada profundidade é desenhada à parte);
   // opts.lighting: luz pronta (filme: a do ator mais a da cena); opts.glows=false: sem os halos das lâmpadas.
+  // Passes dos estilos de arte (opts.pass): o mesmo desenho de outro jeito, para o estilo comparar.
+  //   unlit: sem luz · noInk: sem o contorno (ink) · toon: { shadow, c }: a faixa de sombra de cada forma, do
+  //   lado oposto ao light= do canvas · tex: { tile, d, px, off }: cada forma recebe a textura do estilo presa a
+  //   ela (sem luz, sem contorno, sem traços, textos, partículas nem efeitos de camada).
+  // Sem opts.pass, o desenho é o de sempre (e um drawScene de dentro herda o passe de quem chamou).
+  let PASS = null;
   function drawScene(ctx, model, pose, opts) {
+    if (!opts || opts.pass === undefined) return drawScene0(ctx, model, pose, opts);
+    const prev = PASS;
+    PASS = opts.pass || null;
+    try { return drawScene0(ctx, model, pose, opts); } finally { PASS = prev; }
+  }
+  function drawScene0(ctx, model, pose, opts) {
     opts = opts || {};
-    if (opts.background !== false) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
-    const lighting = opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
+    const tex = !!(PASS && PASS.tex);
+    if (opts.background !== false && !tex) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
+    const lighting = PASS && (PASS.unlit || tex) ? null : opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
     const R = { model, pose, opts, lighting, maps: null };
     for (const layer of orderLayers(model, pose)) {
       // com opts.layers, quem chama já decidiu o que aparece (no filme, only= também aceita shots)
@@ -1787,8 +1800,8 @@
       if (layer.cast && lighting) drawCast(ctx, R, layer, items, alpha);
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
-      const fx = layerFx(layer, lp);
-      if (fx || (layer.trail && pose.anim)) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
+      const fx = tex ? null : layerFx(layer, lp);
+      if (fx || (layer.trail && pose.anim && !tex)) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
       else drawLayer(ctx, R, layer, items, alpha, lit, pose, false);
     }
     if (lighting && opts.glows !== false) drawLightGlows(ctx, lighting);
@@ -1796,7 +1809,7 @@
 
   function drawLayer(ctx, R, layer, items, alpha, lit, pose, solo, flat) {
     ctx.save();
-    if (!solo) ctx.globalCompositeOperation = layer.blend;
+    if (!solo) ctx.globalCompositeOperation = PASS && PASS.tex ? 'source-over' : layer.blend;
     if (layer.clip) clipInto(ctx, R.model, pose, layer.clip);
     if (layer.cut) clipAway(ctx, R.model, pose, layer.cut);
     for (const it of items) drawItem(ctx, R.model, pose, it.el, it.part, layer, alpha, lit ? R : null, flat);
@@ -1921,7 +1934,7 @@
   function drawSides(ctx, model, pose, el, quads, base, R, flat) {
     const pr = propsOf(pose, el);
     const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
-    if (alpha <= 0.001 || pr.show === 0 || !quads.length) return;
+    if (alpha <= 0.001 || pr.show === 0 || !quads.length || (PASS && PASS.tex)) return;
     let col = sideColor(el, pr);
     const ink = pr.ink !== undefined ? pr.ink : el.ink;
     let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
@@ -1934,7 +1947,7 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.lineJoin = 'round';
-    if (ink > 0 && typeof inkc === 'string' && model.finish.style !== 'flat' && !flat) {
+    if (ink > 0 && typeof inkc === 'string' && model.finish.style !== 'flat' && !flat && !(PASS && PASS.noInk)) {
       ctx.strokeStyle = inkc;
       ctx.lineWidth = ink;
       for (const s of quads) { quad(s.q); ctx.stroke(); }
@@ -1961,7 +1974,9 @@
     const L = R && !el.emit ? R : null; // o que emite luz não recebe luz
     ctx.globalAlpha = alpha;
     ctx.setLineDash([]);
-    const emit = el.emit && !flat;
+    const tex = !!(PASS && PASS.tex);
+    if (tex && (el.type === 'text' || el.type === 'emitter')) return;
+    const emit = el.emit && !flat && !tex;
     if (emit) glowOn(ctx, el.emit);
     if (el.type === 'text') { drawText(ctx, model, pose, el, pr, L, dr); glowOff(ctx); return; }
     if (el.type === 'emitter') { drawParticles(ctx, model, pose, el, alpha, L); glowOff(ctx); return; }
@@ -1971,7 +1986,7 @@
       const fill = pr.c !== undefined ? pr.c : el.fill;
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
       let inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
-      const hasInk = ink > 0 && fin.style !== 'flat' && inkc;
+      const hasInk = ink > 0 && fin.style !== 'flat' && inkc && !(PASS && (PASS.noInk || PASS.tex));
       const withInk = part !== 'fill' && hasInk;
       const cut = el.cuts ? cutPath(model, pose, el) : null;
       const apart = cut && crossing(model, pose, el.cuts);
@@ -1983,11 +1998,12 @@
       if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
         const fa = dp ? alpha * dp.fill : alpha;
         ctx.globalAlpha = fa;
-        if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
+        if (tex) texFill(ctx, model, pose, el, g, path);
+        else if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
         else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
         glowOff(ctx);
         // cartão virando de lado (3D): mais escuro
-        const d3 = el3(model, pose, el);
+        const d3 = tex ? null : el3(model, pose, el);
         if (d3 && d3.dark > 0.004) {
           ctx.save();
           ctx.globalAlpha = fa * d3.dark;
@@ -2002,6 +2018,7 @@
           const rim = layer.rim || L.lighting.rim;
           if (rim) rimShape(ctx, L, el, g, path, bb, rim, fa);
         }
+        if (PASS && PASS.toon && !layer.unlit && !layer.guide) toonBand(ctx, model, g, path, fa, PASS.toon);
       }
       glowOff(ctx);
       if (dp) {
@@ -2038,7 +2055,7 @@
       return;
     }
     let color = pr.c !== undefined ? pr.c : el.color;
-    if (!color) { glowOff(ctx); return; }
+    if (!color || tex) { glowOff(ctx); return; }
     if (L) { const bb = segsBox(g.segs); color = litColor(color, L.lighting, bb.x + bb.w / 2, bb.y + bb.h / 2); }
     const w = pr.w !== undefined ? pr.w : el.w;
     ctx.fillStyle = ctx.strokeStyle = paint(ctx, model, pose, el, color);
@@ -2073,6 +2090,52 @@
       ctx.stroke(pathOf(g));
     }
     glowOff(ctx);
+  }
+
+  // Passe toon: a faixa de sombra da forma, do lado oposto ao light= do canvas (a forma menos ela mesma
+  // deslocada para a luz). Formas do tamanho do canvas (o chão, o céu) ficam sem.
+  function toonBand(ctx, model, g, path, alpha, T) {
+    if (!(T.shadow > 0)) return;
+    const bb = segsBox(g.segs);
+    if (bb.w >= model.canvas.w * 0.9 || bb.h >= model.canvas.h * 0.9) return;
+    const l = model.canvas.light, ll = Math.hypot(l[0], l[1]) || 1, lx = l[0] / ll, ly = l[1] / ll;
+    const d = T.shadow * (Math.abs(lx) * bb.w + Math.abs(ly) * bb.h);
+    if (d < 0.25) return;
+    ctx.save();
+    ctx.clip(path);
+    ctx.clip(inverse(inverseShift(g.segs, lx * d, ly * d)), 'evenodd');
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = T.c || '#a9aec6';
+    ctx.fillRect(bb.x - 1, bb.y - 1, bb.w + 2, bb.h + 2);
+    ctx.restore();
+  }
+  // Passe de textura: a forma recebe a textura do estilo (T.tile, d pontos por unidade, repetida), presa a ela:
+  // anda e gira com o osso. A escala é a da tela (T.px pontos por unidade), para a textura ter sempre o mesmo
+  // tamanho, mesmo num ator pequeno. T.off: o deslocamento da textura (boil, seed).
+  function texFill(ctx, model, pose, el, g, path) {
+    const T = PASS.tex, f = fullMap(model, pose, el), b = localBox(el);
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = Math.max(1, Math.max(b.w, b.h) / 2);
+    const p0 = f(cx, cy), px = f(cx + h, cy), py = f(cx, cy + h);
+    const A = [(px[0] - p0[0]) / h, (px[1] - p0[1]) / h, (py[0] - p0[0]) / h, (py[1] - p0[1]) / h, 0, 0];
+    A[4] = p0[0] - A[0] * cx - A[2] * cy;
+    A[5] = p0[1] - A[1] * cx - A[3] * cy;
+    const m = matOf(ctx), t = M.mul(m, A), k = T.px / (Math.sqrt(Math.abs(M.det(t))) || 1);
+    const pm = M.mul([t[0] * k, t[1] * k, t[2] * k, t[3] * k, t[4], t[5]], [1 / T.d, 0, 0, 1 / T.d, -T.off[0], -T.off[1]]);
+    const bb = segsBox(g.segs), inv = M.invert(pm);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of [[bb.x, bb.y], [bb.x + bb.w, bb.y], [bb.x, bb.y + bb.h], [bb.x + bb.w, bb.y + bb.h]]) {
+      const q = M.apply(m, x, y), r = M.apply(inv, q[0], q[1]);
+      x0 = Math.min(x0, r[0]); y0 = Math.min(y0, r[1]); x1 = Math.max(x1, r[0]); y1 = Math.max(y1, r[1]);
+    }
+    ctx.save();
+    ctx.clip(path);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.setTransform(pm[0], pm[1], pm[2], pm[3], pm[4], pm[5]);
+    ctx.fillStyle = ctx.createPattern(T.tile, 'repeat');
+    ctx.fillRect(x0 - 2, y0 - 2, x1 - x0 + 4, y1 - y0 + 4);
+    ctx.restore();
   }
 
   function drawInk(ctx, model, pose, g, el, ink, inkc) {
@@ -2235,11 +2298,13 @@
     const art = opts.art !== false && model.art && W.art ? model.art : null;
     if (art) {
       const r = W.art.paint(octx, [scale, 0, 0, scale, -rect.x * scale, -rect.y * scale], rect, art, {
-        content: (x, m) => {
+        // pass: o passe que o estilo pediu (sem luz, sem contorno, textura…); no passe de textura, sem as referências
+        content: (x, m, pass) => {
           x.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-          if (opts.refs) drawRefs(x, model, pose, opts.refs, false);
-          drawScene(x, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
-          if (opts.refs) drawRefs(x, model, pose, opts.refs, true);
+          const refs = pass && pass.tex ? null : opts.refs;
+          if (refs) drawRefs(x, model, pose, refs, false);
+          drawScene(x, model, pose, { background: false, guides: opts.guides, filter: opts.filter, pass });
+          if (refs) drawRefs(x, model, pose, refs, true);
         },
         bg: opts.transparent ? null : (x, m) => {
           // o fundo cobre a imagem de trabalho inteira (a grade passa um pouco do recorte)
@@ -2249,7 +2314,7 @@
           if (!model.canvas.bg && !opts.matte) x.fillRect(R.x, R.y, R.w, R.h);
           fillBg(x, model, pose, R, opts.matte);
         },
-      }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model) });
+      }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model), lit: !!sceneLights(model, pose), frame: pose.frame || 0 });
       if (opts.after) { octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale); opts.after(octx, scale); octx.setTransform(1, 0, 0, 1, 0, 0); }
       if (!opts.noPost) postFx(out, model, pose.frame);
       if (r.text) out.artText = r.text;

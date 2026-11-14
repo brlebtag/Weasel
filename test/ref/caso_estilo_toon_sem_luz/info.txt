@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo transparente
+art      toon seed=3
+camadas  2
+  chao             1 item(ns)
+  coisas           4 item(ns)
+formas   5
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

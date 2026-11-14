@@ -27,7 +27,7 @@ Você aprovou a análise e a ordem. Ainda falta o "pode fazer" do item 1.
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Virada e metamorfose](metamorfose.md) | um desenho virando outro: o personagem de lado virando de frente (jogo) e a aranha virando jacaré (filme) | análise e protótipo da virada de 13/11/2026; esperando você decidir |
-| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, cel shading, HQ, recorte de papel, vitral, massinha e outros, a partir do mesmo desenho | estilos escolhidos em 14/11/2026; fase 1 (`art`, `pixel` e `ascii`) feita na 1.30.0; faltam as fases 2 a 5 |
+| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, cel shading, HQ, recorte de papel, vitral, massinha e outros, a partir do mesmo desenho | estilos escolhidos em 14/11/2026; fase 1 (`art`, `pixel` e `ascii`) feita na 1.30.0; as bases de tom (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`) na 1.31.0; faltam as combinações de tom (1.32.0) e as fases 4 a 6 |
 
 ## Para depois
 

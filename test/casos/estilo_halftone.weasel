@@ -1,0 +1,17 @@
+# teste: art halftone color — quatro retículas (ciano, magenta, amarelo e preto) paradas na tela (o boil
+# padrão é screen)
+canvas 240 160 bg=#fff6e0
+palette ink=#1d1b26 line=4
+art halftone size=5 color
+
+bone bola pivot=80,84
+
+layer coisas
+ellipse b 80,84 44 c=bolaG ink=line bone=bola
+gradient bolaG radial 64,68 56 : #ffe9a8@0 #e8453c@0.55 #5a1830@1
+rect ceu 140,20 80,60 c=#3aa0e8 ink=line
+rect mato 140,90 80,50 c=#5bbf4a ink=line
+
+anim gira frames=3 fps=6
+key 0 bola=0,0,0
+key 3 bola=0,0,45

@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)); faltam as fases 2 a 5.
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)); faltam as combinações (1.32.0) e as fases 4 a 6.
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -68,17 +68,25 @@ art cutout boil=0
 
 **Fases** (cada uma é uma versão):
 1. **1.30.0:** a linha `art`, os quatro níveis do filme, a chave Estilo, as exportações, `boil=` e `seed=`, e os estilos `pixel` e `ascii`.
-2. **1.31.0, tom:** `toon`, `engraving`, `woodcut`, `comic`, `manga`, `halftone`, `riso`, `stencil` e `silhouette`.
-3. **1.32.0, traço:** `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`.
-4. **1.33.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
-5. **1.34.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
+2. **1.31.0, tom (as bases):** `toon`, `halftone`, `engraving`, `stencil` e `silhouette`.
+3. **1.32.0, tom (as combinações):** `woodcut`, `comic`, `comic old`, `comic old bw`, `manga` e `riso`.
+4. **1.33.0, traço:** `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`.
+5. **1.34.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
+6. **1.35.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
+
+### Decisões da fase 2 (14/11/2026)
+
+- **Duas versões:** a fase de tom foi dividida em duas (acima). As bases saem antes, para você ver e ajustar antes das HQs serem montadas em cima delas.
+- **`toon` sem luz:** cada forma ganha uma faixa de sombra com borda nítida no lado longe do `light=` do `canvas` (a mesma direção do contorno). Com `light` ou `ambient`, a luz também vira degraus, como no [protótipo](#cel-shading).
+- **Hachura presa à forma:** na gravura e na xilogravura, a hachura de cada forma gira e anda junto com o osso dela. `boil=2` sorteia de novo a cada 2 quadros. A retícula de pontos (`comic`, `manga`, `halftone`) fica presa na tela por padrão, como na impressão: `boil=screen`.
+- **Contraste:** a opção `levels=0.05,0.7` diz a claridade que vira preto e a que vira branco (padrão `0,1`), como os Níveis de um editor de imagem. Vale nos estilos que escolhem papel, hachura ou preto pela claridade. Não há ajuste automático, para nada piscar no filme.
 
 ## Como a fase 1 ficou (1.30.0)
 
 O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
 
 - **O acabamento vem depois do estilo:** `bloom=`, `vignette=`, `grain=` e `posterize=` entram por cima da imagem pronta. Com um `art`, o `finish pixel=` não entra (o Weasel avisa).
-- **`boil=` e `seed=`** já são lidos em todos os estilos, mas o `pixel` e o `ascii` não têm textura: neles, os dois só dão aviso. Servem para as fases 2 a 5.
+- **`boil=` e `seed=`** já são lidos em todos os estilos, mas o `pixel` e o `ascii` não têm textura: neles, os dois só dão aviso. Servem para as fases seguintes.
 - **As cores são comparadas em Lab** (o jeito que o olho vê), e não em RGB: no RGB, um azul-escuro ficava "perto" de um verde-escuro, e o céu virava morro.
 - **`palette=own`:** todas as cores do desenho (palette, formas, gradientes, padrões e fundo). Num desenho sem fundo exportado opaco, o branco do fundo entra também.
 - **O voto do pixel art:** cada ponto vira a cor mais parecida da paleta, e o bloco fica com a mais votada. A tinta ganha com 1/4 do bloco; "tinta" é o ponto cuja cor mais parecida, entre as cores do desenho, é a `ink` (no filme, a `ink` de cada arquivo). O bloco fica vazio quando o transparente ganha da cor mais votada.
@@ -88,6 +96,20 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas f
 - **Na borda do canvas,** o bloco (ou a célula) só conta a parte de dentro.
 - **`small`:** a escala vira pixels por bloco (`-s 3` = 3×3 pixels por bloco), e o recorte da folha cai na grade.
 - **Godot:** `texture_filter = 1` (nearest) com qualquer `art pixel`; o normal map sai pixelado, um tom por bloco. No esqueleto de verdade, cada peça sai no estilo na pose parada, e o `--info` lembra que o pixel art perde a grade quando a peça gira.
+
+## Como as bases de tom ficaram (1.31.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette), mais as escolhas feitas no caminho. Elas servem de base para a 1.32.0 (`woodcut`, `comic`, `manga` e `riso`).
+
+- **Passes:** o estilo pede o mesmo desenho de outro jeito, e o Weasel desenha de novo: sem luz (`unlit`), sem o contorno (`noInk`), com a faixa de sombra do toon (`toon`) ou com a textura presa à forma (`tex`). Sem estilo, nada disso roda: os desenhos de antes saem iguais.
+- **Resolução:** os estilos de tom pintam na resolução da imagem final, de 1 a 4 pontos por unidade do desenho. Numa escala menor que 1, eles pintam a 1 ponto por unidade e reduzem com suavização (a hachura não vira borrão).
+- **`toon`:** a faixa é a forma menos ela mesma empurrada na direção do `light=` do canvas, com largura `shadow=` vezes o tamanho da forma nessa direção, multiplicada por um cinza-azulado (`#a9aec6`). Formas com 90% ou mais da largura ou da altura do canvas, camadas `unlit` e guias ficam sem faixa. Com luz, a razão entre o desenho com luz e sem luz é arredondada em degraus de log2 de tamanho `2/(steps-1)`; onde o desenho sem luz é muito escuro (claridade abaixo de 0,06), fica o desenho com luz.
+- **`engraving`:** a hachura vem do tom do desenho sem contorno; as quatro famílias de linhas (45°, −45°, horizontal e 45° no meio) entram com o escuro, e acima de 0,85 o preto chapado entra. O contorno é medido pela diferença entre o desenho com e sem `ink`, e sai preto. Papel `#f6f2ea`, tinta `#1c1a17`.
+- **`halftone`:** a grade de cada retícula é feita com números inteiros, para se repetir sem emenda: o ângulo e o tamanho ficam bem perto dos pedidos. O quase branco (até 4%) fica papel e o quase preto (de 88% em diante) fica chapado, como a impressão faz. A separação de cores é a simples: o preto tira o que as três cores têm em comum.
+- **`stencil`:** o ruído é suave (um valor por unidade, misturado entre vizinhos) em dois tamanhos; ele empurra o tom para um lado ou para o outro só perto da troca de tom.
+- **`silhouette`:** o desenho é feito sem luz (o halo e a sombra projetada não viram silhueta) e pintado de uma cor só; o fundo fica.
+- **A textura presa à forma:** o passe `tex` pinta cada forma com uma textura que guarda o cosseno e o seno de uma volta a cada 128 unidades (um passe para u, outro para v), girada e movida com a forma (pelo osso, no centro da caixa dela) e na escala da tela. A primeira tentativa guardava direto o cosseno da hachura, mas a suavização do canvas tirava contraste (erro médio de 12 em 255); a volta lenta não sofre com isso, e as contas da hachura, dos pontos e do ruído são feitas depois, exatas. Na pose parada, a textura presa é igual à da tela (só pontos soltos na borda das formas mudam).
+- **Tempo** (Cavaleiro, 800×640, escala 1): toon sem luz quase nada; engraving uns 60 ms; halftone uns 40 ms (color, uns 110); stencil uns 50 ms. Um quadro Full HD do filme de exemplo leva de 0,3 s (toon) a 1 s (engraving).
 
 ## O que já existe
 

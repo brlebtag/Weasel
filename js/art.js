@@ -303,22 +303,320 @@
     return { text: lines.join('\n') + '\n' };
   }
 
-  // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade
+  // ---------- estilos de tom (toon, engraving, halftone, stencil, silhouette) ----------
+  // Trabalham na resolução da saída: um ponto da imagem de trabalho por ponto da imagem final (de 1 a 4 pontos
+  // por unidade do desenho; numa escala menor que 1, o resultado é reduzido com suavização). Cada um pede os
+  // passes de que precisa (sem luz, sem contorno, textura presa à forma) e pinta a imagem final.
+  const PAPER = '#f6f2ea', DARK = '#1c1a17', TAU = Math.PI * 2;
+  const toneK = (scale) => Math.min(4, Math.max(1, scale || 1));
+  const cl = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+  const lum3 = (r, g, b) => (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+  // levels=escuro,claro: o tom que vira preto (0) e o que vira papel (1)
+  const levels = (t, L) => (L ? cl((t - L[0]) / (L[1] - L[0])) : t);
+  const firstInk = (info) => [].concat(info.ink || []).find((c) => rgbOf(c)) || DARK;
+  // número pseudoaleatório de 0 a 1 a partir de dois inteiros
+  function rnd(a, b) {
+    let h = (Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  // a imagem de trabalho de volta na saída (suavizada: a grade de trabalho pode ser maior que a saída)
+  function blit(ctx, base, g, canvas) {
+    ctx.save();
+    setMat(ctx, base);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(canvas, g.gx0 * g.cw, g.gy0 * g.ch, g.gw * g.cw, g.gh * g.ch);
+    ctx.restore();
+  }
+  // o fundo numa imagem de trabalho (uma vez só; os passes são desenhados por cima de cópias dele)
+  function bgShot(g, src, m) {
+    const B = work('art_bg0', g.Wd, g.Hd);
+    B.ctx.save();
+    src.bg(B.ctx, m);
+    B.ctx.restore();
+    return B.canvas;
+  }
+  // o desenho (com um passe) numa imagem de trabalho, por cima do fundo (under) quando há fundo
+  function shot(name, g, src, m, pass, under) {
+    const C = work(name, g.Wd, g.Hd);
+    if (under) C.ctx.drawImage(under, 0, 0);
+    C.ctx.save();
+    src.content(C.ctx, m, pass);
+    C.ctx.restore();
+    return C;
+  }
+
+  // A posição de cada ponto na textura (u, v, de 0 a P unidades), presa à forma: o passe tex desenha cada forma
+  // com uma textura que guarda o cosseno e o seno de uma volta a cada P unidades (um passe para u, outro para
+  // v). São funções suaves, sem emenda, então a suavização do canvas ao girar a textura com a forma não estraga
+  // os valores. Com boil=screen, e onde não há forma (o fundo, os traços), a posição é a da tela.
+  const TP = 128;
+  const tiles = {};
+  function coordTile(axis) {
+    if (tiles[axis]) return tiles[axis];
+    const n = 256, c = document.createElement('canvas');
+    c.width = axis === 'u' ? n : 1;
+    c.height = axis === 'u' ? 1 : n;
+    const x = c.getContext('2d'), img = x.createImageData(c.width, c.height), D = img.data;
+    for (let i = 0; i < n; i++) {
+      const a = ((i + 0.5) / n) * TAU;
+      D[i * 4] = Math.round(127.5 + 127.5 * Math.cos(a));
+      D[i * 4 + 1] = Math.round(127.5 + 127.5 * Math.sin(a));
+      D[i * 4 + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    tiles[axis] = c;
+    return c;
+  }
+  // boil= e seed=: o deslocamento da textura (muda a cada boil quadros; seed= dá outra versão)
+  function texOff(art, info) {
+    const step = typeof art.boil === 'number' && art.boil > 0 ? Math.floor((info.frame || 0) / art.boil) : 0;
+    if (!art.seed && !step) return [0, 0];
+    return [rnd(art.seed, step * 2 + 1) * TP, rnd(art.seed, step * 2 + 2) * TP];
+  }
+  // devolve uv(o, x, y): a posição [u, v] no ponto o (índice ×4) da imagem de trabalho, em (x, y) unidades
+  function field(g, src, m, art, info) {
+    const k = 1 / g.cw, off = texOff(art, info);
+    let tu = null, tv = null;
+    if (art.boil !== 'screen') {
+      const pass = (name, axis) => {
+        const X = work(name, g.Wd, g.Hd);
+        X.ctx.save();
+        src.content(X.ctx, m, { tex: { tile: coordTile(axis), d: 256 / TP, px: k, off } });
+        X.ctx.restore();
+        return X.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+      };
+      tu = pass('art_tu', 'u');
+      tv = pass('art_tv', 'v');
+    }
+    const r = [0, 0];
+    const ang = (c, sn) => { const a = Math.atan2(sn - 127.5, c - 127.5) / TAU; return (a < 0 ? a + 1 : a) * TP; };
+    return (o, x, y) => {
+      if (tu && tu[o + 3] >= 128) { r[0] = ang(tu[o], tu[o + 1]); r[1] = ang(tv[o], tv[o + 1]); } else { r[0] = x + off[0]; r[1] = y + off[1]; }
+      return r;
+    };
+  }
+  // a distância (de 0 a 0,5 volta) até o inteiro mais perto
+  const tri = (p) => Math.abs(p - Math.round(p));
+
+  // ---------- toon (cel shading) ----------
+  // Cada forma ganha uma faixa de sombra dura, do lado oposto ao light= do canvas (shadow=: a largura, em
+  // fração da forma). Com luzes, a luz vira degraus: a razão entre o desenho com luz e sem luz é arredondada
+  // em degraus (steps=).
+  function toonDraw(ctx, base, g, src, art, info, m) {
+    const band = { toon: { shadow: art.shadow } };
+    if (info.lit === false) {
+      ctx.save();
+      if (src.bg) src.bg(ctx, base);
+      ctx.restore();
+      ctx.save();
+      src.content(ctx, base, band);
+      ctx.restore();
+      return {};
+    }
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const L = shot('art_c', g, src, m, band, B0), U = shot('art_u', g, src, m, { unlit: true, toon: band.toon }, B0);
+    const li = L.ctx.getImageData(0, 0, g.Wd, g.Hd), l = li.data, u = U.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+    const step = 2 / (art.steps - 1);
+    for (let o = 0; o < l.length; o += 4) {
+      if (!l[o + 3]) continue;
+      const lu = lum3(u[o], u[o + 1], u[o + 2]), ll = lum3(l[o], l[o + 1], l[o + 2]);
+      // muito escuro sem luz: a razão não quer dizer nada (fica o desenho com luz)
+      if (lu < 0.06 || ll <= 0.001) continue;
+      const rho = ll / lu, f = Math.pow(2, Math.round(Math.log2(rho) / step) * step) / rho;
+      l[o] = Math.min(255, l[o] * f); l[o + 1] = Math.min(255, l[o + 1] * f); l[o + 2] = Math.min(255, l[o + 2] * f);
+    }
+    L.ctx.putImageData(li, 0, 0);
+    blit(ctx, base, g, L.canvas);
+    return {};
+  }
+
+  // ---------- engraving (gravura) ----------
+  // O tom (do desenho sem contorno) vira hachura: 45°, depois −45°, depois horizontal, depois 45° no meio das
+  // primeiras e, no mais escuro, preto. As linhas engrossam com o tom. O contorno (ink) sai preto.
+  function engravingDraw(ctx, base, g, src, art, info, m) {
+    const k = 1 / g.cw, gap = art.gap, P = TP;
+    // linhas que se repetem a cada P sem emenda: um número inteiro delas por volta
+    const nA = Math.max(1, Math.round(P / (gap * Math.SQRT2))), nC = Math.max(1, Math.round(P / gap));
+    const sA = (P / nA / Math.SQRT2) * k, sC = (P / nC) * k; // distância entre as linhas, em pontos
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, undefined, B0), N = shot('art_n', g, src, m, { noInk: true }, B0);
+    const uv = field(g, src, m, art, info);
+    const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data, nd = N.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+    const pp = rgbOf(art.paper || PAPER), dk = rgbOf(DARK), ik = rgbOf(firstInk(info));
+    // a cobertura de uma linha de largura w (pontos) a d pontos do meio dela
+    const cov = (d, w) => (w <= 0 ? 0 : w >= 1 ? cl(w / 2 + 0.5 - d) : w * cl(1 - d));
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const ac = c[o + 3] / 255, an = nd[o + 3] / 255;
+        if (!ac && !an) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        // sem fundo: as cores contam por cima do papel
+        const nr = nd[o] * an + pp[0] * (1 - an), ng = nd[o + 1] * an + pp[1] * (1 - an), nb = nd[o + 2] * an + pp[2] * (1 - an);
+        const cr = c[o] * ac + pp[0] * (1 - ac), cg = c[o + 1] * ac + pp[1] * (1 - ac), cb = c[o + 2] * ac + pp[2] * (1 - ac);
+        const D = 1 - levels(lum3(nr, ng, nb), art.levels);
+        let h = 0;
+        if (D > 0.06) {
+          // 45°, depois −45°, depois horizontal, depois 45° no meio das primeiras; no mais escuro, chapado
+          const wA = 0.3 * cl((D - 0.06) / 0.3) + 0.15 * cl((D - 0.6) / 0.35), wB = 0.3 * cl((D - 0.36) / 0.25) + 0.15 * cl((D - 0.8) / 0.15);
+          const wC = 0.3 * cl((D - 0.6) / 0.2), wD = 0.3 * cl((D - 0.8) / 0.15);
+          const q = uv(o, x, y), pa = (nA * (q[0] + q[1])) / P;
+          let keep = 1 - cov(tri(pa) * sA, wA * sA);
+          if (wB > 0) keep *= 1 - cov(tri((nA * (q[0] - q[1])) / P) * sA, wB * sA);
+          if (wC > 0) keep *= 1 - cov(tri((nC * q[1]) / P) * sC, wC * sC);
+          if (wD > 0) keep *= 1 - cov(tri(pa + 0.5) * sA, wD * sA);
+          h = Math.max(1 - keep, cl((D - 0.85) / 0.06));
+        }
+        // o contorno: o quanto o desenho com ink se aproxima da cor da ink, saindo do desenho sem ink
+        const ir = ik[0] - nr, ig = ik[1] - ng, ib = ik[2] - nb, ii = ir * ir + ig * ig + ib * ib;
+        const e = ii > 300 ? cl(((cr - nr) * ir + (cg - ng) * ig + (cb - nb) * ib) / ii) : 0;
+        const t = 1 - (1 - h) * (1 - e);
+        c[o] = pp[0] + (dk[0] - pp[0]) * t;
+        c[o + 1] = pp[1] + (dk[1] - pp[1]) * t;
+        c[o + 2] = pp[2] + (dk[2] - pp[2]) * t;
+        c[o + 3] = B0 ? 255 : Math.max(c[o + 3], nd[o + 3]);
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- halftone (retícula) ----------
+  // Pontos numa grade girada (size=, angle=), maiores onde é mais escuro. Com color, quatro retículas (ciano
+  // 15°, magenta 75°, amarelo 0° e preto 45°) que se misturam no papel.
+  const CMYK = [[0, 174, 239], [236, 0, 140], [255, 242, 0], [35, 31, 32]];
+  function halftoneDraw(ctx, base, g, src, art, info, m) {
+    const k = 1 / g.cw, sz = art.size, P = TP;
+    // a grade de cada retícula com números inteiros: ela se repete a cada P sem emenda (o ângulo e o tamanho
+    // ficam bem perto dos pedidos)
+    const screen = (deg) => {
+      const r = (deg * Math.PI) / 180, a = Math.round((P * Math.cos(r)) / sz), b = Math.round((P * Math.sin(r)) / sz);
+      return (u, v) => 0.5 + 0.25 * (Math.cos((TAU * (a * u + b * v)) / P) + Math.cos((TAU * (-b * u + a * v)) / P));
+    };
+    const color = !!art.color, scr = (color ? [15, 75, 0, 45] : [art.angle]).map(screen);
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, undefined, B0);
+    const uv = field(g, src, m, art, info);
+    const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data;
+    const pp = rgbOf(art.paper || PAPER), dk = rgbOf(DARK), L = art.levels;
+    // a borda do ponto, suavizada em mais ou menos um ponto da imagem; o quase branco fica papel e o quase
+    // preto fica chapado (como na impressão)
+    const fw = Math.max(0.02, 1.2 / (sz * k));
+    const dot = (val, D0) => { const D = (D0 - 0.04) / 0.84; return D <= 0 ? 0 : D >= 1 ? 1 : cl((val - (1 - D)) / fw + 0.5); };
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const a = c[o + 3] / 255;
+        if (!a) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const r = c[o] * a + pp[0] * (1 - a), gg = c[o + 1] * a + pp[1] * (1 - a), b = c[o + 2] * a + pp[2] * (1 - a);
+        const q = uv(o, x, y), u = q[0], v = q[1];
+        if (!color) {
+          const t = dot(scr[0](u, v), 1 - levels(lum3(r, gg, b), L));
+          c[o] = pp[0] + (dk[0] - pp[0]) * t; c[o + 1] = pp[1] + (dk[1] - pp[1]) * t; c[o + 2] = pp[2] + (dk[2] - pp[2]) * t;
+        } else {
+          // separação simples: o preto tira o que as três cores têm em comum
+          const C0 = 1 - levels(r / 255, L), M0 = 1 - levels(gg / 255, L), Y0 = 1 - levels(b / 255, L), K = Math.min(C0, M0, Y0);
+          const kq = K < 1 ? 1 / (1 - K) : 0, amt = [(C0 - K) * kq, (M0 - K) * kq, (Y0 - K) * kq, K];
+          let R = pp[0], G2 = pp[1], B = pp[2];
+          for (let i = 0; i < 4; i++) {
+            const t = amt[i] > 0.04 ? dot(scr[i](u, v), amt[i]) : 0;
+            if (!t) continue;
+            const ink = CMYK[i];
+            R *= 1 - t * (1 - ink[0] / 255); G2 *= 1 - t * (1 - ink[1] / 255); B *= 1 - t * (1 - ink[2] / 255);
+          }
+          c[o] = R; c[o + 1] = G2; c[o + 2] = B;
+        }
+        if (B0) c[o + 3] = 255;
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- stencil (estêncil, spray) ----------
+  // Poucos tons chapados (tones=) da cor c= sobre o papel; perto da troca de tom, o spray salpica um no outro.
+  // ruído suave (um valor sorteado por unidade, misturado entre os vizinhos), que se repete a cada TP
+  function noise(u, v) {
+    const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const w = (a) => ((a % TP) + TP) % TP;
+    const i0 = w(i), i1 = w(i + 1), j0 = w(j), j1 = w(j + 1);
+    const a = rnd(i0, j0), b = rnd(i1, j0), c = rnd(i0, j1), d = rnd(i1, j1);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  }
+  function stencilDraw(ctx, base, g, src, art, info, m) {
+    const n = art.tones - 1;
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, undefined, B0);
+    const uv = field(g, src, m, art, info);
+    const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data;
+    const pp = rgbOf(art.paper || PAPER), ink = rgbOf(art.c || firstInk(info));
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const a = c[o + 3] / 255;
+        if (!a) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const t = levels(lum3(c[o] * a + pp[0] * (1 - a), c[o + 1] * a + pp[1] * (1 - a), c[o + 2] * a + pp[2] * (1 - a)), art.levels);
+        // perto da troca de tom, o ruído decide (o spray salpica um tom no outro)
+        const q = uv(o, x, y), z = 0.65 * noise(q[0] * 1.6, q[1] * 1.6) + 0.35 * noise(q[0] * 4.3 + 37, q[1] * 4.3 + 11);
+        const j = Math.max(0, Math.min(n, Math.round(t * n + (z - 0.5) * 0.5))) / n;
+        c[o] = ink[0] + (pp[0] - ink[0]) * j; c[o + 1] = ink[1] + (pp[1] - ink[1]) * j; c[o + 2] = ink[2] + (pp[2] - ink[2]) * j;
+        if (B0) c[o + 3] = 255;
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- silhouette (silhueta) ----------
+  // Tudo o que é desenho vira a cor c= (a ink, se não tiver); o fundo fica como é.
+  function silhouetteDraw(ctx, base, g, src, art, info, m) {
+    if (src.bg) { ctx.save(); src.bg(ctx, base); ctx.restore(); }
+    const C = shot('art_c', g, src, m, { unlit: true }, null);
+    C.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    C.ctx.globalCompositeOperation = 'source-in';
+    C.ctx.fillStyle = art.c || firstInk(info);
+    C.ctx.fillRect(0, 0, g.Wd, g.Hd);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
+  // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
+  const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
   const STYLES = {
     pixel: { cell: (a) => [a.size, a.size], ws: (a) => (a.size >= 4 ? 1 : Math.ceil(4 / a.size)), paint: pixelPaint },
     ascii: { cell: (a) => a.cell, ws: (a) => (Math.min(a.cell[0], a.cell[1]) >= 4 ? 1 : 2), paint: asciiPaint },
+    toon: tone(toonDraw, true),
+    engraving: tone(engravingDraw, true),
+    halftone: tone(halftoneDraw, true),
+    stencil: tone(stencilDraw, true),
+    silhouette: tone(silhouetteDraw, false),
   };
   const heavy = (art) => !!(art && STYLES[art.style] && STYLES[art.style].heavy);
 
   // Pinta a região rect (unidades do desenho) no ctx com o estilo. base: desenho → pixels do ctx.
-  // src.content(x, m) desenha o desenho (fundo transparente) com a transformação m; src.bg(x, m), o fundo
-  // (null = sem fundo). info = { colors(): cores da palette own, ink, paper: a cor do papel (a referência do
-  // ascii, mesmo sem fundo; null = branco) }.
+  // src.content(x, m, pass) desenha o desenho (fundo transparente) com a transformação m, num passe (sem
+  // passe: o desenho de sempre; ver drawScene); src.bg(x, m), o fundo (null = sem fundo). info = { colors():
+  // cores da palette own, ink, paper: a cor do papel (a referência do ascii, mesmo sem fundo; null = branco),
+  // lit: o desenho tem luz, frame: o quadro (para o boil=) }.
   // Devolve { text } no ASCII.
   function paint(ctx, base, rect, art, src, info) {
     const S = STYLES[art.style];
     if (!S) return {};
-    const cell = S.cell(art), ws = S.ws(art);
+    const scale = Math.hypot(base[0], base[1]) || 1;
+    const cell = S.cell(art, scale), ws = S.ws(art, scale);
     const gx0 = Math.floor(rect.x / cell[0] + 1e-9), gy0 = Math.floor(rect.y / cell[1] + 1e-9);
     const gw = Math.max(1, Math.ceil((rect.x + rect.w) / cell[0] - 1e-9) - gx0), gh = Math.max(1, Math.ceil((rect.y + rect.h) / cell[1] - 1e-9) - gy0);
     const sx = Math.max(1, Math.round(cell[0] * ws)), sy = Math.max(1, Math.round(cell[1] * ws));
@@ -327,6 +625,7 @@
     // o recorte na imagem de trabalho: as células da borda só contam os pontos de dentro dele
     const ix0 = Math.max(0, Math.round(rect.x * m[0] + m[4])), iy0 = Math.max(0, Math.round(rect.y * m[3] + m[5]));
     const ix1 = Math.min(Wd, Math.round((rect.x + rect.w) * m[0] + m[4])), iy1 = Math.min(Hd, Math.round((rect.y + rect.h) * m[3] + m[5]));
+    if (S.draw) return S.draw(ctx, base, { gx0, gy0, gw, gh, sx, sy, Wd, Hd, cw: cell[0], ch: cell[1], fill: !!src.bg, ix0, iy0, ix1, iy1 }, src, art, info, m) || {};
     const C = work('art_content', Wd, Hd);
     src.content(C.ctx, m);
     let img, mask = null;
@@ -367,8 +666,23 @@
       p.push(`size=${a.cell.join(',')}`);
       if (a.chars !== ' .:-=+*#%@') p.push(`chars="${a.chars}"`);
       if (a.color) p.push('color');
+    } else if (a.style === 'toon') {
+      if (a.steps !== 3) p.push(`steps=${a.steps}`);
+      if (a.shadow !== 0.3) p.push(`shadow=${a.shadow}`);
+    } else if (a.style === 'engraving') {
+      if (a.gap !== 5) p.push(`gap=${a.gap}`);
+    } else if (a.style === 'halftone') {
+      if (a.size !== 6) p.push(`size=${a.size}`);
+      if (a.angle !== 45 && !a.color) p.push(`angle=${a.angle}`);
+      if (a.color) p.push('color');
+    } else if (a.style === 'stencil') {
+      if (a.tones !== 3) p.push(`tones=${a.tones}`);
     }
-    if (a.boil) p.push(`boil=${a.boil}`);
+    if (a.c) p.push(`c=${a.c}`);
+    if (a.levels && (a.levels[0] !== 0 || a.levels[1] !== 1)) p.push(`levels=${a.levels.join(',')}`);
+    if (a.paper) p.push(`paper=${a.paper}`);
+    const boil0 = (W.lang && W.lang.ART_BOIL && W.lang.ART_BOIL[a.style]) || 0;
+    if (a.boil !== undefined && a.boil !== boil0) p.push(`boil=${a.boil}`);
     if (a.seed) p.push(`seed=${a.seed}`);
     return p.join(' ');
   }

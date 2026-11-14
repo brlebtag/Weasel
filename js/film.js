@@ -605,12 +605,14 @@
       if (!v) { v = g.screen ? M.id() : viewMatrix(fs.cam, g.d, fs.W, fs.H); views.set(g.d, v); }
       const m = M.mul(top, M.mul(v, w.mat));
       const fog = g.screen ? 0 : fogAmount(fs.cam, g.d);
-      const faded = w.opacity < 0.999 || fog > 0.002;
+      // passe de textura dos estilos de arte: sem névoa, sem transparência e sem o fundo do ator
+      const tex = !!(opts.artPass && opts.artPass.tex);
+      const faded = !tex && (w.opacity < 0.999 || fog > 0.002);
       const x = faded ? alphaLayer(ctx.canvas.width, ctx.canvas.height) : ctx;
       if (!faded) ctx.save();
       setMat(x, m);
-      if (g.bg) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
-      if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides) });
+      if (g.bg && !tex) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
+      if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass });
       if (faded) {
         if (fog > 0.002) {
           // a névoa pinta por cima só onde já tem desenho
@@ -655,9 +657,9 @@
         if (!run.art) { paintPlates(ctx, model, fs, base, run.groups, opts, first, false); return; }
         const models = [model, ...(fs.entry.chain || []), ...run.groups.map((g) => g.w.model)];
         const r = W.art.paint(ctx, base, frameRect, run.art, {
-          content: (x, m) => paintPlates(x, model, fs, m, run.groups, opts, false, false),
+          content: (x, m, pass) => paintPlates(x, model, fs, m, run.groups, pass ? Object.assign({}, opts, { artPass: pass }) : opts, false, false),
           bg: first ? (x, m) => paintBg(x, model, fs, m) : null,
-        }, { colors: () => W.art.colorsOf(models), ink: [...new Set(models.filter(Boolean).map((x) => x.palette.get('ink')))], paper: W.art.paperOf(fs.owner !== model && fs.owner.canvas.bg ? fs.owner : model) });
+        }, { colors: () => W.art.colorsOf(models), ink: [...new Set(models.filter(Boolean).map((x) => x.palette.get('ink')))], paper: W.art.paperOf(fs.owner !== model && fs.owner.canvas.bg ? fs.owner : model), lit: !!(fs.stageLighting || fs.who.some((w) => w.lighting)), frame });
         if (r.text && runs.length === 1) fs.artText = r.text;
       });
       if (fs.cam.fade > 0.001) {

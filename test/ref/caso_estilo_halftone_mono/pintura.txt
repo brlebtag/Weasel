@@ -1,0 +1,4 @@
+ellipse b @0.000 +0.756
+rect ceu @0.756 +0.761
+rect mato @1.516 +0.733
+total 2.249

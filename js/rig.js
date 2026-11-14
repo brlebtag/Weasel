@@ -140,9 +140,9 @@
     // estilo de arte (art): cada peça sai no estilo, na grade presa à origem do canvas
     if (model.art && W.art) {
       W.art.paint(x, [k, 0, 0, k, -R.x * k, -R.y * k], R, model.art, {
-        content: (y, m) => { y.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); S.drawScene(y, model, pose, { background: false, glows: false, layers: part.layers, items: part.items }); },
+        content: (y, m, pass) => { y.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); S.drawScene(y, model, pose, { background: false, glows: false, layers: part.layers, items: part.items, pass }); },
         bg: null,
-      }, { colors: () => W.art.colorsOf([model]), ink: model.palette.get('ink'), paper: W.art.paperOf(model) });
+      }, { colors: () => W.art.colorsOf([model]), ink: model.palette.get('ink'), paper: W.art.paperOf(model), lit: !!S.sceneLights(model, pose), frame: pose.frame || 0 });
       return c;
     }
     x.setTransform(k, 0, 0, k, -R.x * k, -R.y * k);

@@ -1,0 +1,11 @@
+filme    320 × 180, 4 fps, 4s (16 quadros, 00:04:00), fundo #1d2b53
+art      toon
+ambiente #8090b0 × 0.6
+luzes    lamp (point, #ffd9a0 × 1.3)
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   4
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  gravura          00:01:00      1s      4 quadros  câmera 160,90 · art engraving levels=0.05,0.9
+  misto            00:02:00      1s      4 quadros  câmera 160,90 · art de b: halftone color
+  sombra           00:03:00      1s      4 quadros  câmera 160,90 · art silhouette
