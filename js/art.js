@@ -2731,22 +2731,26 @@
     };
   }
   // o passe das peças: cada forma (e cada traço largo) com uma cor sorteada; S.ids guarda as cores (1: um traço)
+  // (S.keys: o número de cada forma, it.key, que não muda de um quadro para o outro: o sorteio das cores vem dele, e
+  // não da ordem em que as formas aparecem na tela, que muda quando uma passa por cima da outra)
   function glassIds(S, lead) {
     let n = 0;
     S.ids = new Map();
-    const col = (line) => {
+    S.keys = new Map();
+    const col = (line, key) => {
       const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
       S.ids.set(v, line);
+      S.keys.set(v, key | 0);
       return `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
     };
     return {
       glow: false,
-      fill(ctx, it) { ctx.fillStyle = col(0); ctx.fill(it.path); },
+      fill(ctx, it) { ctx.fillStyle = col(0, it.key); ctx.fill(it.path); },
       ink() {},
       line(ctx, it) {
         if (glassSlim(it, lead)) return true;
         ctx.save();
-        ctx.fillStyle = ctx.strokeStyle = col(1);
+        ctx.fillStyle = ctx.strokeStyle = col(1, it.key);
         it.body(ctx);
         ctx.restore();
         return true;
@@ -2803,14 +2807,15 @@
     src.content(IX.ctx, m, { unlit: true, stroke: glassIds(S, lead) });
     IX.ctx.restore();
     const { P, own } = piecesOf(IX.ctx.getImageData(0, 0, Wd, Hd).data, S.ids, Wd, Hd);
-    // cada peça num número pequeno (slot; 0 é o fundo) e a caixa dela
-    const slot = new Int32Array(N), bx = [Infinity], by = [Infinity], ex = [-Infinity], ey = [-Infinity], isLine = [0], of = new Map();
+    // cada peça num número pequeno (slot; 0 é o fundo), a caixa dela e o número da forma (fk: para o sorteio; o slot
+    // muda de um quadro para o outro, o fk não)
+    const slot = new Int32Array(N), bx = [Infinity], by = [Infinity], ex = [-Infinity], ey = [-Infinity], isLine = [0], fk = [0], of = new Map();
     for (let y = 0, i = 0; y < Hd; y++) {
       for (let x = 0; x < Wd; x++, i++) {
         const p = P[i];
         if (p < 0) { slot[i] = 0; continue; }
         let s = of.get(p);
-        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isLine.push(S.ids.get(p)); }
+        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isLine.push(S.ids.get(p)); fk.push(S.keys.get(p)); }
         slot[i] = s;
         if (x < bx[s]) bx[s] = x;
         if (x > ex[s]) ex[s] = x;
@@ -2837,37 +2842,41 @@
     chamfer(Dt, Wd, Hd);
     // o pedaço de cada ponto (o vidro do fundo, sem bg no canvas, fica de fora: é o papel)
     const T = glassTile(k, sz), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0, 0];
-    const bare = !!info.bare, key = new Int32Array(N), mot = new Uint8Array(N), ed = new Float32Array(N);
-    const idx = new Map(), sum = [], cnt = [], all = [];
-    let lastK = -1, lastI = -1;
+    const bare = !!info.bare, pk = new Int32Array(N).fill(-1), mot = new Uint8Array(N), ed = new Float32Array(N), seed = new Int32Array(N), sd0 = art.seed | 0;
     for (let py = 0, o = 0, i = 0; py < Hd; py++) {
       for (let px = 0; px < Wd; px++, o += 4, i++) {
         const s = slot[i];
-        if (!c[o + 3] || (s === 0 && bare)) { key[i] = -1; continue; }
+        if (!c[o + 3] || (s === 0 && bare)) continue;
         tileAt(V, T, tx, o, px, py, k, off);
-        const cut = !whole[s] && !bead[s];
-        const kk = s * 256 + (cut ? Math.round((V[0] * 255) / 4) : 255);
+        const cut = !whole[s] && !bead[s], tid = cut ? Math.round((V[0] * 255) / 4) : 255;
+        pk[i] = s * 256 + tid;
         mot[i] = Math.round(V[1] * 255);
         ed[i] = cut ? ((V[2] * 255) / GD) * k : 1e9;
-        let q = kk === lastK ? lastI : idx.get(kk);
-        if (q === undefined) { q = sum.length / 3; idx.set(kk, q); sum.push(0, 0, 0); all.push(0, 0, 0); cnt.push(0, 0); }
-        lastK = kk;
-        lastI = q;
-        key[i] = q;
-        all[q * 3] += c[o]; all[q * 3 + 1] += c[o + 1]; all[q * 3 + 2] += c[o + 2]; cnt[q * 2 + 1]++;
-        if (own[i] || s === 0) { sum[q * 3] += c[o]; sum[q * 3 + 1] += c[o + 1]; sum[q * 3 + 2] += c[o + 2]; cnt[q * 2]++; }
+        seed[i] = Math.imul(fk[s] + 1, 2654435761) ^ Math.imul(tid + 1, 40503) ^ Math.imul(sd0 + 1, 7919);
       }
     }
+    // cada pedaço é um pedaço inteiro da tela: o mesmo pedaço do azulejo, repetido mais adiante numa forma grande,
+    // é outro pedaço, com a sua cor
+    const { L: key, n: nq } = regions(pk, Wd, Hd);
+    const sum = new Float64Array(nq * 3), all = new Float64Array(nq * 3), cnt = new Int32Array(nq * 2), sd = new Int32Array(nq), rs = new Int32Array(nq);
+    for (let i = 0, o = 0; i < N; i++, o += 4) {
+      const q = key[i];
+      if (q < 0) continue;
+      all[q * 3] += c[o]; all[q * 3 + 1] += c[o + 1]; all[q * 3 + 2] += c[o + 2]; cnt[q * 2 + 1]++;
+      if (own[i] || slot[i] === 0) { sum[q * 3] += c[o]; sum[q * 3 + 1] += c[o + 1]; sum[q * 3 + 2] += c[o + 2]; cnt[q * 2]++; }
+      sd[q] = seed[i];
+      rs[q] = slot[i];
+    }
     // a cor de cada pedaço: a média, mais forte, e um pouco diferente da do vizinho
-    const nq = cnt.length / 2, col = new Float32Array(nq * 3);
-    for (const [kk, q] of idx) {
-      const n0 = cnt[q * 2], A = n0 ? sum : all, n = n0 || cnt[q * 2 + 1];
+    const col = new Float32Array(nq * 3);
+    for (let q = 0; q < nq; q++) {
+      const n0 = cnt[q * 2], A = n0 ? sum : all, n = n0 || cnt[q * 2 + 1] || 1;
       let r = A[q * 3] / n, gg = A[q * 3 + 1] / n, b = A[q * 3 + 2] / n;
-      const l = 0.3 * r + 0.59 * gg + 0.11 * b, f = 0.92 + 0.16 * rnd(kk, 5 + (art.seed | 0));
-      r = (l + (r - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 6));
-      gg = (l + (gg - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 7));
-      b = (l + (b - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 8));
-      if (bead[kk >> 8]) { r *= 1.12; gg *= 1.12; b *= 1.12; }
+      const l = 0.3 * r + 0.59 * gg + 0.11 * b, f = 0.92 + 0.16 * rnd(sd[q], 5);
+      r = (l + (r - l) * 1.35) * f * (0.97 + 0.06 * rnd(sd[q], 6));
+      gg = (l + (gg - l) * 1.35) * f * (0.97 + 0.06 * rnd(sd[q], 7));
+      b = (l + (b - l) * 1.35) * f * (0.97 + 0.06 * rnd(sd[q], 8));
+      if (bead[rs[q]]) { r *= 1.12; gg *= 1.12; b *= 1.12; }
       col[q * 3] = r; col[q * 3 + 1] = gg; col[q * 3 + 2] = b;
     }
     const hw = (lead * k) / 2, ht = (lead * k) / 4, fw = art.frame ? 2.2 * lead * k : 0, soft = 1.5 * U * k;
