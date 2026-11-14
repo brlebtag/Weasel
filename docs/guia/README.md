@@ -23,6 +23,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 11 | [Profundidade (2.5D)](11-profundidade.md) | girar formas em 3D, verso e espessura, a cabeça que olha para os lados, chão em perspectiva, mapa isométrico, lente e névoa no filme |
 | 12 | [Referência rápida](12-referencia.md) | todas as instruções e atributos, com os valores padrão |
 | 13 | [Problemas comuns](13-problemas.md) | o que costuma dar errado e como resolver |
+| 14 | [Estilos de arte](14-estilos.md) | a linha `art`: o mesmo desenho em pixel art (paletas, pontilhado, contorno, folha pequena para o Godot) e em letras (ASCII, também em `.txt`), e o estilo no filme, na cena, no plano ou num ator |
 
 **Por onde começar:** leia os capítulos 1 a 4 em ordem; eles são a base de tudo. Depois, os capítulos 6 e 7 (ossos e animação) são os mais importantes para personagens. O resto pode ser lido conforme a necessidade.
 

@@ -1,6 +1,6 @@
 # 13. Problemas comuns
 
-[← Referência rápida](12-referencia.md) · [Índice](README.md)
+[← Referência rápida](12-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
 
 O que costuma dar errado, por que acontece e como resolver. Cada problema tem três partes:
 
@@ -1042,4 +1042,4 @@ O GIF só tem transparência de 1 bit: cada pixel é transparente ou não, sem m
 
 O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na mesma pasta do projeto do Godot.
 
-[← Referência rápida](12-referencia.md) · [Índice](README.md)
+[← Referência rápida](12-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)

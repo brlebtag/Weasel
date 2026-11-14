@@ -1,0 +1,4 @@
+ellipse sol @0.000 +0.581
+shape mar @0.581 +1.103
+stroke onda @1.684 +0.410
+total 2.094

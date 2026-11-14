@@ -220,6 +220,7 @@
 
   // Normal map de um quadro. alpha: os pixels do quadro colorido (a transparência é copiada dele).
   function frame(model, pose, o) {
+    if (!o.noArt && model.art && model.art.style === 'pixel') return pixelFrame(model, pose, o, model.art.size);
     const s = o.scale || 1, rect = o.rect;
     const { H, Wd, Hd } = heights(model, pose, rect, s, o.strength !== undefined ? o.strength : 1, o.items || o.layers ? { items: o.items, layers: o.layers } : null);
     const out = document.createElement('canvas');
@@ -239,6 +240,54 @@
         D[i * 4 + 1] = Math.round(((gy / l) * 0.5 + 0.5) * 255); // Y para cima: o lado de cima da forma fica verde
         D[i * 4 + 2] = Math.round(((1 / l) * 0.5 + 0.5) * 255);
         D[i * 4 + 3] = A ? A[i * 4 + 3] : 255;
+      }
+    }
+    oc.putImageData(im, 0, 0);
+    return out;
+  }
+
+  // Pixel art (art pixel): o relevo é calculado com detalhe (pelo menos 4 pontos por bloco) e cada bloco da
+  // grade (a mesma do art, presa à origem do canvas) fica com a média das inclinações dele.
+  function pixelFrame(model, pose, o, size) {
+    const s = o.scale || 1, rect = o.rect, f = Math.max(1, Math.ceil(4 / (size * s) - 1e-9));
+    const hi = frame(model, pose, Object.assign({}, o, { scale: s * f, alpha: null, noArt: true }));
+    const hw = hi.width, hh = hi.height, hd = hi.getContext('2d').getImageData(0, 0, hw, hh).data;
+    const Wd = Math.max(1, Math.round(rect.w * s)), Hd = Math.max(1, Math.round(rect.h * s));
+    const out = document.createElement('canvas');
+    out.width = Wd;
+    out.height = Hd;
+    const oc = out.getContext('2d');
+    const im = oc.createImageData(Wd, Hd), D = im.data, A = o.alpha;
+    // o bloco de cada coluna e linha da imagem (pelo centro do pixel, em unidades do canvas)
+    const colB = new Int32Array(Wd), rowB = new Int32Array(Hd);
+    for (let x = 0; x < Wd; x++) colB[x] = Math.floor((rect.x + (x + 0.5) / s) / size);
+    for (let y = 0; y < Hd; y++) rowB[y] = Math.floor((rect.y + (y + 0.5) / s) / size);
+    const cache = new Map();
+    const blockN = (bx, by) => {
+      const key = bx * 65536 + by;
+      let n = cache.get(key);
+      if (n) return n;
+      const x0 = Math.max(0, Math.floor((bx * size - rect.x) * s * f)), x1 = Math.min(hw, Math.ceil(((bx + 1) * size - rect.x) * s * f));
+      const y0 = Math.max(0, Math.floor((by * size - rect.y) * s * f)), y1 = Math.min(hh, Math.ceil(((by + 1) * size - rect.y) * s * f));
+      let nx = 0, ny = 0, nz = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * hw + x) * 4;
+          nx += hd[i] / 127.5 - 1; ny += hd[i + 1] / 127.5 - 1; nz += hd[i + 2] / 127.5 - 1;
+        }
+      }
+      const l = Math.hypot(nx, ny, nz) || 1;
+      n = nz > 0 ? [nx / l, ny / l, nz / l] : [0, 0, 1];
+      cache.set(key, n);
+      return n;
+    };
+    for (let y = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++) {
+        const n = blockN(colB[x], rowB[y]), i = (y * Wd + x) * 4;
+        D[i] = Math.round((n[0] * 0.5 + 0.5) * 255);
+        D[i + 1] = Math.round((n[1] * 0.5 + 0.5) * 255);
+        D[i + 2] = Math.round((n[2] * 0.5 + 0.5) * 255);
+        D[i + 3] = A ? A[i + 3] : 255;
       }
     }
     oc.putImageData(im, 0, 0);

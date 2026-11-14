@@ -1,0 +1,67 @@
+{
+  "frames": {
+    "pose_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 72,
+        "h": 45
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 45
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 45
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83
+    }
+  },
+  "animations": {
+    "pose": [
+      "pose_00"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_estilo_paleta.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 76,
+      "h": 49
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 72,
+      "h": 45
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "pose",
+        "from": 0,
+        "to": 0,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 0,
+      "y": 11,
+      "w": 240,
+      "h": 149
+    }
+  }
+}

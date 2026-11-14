@@ -147,6 +147,8 @@ async function drawingCases(file, prefix, svg) {
   await check(group, 'pose.png', 'png', X.imageCanvas(model, null, 0, o));
   for (const v of model.variants) await check(group, `pose_${v}.png`, 'png', X.imageCanvas(load(file, v), null, 0, o));
   await check(group, 'pose.svg', 'text', X.svgText(model, null, 0, { scale: 0.5, transparent: false }));
+  // art ascii: as letras do .txt (o mesmo que weasel arquivo.weasel -o pose.txt)
+  if (model.art && model.art.style === 'ascii') await check(group, 'pose.txt', 'text', X.imageCanvas(model, null, 0, o).artText);
 
   // imagens guia (ref): ficam fora de tudo acima; com --refs, a linha de comando desenha por baixo
   if (model.refs.length) {
@@ -274,6 +276,17 @@ async function filmCases(file, prefix) {
   const sheet = createCanvas(w * 3, h * 3), x = sheet.getContext('2d');
   imgs.forEach((c, i) => x.drawImage(c, (i % 3) * w, Math.floor(i / 3) * h));
   await check(group, 'quadros.png', 'png', sheet);
+
+  // art: o quadro do meio de cada plano maior (na folha pequena o estilo some), e as letras quando o
+  // quadro é todo ascii
+  if (W.art.has(model)) {
+    for (const e of tl.entries) {
+      const img = W.film.renderFrame(model, e.start + Math.floor(e.frames / 2), { scale: 0.5 });
+      const id = e.name.replace(/[^\w.-]+/g, '_');
+      await check(group, `estilo_${id}.png`, 'png', img);
+      if (img.artText) await check(group, `estilo_${id}.txt`, 'text', img.artText);
+    }
+  }
 }
 
 // som: os .wav dos exemplos são os do gerador, a leitura de WAV (8/16/24 bits, float, estéreo), o lip sync

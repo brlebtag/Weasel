@@ -1,0 +1,9 @@
+# teste: art ascii com cor, letras próprias e células 6x10 (o .txt sai junto)
+canvas 240 160 bg=#f4efe6
+palette ink=#1d1b26 line=4 sol=#ffb347 mar=#3a6ea5
+art ascii size=6,10 chars=" .-+*#@" color
+
+layer cena
+ellipse sol 170,50 26 c=sol ink=line
+shape mar c=mar ink=line : 0,110! 60,100 120,114 180,98 240,108! 240,160! 0,160!
+stroke onda w=4 c=#ffffff : 30,130 70,124 110,132

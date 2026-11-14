@@ -1,0 +1,4 @@
+ellipse lua @0.000 +0.483
+shape morro @0.483 +1.080
+text nome @1.564 +0.352
+total 1.916

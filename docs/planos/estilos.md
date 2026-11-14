@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Nada implementado. Falta você dizer quais estilos interessam e dar o "pode fazer".
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)); faltam as fases 2 a 5.
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -9,6 +9,85 @@
 - que outros estilos dá para gerar? (Da resposta saíram os protótipos de recorte de papel, vitral e massinha.)
 
 **Resposta curta:** sim. O Weasel guarda o desenho como formas, e não como uma imagem pronta, então ele pode pintar a mesma cena de outros jeitos.
+
+## Decisões de 14/11/2026
+
+**Quais estilos:** todos, menos os três de [Não recomendo](#não-recomendo).
+
+**A instrução:** uma linha própria, `art`, na parte de cima do arquivo, como o `finish`. A primeira palavra é o estilo, e depois vêm as opções dele. Só nomes em inglês:
+
+```
+art pixel size=8 palette=gameboy dither=bayer outline small
+art comic old bw
+art cutout boil=0
+```
+
+- Um `art` por arquivo de personagem. Sem `art`, nada muda.
+- O `finish` continua como está e funciona junto. O `finish pixel=` continua sendo o pixelado de hoje; o pixel art nítido é o `art pixel`.
+- `art none` desliga o estilo (útil no filme).
+
+**Os nomes:**
+
+| Estilo | Nome | Opções próprias |
+|---|---|---|
+| Pixel art | `pixel` | `size=`, `palette=own\|gameboy\|nes\|pico8\|mono`, `dither=bayer`, `outline`, `small` |
+| ASCII | `ascii` | `size=6,12`, `chars=`, `color`; sai também em `.txt` |
+| Retícula | `halftone` | `size=`, `angle=`, `color` |
+| Ponto-cruz, mosaico, tricô | `stitch`, `mosaic`, `knit` | `size=`; o mosaico tem `grout=` |
+| Esboço, marcador, lápis de cor | `sketch`, `marker`, `pencil` | `paper=` |
+| Giz de cera, giz no quadro, aquarela | `crayon`, `chalk`, `watercolor` | `paper=` |
+| Só contorno, neon | `lines`, `neon` | `w=`, `c=` |
+| Recorte de papel | `cutout` | |
+| Massinha, vitral, bordado | `clay`, `glass`, `embroidery` | o vitral tem `size=` e `lead=` |
+| Cel shading | `toon` | `steps=` |
+| Gravura, xilogravura | `engraving`, `woodcut` | `gap=` |
+| HQ | `comic` (moderna colorida), `comic old`, `comic old bw` (`bw` = *black and white*), `manga` | `size=` |
+| Risografia, estêncil, silhueta | `riso`, `stencil`, `silhouette` | `inks=`, `tones=`, `c=` |
+
+**Opções de todos os estilos:**
+- `boil=2` redesenha a textura a cada 2 quadros (a fervura); `boil=0` deixa a textura presa à forma. Cada estilo tem o seu padrão.
+- `seed=` sorteia outra versão do mesmo desenho.
+
+**Pixel art no jogo:** `small` faz só a sprite sheet e o Godot saírem no tamanho pequeno de verdade. O vídeo e o GIF saem sempre no tamanho do `canvas`, com o pixel nítido.
+
+**Efeitos de tela:** no `finish`, como o `bloom=`: `oldfilm=`, `vhs=`, `crt=` e `glitch=`, de 0 a 1. Seguem a regra de hoje do `finish` (o arquivo principal; sem ele, a cena).
+
+**No filme, quatro níveis.** O mais específico ganha: ator, depois plano, depois cena, depois filme.
+
+| Onde vale | Como escrever |
+|---|---|
+| O filme todo | `art` no começo do arquivo do filme |
+| Uma cena | `art` no começo do arquivo da cena |
+| Um plano | `art` dentro do bloco do `shot` |
+| Um personagem | `art … actor=coruja` (no começo do filme ou dentro de um `shot`) |
+
+- O `art` do arquivo do próprio personagem vale para o jogo e as exportações dele; no filme, quem decide é o filme.
+- Quando o quadro todo tem o mesmo estilo, ele é aplicado de uma vez (uma grade só no pixel art e no ASCII). Um personagem com outro estilo é desenhado sozinho e encaixado na ordem de profundidade de sempre.
+
+**No editor:** o estilo aparece, como já aparecem o `pixel=` e o `bloom=`, e as alças continuam nos pontos do desenho. Uma chave "Estilo" liga e desliga. Os estilos pesados mostram o desenho normal enquanto você arrasta.
+
+**Fases** (cada uma é uma versão):
+1. **1.30.0:** a linha `art`, os quatro níveis do filme, a chave Estilo, as exportações, `boil=` e `seed=`, e os estilos `pixel` e `ascii`.
+2. **1.31.0, tom:** `toon`, `engraving`, `woodcut`, `comic`, `manga`, `halftone`, `riso`, `stencil` e `silhouette`.
+3. **1.32.0, traço:** `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`.
+4. **1.33.0, peças:** `cutout`, `clay`, `glass` e `embroidery`.
+5. **1.34.0, o resto:** `stitch`, `mosaic`, `knit` e os efeitos de tela.
+
+## Como a fase 1 ficou (1.30.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
+
+- **O acabamento vem depois do estilo:** `bloom=`, `vignette=`, `grain=` e `posterize=` entram por cima da imagem pronta. Com um `art`, o `finish pixel=` não entra (o Weasel avisa).
+- **`boil=` e `seed=`** já são lidos em todos os estilos, mas o `pixel` e o `ascii` não têm textura: neles, os dois só dão aviso. Servem para as fases 2 a 5.
+- **As cores são comparadas em Lab** (o jeito que o olho vê), e não em RGB: no RGB, um azul-escuro ficava "perto" de um verde-escuro, e o céu virava morro.
+- **`palette=own`:** todas as cores do desenho (palette, formas, gradientes, padrões e fundo). Num desenho sem fundo exportado opaco, o branco do fundo entra também.
+- **O voto do pixel art:** cada ponto vira a cor mais parecida da paleta, e o bloco fica com a mais votada. A tinta ganha com 1/4 do bloco; "tinta" é o ponto cuja cor mais parecida, entre as cores do desenho, é a `ink` (no filme, a `ink` de cada arquivo). O bloco fica vazio quando o transparente ganha da cor mais votada.
+- **O pontilhado** (`dither=bayer`, Bayer 4×4) mistura a cor do bloco com a segunda mais parecida, só onde a cor muda aos poucos (degradês e luz). Com 2 cores (`mono`), em tudo.
+- **O `outline`** é 1 bloco por fora da silhueta, na cor da tinta.
+- **ASCII:** a letra mede o quanto a célula se afasta do papel (Lab). O papel é o fundo do canvas (o primeiro tom, se for gradiente; branco sem fundo). Num papel escuro, as letras saem claras. Um ator em ASCII desenhado à parte usa o papel do filme como referência, mas não pinta o papel.
+- **Na borda do canvas,** o bloco (ou a célula) só conta a parte de dentro.
+- **`small`:** a escala vira pixels por bloco (`-s 3` = 3×3 pixels por bloco), e o recorte da folha cai na grade.
+- **Godot:** `texture_filter = 1` (nearest) com qualquer `art pixel`; o normal map sai pixelado, um tom por bloco. No esqueleto de verdade, cada peça sai no estilo na pose parada, e o `--info` lembra que o pixel art perde a grade quando a peça gira.
 
 ## O que já existe
 
@@ -283,6 +362,8 @@ Não são estilos de desenho: vão por cima de qualquer estilo.
 
 ## No Weasel e no jogo
 
+(Escrito antes das [Decisões](#decisões-de-14112026): o nome ficou `art`, e não opções do `finish`.)
+
 - **Nada muda sozinho.** Cada estilo seria uma opção nova no `finish`, por exemplo `pixel=8 crisp` para o voto por bloco. Sem a opção, o `pixel=8` continua igual a hoje, e os arquivos existentes e os testes não mudam. O nome das opções ainda está aberto.
 - **Pixel art no Godot:**
   - **O tamanho da folha:** hoje ela sai grande (800×640, em blocos de 8×8). Funciona, mas pesa 64 vezes mais e borra se o Godot aumentar a imagem com suavização. O certo é exportar no tamanho pequeno de verdade (100×80) e configurar a cena para não suavizar (`texture_filter` em *nearest*).
@@ -317,7 +398,4 @@ Os [outros estilos possíveis](#outros-estilos-possíveis-ainda-sem-protótipo) 
 
 ## Para decidir
 
-1. Quais estilos interessam, e em que ordem?
-2. Os nomes das opções no `finish` (por exemplo `crisp`, `dither=`, `outline=`, `ascii`, `sketch`, `marker`, `pencil`, `comic=`, `paper`, `glass`, `clay`).
-3. No pixel art para o jogo: a folha sai sempre no tamanho pequeno, ou só com uma opção?
-4. Nas texturas animadas: redesenhar a cada 2 quadros (fervura) ou deixar presa à forma?
+As quatro perguntas daqui foram respondidas em 14/11/2026: ver [Decisões](#decisões-de-14112026).

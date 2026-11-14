@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="80" viewBox="0 0 240 160">
+<defs><linearGradient id="g1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="160"><stop offset="0" stop-color="#0b1030"/><stop offset="0.6" stop-color="#3a4f9a"/><stop offset="1" stop-color="#f0b070"/></linearGradient>
+<g id="L2"><g><path d="M198 40C198 49.94 189.94 58 180 58C170.06 58 162 49.94 162 40C162 30.06 170.06 22 180 22C189.94 22 198 30.06 198 40Z" fill="#fff3c4"/><path d="M0 130C20 123.33 37.26 111.05 60 110C85.67 108.82 104.33 125.18 130 124C152.74 122.95 167.29 105.65 190 104C208.46 102.66 223.33 112 240 116C240 130.67 240 145.33 240 160C160 160 80 160 0 160C0 150 0 140 0 130Z" fill="#2b3a2a"/><path d="M0 130C20 123.33 37.26 111.05 60 110C85.67 108.82 104.33 125.18 130 124C152.74 122.95 167.29 105.65 190 104C208.46 102.66 223.33 112 240 116C240 130.67 240 145.33 240 160C160 160 80 160 0 160C0 150 0 140 0 130Z" fill="none" stroke="#141320" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><text transform="matrix(1 0 0 1 20 30)" font-family="sans-serif" font-size="20" text-anchor="start" font-weight="bold" fill="#ffffff">Weasel</text></g></g></defs>
+<rect x="0" y="0" width="240" height="160" fill="url(#g1)"/>
+<g data-layer="fundo"><use href="#L2" xlink:href="#L2"/></g>
+</svg>

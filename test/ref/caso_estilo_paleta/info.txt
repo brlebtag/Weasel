@@ -1,0 +1,7 @@
+canvas   240 × 160, fundo gradiente ceu
+art      pixel size=5 palette=gameboy dither=bayer
+gradientes ceu (linear)
+camadas  1
+  fundo            3 item(ns)
+formas   3
+animações nenhuma

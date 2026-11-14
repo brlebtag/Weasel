@@ -1,0 +1,189 @@
+{
+  "frames": {
+    "quica_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 26,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 26,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 26,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo",
+          "kind": "body",
+          "shape": "rect",
+          "x": 13,
+          "y": 24.25,
+          "w": 20,
+          "h": 22.5
+        }
+      ]
+    },
+    "quica_01": {
+      "frame": {
+        "x": 30,
+        "y": 2,
+        "w": 26,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 26,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 26,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo",
+          "kind": "body",
+          "shape": "rect",
+          "x": 13,
+          "y": 24.25,
+          "w": 20,
+          "h": 22.5
+        }
+      ]
+    },
+    "quica_02": {
+      "frame": {
+        "x": 58,
+        "y": 2,
+        "w": 26,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 26,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 26,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo",
+          "kind": "body",
+          "shape": "rect",
+          "x": 13,
+          "y": 24.25,
+          "w": 20,
+          "h": 22.5
+        }
+      ]
+    },
+    "quica_03": {
+      "frame": {
+        "x": 86,
+        "y": 2,
+        "w": 26,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 26,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 26,
+        "h": 38
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "corpo",
+          "kind": "body",
+          "shape": "rect",
+          "x": 13,
+          "y": 24.25,
+          "w": 20,
+          "h": 22.5
+        }
+      ]
+    }
+  },
+  "animations": {
+    "quica": [
+      "quica_00",
+      "quica_01",
+      "quica_02",
+      "quica_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_estilo_pixel.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 114,
+      "h": 42
+    },
+    "scale": "0.25",
+    "frameSize": {
+      "w": 26,
+      "h": 38
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "quica",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 28,
+      "y": 8,
+      "w": 104,
+      "h": 152
+    }
+  }
+}

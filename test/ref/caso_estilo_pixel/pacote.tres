@@ -1,0 +1,44 @@
+[gd_resource type="SpriteFrames" load_steps=8 format=3]
+
+[ext_resource type="Texture2D" path="caso_estilo_pixel.png" id="1_sheet"]
+[ext_resource type="Texture2D" path="caso_estilo_pixel_normal.png" id="2_normal"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_sheet"]
+diffuse_texture = ExtResource("1_sheet")
+normal_texture = ExtResource("2_normal")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0"]
+atlas = SubResource("CanvasTexture_sheet")
+region = Rect2(2, 2, 28, 39)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
+atlas = SubResource("CanvasTexture_sheet")
+region = Rect2(32, 2, 28, 39)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
+atlas = SubResource("CanvasTexture_sheet")
+region = Rect2(2, 43, 28, 39)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3"]
+atlas = SubResource("CanvasTexture_sheet")
+region = Rect2(32, 43, 28, 39)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3")
+}],
+"loop": true,
+"name": &"quica",
+"speed": 8.0
+}]

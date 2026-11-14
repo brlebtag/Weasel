@@ -271,13 +271,16 @@ async function exportFilm(model, o, format, source, h) {
   }
 
   // um quadro só
-  const single = (format === 'png' || format === 'jpg') && !o.frames;
+  if (format === 'txt' && o.frames) h.usage('o .txt do filme sai de um quadro só (use --time ou --frame)');
+  const single = (format === 'png' || format === 'jpg' || format === 'txt') && !o.frames;
   if (single) {
     let f = o.time !== null ? t2f(o.time, '--time') : o.frame;
     if (o.shot && o.time === null && !o.frameSet) f = entries[0].start;
     if (f >= tl.frames) h.usage(`o filme vai do quadro 0 ao ${tl.frames - 1} (${W.film.timecode(tl.frames - 1, fps)})`);
     const cv = W.film.renderFrame(model, f, { scale: o.scale, transparent: o.transparent && format !== 'jpg', subs: burn, lang: o.lang });
-    const buf = format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png');
+    // .txt: as letras do art ascii, quando o quadro inteiro está nesse estilo
+    if (format === 'txt' && !cv.artText) h.usage(`o .txt sai quando o quadro inteiro está em art ascii (o quadro ${f} não está)`);
+    const buf = format === 'txt' ? Buffer.from(cv.artText) : format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png');
     const loc = W.film.locate(model, f);
     h.save(o.out || `${source.base}_${String(f).padStart(5, '0')}.${format}`, buf, `${cv.width}×${cv.height}, quadro ${f} (${W.film.timecode(f, fps)}, shot ${loc.entry.name})`, o.quiet);
     return;
@@ -376,6 +379,11 @@ function filmInfo(m) {
   out.push(`filme    ${m.canvas.w} × ${m.canvas.h}, ${F.fps} fps, ${secs(tl.duration)} (${tl.frames} quadros, ${W.film.timecode(tl.frames, F.fps)}), fundo ${bg}`);
   const fin = Object.entries({ bloom: m.finish.bloom, vignette: m.finish.vignette, grain: m.finish.grain, posterize: m.finish.posterize, pixel: m.finish.pixel > 1 && m.finish.pixel }).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
   if (fin.length) out.push(`acabamento ${fin.join(' ')}`);
+  // art: o do filme todo e o dos atores (o de cada plano vai na linha dele)
+  const artText = (a) => (a.style === 'none' ? 'none' : W.art.describe(a));
+  const artActors = (map) => { const by = new Map(); for (const [n, a] of map) by.set(a, [...(by.get(a) || []), n]); return [...by].map(([a, ns]) => `${ns.join(', ')}: ${artText(a)}`); };
+  if (F.art) out.push(`art      ${artText(F.art)}`);
+  for (const t of artActors(F.artActors)) out.push(`art      ${t}`);
   if (m.ambient) out.push(`ambiente ${m.ambient.c} × ${m.ambient.power}`);
   if (m.lights.size) out.push(`luzes    ${[...m.lights.values()].map((l) => `${l.name} (${l.type}, ${l.c} × ${l.power})`).join(', ')}`);
   const actor = (a) => {
@@ -407,6 +415,13 @@ function filmInfo(m) {
     const keys = [...s.tracks.values()].reduce((n, t) => n + t.keys.length, 0);
     if (keys) notes.push(`${keys} mudança(s) com at`);
     if (s.trans) notes.push(`entra com ${s.trans.type} (${secs(s.trans.dur)})`);
+    if (s.art) notes.push(`art ${artText(s.art)}`);
+    if (s.artActors && s.artActors.size) notes.push(...artActors(s.artActors).map((t) => `art de ${t}`));
+    // plano de uma cena (outro arquivo): o art que vem do arquivo da cena, quando o plano não tem o próprio
+    const scenes = (e.chain || []).slice(1).reverse();
+    const sceneArt = scenes.find((ow) => ow.film.art !== undefined);
+    if (!s.art && sceneArt) notes.push(`art da cena ${artText(sceneArt.film.art)}`);
+    for (const ow of scenes) if (ow.film.artActors.size) notes.push(...artActors(ow.film.artActors).map((t) => `art de ${t} (da cena)`));
     out.push(`  ${e.name.padEnd(16)} ${W.film.timecode(e.start, F.fps)}  ${secs(e.frames / F.fps).padStart(6)}  ${String(e.frames).padStart(5)} quadros  ${notes.join(' · ')}`);
   }
   return out.join('\n');

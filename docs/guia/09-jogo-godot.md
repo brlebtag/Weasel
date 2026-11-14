@@ -924,4 +924,6 @@ Repare:
 | `--layout rows` | uma linha por animação, em vez de uma grade (como a [folha das direções](#um-bichinho-com-cinco-vistas)) |
 | `--variant all` | uma folha para cada variante de cor |
 
+**Pixel art:** com `art pixel … small` ([capítulo 14](14-estilos.md#pixel-art-no-jogo-small)), a folha e o pacote do Godot saem com 1 pixel por bloco, e a cena do Godot já vem sem suavizar a imagem (`texture_filter` em *nearest*).
+
 [← Luz, efeitos e partículas](08-luz-efeitos.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)

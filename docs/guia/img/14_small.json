@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "quica_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 120,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 120,
+        "h": 120
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "quica_01": {
+      "frame": {
+        "x": 124,
+        "y": 2,
+        "w": 120,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 120,
+        "h": 120
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "quica_02": {
+      "frame": {
+        "x": 2,
+        "y": 124,
+        "w": 120,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 120,
+        "h": 120
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "quica_03": {
+      "frame": {
+        "x": 124,
+        "y": 124,
+        "w": 120,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 120,
+        "h": 120
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    }
+  },
+  "animations": {
+    "quica": [
+      "quica_00",
+      "quica_01",
+      "quica_02",
+      "quica_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "14_small.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 246,
+      "h": 246
+    },
+    "scale": "0.75",
+    "frameSize": {
+      "w": 120,
+      "h": 120
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "quica",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 0,
+      "y": 0,
+      "w": 160,
+      "h": 160
+    }
+  }
+}

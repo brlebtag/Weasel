@@ -4,7 +4,7 @@
   const M = W.geom.M;
 
   const KEYWORDS = {
-    canvas: 'setup', finish: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup', ref: 'setup',
+    canvas: 'setup', finish: 'setup', art: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup', ref: 'setup',
     layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
     def: 'comp', end: 'comp', use: 'comp', repeat: 'comp',
     bone: 'rig', cloth: 'rig', ik: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
@@ -25,6 +25,7 @@
   const ATTRS = {
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
+    art: ['size', 'palette', 'dither', 'chars', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
@@ -67,6 +68,7 @@
     tileset: ['auto', 'iso'],
     tile: ['solid', 'oneway'],
     ref: ['lock', 'hidden', 'front'],
+    art: ['outline', 'small', 'color'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic', 'billboard']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
@@ -92,6 +94,12 @@
   const BOX_KINDS = ['body', 'hit', 'hurt'], BOX_SHAPES = ['rect', 'circle', 'capsule'];
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
+  // art: estilos de arte (a imagem pronta pintada de outro jeito). ART_LATER = os que ainda vão chegar.
+  const ART_STYLES = ['pixel', 'ascii'];
+  const ART_LATER = ['halftone', 'stitch', 'mosaic', 'knit', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery', 'toon', 'engraving', 'woodcut', 'comic', 'manga', 'riso', 'stencil', 'silhouette'];
+  const ART_OPTS = { pixel: { attrs: ['size', 'palette', 'dither'], flags: ['outline', 'small'] }, ascii: { attrs: ['size', 'chars'], flags: ['color'] }, none: { attrs: [], flags: [] } };
+  const ART_COMMON = ['boil', 'seed', 'actor'];
+  const ART_PALETTES = ['own', 'gameboy', 'nes', 'pico8', 'mono'];
   const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'];
   const DEFAULT_PALETTE = { ink: '#14141c', line: 8, inner: 5, edge: 3 };
 
@@ -525,6 +533,7 @@
       lineCount: src.split(/\r?\n/).length,
       canvas: { w: 800, h: 600, bg: '#ffffff', light: [-0.6, -0.8] },
       finish: { style: 'game', inner: 1, pixel: 1 },
+      art: null,
       unity: null,
       palette: new Map(Object.entries(DEFAULT_PALETTE)),
       gradients: new Map(), patterns: new Map(),
@@ -750,9 +759,79 @@
     if (open) err(open.line, `def "${open.name}" sem end`, open.st.cmdTok.from, open.st.cmdTok.to);
     const top = stmts.filter((s) => !s.inDef && s.cmd !== 'def' && s.cmd !== 'end');
 
+    // ---- art: o estilo de arte (pixel, ascii…); a imagem pronta é pintada de outro jeito ----
+    // art pixel size=8 palette=gameboy dither=bayer outline small · art ascii size=6,12 chars=" .:#@" color · art none
+    function readArt(st) {
+      const A = st.attrs, t = st.pos[0];
+      if (!t) { err(st.line, `falta o estilo (ex.: art pixel size=8; hoje: ${ART_STYLES.join(', ')} ou none)`, st.cmdTok.from, st.cmdTok.to); return null; }
+      const style = t.text;
+      if (style !== 'none' && !ART_STYLES.includes(style)) {
+        err(st.line, ART_LATER.includes(style) ? `o estilo "${style}" ainda não foi feito (hoje: ${ART_STYLES.join(', ')})` : `estilo desconhecido "${style}" (use ${ART_STYLES.join(', ')} ou none)`, t.from, t.to);
+        return null;
+      }
+      const own = ART_OPTS[style];
+      const where = (k) => ART_STYLES.filter((n) => ART_OPTS[n].attrs.includes(k) || ART_OPTS[n].flags.includes(k));
+      for (const a of A.values()) {
+        if (!ATTRS.art.includes(a.key) || ART_COMMON.includes(a.key) || own.attrs.includes(a.key)) continue;
+        bad(st, a, `${a.key}= não vale no estilo ${style}${where(a.key).length ? ` (vale no ${where(a.key).join(' e no ')})` : ''}`, 'warn');
+      }
+      const a = { style, line: st.line };
+      for (const f of st.pos.slice(1)) {
+        if (own.flags.includes(f.text)) a[f.text] = true;
+        else if (FLAGS.art.includes(f.text)) err(st.line, `${f.text} não vale no estilo ${style} (vale no ${where(f.text).join(' e no ')})`, f.from, f.to, 'warn');
+        else err(st.line, `opção desconhecida "${f.text}"${own.flags.length ? ` (use ${own.flags.join(', ')})` : ''}`, f.from, f.to, 'warn');
+      }
+      if (A.has('actor')) {
+        const at = A.get('actor');
+        a.actors = at.text.split(',').filter(Boolean);
+        a.actorAt = at;
+        for (const n of a.actors) if (!IDENT.test(n)) bad(st, at, `nome inválido "${n}" em actor=`);
+        if (!a.actors.length) { bad(st, at, 'actor= leva o nome dos atores, separados por vírgula'); delete a.actors; }
+      }
+      if (style === 'pixel') {
+        a.size = A.has('size') ? Math.round(number(st, A.get('size'), 8, 1, 64)) : 8;
+        a.palette = 'own';
+        if (A.has('palette')) {
+          const p = A.get('palette');
+          if (ART_PALETTES.includes(p.text)) a.palette = p.text;
+          else bad(st, p, `palette= desconhecida "${p.text}" (use ${ART_PALETTES.join(', ')})`, 'warn');
+        }
+        a.dither = null;
+        if (A.has('dither')) {
+          const d = A.get('dither');
+          if (d.text === 'bayer') a.dither = 'bayer';
+          else if (d.text !== 'none') bad(st, d, 'dither= aceita bayer (pontilhado) ou none', 'warn');
+        }
+      } else if (style === 'ascii') {
+        a.cell = [6, 12];
+        if (A.has('size')) {
+          const sz = A.get('size'), v = nums(sz.text);
+          if (v.length === 1 && !isNaN(v[0])) a.cell = [v[0], v[0] * 2];
+          else if (v.length === 2 && !v.some(isNaN)) a.cell = v;
+          else bad(st, sz, 'size= no ascii é a largura,altura de cada letra (ex.: size=6,12)');
+          if (a.cell.some((n) => n < 2 || n > 64)) bad(st, sz, 'size= deve ficar entre 2 e 64', 'warn');
+          a.cell = a.cell.map((n) => Math.round(Math.min(64, Math.max(2, n))));
+        }
+        a.chars = ' .:-=+*#%@';
+        if (A.has('chars')) {
+          const c = A.get('chars'), v = unq(c.text);
+          if ([...v].length < 2) bad(st, c, 'chars= precisa de pelo menos 2 letras, da mais clara para a mais escura (ex.: chars=" .:#@")', 'warn');
+          else a.chars = v;
+        }
+      }
+      // boil= (a fervura: a textura muda a cada N quadros) e seed= (outra versão do mesmo desenho)
+      a.boil = A.has('boil') ? Math.round(number(st, A.get('boil'), 0, 0, 1000)) : 0;
+      a.seed = A.has('seed') ? Math.round(number(st, A.get('seed'), 0, 0, 1e9)) : 0;
+      for (const k of ['boil', 'seed']) if (A.has(k) && (style === 'pixel' || style === 'ascii')) bad(st, A.get(k), `${k}= não muda nada no estilo ${style} (ele não tem textura)`, 'warn');
+      if (style === 'none') for (const k of ['boil', 'seed']) if (A.has(k)) bad(st, A.get(k), 'art none não leva opções', 'warn');
+      a.key = JSON.stringify(Object.assign({}, a, { line: undefined, actors: undefined, actorAt: undefined }));
+      return a;
+    }
+
     // ---- passo 1: configuração, palette, camadas, ossos, tecidos ----
     const variantStmts = [], gradientStmts = [], lateStmts = [], layerFx = [];
-    let bgTok = null;
+    let bgTok = null, artSt = null;
+    const isFilm = top.some((s) => s.cmd === 'film');
     for (const st of top) {
       const A = st.attrs;
       checkAttrs(st);
@@ -792,6 +871,18 @@
             else m.finish.posterize = Math.round(number(st, a, 0, 2, 64));
           }
           info(st);
+          break;
+        }
+        // no filme, quem lê o art é o readFilm (ele vale para o filme, a cena, o plano ou um ator)
+        case 'art': {
+          if (isFilm) break;
+          const a = readArt(st);
+          info(st, { art: a });
+          if (!a) break;
+          if (a.actors) bad(st, a.actorAt, 'actor= só vale num filme (aqui o art vale para o desenho todo)', 'warn');
+          if (artSt) { err(st.line, `art repetido: só um por arquivo (vale o da linha ${artSt.line + 1})`, st.cmdTok.from, st.cmdTok.to, 'warn'); break; }
+          artSt = st;
+          if (a.style !== 'none') m.art = a;
           break;
         }
         case 'unity': {
@@ -2219,6 +2310,11 @@
     const round3 = (v) => Math.round(v * 1000) / 1000;
     if (filmSts.length) readFilm(filmSts[0]);
     else for (const st of top) if (FILM_CMDS.has(st.cmd)) err(st.line, `${st.cmd} só vale num filme (comece o arquivo com: film fps=24)`, st.cmdTok.from, st.cmdTok.to);
+    // com art, o finish pixel= fica de fora: o pixel art é o art pixel size=
+    if ((m.art || (m.film && m.film.hasArt)) && m.finish.pixel > 1) {
+      const fst = top.filter((s) => s.cmd === 'finish' && s.attrs.has('pixel')).pop();
+      if (fst) bad(fst, fst.attrs.get('pixel'), 'com art, o finish pixel= fica de fora (o pixel art de verdade é art pixel size=)', 'warn');
+    }
 
     // tempo: 2s, 1.5, 500ms, 48f (quadros do filme), 1m30s; com + na frente, conta a partir do at anterior
     function timeOf(st, tok, fps, what) {
@@ -2378,6 +2474,8 @@
         actors: [], camera: { x: m.canvas.w / 2, y: m.canvas.h / 2, zoom: 1, rot: 0, shake: 0, follow: null, offset: [0, 0], lag: 0, fade: 0, fadec: '#000000', lens: 1, fog: null, haze: 6 },
         shots: [], seq: [], audios: [], subs: [], marks: [],
         lang: 'pt', burn: false, subsize: null, subc: '#ffffff',
+        // art do filme (undefined = não tem; style none = desligado) e art … actor= no começo do filme
+        art: undefined, artActors: new Map(), hasArt: false,
       };
       m.film = F;
       if (fst.attrs.has('fps')) F.fps = number(fst, fst.attrs.get('fps'), 24, 1, 120);
@@ -2394,15 +2492,15 @@
 
       const sequenced = top.some((s) => s.cmd === 'shot' || s.cmd === 'scene');
       const base = (X.mainFile || 'filme').replace(/\.[^.]+$/, '');
-      let shot = sequenced ? null : { name: base, line: fst.line, dur: F.dur, implicit: true, actors: [], cam: null, ats: [], tracks: new Map(), audios: [], subs: [] };
+      let shot = sequenced ? null : { name: base, line: fst.line, dur: F.dur, implicit: true, actors: [], cam: null, ats: [], tracks: new Map(), audios: [], subs: [], art: undefined, artActors: new Map() };
       if (shot) { F.shots.push(shot); F.seq.push({ kind: 'shot', shot }); }
       let order = 0, seen = false;
-      const shotNames = new Set();
+      const shotNames = new Set(), artNames = [];
       for (const st of top) {
         if (st.cmd === 'shot') {
           seen = true;
           const name = ident(st, st.pos[0], 'do plano');
-          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names), audios: [], subs: [], trans: null };
+          shot = { name: name || '?', line: st.line, dur: null, actors: [], cam: null, ats: [], tracks: new Map(), names: new Set(F.names), audios: [], subs: [], trans: null, art: undefined, artActors: new Map() };
           if (name && shotNames.has(name)) err(st.line, `shot "${name}" já existe`, st.pos[0].from, st.pos[0].to);
           shotNames.add(shot.name);
           shot.cam = Object.assign({}, F.camera, { offset: F.camera.offset.slice() });
@@ -2427,8 +2525,24 @@
           if (sub) F.seq.push({ kind: 'scene', file, model: sub, line: st.line });
           continue;
         }
-        if ((st.cmd === 'actor' || st.cmd === 'camera' || st.cmd === 'audio' || st.cmd === 'sub') && !shot && seen) {
+        if ((st.cmd === 'actor' || st.cmd === 'camera' || st.cmd === 'audio' || st.cmd === 'sub' || st.cmd === 'art') && !shot && seen) {
           err(st.line, `${st.cmd} depois de scene precisa de um shot antes (ou suba para antes do primeiro shot, valendo para todos)`, st.cmdTok.from, st.cmdTok.to);
+          continue;
+        }
+        // art: antes dos shots vale para o filme todo; dentro de um shot, só para ele; com actor=, só para esses atores
+        if (st.cmd === 'art') {
+          const a = readArt(st);
+          info(st, { art: a });
+          if (!a) continue;
+          const local = shot && !shot.implicit, host = local ? shot : F;
+          if (a.actors) {
+            for (const n of a.actors) {
+              if (host.artActors.has(n)) bad(st, a.actorAt, `"${n}" já tem art ${local ? 'neste shot' : 'no filme'} (vale o da linha ${host.artActors.get(n).line + 1})`, 'warn');
+              else host.artActors.set(n, a);
+            }
+            artNames.push({ st, a, shot: local ? shot : null });
+          } else if (host.art !== undefined) err(st.line, `art repetido ${local ? `no shot "${shot.name}"` : 'no filme'} (vale o da linha ${host.art.line + 1})`, st.cmdTok.from, st.cmdTok.to, 'warn');
+          else host.art = a;
           continue;
         }
         if (st.cmd === 'actor') {
@@ -2533,6 +2647,21 @@
       }
       const everyone = new Map([...F.actors, ...F.shots.flatMap((s) => s.actors)].map((a) => [a.name, a]));
       for (const a of F.audios) checkLips(a, everyone);
+      // art … actor=: o ator precisa existir ali (no filme todo, contando os das cenas)
+      const deep = (F2, out, depth) => {
+        for (const a of [...F2.actors, ...F2.shots.flatMap((s) => s.actors)]) out.add(a.name);
+        if (depth < 8) for (const x of F2.seq) if (x.model && x.model.film) deep(x.model.film, out, depth + 1);
+        return out;
+      };
+      const allNames = artNames.some((x) => !x.shot) ? deep(F, new Set(), 0) : null;
+      for (const { st, a, shot: s } of artNames) {
+        for (const n of a.actors) if (!(s ? s.actorMap.has(n) : allNames.has(n))) bad(st, a.actorAt, `ator "${n}" não existe ${s ? `no shot "${s.name}"` : 'no filme'}`, 'warn');
+      }
+      // o filme tem algum art (dele, de um shot, de um ator ou de uma cena)?
+      F.hasArt = (F.art !== undefined && F.art.style !== 'none') || [...F.artActors.values()].some((a) => a.style !== 'none')
+        || F.shots.some((s) => (s.art && s.art.style !== 'none') || [...s.artActors.values()].some((a) => a.style !== 'none'))
+        || F.seq.some((x) => x.model && x.model.film && x.model.film.hasArt);
+      if (F.art && F.art.style !== 'none') m.art = F.art;
       if (sequenced && F.dur !== null) err(fst.line, 'dur= do film só vale sem shot (a duração vem dos shots)', fst.attrs.get('dur').from, fst.attrs.get('dur').to, 'warn');
       if (!F.seq.length) err(fst.line, 'o filme não tem nenhum shot', fst.cmdTok.from, fst.cmdTok.to, 'warn');
       delete F.names;
@@ -2802,5 +2931,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, ART_STYLES, ART_OPTS, ART_PALETTES, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

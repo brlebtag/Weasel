@@ -1,0 +1,10 @@
+# teste: art pixel com paleta fixa (gameboy) e dither num céu em degradê, sem small
+canvas 240 160 bg=ceu
+gradient ceu linear 0,0 0,160 : #0b1030@0 #3a4f9a@0.6 #f0b070@1
+palette ink=#141320 line=4 morro=#2b3a2a lua=#fff3c4
+art pixel size=5 palette=gameboy dither=bayer
+
+layer fundo
+ellipse lua 180,40 18 c=lua
+shape morro c=morro ink=line : 0,130! 60,110 130,124 190,104 240,116! 240,160! 0,160!
+text nome 20,30 "Weasel" size=20 c=#ffffff bold

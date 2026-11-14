@@ -25,9 +25,9 @@ Entrada:
 Saída:
   -o, --out <arquivo>     arquivo de saída; a extensão escolhe o formato
                           (.png .jpg .gif .svg .tres .tscn; .zip = sprite sheet em zip;
-                          filme: .mp4 .mov .webm .mkv)
+                          .txt = as letras do art ascii; filme: .mp4 .mov .webm .mkv)
   -f, --format <tipo>     png | jpg | gif | svg | sheet | godot | tscn | build (GIF da pintura)
-                          | mp4 | mov | webm | mkv (filme)
+                          | txt (art ascii) | mp4 | mov | webm | mkv (filme)
   -a, --anim <nome>       animação usada (gif, sheet, godot, png/jpg/svg). Em sheet, "all" = todas
       --frame <n>         quadro do png/jpg/svg (o mesmo número usado em key; começa em 0)
       --frames            png/jpg/svg: salva todos os quadros, um arquivo por quadro
@@ -250,6 +250,7 @@ function info(m, scale) {
   const bg = !c.bg ? 'transparente' : typeof c.bg === 'string' ? c.bg : `gradiente ${c.bg.name}`;
   const out = [];
   out.push(`canvas   ${c.w} × ${c.h}, fundo ${bg}${m.finish.style !== 'game' ? `, acabamento ${m.finish.style}` : ''}${m.finish.pixel > 1 ? `, pixel ${m.finish.pixel}` : ''}`);
+  if (m.art) out.push(`art      ${W.art.describe(m.art)}`);
   if (m.files.length) out.push(`include  ${m.files.join(', ')}`);
   if (m.vars.size) out.push(`let      ${[...m.vars].map(([k, v]) => `${k}=${Math.round(v * 1000) / 1000}`).join(' ')}`);
   if (m.gradients.size) out.push(`gradientes ${[...m.gradients.values()].map((g) => `${g.name} (${g.type}${g.box ? ', box' : ''})`).join(', ')}`);
@@ -313,7 +314,7 @@ function info(m, scale) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.txt': 'txt', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -360,11 +361,15 @@ async function exportModel(model, o, format, base, sfx) {
     return;
   }
 
-  if (format === 'png' || format === 'jpg' || format === 'svg') {
+  if (format === 'png' || format === 'jpg' || format === 'svg' || format === 'txt') {
+    if (format === 'txt' && !(model.art && model.art.style === 'ascii')) usage('o .txt sai do estilo ascii (ponha "art ascii" no arquivo)');
+    // o SVG é feito de formas: o estilo (art) é pintado na imagem pronta, então não vai junto
+    if (format === 'svg' && model.art && !o.quiet) console.error(paint('33', 'aviso') + `: o SVG sai sem o estilo (art ${model.art.style}), só com as formas; para o estilo, use png`);
     const anim = pickAnim(model, o.anim, o.frames);
     const a = anim ? model.animMap.get(anim) : null;
     const one = (f) => {
       if (format === 'svg') { const s = X.svgText(model, anim, f, opts); return { buf: Buffer.from(s), what: 'SVG' }; }
+      if (format === 'txt') { const t = X.imageCanvas(model, anim, f, opts).artText; const ls = t.split('\n').length - 1; return { buf: Buffer.from(t), what: `${ls} linhas de letras` }; }
       const cv = X.imageCanvas(model, anim, f, opts);
       return { buf: format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), what: `${cv.width}×${cv.height}` };
     };
@@ -487,7 +492,7 @@ async function run(o) {
 
   let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
-  if (![...['png', 'jpg', 'gif', 'svg', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
+  if (![...['png', 'jpg', 'gif', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
     if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
     if (o.small && format === 'mov') usage('--small vale para mp4, mkv e webm; o .mov é ProRes, feito para editar');

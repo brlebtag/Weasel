@@ -247,6 +247,8 @@
     const nodes = [`[node name="${rootName}" type="${ROOT_TYPES[bodyType]}"]`];
     const sprite = [`[node name="Sprite" type="AnimatedSprite2D" parent="."]`, 'sprite_frames = ExtResource("1_frames")'];
     sprite.push(`animation = ${sname(first ? first.anim.name : 'default')}`, 'centered = false', `offset = ${vec(off)}`);
+    // pixel art (art pixel): o Godot desenha sem suavizar (nearest), senão os pixels borram
+    if (W.art && W.art.crisp(model)) sprite.push('texture_filter = 1');
     nodes.push(sprite.join('\n'));
     const boxNode = (b, k) => {
       const lines = [`[node name="${b.node}" type="CollisionShape2D" parent="${b.parent}"]`, `position = ${rest[k].pos}`];
@@ -434,6 +436,8 @@ func _weasel_eventos(nomes: Array) -> void:
     const strength = model.godot ? model.godot.normal : 1;
     if (model.tileset) {
       const T = model.tileset;
+      // art pixel … small: o atlas sai com 1 pixel por bloco
+      if (W.art && W.art.small(model)) o = Object.assign({}, o, { scale: W.art.smallScale(model, o.scale) });
       if (Math.abs(T.size[0] * o.scale - Math.round(T.size[0] * o.scale)) > 1e-6 || Math.abs(T.size[1] * o.scale - Math.round(T.size[1] * o.scale)) > 1e-6) {
         throw new Error(`com escala ${o.scale} o bloco de ${T.size[0]}×${T.size[1]} não fica com tamanho inteiro`);
       }

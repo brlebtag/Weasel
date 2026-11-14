@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.29.0">
+<link rel="stylesheet" href="css/style.css?v=1.30.0">
 </head>
 <body>
 <header class="top">
@@ -51,6 +51,7 @@
       <label class="tog ic" title="Pontos: as alças da linha do cursor (arraste para mudar o código)"><input type="checkbox" id="tPoints" checked aria-label="Pontos"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5C4.5 5 11.5 11 13 3.5"/><path class="f" d="M1.5 11h3v3h-3zM11.5 2h3v3h-3z"/></svg></label>
       <label class="tog ic" title="Ossos: o esqueleto (com uma animação escolhida e o player parado, arrastar um osso escreve a key do quadro)"><input type="checkbox" id="tBones" aria-label="Ossos"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="12.5" r="1.6"/><circle cx="8.5" cy="7.5" r="1.6"/><circle cx="12.5" cy="3.5" r="1.6"/><path d="M4.6 11.4l2.8-2.8M9.6 6.4l1.8-1.8"/></svg></label>
       <label class="tog ic" title="Papel vegetal: mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion" aria-label="Papel vegetal"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="8" r="4.3" opacity=".45"/><circle cx="10" cy="8" r="4.3"/></svg></label>
+      <label class="tog ic" id="tArtWrap" title="Estilo: mostra o desenho no estilo do art (pixel art, ASCII). Desligado, mostra as formas como são, sem o estilo" hidden><input type="checkbox" id="tArt" checked aria-label="Estilo"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="f" d="M2 2h4v4H2zM10 2h4v4h-4zM6 6h4v4H6zM2 10h4v4H2zM10 10h4v4h-4z"/></svg></label>
       <label class="tog ic" title="Trajetória: o caminho dos pés (anim feet=) ou dos pontos (point) em todos os quadros da animação, numerado; com feet=, quanto o personagem anda por segundo para os pés no chão não escorregarem"><input type="checkbox" id="tTraj" aria-label="Trajetória"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5C3 8 7.5 4.5 12.5 4" stroke-dasharray="0 2.7" stroke-width="2"/><path d="M10.6 1.9 13 4l-2 2.3"/></svg></label>
       <label class="tog ic pv-tog" id="tPreviewWrap" title="Prévia do def" hidden><input type="checkbox" id="tPreview" aria-label="Prévia do def"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l2.3 2.3L8 6.1 5.7 3.8zM8 9.9l2.3 2.3L8 14.5l-2.3-2.3zM3.8 5.7 6.1 8l-2.3 2.3L1.5 8zM12.2 5.7 14.5 8l-2.3 2.3L9.9 8z"/></svg></label>
       <label class="tog ic" id="tRulersWrap" title="Réguas (tecla R): réguas em pixels em cima e à esquerda. Arraste de uma régua para pôr uma linha guia: o que você arrasta gruda nela (segurando Ctrl, não gruda)"><input type="checkbox" id="tRulers" aria-label="Réguas"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2 11.2 1.6l3.2 3.2-9.6 9.6z"/><path d="M4 8.8l1.4 1.4M6 6.8l1 1M8 4.8l1.4 1.4M10 2.8l1 1"/></svg></label>
@@ -296,6 +297,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <button type="button" data-kind="jpg">JPG</button>
     <button type="button" data-kind="gif">GIF animado</button>
     <button type="button" data-kind="svg" data-for="draw">SVG</button>
+    <button type="button" data-kind="txt" data-for="ascii">Texto (ASCII)</button>
     <button type="button" data-kind="sheet" data-for="draw">Sprite sheet</button>
     <button type="button" data-kind="godot" data-for="draw">Godot</button>
     <button type="button" data-kind="video" data-for="film">Vídeo</button>
@@ -337,7 +339,8 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <label data-show="nle" title="A pasta onde ficam os vídeos renderizados e o .weasel (com a pasta dos sons). Vazio: só os nomes, e o editor pede para achar os arquivos.">Pasta do projeto <input type="text" id="expNleDir" placeholder="C:\Filmes\meu_filme" spellcheck="false"></label>
       <p data-show="nle" class="opt-note">Um .zip com a linha do tempo para o editor de vídeo: .fcpxml (DaVinci Resolve, Final Cut), .edl (Premiere, Resolve e quase todos) e as legendas .srt. O vídeo vai na trilha de vídeo, cada audio numa trilha de som, no lugar e no volume certos, e os planos viram marcadores. Grave os vídeos sem o som misturado e com os mesmos nomes: <code>weasel filme.weasel --shots --edl --fcpxml</code> faz tudo de uma vez.</p>
       <p data-show="godot" class="opt-note">Sai um .zip para pôr numa pasta do projeto do Godot: a folha (.png), o SpriteFrames (.tres) e, com as opções, o normal map, a cena (.tscn) e o weasel_anim.gd. Use a cena como personagem e toque com $AnimationPlayer.tocar("walk", velocity). Num arquivo com tileset, sai o TileSet.</p>
-      <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= não vale para SVG.</p>
+      <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= e o estilo (art) não valem para SVG: ele sai só com as formas.</p>
+      <p data-show="txt" class="opt-note">As letras do art ascii num .txt, uma linha de texto por linha de letras (o quadro atual).</p>
       <p data-show="video" class="opt-note">WebM (VP9) gravado pelo próprio navegador, sem som. Para filmes longos, MP4 ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
       <p data-show="subs" class="opt-note">As legendas (sub e o text= dos audio) em .srt e .vtt, com o tempo contado do começo do trecho. O YouTube e os editores de vídeo abrem os dois. Cada língua (lang=) sai num arquivo.</p>
       <p data-show="seq" class="opt-note">Um PNG por quadro num .zip, numerado pelo quadro do filme (filme_00000.png …). Todo editor de vídeo importa sequência de imagens.</p>
@@ -351,23 +354,24 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.29.0"></script>
-<script src="js/lang.js?v=1.29.0"></script>
-<script src="js/scene.js?v=1.29.0"></script>
-<script src="js/film.js?v=1.29.0"></script>
-<script src="js/audio.js?v=1.29.0"></script>
-<script src="js/nle.js?v=1.29.0"></script>
-<script src="js/webm.js?v=1.29.0"></script>
-<script src="js/svg.js?v=1.29.0"></script>
-<script src="js/gif.js?v=1.29.0"></script>
-<script src="js/zip.js?v=1.29.0"></script>
-<script src="js/normal.js?v=1.29.0"></script>
-<script src="js/export.js?v=1.29.0"></script>
-<script src="js/godot.js?v=1.29.0"></script>
-<script src="js/rig.js?v=1.29.0"></script>
-<script src="js/editor.js?v=1.29.0"></script>
-<script src="js/examples.js?v=1.29.0"></script>
-<script src="js/timeline.js?v=1.29.0"></script>
-<script src="js/app.js?v=1.29.0"></script>
+<script src="js/geom.js?v=1.30.0"></script>
+<script src="js/lang.js?v=1.30.0"></script>
+<script src="js/art.js?v=1.30.0"></script>
+<script src="js/scene.js?v=1.30.0"></script>
+<script src="js/film.js?v=1.30.0"></script>
+<script src="js/audio.js?v=1.30.0"></script>
+<script src="js/nle.js?v=1.30.0"></script>
+<script src="js/webm.js?v=1.30.0"></script>
+<script src="js/svg.js?v=1.30.0"></script>
+<script src="js/gif.js?v=1.30.0"></script>
+<script src="js/zip.js?v=1.30.0"></script>
+<script src="js/normal.js?v=1.30.0"></script>
+<script src="js/export.js?v=1.30.0"></script>
+<script src="js/godot.js?v=1.30.0"></script>
+<script src="js/rig.js?v=1.30.0"></script>
+<script src="js/editor.js?v=1.30.0"></script>
+<script src="js/examples.js?v=1.30.0"></script>
+<script src="js/timeline.js?v=1.30.0"></script>
+<script src="js/app.js?v=1.30.0"></script>
 </body>
 </html>

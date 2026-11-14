@@ -1,0 +1,6 @@
+canvas   240 × 160, fundo #f4efe6
+art      ascii size=6,10 chars=" .-+*#@" color
+camadas  1
+  cena             3 item(ns)
+formas   3
+animações nenhuma

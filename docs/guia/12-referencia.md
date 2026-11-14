@@ -129,6 +129,7 @@ Para aprender: [capítulo 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette
 |---|---|
 | `canvas L A` | `bg=` cor, gradiente ou `none` (`#ffffff`) · `light=x,y` direção da luz do contorno (`-0.6,-0.8`). Tamanho de 1 a 4096 (padrão 800×600; num filme, 1920×1080). |
 | `finish [game\|flat]` | `inner=` opacidade dos traços em camadas com `clip`, 0–1 (1) · `pixel=` 1–32 (1) · `posterize=` 2–64 ou `palette` · `bloom=` 0–3 (0) · `vignette=` 0–1 (0) · `grain=` 0–0.33 (0); fora da faixa, o Weasel avisa (acima de 1 no `vignette` e de 0.33 no `grain`, a imagem não muda mais) |
+| `art estilo` | o desenho pronto pintado em outro estilo ([cap. 14](14-estilos.md)); um por arquivo; `art none` desliga. `art pixel`: `size=` 1–64 (8) · `palette=own\|gameboy\|nes\|pico8\|mono` (own) · `dither=bayer\|none` (none) · `[outline]` · `[small]`. `art ascii`: `size=l,a` 2–64 (6,12; um número `n` vale `n,2n`) · `chars="…"` da mais clara para a mais escura (`" .:-=+*#%@"`) · `[color]`. Todos: `boil=` · `seed=` (sem efeito no pixel e no ascii) |
 | `palette nome=valor …` | cores e números. Já existem: `ink=#14141c` `line=8` `inner=5` `edge=3`. Usar um nome (`c=`, `ink=`, `bg=`, cores de `gradient`…) vale no arquivo todo; copiar (`b=a`) só depois do original: acima, ou à esquerda na mesma linha ([cap. 3](03-cores.md#antes-ou-depois-onde-um-nome-da-palette-vale)) |
 | `let nome=valor …` | variáveis para as contas; lidas antes de tudo (um `let` pode usar outro, de cima ou de baixo) |
 | `gradient nome linear x1,y1 x2,y2 [box] : cores` | cores com posição opcional `cor@0.5` |
@@ -492,6 +493,7 @@ Para aprender: [capítulo 9](09-jogo-godot.md).
 | `mark nome tempo` | um momento com nome (antes dos `shot`: do começo do filme; dentro de um: do começo dele); `at nome`, `at nome+0.3s` |
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |
 | `sub tempo "texto"` | `dur=` (o tempo de ler) · `lang=` |
+| `art estilo` | antes do primeiro `shot`: o filme todo (no arquivo de uma cena: a cena); dentro de um `shot`: só ele · `actor=nome,…` só esses atores. O mais específico ganha: ator, plano, cena, filme ([cap. 14](14-estilos.md#no-filme-o-filme-a-cena-o-plano-e-o-ator)) |
 
 **O que o `at` muda:** ator `pos x y scale rot opacity depth flip show anim speed variant expr along` · câmera `pos x y zoom rot shake follow offset lag fade fadec lens fog haze` · luz `power radius c glow aim cone` · camada `opacity show yaw pitch` e os efeitos · forma do filme `draw opacity show yaw pitch z`. Uma forma ou camada do filme com `hidden` começa escondida e aparece com `show=1`.
 
@@ -533,8 +535,8 @@ Para aprender: [capítulo 10](10-filme.md).
 
 | Opção | O que faz |
 |---|---|
-| `-o arquivo` | saída; a extensão escolhe o formato (`.png .jpg .gif .svg .tres .tscn .zip`; filme: `.mp4 .mov .webm .mkv .wav .fcpxml .edl`) |
-| `-f formato` | `png jpg gif svg sheet godot tscn build` (GIF da pintura passo a passo) |
+| `-o arquivo` | saída; a extensão escolhe o formato (`.png .jpg .gif .svg .txt .tres .tscn .zip`; filme: `.mp4 .mov .webm .mkv .wav .fcpxml .edl`); o `.txt` é o das letras do `art ascii` |
+| `-f formato` | `png jpg gif svg txt sheet godot tscn build` (GIF da pintura passo a passo) |
 | `-a anim` | animação (`all` = todas, na sprite sheet) |
 | `--frame n` · `--frames` | um quadro · um arquivo por quadro |
 | `--variant nome` | variante (`all` = todas) |

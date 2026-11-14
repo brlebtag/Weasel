@@ -1,0 +1,10 @@
+filme    320 × 180, 4 fps, 5s (20 quadros, 00:05:00), fundo #1d2b53
+art      pixel size=6 palette=pico8
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   5
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  letras           00:01:00      1s      4 quadros  câmera 160,90 · art ascii size=6,12
+  misto            00:02:00      1s      4 quadros  câmera 160,90 · art de b: ascii size=6,12
+  nenhum           00:03:00      1s      4 quadros  câmera 160,90 · art none
+  estilo/cena/cena 00:04:00      1s      4 quadros  câmera 160,90 · art da cena pixel size=10 palette=mono

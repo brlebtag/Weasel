@@ -95,6 +95,8 @@
       }
     }
     if (model.lights.size && !lightsMove) notes.add('a luz da cena fica desenhada nas peças como na pose parada (no Godot, use as luzes 2D com o normal map)');
+    // art: cada peça é desenhada uma vez, parada, já no estilo
+    if (model.art) notes.add(`com art ${model.art.style}, cada peça sai no estilo como na pose parada: a textura não ferve${model.art.style === 'pixel' ? ', e o pixel art perde a grade quando a peça gira (para pixel art que gira, use a folha de quadros: --no-rig)' : ''}`);
     return { kind, motion, fade, order, orderLayers, notes };
   }
 
@@ -135,6 +137,14 @@
     c.width = Math.max(1, Math.ceil(R.w * k));
     c.height = Math.max(1, Math.ceil(R.h * k));
     const x = c.getContext('2d');
+    // estilo de arte (art): cada peça sai no estilo, na grade presa à origem do canvas
+    if (model.art && W.art) {
+      W.art.paint(x, [k, 0, 0, k, -R.x * k, -R.y * k], R, model.art, {
+        content: (y, m) => { y.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]); S.drawScene(y, model, pose, { background: false, glows: false, layers: part.layers, items: part.items }); },
+        bg: null,
+      }, { colors: () => W.art.colorsOf([model]), ink: model.palette.get('ink'), paper: W.art.paperOf(model) });
+      return c;
+    }
     x.setTransform(k, 0, 0, k, -R.x * k, -R.y * k);
     S.drawScene(x, model, pose, { background: false, glows: false, layers: part.layers, items: part.items });
     return c;
@@ -197,8 +207,14 @@
   // Arquivos para o Godot: a folha de peças (.png), o normal map, a cena (.tscn) e o ajudante do AnimationPlayer.
   // o = { base, scale, mirror, names, name, normal }
   function packageFiles(model, o) {
-    const Gd = W.godot, k = o.scale || 1, base = o.base, withNormal = o.normal !== false;
-    const R = { x: -MARGIN, y: -MARGIN, w: model.canvas.w + 2 * MARGIN, h: model.canvas.h + 2 * MARGIN };
+    // art pixel … small: as peças saem com 1 pixel por bloco
+    const Gd = W.godot, k = W.art ? W.art.smallScale(model, o.scale || 1) : o.scale || 1, base = o.base, withNormal = o.normal !== false;
+    let R = { x: -MARGIN, y: -MARGIN, w: model.canvas.w + 2 * MARGIN, h: model.canvas.h + 2 * MARGIN };
+    // pixel art: a área das peças cai na grade dos blocos
+    if (model.art && model.art.style === 'pixel') {
+      const n = model.art.size, x0 = Math.floor(R.x / n) * n, y0 = Math.floor(R.y / n) * n;
+      R = { x: x0, y: y0, w: Math.ceil((R.x + R.w) / n) * n - x0, h: Math.ceil((R.y + R.h) / n) * n - y0 };
+    }
     const root = Gd.rootOf(model, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
     const T = (x, y) => [(x - root[0]) * k, (y - root[1]) * k];
     const allow = o.names ? o.names.filter(Boolean) : [];
@@ -598,7 +614,9 @@
 
     // nós: o personagem, o visual (esqueleto e peças), as caixas, os pontos e o AnimationPlayer
     const rootName = o.name || (model.godot && model.godot.name) || Gd.pascal(base);
-    const nodes = [`[node name="${rootName}" type="${Gd.ROOT_TYPES[bodyType]}"]`, '[node name="Visual" type="Node2D" parent="."]', '[node name="Esqueleto" type="Skeleton2D" parent="Visual"]'];
+    // pixel art (art pixel): as peças são desenhadas sem suavizar (nearest)
+    const visual = '[node name="Visual" type="Node2D" parent="."]' + (W.art && W.art.crisp(model) ? '\ntexture_filter = 1' : '');
+    const nodes = [`[node name="${rootName}" type="${Gd.ROOT_TYPES[bodyType]}"]`, visual, '[node name="Esqueleto" type="Skeleton2D" parent="Visual"]'];
     const visit = (g) => {
       const parent = g.parent ? bonePath(g.parent) : 'Visual/Esqueleto', p = [g.rest[0] * k, g.rest[1] * k];
       nodes.push([`[node name="${g.node}" type="Bone2D" parent="${parent}"]`, `position = ${vec(p)}`, `rest = Transform2D(1, 0, 0, 1, ${num(p[0])}, ${num(p[1])})`,

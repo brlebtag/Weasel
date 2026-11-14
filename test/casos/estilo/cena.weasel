@@ -1,0 +1,11 @@
+# cena do teste estilo_filme: o art da cena vale para os planos dela (e não o do filme)
+film fps=4
+canvas 320 180 bg=#f4efe6
+art pixel size=10 palette=mono
+
+layer chao
+rect terra 0,150 320,30 c=#6b4a2d
+
+actor c "../rosto.weasel" 160,170
+
+shot cena dur=1s

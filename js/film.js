@@ -27,18 +27,20 @@
     };
     const sub = (s, owner, base, file) => subs.push({ start: base + s.t, end: base + s.t + s.dur, text: s.text, lang: s.lang || owner.film.lang || lang, src: s, owner, base, file });
     // file: o arquivo de onde vêm os blocos (undefined = o arquivo principal)
-    const walk = (owner, prefix, fit, depth, file) => {
+    // chain: os arquivos do filme até este (o principal primeiro): o art de cada nível vale no plano
+    const walk = (owner, prefix, fit, depth, file, chain) => {
       const first = start;
+      chain = chain ? [...chain, owner] : [owner];
       for (const s of owner.film.seq) {
         if (s.kind === 'shot') {
           const frames = Math.max(1, Math.round(s.shot.dur * fps));
           // o plano sem nome de uma cena (arquivo sem shot) leva só o nome do arquivo
           const name = s.shot.implicit && prefix ? prefix.slice(0, -1) : prefix + s.shot.name;
-          entries.push({ owner, shot: s.shot, name, start, frames, fit, index: entries.length, file });
+          entries.push({ owner, shot: s.shot, name, start, frames, fit, index: entries.length, file, chain });
           for (const a of s.shot.audios) clip(a, owner, start / fps, (start + frames) / fps, file);
           for (const sb of s.shot.subs) sub(sb, owner, start / fps, file);
           start += frames;
-        } else if (depth < 8) walk(s.model, prefix + s.file.replace(/\.[^.]+$/, '') + '/', fitOf(owner, s.model, fit), depth + 1, s.file);
+        } else if (depth < 8) walk(s.model, prefix + s.file.replace(/\.[^.]+$/, '') + '/', fitOf(owner, s.model, fit), depth + 1, s.file, chain);
       }
       for (const a of owner.film.audios) clip(a, owner, first / fps, start / fps, file);
       for (const sb of owner.film.subs) sub(sb, owner, first / fps, file);
@@ -555,23 +557,49 @@
     return fs;
   }
 
-  // Um quadro sem transição: o plano daquele quadro, com câmera, atores e legendas.
-  function drawShot(ctx, model, frame, opts) {
-    const fs = frameState(model, frame, opts);
-    if (!fs) return null;
-    const base = matOf(ctx);
+  // ---------- estilos de arte (art) ----------
+  // O estilo de quem aparece no quadro: o mais específico ganha (ator, plano, cena, filme). O art do arquivo
+  // do próprio personagem não vale no filme. null = sem estilo.
+  function artFor(entry, w) {
+    const chain = entry.chain || [entry.owner];
+    const name = w.stage ? null : w.ac.name;
+    let a;
+    if (name) {
+      a = entry.shot.artActors && entry.shot.artActors.get(name);
+      for (let i = chain.length - 1; a === undefined && i >= 0; i--) a = chain[i].film.artActors && chain[i].film.artActors.get(name);
+    }
+    if (a === undefined) a = entry.shot.art;
+    for (let i = chain.length - 1; a === undefined && i >= 0; i--) a = chain[i].film.art;
+    return a && a.style !== 'none' ? a : null;
+  }
+  // As camadas em trechos seguidos com o mesmo estilo, na ordem de profundidade. null = nenhum estilo no quadro.
+  function artRuns(fs, groups) {
+    const of = new Map(fs.who.map((w) => [w, artFor(fs.entry, w)]));
+    if (![...of.values()].some(Boolean)) return null;
+    const runs = [];
+    for (const g of groups) {
+      const a = of.get(g.w), k = a ? a.key : '';
+      const r = runs[runs.length - 1];
+      if (r && r.k === k) r.groups.push(g); else runs.push({ k, art: a, groups: [g] });
+    }
+    if (!runs.length) runs.push({ k: '', art: null, groups: [] });
+    return runs;
+  }
+
+  // o fundo do quadro: o do filme e, numa cena encaixada, o da cena
+  function paintBg(ctx, model, fs, base) {
+    if (model.canvas.bg) { setMat(ctx, base); S.fillBg(ctx, model, fs.who[0].pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h }); }
+    if (fs.owner !== model && fs.owner.canvas.bg) { setMat(ctx, fs.fit ? M.mul(base, fs.fit) : base); S.fillBg(ctx, fs.owner, fs.who[0].pose, { x: 0, y: 0, w: fs.W, h: fs.H }); }
+  }
+  // As camadas (groups) do quadro, com a câmera, a névoa e a transparência de cada ator. bg: com o fundo;
+  // fade: com o escurecer da câmera por cima.
+  function paintPlates(ctx, model, fs, base, groups, opts, bg, fade) {
     const top = fs.fit ? M.mul(base, fs.fit) : base;
     ctx.save();
-    if (!opts.transparent) {
-      setMat(ctx, base);
-      if (model.canvas.bg) S.fillBg(ctx, model, fs.who[0].pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
-      if (fs.owner !== model && fs.owner.canvas.bg) { setMat(ctx, top); S.fillBg(ctx, fs.owner, fs.who[0].pose, { x: 0, y: 0, w: fs.W, h: fs.H }); }
-    }
+    if (bg && !opts.transparent) paintBg(ctx, model, fs, base);
     if (fs.fit) { setMat(ctx, top); ctx.beginPath(); ctx.rect(0, 0, fs.W, fs.H); ctx.clip(); }
-    const stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
-    for (const w of fs.who) if (!w.stage && w.model && w.pose) w.lighting = actorLighting(stageLighting, w, w.mat);
     const views = new Map();
-    for (const g of plates(fs, opts)) {
+    for (const g of groups) {
       const w = g.w;
       let v = views.get(g.d);
       if (!v) { v = g.screen ? M.id() : viewMatrix(fs.cam, g.d, fs.W, fs.H); views.set(g.d, v); }
@@ -582,7 +610,7 @@
       if (!faded) ctx.save();
       setMat(x, m);
       if (g.bg) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
-      if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides) });
+      if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides) });
       if (faded) {
         if (fog > 0.002) {
           // a névoa pinta por cima só onde já tem desenho
@@ -599,13 +627,48 @@
         ctx.restore();
       } else ctx.restore();
     }
-    if (fs.cam.fade > 0.001) {
+    if (fade && fs.cam.fade > 0.001) {
       setMat(ctx, top);
       ctx.globalAlpha = fs.cam.fade;
       ctx.fillStyle = fs.cam.fadec || '#000000';
       ctx.fillRect(0, 0, fs.W, fs.H);
     }
     ctx.restore();
+  }
+
+  // Um quadro sem transição: o plano daquele quadro, com câmera, atores e legendas.
+  // opts.art: com os estilos de arte. Cada trecho de camadas com o mesmo estilo vai numa imagem de trabalho,
+  // na grade presa ao quadro do filme; o escurecer da câmera e as legendas vêm por cima, sem estilo.
+  function drawShot(ctx, model, frame, opts) {
+    const fs = frameState(model, frame, opts);
+    if (!fs) return null;
+    const base = matOf(ctx);
+    fs.stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
+    for (const w of fs.who) if (!w.stage && w.model && w.pose) w.lighting = actorLighting(fs.stageLighting, w, w.mat);
+    const groups = plates(fs, opts);
+    const runs = opts.art && W.art ? artRuns(fs, groups) : null;
+    if (!runs) paintPlates(ctx, model, fs, base, groups, opts, true, true);
+    else {
+      const frameRect = { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h };
+      runs.forEach((run, i) => {
+        const first = i === 0 && !opts.transparent;
+        if (!run.art) { paintPlates(ctx, model, fs, base, run.groups, opts, first, false); return; }
+        const models = [model, ...(fs.entry.chain || []), ...run.groups.map((g) => g.w.model)];
+        const r = W.art.paint(ctx, base, frameRect, run.art, {
+          content: (x, m) => paintPlates(x, model, fs, m, run.groups, opts, false, false),
+          bg: first ? (x, m) => paintBg(x, model, fs, m) : null,
+        }, { colors: () => W.art.colorsOf(models), ink: [...new Set(models.filter(Boolean).map((x) => x.palette.get('ink')))], paper: W.art.paperOf(fs.owner !== model && fs.owner.canvas.bg ? fs.owner : model) });
+        if (r.text && runs.length === 1) fs.artText = r.text;
+      });
+      if (fs.cam.fade > 0.001) {
+        ctx.save();
+        setMat(ctx, fs.fit ? M.mul(base, fs.fit) : base);
+        ctx.globalAlpha = fs.cam.fade;
+        ctx.fillStyle = fs.cam.fadec || '#000000';
+        ctx.fillRect(0, 0, fs.W, fs.H);
+        ctx.restore();
+      }
+    }
     if (opts.subs) { ctx.save(); setMat(ctx, base); drawSubs(ctx, model, fs.loc.frame, opts.lang); ctx.restore(); }
     return fs;
   }
@@ -622,8 +685,10 @@
     // acabamento (bloom, vinheta, granulado…): o do arquivo principal; sem ele, o da cena daquele quadro
     const loc = locate(model, frame);
     const post = S.hasPost(model) || !loc ? model : loc.entry.owner;
-    const px = model.finish.pixel || 1;
-    const o = { transparent: opts.transparent, view: opts.view, guides: opts.guides, subs: opts.subs, lang: opts.lang };
+    // estilos de arte (art): ligados, a não ser com opts.art === false; com eles, o finish pixel= fica de fora
+    const art = opts.art !== false && !!W.art && W.art.has(model) && opts.view !== 'world';
+    const px = art ? 1 : model.finish.pixel || 1;
+    const o = { transparent: opts.transparent, view: opts.view, guides: opts.guides, subs: opts.subs, lang: opts.lang, art };
     if (px > 1) {
       const small = document.createElement('canvas');
       small.width = Math.max(1, Math.round(W2 / px));
@@ -636,9 +701,10 @@
       octx.drawImage(small, 0, 0, W2, H2);
     } else {
       octx.setTransform(scale, 0, 0, scale, 0, 0);
-      drawFrame(octx, model, frame, o);
+      const fs = drawFrame(octx, model, frame, o);
       octx.setTransform(1, 0, 0, 1, 0, 0);
       if (!opts.noPost) S.postFx(out, post, frame);
+      if (fs && fs.artText) out.artText = fs.artText;
     }
     return out;
   }

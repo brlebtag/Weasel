@@ -1319,6 +1319,8 @@ Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 | só o som misturado | `node cli/weasel.js filme.weasel -o som.wav` |
 | ver planos, tempos, atores, sons e legendas | `node cli/weasel.js filme.weasel --info` |
 
+O filme todo, uma cena, um plano ou um ator também podem sair em outro estilo, como pixel art ou letras: veja a linha `art` no [capítulo 14](14-estilos.md#no-filme-o-filme-a-cena-o-plano-e-o-ator).
+
 O que a linha de comando responde, com o `conversa.weasel` de cima. Um vídeo em um quarto do tamanho (`-s 0.25`):
 
 ```

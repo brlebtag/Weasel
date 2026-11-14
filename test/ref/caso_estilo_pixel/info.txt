@@ -1,0 +1,13 @@
+canvas   160 × 160, fundo transparente
+art      pixel size=4 dither=bayer outline small
+gradientes brilho (radial)
+camadas  2
+  sombra           1 item(ns)
+  bola             2 item(ns)
+formas   3
+ossos    sombra, bola
+animações 1
+  quica          4 quadros, 8 fps
+godot    character, raiz 80,150
+caixas   1
+  corpo          body rect

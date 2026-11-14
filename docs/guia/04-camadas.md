@@ -869,6 +869,8 @@ Os quatro códigos são iguais, menos a linha `finish`. Repare:
 
 **Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
 
+O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítido, com as cores do desenho, paletas de console e contorno de 1 bloco, use a linha `art pixel` do [capítulo 14](14-estilos.md#pixel-art-art-pixel).
+
 ### Só as cores da palette: `posterize=palette`
 
 Com `posterize=palette`, cada ponto da imagem vira a cor **mais parecida** entre as cores da sua `palette`. Serve para garantir que o desenho inteiro use só as cores escolhidas, como numa pixel art de poucas cores.

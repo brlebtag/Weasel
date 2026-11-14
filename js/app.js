@@ -22,7 +22,7 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, boxes: true, points: true, bones: false, onion: false, traj: false, refs: true, rulers: store.get('weasel.rulers') === '1' },
+    show: { guides: true, boxes: true, points: true, bones: false, onion: false, traj: false, refs: true, art: true, rulers: store.get('weasel.rulers') === '1' },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
@@ -1477,7 +1477,7 @@
 
   // ---------- autocompletar ----------
   const KDESC = {
-    canvas: 'tamanho e fundo', finish: 'acabamento', unity: 'escala da Unity', palette: 'cores e espessuras', gradient: 'gradiente', let: 'variáveis',
+    canvas: 'tamanho e fundo', finish: 'acabamento', art: 'estilo de arte (pixel, ascii)', unity: 'escala da Unity', palette: 'cores e espessuras', gradient: 'gradiente', let: 'variáveis',
     variant: 'variação de cores', include: 'usar outro arquivo', layer: 'camada', shape: 'forma fechada', stroke: 'traço ou membro', line: 'linha reta',
     ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
     cloth: 'tecido', ik: 'perna ou braço de ossos com IK', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
@@ -1593,6 +1593,9 @@
         case 'only': return [...names(m.anims.map((a) => a.name), 'animação'), { label: 'pose', detail: 'pose parada' }];
         case 'body': return names(L.GODOT_BODIES, 'nó raiz do Godot');
         case 'rig': return [{ label: 'frames', detail: 'quadros prontos (padrão)' }, { label: 'bones', detail: 'esqueleto de verdade: Bone2D e peças' }];
+        case 'palette': return cmd === 'art' ? [{ label: 'own', detail: 'as cores do desenho (padrão)' }, { label: 'gameboy', detail: '4 verdes' }, { label: 'nes', detail: 'Nintendo 8 bits' }, { label: 'pico8', detail: '16 cores' }, { label: 'mono', detail: 'preto e branco (1 bit)' }] : [];
+        case 'dither': return [{ label: 'bayer', detail: 'pontilhado nos degradês e na luz' }, { label: 'none', detail: 'sem pontilhado' }];
+        case 'actor': return names(filmActors().map((a) => a.name), 'ator (separe com vírgula)');
         case 'collision': return names(els.filter((n) => m.named.get(n)[0].closed), 'forma');
         case 'lips': return names(filmActors().filter((a) => a.model && a.model.mouth).map((a) => a.name), 'ator com boca');
         case 'cues': return names([...st.files.keys()].filter((f) => /\.(json|tsv|txt)$/i.test(f)).map((f) => `"${f}"`), 'bocas do Rhubarb');
@@ -1643,6 +1646,11 @@
     if (cmd === 'gradient' && idx === 2) return names(['linear', 'radial']);
     if (cmd === 'light' && idx === 2) return names(['point', 'spot', 'dir']);
     if (cmd === 'pattern' && idx === 2) return names(['hatch', 'dots']);
+    if (cmd === 'art' && idx === 1) return [{ label: 'pixel', detail: 'pixel art nítido' }, { label: 'ascii', detail: 'letras (sai também em .txt)' }, { label: 'none', detail: 'sem estilo' }];
+    if (cmd === 'art' && idx >= 2) {
+      const o = L.ART_OPTS[ws[1] && ws[1].text];
+      if (o) return [...names([...o.attrs, ...(isFilm() ? ['actor'] : [])].map((a) => a + '='), 'atributo'), ...names(o.flags, 'opção')];
+    }
     return [...names((L.ATTRS[cmd] || []).map((a) => a + '='), 'atributo'), ...names(L.FLAGS[cmd] || [], 'opção')];
   }
 
@@ -2054,13 +2062,15 @@
     ctx.beginPath();
     ctx.rect(R.x, R.y, R.w, R.h);
     ctx.clip();
-    const post = m.finish.pixel > 1 || S.hasPost(m);
+    // estilo (art): com a chave Estilo ligada; os estilos pesados mostram o desenho normal enquanto você arrasta
+    const artOn = !!m.art && st.show.art && !(st.drag && W.art.heavy(m.art));
+    const post = m.finish.pixel > 1 || S.hasPost(m) || artOn;
     if (refs && !post) S.drawRefs(ctx, m, pose, refs, false);
     const anim = pose.anim;
     if (st.show.onion && anim && anim.frames > 1 && !st.build && !P) {
       const s = Math.min(2, z * dpr);
       for (const d of [-1, 1]) {
-        const img = S.renderImage(m, S.makePose(m, anim.name, st.frame + d), { scale: s, transparent: true, guides: false });
+        const img = S.renderImage(m, S.makePose(m, anim.name, st.frame + d), { scale: s, transparent: true, guides: false, art: artOn });
         ctx.globalAlpha = 0.22;
         ctx.drawImage(img, 0, 0, c.w, c.h);
       }
@@ -2069,7 +2079,7 @@
     if (post) {
       // acabamentos de imagem (pixel, bloom, vinheta, granulado) precisam da imagem pronta
       const cap = m.finish.posterize ? 2 : 4;
-      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter, refs, rect: R });
+      const img = S.renderImage(m, pose, { scale: Math.min(cap, z * dpr), transparent: !c.bg, guides: st.show.guides, filter: bf && bf.filter, refs, rect: R, art: artOn });
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, R.x, R.y, R.w, R.h);
       ctx.imageSmoothingEnabled = true;
@@ -2160,9 +2170,10 @@
       ctx.beginPath();
       ctx.rect(0, 0, c.w, c.h);
       ctx.clip();
-      if (m.finish.pixel > 1 || S.hasPost(m)) {
-        const img = W.film.renderFrame(m, st.frame, { scale: Math.min(m.finish.posterize ? 1 : 2, z * dpr), subs: st.subs });
-        ctx.imageSmoothingEnabled = m.finish.pixel <= 1;
+      const artOn = st.show.art && W.art.has(m);
+      if (m.finish.pixel > 1 || S.hasPost(m) || artOn) {
+        const img = W.film.renderFrame(m, st.frame, { scale: Math.min(m.finish.posterize ? 1 : 2, z * dpr), subs: st.subs, art: artOn });
+        ctx.imageSmoothingEnabled = m.finish.pixel <= 1 && !artOn;
         ctx.drawImage(img, 0, 0, c.w, c.h);
         ctx.imageSmoothingEnabled = true;
       } else W.film.drawFrame(ctx, m, st.frame, { subs: st.subs });
@@ -3569,6 +3580,8 @@
     if (film && st.measure) setMeasure(false);
     $('pinBtn').hidden = film;
     if (film && st.pin.on) setPin(false);
+    // a chave Estilo só aparece quando o arquivo (ou o filme) tem art
+    $('tArtWrap').hidden = !W.art.has(st.model);
     stage.classList.toggle('ruled', rulersOn());
   }
 
@@ -4236,6 +4249,7 @@
   $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
+  $('tArt').addEventListener('change', (e) => { st.show.art = e.target.checked; draw(); });
   $('tTraj').addEventListener('change', (e) => { st.show.traj = e.target.checked; draw(); });
   $('tRulers').checked = st.show.rulers;
   $('tRulers').addEventListener('change', (e) => {

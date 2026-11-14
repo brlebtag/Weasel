@@ -1,0 +1,27 @@
+# teste: art num filme — o filme todo em pixel; um plano em ascii; um ator com outro estilo
+# (desenhado à parte, na ordem de profundidade); um plano sem estilo (art none); e uma cena
+# (outro arquivo) com o próprio art
+film fps=4
+canvas 320 180 bg=#1d2b53
+art pixel size=6 palette=pico8
+
+actor a "rosto.weasel" 90,170 scale=0.8
+actor b "rosto.weasel" 220,170 scale=0.8 flip=x
+
+layer fundo
+rect chao 0,150 320,30 c=#008751
+ellipse lua 280,36 18 c=#fff1e8
+
+shot todo dur=1s
+at 1s a.pos=110,170
+
+shot letras dur=1s
+art ascii size=6,12
+
+shot misto dur=1s
+art ascii actor=b
+
+shot nenhum dur=1s
+art none
+
+scene "estilo/cena.weasel"

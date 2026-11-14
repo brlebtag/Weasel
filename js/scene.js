@@ -2230,6 +2230,31 @@
       if (opts.refs) drawRefs(ctx, model, pose, opts.refs, true);
       if (opts.after) opts.after(ctx, s);
     };
+    // estilo de arte (art pixel, art ascii…): o desenho vai numa imagem de trabalho e o estilo pinta o resultado;
+    // o acabamento (bloom, vinheta…) vem por cima, e o finish pixel= fica de fora. opts.art === false: sem o estilo.
+    const art = opts.art !== false && model.art && W.art ? model.art : null;
+    if (art) {
+      const r = W.art.paint(octx, [scale, 0, 0, scale, -rect.x * scale, -rect.y * scale], rect, art, {
+        content: (x, m) => {
+          x.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+          if (opts.refs) drawRefs(x, model, pose, opts.refs, false);
+          drawScene(x, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
+          if (opts.refs) drawRefs(x, model, pose, opts.refs, true);
+        },
+        bg: opts.transparent ? null : (x, m) => {
+          // o fundo cobre a imagem de trabalho inteira (a grade passa um pouco do recorte)
+          const R = { x: -m[4] / m[0], y: -m[5] / m[3], w: x.canvas.width / m[0], h: x.canvas.height / m[3] };
+          x.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+          x.fillStyle = '#ffffff';
+          if (!model.canvas.bg && !opts.matte) x.fillRect(R.x, R.y, R.w, R.h);
+          fillBg(x, model, pose, R, opts.matte);
+        },
+      }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model) });
+      if (opts.after) { octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale); opts.after(octx, scale); octx.setTransform(1, 0, 0, 1, 0, 0); }
+      if (!opts.noPost) postFx(out, model, pose.frame);
+      if (r.text) out.artText = r.text;
+      return out;
+    }
     if (px > 1) {
       const small = document.createElement('canvas');
       small.width = Math.max(1, Math.round(W2 / px));

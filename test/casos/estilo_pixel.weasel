@@ -1,0 +1,24 @@
+# teste: art pixel com as cores do próprio desenho (palette own), dither, outline e small,
+# numa animação com pacote do Godot (texture_filter, folha pequena)
+canvas 160 160 bg=none light=-0.5,-0.85
+palette ink=#1d1b26 line=5 ball=#ff6b4a hi=#ffc2ad shadow=#9c8f7c
+gradient brilho radial 66,70 60 : #ffd9c9@0 #ff6b4a@0.7 #c43c25@1
+art pixel size=4 dither=bayer outline small
+
+godot body=character root=80,150
+box corpo body rect 40,60 80,90
+
+bone sombra pivot=80,148
+bone bola pivot=80,146
+
+layer sombra
+ellipse s 80,148 34,7 c=shadow bone=sombra
+
+layer bola
+ellipse b 80,112 34 c=brilho ink=line weight=0.3 bone=bola
+ellipse olho 92,104 5,8 c=ink bone=bola
+
+anim quica frames=4 fps=8
+key 0 bola=0,0,0,1.2,0.8 sombra=0,0,0,1.1 ease=out
+key 2 bola=0,-60,0,1,1 sombra=0,0,0,0.6 ease=in
+key 4 bola=0,0,0,1.2,0.8 sombra=0,0,0,1.1

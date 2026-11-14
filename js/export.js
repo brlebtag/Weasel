@@ -149,7 +149,10 @@
 
   function sheetCanvas(model, names, o) {
     const list = names.length ? names : [null];
-    const rect = o.trim ? contentRect(model, list, o.margin) : fullRect(model);
+    // art pixel … small: a folha sai com 1 pixel por bloco, e o recorte cai na grade do pixel art
+    if (W.art && W.art.small(model)) o = Object.assign({}, o, { scale: W.art.smallScale(model, o.scale) });
+    const rect0 = o.trim ? contentRect(model, list, o.margin) : fullRect(model);
+    const rect = W.art ? W.art.snapRect(model, rect0) : rect0;
     const fw = Math.max(1, Math.round(rect.w * o.scale)), fh = Math.max(1, Math.round(rect.h * o.scale));
     const pad = o.padding || 0;
     const cells = [];
@@ -277,14 +280,16 @@
     $('expDownloadPng').addEventListener('click', () => save(true));
 
     const isSheet = () => kind === 'sheet' || kind === 'godot';
-    const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg';
+    const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg' || kind === 'txt';
     const isFilm = () => !!app.model().film;
+    // o .txt sai do art ascii (num filme, de um quadro todo em ascii)
+    const ascii = (m) => (m.film ? W.art.has(m) : !!(m.art && m.art.style === 'ascii'));
     // filme: GIF, vídeo e sequência só são gerados quando a pessoa pede (podem ser muitos quadros)
     const heavy = () => isFilm() && (kind === 'gif' || kind === 'video' || kind === 'seq');
 
     function sync() {
       const film = isFilm();
-      dlg.querySelectorAll('[data-kind]').forEach((b) => { b.hidden = b.dataset.for === (film ? 'draw' : 'film'); });
+      dlg.querySelectorAll('[data-kind]').forEach((b) => { b.hidden = b.dataset.for === 'ascii' ? !ascii(app.model()) : b.dataset.for === (film ? 'draw' : 'film'); });
       if (dlg.querySelector(`[data-kind="${kind}"]`).hidden) kind = 'png';
       dlg.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
       dlg.querySelectorAll('[data-show]').forEach((el) => { el.hidden = !el.dataset.show.split(' ').includes(kind); });
@@ -298,7 +303,7 @@
       const add = (s, v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; s.appendChild(o); };
       if (film) {
         const tl = W.film.timeline(model), st = app.state();
-        if (kind === 'png' || kind === 'jpg') {
+        if (kind === 'png' || kind === 'jpg' || kind === 'txt') {
           const loc = W.film.locate(model, st.frame);
           add(sel, '', `Quadro atual — ${W.film.timecode(st.frame, tl.fps)}${loc ? ` (${loc.entry.name})` : ''}`);
         } else {
@@ -383,6 +388,12 @@
         const cv = W.film.renderFrame(model, Math.round(Math.max(first.start, from) * tl.fps), { scale: Math.min(0.5, o.scale), subs: true, lang: first.lang });
         return { files, preview: cv.toDataURL(), info: `${count} legenda${count > 1 ? 's' : ''} · ${W.film.langs(model).join(', ')}` };
       }
+      if (kind === 'txt') {
+        const cv = model.film ? W.film.renderFrame(model, st.frame, { scale: o.scale }) : imageCanvas(model, st.anim, st.frame, Object.assign({}, o, { transparent: false }));
+        if (!cv.artText) throw new Error('o .txt sai quando o quadro inteiro está em art ascii');
+        const blob = new Blob([cv.artText], { type: 'text/plain' });
+        return { files: [{ name: `${base}.txt`, blob }], preview: cv.toDataURL(), info: `${cv.artText.split('\n').length - 1} linhas de letras · ${kb(blob.size)}` };
+      }
       if (model.film) {
         const cv = W.film.renderFrame(model, st.frame, { scale: o.scale, transparent: o.transparent, subs: o.burn });
         const blob = await toBlob(cv, kind === 'jpg' ? 'image/jpeg' : 'image/png', kind === 'jpg' ? o.quality : undefined);
@@ -395,7 +406,7 @@
       if (kind === 'svg') {
         const s = svgText(model, st.anim, st.frame, o);
         const blob = new Blob([s], { type: 'image/svg+xml' });
-        return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: `SVG vetorial · ${kb(blob.size)}` };
+        return { files: [{ name: `${base}.svg`, blob }], previewUrl: URL.createObjectURL(blob), info: `SVG vetorial · ${kb(blob.size)}${model.art ? ` · sem o estilo (art ${model.art.style})` : ''}` };
       }
       if (kind === 'gif') {
         const src = $('expAnim').value;
