@@ -477,6 +477,8 @@ pre.ex u { color: var(--num); text-decoration: none; }
   padding: 10px;
 }
 .prev img { max-width: 100%; max-height: calc(60vh - 22px); object-fit: contain; image-rendering: auto; }
+.prev .exp-vid { max-width: 100%; max-height: calc(60vh - 22px); }
+.prev [hidden] { display: none; }
 .prev img.checker {
   background-color: #fff;
   background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%);

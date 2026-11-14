@@ -443,6 +443,69 @@ async function jobCase() {
   record(Buffer.from(await r.png.blob.arrayBuffer()).equals(direct.canvas.toBuffer('image/png')), '_janela/folha', 'a folha da janela não é a da função de sempre');
 }
 
+// as animações em GIF, WebP e vídeo: a sequência (idle walk*3), os tempos de cada quadro, o ritmo do vídeo,
+// o WebP animado (e a figurinha), o MP4 montado em volta de quadros de mentira e o .webp da linha de comando
+async function animCase() {
+  console.log(paint('1', '_animado'));
+  const model = load(path.join(EX, 'furao.weasel'));
+  const lines = [];
+  const seq = 'idle_down walk_down*2';
+  lines.push('sequência: ' + JSON.stringify(X.parseSeq(model, 'idle_down  walk_down * 2, attack_down')));
+  for (const bad of ['', 'nada', 'walk_down*0', 'walk_down*x']) {
+    try { X.parseSeq(model, bad); lines.push(` "${bad}": sem erro`); } catch (e) { lines.push(` "${bad}": ${e.message}`); }
+  }
+  lines.push('é sequência: ' + ['walk_down', 'idle_down walk_down', 'walk_down*2', 'a,b', ''].map((s) => `"${s}" ${X.isSeq(s)}`).join(', '));
+  const o = { scale: 0.5, transparent: true, trim: true, margin: 8, quality: 0.92, seq };
+  const list = X.frameList(model, X.SEQ, o);
+  lines.push(`quadros da sequência: ${list.frames.length} (${list.frames.map((x) => x.name + ':' + x.f).filter((_, i) => i % 4 === 0).join(' ')}) · nome ${list.tag}`);
+  const build = X.frameList(model, X.BUILD, o);
+  lines.push(`pintura: ${build.frames.length} quadros, o último fica ${build.hold} s`);
+  for (const [min, src] of [[3, X.SEQ], [0, X.SEQ], [5, 'attack_down'], [3, X.BUILD]]) {
+    const v = X.videoFrames(model, src, Object.assign({}, o, { minLength: min, transparent: false }));
+    lines.push(`vídeo ${src === X.SEQ ? 'sequência' : src === X.BUILD ? 'pintura' : src} (mínimo ${min} s): ${v.width}×${v.height}, ${v.count} quadros a ${v.fps} fps, ${v.seconds} s, ${v.cycles} volta(s); primeira volta: ${v.index.slice(0, 30).join(',')}${v.index.length > 30 ? '…' : ''}`);
+  }
+  const wp = await X.webpBytes(model, X.SEQ, o);
+  const p = W.webp.parse(wp.bytes);
+  lines.push(`webp: ${p.width}×${p.height}, flags ${p.flags}, repete ${p.loop}, ${p.frames.length} quadros; ms ${p.frames.map((f) => f.ms).join(',')}; peças ${p.frames[0].parts.join('+')}; flags dos quadros ${[...new Set(p.frames.map((f) => f.flags))].join(',')}`);
+  const st = await X.webpBytes(model, 'attack_down', Object.assign({}, o, { sticker: true }));
+  const sp = W.webp.parse(st.bytes);
+  lines.push(`figurinha: ${sp.width}×${sp.height}, flags ${sp.flags}, ${sp.frames.length} quadros, cabe em 500 KB: ${st.bytes.length <= 500000}, grande: ${st.big}`);
+  // sem perdas e sem transparência: o primeiro quadro do WebP animado é o mesmo do WebP de um quadro só (a montagem
+  // não mexe na imagem que o codificador fez)
+  const exact = await X.webpBytes(model, 'walk_down', Object.assign({}, o, { quality: 1, transparent: false }));
+  const first = await pixels(Buffer.from(exact.bytes));
+  const want = X.imageCanvas(model, 'walk_down', 0, Object.assign({}, o, { transparent: false, rect: X.contentRect(model, ['walk_down'], o.margin) }));
+  const single = await pixels(want.toBuffer('image/webp', 100));
+  record(first.width === want.width && Buffer.from(first.data).equals(Buffer.from(single.data)), '_animado/webp', 'o primeiro quadro do WebP animado não é o do WebP de um quadro só');
+  // o MP4 em volta de quadros de mentira: 6 quadros, o 3º fora de ordem (como um B-frame)
+  const fake = [0, 2, 1, 3, 4, 5].map((k, i) => ({ data: new Uint8Array(10 + i).fill(i + 1), us: Math.round((k * 1e6) / 12), key: i === 0 || i === 4 }));
+  const mp4 = new Uint8Array(await W.mp4.mux(fake, { width: 64, height: 48, fps: 12, description: new Uint8Array([1, 100, 0, 31, 255, 225]) }).arrayBuffer());
+  const tree = (l) => l.map((b) => b.type + (b.kids ? '(' + tree(b.kids) + ')' : '')).join(' ');
+  const flat = [];
+  const walk = (l) => l.forEach((b) => { flat.push(b); if (b.kids) walk(b.kids); });
+  walk(W.mp4.boxes(mp4));
+  const dv = new DataView(mp4.buffer);
+  const get = (t) => flat.find((b) => b.type === t);
+  // um número de 32 bits de uma caixa: 0 = versão e flags, 1 = quantos, 2… = a tabela
+  const u32 = (t, k) => dv.getUint32(get(t).at + 8 + 4 * k);
+  lines.push(`mp4: ${tree(W.mp4.boxes(mp4))}`);
+  lines.push(`  stts ${u32('stts', 2)}×${u32('stts', 3)} · stss ${u32('stss', 2)},${u32('stss', 3)} · ctts ${Array.from({ length: 6 }, (_, k) => u32('ctts', 3 + 2 * k)).join(',')} · elst começa em ${u32('elst', 3)} · tamanhos ${Array.from({ length: 6 }, (_, k) => u32('stsz', 3 + k)).join(',')} · os quadros começam no mdat: ${u32('stco', 2) === get('mdat').at + 8}`);
+  // o .webp da linha de comando (não precisa do ffmpeg) e os avisos de uso
+  const dir = path.join(OUT, '_animado');
+  fs.mkdirSync(dir, { recursive: true });
+  const cli = (...a) => {
+    const r = spawnSync(process.execPath, [CLI, path.join(EX, 'furao.weasel'), '--quiet', ...a], { encoding: 'utf8', env: Object.assign({}, process.env, { NO_COLOR: '1' }) });
+    return (r.stderr || '').split('\n')[0].trim() || `ok (${r.status})`;
+  };
+  lines.push(`cli webp: ${cli('-a', seq, '-s', '0.25', '-o', path.join(dir, 'seq.webp'))}`);
+  const cw = W.webp.parse(new Uint8Array(fs.readFileSync(path.join(dir, 'seq.webp'))));
+  lines.push(`  ${cw.width}×${cw.height}, ${cw.frames.length} quadros`);
+  lines.push(`cli png com sequência: ${cli('-a', seq, '-o', path.join(dir, 'x.png'))}`);
+  lines.push(`cli figurinha em gif: ${cli('-a', 'walk_down', '--sticker', '-o', path.join(dir, 'x.gif'))}`);
+  lines.push(`cli --min-length em webp: ${cli('-a', 'walk_down', '--min-length', '2s', '-o', path.join(dir, 'x.webp'))}`);
+  await check('_animado', 'animado.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -463,6 +526,7 @@ async function main() {
   if (!only.length || only.some((o) => '_previa'.includes(o))) await previewCase();
   if (!only.length || only.some((o) => '_contas'.includes(o))) await exprCase();
   if (!only.length || only.some((o) => '_janela'.includes(o))) await jobCase();
+  if (!only.length || only.some((o) => '_animado'.includes(o))) await animCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

@@ -1,0 +1,21 @@
+sequência: [{"name":"idle_down","times":1},{"name":"walk_down","times":2},{"name":"attack_down","times":1}]
+ "": a sequência está vazia: escreva os nomes das animações na ordem (ex.: idle walk*3 jump)
+ "nada": animação "nada" não existe (tem: idle_down, idle_up, idle_right, walk_down, walk_up, walk_right, attack_down, attack_up, attack_right)
+ "walk_down*0": "walk_down*0" na sequência: repita de 1 a 99 vezes
+ "walk_down*x": "walk_down*x" na sequência: escreva o nome da animação, ou nome*3 para repetir
+é sequência: "walk_down" false, "idle_down walk_down" true, "walk_down*2" true, "a,b" true, "" false
+quadros da sequência: 24 (idle_down:0 idle_down:4 walk_down:0 walk_down:4 walk_down:0 walk_down:4) · nome idle_down-walk_down
+pintura: 144 quadros, o último fica 2 s
+vídeo sequência (mínimo 3 s): 48×58, 112 quadros a 24 fps, 4.666666666666667 s, 2 volta(s); primeira volta: 0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,9,9,10,10…
+vídeo sequência (mínimo 0 s): 48×58, 56 quadros a 24 fps, 2.3333333333333335 s, 1 volta(s); primeira volta: 0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,9,9,10,10…
+vídeo attack_down (mínimo 5 s): 56×66, 60 quadros a 12 fps, 5 s, 10 volta(s); primeira volta: 0,1,2,3,4,5
+vídeo pintura (mínimo 3 s): 48×58, 183 quadros a 20 fps, 9.15 s, 1 volta(s); primeira volta: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29…
+webp: 48×58, flags 18, repete 0, 24 quadros; ms 125,125,125,125,125,125,125,125,83,84,83,83,84,83,83,84,83,84,83,83,84,83,83,84; peças ALPH+VP8; flags dos quadros 2
+figurinha: 512×512, flags 18, 6 quadros, cabe em 500 KB: true, grande: false
+mp4: ftyp moov(mvhd trak(tkhd edts(elst) mdia(mdhd hdlr minf(vmhd dinf(dref) stbl(stsd(avc1(avcC pasp)) stts stss ctts stsc stsz stco))))) mdat
+  stts 6×1000 · stss 1,5 · ctts 1000,2000,0,1000,1000,1000 · elst começa em 1000 · tamanhos 10,11,12,13,14,15 · os quadros começam no mdat: true
+cli webp: ok (0)
+  40×40, 24 quadros
+cli png com sequência: weasel: uma sequência de animações (-a "idle walk*3") vale para gif, webp e vídeo
+cli figurinha em gif: weasel: --sticker vale para webp
+cli --min-length em webp: weasel: --min-length vale para o vídeo (mp4, mov, webm, mkv)

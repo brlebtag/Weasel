@@ -22,7 +22,7 @@ if (typeof CSS === 'undefined') {
   };
 }
 // a mesma lista do cli/runtime.js, com o ?v= da página (o js/export.js abre este arquivo com ele)
-importScripts(...['geom', 'lang', 'art', 'scene', 'film', 'audio', 'nle', 'normal', 'svg', 'gif', 'zip', 'export', 'godot', 'rig'].map((f) => `${f}.js${self.location.search}`));
+importScripts(...['geom', 'lang', 'art', 'scene', 'film', 'audio', 'nle', 'normal', 'svg', 'gif', 'webp', 'mp4', 'zip', 'export', 'godot', 'rig'].map((f) => `${f}.js${self.location.search}`));
 
 self.onmessage = async (e) => {
   const job = e.data;

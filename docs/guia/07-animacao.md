@@ -779,6 +779,8 @@ node cli/weasel.js pingo.weasel -a parado --frames -o quadros/pingo.png
 
 O primeiro faz um GIF; o segundo, o PNG de um quadro (o mesmo número usado nas `key`); o terceiro, um PNG por quadro. Para jogos, a sprite sheet e a cena do Godot estão no [capítulo 9](09-jogo-godot.md).
 
+- **Para mandar para alguém:** `-o pingo.webp` faz um WebP animado (cores de verdade e transparência suave) e `-o pingo.mp4` um vídeo, que toca no WhatsApp (precisa do [ffmpeg](https://ffmpeg.org); no editor, o botão **Vídeo** da janela Exportar grava sem ele). O vídeo repete a animação até dar 3 segundos (`--min-length` muda). Várias animações em seguida: `-a "idle walk*3 jump"`, com os nomes das suas animações, na ordem; `*3` repete três vezes. No editor, é a origem **Sequência de animações** da janela Exportar.
+
 Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info` (há um exemplo da saída em [Eventos](#eventos-event)):
 
 ```bash

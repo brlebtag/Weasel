@@ -3,6 +3,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const { W, loadImage } = require('./runtime');
 const X = W.exporter;
@@ -24,18 +25,22 @@ Entrada:
 
 Saída:
   -o, --out <arquivo>     arquivo de saída; a extensão escolhe o formato
-                          (.png .jpg .gif .svg .tres .tscn; .zip = sprite sheet em zip;
-                          .txt = as letras do art ascii; filme: .mp4 .mov .webm .mkv)
-  -f, --format <tipo>     png | jpg | gif | svg | sheet | godot | tscn | build (GIF da pintura)
-                          | txt (art ascii) | mp4 | mov | webm | mkv (filme)
-  -a, --anim <nome>       animação usada (gif, sheet, godot, png/jpg/svg). Em sheet, "all" = todas
+                          (.png .jpg .gif .webp .svg .tres .tscn; .zip = sprite sheet em zip;
+                          .txt = as letras do art ascii; vídeo: .mp4 .mov .webm .mkv)
+  -f, --format <tipo>     png | jpg | gif | webp | svg | sheet | godot | tscn | build (a pintura;
+                          GIF, ou o formato do -o: -f build -o pintura.mp4) | txt (art ascii)
+                          | mp4 | mov | webm | mkv
+  -a, --anim <nome>       animação usada (gif, webp, vídeo, sheet, godot, png/jpg/svg). Em sheet,
+                          "all" = todas. No gif, no webp e no vídeo, uma sequência de animações:
+                          -a "idle walk*3 jump" (na ordem; *3 repete 3 vezes)
       --frame <n>         quadro do png/jpg/svg (o mesmo número usado em key; começa em 0)
       --frames            png/jpg/svg: salva todos os quadros, um arquivo por quadro
       --variant <nome>    variante de cores; "all" exporta todas (sufixo _variante)
   -s, --scale <n>         escala (padrão 1; ex.: 0.5, 2)
   -t, --transparent       fundo transparente (png, gif, svg, sheet, godot)
       --trim [margem]     recorta ao desenho (margem padrão 8)
-  -q, --quality <1-100>   qualidade do jpg (padrão 92)
+  -q, --quality <1-100>   qualidade do jpg e do webp (padrão 92; no webp, 100 = sem perdas)
+      --sticker           webp: figurinha do WhatsApp (512×512, fundo transparente, até 500 KB)
       --layout <grid|rows>  sprite sheet em grade ou uma linha por animação
       --cols <n>          colunas da grade (0 = automático)
       --padding <n>       espaço entre quadros da sprite sheet (padrão 2)
@@ -56,6 +61,12 @@ Godot:
       --no-mirror         .tscn sem gerar o lado espelhado (walk_right → walk_left)
       --rig               .tscn com esqueleto de verdade (Bone2D e peças; experimental)
       --no-rig            .tscn por quadros, mesmo com godot rig=bones no arquivo
+
+Vídeo de um desenho (precisa do ffmpeg):
+  -o furao.mp4 -a walk    a animação em vídeo (.mp4 H.264; .mov, .webm e .mkv também; com -t,
+                          .mov e .webm guardam a transparência); --crf, --small e --ffmpeg valem
+      --min-length <t>    o vídeo dura no mínimo isso: a animação (ou a sequência) repete
+                          inteira (padrão 3s; 0 = uma volta só)
 
 Filme (arquivo com a linha film):
   -o filme.mp4            vídeo H.264 (padrão); .mov = ProRes (bom para editar; com -t,
@@ -96,6 +107,8 @@ Exemplos:
   weasel coruja.weasel -f godot -a all --trim -t -o godot/coruja.tres
   weasel coruja.weasel -o coruja.svg --variant all
   weasel cavaleiro.weasel -f build -o pintura.gif
+  weasel furao.weasel -a "idle_down walk_down*3" -o furao.mp4 --small
+  weasel furao.weasel -a idle_down -o figurinha.webp --sticker
   weasel furao.weasel -o godot/furao.tscn -s 0.5
   weasel blocos.weasel -f godot -o godot/blocos.tres --normal
   weasel coruja.weasel -a pia -o coruja.gif --watch
@@ -119,7 +132,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null,
+    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -153,6 +166,8 @@ function parseArgs(argv) {
       case '--crf': o.crf = Math.round(num('--crf', val(), 0, 63)); break;
       case '--small': o.small = true; break;
       case '--ffmpeg': o.ffmpeg = val(); break;
+      case '--min-length': o.minLength = val(); break;
+      case '--sticker': o.sticker = true; break;
       case '--normal': o.normal = true; break;
       case '--no-normal': o.normal = false; break;
       case '--no-mirror': o.mirror = false; break;
@@ -314,7 +329,7 @@ function info(m, scale) {
 
 function formatFromOut(out) {
   const ext = path.extname(out || '').toLowerCase();
-  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.svg': 'svg', '.txt': 'txt', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
+  return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.webp': 'webp', '.svg': 'svg', '.txt': 'txt', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
 }
 
 function save(file, buf, what, quiet) {
@@ -335,10 +350,53 @@ function pickAnim(m, name, required) {
   return name;
 }
 
+// O vídeo de um desenho: os quadros (a animação, a sequência ou a pintura) vão crus para o ffmpeg, num ritmo fixo,
+// repetindo até --min-length (padrão 3 s). outName(tag) dá o nome do arquivo.
+async function drawingVideo(model, o, format, source, opts, outName) {
+  const bin = V.findFfmpeg(o.ffmpeg);
+  if (!bin) throw new Fail('não achei o ffmpeg. Instale (https://ffmpeg.org; no Windows: winget install ffmpeg), passe --ffmpeg <caminho> ou exporte um gif ou webp', 2);
+  if (o.small && format === 'mov') usage('--small vale para mp4, mkv e webm; o .mov é ProRes, feito para editar');
+  const alpha = o.transparent && (format === 'mov' || format === 'webm');
+  if (o.transparent && !alpha && !o.quiet) console.error(paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou .webp`);
+  let minLength = 3;
+  if (o.minLength !== null) {
+    minLength = V.parseTime(o.minLength, model.anims.length ? model.anims[0].fps : 12);
+    if (!Number.isFinite(minLength) || minLength < 0) usage(`--min-length: tempo inválido "${o.minLength}" (ex.: 3s, 5, 1500ms; 0 = uma volta só)`);
+  }
+  const v = X.videoFrames(model, source, Object.assign({}, opts, { transparent: alpha, minLength }));
+  const out = outName(v.tag);
+  fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+  const t0 = Date.now();
+  const proc = spawn(bin, V.ffmpegArgs(format, v.width, v.height, v.fps, { transparent: alpha, crf: o.crf, small: o.small, audio: null }, out), { stdio: ['pipe', 'ignore', 'pipe'] });
+  let errText = '';
+  proc.stderr.on('data', (d) => { errText += d; });
+  proc.stdin.on('error', () => {});
+  const closed = new Promise((res) => proc.on('close', res));
+  for (let k = 0; k < v.count; k++) {
+    const d = v.frame(k).getContext('2d').getImageData(0, 0, v.width, v.height).data;
+    if (proc.exitCode !== null) break;
+    if (!proc.stdin.write(Buffer.from(d.buffer, d.byteOffset, d.byteLength))) {
+      await new Promise((res) => {
+        const go = () => { proc.stdin.off('drain', go); proc.off('close', go); res(); };
+        proc.stdin.once('drain', go);
+        proc.once('close', go);
+      });
+    }
+  }
+  proc.stdin.end();
+  const code = await closed;
+  if (code !== 0) throw new Fail(`o ffmpeg falhou (${code}): ${errText.trim() || 'sem mensagem'}`, 3);
+  if (!o.quiet) console.log(`${paint('32', 'salvo')} ${out}  ${paint('2', `${v.width}×${v.height}, ${v.count} quadros a ${v.fps} fps, ${v.seconds.toFixed(1)} s${v.cycles > 1 ? ` (${v.cycles} voltas)` : ''} · ${kb(fs.statSync(out).size)} · ${((Date.now() - t0) / 1000).toFixed(1)}s`)}`);
+}
+
 // Exporta um modelo (uma variante). sfx vai no fim do nome dos arquivos.
 async function exportModel(model, o, format, base, sfx) {
   const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, refs: o.refImages || null, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
+  const animated = format === 'gif' || format === 'webp' || format === 'build' || V.VIDEO.includes(format);
+  if (!animated && X.isSeq(o.anim)) usage('uma sequência de animações (-a "idle walk*3") vale para gif, webp e vídeo');
+  if (!animated && o.sticker) usage('--sticker vale para webp');
+  if (!animated && o.minLength !== null) usage('--min-length vale para o vídeo (mp4, mov, webm, mkv)');
 
   // --trajectory: a trajetória dos pés (ou dos pontos) em todos os quadros, por cima do personagem clarinho
   if (o.trajectory) {
@@ -387,10 +445,28 @@ async function exportModel(model, o, format, base, sfx) {
     return;
   }
 
-  if (format === 'gif' || format === 'build') {
-    const source = format === 'build' ? X.BUILD : pickAnim(model, o.anim, true);
-    const r = await X.gifBytes(model, source, opts);
-    save(named(o.out || `${base}_${format === 'build' ? 'pintura' : source}.gif`), Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros`, o.quiet);
+  // as animações: GIF, WebP e vídeo, de uma animação, de uma sequência (-a "idle walk*3") ou da pintura (-f build)
+  if (format === 'gif' || format === 'webp' || format === 'build' || V.VIDEO.includes(format)) {
+    let fmt = format, source;
+    if (format === 'build') {
+      const ext = formatFromOut(o.out);
+      fmt = ext === 'webp' || V.VIDEO.includes(ext) ? ext : 'gif';
+      source = X.BUILD;
+    } else if (X.isSeq(o.anim)) {
+      try { X.parseSeq(model, o.anim); } catch (e) { usage(e.message); }
+      source = X.SEQ;
+      opts.seq = o.anim;
+    } else source = pickAnim(model, o.anim, true);
+    if (o.sticker && fmt !== 'webp') usage('--sticker vale para webp');
+    if (o.minLength !== null && !V.VIDEO.includes(fmt)) usage('--min-length vale para o vídeo (mp4, mov, webm, mkv)');
+    if (fmt === 'gif') {
+      const r = await X.gifBytes(model, source, opts);
+      save(named(o.out || `${base}_${r.tag}.gif`), Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros`, o.quiet);
+    } else if (fmt === 'webp') {
+      const r = await X.webpBytes(model, source, Object.assign(opts, { sticker: o.sticker }));
+      save(named(o.out || `${base}_${r.tag}${o.sticker ? '_figurinha' : ''}.webp`), Buffer.from(r.bytes), `${r.width}×${r.height}, ${r.frames} quadros${o.sticker ? `, figurinha (qualidade ${Math.round(r.quality * 100)})` : ''}`, o.quiet);
+      if (r.big && !o.quiet) console.error(paint('33', 'aviso') + ': a figurinha passou de 500 KB mesmo na qualidade mais baixa; o WhatsApp pode recusar (use uma animação mais curta)');
+    } else await drawingVideo(model, o, fmt, source, opts, (tag) => named(o.out || `${base}_${tag}.${fmt}`));
     return;
   }
 
@@ -496,14 +572,17 @@ async function run(o) {
 
   let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
-  if (![...['png', 'jpg', 'gif', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
+  if (![...['png', 'jpg', 'gif', 'webp', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, webp, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
+    if (format === 'webp') usage('webp sai de desenhos; para o filme use gif ou mp4');
+    if (o.sticker) usage('--sticker vale para o webp de um desenho');
+    if (o.minLength !== null) usage('--min-length vale para o vídeo de um desenho; no filme, use --from e --to');
     if (o.variant) usage('--variant vale para desenhos; num filme, escolha a variante no actor (variant=)');
     if (o.small && format === 'mov') usage('--small vale para mp4, mkv e webm; o .mov é ProRes, feito para editar');
     await V.exportFilm(model, o, format, source, { save, usage, Fail, paint, withSuffix, kb });
     return { code: 0, watched };
   }
-  if (V.VIDEO.includes(format) || ['wav', 'edl', 'fcpxml'].includes(format)) usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
+  if (['wav', 'edl', 'fcpxml'].includes(format)) usage(`${format} é para filmes (arquivo com a linha film); para animação de jogo use gif ou sheet`);
   for (const [k, flag] of [['shot', '--shot'], ['from', '--from'], ['to', '--to'], ['time', '--time']]) if (o[k] !== null) usage(`${flag} só vale para filmes`);
 
   if (o.variant === 'all') {

@@ -535,9 +535,11 @@ Para aprender: [capítulo 10](10-filme.md).
 
 | Opção | O que faz |
 |---|---|
-| `-o arquivo` | saída; a extensão escolhe o formato (`.png .jpg .gif .svg .txt .tres .tscn .zip`; filme: `.mp4 .mov .webm .mkv .wav .fcpxml .edl`); o `.txt` é o das letras do `art ascii` |
-| `-f formato` | `png jpg gif svg txt sheet godot tscn build` (GIF da pintura passo a passo) |
-| `-a anim` | animação (`all` = todas, na sprite sheet) |
+| `-o arquivo` | saída; a extensão escolhe o formato (`.png .jpg .gif .webp .svg .txt .tres .tscn .zip`; vídeo: `.mp4 .mov .webm .mkv`; filme também `.wav .fcpxml .edl`); o `.txt` é o das letras do `art ascii` |
+| `-f formato` | `png jpg gif webp svg txt sheet godot tscn build` (a pintura passo a passo: GIF, ou o formato do `-o`) |
+| `-a anim` | animação (`all` = todas, na sprite sheet); no gif, no webp e no vídeo, uma sequência: `-a "idle walk*3 jump"` |
+| `--min-length t` | vídeo de um desenho: dura no mínimo isso, repetindo a animação inteira (padrão `3s`; `0` = uma volta) |
+| `--sticker` | webp: figurinha do WhatsApp (512×512, fundo transparente, até 500 KB) |
 | `--frame n` · `--frames` | um quadro · um arquivo por quadro |
 | `--variant nome` | variante (`all` = todas) |
 | `-s n` · `-t` · `--trim` | escala · fundo transparente · recortar ao desenho |

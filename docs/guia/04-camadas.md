@@ -1052,7 +1052,7 @@ rect porta 78,78 20,34 c=#8a5a3c ink=line
 
 Repare:
 
-- **São para o filme e o vídeo**, e valem também no GIF e no PNG. A sprite sheet e o Godot saem **sem eles** (um personagem de jogo não deve levar a tela de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG também sai sem eles.
+- **São para o filme e o vídeo**, e valem também no GIF, no WebP e no PNG. A sprite sheet e o Godot saem **sem eles** (um personagem de jogo não deve levar a tela de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG também sai sem eles.
 - Eles entram por último: depois do estilo (`art`), do `bloom`, do `vignette`, do `grain` e do `posterize`. Com `pixel=`, entram depois dos blocos.
 - Podem ir juntos: `finish crt=0.6 vhs=0.4` é uma fita velha passando numa televisão de tubo.
 - Na imagem transparente, eles mexem só no desenho: o que é transparente continua transparente.

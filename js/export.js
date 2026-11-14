@@ -1,8 +1,8 @@
-/* Weasel — exportação: PNG, JPG, GIF animado, SVG, sprite sheet (PNG + JSON) e SpriteFrames do Godot. */
+/* Weasel — exportação: PNG, JPG, GIF e WebP animados, vídeo MP4, SVG, sprite sheet (PNG + JSON) e SpriteFrames do Godot. */
 (function (W) {
   'use strict';
   const S = W.scene;
-  const BUILD = '__build__', ALL = '__all__';
+  const BUILD = '__build__', ALL = '__all__', SEQ = '__seq__';
   // o endereço deste arquivo (com o ?v= da página): o worker da exportação, js/worker.js, fica ao lado dele
   const SELF = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : null;
 
@@ -109,44 +109,186 @@
     return out;
   }
 
-  async function gifBytes(model, source, o) {
-    const frames = [];
-    let fps, d;
-    let preview = null;
+  // ---------- as animações em GIF, WebP e vídeo ----------
+  // A origem é uma animação, a pintura passo a passo (BUILD) ou uma sequência de animações (SEQ, com o texto em o.seq).
+
+  // A sequência (na janela, ou o -a da linha de comando): os nomes na ordem, "idle walk*3 jump"; *3 repete 3 vezes.
+  // Devolve [{ name, times }]; um nome que não existe dá erro com os que existem.
+  function parseSeq(model, text) {
+    const list = [];
+    for (const tok of String(text || '').replace(/\s*\*\s*/g, '*').split(/[\s,]+/).filter(Boolean)) {
+      const m = /^([^*]+)(?:\*(\d+))?$/.exec(tok);
+      if (!m) throw new Error(`"${tok}" na sequência: escreva o nome da animação, ou nome*3 para repetir`);
+      const times = m[2] ? parseInt(m[2], 10) : 1;
+      if (!model.animMap.has(m[1])) throw new Error(`animação "${m[1]}" não existe${model.anims.length ? ` (tem: ${model.anims.map((a) => a.name).join(', ')})` : ''}`);
+      if (times < 1 || times > 99) throw new Error(`"${tok}" na sequência: repita de 1 a 99 vezes`);
+      list.push({ name: m[1], times });
+    }
+    if (!list.length) throw new Error('a sequência está vazia: escreva os nomes das animações na ordem (ex.: idle walk*3 jump)');
+    return list;
+  }
+  // um -a com mais de uma animação (ou com *): é uma sequência
+  const isSeq = (s) => /[\s,*]/.test(String(s || '').trim());
+
+  // Os quadros de uma origem, cada um com a animação, o quadro e a posição no trecho dela (j, a fps quadros por
+  // segundo; os tempos saem daí, sem erro de arredondamento). hold: quanto o último quadro fica parado (a pintura
+  // pronta, 2 s); names: as animações (para o recorte); tag: o nome que vai no arquivo.
+  function frameList(model, source, o) {
     if (source === BUILD) {
-      const rect = o.trim ? contentRect(model, [null], o.margin, o.progress) : fullRect(model);
       const plan = S.buildPlan(model, { speed: o.speed || 1, guides: o.guides });
-      const pose = S.makePose(model, null, 0);
-      fps = 20;
-      const n = Math.ceil(plan.total * fps) + 1;
-      for (let i = 0; i <= n; i++) {
-        if (o.progress) o.progress('quadros', i + 1, n + 1);
-        const bf = S.buildFilter(plan, i / fps);
+      const n = Math.ceil(plan.total * 20) + 1;
+      return { build: plan, frames: Array.from({ length: n + 1 }, (_, i) => ({ name: null, f: 0, j: i, fps: 20, start: 0 })), hold: 2, names: [null], tag: 'pintura' };
+    }
+    const list = source === SEQ ? parseSeq(model, o.seq) : [{ name: source, times: 1 }];
+    const frames = [];
+    let start = 0;
+    for (const it of list) {
+      const a = it.name ? model.animMap.get(it.name) : null;
+      const fps = a ? a.fps : 12;
+      const idx = frameIdx(model, it.name);
+      for (let k = 0; k < it.times; k++) {
+        idx.forEach((f, j) => frames.push({ name: it.name, f, j, fps, start }));
+        start += idx.length / fps;
+      }
+    }
+    return { frames, hold: 0, names: [...new Set(list.map((x) => x.name))], tag: source === SEQ ? list.map((x) => x.name).join('-') : source };
+  }
+  // quanto cada quadro fica na tela, em 1/unit de segundo (GIF: centésimos; WebP: milésimos)
+  function spans(list, unit) {
+    const out = list.frames.map((x) => Math.round(((x.j + 1) * unit) / x.fps) - Math.round((x.j * unit) / x.fps));
+    if (list.hold) out[out.length - 1] = Math.round(list.hold * unit);
+    return out;
+  }
+  const rectFor = (model, list, o) => (o.trim ? contentRect(model, list.names, o.margin, o.progress) : fullRect(model));
+  // Desenha o quadro i de uma lista; os que se repetem (walk*3) são desenhados uma vez só.
+  function frameRenderer(model, list, o, rect) {
+    const cache = new Map();
+    const pose = list.build ? S.makePose(model, null, 0) : null;
+    let last = null;
+    return (i) => {
+      const x = list.frames[i];
+      if (list.build) {
+        if (last && last.i === i) return last.cv;
+        const bf = S.buildFilter(list.build, x.j / x.fps);
         const cv = S.renderImage(model, pose, {
           scale: o.scale, rect, transparent: o.transparent, filter: bf.filter,
-          after: (ctx, s) => S.drawTrace(ctx, model, pose, plan, bf.st, s),
+          after: (ctx, s) => S.drawTrace(ctx, model, pose, list.build, bf.st, s),
         });
-        frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
-        preview = cv;
+        last = { i, cv };
+        return cv;
       }
-      d = delays(frames.length, fps);
-      d[d.length - 1] = 200;
-    } else {
-      const rect = o.trim ? contentRect(model, [source], o.margin, o.progress) : fullRect(model);
-      const anim = model.animMap.get(source);
-      fps = anim ? anim.fps : 12;
-      const all = frameIdx(model, source);
-      for (const f of all) {
-        if (o.progress) o.progress('quadros', f + 1, all.length);
-        const cv = S.renderImage(model, S.makePose(model, source, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, refs: o.refs });
-        frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
-        if (!preview) preview = cv;
-      }
-      d = delays(frames.length, fps);
+      const key = `${x.name}\n${x.f}`;
+      if (!cache.has(key)) cache.set(key, S.renderImage(model, S.makePose(model, x.name, x.f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, refs: o.refs }));
+      return cache.get(key);
+    };
+  }
+
+  async function gifBytes(model, source, o) {
+    const list = frameList(model, source, o);
+    const draw = frameRenderer(model, list, o, rectFor(model, list, o));
+    const frames = [];
+    let preview = null;
+    const n = list.frames.length;
+    for (let i = 0; i < n; i++) {
+      if (o.progress) o.progress('quadros', i + 1, n);
+      const cv = draw(i);
+      frames.push(cv.getContext('2d').getImageData(0, 0, cv.width, cv.height));
+      if (!preview || list.build) preview = cv;
     }
     await new Promise((r) => setTimeout(r, 0));
-    const bytes = W.gif.encode(frames, { delay: d, loop: 0, transparent: o.transparent, dither: o.dither });
-    return { bytes, width: frames[0].width, height: frames[0].height, frames: frames.length, preview };
+    const bytes = W.gif.encode(frames, { delay: spans(list, 100), loop: 0, transparent: o.transparent, dither: o.dither });
+    return { bytes, width: frames[0].width, height: frames[0].height, frames: frames.length, preview, tag: list.tag };
+  }
+
+  // WebP animado: cores de verdade e transparência suave (o GIF tem 256 cores e transparência de 1 bit).
+  // o.quality de 0 a 1 (1 = sem perdas). o.sticker: a figurinha do WhatsApp, 512 × 512 com fundo transparente, o
+  // desenho centrado com 16 px de folga, e a qualidade baixa até o arquivo caber em 500 KB.
+  const STICKER = 512, STICKER_MAX = 500 * 1000;
+  async function webpBytes(model, source, o) {
+    const list = frameList(model, source, o);
+    const n = list.frames.length;
+    let draw;
+    if (o.sticker) {
+      const rect = contentRect(model, list.names, 0, o.progress);
+      const inner = frameRenderer(model, list, Object.assign({}, o, { scale: Math.min((STICKER - 32) / rect.w, (STICKER - 32) / rect.h), transparent: true }), rect);
+      const boxed = new Map();
+      draw = (i) => {
+        const cv = inner(i);
+        if (!boxed.has(cv)) {
+          const out = document.createElement('canvas');
+          out.width = out.height = STICKER;
+          out.getContext('2d').drawImage(cv, Math.round((STICKER - cv.width) / 2), Math.round((STICKER - cv.height) / 2));
+          boxed.set(cv, out);
+        }
+        return boxed.get(cv);
+      };
+    } else draw = frameRenderer(model, list, o, rectFor(model, list, o));
+    const canvases = [];
+    for (let i = 0; i < n; i++) {
+      if (o.progress) o.progress('quadros', i + 1, n);
+      canvases.push(draw(i));
+    }
+    const ms = spans(list, 1000);
+    const encode = async (q) => {
+      const memo = new Map();
+      const frames = [];
+      for (let i = 0; i < n; i++) {
+        const cv = canvases[i];
+        if (!memo.has(cv)) memo.set(cv, await W.webp.frameBytes(cv, q));
+        frames.push({ bytes: memo.get(cv), width: cv.width, height: cv.height, ms: ms[i] });
+      }
+      return W.webp.encode(frames, { loop: 0, transparent: o.sticker || o.transparent });
+    };
+    let q = o.quality === undefined ? 0.92 : o.quality;
+    let bytes = await encode(q);
+    if (o.sticker) {
+      for (const lower of [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]) {
+        if (bytes.length <= STICKER_MAX) break;
+        if (lower < q) { q = lower; bytes = await encode(q); }
+      }
+    }
+    return { bytes, width: canvases[0].width, height: canvases[0].height, frames: n, quality: q, big: !!o.sticker && bytes.length > STICKER_MAX, preview: canvases[list.build ? n - 1 : 0], tag: list.tag };
+  }
+
+  // Os quadros de um vídeo: um ritmo fixo (o fps da animação; numa sequência com fps diferentes, um que sirva para
+  // todas), com a animação (ou a sequência) repetida inteira até dar o.minLength segundos (a pintura não repete).
+  // Os quadros saem num tamanho par (o H.264 pede), com o fundo do desenho; o.transparent só nos vídeos que guardam
+  // transparência (o .mov e o .webm da linha de comando). frame(k) devolve o canvas do quadro k (de 0 a count-1).
+  function videoFrames(model, source, o) {
+    const list = frameList(model, source, o);
+    const draw = frameRenderer(model, list, o, rectFor(model, list, o));
+    const rates = [...new Set(list.frames.map((x) => x.fps))];
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    const lcm = rates.every(Number.isInteger) ? rates.reduce((a, b) => (a * b) / gcd(a, b), 1) : 0;
+    const fps = rates.length === 1 ? rates[0] : lcm && lcm <= 60 ? lcm : Math.max(...rates);
+    const starts = list.frames.map((x) => x.start + x.j / x.fps);
+    const end = list.frames[list.frames.length - 1];
+    const cycle = list.hold ? starts[starts.length - 1] + list.hold : end.start + (end.j + 1) / end.fps;
+    const cycles = list.build || !(o.minLength > 0) ? 1 : Math.max(1, Math.ceil(o.minLength / cycle - 1e-9));
+    const perCycle = Math.max(1, Math.round(cycle * fps));
+    // o quadro que aparece no instante k / fps (o último que já começou)
+    const index = [];
+    for (let k = 0, i = 0; k < perCycle; k++) {
+      while (i + 1 < starts.length && starts[i + 1] <= k / fps + 1e-9) i++;
+      index.push(i);
+    }
+    const first = draw(0);
+    const width = first.width + (first.width % 2), height = first.height + (first.height % 2);
+    let pad = null, padOf = null;
+    const frame = (k) => {
+      const cv = draw(index[k % perCycle]);
+      if (cv.width === width && cv.height === height) return cv;
+      if (padOf !== cv) {
+        if (!pad) { pad = document.createElement('canvas'); pad.width = width; pad.height = height; }
+        const ctx = pad.getContext('2d');
+        ctx.clearRect(0, 0, width, height);
+        if (!o.transparent) { ctx.fillStyle = solidBg(model); ctx.fillRect(0, 0, width, height); }
+        ctx.drawImage(cv, 0, 0);
+        padOf = cv;
+      }
+      return pad;
+    };
+    return { fps, count: perCycle * cycles, width, height, frame, cycles, seconds: (perCycle * cycles) / fps, tag: list.tag, index };
   }
 
   async function gif(model, source, o) {
@@ -277,10 +419,11 @@
   const kb = (n) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
   const bytesOf = async (blob) => new Uint8Array(await blob.arrayBuffer());
 
-  // ---------- a folha, o Godot e o GIF de um desenho ----------
+  // ---------- a folha, o Godot, o GIF, o WebP e o vídeo de um desenho ----------
   // Desenham todos os quadros, por isso a janela de exportar os manda para o worker (js/worker.js), e a página não
   // trava; sem worker, rodam na própria página. Não usam a página: tudo o que a janela escolheu vem em o (anim: a
-  // animação; normal, rig, scene e mirror: as caixas do Godot; progress(fase, i, n): a barra).
+  // origem; seq: a sequência; minLength: a duração mínima do vídeo; sticker: a figurinha; normal, rig, scene e
+  // mirror: as caixas do Godot; progress(fase, i, n): a barra).
   // Devolve os arquivos prontos (blob), a prévia (o blob da imagem principal) e o resumo.
   async function buildFiles(model, kind, o, suffix) {
     // a folha, o Godot e o SVG saem sem os efeitos de tela (oldfilm, vhs, crt, glitch): o aviso vai junto
@@ -288,7 +431,20 @@
     const v = o.anim || '';
     if (kind === 'gif') {
       const x = await gif(model, v, o);
-      return { files: [{ name: `${o.baseName}${suffix}_${v === BUILD ? 'pintura' : v}.gif`, blob: x.blob }], preview: x.blob, info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
+      return { files: [{ name: `${o.baseName}${suffix}_${x.tag}.gif`, blob: x.blob }], preview: x.blob, info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(x.blob.size)}` };
+    }
+    if (kind === 'webp') {
+      const x = await webpBytes(model, v, o);
+      const blob = new Blob([x.bytes], { type: 'image/webp' });
+      const sticker = o.sticker ? ` · figurinha, qualidade ${Math.round(x.quality * 100)}%${x.big ? ' · passou de 500 KB: o WhatsApp pode recusar; use uma animação mais curta' : ''}` : '';
+      return { files: [{ name: `${o.baseName}${suffix}_${x.tag}${o.sticker ? '_figurinha' : ''}.webp`, blob }], preview: blob, info: `${x.width} × ${x.height} px · ${x.frames} quadros · ${kb(blob.size)}${sticker}` };
+    }
+    if (kind === 'video') {
+      // MP4 (H.264) pelo codificador do navegador; sem transparência
+      const x = videoFrames(model, v, Object.assign({}, o, { transparent: false }));
+      const r = await W.mp4.record(x.count, x.fps, x.width, x.height, x.frame, (i, n) => { if (o.progress) o.progress('video', i, n); });
+      const secs = x.seconds.toFixed(1).replace('.', ',');
+      return { files: [{ name: `${o.baseName}${suffix}_${x.tag}.mp4`, blob: r.blob }], preview: r.blob, video: true, info: `${x.width} × ${x.height} px · ${x.count} quadros a ${x.fps} fps · ${secs} s${x.cycles > 1 ? ` (${x.cycles} voltas)` : ''} · ${kb(r.blob.size)}` };
     }
     const names = v === ALL ? model.anims.map((a) => a.name) : [v || null];
     const tag = (v === ALL ? 'todas' : v || 'pose') + suffix;
@@ -318,7 +474,7 @@
     return { files, preview: x.png, info: screen(`${x.canvas.width} × ${x.canvas.height} px · ${x.frames} quadros de ${x.fw} × ${x.fh} · PNG ${kb(x.png.size)}`) };
   }
 
-  // Uma exportação da janela (folha, Godot ou GIF): cada variante (parse(v) lê o desenho dela), num .zip quando sai
+  // Uma exportação da janela (folha, Godot, GIF, WebP ou vídeo): cada variante (parse(v) lê o desenho dela), num .zip quando sai
   // mais de um arquivo. all: todas as variantes (o "Só o PNG" não vale).
   async function exportJob(kind, o, parse, variants, all) {
     const files = [];
@@ -335,7 +491,7 @@
       name = `${o.baseName}_${kind}${all ? '_variantes' : ''}.zip`;
     }
     const png = files.find((f) => f.png);
-    return { blob, name, png: png && !all ? { blob: png.blob, name: png.name } : null, preview: first.preview, info: first.info, count: files.length, names: files.map((f) => f.name) };
+    return { blob, name, png: png && !all ? { blob: png.blob, name: png.name } : null, preview: first.preview, video: !!first.video, info: first.info, count: files.length, names: files.map((f) => f.name) };
   }
 
   // ---------- janela de exportação ----------
@@ -345,9 +501,17 @@
     let kind = 'png', result = null, busy = 0;
 
     dlg.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.kind; sync(); }));
-    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expRig', 'expBurn', 'expNleSplit', 'expNleExt', 'expNleDir']) {
+    for (const id of ['expAnim', 'expVariant', 'expScale', 'expTransparent', 'expTrim', 'expMargin', 'expQuality', 'expLayout', 'expCols', 'expPad', 'expSpeed', 'expDither', 'expGodotScene', 'expNormal', 'expMirror', 'expRig', 'expBurn', 'expNleSplit', 'expNleExt', 'expNleDir', 'expSeq', 'expMinLen', 'expSticker', 'expVidFmt']) {
       $(id).addEventListener('change', () => refresh());
     }
+    // "Acrescentar": põe a animação escolhida no fim da sequência, sem precisar digitar
+    $('expSeqAdd').addEventListener('change', () => {
+      const name = $('expSeqAdd').value;
+      if (!name) return;
+      $('expSeq').value = `${$('expSeq').value.trim()} ${name}`.trim();
+      $('expSeqAdd').value = '';
+      refresh();
+    });
     // a pasta do projeto (para o editor de vídeo achar os arquivos) fica guardada neste navegador
     try { $('expNleDir').value = localStorage.getItem('weasel.nleDir') || ''; } catch (e) { /* sem armazenamento */ }
     $('expNleDir').addEventListener('change', () => { try { localStorage.setItem('weasel.nleDir', $('expNleDir').value.trim()); } catch (e) { /* sem armazenamento */ } });
@@ -355,8 +519,10 @@
     $('expDownloadPng').addEventListener('click', () => save(true));
 
     const isSheet = () => kind === 'sheet' || kind === 'godot';
-    // a folha, o Godot e o GIF de um desenho desenham todos os quadros: vão para o worker
-    const isJob = () => !isFilm() && (isSheet() || kind === 'gif');
+    // as animações (uma, a sequência ou a pintura) em GIF, WebP ou vídeo
+    const isAnim = () => kind === 'gif' || kind === 'webp' || kind === 'video';
+    // a folha, o Godot, o GIF, o WebP e o vídeo de um desenho desenham todos os quadros: vão para o worker
+    const isJob = () => !isFilm() && (isSheet() || isAnim());
     const isFrame = () => kind === 'png' || kind === 'jpg' || kind === 'svg' || kind === 'txt';
     const isFilm = () => !!app.model().film;
     // o .txt sai do art ascii (num filme, de um quadro todo em ascii)
@@ -370,7 +536,7 @@
       if (dlg.querySelector(`[data-kind="${kind}"]`).hidden) kind = 'png';
       dlg.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === kind));
       dlg.querySelectorAll('[data-show]').forEach((el) => { el.hidden = !el.dataset.show.split(' ').includes(kind); });
-      dlg.querySelectorAll('[data-hide="film"]').forEach((el) => { el.hidden = film; });
+      dlg.querySelectorAll('[data-hide="film"]').forEach((el) => { if (film) el.hidden = true; else if (!el.dataset.show) el.hidden = false; });
       dlg.querySelectorAll('[data-only="film"]').forEach((el) => { if (!film) el.hidden = true; });
       $('expTransparent').closest('label').hidden = kind === 'nle' || kind === 'subs';
       const model = app.model();
@@ -393,7 +559,12 @@
         add(sel, '', st.anim ? `Quadro atual — ${st.anim}, quadro ${st.frame + 1}` : 'Pose parada (sem animação)');
       } else {
         for (const a of model.anims) add(sel, a.name, `${a.name} — ${a.frames} quadros, ${a.fps} fps`);
-        if (kind === 'gif') add(sel, BUILD, 'Pintura passo a passo (como no vídeo)');
+        if (isAnim() && model.anims.length) add(sel, SEQ, 'Sequência de animações');
+        if (isAnim()) add(sel, BUILD, 'Pintura passo a passo (como no vídeo)');
+        const seqAdd = $('expSeqAdd');
+        seqAdd.innerHTML = '';
+        add(seqAdd, '', '+ animação');
+        for (const a of model.anims) add(seqAdd, a.name, a.name);
         if (isSheet() && model.anims.length > 1) add(sel, ALL, 'Todas as animações');
         if (!model.anims.length && isSheet()) add(sel, '', 'Pose parada');
         const want = [prev, isSheet() && model.anims.length > 1 ? ALL : '', app.state().anim].find((v) => v && [...sel.options].some((o) => o.value === v));
@@ -407,7 +578,6 @@
       if (variants.length) add(vs, ALL, 'todas (num .zip)');
       vs.value = [vprev, app.variant()].find((v) => v !== undefined && [...vs.options].some((o) => o.value === v)) || '';
       $('expVariantWrap').hidden = !variants.length;
-      $('expTransparent').disabled = kind === 'jpg';
       $('expDownloadPng').hidden = !isSheet();
       refresh();
     }
@@ -497,7 +667,7 @@
     let useWorker = !!workerUrl && typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined';
     let stopJob = null;
     const cancelJob = () => { if (stopJob) stopJob(); };
-    const PHASES = { recorte: 'Medindo o recorte', quadros: 'Desenhando', normal: 'Normal map' };
+    const PHASES = { recorte: 'Medindo o recorte', quadros: 'Desenhando', normal: 'Normal map', video: 'Gravando o vídeo' };
     function progress(phase, i, n) {
       const p = $('expProg');
       p.hidden = false;
@@ -538,7 +708,9 @@
       const img = $('expImg');
       if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
       img.dataset.url = r.previewUrl || '';
-      img.src = r.previewUrl || r.preview;
+      // o vídeo aparece num <video>, tocando sem parar; o resto (o GIF e o WebP animados também) numa imagem
+      showVideo(r.video ? r.previewUrl : null);
+      if (!r.video) img.src = r.previewUrl || r.preview;
       img.classList.toggle('checker', transparent);
       $('expInfo').textContent = r.info + (r.count > 1 ? ` · ${r.count} arquivos no .zip` : '');
       $('expDownload').textContent = r.count > 1 ? 'Baixar .zip' : `Baixar .${r.name.split('.').pop()}`;
@@ -546,8 +718,24 @@
       $('expDownloadPng').disabled = !r.png;
     }
 
+    function showVideo(url) {
+      const vid = $('expVid');
+      $('expImg').hidden = !!url;
+      vid.hidden = !url;
+      if (url) { vid.src = url; vid.play().catch(() => {}); } else if (vid.getAttribute('src')) { vid.pause(); vid.removeAttribute('src'); vid.load(); }
+    }
+
     async function refresh() {
-      $('expSpeedWrap').hidden = !(kind === 'gif' && $('expAnim').value === BUILD);
+      const film = isFilm(), src = $('expAnim').value;
+      $('expSpeedWrap').hidden = !(isAnim() && src === BUILD);
+      // a sequência: o campo e o "Acrescentar"; começa com a animação do editor
+      const seq = !film && isAnim() && src === SEQ;
+      $('expSeqWrap').hidden = $('expSeqAddWrap').hidden = !seq;
+      if (seq && !$('expSeq').value.trim()) $('expSeq').value = app.state().anim || app.model().anims[0].name;
+      // a figurinha tem tamanho e fundo certos; o vídeo e o JPG não têm transparência
+      const sticker = kind === 'webp' && $('expSticker').checked;
+      $('expTransparent').disabled = kind === 'jpg' || kind === 'video' || sticker;
+      $('expScale').disabled = $('expTrim').disabled = $('expMargin').disabled = sticker;
       const my = ++busy;
       cancelJob();
       result = null;
@@ -557,10 +745,11 @@
       await new Promise((r) => setTimeout(r, 30));
       if (my !== busy) return;
       const o = {
-        scale: parseFloat($('expScale').value), transparent: $('expTransparent').checked && kind !== 'jpg',
+        scale: parseFloat($('expScale').value), transparent: $('expTransparent').checked && kind !== 'jpg' && kind !== 'video',
         trim: $('expTrim').checked, margin: parseInt($('expMargin').value, 10) || 0, quality: parseInt($('expQuality').value, 10) / 100,
         layout: $('expLayout').value, cols: parseInt($('expCols').value, 10) || 0, padding: parseInt($('expPad').value, 10) || 0,
         speed: parseFloat($('expSpeed').value) || 1, baseName: app.baseName(), format: kind, dither: $('expDither').checked, burn: $('expBurn').checked,
+        seq: $('expSeq').value, minLength: parseFloat($('expMinLen').value) || 0, sticker, vfmt: $('expVidFmt').value,
       };
       if (heavy()) {
         // prévia do primeiro quadro; o resto só quando clicar
@@ -570,10 +759,11 @@
           const img = $('expImg');
           if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
           img.dataset.url = '';
+          showVideo(null);
           img.src = cv.toDataURL();
           img.classList.toggle('checker', o.transparent && kind !== 'video');
           $('expInfo').textContent = `${cv.width} × ${cv.height} px · ${frames.length} quadros · ${W.film.timecode(frames.length, tl.fps)} (min:seg:quadro)`;
-          $('expDownload').textContent = { gif: 'Gerar GIF', video: 'Gravar vídeo .webm', seq: 'Gerar .zip' }[kind];
+          $('expDownload').textContent = { gif: 'Gerar GIF', video: `Gravar vídeo .${o.vfmt}`, seq: 'Gerar .zip' }[kind];
           $('expDownload').disabled = false;
           result = { lazy: true, o, frames, sel: $('expAnim').value };
         } catch (e) {
@@ -585,8 +775,8 @@
       const variants = vsel === ALL ? ['', ...app.variants()] : [vsel];
       try {
         if (isJob()) {
-          // a folha, o Godot e o GIF: no worker (a página não trava), com a barra de progresso
-          const r = await runJob(Object.assign(o, { anim: $('expAnim').value, normal: $('expNormal').checked, rig: $('expRig').checked, scene: $('expGodotScene').checked, mirror: $('expMirror').checked }), variants, vsel === ALL);
+          // a folha, o Godot, o GIF, o WebP e o vídeo: no worker (a página não trava), com a barra de progresso
+          const r = await runJob(Object.assign(o, { anim: src, normal: $('expNormal').checked, rig: $('expRig').checked, scene: $('expGodotScene').checked, mirror: $('expMirror').checked }), variants, vsel === ALL);
           if (my !== busy || !r) return;
           $('expProg').hidden = true;
           show(Object.assign(r, { previewUrl: URL.createObjectURL(r.preview) }), o.transparent);
@@ -640,7 +830,9 @@
           pad.width = w;
           pad.height = h;
           const px = pad.getContext('2d');
-          const out = await W.webm.record(n, tl.fps, w, h, (i) => {
+          // MP4 (H.264, toca no WhatsApp e no celular) ou WebM (VP9)
+          const record = o.vfmt === 'webm' ? W.webm.record : W.mp4.record;
+          const out = await record(n, tl.fps, w, h, (i) => {
             px.fillStyle = '#000';
             px.fillRect(0, 0, w, h);
             px.drawImage(W.film.renderFrame(model, r.frames[i], { scale: o.scale, subs: o.burn }), 0, 0);
@@ -648,7 +840,7 @@
           }, prog, cancelled);
           if (!out) return;
           blob = out.blob;
-          name = `${base}.webm`;
+          name = `${base}.${o.vfmt === 'webm' ? 'webm' : 'mp4'}`;
         } else if (kind === 'seq') {
           const files = [];
           for (let i = 0; i < n; i++) {
@@ -689,7 +881,7 @@
       else download(result.blob, result.name);
     }
 
-    dlg.addEventListener('close', () => { busy++; cancelJob(); $('expProg').hidden = true; });
+    dlg.addEventListener('close', () => { busy++; cancelJob(); $('expProg').hidden = true; $('expVid').pause(); });
     return {
       open(k) {
         kind = k || kind;
@@ -701,5 +893,5 @@
     };
   }
 
-  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, solidBg };
+  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg };
 })(window.Weasel = window.Weasel || {});

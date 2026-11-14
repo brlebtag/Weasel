@@ -6,7 +6,7 @@
 
 **[Guia da linguagem →](docs/guia/README.md)** Aprenda passo a passo, com um exemplo e a imagem que ele gera em cada capítulo.
 
-Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF animado, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, com a **linha do tempo pronta para o editor de vídeo** (FCPXML e EDL), tanto no navegador quanto pela **linha de comando**.
+Weasel é um editor web onde você **escreve uma pequena linguagem de desenho e vê a imagem sendo pintada ao vivo**. A linguagem tem formas, curvas, camadas, recortes, gradientes, hachuras, texto, componentes reutilizáveis, variáveis, esqueleto com molas, tecido que balança, braços e pernas com IK, animação com morph e eventos, **luzes que mudam a cor dos personagens, sombras projetadas, partículas e efeitos** (brilho, desfoque, rastro, bloom). Tudo exporta em **PNG, JPG, SVG, GIF e WebP animados, vídeo MP4, sprite sheet e SpriteFrames do Godot**, e filmes saem em **vídeo** (MP4, ProRes, WebM) ou sequência de PNG, com a **linha do tempo pronta para o editor de vídeo** (FCPXML e EDL), tanto no navegador quanto pela **linha de comando**.
 
 A ideia veio do vídeo [*Claude simplesmente clonou Hollow Knight em menos de uma hora*](https://www.youtube.com/watch?v=X2cFbpQCZec&t=517s) (trecho de 8:37 a 8:42), que mostra uma ferramenta assim desenhando o Cavaleiro. O vídeo não documenta a linguagem: ela foi reconstruída a partir dos quadros. As capturas e a transcrição do código que aparece na tela estão em [`referencia/`](referencia/).
 
@@ -45,7 +45,7 @@ Depois abra <http://localhost:5317> (o endereço aparece no terminal e dá para 
 
 **Opção 3 — na internet, pelo GitHub Pages.** Abra <https://brlebtag.github.io/Weasel/>. É o mesmo `index.html` deste repositório, servido pelo GitHub: não tem servidor nem banco de dados por trás, tudo roda no seu navegador.
 
-- **Funciona tudo o que o editor faz:** desenhar, animar, os exemplos e todas as exportações da janela **Exportar** (PNG, JPG, SVG, GIF, sprite sheet, Godot, sequência PNG, legendas). O vídeo WebM é gravado pelo próprio navegador, sem som, no Chrome e no Edge.
+- **Funciona tudo o que o editor faz:** desenhar, animar, os exemplos e todas as exportações da janela **Exportar** (PNG, JPG, SVG, GIF, WebP, sprite sheet, Godot, sequência PNG, legendas). O vídeo (MP4 ou WebM) é gravado pelo próprio navegador, sem som, no Chrome e no Edge.
 - **Fica só na [linha de comando](#linha-de-comando):** MP4, ProRes, vídeo com som e o render em paralelo, porque precisam do Node e do ffmpeg no seu computador.
 - **Seus arquivos ficam no navegador de quem abre a página.** Cada pessoa tem a própria cópia, e nada vai para o GitHub. Como os arquivos ficam guardados por endereço, o que você salvou em `localhost:5317` não aparece no site, e vice-versa: use **Baixar todos** num endereço e **Abrir…** no outro para levar os arquivos.
 
@@ -79,7 +79,7 @@ node cli/weasel.js -e "canvas 200 200; ellipse sol 100,100 60 c=#ffb000 ink=4" -
 cat desenho.weasel | node cli/weasel.js - -o desenho.png
 ```
 
-O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.zip`; num filme também `.mp4`, `.mov`, `.webm`, `.mkv`) ou de `-f`:
+O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.webp`, `.svg`, `.tres`, `.zip`; vídeo em `.mp4`, `.mov`, `.webm`, `.mkv`) ou de `-f`:
 
 | Quero… | Comando |
 |---|---|
@@ -90,6 +90,9 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.svg`, `.tres`, `.z
 | Texto de um desenho com `art ascii` | `node cli/weasel.js meu.weasel -o meu.txt` |
 | GIF de uma animação | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --trim -t -o pulo.gif` |
 | GIF da pintura passo a passo | `node cli/weasel.js exemplos/cavaleiro.weasel -f build -o pintura.gif` |
+| WebP animado (cores de verdade, transparência suave) | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --trim -t -o pulo.webp` |
+| Vídeo MP4 de uma sequência de animações (para o WhatsApp) | `node cli/weasel.js exemplos/furao.weasel -a "idle_down walk_down*3" -o furao.mp4 --small` |
+| Figurinha do WhatsApp (512×512, até 500 KB) | `node cli/weasel.js exemplos/furao.weasel -a idle_down -o figurinha.webp --sticker` |
 | Sprite sheet (PNG + JSON) | `node cli/weasel.js exemplos/cavaleiro.weasel -f sheet -a all -s 0.5 --trim -t -o sprites.png` |
 | Cena pronta do Godot (folha, normal map, .tres, .tscn e ajudante) | `node cli/weasel.js exemplos/furao.weasel -o godot/furao.tscn` |
 | SpriteFrames do Godot (PNG + .tres) | `node cli/weasel.js exemplos/coruja.weasel -f godot -a all --trim -t -o godot/coruja.tres` |
@@ -176,7 +179,7 @@ Os botões das barras mostram só um ícone: pare o mouse em cima de um para ver
 | **Câmera** (filmes) | Ligada, mostra o que a câmera filma, como vai sair no vídeo. Desligada, mostra o mundo inteiro como foi desenhado, com a moldura tracejada do quadro parado e a moldura laranja da câmera naquele momento. |
 | **Linha do tempo** (filmes) | Embaixo do desenho: os planos, os sons (com a forma de onda e as letras das bocas do lip sync) e as legendas no tempo. Clique ou arraste na régua para ir a um momento; clique num bloco para ir à linha dele no código. Arraste um som ou uma legenda para mudar quando começa (`at=` ou o tempo do `sub`); a borda direita muda o `dur=` (num plano, só a borda). Gruda nos quadros, na cabeça de leitura e no começo dos planos (Alt solta). A roda anda, Ctrl+roda dá zoom, duplo clique no vazio mostra tudo e, num bloco de outro arquivo (`scene`), abre esse arquivo. |
 | **Pintar** | Repete a pintura traço a traço, com o pincel laranja, como no vídeo. |
-| **Exportar** | PNG, JPG, GIF animado, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas. Num filme: quadro atual, GIF, vídeo WebM, sequência PNG, legendas ou a linha do tempo para o editor de vídeo. |
+| **Exportar** | PNG, JPG, GIF ou WebP animado, vídeo MP4, SVG, sprite sheet ou Godot, com prévia; uma variante ou todas; uma animação ou uma sequência delas. Num filme: quadro atual, GIF, vídeo MP4 ou WebM, sequência PNG, legendas ou a linha do tempo para o editor de vídeo. |
 | **Referência** | A referência completa da linguagem, dentro do app (F1). |
 
 Editando pelo desenho e pelo teclado:
@@ -508,17 +511,21 @@ sub +0.2s "Cuidado com o fantasma…" dur=1.6s
 | **PNG** | O quadro da tela, com fundo transparente opcional. |
 | **JPG** | O quadro da tela, com qualidade ajustável. |
 | **SVG** | O quadro da tela em vetor, com gradientes, recortes e texto. Abre no navegador, no Inkscape ou no Figma. |
-| **GIF animado** | Uma animação (no fps dela) ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. A opção **pontilhado** troca as faixas de cor de brilhos e degradês por um padrão fino. |
+| **GIF animado** | Uma animação (no fps dela), uma **sequência de animações** ou a **pintura passo a passo**. Paleta de até 256 cores; a transparência do GIF é de 1 bit. A opção **pontilhado** troca as faixas de cor de brilhos e degradês por um padrão fino. |
+| **WebP animado** | O mesmo do GIF, com cores de verdade e transparência de borda suave, num arquivo em geral menor; abre no navegador, no Telegram e no Discord. **Qualidade** 100 = sem perdas. **Figurinha do WhatsApp**: 512×512, fundo transparente, o desenho centrado com folga e a qualidade baixando até caber em 500 KB (no WhatsApp, WebP só entra como figurinha). |
+| **Vídeo** (desenho) | MP4 (H.264) gravado pelo próprio navegador, de uma animação, de uma sequência ou da pintura: toca no WhatsApp e no celular. Sem som e sem transparência (o fundo é o do desenho). A animação repete inteira até a **duração** escolhida (no mínimo 3 s, por padrão). |
 | **Sprite sheet** | Um `.zip` com todos os quadros num PNG e um `.json` no formato do TexturePacker/Phaser (`frames`, `animations`, `meta.frameTags`, com `groundSpeed` nas animações com `feet=`), com os eventos de cada quadro e o pivô e os pixels por unidade da Unity quando houver `unity`. Arranjo em grade ou uma linha por animação. |
 | **Godot** | Um `.zip` para uma pasta do projeto: a folha (.png), o `SpriteFrames` (.tres) e, com as opções (ligadas por padrão), o normal map, a **cena pronta** (.tscn) e o `weasel_anim.gd` (veja [Godot](#godot)). Num arquivo com `tileset`, sai o **TileSet**. Com as opções desligadas, sai só a folha e o .tres, como antes. |
-| **Vídeo** (filme) | WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. MP4, ProRes e filmes longos saem pela linha de comando. |
+| **Vídeo** (filme) | MP4 (H.264) ou WebM (VP9) gravado pelo próprio navegador, sem som, do filme inteiro ou de um plano. Vídeo com som, ProRes e filmes longos saem pela linha de comando. |
 | **Sequência PNG** (filme) | Um `.zip` com um PNG por quadro, numerado pelo quadro do filme. |
 | **Legendas** (filme) | `.srt` e `.vtt` do filme inteiro ou de um plano, uma língua por arquivo. Nas outras abas do filme, **Legendas na imagem** desenha as legendas no quadro. |
 | **Editor de vídeo** (filme) | Um `.zip` com a linha do tempo do filme inteiro ou de um plano em `.fcpxml` e `.edl`, mais as legendas `.srt` (veja [Do Weasel para o editor de vídeo](#do-weasel-para-o-editor-de-vídeo)). A prévia é a linha do tempo. |
 
 Num filme, PNG e JPG exportam o quadro que está no player; GIF, vídeo e sequência exportam o filme inteiro ou um plano e só são gerados ao clicar (fechar a janela cancela).
 
-Num desenho, a sprite sheet, o Godot e o GIF são feitos em segundo plano (um Web Worker, `js/worker.js`), com uma barra de progresso: o editor continua respondendo, e mudar uma opção ou fechar a janela cancela o que estava sendo feito. Num navegador sem `OffscreenCanvas`, eles são feitos na própria página, como antes.
+**Sequência de animações** (GIF, WebP e vídeo): em **Origem**, escolha *Sequência de animações* e escreva os nomes na ordem, `idle walk*3 jump` (`*3` repete três vezes); **Acrescentar** põe uma animação no fim sem precisar digitar. Na linha de comando, o mesmo texto vai no `-a`: `-a "idle walk*3 jump"`. No vídeo, a sequência inteira repete até dar a duração (`--min-length` na linha de comando, padrão 3 s; `0` = uma volta só); animações com fps diferentes entram cada uma no seu ritmo.
+
+Num desenho, a sprite sheet, o Godot, o GIF, o WebP e o vídeo são feitos em segundo plano (um Web Worker, `js/worker.js`), com uma barra de progresso: o editor continua respondendo, e mudar uma opção ou fechar a janela cancela o que estava sendo feito. Num navegador sem `OffscreenCanvas`, eles são feitos na própria página, como antes.
 
 Todos aceitam escala (25% a 400%) e **recortar ao desenho**: o recorte cobre todos os quadros da animação, então os quadros ficam alinhados. Com variantes, dá para exportar uma ou todas de uma vez (num `.zip`).
 
@@ -660,12 +667,14 @@ js/film.js          filme: planos em sequência, atores, at, câmera com profund
 js/nle.js           linha do tempo para o editor de vídeo: EDL (CMX3600) e FCPXML 1.9
 js/timeline.js      a linha do tempo do editor: planos, sons com forma de onda, legendas, arrastar para mudar o tempo
 js/webm.js          vídeo no navegador (WebCodecs) e o arquivo .webm
+js/mp4.js           vídeo MP4 (H.264) no navegador: o arquivo .mp4 em volta dos quadros do WebCodecs
+js/webp.js          WebP animado: junta os quadros (cada um gravado em WebP pelo canvas) num arquivo só
 js/svg.js           exportação em SVG
 js/editor.js        editor com cores, sugestões, Alt+arrastar números, seletor de cor e desfazer
 js/gif.js           codificador de GIF animado (median cut + LZW)
 js/zip.js           .zip simples para a sprite sheet
 js/export.js        PNG, JPG, GIF, SVG, sprite sheet, Godot, vídeo e a janela de exportação
-js/worker.js        a folha, o Godot e o GIF da janela de exportação, em segundo plano (Web Worker)
+js/worker.js        a folha, o Godot, o GIF, o WebP e o vídeo da janela de exportação, em segundo plano (Web Worker)
 js/examples.js      exemplos do menu
 js/app.js           a interface: arquivos, editor, desenho ao vivo, arrastar pontos, player
 cli/weasel.js       linha de comando (usa os mesmos arquivos de js/)
@@ -702,8 +711,9 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - `loop` repete o arquivo inteiro (o `from=` vale só para a primeira vez).
 - A linha do tempo para o editor de vídeo leva cortes, trilhas, volumes e marcadores; não leva fades nem efeitos. Os arquivos foram conferidos lendo com o [OpenTimelineIO](https://opentimeline.io); cada editor tem suas manias na importação (no EDL, o volume vai só como comentário e os arquivos são achados pelo nome).
 - Na linha do tempo do editor, arrastar muda só o que está no arquivo aberto; os blocos de um `scene` se editam no arquivo deles (duplo clique abre). Arrastar uma legenda escrita com `+0.3s` troca o tempo dela por um tempo fixo dentro do plano.
-- No navegador, os sons ficam guardados no próprio navegador (não vão no **Baixar todos**) e o vídeo WebM sai sem som; para vídeo com som, use a linha de comando.
-- Vídeo no navegador sai só em WebM (VP9 ou VP8, sem som nem transparência) e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, MP4 e ProRes, use a linha de comando, que precisa do ffmpeg.
+- No navegador, os sons ficam guardados no próprio navegador (não vão no **Baixar todos**) e o vídeo sai sem som; para vídeo com som, use a linha de comando.
+- Vídeo no navegador sai em MP4 (H.264) ou WebM (VP9 ou VP8), sem som nem transparência, e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, com som ou em ProRes, use a linha de comando, que precisa do ffmpeg.
+- O WebP animado precisa de um navegador que grave WebP (Chrome, Edge, Firefox); no Safari, use a linha de comando.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
 - Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.
 - O 2.5D é feito de peças chatas: não há modelo 3D, sombra de uma peça sobre outra nem interseção (duas peças que se cruzam no espaço não se cortam; vale a ordem do `zsort`, pelo meio de cada uma). O esqueleto de verdade do Godot (`rig=bones`) não gira em 3D: com `yaw=`, `pitch=`, `z=` ou `iso`, exporte por quadros (`rig=frames`, o padrão).

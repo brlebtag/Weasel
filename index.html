@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.38.1">
+<link rel="stylesheet" href="css/style.css?v=1.39.0">
 </head>
 <body>
 <header class="top">
@@ -281,12 +281,15 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <h3>Exportar</h3>
     <ul>
       <li><b>PNG / JPG / SVG</b>: o quadro que está na tela (SVG é vetorial).</li>
-      <li><b>GIF animado</b>: uma animação, ou a pintura passo a passo. "Pontilhado" troca faixas de cor por um padrão fino (bom com brilhos e luz).</li>
+      <li><b>GIF animado</b>: uma animação, uma sequência de animações ou a pintura passo a passo. "Pontilhado" troca faixas de cor por um padrão fino (bom com brilhos e luz).</li>
+      <li><b>WebP animado</b>: o mesmo do GIF, com cores de verdade e transparência suave. "Figurinha do WhatsApp" faz 512 × 512 com fundo transparente, até 500 KB.</li>
+      <li><b>Vídeo</b>: MP4 (H.264), que toca no WhatsApp e no celular. A animação repete até dar a duração escolhida (no mínimo 3 s).</li>
+      <li><b>Sequência de animações</b> (GIF, WebP e vídeo): em Origem, escolha "Sequência de animações" e escreva os nomes na ordem, <code>idle walk*3 jump</code> (<code>*3</code> repete); "Acrescentar" põe uma no fim.</li>
       <li><b>Sprite sheet</b>: todos os quadros numa imagem só, mais um JSON no formato do TexturePacker/Phaser (com <code>frameTags</code>, eventos e o pivô da Unity).</li>
       <li><b>Godot</b>: a folha e o <code>SpriteFrames</code> (.tres) e, com as opções, o normal map para a luz 2D e a cena pronta (.tscn) com AnimatedSprite2D, colisão, hitbox e hurtbox por quadro, eventos e direções espelhadas. Num arquivo com <code>tileset</code>, sai o TileSet.</li>
       <li>Com variantes, escolha uma ou exporte todas num .zip.</li>
-      <li>A sprite sheet, o Godot e o GIF são feitos em segundo plano, com uma barra de progresso: a página não trava enquanto isso, e mudar uma opção ou fechar a janela cancela.</li>
-      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt); em <b>Editor de vídeo</b>, a linha do tempo para o DaVinci Resolve, Final Cut ou Premiere (.fcpxml, .edl e .srt). Vídeo com som: linha de comando; <code>weasel filme.weasel -o filme.mov --shots --fcpxml --edl</code> faz um vídeo por plano e a linha do tempo com cada som na sua trilha.</li>
+      <li>A sprite sheet, o Godot, o GIF, o WebP e o vídeo são feitos em segundo plano, com uma barra de progresso: a página não trava enquanto isso, e mudar uma opção ou fechar a janela cancela.</li>
+      <li><b>Filme</b>: o quadro atual em PNG/JPG; o filme inteiro ou um plano em GIF, <b>vídeo</b> MP4 ou WebM, <b>sequência PNG</b> (num .zip) ou <b>legendas</b> (.srt e .vtt); em <b>Editor de vídeo</b>, a linha do tempo para o DaVinci Resolve, Final Cut ou Premiere (.fcpxml, .edl e .srt). Vídeo com som: linha de comando; <code>weasel filme.weasel -o filme.mov --shots --fcpxml --edl</code> faz um vídeo por plano e a linha do tempo com cada som na sua trilha.</li>
     </ul>
   </div>
 </aside>
@@ -297,11 +300,12 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <button type="button" data-kind="png">PNG</button>
     <button type="button" data-kind="jpg">JPG</button>
     <button type="button" data-kind="gif">GIF animado</button>
+    <button type="button" data-kind="webp" data-for="draw">WebP animado</button>
+    <button type="button" data-kind="video">Vídeo</button>
     <button type="button" data-kind="svg" data-for="draw">SVG</button>
     <button type="button" data-kind="txt" data-for="ascii">Texto (ASCII)</button>
     <button type="button" data-kind="sheet" data-for="draw">Sprite sheet</button>
     <button type="button" data-kind="godot" data-for="draw">Godot</button>
-    <button type="button" data-kind="video" data-for="film">Vídeo</button>
     <button type="button" data-kind="seq" data-for="film">Sequência PNG</button>
     <button type="button" data-kind="subs" data-for="film">Legendas</button>
     <button type="button" data-kind="nle" data-for="film">Editor de vídeo</button>
@@ -309,6 +313,14 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   <div class="dlg-body">
     <div class="opts">
       <label>Origem <select id="expAnim"></select></label>
+      <label id="expSeqWrap" hidden title="As animações na ordem, separadas por espaço; nome*3 repete 3 vezes">Sequência <input type="text" id="expSeq" placeholder="idle walk*3 jump" spellcheck="false"></label>
+      <label id="expSeqAddWrap" hidden title="Põe a animação no fim da sequência">Acrescentar <select id="expSeqAdd"></select></label>
+      <label data-show="video" data-hide="film" title="A animação (ou a sequência) repete inteira até dar esse tempo; a pintura passo a passo toca uma vez">Duração
+        <select id="expMinLen"><option value="3" selected>no mínimo 3 s</option><option value="5">no mínimo 5 s</option><option value="10">no mínimo 10 s</option><option value="0">uma volta só</option></select>
+      </label>
+      <label data-show="video" data-only="film">Formato
+        <select id="expVidFmt"><option value="mp4" selected>MP4 (H.264)</option><option value="webm">WebM (VP9)</option></select>
+      </label>
       <label id="expVariantWrap" hidden>Variante <select id="expVariant"></select></label>
       <label id="expSpeedWrap" hidden>Velocidade da pintura
         <select id="expSpeed"><option value="0.5">devagar</option><option value="1" selected>normal</option><option value="2">rápida</option></select>
@@ -319,7 +331,8 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <label class="chk"><input type="checkbox" id="expTransparent"> Fundo transparente</label>
       <label class="chk" data-hide="film"><input type="checkbox" id="expTrim"> Recortar ao desenho</label>
       <label data-hide="film">Margem do recorte <input type="number" id="expMargin" value="8" min="0" max="200"></label>
-      <label data-show="jpg">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
+      <label data-show="jpg webp" title="No WebP, 100 = sem perdas">Qualidade <input type="range" id="expQuality" min="50" max="100" value="92"></label>
+      <label data-show="webp" class="chk" title="512 × 512 com fundo transparente, o desenho centrado com folga; a qualidade baixa até o arquivo caber em 500 KB"><input type="checkbox" id="expSticker"> Figurinha do WhatsApp (512 × 512)</label>
       <label data-show="gif" class="chk" title="Troca as faixas de cor de brilhos e degradês por um pontilhado fino"><input type="checkbox" id="expDither"> Pontilhado (menos faixas)</label>
       <label data-show="png jpg gif video seq" data-only="film" class="chk" title="Desenha as legendas (sub, text= dos audio) no quadro"><input type="checkbox" id="expBurn"> Legendas na imagem</label>
       <label data-show="sheet godot">Arranjo
@@ -342,11 +355,13 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <p data-show="godot" class="opt-note">Sai um .zip para pôr numa pasta do projeto do Godot: a folha (.png), o SpriteFrames (.tres) e, com as opções, o normal map, a cena (.tscn) e o weasel_anim.gd. Use a cena como personagem e toque com $AnimationPlayer.tocar("walk", velocity). Num arquivo com tileset, sai o TileSet.</p>
       <p data-show="svg" class="opt-note">Vetorial: abre em qualquer navegador, no Inkscape ou no Figma. O acabamento pixel= e o estilo (art) não valem para SVG: ele sai só com as formas.</p>
       <p data-show="txt" class="opt-note">As letras do art ascii num .txt, uma linha de texto por linha de letras (o quadro atual).</p>
-      <p data-show="video" class="opt-note">WebM (VP9) gravado pelo próprio navegador, sem som. Para filmes longos, MP4 ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
+      <p data-show="video" data-only="film" class="opt-note">MP4 (H.264) ou WebM (VP9) gravado pelo próprio navegador, sem som. O MP4 toca no WhatsApp e no celular. Para filmes longos, com som ou ProRes para o editor de vídeo, use a linha de comando: <code>weasel filme.weasel -o filme.mp4</code> (bem mais rápido, em paralelo).</p>
+      <p data-show="video" data-hide="film" class="opt-note">MP4 (H.264) gravado pelo próprio navegador, sem som e sem transparência (o fundo é o do desenho): toca no WhatsApp e no celular. A animação repete até dar a duração; em Sequência de animações, escreva os nomes na ordem (<code>idle walk*3 jump</code>). Na linha de comando: <code>weasel furao.weasel -a "idle walk*3" -o furao.mp4</code>.</p>
+      <p data-show="webp" class="opt-note">WebP animado: cores de verdade e transparência com borda suave, num arquivo menor que o GIF; abre no navegador, no Telegram e no Discord. No WhatsApp, WebP só entra como figurinha: marque Figurinha do WhatsApp; para mandar como vídeo, use Vídeo (MP4).</p>
       <p data-show="subs" class="opt-note">As legendas (sub e o text= dos audio) em .srt e .vtt, com o tempo contado do começo do trecho. O YouTube e os editores de vídeo abrem os dois. Cada língua (lang=) sai num arquivo.</p>
       <p data-show="seq" class="opt-note">Um PNG por quadro num .zip, numerado pelo quadro do filme (filme_00000.png …). Todo editor de vídeo importa sequência de imagens.</p>
     </div>
-    <div class="prev"><img id="expImg" alt="Prévia da exportação"></div>
+    <div class="prev"><img id="expImg" alt="Prévia da exportação"><video id="expVid" class="exp-vid" autoplay loop muted playsinline hidden></video></div>
   </div>
   <div class="dlg-foot">
     <progress id="expProg" class="exp-prog" hidden></progress>
@@ -356,24 +371,26 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.38.1"></script>
-<script src="js/lang.js?v=1.38.1"></script>
-<script src="js/art.js?v=1.38.1"></script>
-<script src="js/scene.js?v=1.38.1"></script>
-<script src="js/film.js?v=1.38.1"></script>
-<script src="js/audio.js?v=1.38.1"></script>
-<script src="js/nle.js?v=1.38.1"></script>
-<script src="js/webm.js?v=1.38.1"></script>
-<script src="js/svg.js?v=1.38.1"></script>
-<script src="js/gif.js?v=1.38.1"></script>
-<script src="js/zip.js?v=1.38.1"></script>
-<script src="js/normal.js?v=1.38.1"></script>
-<script src="js/export.js?v=1.38.1"></script>
-<script src="js/godot.js?v=1.38.1"></script>
-<script src="js/rig.js?v=1.38.1"></script>
-<script src="js/editor.js?v=1.38.1"></script>
-<script src="js/examples.js?v=1.38.1"></script>
-<script src="js/timeline.js?v=1.38.1"></script>
-<script src="js/app.js?v=1.38.1"></script>
+<script src="js/geom.js?v=1.39.0"></script>
+<script src="js/lang.js?v=1.39.0"></script>
+<script src="js/art.js?v=1.39.0"></script>
+<script src="js/scene.js?v=1.39.0"></script>
+<script src="js/film.js?v=1.39.0"></script>
+<script src="js/audio.js?v=1.39.0"></script>
+<script src="js/nle.js?v=1.39.0"></script>
+<script src="js/webm.js?v=1.39.0"></script>
+<script src="js/svg.js?v=1.39.0"></script>
+<script src="js/gif.js?v=1.39.0"></script>
+<script src="js/webp.js?v=1.39.0"></script>
+<script src="js/mp4.js?v=1.39.0"></script>
+<script src="js/zip.js?v=1.39.0"></script>
+<script src="js/normal.js?v=1.39.0"></script>
+<script src="js/export.js?v=1.39.0"></script>
+<script src="js/godot.js?v=1.39.0"></script>
+<script src="js/rig.js?v=1.39.0"></script>
+<script src="js/editor.js?v=1.39.0"></script>
+<script src="js/examples.js?v=1.39.0"></script>
+<script src="js/timeline.js?v=1.39.0"></script>
+<script src="js/app.js?v=1.39.0"></script>
 </body>
 </html>
