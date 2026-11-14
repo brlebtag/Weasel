@@ -714,6 +714,7 @@ referencia/         capturas do vídeo e transcrição do código mostrado
 - No navegador, os sons ficam guardados no próprio navegador (não vão no **Baixar todos**) e o vídeo sai sem som; para vídeo com som, use a linha de comando.
 - Vídeo no navegador sai em MP4 (H.264) ou WebM (VP9 ou VP8), sem som nem transparência, e precisa do WebCodecs (Chrome, Edge, Firefox recente). Para filmes longos, com som ou em ProRes, use a linha de comando, que precisa do ffmpeg.
 - O WebP animado precisa de um navegador que grave WebP (Chrome, Edge, Firefox); no Safari, use a linha de comando.
+- A figurinha do WhatsApp só fica animada se entrar pelo celular, por um aplicativo de figurinhas que importa `.webp`. O WhatsApp do computador a deixa parada, tanto arrastando o arquivo quanto pelo **Criar figurinha**, e o visualizador de fotos do Windows mostra só o primeiro quadro. Para mandar a animação no chat, use o vídeo MP4.
 - A luz do filme ilumina os atores, mas a sombra projetada (`cast`) continua dentro de cada arquivo: o chão do cenário não recebe a sombra de um ator.
 - Cada camada é desenhada inteira numa profundidade: para partes de um mesmo desenho ficarem em profundidades diferentes, separe-as em camadas.
 - O 2.5D é feito de peças chatas: não há modelo 3D, sombra de uma peça sobre outra nem interseção (duas peças que se cruzam no espaço não se cortam; vale a ordem do `zsort`, pelo meio de cada uma). O esqueleto de verdade do Godot (`rig=bones`) não gira em 3D: com `yaw=`, `pitch=`, `z=` ou `iso`, exporte por quadros (`rig=frames`, o padrão).

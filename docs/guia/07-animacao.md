@@ -780,6 +780,7 @@ node cli/weasel.js pingo.weasel -a parado --frames -o quadros/pingo.png
 O primeiro faz um GIF; o segundo, o PNG de um quadro (o mesmo número usado nas `key`); o terceiro, um PNG por quadro. Para jogos, a sprite sheet e a cena do Godot estão no [capítulo 9](09-jogo-godot.md).
 
 - **Para mandar para alguém:** `-o pingo.webp` faz um WebP animado (cores de verdade e transparência suave) e `-o pingo.mp4` um vídeo, que toca no WhatsApp (precisa do [ffmpeg](https://ffmpeg.org); no editor, o botão **Vídeo** da janela Exportar grava sem ele). O vídeo repete a animação até dar 3 segundos (`--min-length` muda). Várias animações em seguida: `-a "idle walk*3 jump"`, com os nomes das suas animações, na ordem; `*3` repete três vezes. No editor, é a origem **Sequência de animações** da janela Exportar.
+- **Figurinha do WhatsApp:** `-o pingo.webp --sticker` (no editor, marque **Figurinha do WhatsApp** no WebP animado) faz o WebP do jeito que o WhatsApp pede: 512 × 512, fundo transparente e até 500 KB. Ela só fica animada se entrar pelo celular, por um aplicativo de figurinhas que importa `.webp`. O WhatsApp do computador a deixa parada, tanto arrastando o arquivo quanto pelo **Criar figurinha**. O visualizador de fotos do Windows também mostra só o primeiro quadro. Para mandar a animação no chat, use o vídeo.
 
 Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info` (há um exemplo da saída em [Eventos](#eventos-event)):
 
