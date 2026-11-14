@@ -2195,6 +2195,7 @@
   // anda e gira com o osso. A escala é a da tela (T.px pontos por unidade), para a textura ter sempre o mesmo
   // tamanho, mesmo num ator pequeno. T.off: o deslocamento da textura (boil, seed). T.turn(key): o giro da
   // textura em cada forma (um ângulo a partir do número da forma), para cada uma ter a sua direção.
+  const TEXPAT = new WeakMap();
   function texFill(ctx, model, pose, el, g, path) {
     const T = PASS.tex, f = fullMap(model, pose, el), b = localBox(el);
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = Math.max(1, Math.max(b.w, b.h) / 2);
@@ -2218,7 +2219,10 @@
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.setTransform(pm[0], pm[1], pm[2], pm[3], pm[4], pm[5]);
-    ctx.fillStyle = ctx.createPattern(T.tile, 'repeat');
+    // o padrão é feito uma vez por azulejo (fazer um a cada forma copia o azulejo inteiro)
+    let pat = TEXPAT.get(T.tile);
+    if (!pat) { pat = ctx.createPattern(T.tile, 'repeat'); TEXPAT.set(T.tile, pat); }
+    ctx.fillStyle = pat;
     ctx.fillRect(x0 - 2, y0 - 2, x1 - x0 + 4, y1 - y0 + 4);
     ctx.restore();
   }

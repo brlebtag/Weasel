@@ -2635,6 +2635,513 @@
     }
   }
 
+  // ---------- glass (vitral) ----------
+  // ruído de valor que emenda com períodos diferentes em x (px) e em y (py)
+  function noiseA(u, v, px, py, salt) {
+    const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const wx = (a) => ((a % px) + px) % px, wy = (a) => ((a % py) + py) % py;
+    const i0 = wx(i) + salt * 4099, i1 = wx(i + 1) + salt * 4099, j0 = wy(j), j1 = wy(j + 1);
+    const a = rnd(i0, j0), b = rnd(i1, j0), c = rnd(i0, j1), d = rnd(i1, j1);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  }
+  // O azulejo dos cortes (que emenda): um ponto sorteado em cada casa de uma grade GM×GM, e cada pedaço é o lugar
+  // mais perto de um ponto (Voronoi). Cada ponto do azulejo guarda o número do pedaço (R, de 4 em 4), as manchas
+  // compridas do vidro (G) e a distância até a borda do pedaço (B, em unidades vezes GD). O azulejo tem GM·sz
+  // unidades (sz: o tamanho de um pedaço).
+  const GM = 8, GD = 20;
+  const glassTiles = new Map();
+  function glassTile(k, sz) {
+    const n = Math.min(1024, Math.max(64, Math.round(GM * sz * k))), key = n + ':' + sz.toFixed(3);
+    if (glassTiles.has(key)) return glassTiles.get(key);
+    if (glassTiles.size > 3) glassTiles.delete(glassTiles.keys().next().value);
+    const R = rng(4243), S = [];
+    for (let j = 0; j < GM; j++) for (let i = 0; i < GM; i++) S.push([i + 0.15 + 0.7 * R(), j + 0.15 + 0.7 * R()]);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data;
+    for (let py = 0, o = 0; py < n; py++) {
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = ((px + 0.5) / n) * GM, v = ((py + 0.5) / n) * GM, ci = Math.floor(u), cj = Math.floor(v);
+        let d1 = Infinity, d2 = Infinity, ax = 0, ay = 0, bx = 0, by = 0, ia = 0;
+        for (let dj = -1; dj <= 1; dj++) {
+          for (let di = -1; di <= 1; di++) {
+            const ii = (ci + di + GM) % GM, jj = (cj + dj + GM) % GM, s = S[jj * GM + ii];
+            const sx = s[0] + (ci + di - ii), sy = s[1] + (cj + dj - jj), d = (sx - u) * (sx - u) + (sy - v) * (sy - v);
+            if (d < d1) { d2 = d1; bx = ax; by = ay; d1 = d; ax = sx; ay = sy; ia = jj * GM + ii; } else if (d < d2) { d2 = d; bx = sx; by = sy; }
+          }
+        }
+        // a distância até a mediatriz dos dois pontos mais perto (a borda entre os dois pedaços)
+        const e = ((d2 - d1) / (2 * Math.hypot(ax - bx, ay - by))) * sz;
+        D[o] = ia * 4;
+        D[o + 1] = Math.round(255 * (0.6 * noiseA(u * 3, v * 0.75, 3 * GM, 0.75 * GM, 71) + 0.4 * noiseA(u * 2.5, v * 2.5, 2.5 * GM, 2.5 * GM, 72)));
+        D[o + 2] = Math.min(255, Math.round(e * GD));
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: n / (GM * sz) };
+    glassTiles.set(key, T);
+    return T;
+  }
+  // as medidas do vitral, em unidades: o chumbo grosso (lead=; o fino tem a metade) e o tamanho dos pedaços (size=;
+  // sem size=, uns 12 pedaços na largura do canvas)
+  const glassLead = (art, g) => art.lead || 4 * bgUnit(g);
+  const glassSize = (art, g) => art.size || 40 * bgUnit(g);
+  // o traço fino vira grisalha (pintura escura no vidro), e não um vidro: o chumbo o engoliria
+  const glassSlim = (it, lead) => (it.ws ? Math.max(...it.ws) : it.w) < 2.5 * lead;
+  // O glass: cada forma (e o fundo do canvas) vira vidro, cortado em pedaços (os grandes); a cor de cada pedaço é a
+  // média do desenho nele, mais forte. Entre formas, o chumbo grosso; entre pedaços da mesma forma, o fino. O
+  // contorno vira o chumbo (a cor dele não conta). Os traços finos viram grisalha, por cima; as formas pequenas
+  // demais viram contas de vidro, sem chumbo. As partes claras brilham. Com frame, uma moldura de chumbo em volta.
+  function glassPaint(art, info, g) {
+    const lead = glassLead(art, g);
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink() {},
+      line(ctx, it) {
+        if (!glassSlim(it, lead)) { eraseWith(ctx, () => it.body(ctx)); return true; }
+        const c = specRGB(it.lineSpec) || [40, 30, 24];
+        ctx.save();
+        ctx.globalAlpha *= 0.9;
+        ctx.fillStyle = ctx.strokeStyle = hexOf(c.map((v) => v * 0.45));
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+    return {
+      inkPass,
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) { ctx.fillStyle = it.fillStyle; ctx.fill(it.path); },
+      ink() {},
+      line(ctx, it) {
+        if (glassSlim(it, lead)) return true;
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = it.lineStyle;
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // o passe das peças: cada forma (e cada traço largo) com uma cor sorteada; S.ids guarda as cores (1: um traço)
+  function glassIds(S, lead) {
+    let n = 0;
+    S.ids = new Map();
+    const col = (line) => {
+      const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
+      S.ids.set(v, line);
+      return `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
+    };
+    return {
+      glow: false,
+      fill(ctx, it) { ctx.fillStyle = col(0); ctx.fill(it.path); },
+      ink() {},
+      line(ctx, it) {
+        if (glassSlim(it, lead)) return true;
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = col(1);
+        it.body(ctx);
+        ctx.restore();
+        return true;
+      },
+    };
+  }
+  // a distância (em pontos) até o ponto marcado com 0 mais perto, em duas passadas (1 de lado, 1,41 na diagonal)
+  function chamfer(D, Wd, Hd) {
+    const R2 = Math.SQRT2;
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        let d = D[i];
+        if (x > 0 && D[i - 1] + 1 < d) d = D[i - 1] + 1;
+        if (y > 0) {
+          if (D[i - Wd] + 1 < d) d = D[i - Wd] + 1;
+          if (x > 0 && D[i - Wd - 1] + R2 < d) d = D[i - Wd - 1] + R2;
+          if (x < Wd - 1 && D[i - Wd + 1] + R2 < d) d = D[i - Wd + 1] + R2;
+        }
+        D[i] = d;
+      }
+    }
+    for (let y = Hd - 1, i = Wd * Hd - 1; y >= 0; y--) {
+      for (let x = Wd - 1; x >= 0; x--, i--) {
+        let d = D[i];
+        if (x < Wd - 1 && D[i + 1] + 1 < d) d = D[i + 1] + 1;
+        if (y < Hd - 1) {
+          if (D[i + Wd] + 1 < d) d = D[i + Wd] + 1;
+          if (x < Wd - 1 && D[i + Wd + 1] + R2 < d) d = D[i + Wd + 1] + R2;
+          if (x > 0 && D[i + Wd - 1] + R2 < d) d = D[i + Wd - 1] + R2;
+        }
+        D[i] = d;
+      }
+    }
+  }
+  // as peças: P (-1: o fundo; -2: nenhuma, como a mistura de duas na borda, que fica com a de um vizinho) e own (1:
+  // o ponto é da peça de verdade, e a cor dele conta na média)
+  function piecesOf(id, ids, Wd, Hd) {
+    const N = Wd * Hd, P = new Int32Array(N), own = new Uint8Array(N);
+    for (let i = 0, o = 0; i < N; i++, o += 4) {
+      if (!id[o + 3]) { P[i] = -1; continue; }
+      const v = (id[o] << 16) | (id[o + 1] << 8) | id[o + 2];
+      if (ids.has(v) && id[o + 3] > 250) { P[i] = v; own[i] = 1; } else P[i] = ids.has(v) ? v : -2;
+    }
+    for (let i = 0; i < N; i++) if (P[i] === -2) { const px = i % Wd; P[i] = px > 0 && P[i - 1] >= 0 ? P[i - 1] : i >= Wd && P[i - Wd] >= 0 ? P[i - Wd] : -2; }
+    for (let i = N - 1; i >= 0; i--) if (P[i] === -2) { const px = i % Wd; P[i] = px < Wd - 1 && P[i + 1] >= 0 ? P[i + 1] : i + Wd < N && P[i + Wd] >= 0 ? P[i + Wd] : -1; }
+    return { P, own };
+  }
+  const LEAD_D = [26, 26, 30], LEAD_H = [124, 126, 136];
+  function glassPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, N = Wd * Hd, k = 1 / g.cw, U = bgUnit(g), lead = glassLead(art, g), sz = glassSize(art, g);
+    const S = {};
+    const IX = work('art_id', Wd, Hd);
+    IX.ctx.save();
+    src.content(IX.ctx, m, { unlit: true, stroke: glassIds(S, lead) });
+    IX.ctx.restore();
+    const { P, own } = piecesOf(IX.ctx.getImageData(0, 0, Wd, Hd).data, S.ids, Wd, Hd);
+    // cada peça num número pequeno (slot; 0 é o fundo) e a caixa dela
+    const slot = new Int32Array(N), bx = [Infinity], by = [Infinity], ex = [-Infinity], ey = [-Infinity], isLine = [0], of = new Map();
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        const p = P[i];
+        if (p < 0) { slot[i] = 0; continue; }
+        let s = of.get(p);
+        if (s === undefined) { s = bx.length; of.set(p, s); bx.push(Infinity); by.push(Infinity); ex.push(-Infinity); ey.push(-Infinity); isLine.push(S.ids.get(p)); }
+        slot[i] = s;
+        if (x < bx[s]) bx[s] = x;
+        if (x > ex[s]) ex[s] = x;
+        if (y < by[s]) by[s] = y;
+        if (y > ey[s]) ey[s] = y;
+      }
+    }
+    // inteira (um pedaço só): os traços e as formas menores que um pedaço; conta: pequena demais para o chumbo
+    const ns = bx.length, whole = new Uint8Array(ns), bead = new Uint8Array(ns);
+    for (let s = 1; s < ns; s++) {
+      const mn = Math.min(ex[s] - bx[s], ey[s] - by[s]) + 1;
+      whole[s] = isLine[s] || mn < 1.2 * sz * k ? 1 : 0;
+      bead[s] = mn < 3 * lead * k ? 1 : 0;
+    }
+    // o chumbo grosso: a distância até a divisa entre duas peças (a conta não tem chumbo em volta)
+    const Dt = new Float32Array(N).fill(1e9);
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        const s = slot[i];
+        if (x < Wd - 1 && slot[i + 1] !== s && !bead[s] && !bead[slot[i + 1]]) Dt[i] = Dt[i + 1] = 0;
+        if (y < Hd - 1 && slot[i + Wd] !== s && !bead[s] && !bead[slot[i + Wd]]) Dt[i] = Dt[i + Wd] = 0;
+      }
+    }
+    chamfer(Dt, Wd, Hd);
+    // o pedaço de cada ponto (o vidro do fundo, sem bg no canvas, fica de fora: é o papel)
+    const T = glassTile(k, sz), tx = shapeTex(g, src, m, art, info, T, null), off = texOff(art, info), V = [0, 0, 0];
+    const bare = !!info.bare, key = new Int32Array(N), mot = new Uint8Array(N), ed = new Float32Array(N);
+    const idx = new Map(), sum = [], cnt = [], all = [];
+    let lastK = -1, lastI = -1;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const s = slot[i];
+        if (!c[o + 3] || (s === 0 && bare)) { key[i] = -1; continue; }
+        tileAt(V, T, tx, o, px, py, k, off);
+        const cut = !whole[s] && !bead[s];
+        const kk = s * 256 + (cut ? Math.round((V[0] * 255) / 4) : 255);
+        mot[i] = Math.round(V[1] * 255);
+        ed[i] = cut ? ((V[2] * 255) / GD) * k : 1e9;
+        let q = kk === lastK ? lastI : idx.get(kk);
+        if (q === undefined) { q = sum.length / 3; idx.set(kk, q); sum.push(0, 0, 0); all.push(0, 0, 0); cnt.push(0, 0); }
+        lastK = kk;
+        lastI = q;
+        key[i] = q;
+        all[q * 3] += c[o]; all[q * 3 + 1] += c[o + 1]; all[q * 3 + 2] += c[o + 2]; cnt[q * 2 + 1]++;
+        if (own[i] || s === 0) { sum[q * 3] += c[o]; sum[q * 3 + 1] += c[o + 1]; sum[q * 3 + 2] += c[o + 2]; cnt[q * 2]++; }
+      }
+    }
+    // a cor de cada pedaço: a média, mais forte, e um pouco diferente da do vizinho
+    const nq = cnt.length / 2, col = new Float32Array(nq * 3);
+    for (const [kk, q] of idx) {
+      const n0 = cnt[q * 2], A = n0 ? sum : all, n = n0 || cnt[q * 2 + 1];
+      let r = A[q * 3] / n, gg = A[q * 3 + 1] / n, b = A[q * 3 + 2] / n;
+      const l = 0.3 * r + 0.59 * gg + 0.11 * b, f = 0.92 + 0.16 * rnd(kk, 5 + (art.seed | 0));
+      r = (l + (r - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 6));
+      gg = (l + (gg - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 7));
+      b = (l + (b - l) * 1.35) * f * (0.97 + 0.06 * rnd(kk, 8));
+      if (bead[kk >> 8]) { r *= 1.12; gg *= 1.12; b *= 1.12; }
+      col[q * 3] = r; col[q * 3 + 1] = gg; col[q * 3 + 2] = b;
+    }
+    const hw = (lead * k) / 2, ht = (lead * k) / 4, fw = art.frame ? 2.2 * lead * k : 0, soft = 1.5 * U * k;
+    // o brilho das partes claras: forte numa cena escura, nenhum numa clara (senão tudo brilha)
+    let ls = 0, ln = 0;
+    for (let i = 0, o = 0; i < N; i++, o += 4) if (key[i] >= 0) { ls += lum3(c[o], c[o + 1], c[o + 2]); ln++; }
+    const glow = 0.6 * Math.min(1, Math.max(0, (0.8 - (ln ? ls / ln : 1)) / 0.35));
+    const GL = work('art_gl', Wd, Hd), gi = GL.ctx.createImageData(Wd, Hd), gd = gi.data;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      const back = 1.1 - (0.2 * py) / Hd;
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const q = key[i];
+        if (q < 0 && !fw) continue;
+        // o chumbo: o grosso (entre peças), o fino (entre pedaços) e a moldura; fica o que cobre mais
+        let cov = 0, prof = 0, near = 1e9;
+        const dT = Dt[i], dt = ed[i] === undefined ? 1e9 : ed[i];
+        if (q >= 0) {
+          const a = Math.min(1, Math.max(0, hw - dT)), b = Math.min(1, Math.max(0, ht - dt + 0.5));
+          if (a >= b && a > 0) { cov = a; prof = 1 - dT / Math.max(0.5, hw); } else if (b > 0) { cov = b; prof = 1 - dt / Math.max(0.5, ht); }
+          near = Math.min(dT - hw, dt - ht);
+        }
+        if (fw) {
+          const dB = Math.min(px, py, Wd - 1 - px, Hd - 1 - py), f = Math.min(1, Math.max(0, fw - dB));
+          if (f > cov) { cov = f; prof = 1 - Math.abs((2 * dB) / fw - 1); }
+          near = Math.min(near, dB - fw);
+          if (q < 0) { c[o + 3] = Math.max(c[o + 3], Math.round(255 * f)); }
+        }
+        prof = Math.max(0, Math.min(1, prof));
+        const hl = 0.6 * prof * prof * prof;
+        let r = 0, gg = 0, b = 0;
+        if (q >= 0) {
+          const f = back * (1 + 0.22 * (mot[i] / 255 - 0.5)) * (0.84 + 0.16 * Math.min(1, Math.max(0, near / soft)));
+          r = col[q * 3] * f; gg = col[q * 3 + 1] * f; b = col[q * 3 + 2] * f;
+          // as partes claras do vidro brilham (o brilho vai para gd, borrado depois)
+          const l = (0.3 * r + 0.59 * gg + 0.11 * b) / 255, w = Math.max(0, (l - 0.72) / 0.28) * (1 - cov);
+          if (w > 0) { gd[o] = Math.min(255, r * w); gd[o + 1] = Math.min(255, gg * w); gd[o + 2] = Math.min(255, b * w); gd[o + 3] = 255; }
+        } else if (q < 0) { r = c[o]; gg = c[o + 1]; b = c[o + 2]; }
+        if (cov > 0) {
+          r += (LEAD_D[0] + (LEAD_H[0] - LEAD_D[0]) * hl - r) * cov;
+          gg += (LEAD_D[1] + (LEAD_H[1] - LEAD_D[1]) * hl - gg) * cov;
+          b += (LEAD_D[2] + (LEAD_H[2] - LEAD_D[2]) * hl - b) * cov;
+        }
+        c[o] = Math.min(255, r); c[o + 1] = Math.min(255, gg); c[o + 2] = Math.min(255, b);
+      }
+    }
+    if (!glow) return;
+    GL.ctx.putImageData(gi, 0, 0);
+    const gb = soften(GL.canvas, 5 * U * k, 'art_glb').getContext('2d').getImageData(0, 0, Wd, Hd).data;
+    for (let o = 0; o < c.length; o += 4) {
+      if (!c[o + 3] || !gb[o + 3]) continue;
+      const a = gb[o + 3] / 255;
+      for (let ch = 0; ch < 3; ch++) c[o + ch] = Math.min(255, c[o + ch] + glow * gb[o + ch] * a);
+    }
+  }
+
+  // ---------- embroidery (bordado) ----------
+  const LINEN = '#e6dccb';
+  // O azulejo do ponto cheio (que emenda), em unidades vezes U: fios lado a lado (um a cada 1,28) ao longo de u,
+  // cada um em pontos de 12,8, com o começo sorteado por fio (as fileiras desencontradas). R: o perfil do fio
+  // (0 entre dois fios, 1 no meio, com a torção da linha); G: o perfil ao longo do ponto (0 nas pontas); B: um
+  // sorteio por ponto.
+  const SP = 1.28, SL = 12.8;
+  const stitchTiles = new Map();
+  function stitchTile(k, U) {
+    const n = Math.min(1024, Math.max(TP, Math.round(TP * k * U))), key = n + ':' + U.toFixed(3);
+    if (stitchTiles.has(key)) return stitchTiles.get(key);
+    if (stitchTiles.size > 3) stitchTiles.delete(stitchTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data, NT = Math.round(TP / SP);
+    for (let py = 0, o = 0; py < n; py++) {
+      const v = ((py + 0.5) / n) * TP, j = Math.floor(v / SP) % NT, fv = v / SP - Math.floor(v / SP), off = rnd(j, 61) * SL;
+      for (let px = 0; px < n; px++, o += 4) {
+        const u = ((px + 0.5) / n) * TP, s = u + off, t = (s % SL) / SL, id = Math.floor(s / SL);
+        const twist = 0.5 + 0.5 * Math.cos(TAU * (u / (1.7 * SP) + fv * 0.7));
+        D[o] = Math.round(255 * Math.sin(Math.PI * fv) * (0.84 + 0.16 * twist));
+        D[o + 1] = Math.round(255 * Math.sin(Math.PI * t));
+        D[o + 2] = Math.round(255 * rnd(j, id + 62));
+        D[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: n / (TP * U) };
+    stitchTiles.set(key, T);
+    return T;
+  }
+  // O azulejo do linho (que emenda), em unidades vezes U: a trama de tela (um fio por cima, um por baixo), com os
+  // fios um pouco grossos e finos ao longo do caminho (o linho é irregular) e o pelinho da fibra. R: o quanto o
+  // ponto clareia ou escurece (de 0 a 1,3), com a média 1.
+  const LP = 0.8;
+  const linenTiles = new Map();
+  function linenTile(k, U) {
+    const n = Math.min(1024, Math.max(TP, Math.round(TP * k * U))), key = n + ':' + U.toFixed(3);
+    if (linenTiles.has(key)) return linenTiles.get(key);
+    if (linenTiles.size > 3) linenTiles.delete(linenTiles.keys().next().value);
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const x = c.getContext('2d'), img = x.createImageData(n, n), D = img.data, NT = Math.round(TP / LP), F = new Float32Array(n * n);
+    let sum = 0;
+    for (let py = 0, i = 0; py < n; py++) {
+      const v = ((py + 0.5) / n) * TP, j = Math.floor(v / LP) % NT, fv = v / LP - Math.floor(v / LP);
+      for (let px = 0; px < n; px++, i++) {
+        const u = ((px + 0.5) / n) * TP, ii = Math.floor(u / LP) % NT, fu = u / LP - Math.floor(u / LP);
+        // por cima: o fio vertical (o perfil em u) ou o horizontal (em v); o grosso e fino ao longo do fio
+        const warp = (ii + j) & 1, pr = Math.sin(Math.PI * (warp ? fu : fv)), al = Math.sin(Math.PI * (warp ? fv : fu));
+        const slub = warp ? noiseA(v / 4, ii, TP / 4, NT, 75) : noiseA(u / 4, j, TP / 4, NT, 76);
+        const w = (0.8 + 0.24 * pr * (0.86 + 0.14 * al)) * (0.92 + 0.16 * slub) * (0.96 + 0.08 * noiseP(u * 2, v * 2, TP * 2, 77));
+        F[i] = w;
+        sum += w;
+      }
+    }
+    const mean = sum / F.length;
+    for (let i = 0, o = 0; i < F.length; i++, o += 4) {
+      D[o] = Math.max(0, Math.min(255, Math.round(((F[i] / mean) * 255) / 1.3)));
+      D[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    const T = { canvas: c, data: D, n, hr: n / (TP * U) };
+    linenTiles.set(key, T);
+    return T;
+  }
+  // o dash= do traço (em unidades): se o ponto a s unidades do começo fica num pedaço cheio
+  function dashAt(d) {
+    if (!d || !d.length) return () => true;
+    const D = d.length % 2 ? d.concat(d) : d, per = D.reduce((a, b) => a + b, 0);
+    if (!(per > 0)) return () => true;
+    return (s) => {
+      let t = s % per;
+      for (let i = 0; i < D.length; i++) { if (t < D[i]) return i % 2 === 0; t -= D[i]; }
+      return true;
+    };
+  }
+  // o brilho da linha: o quanto o fio (na direção a, na tela) fica de través para a luz (o fio brilha quando a
+  // luz vem de lado, e não ao longo dele)
+  const sheen = (a, light) => Math.abs(Math.sin(a - Math.atan2(light[1], light[0])));
+  // Um ponto de linha de a até b: o fundo escuro, a linha e o brilho (para o lado da luz)
+  function threadStitch(ctx, a, b, w, rgb, light) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy);
+    if (l < 1e-6) return;
+    const sh = sheen(Math.atan2(dy, dx), light), ll = Math.hypot(light[0], light[1]) || 1, ox = (light[0] / ll) * 0.14 * w, oy = (light[1] / ll) * 0.14 * w;
+    const line = (c, lw, sx, sy) => { ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(a[0] + sx, a[1] + sy); ctx.lineTo(b[0] + sx, b[1] + sy); ctx.stroke(); };
+    line(hexOf(rgb.map((v) => v * 0.55)), w, 0, 0);
+    line(hexOf(rgb.map((v) => v * (0.9 + 0.12 * sh))), 0.7 * w, 0, 0);
+    line(hexOf(rgb.map((v) => v * (0.9 + 0.12 * sh) + (255 - v) * (0.1 + 0.22 * sh))), 0.26 * w, ox, oy);
+  }
+  // O embroidery: bordado à mão, no linho. Cada forma vira ponto cheio (fios lado a lado, atravessando a forma
+  // pelo lado mais curto, em fileiras desencontradas), com o brilho da linha conforme a direção dela; o contorno
+  // vira um pesponto da cor da ink; os traços finos, um ponto haste (um cordão torcido); os largos, ponto cheio
+  // atravessado. O fundo vira linho (a trama por cima da cor do fundo; sem bg, o linho do paper=).
+  function embroideryPaint(art, info) {
+    const step = boilStep(art, info);
+    const inkPass = {
+      glow: false,
+      fill(ctx, it) { eraseWith(ctx, () => ctx.fill(it.path)); },
+      ink(ctx, it) {
+        if (!(it.hasInk && it.ink > 0)) return;
+        const U = unitOf(it.canvas), R = rng(seedOf(art, step, it, it.hole ? 31 : 32)), rgb = specRGB(it.inkc) || [20, 20, 28];
+        const px = pxOf(ctx), w = Math.max(1.6 / px, Math.min(2.6 * U, Math.max(0.9 * U, it.ink * 0.45))), L = Math.max(5 / px, 2.6 * U), gap = 0.22 * U, j = 0.12 * U;
+        const q = resample(ptsOf(it.poly), true, L);
+        ctx.save();
+        ctx.lineCap = 'round';
+        for (let i = 0; i < q.length; i++) {
+          const a = q[i], b = q[(i + 1) % q.length], d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, ux = (b[0] - a[0]) / d, uy = (b[1] - a[1]) / d;
+          const g0 = Math.min(gap, d * 0.3);
+          threadStitch(ctx, [a[0] + ux * g0 + (R() - 0.5) * j, a[1] + uy * g0 + (R() - 0.5) * j], [b[0] - ux * g0 + (R() - 0.5) * j, b[1] - uy * g0 + (R() - 0.5) * j], w, rgb, it.light);
+        }
+        ctx.restore();
+      },
+      line(ctx, it) {
+        const U = unitOf(it.canvas), E = lineEdges(it), rgb = specRGB(it.lineSpec) || [40, 30, 24], wmax = it.ws ? Math.max(...it.ws) : it.w;
+        const R = rng(seedOf(art, step, it, 33)), on = dashAt(it.el.dash);
+        ctx.save();
+        ctx.lineCap = 'round';
+        if (wmax < 6 * U) {
+          // o ponto haste: pontos inclinados, cada um voltando um pouco sobre o anterior
+          const tw = Math.max(1.4 / pxOf(ctx), Math.max(0.7 * U, 0.6 * wmax)), st = Math.max(0.6 * U, 0.75 * tw), q = resample(E.pts, false, st), n = q.length;
+          for (let i = 1; i + 1 < n; i++) {
+            if (!on(i * st)) continue;
+            const a = q[i - 1], b = q[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
+            const h = Math.max(0.2 * U, Math.min(E.half(i, n), 0.5 * wmax) * 0.45);
+            threadStitch(ctx, [a[0] + nx * h, a[1] + ny * h], [b[0] - nx * h + (R() - 0.5) * 0.1 * U, b[1] - ny * h], tw, rgb, it.light);
+          }
+        } else {
+          // o traço largo: ponto cheio atravessado, um pouco inclinado
+          const tw = Math.max(2 / pxOf(ctx), 1.1 * U), q = resample(E.pts, false, 0.85 * tw), n = q.length;
+          for (let i = 0; i < n; i++) {
+            if (!on(i * 0.85 * tw)) continue;
+            const a = q[Math.max(0, i - 1)], b = q[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1;
+            const ux = dx / d, uy = dy / d, h = E.half(i, n), p = q[i], sl = 0.2 * h;
+            threadStitch(ctx, [p[0] - uy * h - ux * sl, p[1] + ux * h - uy * sl], [p[0] + uy * h + ux * sl, p[1] - ux * h + uy * sl], tw, rgb, it.light);
+          }
+        }
+        ctx.restore();
+        return true;
+      },
+    };
+    return {
+      paper: LINEN,
+      inkPass,
+      bg(ctx, B0) { ctx.drawImage(B0, 0, 0); },
+      fill(ctx, it) {
+        const U = unitOf(it.canvas);
+        ctx.save();
+        dropShadow(ctx, it, 0.5 * U, 1.2 * U, 0.35);
+        ctx.fillStyle = it.fillStyle;
+        ctx.fill(it.path);
+        ctx.restore();
+      },
+      ink() {},
+      line() { return true; },
+    };
+  }
+  // o passe das peças do bordado: cada forma com uma cor sorteada; S.of guarda, por cor, o brilho da linha, e
+  // S.turn, por forma, a direção dos fios (pelo lado mais curto da forma, um pouco torta)
+  function embroideryIds(art, S) {
+    let n = 0;
+    S.of = new Map();
+    S.turn = new Map();
+    return {
+      glow: false,
+      fill(ctx, it) {
+        const lb = it.lbox(), f = it.map(), a = (lb.w >= lb.h ? Math.PI / 2 : 0) + (rnd(it.key, 63 + (art.seed | 0)) - 0.5) * 0.7;
+        const cx = lb.x + lb.w / 2, cy = lb.y + lb.h / 2, o = f(cx, cy), q = f(cx + Math.cos(a), cy + Math.sin(a));
+        const v = (Math.imul(++n, 2654435761) >>> 8) & 0xffffff;
+        S.of.set(v, sheen(Math.atan2(q[1] - o[1], q[0] - o[0]), it.light));
+        S.turn.set(it.key, a);
+        ctx.fillStyle = `rgb(${v >> 16},${(v >> 8) & 255},${v & 255})`;
+        ctx.fill(it.path);
+      },
+      ink() {},
+      line() { return true; },
+    };
+  }
+  function embroideryPost(c, g, art, info, pp, src, m) {
+    const { Wd, Hd } = g, N = Wd * Hd, k = 1 / g.cw, U = bgUnit(g), S = {};
+    const IX = work('art_id', Wd, Hd);
+    IX.ctx.save();
+    src.content(IX.ctx, m, { unlit: true, stroke: embroideryIds(art, S) });
+    IX.ctx.restore();
+    const { P } = piecesOf(IX.ctx.getImageData(0, 0, Wd, Hd).data, S.of, Wd, Hd);
+    // a borda de cada peça (onde a linha entra no tecido)
+    const Dt = new Float32Array(N).fill(1e9);
+    for (let y = 0, i = 0; y < Hd; y++) {
+      for (let x = 0; x < Wd; x++, i++) {
+        if (x < Wd - 1 && P[i + 1] !== P[i]) Dt[i] = Dt[i + 1] = 0;
+        if (y < Hd - 1 && P[i + Wd] !== P[i]) Dt[i] = Dt[i + Wd] = 0;
+      }
+    }
+    chamfer(Dt, Wd, Hd);
+    // os fios com pelo menos 3 pontos (num canvas pequeno, mais grossos que U), senão a trama vira xadrez
+    const T = stitchTile(k, Math.max(U, 3 / (SP * k))), tx = shapeTex(g, src, m, art, info, T, (key) => S.turn.get(key) || 0), off = texOff(art, info), V = [0, 0, 0];
+    const L = linenTile(k, Math.max(U, 3 / (LP * k))), VL = [0, 0, 0], de = 0.8 * U * k;
+    let lastP = -3, sh = 0;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        if (!c[o + 3]) continue;
+        const p = P[i];
+        if (p < 0) {
+          // o linho: a trama por cima da cor (parada na tela)
+          tileAt(VL, L, null, o, px, py, k, off);
+          const f = VL[0] * 1.3;
+          for (let ch = 0; ch < 3; ch++) c[o + ch] = Math.min(255, c[o + ch] * f);
+          continue;
+        }
+        if (p !== lastP) { lastP = p; sh = S.of.get(p) || 0; }
+        tileAt(V, T, tx, o, px, py, k, off);
+        const e = Math.min(1, (Dt[i] + 0.5) / de);
+        // (a média dos fatores dá uns 0,78: o /0,78 mantém a cor da forma)
+        const shade = ((0.6 + 0.44 * V[0]) * (0.78 + 0.22 * V[1]) * (0.93 + 0.14 * V[2]) * (0.88 + 0.16 * sh) * (0.74 + 0.26 * e)) / 0.78;
+        const h = sh * Math.pow(V[0], 5) * (0.4 + 0.6 * V[1]) * 0.34 * e;
+        for (let ch = 0; ch < 3; ch++) {
+          const v = c[o + ch] * shade;
+          c[o + ch] = Math.min(255, v + (255 - v) * h);
+        }
+      }
+    }
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -2658,6 +3165,8 @@
     watercolor: tone(handDraw(watercolorPaint, watercolorPost), true),
     cutout: tone(handDraw(cutoutPaint, cutoutPost), true),
     clay: tone(handDraw(clayPaint, clayPost), true),
+    glass: tone(handDraw(glassPaint, glassPost), true),
+    embroidery: tone(handDraw(embroideryPaint, embroideryPost), true),
     lines: tone(linesDraw, false),
     neon: tone(neonDraw, true),
   };
@@ -2745,7 +3254,11 @@
       if (a.color) p.push('color');
     } else if (a.style === 'stencil') {
       if (a.tones !== 3) p.push(`tones=${a.tones}`);
-    } else if ((a.style === 'lines' || a.style === 'neon') && a.w) p.push(`w=${a.w}`);
+    } else if (a.style === 'glass') {
+      if (a.size) p.push(`size=${a.size}`);
+      if (a.lead) p.push(`lead=${a.lead}`);
+      if (a.frame) p.push('frame');
+} else if ((a.style === 'lines' || a.style === 'neon') && a.w) p.push(`w=${a.w}`);
     if (a.c) p.push(`c=${a.c}`);
     if (a.shift !== undefined && a.shift !== 1.5) p.push(`shift=${a.shift}`);
     if (a.levels && (a.levels[0] !== 0 || a.levels[1] !== 1)) p.push(`levels=${a.levels.join(',')}`);

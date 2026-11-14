@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)), e `crayon`, `chalk` e `watercolor` na 1.34.0 (ver [Decisões da 1.34.0](#decisões-da-1340-14112026) e [Como o giz e a aquarela ficaram](#como-o-giz-e-a-aquarela-ficaram-1340)). A fase 5 também virou duas versões (ver [Decisões da fase 5](#decisões-da-fase-5-14112026)): `cutout` e `clay` saíram na 1.35.0 (ver [Como o recorte e a massinha ficaram](#como-o-recorte-e-a-massinha-ficaram-1350)); faltam `glass` e `embroidery` (1.36.0) e a fase 6 (1.37.0).
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)). A fase 4 também virou duas versões (ver [Decisões da fase 4](#decisões-da-fase-4-14112026)): `sketch`, `marker`, `pencil`, `lines` e `neon` saíram na 1.33.0 (ver [Como os estilos de traço ficaram](#como-os-estilos-de-traço-ficaram-1330)), e `crayon`, `chalk` e `watercolor` na 1.34.0 (ver [Decisões da 1.34.0](#decisões-da-1340-14112026) e [Como o giz e a aquarela ficaram](#como-o-giz-e-a-aquarela-ficaram-1340)). A fase 5 também virou duas versões (ver [Decisões da fase 5](#decisões-da-fase-5-14112026)): `cutout` e `clay` saíram na 1.35.0 (ver [Como o recorte e a massinha ficaram](#como-o-recorte-e-a-massinha-ficaram-1350)), e `glass` e `embroidery` na 1.36.0 (ver [Decisões da 1.36.0](#decisões-da-1360-14112026) e [Como o vitral e o bordado ficaram](#como-o-vitral-e-o-bordado-ficaram-1360)); falta a fase 6 (1.37.0).
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -111,6 +111,14 @@ art cutout boil=0
 - **Bordado (`embroidery`, para a 1.36.0):** à mão, no linho. O fundo vira linho com a trama aparecendo (`paper=` muda a cor); cada forma em ponto cheio (satin) na direção dela, com o brilho da linha, e em fileiras desencontradas nas formas grandes; o contorno vira um pesponto (backstitch) da cor da `ink`.
 - **O contorno na massinha:** não foi perguntado. Ficou como no recorte: uma tira de massinha da cor da `ink`, por baixo de cada peça. Dá para mudar (por exemplo, um sulco riscado na massinha, sem cor própria).
 
+### Decisões da 1.36.0 (14/11/2026)
+
+- **O fundo no vitral:** vira vidro também, cortado em pedaços como as formas; um degradê vira degraus de vidro. Sem fundo (`bg=none`), fica o papel.
+- **A moldura:** só com a opção `frame` (`art glass frame`): um chumbo mais grosso em volta do canvas.
+- **O chumbo:** igual em todas as formas, cinza-escuro com um brilho no meio. É grosso entre formas diferentes e fino (a metade) entre os pedaços da mesma forma; `lead=` muda a largura. O contorno (`ink`) só vira o chumbo grosso: a cor e a largura dele não contam.
+- **Os traços no bordado:** o fino vira ponto haste, na cor dele; o largo vira ponto cheio, atravessado.
+- **O fundo no bordado:** não foi perguntado. Com fundo no canvas, a trama do linho fica por cima da cor do fundo (um linho tingido); sem fundo, o linho é da cor do `paper=` (`#e6dccb`, o linho cru). Dá para mudar (por exemplo, o linho sempre cru, sem a cor do fundo).
+
 ## Como a fase 1 ficou (1.30.0)
 
 O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
@@ -185,7 +193,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#giz-de-cera-giz-e-aq
 
 ## Como o recorte e a massinha ficaram (1.35.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-peças-cutout-e-clay), mais as escolhas feitas no caminho.
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#recorte-e-massinha-art-cutout-e-art-clay), mais as escolhas feitas no caminho.
 
 - **Como o `pencil`:** os dois pintam forma por forma, no passe `stroke`, e depois ponto a ponto. As sombras das peças são a sombra do próprio canvas (`shadowBlur`), para o lado longe do `light=` do `canvas`.
 - **`cutout`, a peça:** o contorno da forma refeito em cortes retos (de 1,5 a 5 unidades, conforme o tamanho da forma), com um tremido pequeno; os cantos ficam no lugar. Por baixo, com sombra, o papel escuro do contorno: a peça com um traço em volta, da largura do contorno (de 0,8 a 6 unidades para fora). Por cima, a beirada clara: a peça menos ela mesma empurrada para o lado da luz, em branco a 22%.
@@ -195,6 +203,23 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-peças
 - **`clay`, três passes:** a cor (com a sombra de contato e a tira do contorno por baixo), a altura e as peças. Na altura, cada forma é preta, com ela mesma borrada em branco por cima (recortada nela): 0,5 na borda e 1 lá dentro, numa borda redonda de 1,5 a 12 unidades. A tira do contorno e os traços são rolinhos (quatro larguras, cada uma mais alta). As covinhas de dedo são manchas escuras e rasas, sorteadas por forma, nas formas com mais de 28 unidades. Nas peças, cada forma tem uma cor sorteada (24 bits), para o volume não passar de uma peça para a outra; a mistura de duas, na borda, fica com a de um vizinho.
 - **`clay`, ponto a ponto:** os caroços (um azulejo de ruído em 16, 8 e 4 unidades, maiores num canvas maior, preso à forma); a altura alisada em números, só dentro de cada peça (com os 8 bits do canvas, a luz fazia listras numa rampa lenta, como a do chão do cenário); a inclinação pela diferença de altura dos vizinhos da mesma peça; a luz do `light=` do `canvas`, difusa (de 0,6 a 1) e com um brilho leve. O fundo é desfocado 1,5 unidade, por cima dele mesmo nítido (só o desfocado deixava a beirada da imagem mais clara).
 - **Tempo** (escala 1): no Cavaleiro (800×640), uns 55 ms no `cutout` e 80 no `clay`; na noite (com luzes), uns 210 ms; no cenário (1920×1080), uns 130 ms no `cutout` e 300 no `clay`.
+
+## Como o vitral e o bordado ficaram (1.36.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#vitral-e-bordado-art-glass-e-art-embroidery), mais as escolhas feitas no caminho.
+
+- **Como o `clay`:** os dois pintam forma por forma, no passe `stroke`, e depois ponto a ponto, com um passe de peças: cada forma com uma cor sorteada (24 bits), para saber onde uma acaba e a outra começa. A mistura de duas, na borda, fica com a de um vizinho.
+- **`glass`, o corte:** um azulejo de Voronoi (pontos sorteados numa grade de 8 por 8 pedaços, emendando nas beiradas), preso a cada forma pelo passe `tex`. Por isso o corte anda e gira com o osso sem ser calculado de novo (o problema do protótipo). Cada ponto lê do azulejo o pedaço, a distância até a divisa (o chumbo fino) e as manchas do vidro (um ruído esticado, como o do vidro soprado).
+- **`glass`, as peças:** uma forma menor que 1,2 pedaço fica inteira; menor que 3 chumbos, vira conta (sem chumbo em volta e 12% mais clara). O chumbo grosso vem da distância até a divisa entre duas peças (uma distância em dois passes, com pesos 1 e √2).
+- **`glass`, a cor:** a média do pedaço, só com os pontos que são mesmo da peça (para a borda misturada não sujar a cor), com a saturação ×1,35 e, sorteados, ±8% de brilho e ±3% em cada canal. O vidro vai de 10% mais claro em cima a 10% mais escuro embaixo, tem manchas de ±11% e escurece até 16% perto do chumbo.
+- **`glass`, o brilho:** as partes claras vão para um mapa, borrado em 5 unidades e somado por cima. A força depende do tom médio da cena: forte numa cena escura, nenhuma numa clara (na primeira versão, tudo brilhava no fundo claro do Cavaleiro).
+- **`glass`, o chumbo:** o padrão é 4 unidades (0,8% do lado maior do canvas), e o fino é a metade. A cor vai de um chumbo quase preto na beirada a um cinza claro no meio (o brilho é estreito). A primeira versão, com 3 unidades e um cinza mais claro, parecia um desenho, e não chumbo.
+- **`glass`, os traços:** os mais finos que 2,5 chumbos viram grisalha (a cor do traço a 45%, quase opaca), por cima do vidro; os mais largos viram vidro.
+- **`embroidery`, o ponto cheio:** um azulejo de linhas (cada fio com o seu brilho e uma torção leve, os pontos de uns 13 unidades em fileiras desencontradas), preso à forma e girado na direção dos pontos dela: pelo lado mais curto, com até 20° sorteados para um lado ou para o outro. O brilho é o seno do ângulo entre a direção dos pontos e a luz do canvas. Uma sombra leve embaixo de cada forma dá a altura do bordado.
+- **`embroidery`, o linho:** um azulejo de trama simples (os fios passam por cima e por baixo, com engrossamentos), parado na tela e multiplicado pela cor do fundo. A primeira versão parecia uma grade e serrilhava: a trama ficou mais leve, e o fio tem um tamanho mínimo na tela.
+- **`embroidery`, o contorno e os traços:** o pesponto segue o contorno em pontos de 2,6 unidades, com um vão e um tremido pequenos. Cada ponto (também os do ponto haste) é uma linha em três passadas: a sombra, a cor e um brilho do lado da luz. Os traços com menos de 6 unidades viram ponto haste; os outros, ponto cheio atravessado. O `dash=` deixa os vãos sem ponto.
+- **Mais rápido em todos os estilos com textura:** o `texFill` (o passe `tex`) agora faz o padrão de cada azulejo uma vez só, e não a cada forma. No vitral do cenário, o quadro foi de 540 para 180 ms. As referências dos testes não mudaram.
+- **Tempo** (escala 1): no Cavaleiro, uns 50 a 80 ms no `glass` e 45 no `embroidery`; na noite, uns 180 ms no `glass` e de 160 a 250 no `embroidery`; no cenário, uns 180 ms nos dois.
 
 ## O que já existe
 

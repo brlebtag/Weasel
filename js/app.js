@@ -1660,6 +1660,7 @@
         { label: 'crayon', detail: 'giz de cera: passadas de vai-e-vem e grão' }, { label: 'chalk', detail: 'giz no quadro-negro' },
         { label: 'watercolor', detail: 'aquarela: aguada e linha de caneta' },
         { label: 'cutout', detail: 'recorte de papel: peças com sombra' }, { label: 'clay', detail: 'massinha: peças com volume' },
+        { label: 'glass', detail: 'vitral: vidros com chumbo (frame: moldura)' }, { label: 'embroidery', detail: 'bordado à mão no linho' },
         { label: 'lines', detail: 'só o contorno (livro de colorir)' }, { label: 'neon', detail: 'contornos de neon num fundo escuro' },
         { label: 'none', detail: 'sem estilo' },
       ];

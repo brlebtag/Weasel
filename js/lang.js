@@ -25,7 +25,7 @@
   const ATTRS = {
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
-    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'levels', 'paper', 'boil', 'seed', 'actor'],
+    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
@@ -68,7 +68,7 @@
     tileset: ['auto', 'iso'],
     tile: ['solid', 'oneway'],
     ref: ['lock', 'hidden', 'front'],
-    art: ['outline', 'small', 'color', 'old', 'bw'],
+    art: ['outline', 'small', 'color', 'old', 'bw', 'frame'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic', 'billboard']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
@@ -95,8 +95,8 @@
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
   // art: estilos de arte (a imagem pronta pintada de outro jeito). ART_LATER = os que ainda vão chegar.
-  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay'];
-  const ART_LATER = ['stitch', 'mosaic', 'knit', 'glass', 'embroidery'];
+  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery'];
+  const ART_LATER = ['stitch', 'mosaic', 'knit'];
   // boil= e seed= só aparecem (no autocompletar) nos estilos com textura
   const ART_OPTS = {
     pixel: { attrs: ['size', 'palette', 'dither'], flags: ['outline', 'small'] },
@@ -118,6 +118,8 @@
     watercolor: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     cutout: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     clay: { attrs: ['paper', 'boil', 'seed'], flags: [] },
+    glass: { attrs: ['size', 'lead', 'paper', 'boil', 'seed'], flags: ['frame'] },
+    embroidery: { attrs: ['paper', 'boil', 'seed'], flags: [] },
     lines: { attrs: ['w', 'c', 'paper'], flags: [] },
     neon: { attrs: ['w', 'c', 'paper'], flags: [] },
     none: { attrs: [], flags: [] },
@@ -125,7 +127,8 @@
   // o boil= de cada estilo quando não é escrito: screen = a textura fica parada na tela (como a retícula impressa).
   // Na comic old bw, as linhas são do desenhista, e não da impressão: ficam presas à forma.
   // Nos desenhados à mão (sketch, marker, pencil, crayon, chalk), as passadas fervem: mudam a cada 2 quadros. A
-  // aquarela (watercolor), o recorte (cutout) e a massinha (clay) ficam parados.
+  // aquarela (watercolor), o recorte (cutout), a massinha (clay), o vitral (glass) e o bordado (embroidery) ficam
+  // parados.
   const ART_BOIL = { halftone: 'screen', comic: 'screen', manga: 'screen', riso: 'screen', sketch: 2, marker: 2, pencil: 2, crayon: 2, chalk: 2 };
   const artBoil = (a) => (a.style === 'comic' && a.bw ? 0 : ART_BOIL[a.style] || 0);
   const RISO_INKS = ['#ff48b0', '#00838a', '#ffe800'];
@@ -795,7 +798,8 @@
     // art toon steps=3 shadow=0.3 · art engraving gap=5 levels=0.05,0.7 paper=#f6f2ea · art halftone size=6 angle=45 color
     // art stencil tones=3 c=#2a1f3d · art silhouette c=#000000 · art woodcut gap=8 · art comic old bw size=5 shadow=0.3
     // art manga size=4 tones=3 · art riso inks=#ff48b0,#00838a size=1 shift=1.5 · art sketch · art marker · art pencil
-    // art crayon · art chalk paper=#203028 · art watercolor · art cutout · art clay
+    // art crayon · art chalk paper=#203028 · art watercolor · art cutout · art clay · art glass size=40 lead=4 frame
+    // art embroidery
     // paper=#f6f2ea · art lines w=3 c=#000000 · art neon w=3 c=#ff40c0 (boil=número|screen e seed= nos que têm textura)
     function readArt(st) {
       const A = st.attrs, t = st.pos[0];
@@ -892,6 +896,10 @@
         a.shift = A.has('shift') ? number(st, A.get('shift'), 1.5, 0, 20) : 1.5;
       } else if (style === 'stencil') {
         a.tones = A.has('tones') ? Math.round(number(st, A.get('tones'), 3, 2, 6)) : 3;
+      } else if (style === 'glass') {
+        // size=: o tamanho de um pedaço; lead=: a espessura do chumbo grosso (sem eles, medidas pelo tamanho do canvas)
+        a.size = A.has('size') ? number(st, A.get('size'), 40, 4, 400) : null;
+        a.lead = A.has('lead') ? number(st, A.get('lead'), 3, 0.5, 32) : null;
       } else if (style === 'lines' || style === 'neon') {
         // w=: a espessura da linha (sem w=, a do contorno de cada forma no lines, e uma só no neon)
         a.w = A.has('w') ? number(st, A.get('w'), 3, 0.5, 64) : null;

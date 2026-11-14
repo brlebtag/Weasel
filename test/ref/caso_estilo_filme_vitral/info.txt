@@ -1,0 +1,10 @@
+filme    320 × 180, 4 fps, 3s (12 quadros, 00:03:00), fundo #9fc4de
+art      glass
+ambiente #a0b0d0 × 0.7
+luzes    lamp (point, #ffd9a0 × 1.2)
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   3
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  bordado          00:01:00      1s      4 quadros  câmera 160,90 · art embroidery paper=#d8c8b0
+  misto            00:02:00      1s      4 quadros  câmera 160,90 · art de b: embroidery
