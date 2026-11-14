@@ -1,0 +1,12 @@
+filme    320 × 180, 4 fps, 5s (20 quadros, 00:05:00), fundo #1d2b53
+art      comic old
+ambiente #8090b0 × 0.6
+luzes    lamp (point, #ffd9a0 × 1.3)
+atores   a (rosto.weasel), b (rosto.weasel)
+camadas  fundo
+planos   5
+  todo             00:00:00      1s      4 quadros  câmera 160,90 · 2 mudança(s) com at
+  manga            00:01:00      1s      4 quadros  câmera 160,90 · art manga
+  misto            00:02:00      1s      4 quadros  câmera 160,90 · art de b: riso
+  tira             00:03:00      1s      4 quadros  câmera 160,90 · art comic old bw
+  xilo             00:04:00      1s      4 quadros  câmera 160,90 · art woodcut

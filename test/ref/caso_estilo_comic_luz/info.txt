@@ -1,0 +1,11 @@
+canvas   240 × 160, fundo #2a2f45
+art      comic size=4 shadow=0.4
+ambiente #6070a0 × 0.5
+luzes    lamp (point, #ffd9a0 × 1.5)
+camadas  2
+  chao             1 item(ns)
+  coisas           3 item(ns)
+formas   4
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

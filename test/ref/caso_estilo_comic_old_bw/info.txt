@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo transparente
+art      comic old bw
+gradientes bolaG (radial)
+camadas  1
+  coisas           3 item(ns)
+formas   3
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

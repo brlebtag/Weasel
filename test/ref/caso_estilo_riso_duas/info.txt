@@ -1,0 +1,8 @@
+canvas   240 × 160, fundo transparente
+art      riso inks=#ff48b0,#0078bf size=2 shift=0 boil=2
+camadas  1
+  coisas           3 item(ns)
+formas   3
+ossos    bola
+animações 1
+  gira           4 quadros, 6 fps

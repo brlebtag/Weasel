@@ -1,6 +1,6 @@
 # Outros estilos: pixel art, ASCII, esboço, marcador, HQ e mais
 
-**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)); faltam as combinações (1.32.0) e as fases 4 a 6.
+**Situação:** análise e protótipos feitos em 12 e 13/11/2026, fora do Weasel. Em 14/11/2026 você respondeu as perguntas (ver [Decisões](#decisões-de-14112026)) e deu o "pode fazer" da fase 1. A fase 1 foi feita na 1.30.0 (ver [Como a fase 1 ficou](#como-a-fase-1-ficou-1300)). A fase 2 virou duas versões (ver [Decisões da fase 2](#decisões-da-fase-2-14112026)): as bases saíram na 1.31.0 (ver [Como as bases de tom ficaram](#como-as-bases-de-tom-ficaram-1310)) e as combinações na 1.32.0 (ver [Como as combinações de tom ficaram](#como-as-combinações-de-tom-ficaram-1320)); faltam as fases 4 a 6.
 
 **Origem:** quatro perguntas suas:
 - dá para gerar pixel art, ASCII ou outro estilo a partir do Weasel, sem modelar pixel por pixel, mesmo que não fique 100% perfeito?
@@ -81,6 +81,13 @@ art cutout boil=0
 - **Hachura presa à forma:** na gravura e na xilogravura, a hachura de cada forma gira e anda junto com o osso dela. `boil=2` sorteia de novo a cada 2 quadros. A retícula de pontos (`comic`, `manga`, `halftone`) fica presa na tela por padrão, como na impressão: `boil=screen`.
 - **Contraste:** a opção `levels=0.05,0.7` diz a claridade que vira preto e a que vira branco (padrão `0,1`), como os Níveis de um editor de imagem. Vale nos estilos que escolhem papel, hachura ou preto pela claridade. Não há ajuste automático, para nada piscar no filme.
 
+### Decisões da 1.32.0 (14/11/2026)
+
+- **A sombra sem luz nas HQs:** `comic`, `comic old`, `comic old bw` e `manga` ganham a faixa de sombra do `toon` (`shadow=`, padrão 0.3; `shadow=0` tira). Com luz, a luz também vira degraus.
+- **Mangá:** a retícula vem em poucos tons fixos (`tones=3`), como as folhas coladas à mão, e não com o ponto seguindo o tom.
+- **Risografia:** as tintas viram grão (pontinhos soltos sorteados), e não pontos em grade.
+- **Registro torto:** a opção `shift=` (padrão 1.5 unidades, na direção sorteada pelo `seed=`; `shift=0` deixa no lugar), na `comic old` e na `riso`.
+
 ## Como a fase 1 ficou (1.30.0)
 
 O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
@@ -99,7 +106,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas f
 
 ## Como as bases de tom ficaram (1.31.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette), mais as escolhas feitas no caminho. Elas servem de base para a 1.32.0 (`woodcut`, `comic`, `manga` e `riso`).
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette), mais as escolhas feitas no caminho. Elas são a base da 1.32.0 (`woodcut`, `comic`, `manga` e `riso`).
 
 - **Passes:** o estilo pede o mesmo desenho de outro jeito, e o Weasel desenha de novo: sem luz (`unlit`), sem o contorno (`noInk`), com a faixa de sombra do toon (`toon`) ou com a textura presa à forma (`tex`). Sem estilo, nada disso roda: os desenhos de antes saem iguais.
 - **Resolução:** os estilos de tom pintam na resolução da imagem final, de 1 a 4 pontos por unidade do desenho. Numa escala menor que 1, eles pintam a 1 ponto por unidade e reduzem com suavização (a hachura não vira borrão).
@@ -110,6 +117,20 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-
 - **`silhouette`:** o desenho é feito sem luz (o halo e a sombra projetada não viram silhueta) e pintado de uma cor só; o fundo fica.
 - **A textura presa à forma:** o passe `tex` pinta cada forma com uma textura que guarda o cosseno e o seno de uma volta a cada 128 unidades (um passe para u, outro para v), girada e movida com a forma (pelo osso, no centro da caixa dela) e na escala da tela. A primeira tentativa guardava direto o cosseno da hachura, mas a suavização do canvas tirava contraste (erro médio de 12 em 255); a volta lenta não sofre com isso, e as contas da hachura, dos pontos e do ruído são feitas depois, exatas. Na pose parada, a textura presa é igual à da tela (só pontos soltos na borda das formas mudam).
 - **Tempo** (Cavaleiro, 800×640, escala 1): toon sem luz quase nada; engraving uns 60 ms; halftone uns 40 ms (color, uns 110); stencil uns 50 ms. Um quadro Full HD do filme de exemplo leva de 0,3 s (toon) a 1 s (engraving).
+
+## Como as combinações de tom ficaram (1.32.0)
+
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#as-combinações-de-tom-woodcut-comic-manga-e-riso), mais as escolhas feitas no caminho.
+
+- **Os nomes:** `old` e `bw` são opções do `comic`. `comic bw` sem o `old` avisa e vale como `comic old bw` (a única HQ preto e branco). O `boil=` padrão é `screen` na `comic`, na `comic old`, no `manga` e na `riso` (impressão) e 0 na `comic old bw` e na `woodcut` (o traço do desenhista e o corte da madeira).
+- **`woodcut`:** um sulco branco deitado na forma por `gap=` (8), entortado por um ruído largo (um valor a cada 16 unidades) e com a borda engrossada e afinada por um fino (a cada 4). A largura do sulco cresce com a luz; no escuro, o ruído some aos poucos, para o preto ficar chapado.
+- **`comic`:** o `toon` (a faixa e a luz em 3 degraus), com a saturação 25% mais forte. A retícula entra onde o ponto ficou mais escuro que a cor chapada (sem luz e sem faixa): de 15% mais escuro em diante, até 50% de cobertura.
+- **`comic old`:** a cena é clareada 12% antes da tabela de 64 cores (a cor mais perto em Lab, guardada para cada cor que aparece). O preto chapado entra abaixo de 13% de claridade (completo em 8%). A cor sai do lugar em pontos inteiros da imagem de trabalho; o preto e o contorno ficam no lugar. Papel-jornal `#f0e6cc`.
+- **`comic old bw`:** hachura a 45° de 25% a 55% de escuro, linhas deitadas que engrossam de 55% até o preto chapado em 85%; a hachura some enquanto as linhas entram.
+- **`manga`:** papel abaixo de 18% de escuro, preto chapado de 82% a 85%; entre os dois, `tones=` faixas iguais, com 15% a 65% de cobertura.
+- **`riso`:** a mistura das tintas é calculada no modelo da impressão (em cada canal, o papel vezes `1 − x·(1 − tinta)` de cada tinta), uma tinta por vez (com as outras paradas, a conta é exata), e guardada para cada cor. O quase papel (até 8% de tinta) fica papel. O grão é um ruído suave com um valor por célula de `size=`; uma tabela corrige o limiar para a cobertura sair certa. Cada tinta sai do lugar numa direção (a do `seed=` mais 1/3 de volta para cada tinta).
+- **Peças comuns:** a retícula de números inteiros, o ponto com o quase branco e o quase preto, a luz em degraus e o contorno medido pela diferença com e sem `ink` viraram funções da 1.31.0 que todos usam; as saídas da 1.31.0 continuam iguais.
+- **Tempo** (Cavaleiro, 800×640, escala 1): `comic` uns 35 ms; `manga`, `comic old bw` e `comic old` de 50 a 70 ms; `woodcut` uns 80 ms; `riso` de 70 a 110 ms. A noite (com luzes) leva de 140 a 230 ms.
 
 ## O que já existe
 

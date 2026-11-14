@@ -25,7 +25,7 @@
   const ATTRS = {
     canvas: ['bg', 'light'],
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize'],
-    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'levels', 'paper', 'boil', 'seed', 'actor'],
+    art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'inks', 'shift', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
@@ -68,7 +68,7 @@
     tileset: ['auto', 'iso'],
     tile: ['solid', 'oneway'],
     ref: ['lock', 'hidden', 'front'],
-    art: ['outline', 'small', 'color'],
+    art: ['outline', 'small', 'color', 'old', 'bw'],
   };
   const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic', 'billboard']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
@@ -95,21 +95,28 @@
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
   // art: estilos de arte (a imagem pronta pintada de outro jeito). ART_LATER = os que ainda vão chegar.
-  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'halftone', 'stencil', 'silhouette'];
-  const ART_LATER = ['stitch', 'mosaic', 'knit', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery', 'woodcut', 'comic', 'manga', 'riso'];
+  const ART_STYLES = ['pixel', 'ascii', 'toon', 'engraving', 'woodcut', 'halftone', 'comic', 'manga', 'riso', 'stencil', 'silhouette'];
+  const ART_LATER = ['stitch', 'mosaic', 'knit', 'sketch', 'marker', 'pencil', 'crayon', 'chalk', 'watercolor', 'lines', 'neon', 'cutout', 'clay', 'glass', 'embroidery'];
   // boil= e seed= só aparecem (no autocompletar) nos estilos com textura
   const ART_OPTS = {
     pixel: { attrs: ['size', 'palette', 'dither'], flags: ['outline', 'small'] },
     ascii: { attrs: ['size', 'chars'], flags: ['color'] },
     toon: { attrs: ['steps', 'shadow'], flags: [] },
     engraving: { attrs: ['gap', 'levels', 'paper', 'boil', 'seed'], flags: [] },
+    woodcut: { attrs: ['gap', 'levels', 'paper', 'boil', 'seed'], flags: [] },
     halftone: { attrs: ['size', 'angle', 'levels', 'paper', 'boil', 'seed'], flags: ['color'] },
+    comic: { attrs: ['size', 'shadow', 'shift', 'levels', 'paper', 'boil', 'seed'], flags: ['old', 'bw'] },
+    manga: { attrs: ['size', 'shadow', 'tones', 'levels', 'paper', 'boil', 'seed'], flags: [] },
+    riso: { attrs: ['inks', 'size', 'shift', 'levels', 'paper', 'boil', 'seed'], flags: [] },
     stencil: { attrs: ['tones', 'c', 'levels', 'paper', 'boil', 'seed'], flags: [] },
     silhouette: { attrs: ['c'], flags: [] },
     none: { attrs: [], flags: [] },
   };
-  // o boil= de cada estilo quando não é escrito: screen = a textura fica parada na tela (como a retícula impressa)
-  const ART_BOIL = { halftone: 'screen' };
+  // o boil= de cada estilo quando não é escrito: screen = a textura fica parada na tela (como a retícula impressa).
+  // Na comic old bw, as linhas são do desenhista, e não da impressão: ficam presas à forma.
+  const ART_BOIL = { halftone: 'screen', comic: 'screen', manga: 'screen', riso: 'screen' };
+  const artBoil = (a) => (a.style === 'comic' && a.bw ? 0 : ART_BOIL[a.style] || 0);
+  const RISO_INKS = ['#ff48b0', '#00838a', '#ffe800'];
   const ART_COMMON = ['boil', 'seed', 'actor'];
   const ART_PALETTES = ['own', 'gameboy', 'nes', 'pico8', 'mono'];
   const BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'];
@@ -774,7 +781,8 @@
     // ---- art: o estilo de arte (pixel, ascii…); a imagem pronta é pintada de outro jeito ----
     // art pixel size=8 palette=gameboy dither=bayer outline small · art ascii size=6,12 chars=" .:#@" color · art none
     // art toon steps=3 shadow=0.3 · art engraving gap=5 levels=0.05,0.7 paper=#f6f2ea · art halftone size=6 angle=45 color
-    // art stencil tones=3 c=#2a1f3d · art silhouette c=#000000 (boil=número|screen e seed= nos que têm textura)
+    // art stencil tones=3 c=#2a1f3d · art silhouette c=#000000 · art woodcut gap=8 · art comic old bw size=5 shadow=0.3
+    // art manga size=4 tones=3 · art riso inks=#ff48b0,#00838a size=1 shift=1.5 (boil=número|screen e seed= nos que têm textura)
     function readArt(st) {
       const A = st.attrs, t = st.pos[0];
       if (!t) { err(st.line, `falta o estilo (ex.: art pixel size=8; hoje: ${ART_STYLES.join(', ')} ou none)`, st.cmdTok.from, st.cmdTok.to); return null; }
@@ -839,9 +847,35 @@
         a.shadow = A.has('shadow') ? number(st, A.get('shadow'), 0.3, 0, 1) : 0.3;
       } else if (style === 'engraving') {
         a.gap = A.has('gap') ? number(st, A.get('gap'), 5, 2, 64) : 5;
+      } else if (style === 'woodcut') {
+        a.gap = A.has('gap') ? number(st, A.get('gap'), 8, 2, 64) : 8;
       } else if (style === 'halftone') {
         a.size = A.has('size') ? number(st, A.get('size'), 6, 2, 64) : 6;
         a.angle = A.has('angle') ? number(st, A.get('angle'), 45, -360, 360) : 45;
+      } else if (style === 'comic' || style === 'manga') {
+        // shadow=: a faixa de sombra do toon (0 = sem faixa); size=: o espaço entre os pontos (e entre as linhas)
+        const sz0 = style === 'manga' ? 4 : 5;
+        a.size = A.has('size') ? number(st, A.get('size'), sz0, 2, 64) : sz0;
+        a.shadow = A.has('shadow') ? number(st, A.get('shadow'), 0.3, 0, 1) : 0.3;
+        if (style === 'manga') a.tones = A.has('tones') ? Math.round(number(st, A.get('tones'), 3, 1, 5)) : 3;
+        else {
+          // bw sem old: a tira de jornal (a única HQ preto e branco)
+          const bw = st.pos.find((f) => f.text === 'bw');
+          if (a.bw && !a.old) { err(st.line, 'bw vale junto com old (art comic old bw)', bw.from, bw.to, 'warn'); a.old = true; }
+          if (!a.old) { for (const k of ['paper', 'shift']) if (A.has(k)) bad(st, A.get(k), `${k}= só vale na comic old`, 'warn'); }
+          else if (a.bw && A.has('shift')) bad(st, A.get('shift'), 'shift= não muda nada na comic old bw (ela não tem cor)', 'warn');
+          if (a.old && !a.bw) a.shift = A.has('shift') ? number(st, A.get('shift'), 1.5, 0, 20) : 1.5;
+        }
+      } else if (style === 'riso') {
+        // inks=: de 1 a 3 tintas; size=: o tamanho do grão; shift=: o quanto cada tinta sai do lugar
+        a.inks = RISO_INKS.slice();
+        if (A.has('inks')) {
+          const it = A.get('inks'), parts = it.text.split(',').filter(Boolean);
+          if (parts.length < 1 || parts.length > 3) bad(st, it, 'inks= leva de 1 a 3 cores, separadas por vírgula (ex.: inks=#ff48b0,#00838a)', 'warn');
+          else { const v = parts.map((p) => plainColor(st, it, p)); if (v.every(Boolean)) a.inks = v; }
+        }
+        a.size = A.has('size') ? number(st, A.get('size'), 1, 0.5, 16) : 1;
+        a.shift = A.has('shift') ? number(st, A.get('shift'), 1.5, 0, 20) : 1.5;
       } else if (style === 'stencil') {
         a.tones = A.has('tones') ? Math.round(number(st, A.get('tones'), 3, 2, 6)) : 3;
       }
@@ -857,7 +891,7 @@
       if (own.attrs.includes('paper')) a.paper = A.has('paper') ? plainColor(st, A.get('paper')) || null : null;
       if (own.attrs.includes('c')) a.c = A.has('c') ? plainColor(st, A.get('c')) || null : null;
       // boil= (a fervura: a textura muda a cada N quadros; screen = parada na tela) e seed= (outra versão do mesmo desenho)
-      a.boil = ART_BOIL[style] || 0;
+      a.boil = artBoil(a);
       if (A.has('boil')) { const b = A.get('boil'); a.boil = b.text === 'screen' ? 'screen' : Math.round(number(st, b, 0, 0, 1000)); }
       a.seed = A.has('seed') ? Math.round(number(st, A.get('seed'), 0, 0, 1e9)) : 0;
       for (const k of ['boil', 'seed']) if (A.has(k) && style !== 'none' && !own.attrs.includes('boil')) bad(st, A.get(k), `${k}= não muda nada no estilo ${style} (ele não tem textura)`, 'warn');
@@ -2969,5 +3003,5 @@
     return el.xf ? pts.map((p) => M.apply(el.xf, p[0], p[1])) : pts;
   }
 
-  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, ART_STYLES, ART_OPTS, ART_BOIL, ART_PALETTES, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
+  W.lang = { parse, splitLine, words, evalExpr, KEYWORDS, ATTRS, FLAGS, ART_STYLES, ART_OPTS, ART_BOIL, artBoil, RISO_INKS, ART_PALETTES, DRAW_FLAGS, PROPS, BONE_PROPS, LAYER_PROPS, LIGHT_PROPS, ACTOR_PROPS, CAMERA_PROPS, SHAPE_AT_PROPS, TRANSITIONS, BOX_PROPS, GODOT_BODIES, FILM_CMDS, VISEMES, PARTICLE_SHAPES, DRAWABLE, IDENT, HEX, NUM };
 })(window.Weasel = window.Weasel || {});

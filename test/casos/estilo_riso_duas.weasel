@@ -1,0 +1,16 @@
+# teste: art riso com duas tintas (inks=), grão maior (size=), sem registro torto (shift=0) e o grão preso à
+# forma e sorteado de novo a cada 2 quadros (boil=2); sem fundo (bg=none)
+canvas 240 160 bg=none
+palette ink=#1d1b26 line=4 ball=#ff8a5c leaf=#6cbb3c
+art riso inks=#ff48b0,#0078bf size=2 shift=0 boil=2
+
+bone bola pivot=80,90
+
+layer coisas
+ellipse b 80,90 34 c=ball ink=line bone=bola
+rect caixa 150,70 50,58 r=6 c=#4a90d9 ink=line
+shape folha c=leaf ink=line : 80,56! 96,40 104,52 92,64
+
+anim gira frames=4 fps=6
+key 0 bola=0,0,0
+key 4 bola=0,0,60

@@ -2,7 +2,7 @@
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em retícula de jornal, em estêncil, em silhueta e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso ele pode pintar o mesmo desenho de outro jeito: em pixel art, em letras (ASCII), em cel shading, em gravura, em xilogravura, em retícula de jornal, em HQ, em mangá, em risografia, em estêncil, em silhueta e, nas próximas versões, em outros estilos. Para isso serve a linha `art`.
 
 | O desenho normal | `art pixel` | `art ascii color` |
 |---|---|---|
@@ -58,7 +58,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 - Um `art` por arquivo. Sem `art`, nada muda. `art none` desliga o estilo (serve no filme, mais abaixo).
 - A linha pode ficar em qualquer lugar do arquivo; o costume é logo depois do `canvas`, como o `finish`.
 
-Nesta versão existem sete estilos: `pixel` e `ascii` (logo abaixo) e os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`). Os outros do plano (`sketch`, `comic`, `woodcut`, `cutout`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
+Nesta versão existem onze estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`) e as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`). Os outros do plano (`sketch`, `marker`, `cutout`…) entram nas próximas versões; por enquanto, um desses nomes dá erro dizendo que ainda não foi feito.
 
 **No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
@@ -524,12 +524,12 @@ Repare:
 
 ### A textura presa à forma: `boil=` e `seed=`
 
-A hachura da gravura, os salpicos do estêncil e os pontos da retícula são uma **textura**. O `boil=` diz como ela se move:
+A hachura da gravura, os sulcos da xilogravura, os salpicos do estêncil, os pontos da retícula, das HQs e do mangá e o grão da risografia são uma **textura**. O `boil=` diz como ela se move:
 
 | `boil=` | A textura | Padrão de |
 |---|---|---|
-| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `stencil` |
-| `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone` |
+| `boil=0` | presa às formas: anda e gira com o osso de cada uma | `engraving`, `woodcut`, `stencil`, `comic old bw` |
+| `boil=screen` | parada na tela: o desenho anda por baixo dela | `halftone`, `comic`, `comic old`, `manga`, `riso` |
 | `boil=2` | presa às formas, e sorteada de novo a cada 2 quadros, como a linha que "ferve" num desenho à mão | |
 
 <!-- gerar: img/14_boil.png -f sheet -a all -s 1 -->
@@ -556,6 +556,225 @@ Repare:
 - O `toon`, o `silhouette`, o `pixel` e o `ascii` não têm textura: neles, `boil=` e `seed=` não mudam nada (o Weasel avisa).
 
 **No jogo:** a sprite sheet e o Godot saem com cada quadro pintado no estilo. No esqueleto de verdade (`godot rig=bones`), cada peça sai pintada na pose parada, e a textura gira com ela no Godot.
+
+## As combinações de tom: `woodcut`, `comic`, `manga` e `riso`
+
+Estes quatro juntam as peças dos [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette): a faixa de sombra do `toon`, as linhas da gravura e os pontos da retícula. São a xilogravura, três jeitos de HQ, o mangá e a risografia.
+
+| `art woodcut` | `art comic` | `art comic old` |
+|---|---|---|
+| ![O Cavaleiro em xilogravura: a máscara no papel, a capa preta cortada por sulcos brancos ondulados e o contorno preto](img/14_hq_woodcut.png) | ![O Cavaleiro em HQ moderna: cores chapadas um pouco mais fortes, uma faixa de sombra azulada com pontinhos pretos e o contorno preto](img/14_hq_comic.png) | ![O Cavaleiro em gibi antigo: papel-jornal amarelado, a sombra da máscara em pontos de magenta e ciano e a capa em pontos coloridos](img/14_hq_comic_old.png) |
+
+| `art comic old bw` | `art manga` | `art riso` |
+|---|---|---|
+| ![O Cavaleiro em tira de jornal: a sombra da máscara em hachura diagonal, a capa em linhas deitadas e o corpo em preto chapado](img/14_hq_comic_old_bw.png) | ![O Cavaleiro em mangá: papel branco, a sombra da máscara em retícula clara, a capa em retícula escura e o corpo em preto](img/14_hq_manga.png) | ![O Cavaleiro em risografia: o contorno verde-escuro com uma borda rosa e amarela fora do lugar, e a capa em grão de rosa e azul-petróleo](img/14_hq_riso.png) |
+
+<details>
+<summary>Código dos seis</summary>
+
+<!-- gerar: img/14_hq_woodcut.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art woodcut
+```
+
+<!-- gerar: img/14_hq_comic.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art comic
+```
+
+<!-- gerar: img/14_hq_comic_old.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art comic old
+```
+
+<!-- gerar: img/14_hq_comic_old_bw.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art comic old bw
+```
+
+<!-- gerar: img/14_hq_manga.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art manga
+```
+
+<!-- gerar: img/14_hq_riso.png -s 0.6 -->
+```weasel
+include "cavaleiro.weasel"
+art riso
+```
+
+</details>
+
+### Xilogravura: `art woodcut`
+
+```
+art woodcut gap= levels= paper=
+```
+
+<!-- gerar: img/14_xilo_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art woodcut
+```
+
+![A noite em xilogravura: quase tudo preto, o céu e o chão cortados por sulcos brancos ondulados, a lua e o Cavaleiro claros e a chuva em riscos brancos](img/14_xilo_noite.png)
+
+Repare:
+
+- É o contrário da gravura: a tinta é preta, e a luz vira **sulcos brancos**, largos e toscos, como os cortes da goiva na madeira. O claro fica papel, e o mais escuro fica preto.
+- Os sulcos ficam deitados na forma e ondulam um pouco; a borda de cada um engrossa e afina. Eles ficam presos às formas (o padrão é `boil=0`), como a hachura da gravura.
+- O contorno sai preto, como na gravura.
+
+| Opção | O que faz |
+|---|---|
+| `gap=8` | A distância entre os sulcos, de 2 a 64 (padrão 8). |
+| `levels=`, `paper=` | Como na gravura. |
+
+**Experimente:** troque para `gap=5`, ou para `levels=0,0.6` (mais papel).
+
+### HQ: `art comic`, `comic old` e `comic old bw`
+
+```
+art comic [old] [bw] size= shadow= shift= levels= paper=
+```
+
+| `art comic` | `art comic old` | `art comic old bw` |
+|---|---|---|
+| ![A noite em HQ moderna: o halo do lampião em anéis, as cores um pouco mais fortes e pontinhos pretos nas sombras](img/14_hq_noite.png) | ![A noite em gibi antigo: o céu azul em pontos de ciano, os prédios pretos, o halo do lampião roxo e o chão em pontos de magenta](img/14_hq_noite_old.png) | ![A noite em tira de jornal: o céu em linhas deitadas, os prédios pretos, o halo do lampião em linhas e o Cavaleiro com hachura no lado escuro](img/14_hq_noite_bw.png) |
+
+<details>
+<summary>Código dos três</summary>
+
+<!-- gerar: img/14_hq_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art comic
+```
+
+<!-- gerar: img/14_hq_noite_old.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art comic old
+```
+
+<!-- gerar: img/14_hq_noite_bw.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art comic old bw
+```
+
+</details>
+
+Repare:
+
+- **`comic`, a HQ moderna colorida:** é o `toon` (a faixa de sombra e a luz em degraus), com a cor um pouco mais forte e uma retícula leve de pontos pretos na sombra.
+- **`comic old`, o gibi antigo colorido:** o colorista antigo não pintava degradê. Cada ponto vira a cor mais parecida de uma tabela de 64, em que o ciano, o magenta e o amarelo entram com 0, 25, 50 ou 100%. As tintas de 25% e de 50% viram pontos, cada uma num ângulo, no papel-jornal amarelado. O preto só aparece no contorno e no mais escuro (os prédios), e a cor sai um pouco do lugar, como na impressão barata (`shift=`).
+- **`comic old bw`, a tira de jornal:** o mais escuro vira preto chapado; o escuro, linhas deitadas que engrossam até o preto (o céu); o meio, hachura em diagonal; o claro fica no papel.
+- **A sombra sem luz:** as três (e o `manga`) usam a faixa de sombra do `toon`, então um desenho sem `light` nem `ambient`, como o Cavaleiro de cima, também ganha sombra. Ela vira cor mais escura, retícula ou hachura, conforme o estilo. `shadow=0` tira a faixa.
+- **A textura:** os pontos da `comic` e da `comic old` ficam parados na tela (`boil=screen`), como a retícula da impressão. As linhas da `comic old bw` são do desenhista, e não da impressão, então ficam presas às formas (`boil=0`).
+- `comic bw` sem o `old` avisa e vale como `comic old bw`.
+
+| Opção | O que faz |
+|---|---|
+| `old` | O gibi antigo colorido. |
+| `old bw` | A tira de jornal, em preto e branco. |
+| `size=5` | A distância entre os pontos (e entre as linhas, na `old bw`), de 2 a 64 (padrão 5). |
+| `shadow=0.3` | A largura da faixa de sombra, como no `toon` (padrão 0.3). `shadow=0` tira a faixa. |
+| `shift=1.5` | Só na `comic old`: o quanto a cor sai do lugar, de 0 a 20 unidades (padrão 1.5). A direção vem do `seed=`. `shift=0` deixa a cor no lugar. |
+| `levels=` | Como na gravura. |
+| `paper=#f0e6cc` | Só nas `old`: a cor do papel (padrão: o papel-jornal). |
+
+**No jogo:** para uma sprite de gibi antigo, `shift=0` deixa a cor dentro do contorno. Os pontos parados na tela ficam parados no quadro da sprite sheet: no jogo, eles andam junto com o personagem.
+
+### Mangá: `art manga`
+
+```
+art manga size= tones= shadow= levels= paper=
+```
+
+<!-- gerar: img/14_manga_noite.png -s 0.5 -->
+```weasel
+include "noite.weasel"
+art manga
+```
+
+![A noite em mangá: o céu e os prédios em preto chapado, o halo do lampião em retícula, a máscara do Cavaleiro em branco com retícula no lado escuro e o chão em retícula escura](img/14_manga_noite.png)
+
+Repare:
+
+- O mais escuro vira preto chapado, o claro fica no papel branco e, no meio, entram as **retículas de ponto fixo**: cada área tem pontos de um tamanho só, como as folhas de retícula que o desenhista recorta e cola. São 3 (o padrão): clara, média e escura.
+- A retícula fica a 45° e parada na tela (`boil=screen`). O contorno sai preto.
+- A faixa de sombra do `toon` vira retícula, como nas HQs.
+
+| Opção | O que faz |
+|---|---|
+| `size=4` | A distância entre os pontos, de 2 a 64 (padrão 4). |
+| `tones=3` | Quantas retículas, de 1 a 5 (padrão 3), sem contar o papel e o preto. |
+| `shadow=0.3` | Como nas HQs. |
+| `levels=` | Como na gravura. |
+| `paper=#ffffff` | A cor do papel (padrão: branco). |
+
+### Risografia: `art riso`
+
+```
+art riso inks= size= shift= levels= paper=
+```
+
+| `art riso` | `art riso inks=#ff48b0,#0078bf` |
+|---|---|
+| ![A vila de dia em três tintas: o céu em grão de azul-petróleo, o sol amarelo, o morro em azul-petróleo e amarelo e a casa rosa e amarela, com as cores um pouco fora do lugar](img/14_vila_riso.png) | ![A mesma vila em duas tintas: o céu e o morro em grão azul, a casa e o sol em rosa](img/14_vila_riso_duas.png) |
+
+<details>
+<summary>Código dos dois</summary>
+
+<!-- gerar: img/14_vila_riso.png -->
+```weasel
+canvas 240 160 bg=ceu
+art riso
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+<!-- gerar: img/14_vila_riso_duas.png -->
+```weasel
+canvas 240 160 bg=ceu
+art riso inks=#ff48b0,#0078bf
+gradient ceu linear 0,0 0,160 : #5fb4ea@0 #bfe3f5@0.7 #fff2cc@1
+palette ink=#141320 line=3
+ellipse sol 190,38 16 c=#ffd84a
+shape morro c=#5bb04a ink=line : 0,128! 70,104 140,120 200,100 240,112! 240,160! 0,160!
+shape telhado c=#8a3a2a ink=line : 34,98! 62,74! 90,98!
+rect casa 40,96 44,34 c=#e8604c ink=line
+rect janela 54,106 12,12 c=#ffd34d
+```
+
+</details>
+
+Repare:
+
+- A risografia imprime com poucas tintas fortes, uma por vez, que se sobrepõem no papel. O Weasel acha, para cada cor do desenho, a mistura das tintas que chega mais perto dela: o laranja da casa vira rosa com amarelo; o verde do morro, azul-petróleo com amarelo.
+- Cada tinta sai em **grão**: pontinhos soltos, mais juntos onde a tinta é mais forte. O quase papel fica papel.
+- Cada tinta sai um pouco do lugar, cada uma para um lado (`shift=`): o contorno ganha uma borda de cor.
+- Com uma tinta só, é um desenho de uma cor; com duas, as cores do desenho viram o que dá para fazer com as duas.
+
+| Opção | O que faz |
+|---|---|
+| `inks=#ff48b0,#00838a,#ffe800` | As tintas, de 1 a 3 cores, separadas por vírgula (padrão: rosa, azul-petróleo e amarelo). |
+| `size=1` | O tamanho do grão, de 0.5 a 16 (padrão 1). |
+| `shift=1.5` | O quanto cada tinta sai do lugar, de 0 a 20 unidades (padrão 1.5). A direção vem do `seed=`. `shift=0` deixa as tintas no lugar. |
+| `levels=`, `paper=` | Como na gravura. |
+
+**Experimente:** troque para `inks=#ff48b0` (uma tinta só) ou para `size=3`.
 
 ## No filme: o filme, a cena, o plano e o ator
 
@@ -611,6 +830,6 @@ Repare:
 
 - **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
-- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `halftone` e `stencil`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
+- **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso` e `stencil`, e nos das próximas versões); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 
 [← Problemas comuns](13-problemas.md) · [Índice](README.md)

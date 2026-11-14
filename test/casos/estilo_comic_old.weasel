@@ -1,0 +1,19 @@
+# teste: art comic old — o gibi antigo colorido: a cor mais parecida da tabela de 64 (ciano, magenta e amarelo
+# com 0, 25, 50 ou 100%), em pontos no papel-jornal; o preto só no contorno e no mais escuro; a cor fora do
+# lugar (shift=, na direção sorteada pelo seed=)
+canvas 240 160 bg=fundo light=-0.6,-0.8
+gradient fundo linear 0,0 0,160 : #9fd0f0@0 #3a4a8a@1
+palette ink=#1d1b26 line=4 ball=#ff8a5c leaf=#6cbb3c
+art comic old shift=2 seed=5
+
+bone bola pivot=80,90
+
+layer coisas
+ellipse b 80,90 34 c=ball ink=line bone=bola
+rect caixa 150,70 50,58 r=6 c=#e8c840 ink=line
+shape folha c=leaf ink=line : 80,56! 96,40 104,52 92,64
+rect sombra 130,132 100,16 c=#101018
+
+anim gira frames=3 fps=6
+key 0 bola=0,0,0
+key 3 bola=0,0,90

@@ -1,0 +1,119 @@
+{
+  "frames": {
+    "gira_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 59,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 59,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 59,
+        "h": 36
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    },
+    "gira_01": {
+      "frame": {
+        "x": 63,
+        "y": 2,
+        "w": 59,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 59,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 59,
+        "h": 36
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    },
+    "gira_02": {
+      "frame": {
+        "x": 124,
+        "y": 2,
+        "w": 59,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 59,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 59,
+        "h": 36
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 167
+    }
+  },
+  "animations": {
+    "gira": [
+      "gira_00",
+      "gira_01",
+      "gira_02"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_estilo_comic_old.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 185,
+      "h": 40
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 59,
+      "h": 36
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "gira",
+        "from": 0,
+        "to": 2,
+        "direction": "forward",
+        "fps": 6,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 39,
+      "y": 33,
+      "w": 198,
+      "h": 120
+    }
+  }
+}

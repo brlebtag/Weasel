@@ -1,0 +1,9 @@
+canvas   240 × 160, fundo gradiente fundo
+art      woodcut gap=7 levels=0.05,0.95
+gradientes fundo (linear), bolaG (radial)
+camadas  1
+  coisas           2 item(ns)
+formas   2
+ossos    bola
+animações 1
+  gira           3 quadros, 6 fps

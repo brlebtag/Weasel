@@ -1,0 +1,5 @@
+rect solo @0.000 +1.060
+ellipse b @1.060 +0.664
+rect caixa @1.725 +0.652
+shape folha @2.376 +0.387
+total 2.763

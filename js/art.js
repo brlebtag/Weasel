@@ -303,7 +303,7 @@
     return { text: lines.join('\n') + '\n' };
   }
 
-  // ---------- estilos de tom (toon, engraving, halftone, stencil, silhouette) ----------
+  // ---------- estilos de tom (toon, engraving, woodcut, halftone, comic, manga, riso, stencil, silhouette) ----------
   // Trabalham na resolução da saída: um ponto da imagem de trabalho por ponto da imagem final (de 1 a 4 pontos
   // por unidade do desenho; numa escala menor que 1, o resultado é reduzido com suavização). Cada um pede os
   // passes de que precisa (sem luz, sem contorno, textura presa à forma) e pinta a imagem final.
@@ -400,6 +400,56 @@
   }
   // a distância (de 0 a 0,5 volta) até o inteiro mais perto
   const tri = (p) => Math.abs(p - Math.round(p));
+  // a cobertura de uma linha de largura w (pontos) a d pontos do meio dela
+  const cover = (d, w) => (w <= 0 ? 0 : w >= 1 ? cl(w / 2 + 0.5 - d) : w * cl(1 - d));
+  // ruído suave (um valor sorteado por célula, misturado entre as vizinhas) que se repete a cada per células;
+  // salt: um ruído diferente para cada uso
+  function noiseP(u, v, per, salt) {
+    const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const w = (a) => ((a % per) + per) % per;
+    const i0 = w(i) + salt * 4099, i1 = w(i + 1) + salt * 4099, j0 = w(j), j1 = w(j + 1);
+    const a = rnd(i0, j0), b = rnd(i1, j0), c = rnd(i0, j1), d = rnd(i1, j1);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  }
+  // o contorno: o quanto o desenho com ink (c) se aproxima da cor da ink (ik), saindo do desenho sem ink (n); as
+  // cores contam por cima do papel (pp). Um valor de 0 a 1 por ponto.
+  function edgeMap(c, n, ik, pp) {
+    const E = new Float32Array(c.length >> 2);
+    for (let o = 0, i = 0; o < c.length; o += 4, i++) {
+      const ac = c[o + 3] / 255, an = n[o + 3] / 255;
+      if (!ac && !an) continue;
+      const nr = n[o] * an + pp[0] * (1 - an), ng = n[o + 1] * an + pp[1] * (1 - an), nb = n[o + 2] * an + pp[2] * (1 - an);
+      const cr = c[o] * ac + pp[0] * (1 - ac), cg = c[o + 1] * ac + pp[1] * (1 - ac), cb = c[o + 2] * ac + pp[2] * (1 - ac);
+      const ir = ik[0] - nr, ig = ik[1] - ng, ib = ik[2] - nb, ii = ir * ir + ig * ig + ib * ib;
+      E[i] = ii > 300 ? cl(((cr - nr) * ir + (cg - ng) * ig + (cb - nb) * ib) / ii) : 0;
+    }
+    return E;
+  }
+  // uma retícula de pontos (sz unidades entre os pontos, deg graus) com números inteiros: ela se repete a cada TP
+  // sem emenda (o ângulo e o tamanho ficam bem perto dos pedidos)
+  function screenOf(deg, sz) {
+    const r = (deg * Math.PI) / 180, a = Math.round((TP * Math.cos(r)) / sz), b = Math.round((TP * Math.sin(r)) / sz);
+    return (u, v) => 0.5 + 0.25 * (Math.cos((TAU * (a * u + b * v)) / TP) + Math.cos((TAU * (-b * u + a * v)) / TP));
+  }
+  // o ponto da retícula com cobertura D0, de borda suavizada em fw; o quase branco fica papel e o quase preto
+  // fica chapado (como na impressão)
+  const dotOf = (fw) => (val, D0) => { const D = (D0 - 0.04) / 0.84; return D <= 0 ? 0 : D >= 1 ? 1 : cl((val - (1 - D)) / fw + 0.5); };
+  // a luz em degraus (toon, HQs): a razão entre o desenho com luz (l) e sem luz (u) é arredondada em degraus de
+  // log2 de tamanho 2/(steps-1); muito escuro sem luz, a razão não quer dizer nada (fica o desenho com luz)
+  function stepLight(l, u, steps) {
+    const step = 2 / (steps - 1);
+    for (let o = 0; o < l.length; o += 4) {
+      if (!l[o + 3]) continue;
+      const lu = lum3(u[o], u[o + 1], u[o + 2]), ll = lum3(l[o], l[o + 1], l[o + 2]);
+      if (lu < 0.06 || ll <= 0.001) continue;
+      const rho = ll / lu, f = Math.pow(2, Math.round(Math.log2(rho) / step) * step) / rho;
+      l[o] = Math.min(255, l[o] * f); l[o + 1] = Math.min(255, l[o + 1] * f); l[o + 2] = Math.min(255, l[o + 2] * f);
+    }
+  }
+  // o registro torto (comic old, riso): o deslocamento, em pontos, na direção a (sorteada pelo seed=)
+  const regDir = (art) => (art.seed ? rnd(art.seed, 7) * TAU : 0.6);
+  const regOff = (art, k, a) => [Math.round(art.shift * k * Math.cos(a)), Math.round(art.shift * k * Math.sin(a))];
 
   // ---------- toon (cel shading) ----------
   // Cada forma ganha uma faixa de sombra dura, do lado oposto ao light= do canvas (shadow=: a largura, em
@@ -418,16 +468,8 @@
     }
     const B0 = src.bg ? bgShot(g, src, m) : null;
     const L = shot('art_c', g, src, m, band, B0), U = shot('art_u', g, src, m, { unlit: true, toon: band.toon }, B0);
-    const li = L.ctx.getImageData(0, 0, g.Wd, g.Hd), l = li.data, u = U.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
-    const step = 2 / (art.steps - 1);
-    for (let o = 0; o < l.length; o += 4) {
-      if (!l[o + 3]) continue;
-      const lu = lum3(u[o], u[o + 1], u[o + 2]), ll = lum3(l[o], l[o + 1], l[o + 2]);
-      // muito escuro sem luz: a razão não quer dizer nada (fica o desenho com luz)
-      if (lu < 0.06 || ll <= 0.001) continue;
-      const rho = ll / lu, f = Math.pow(2, Math.round(Math.log2(rho) / step) * step) / rho;
-      l[o] = Math.min(255, l[o] * f); l[o + 1] = Math.min(255, l[o + 1] * f); l[o + 2] = Math.min(255, l[o + 2] * f);
-    }
+    const li = L.ctx.getImageData(0, 0, g.Wd, g.Hd);
+    stepLight(li.data, U.ctx.getImageData(0, 0, g.Wd, g.Hd).data, art.steps);
     L.ctx.putImageData(li, 0, 0);
     blit(ctx, base, g, L.canvas);
     return {};
@@ -491,23 +533,15 @@
   // 15°, magenta 75°, amarelo 0° e preto 45°) que se misturam no papel.
   const CMYK = [[0, 174, 239], [236, 0, 140], [255, 242, 0], [35, 31, 32]];
   function halftoneDraw(ctx, base, g, src, art, info, m) {
-    const k = 1 / g.cw, sz = art.size, P = TP;
-    // a grade de cada retícula com números inteiros: ela se repete a cada P sem emenda (o ângulo e o tamanho
-    // ficam bem perto dos pedidos)
-    const screen = (deg) => {
-      const r = (deg * Math.PI) / 180, a = Math.round((P * Math.cos(r)) / sz), b = Math.round((P * Math.sin(r)) / sz);
-      return (u, v) => 0.5 + 0.25 * (Math.cos((TAU * (a * u + b * v)) / P) + Math.cos((TAU * (-b * u + a * v)) / P));
-    };
-    const color = !!art.color, scr = (color ? [15, 75, 0, 45] : [art.angle]).map(screen);
+    const k = 1 / g.cw, sz = art.size;
+    const color = !!art.color, scr = (color ? [15, 75, 0, 45] : [art.angle]).map((d) => screenOf(d, sz));
     const B0 = src.bg ? bgShot(g, src, m) : null;
     const C = shot('art_c', g, src, m, undefined, B0);
     const uv = field(g, src, m, art, info);
     const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data;
     const pp = rgbOf(art.paper || PAPER), dk = rgbOf(DARK), L = art.levels;
-    // a borda do ponto, suavizada em mais ou menos um ponto da imagem; o quase branco fica papel e o quase
-    // preto fica chapado (como na impressão)
-    const fw = Math.max(0.02, 1.2 / (sz * k));
-    const dot = (val, D0) => { const D = (D0 - 0.04) / 0.84; return D <= 0 ? 0 : D >= 1 ? 1 : cl((val - (1 - D)) / fw + 0.5); };
+    // a borda do ponto, suavizada em mais ou menos um ponto da imagem
+    const dot = dotOf(Math.max(0.02, 1.2 / (sz * k)));
     const { Wd, Hd } = g;
     for (let py = 0, o = 0; py < Hd; py++) {
       const y = (g.gy0 + py + 0.5) * g.ch;
@@ -592,6 +626,302 @@
     return {};
   }
 
+  // ---------- woodcut (xilogravura) ----------
+  // O contrário da gravura: a tinta é preta, e a luz vira sulcos brancos largos (gap=), toscos: um ruído largo
+  // entorta o sulco e um fino engrossa e afina a borda. O claro fica papel; o mais escuro, preto. O contorno sai preto.
+  function woodcutDraw(ctx, base, g, src, art, info, m) {
+    const k = 1 / g.cw, n = Math.max(1, Math.round(TP / art.gap)), s = (TP / n) * k;
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, undefined, B0), N = shot('art_n', g, src, m, { noInk: true }, B0);
+    const uv = field(g, src, m, art, info);
+    const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data, nd = N.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+    const pp = rgbOf(art.paper || PAPER), dk = rgbOf(DARK);
+    const E = edgeMap(c, nd, rgbOf(firstInk(info)), pp);
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const ac = c[o + 3] / 255, an = nd[o + 3] / 255;
+        if (!ac && !an) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const D = 1 - levels(lum3(nd[o] * an + pp[0] * (1 - an), nd[o + 1] * an + pp[1] * (1 - an), nd[o + 2] * an + pp[2] * (1 - an)), art.levels);
+        let t = 1;
+        if (D < 0.95) {
+          // o sulco, deitado na forma; a largura (fração do espaço entre os sulcos) cresce com a luz
+          const q = uv(o, x, y), pa = (n * q[1]) / TP + 0.7 * (noiseP(q[0] / 16, q[1] / 16, 8, 1) - 0.5);
+          const b0 = (0.9 - D) / 0.6, wf = b0 + 0.4 * cl(b0 * 3) * (noiseP(q[0] / 4, q[1] / 4, 32, 2) - 0.5);
+          t = 1 - cover(tri(pa) * s, wf * s);
+        }
+        t = Math.max(t, E[i]);
+        c[o] = pp[0] + (dk[0] - pp[0]) * t;
+        c[o + 1] = pp[1] + (dk[1] - pp[1]) * t;
+        c[o + 2] = pp[2] + (dk[2] - pp[2]) * t;
+        c[o + 3] = B0 ? 255 : Math.max(c[o + 3], nd[o + 3]);
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- comic e manga (HQs) ----------
+  const NEWS = '#f0e6cc'; // papel-jornal
+  // As HQs veem o desenho com a faixa de sombra do toon (shadow=; 0 = sem faixa) e, com luz, a luz em 3 degraus.
+  // Devolve c (com o contorno e sem degraus: só para medir o contorno), n (sem o contorno, em degraus), E (o contorno)
+  // e pp (o papel).
+  function comicShots(g, src, m, art, info, B0) {
+    const toon = art.shadow > 0 ? { shadow: art.shadow } : undefined;
+    const C = shot('art_c', g, src, m, { toon }, B0), N = shot('art_n', g, src, m, { toon, noInk: true }, B0);
+    const ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), n = N.ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+    const pp = rgbOf(art.paper || (art.style === 'manga' ? '#ffffff' : NEWS));
+    const E = edgeMap(ci.data, n, rgbOf(firstInk(info)), pp);
+    if (info.lit !== false) stepLight(n, shot('art_u', g, src, m, { toon, noInk: true, unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data, 3);
+    return { C, ci, c: ci.data, n, E, pp };
+  }
+  // a claridade de 0 (papel) a 1 (preto) do desenho sem contorno, por cima do papel
+  const darkAt = (n, o, pp, L) => {
+    const a = n[o + 3] / 255;
+    return 1 - levels(lum3(n[o] * a + pp[0] * (1 - a), n[o + 1] * a + pp[1] * (1 - a), n[o + 2] * a + pp[2] * (1 - a)), L);
+  };
+
+  // comic (a moderna colorida): o toon, com a cor um pouco mais forte e uma retícula leve de pontos pretos na sombra
+  function comicDraw(ctx, base, g, src, art, info, m) {
+    if (art.old) return art.bw ? comicBwDraw(ctx, base, g, src, art, info, m) : comicOldDraw(ctx, base, g, src, art, info, m);
+    const toon = art.shadow > 0 ? { shadow: art.shadow } : undefined;
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, { toon }, B0), ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), l = ci.data;
+    if (info.lit !== false) stepLight(l, shot('art_u', g, src, m, { toon, unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data, 3);
+    // a cor chapada (sem luz e sem faixa): a sombra é o quanto o ponto ficou mais escuro que ela
+    const f = shot('art_n', g, src, m, { unlit: true }, B0).ctx.getImageData(0, 0, g.Wd, g.Hd).data;
+    const uv = field(g, src, m, art, info);
+    const k = 1 / g.cw, scr = screenOf(45, art.size), dot = dotOf(Math.max(0.02, 1.2 / (art.size * k))), dk = rgbOf(DARK), L = art.levels;
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        if (!l[o + 3]) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const Y = 0.3 * l[o] + 0.59 * l[o + 1] + 0.11 * l[o + 2];
+        let r = levels((Y + (l[o] - Y) * 1.25) / 255, L) * 255, gg = levels((Y + (l[o + 1] - Y) * 1.25) / 255, L) * 255, b = levels((Y + (l[o + 2] - Y) * 1.25) / 255, L) * 255;
+        const lf = lum3(f[o], f[o + 1], f[o + 2]), s = lf > 0.06 ? 1 - lum3(l[o], l[o + 1], l[o + 2]) / lf : 0;
+        const t = 0.5 * cl((s - 0.15) / 0.45);
+        if (t > 0.01) {
+          const q = uv(o, x, y), d = dot(scr(q[0], q[1]), t);
+          r += (dk[0] - r) * d; gg += (dk[1] - gg) * d; b += (dk[2] - b) * d;
+        }
+        l[o] = r; l[o + 1] = gg; l[o + 2] = b;
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // comic old (o gibi antigo colorido): cada ponto vira a cor mais parecida da tabela do colorista (ciano, magenta e
+  // amarelo com 0, 25, 50 ou 100%), um pouco mais clara; 25 e 50% viram pontos, cada tinta num ângulo, no
+  // papel-jornal. O preto vem só do contorno e do mais escuro; a cor sai um pouco do lugar (shift=).
+  const OLD_STEPS = [0, 0.25, 0.5, 1];
+  function comicOldDraw(ctx, base, g, src, art, info, m) {
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const { C, ci, c, n, E, pp } = comicShots(g, src, m, art, info, B0);
+    const uv = field(g, src, m, art, info);
+    const k = 1 / g.cw, sz = art.size, scr = [15, 75, 0].map((d) => screenOf(d, sz)), dot = dotOf(Math.max(0.02, 1.2 / (sz * k)));
+    const dk = rgbOf(DARK), L = art.levels;
+    const tab = [];
+    for (const a0 of OLD_STEPS) for (const a1 of OLD_STEPS) for (const a2 of OLD_STEPS) {
+      const amt = [a0, a1, a2], col = pp.slice();
+      for (let j = 0; j < 3; j++) for (let ch = 0; ch < 3; ch++) col[ch] *= 1 - amt[j] * (1 - CMYK[j][ch] / 255);
+      tab.push({ amt, lab: lab(col[0], col[1], col[2]) });
+    }
+    const memo = new Map();
+    const pick = (r, gg, b) => {
+      const key = (r << 16) | (gg << 8) | b;
+      let e = memo.get(key);
+      if (!e) {
+        const p = lab(r, gg, b);
+        let best = Infinity;
+        for (const t of tab) { const d = dLab(p, t.lab); if (d < best) { best = d; e = t.amt; } }
+        memo.set(key, e);
+      }
+      return e;
+    };
+    const [dx, dy] = regOff(art, k, regDir(art));
+    const { Wd, Hd } = g;
+    const up = (v, a, p) => Math.round(levels(((v * a + p * (1 - a)) / 255) * 0.88 + 0.12, L) * 255);
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const sx = px - dx, sy = py - dy, so = sx >= 0 && sy >= 0 && sx < Wd && sy < Hd ? (sy * Wd + sx) * 4 : -1;
+        const as = so >= 0 ? n[so + 3] / 255 : 0, an = n[o + 3] / 255, ac = c[o + 3] / 255;
+        if (!as && !an && !ac) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        let R = pp[0], G2 = pp[1], B = pp[2];
+        if (as) {
+          // a cor, do ponto deslocado, um pouco mais clara (a tinta no jornal não chega ao escuro da tela)
+          const amt = pick(up(n[so], as, pp[0]), up(n[so + 1], as, pp[1]), up(n[so + 2], as, pp[2]));
+          const q = uv(so, x - dx * g.cw, y - dy * g.ch);
+          for (let j = 0; j < 3; j++) {
+            const a = amt[j];
+            if (!a) continue;
+            const t = a >= 1 ? 1 : dot(scr[j](q[0], q[1]), a), ink = CMYK[j];
+            R *= 1 - t * (1 - ink[0] / 255); G2 *= 1 - t * (1 - ink[1] / 255); B *= 1 - t * (1 - ink[2] / 255);
+          }
+        }
+        // o preto, no lugar: o contorno e o mais escuro
+        const t = Math.max(cl((darkAt(n, o, pp, L) - 0.87) / 0.05), E[i]);
+        c[o] = R + (dk[0] - R) * t; c[o + 1] = G2 + (dk[1] - G2) * t; c[o + 2] = B + (dk[2] - B) * t;
+        c[o + 3] = B0 ? 255 : Math.max(as, an, ac) * 255;
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // comic old bw (a tira de jornal): o mais escuro em preto chapado, o escuro em linhas deitadas que engrossam até
+  // o preto, o meio em hachura diagonal e o claro no papel. As linhas são do desenhista: presas à forma.
+  function comicBwDraw(ctx, base, g, src, art, info, m) {
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const { C, ci, c, n, E, pp } = comicShots(g, src, m, art, info, B0);
+    const uv = field(g, src, m, art, info);
+    const k = 1 / g.cw, sz = art.size;
+    const nH = Math.max(1, Math.round(TP / sz)), sH = (TP / nH) * k, nA = Math.max(1, Math.round(TP / (sz * Math.SQRT2))), sA = (TP / nA / Math.SQRT2) * k;
+    const dk = rgbOf(DARK), L = art.levels;
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const ac = c[o + 3] / 255, an = n[o + 3] / 255;
+        if (!ac && !an) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const D = darkAt(n, o, pp, L);
+        let h = 0;
+        if (D > 0.25) {
+          const q = uv(o, x, y), wH = cl((D - 0.55) / 0.3), wA = 0.35 * cl((D - 0.25) / 0.25) * (1 - wH);
+          let keep = 1;
+          if (wA > 0) keep *= 1 - cover(tri((nA * (q[0] + q[1])) / TP) * sA, wA * sA);
+          if (wH > 0) keep *= 1 - cover(tri((nH * q[1]) / TP) * sH, wH * sH);
+          h = Math.max(1 - keep, cl((D - 0.85) / 0.04));
+        }
+        const t = Math.max(h, E[i]);
+        c[o] = pp[0] + (dk[0] - pp[0]) * t; c[o + 1] = pp[1] + (dk[1] - pp[1]) * t; c[o + 2] = pp[2] + (dk[2] - pp[2]) * t;
+        c[o + 3] = B0 ? 255 : Math.max(c[o + 3], n[o + 3]);
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // manga: preto chapado no mais escuro, papel branco no claro e, no meio, tones= retículas de ponto fixo (como as
+  // folhas de retícula coladas à mão), a 45°. O contorno sai preto.
+  function mangaDraw(ctx, base, g, src, art, info, m) {
+    const B0 = src.bg ? bgShot(g, src, m) : null;
+    const { C, ci, c, n, E, pp } = comicShots(g, src, m, art, info, B0);
+    const uv = field(g, src, m, art, info);
+    const k = 1 / g.cw, scr = screenOf(45, art.size), dot = dotOf(Math.max(0.02, 1.2 / (art.size * k))), dk = rgbOf(DARK), L = art.levels, nt = art.tones;
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0, i = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4, i++) {
+        const ac = c[o + 3] / 255, an = n[o + 3] / 255;
+        if (!ac && !an) continue;
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        const D = darkAt(n, o, pp, L);
+        let t = cl((D - 0.82) / 0.03);
+        if (t < 1 && D > 0.18) {
+          const j = Math.min(nt - 1, Math.floor(((D - 0.18) / 0.67) * nt)), cv = nt > 1 ? 0.15 + (0.5 * j) / (nt - 1) : 0.35;
+          const q = uv(o, x, y);
+          t = Math.max(t, dot(scr(q[0], q[1]), cv));
+        }
+        t = Math.max(t, E[i]);
+        c[o] = pp[0] + (dk[0] - pp[0]) * t; c[o + 1] = pp[1] + (dk[1] - pp[1]) * t; c[o + 2] = pp[2] + (dk[2] - pp[2]) * t;
+        c[o + 3] = B0 ? 255 : Math.max(c[o + 3], n[o + 3]);
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
+  // ---------- riso (risografia) ----------
+  // De 1 a 3 tintas fortes (inks=) que se sobrepõem no papel: cada cor do desenho vira a mistura das tintas que chega
+  // mais perto dela. Cada tinta é impressa em grão (size=: o tamanho do grão) e sai um pouco do lugar (shift=, cada
+  // tinta para um lado).
+  let grainCdf = null;
+  // o limiar do grão que cobre a fração a do papel (o ruído suave não é uniforme: a tabela corrige)
+  function grainLevel(a) {
+    if (!grainCdf) {
+      const v = new Float32Array(8192);
+      for (let i = 0; i < v.length; i++) v[i] = noiseP(rnd(i, 1) * 64, rnd(i, 2) * 64, 64, 5);
+      grainCdf = v.sort();
+    }
+    return a <= 0 ? -1 : a >= 1 ? 2 : grainCdf[Math.min(grainCdf.length - 1, Math.floor(a * grainCdf.length))];
+  }
+  function risoDraw(ctx, base, g, src, art, info, m) {
+    const k = 1 / g.cw, B0 = src.bg ? bgShot(g, src, m) : null;
+    const C = shot('art_c', g, src, m, undefined, B0), ci = C.ctx.getImageData(0, 0, g.Wd, g.Hd), c = ci.data, s0 = c.slice();
+    const uv = field(g, src, m, art, info);
+    const pp = rgbOf(art.paper || PAPER), inks = art.inks.map(rgbOf), ni = inks.length, L = art.levels;
+    // a mistura: em cada canal, o papel vezes (1 − x·(1 − tinta)) de cada tinta, com x de 0 a 1 o mais perto da cor
+    // (uma tinta por vez: com as outras paradas, o canal é uma reta em x, e a conta é exata)
+    const memo = new Map();
+    const mix = (r, gg, b) => {
+      const key = (r << 16) | (gg << 8) | b;
+      let x = memo.get(key);
+      if (x) return x;
+      x = new Float32Array(ni);
+      const want = [r, gg, b];
+      for (let it = 0; it < 12; it++) {
+        for (let i = 0; i < ni; i++) {
+          let num = 0, den = 0;
+          for (let ch = 0; ch < 3; ch++) {
+            let K = pp[ch];
+            for (let j = 0; j < ni; j++) if (j !== i) K *= 1 - x[j] * (1 - inks[j][ch] / 255);
+            const a = K * (1 - inks[i][ch] / 255);
+            num += a * (K - want[ch]);
+            den += a * a;
+          }
+          x[i] = den > 1e-6 ? cl(num / den) : 0;
+        }
+      }
+      memo.set(key, x);
+      return x;
+    };
+    const ncell = Math.max(1, Math.round(TP / art.size)), cs = TP / ncell, fw = Math.min(0.5, 0.3 / (cs * k));
+    const a0 = regDir(art), off = inks.map((_, i) => regOff(art, k, a0 + (i * TAU) / ni));
+    const lv = (v, a, p) => Math.round(levels((v * a + p * (1 - a)) / 255, L) * 255);
+    const { Wd, Hd } = g;
+    for (let py = 0, o = 0; py < Hd; py++) {
+      const y = (g.gy0 + py + 0.5) * g.ch;
+      for (let px = 0; px < Wd; px++, o += 4) {
+        const x = (g.gx0 + px + 0.5) * g.cw;
+        let R = pp[0], G2 = pp[1], B = pp[2], A = s0[o + 3] / 255;
+        for (let i = 0; i < ni; i++) {
+          const sx = px - off[i][0], sy = py - off[i][1];
+          if (sx < 0 || sy < 0 || sx >= Wd || sy >= Hd) continue;
+          const so = (sy * Wd + sx) * 4, as = s0[so + 3] / 255;
+          if (!as) continue;
+          if (as > A) A = as;
+          // o quase papel fica papel (como na impressão)
+          const xa = (mix(lv(s0[so], as, pp[0]), lv(s0[so + 1], as, pp[1]), lv(s0[so + 2], as, pp[2]))[i] - 0.08) / 0.92;
+          if (xa <= 0.002) continue;
+          const q = uv(so, x - off[i][0] * g.cw, y - off[i][1] * g.ch);
+          const t = cl((grainLevel(xa) - noiseP(q[0] / cs, q[1] / cs, ncell, 11 + i)) / fw + 0.5);
+          if (!t) continue;
+          const ink = inks[i];
+          R *= 1 - t * (1 - ink[0] / 255); G2 *= 1 - t * (1 - ink[1] / 255); B *= 1 - t * (1 - ink[2] / 255);
+        }
+        if (!A) continue;
+        c[o] = R; c[o + 1] = G2; c[o + 2] = B;
+        c[o + 3] = B0 ? 255 : A * 255;
+      }
+    }
+    C.ctx.putImageData(ci, 0, 0);
+    blit(ctx, base, g, C.canvas);
+    return {};
+  }
+
   // cell: o tamanho da célula (unidades do canvas); ws: pontos da imagem de trabalho por unidade (scale: a
   // escala da saída); paint: pinta a imagem pronta; draw: o estilo desenha os passes que quiser
   const tone = (draw, heavy) => ({ cell: (a, scale) => [1 / toneK(scale), 1 / toneK(scale)], ws: (a, scale) => toneK(scale), draw, heavy });
@@ -600,7 +930,11 @@
     ascii: { cell: (a) => a.cell, ws: (a) => (Math.min(a.cell[0], a.cell[1]) >= 4 ? 1 : 2), paint: asciiPaint },
     toon: tone(toonDraw, true),
     engraving: tone(engravingDraw, true),
+    woodcut: tone(woodcutDraw, true),
     halftone: tone(halftoneDraw, true),
+    comic: tone(comicDraw, true),
+    manga: tone(mangaDraw, true),
+    riso: tone(risoDraw, true),
     stencil: tone(stencilDraw, true),
     silhouette: tone(silhouetteDraw, false),
   };
@@ -671,6 +1005,17 @@
       if (a.shadow !== 0.3) p.push(`shadow=${a.shadow}`);
     } else if (a.style === 'engraving') {
       if (a.gap !== 5) p.push(`gap=${a.gap}`);
+    } else if (a.style === 'woodcut') {
+      if (a.gap !== 8) p.push(`gap=${a.gap}`);
+    } else if (a.style === 'comic' || a.style === 'manga') {
+      if (a.old) p.push('old');
+      if (a.bw) p.push('bw');
+      if (a.size !== (a.style === 'manga' ? 4 : 5)) p.push(`size=${a.size}`);
+      if (a.shadow !== 0.3) p.push(`shadow=${a.shadow}`);
+      if (a.tones !== undefined && a.tones !== 3) p.push(`tones=${a.tones}`);
+    } else if (a.style === 'riso') {
+      if (a.inks.join(',') !== ((W.lang && W.lang.RISO_INKS) || []).join(',')) p.push(`inks=${a.inks.join(',')}`);
+      if (a.size !== 1) p.push(`size=${a.size}`);
     } else if (a.style === 'halftone') {
       if (a.size !== 6) p.push(`size=${a.size}`);
       if (a.angle !== 45 && !a.color) p.push(`angle=${a.angle}`);
@@ -679,9 +1024,10 @@
       if (a.tones !== 3) p.push(`tones=${a.tones}`);
     }
     if (a.c) p.push(`c=${a.c}`);
+    if (a.shift !== undefined && a.shift !== 1.5) p.push(`shift=${a.shift}`);
     if (a.levels && (a.levels[0] !== 0 || a.levels[1] !== 1)) p.push(`levels=${a.levels.join(',')}`);
     if (a.paper) p.push(`paper=${a.paper}`);
-    const boil0 = (W.lang && W.lang.ART_BOIL && W.lang.ART_BOIL[a.style]) || 0;
+    const boil0 = W.lang && W.lang.artBoil ? W.lang.artBoil(a) : 0;
     if (a.boil !== undefined && a.boil !== boil0) p.push(`boil=${a.boil}`);
     if (a.seed) p.push(`seed=${a.seed}`);
     return p.join(' ');

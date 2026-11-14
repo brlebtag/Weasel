@@ -1595,7 +1595,7 @@
         case 'rig': return [{ label: 'frames', detail: 'quadros prontos (padrão)' }, { label: 'bones', detail: 'esqueleto de verdade: Bone2D e peças' }];
         case 'palette': return cmd === 'art' ? [{ label: 'own', detail: 'as cores do desenho (padrão)' }, { label: 'gameboy', detail: '4 verdes' }, { label: 'nes', detail: 'Nintendo 8 bits' }, { label: 'pico8', detail: '16 cores' }, { label: 'mono', detail: 'preto e branco (1 bit)' }] : [];
         case 'dither': return [{ label: 'bayer', detail: 'pontilhado nos degradês e na luz' }, { label: 'none', detail: 'sem pontilhado' }];
-        case 'paper': return colorList();
+        case 'paper': case 'inks': return colorList();
         case 'boil': return cmd === 'art' ? [{ label: 'screen', detail: 'a textura fica parada na tela' }, { label: '0', detail: 'presa à forma, sem mudar' }, { label: '2', detail: 'presa à forma, sorteada de novo a cada 2 quadros' }] : [];
         case 'actor': return names(filmActors().map((a) => a.name), 'ator (separe com vírgula)');
         case 'collision': return names(els.filter((n) => m.named.get(n)[0].closed), 'forma');
@@ -1652,7 +1652,9 @@
       return [
         { label: 'pixel', detail: 'pixel art nítido' }, { label: 'ascii', detail: 'letras (sai também em .txt)' },
         { label: 'toon', detail: 'cel shading: sombra dura e luz em degraus' }, { label: 'engraving', detail: 'gravura: hachura pelo tom' },
-        { label: 'halftone', detail: 'retícula de pontos (color: quatro cores)' }, { label: 'stencil', detail: 'estêncil: poucos tons e spray' },
+        { label: 'woodcut', detail: 'xilogravura: sulcos brancos no preto' }, { label: 'halftone', detail: 'retícula de pontos (color: quatro cores)' },
+        { label: 'comic', detail: 'HQ (old: gibi antigo; old bw: tira de jornal)' }, { label: 'manga', detail: 'mangá: preto chapado e retícula' },
+        { label: 'riso', detail: 'risografia: 2 ou 3 tintas em grão' }, { label: 'stencil', detail: 'estêncil: poucos tons e spray' },
         { label: 'silhouette', detail: 'silhueta de uma cor só' }, { label: 'none', detail: 'sem estilo' },
       ];
     }

@@ -1,0 +1,17 @@
+# teste: art woodcut — a xilogravura: a tinta preta com sulcos brancos largos e toscos, presos à forma (na
+# animação, os sulcos da bola giram com o osso); o claro fica papel, o mais escuro, preto; gap= e levels=
+canvas 240 160 bg=fundo light=-0.6,-0.8
+gradient fundo linear 0,0 0,160 : #f2ead8@0 #6f7d96@1
+palette ink=#1d1b26 line=4
+art woodcut gap=7 levels=0.05,0.95
+
+bone bola pivot=80,86
+
+layer coisas
+ellipse b 80,86 40 c=bolaG ink=line bone=bola
+gradient bolaG radial 66,70 52 : #ffffff@0 #d07050@0.6 #40202a@1
+rect caixa 150,56 56,74 r=8 c=#88a0c0 ink=line
+
+anim gira frames=3 fps=6
+key 0 bola=0,0,0
+key 3 bola=0,0,45
