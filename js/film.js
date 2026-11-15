@@ -441,7 +441,40 @@
       if (lip) applyLips(s, lip);
       who.push(s);
     }
+    // morph=: durante a troca, os dois atores dão lugar a um só, que vai de um ao outro (a profundidade, a
+    // transparência e, na metade, a ordem e o estilo de arte do segundo)
+    for (const mo of shot.morphs || []) {
+      if (mo.skip || t < mo.t - 1e-9 || t >= mo.t + mo.dur - 1e-9) continue;
+      const ia = who.findIndex((w) => !w.stage && !w.morph && w.ac.name === mo.from), ib = who.findIndex((w) => !w.stage && !w.morph && w.ac.name === mo.to);
+      if (ia < 0 || ib < 0) continue;
+      const A = who[ia], B = who[ib];
+      if (!A.model || !A.pose || !B.model || !B.pose) continue;
+      const u = G.EASE[mo.ease](Math.min(1, Math.max(0, (t - mo.t) / mo.dur))), lerp = (a, b) => a + (b - a) * u;
+      const w = Object.assign({}, u < 0.5 ? A : B, { morph: { A, B, u, plan: morphPlanOf(shot, mo, A, B) }, depth: lerp(A.depth, B.depth), opacity: lerp(A.opacity, B.opacity), show: 1 });
+      who.splice(Math.max(ia, ib), 1);
+      who.splice(Math.min(ia, ib), 1, w);
+    }
     return { loc, entry, owner, shot, t, cam, who, W: owner.canvas.w, H: owner.canvas.h, fit: entry.fit };
+  }
+  // O casamento das partes de uma metamorfose: feito uma vez, com os dois atores como estão no começo da troca (se um
+  // deles trocar de variante no meio, com o desenho de agora)
+  function morphPlanOf(shot, mo, A, B) {
+    const c = mo._plan;
+    if (c && c.a === A.model && c.b === B.model) return c.plan;
+    const start = (w) => { const s = actorState(shot, w.ac, mo.t); return s.model === w.model && s.pose ? Object.assign(s, { mat: actorMatrix(s) }) : w; };
+    const side = (s) => ({ model: s.model, pose: s.pose, mat: s.mat, hide: s.ac.hide });
+    const plan = S.morphPlan(side(start(A)), side(start(B)), mo.spec);
+    mo._plan = { a: A.model, b: B.model, plan };
+    return plan;
+  }
+  // o casamento de uma metamorfose do plano, com os dois atores no começo dela (null sem os desenhos)
+  function morphPlan(shot, mo) {
+    const st = (n) => {
+      const ac = shot.actorMap && shot.actorMap.get(n), s = ac && actorState(shot, ac, mo.t);
+      return s && s.model && s.pose ? Object.assign(s, { mat: actorMatrix(s) }) : null;
+    };
+    const A = st(mo.from), B = st(mo.to);
+    return A && B ? morphPlanOf(shot, mo, A, B) : null;
   }
 
   // Camadas de todos os atores ordenadas por profundidade (longe primeiro), juntando as vizinhas do mesmo ator.
@@ -449,6 +482,8 @@
     const list = [];
     for (const w of fs.who) {
       if (!w.model || !w.show || w.opacity <= 0.001) continue;
+      // a metamorfose: as partes dos dois atores juntas, na profundidade do meio da troca
+      if (w.morph) { const sc = !!w.ac.screen; list.push({ w, kind: 'morph', d: sc ? Infinity : w.depth, screen: sc, front: !!w.ac.front, li: 0 }); continue; }
       const vis = { guides: !!(w.stage && opts.guides) };
       const screen0 = !!w.ac.screen;
       if (w.ac.bg && w.model.canvas.bg) list.push({ w, kind: 'bg', d: screen0 ? Infinity : w.depth, screen: screen0, front: !!w.ac.front, li: -1 });
@@ -472,7 +507,7 @@
     for (const p of list) {
       const g = groups[groups.length - 1];
       if (g && g.w === p.w && g.d === p.d && g.screen === p.screen && p.kind !== 'glow' && !g.glows) { if (p.layer) g.layers.add(p.layer); else g.bg = true; continue; }
-      groups.push({ w: p.w, d: p.d, screen: p.screen, layers: new Set(p.layer ? [p.layer] : []), bg: p.kind === 'bg', glows: p.kind === 'glow' });
+      groups.push({ w: p.w, d: p.d, screen: p.screen, layers: new Set(p.layer ? [p.layer] : []), bg: p.kind === 'bg', glows: p.kind === 'glow', morph: p.kind === 'morph' });
     }
     // halos das luzes de cada ator: junto com a última camada dele
     const seen = new Set();
@@ -637,9 +672,14 @@
       const faded = !tex && (w.opacity < 0.999 || fog > 0.002);
       const x = faded ? alphaLayer(ctx.canvas.width, ctx.canvas.height) : ctx;
       if (!faded) ctx.save();
+      if (g.morph) {
+        const { A, B, u, plan } = w.morph;
+        const side = (s) => ({ model: s.model, pose: s.pose, lighting: s.lighting, m: M.mul(top, M.mul(s.ac.screen ? M.id() : viewMatrix(fs.cam, s.depth, fs.W, fs.H), s.mat)) });
+        S.drawMorph(x, side(A), side(B), u, plan, { glows: g.glows, pass: opts.artPass });
+      }
       setMat(x, m);
       if (g.bg && !tex) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
-      if (g.layers.size || g.glows) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass });
+      if (!g.morph && (g.layers.size || g.glows)) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass });
       if (faded) {
         if (fog > 0.002) {
           // a névoa pinta por cima só onde já tem desenho
@@ -673,7 +713,10 @@
     if (!fs) return null;
     const base = matOf(ctx);
     fs.stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
-    for (const w of fs.who) if (!w.stage && w.model && w.pose) w.lighting = actorLighting(fs.stageLighting, w, w.mat);
+    for (const w of fs.who) {
+      if (!w.stage && w.model && w.pose) w.lighting = actorLighting(fs.stageLighting, w, w.mat);
+      if (w.morph) for (const s of [w.morph.A, w.morph.B]) s.lighting = actorLighting(fs.stageLighting, s, s.mat);
+    }
     const groups = plates(fs, opts);
     const runs = opts.art && W.art ? artRuns(fs, groups) : null;
     if (!runs) paintPlates(ctx, model, fs, base, groups, opts, true, true);
@@ -682,7 +725,7 @@
       runs.forEach((run, i) => {
         const first = i === 0 && !opts.transparent;
         if (!run.art) { paintPlates(ctx, model, fs, base, run.groups, opts, first, false); return; }
-        const models = [model, ...(fs.entry.chain || []), ...run.groups.map((g) => g.w.model)];
+        const models = [model, ...(fs.entry.chain || []), ...run.groups.flatMap((g) => (g.w.morph ? [g.w.morph.A.model, g.w.morph.B.model] : [g.w.model]))];
         const r = W.art.paint(ctx, base, frameRect, run.art, {
           content: (x, m, pass) => paintPlates(x, model, fs, m, run.groups, pass ? Object.assign({}, opts, { artPass: pass }) : opts, false, false),
           bg: first ? (x, m) => paintBg(x, model, fs, m) : null,
@@ -768,5 +811,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
+  W.film = { timeline, locate, timecode, frameState, morphPlan, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

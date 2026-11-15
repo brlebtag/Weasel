@@ -1,0 +1,16 @@
+# teste: a metamorfose (at … morph=). A aranha anda e vira um jacaré andando (dur=1.5s), no lugar dele: as
+# partes casam sozinhas (a cabeça com a cabeça, quatro patas com as quatro pernas), pairs= casa o abdômen com o
+# corpo, born= faz o focinho nascer da cabeça; as outras patas encolhem, o rabo e a barriga nascem. No fim, a
+# aranha some e o jacaré aparece sozinho. Depois o jacaré volta a ser aranha, mais rápido.
+film fps=8 dur=3s
+canvas 320 160 bg=#cfe3f0
+
+actor aranha "metamorfose/aranha.weasel" 90,140 origin=80,104 anim=anda
+actor jacare "metamorfose/jacare.weasel" 190,140 origin=110,92 scale=0.9 anim=anda hidden
+
+layer chao
+rect terra 0,138 320,22 c=#9c7a4e
+
+at 0s aranha.pos=90,140
+at 0.5s aranha.pos=130,140 aranha.morph=jacare dur=1.5s pairs=abdomen->corpo born=focinho->cabeca
+at 2.25s jacare.morph=aranha dur=0.5s

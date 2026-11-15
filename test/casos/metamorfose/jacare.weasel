@@ -1,0 +1,25 @@
+# teste: o jacaré do metamorfose.weasel (olhando para a direita). As pernas são traços grossos; o rabo e o
+# focinho não existem na aranha.
+canvas 220 100 bg=none
+palette ink=#2b2a33 verde=#4f8a3c claro=#a8c97a olho=#f4e04d
+
+bone corpo pivot=110,92
+
+layer pernas
+stroke perna1 w=9 c=verde cap=round bone=corpo : 72,74 68,90
+stroke perna2 w=9 c=verde cap=round bone=corpo : 94,76 92,92
+stroke perna3 w=9 c=verde cap=round bone=corpo : 132,76 134,92
+stroke perna4 w=9 c=verde cap=round bone=corpo : 154,74 158,90
+
+layer corpo
+shape rabo c=verde ink=3 bone=corpo : 72,62 10,72 72,80
+ellipse corpo 112,70 46,16 c=verde ink=3 bone=corpo
+ellipse barriga 112,78 34,6 c=claro bone=corpo
+ellipse cabeca 168,64 20,12 c=verde ink=3 bone=corpo
+shape focinho c=verde ink=3 bone=corpo : 178,58 214,64 214,70 178,74
+ellipse olho 170,56 4,4 c=olho bone=corpo
+
+anim anda frames=8 fps=8
+key 0 corpo=0,0,0
+key 4 corpo=0,-2,0
+key 8 corpo=0,0,0

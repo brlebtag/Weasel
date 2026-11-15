@@ -1,0 +1,31 @@
+dur= com +: error linha 15: dur= é quanto tempo a metamorfose dura (ex.: dur=1.5s), sem o +
+dur= zero: error linha 15: dur= precisa de um tempo maior que zero (ex.: dur=1.5s)
+dur= sem morph=: warn linha 15: dur= é da metamorfose: só vale com um morph= na mesma linha (ex.: at 5s aranha.morph=jacare dur=1.5s)
+pairs= e born= sem morph=: warn linha 15: pairs= é da metamorfose: só vale com um morph= na mesma linha (ex.: at 5s aranha.morph=jacare dur=1.5s)
+ator que não existe: error linha 15: ator "sapo" não existe aqui
+o mesmo ator: error linha 15: aranha.morph= precisa de outro ator (ex.: at 5s aranha.morph=jacare)
+pairs= com dois pontos: error linha 15: pairs= leva pares parte->parte separados por vírgula (ex.: pairs=pata1->rabo) | error linha 15: ponto inválido "corpo" (use x,y  x,y!  x,y~dx,dy  ou  x,y@osso)
+pairs= ao contrário: error linha 15: a parte "corpo" não existe em metamorfose/aranha.weasel (pairs=corpo->abdomen: primeiro a parte de aranha, depois a de jacare) | error linha 15: a parte "abdomen" não existe em metamorfose/jacare.weasel (pairs=corpo->abdomen: primeiro a parte de aranha, depois a de jacare)
+born= de uma parte que não existe: error linha 15: a parte "nariz" não existe em metamorfose/aranha.weasel nem em metamorfose/jacare.weasel
+born= com a outra parte no mesmo ator: error linha 15: a parte "rabo" não existe em metamorfose/aranha.weasel (born=focinho->rabo: rabo é uma parte do outro ator)
+jacaré sem hidden: warn linha 15: "jacare" já aparece antes da metamorfose: use hidden na linha actor jacare (ele aparece sozinho no fim dela)
+uma troca em cima da outra: warn linha 16: "jacare" já está numa metamorfose até 2s: esta fica de fora
+sem dur= (1s): nenhum aviso
+o arquivo: nenhum aviso
+plano (o arquivo) aranha->jacare em 0.5s, 1.5s: vira abdomen->corpo, olho->olho, cabeca->cabeca, pata4->perna2, pata5->perna3, pata3->perna1, pata6->perna4 · nascem rabo->abdomen, barriga->abdomen, focinho->cabeca · somem pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca
+plano (o arquivo) jacare->aranha em 2.25s, 0.5s: vira olho->olho, cabeca->cabeca, perna2->pata4, perna3->pata5, corpo->abdomen, perna1->pata3, perna4->pata6 · nascem pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca · somem rabo->abdomen, barriga->abdomen, focinho->cabeca
+plano (sem pairs= e born=) aranha->jacare em 0.5s, 1.5s: vira olho->olho, cabeca->cabeca, pata4->perna2, pata5->perna3, pata3->perna1, pata6->perna4, abdomen->corpo · nascem rabo->abdomen, barriga->abdomen, focinho->cabeca · somem pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca
+plano (sem pairs= e born=) jacare->aranha em 2.25s, 0.5s: vira olho->olho, cabeca->cabeca, perna2->pata4, perna3->pata5, corpo->abdomen, perna1->pata3, perna4->pata6 · nascem pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca · somem rabo->abdomen, barriga->abdomen, focinho->cabeca
+show: aranha 2s=0 2.75s=1 · jacare 2s=1 2.75s=0
+sem o dur= do film: o filme vai até o fim da última metamorfose (2.75s; sem ela, 2.25s)
+#3 0.38s: aranha
+#4 0.5s: aranha->jacare u=0 depth 1 (aranha na frente)
+#7 0.88s: aranha->jacare u=0.16 depth 1 (aranha na frente)
+#10 1.25s: aranha->jacare u=0.5 depth 1 (jacare na frente)
+#15 1.88s: aranha->jacare u=0.98 depth 1 (jacare na frente)
+#16 2s: jacare
+#18 2.25s: jacare->aranha u=0 depth 1 (jacare na frente)
+#19 2.38s: jacare->aranha u=0.16 depth 1 (jacare na frente)
+#22 2.75s: aranha
+#23 2.88s: aranha
+#4 (u=0) contra a aranha sozinha: 619 pixels diferentes, 0 muito diferentes

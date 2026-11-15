@@ -1,0 +1,13 @@
+filme    320 × 160, 8 fps, 3s (24 quadros, 00:03:00), fundo #cfe3f0
+atores   aranha (metamorfose/aranha.weasel, anim anda), jacare (metamorfose/jacare.weasel, anim anda, hidden)
+camadas  chao
+planos   1
+  metamorfose      00:00:00      3s     24 quadros  câmera 160,80 · 8 mudança(s) com at
+    metamorfose aranha -> jacare em 0.5s (1.5s)
+      vira: abdomen->corpo, olho->olho, cabeca->cabeca, pata4->perna2, pata5->perna3, pata3->perna1, pata6->perna4
+      nascem: rabo->abdomen, barriga->abdomen, focinho->cabeca
+      somem: pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca
+    metamorfose jacare -> aranha em 2.25s (0.5s)
+      vira: olho->olho, cabeca->cabeca, perna2->pata4, perna3->pata5, corpo->abdomen, perna1->pata3, perna4->pata6
+      nascem: pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca
+      somem: rabo->abdomen, barriga->abdomen, focinho->cabeca

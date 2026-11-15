@@ -77,7 +77,7 @@
   const LAYER_PROPS = { opacity: 'num', show: 'step', blur: 'free', glow: 'free', tint: 'free', brightness: 'free', saturate: 'free', contrast: 'free', hue: 'free', above: 'order', below: 'order', yaw: 'free', pitch: 'free' };
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
-  const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant', along: 'free', expr: 'expr' };
+  const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant', along: 'free', expr: 'expr', morph: 'morph' };
   // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1; osso.yaw / osso.pitch: o giro 3D
   const BONE_PROPS = { along: 'free', yaw: 'free', pitch: 'free' };
   // lens = zoom de verdade (aproxima tudo igual); fog = cor da névoa da distância; haze = profundidade com metade de névoa
@@ -85,6 +85,8 @@
   // formas do próprio arquivo do filme (mapas, setas, títulos)
   const SHAPE_AT_PROPS = { draw: 'num', opacity: 'num', show: 'step', yaw: 'free', pitch: 'free', z: 'free' };
   // o que só muda a aparência: numa forma ou camada com hidden, não faz nada sem show=1
+  // atributos soltos do at (sem alvo.): a curva, a mistura de anim= e os da metamorfose (morph=)
+  const AT_PLAIN = new Set(['ease', 'blend', 'dur', 'pairs', 'born']);
   const HIDE_VISUAL = new Set(['opacity', 'draw', 'blur', 'glow', 'tint', 'brightness', 'saturate', 'contrast', 'hue']);
   // transições na entrada de um plano: shot nome dur=4s in=fade,0.5s
   const TRANSITIONS = ['fade', 'wipe', 'slide', 'zoom', 'iris'];
@@ -2894,7 +2896,7 @@
         for (const u of s.hiddenUse || []) if (!s.tracks.has(u.id)) bad(u.st, u.a, `"${u.name}" tem hidden: só aparece com at … ${u.name}.show=1`, 'warn');
         delete s.hiddenUse;
         if (s.implicit && s.dur === null) {
-          const last = Math.max(0, ...s.ats.map((x) => x.t));
+          const last = Math.max(0, ...s.ats.map((x) => x.t), ...(s.morphs || []).map((x) => x.t + x.dur));
           s.dur = last > 0 ? last : 3;
           if (!(last > 0)) err(fst.line, 'falta dur= (ex.: film fps=24 dur=10s) ou shot … dur=; o filme ficou com 3s', fst.cmdTok.from, fst.cmdTok.to, 'warn');
         }
@@ -2902,6 +2904,25 @@
           tr.keys.sort((p, q) => p.t - q.t);
           const over = tr.keys.find((k) => k.t > s.dur + 1e-9);
           if (over) err(over.line, `at ${round3(over.t)}s passa do fim do shot "${s.name}" (dur=${round3(s.dur)}s)`, 0, 2, 'warn');
+        }
+        // morph=: o ator de chegada fica escondido até o fim da troca (hidden), e cada ator entra numa troca de cada vez
+        if (s.morphs) {
+          s.morphs.sort((p, q) => p.t - q.t);
+          const showAt = (n, tt) => {
+            const tr = s.tracks.get(`actor:${n}.show`);
+            let v = actors.get(n).show ? 1 : 0;
+            for (const k of tr ? tr.keys : []) { if (k.t <= tt + 1e-9) v = k.v; else break; }
+            return v;
+          };
+          const busy = [];
+          for (const mo of s.morphs) {
+            const w = (msg) => err(mo.line, msg, mo.at[0], mo.at[1], 'warn');
+            const clash = busy.find((b) => mo.t < b.t + b.dur - 1e-9 && [b.from, b.to].some((x) => x === mo.from || x === mo.to));
+            if (clash) { w(`"${[clash.from, clash.to].includes(mo.from) ? mo.from : mo.to}" já está numa metamorfose até ${round3(clash.t + clash.dur)}s: esta fica de fora`); mo.skip = true; continue; }
+            busy.push(mo);
+            if (showAt(mo.to, mo.t - 1e-6)) w(`"${mo.to}" já aparece antes da metamorfose: use hidden na linha actor ${mo.to} (ele aparece sozinho no fim dela)`);
+            if (!showAt(mo.from, mo.t)) w(`"${mo.from}" está escondido quando a metamorfose começa`);
+          }
         }
         // phase: só alinha duas animações em loop (a que estava tocando e a nova); senão a nova começa do quadro 0
         for (const u of s.phaseUse || []) {
@@ -3045,21 +3066,29 @@
         else if (b && !(b.v > 0)) bad(st, a, 'blend= precisa de um tempo maior que zero (ex.: blend=0.4s)');
         else if (b) blend = b.v;
       }
+      // dur=: quanto tempo dura a metamorfose desta linha (morph=); sem ele, 1s
+      let mdur = 1, morphSeen = false;
+      if (st.attrs.has('dur')) {
+        const a = st.attrs.get('dur'), b = timeOf(st, a, fps, 'o tempo da metamorfose');
+        if (b && b.rel) bad(st, a, 'dur= é quanto tempo a metamorfose dura (ex.: dur=1.5s), sem o +');
+        else if (b && !(b.v > 0)) bad(st, a, 'dur= precisa de um tempo maior que zero (ex.: dur=1.5s)');
+        else if (b) mdur = b.v;
+      }
       const rec = info(st, { at: { shot, t } });
-      const key = (kind, name, prop, interp, v, a) => {
+      const key = (kind, name, prop, interp, v, a, when) => {
         const id = `${kind}:${name}.${prop}`;
         if (!shot.tracks.has(id)) shot.tracks.set(id, { kind, name, prop, interp, keys: [] });
         const tr = shot.tracks.get(id);
-        const k = { t, v, ease, line: st.line };
+        const k = { t: when === undefined ? t : when, v, ease, line: st.line };
         if (blend && prop === 'anim') k.blend = blend;
         if (phase && prop === 'anim') { k.phase = true; (shot.phaseUse || (shot.phaseUse = [])).push({ k, tok: phase, actor: name }); }
-        const same = tr.keys.findIndex((x) => Math.abs(x.t - t) < 1e-9);
+        const same = tr.keys.findIndex((x) => Math.abs(x.t - k.t) < 1e-9);
         if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
         return a;
       };
       let n = 0;
       for (const a of st.attrs.values()) {
-        if (a.key === 'ease' || a.key === 'blend') continue;
+        if (AT_PLAIN.has(a.key)) continue;
         n++;
         const dot = a.key.lastIndexOf('.');
         if (dot <= 0) { bad(st, a, 'use alvo.propriedade=valor (ex.: heroi.pos=400,560 ou camera.zoom=1.5)'); continue; }
@@ -3110,6 +3139,17 @@
           case 'anim': { const v = animOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'step', v); break; }
           case 'variant': { const v = variantOf(st, a, ac); if (v !== null) key(kind, name, prop, 'step', v); break; }
           case 'expr': { const v = exprOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'expr', v); break; }
+          // morph=: este ator vira outro aos poucos; no fim, este some e o outro aparece (sem outra linha)
+          case 'morph': {
+            morphSeen = true;
+            const to = actors.get(a.text);
+            if (!to) { bad(st, a, `ator "${a.text}" não existe aqui`); break; }
+            if (to === ac) { bad(st, a, `${name}.morph= precisa de outro ator (ex.: at 5s aranha.morph=jacare)`); break; }
+            (shot.morphs || (shot.morphs = [])).push({ from: name, to: a.text, t, dur: mdur, ease, spec: morphSpec(st, ac, to), line: st.line, at: [a.from, a.to] });
+            key(kind, name, 'show', 'step', 0, a, t + mdur);
+            key(kind, a.text, 'show', 'step', 1, a, t + mdur);
+            break;
+          }
           case 'actor':
             if (a.text !== 'none' && !actors.has(a.text)) bad(st, a, `ator "${a.text}" não existe aqui`);
             else key(kind, name, prop, 'step', a.text === 'none' ? null : a.text);
@@ -3119,6 +3159,35 @@
       if (!n) err(st.line, 'at sem mudança (ex.: at 2s heroi.pos=400,560 camera.zoom=1.4)', st.cmdTok.from, st.cmdTok.to);
       else if (blend && !animSeen) bad(st, st.attrs.get('blend'), 'blend= só mistura uma troca de anim= da mesma linha (ex.: at 5s heroi.anim=pula blend=0.4s)', 'warn');
       if (n && phase && !animSeen) err(st.line, 'phase só vale numa troca de anim= da mesma linha (ex.: at 3s capivara.anim=trote phase)', phase.from, phase.to, 'warn');
+      const lone = !morphSeen && ['dur', 'pairs', 'born'].find((k) => st.attrs.has(k));
+      if (n && lone) bad(st, st.attrs.get(lone), `${lone}= é da metamorfose: só vale com um morph= na mesma linha (ex.: at 5s aranha.morph=jacare dur=1.5s)`, 'warn');
+    }
+    // pairs= e born= de uma metamorfose: as partes de cada ator (pairs=parte_de_cá->parte_de_lá; born=parte->de_onde)
+    function morphSpec(st, A, B) {
+      const at = st.attrs, spec = { pairs: [], born: [] };
+      for (const k of ['pairs', 'born']) {
+        const a = at.get(k);
+        if (!a) continue;
+        for (const p of a.text.split(',').map((x) => x.trim()).filter(Boolean)) {
+          const ab = p.split('->');
+          if (ab.length !== 2 || !IDENT.test(ab[0]) || !IDENT.test(ab[1])) { bad(st, a, `${k}= leva pares parte->parte separados por vírgula (ex.: ${k === 'pairs' ? 'pairs=pata1->rabo' : 'born=rabo->corpo'})`); continue; }
+          spec[k].push(ab);
+        }
+      }
+      if (!A.model || !B.model) return spec;
+      const NA = A.model.named, NB = B.model.named, said = new Set();
+      const say = (a, msg) => { if (!said.has(msg)) { said.add(msg); bad(st, a, msg); } };
+      for (const [x, y] of spec.pairs) {
+        if (!NA.has(x)) say(at.get('pairs'), `a parte "${x}" não existe em ${A.file} (pairs=${x}->${y}: primeiro a parte de ${A.name}, depois a de ${B.name})`);
+        if (!NB.has(y)) say(at.get('pairs'), `a parte "${y}" não existe em ${B.file} (pairs=${x}->${y}: primeiro a parte de ${A.name}, depois a de ${B.name})`);
+      }
+      // born=x->y: x nasce de y (x de B, y de A) ou some em y (x de A, y de B)
+      for (const [x, y] of spec.born) {
+        if ((NB.has(x) && NA.has(y)) || (NA.has(x) && NB.has(y))) continue;
+        if (!NA.has(x) && !NB.has(x)) say(at.get('born'), `a parte "${x}" não existe em ${A.file} nem em ${B.file}`);
+        else say(at.get('born'), `a parte "${y}" não existe em ${NB.has(x) ? A.file : B.file} (born=${x}->${y}: ${y} é uma parte do outro ator)`);
+      }
+      return spec;
     }
 
     // ---- prévia de um def (o editor, com o cursor dentro dele): uma cópia em 0,0, com as variáveis do painel ----

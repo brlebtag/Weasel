@@ -1499,6 +1499,9 @@
     out.push({ label: 'ease=' });
     out.push({ label: 'blend=', detail: 'mistura a troca de anim= (ex.: 0.4s)' });
     out.push({ label: 'phase', detail: 'a troca de anim= continua na mesma fase da passada' });
+    out.push({ label: 'dur=', detail: 'quanto tempo dura a metamorfose (morph=) da linha (ex.: 1.5s)' });
+    out.push({ label: 'pairs=', detail: 'metamorfose: casa uma parte com outra (ex.: pata1->rabo)' });
+    out.push({ label: 'born=', detail: 'metamorfose: de onde nasce uma parte (ex.: rabo->corpo)' });
     return out;
   }
   function complete({ before }) {
@@ -1536,6 +1539,7 @@
         if (prop === 'expr') return ac && ac.model ? [...names([...ac.model.exprs.keys()], 'expressão'), { label: 'none' }] : [];
         if (prop === 'along') return names(['0', '1'], '0 = começo do caminho, 1 = fim');
         if (prop === 'follow') return [...names(filmActors().map((a) => a.name), 'ator'), { label: 'none' }];
+        if (prop === 'morph') return names(filmActors().map((a) => a.name).filter((n) => n !== target), 'ator em que este vira');
         if (prop === 'flip') return names(['x', 'y', 'xy', 'none']);
         if (prop === 'show') return names(['1', '0']);
         if (prop === 'draw') return names(['0', '1'], '0 = nada, 1 = inteira');

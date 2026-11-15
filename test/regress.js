@@ -242,7 +242,7 @@ async function filmCases(file, prefix) {
   for (let f = 0; f < tl.frames; f += 6) {
     const fs2 = W.film.frameState(model, f);
     const c = fs2.cam;
-    const who = fs2.who.filter((w) => !w.stage).map((w) => `${w.ac.name}=${r2(w.x)},${r2(w.y)}${w.anim ? ` ${w.anim}#${w.animFrame}` : ''}${w.flip[0] < 0 ? ' flip' : ''}${w.show ? '' : ' oculto'}${w.opacity < 1 ? ` op${r2(w.opacity)}` : ''}`);
+    const who = fs2.who.filter((w) => !w.stage).map((w) => `${w.ac.name}=${r2(w.x)},${r2(w.y)}${w.anim ? ` ${w.anim}#${w.animFrame}` : ''}${w.flip[0] < 0 ? ' flip' : ''}${w.show ? '' : ' oculto'}${w.opacity < 1 ? ` op${r2(w.opacity)}` : ''}${w.morph ? ` (metamorfose ${w.morph.A.ac.name}->${w.morph.B.ac.name} ${r2(w.morph.u)})` : ''}`);
     lines.push(`${String(f).padStart(4)} ${W.film.timecode(f, tl.fps)} ${fs2.entry.name} cam=${r2(c.x)},${r2(c.y)} z${r2(c.zoom)}${c.sx || c.sy ? ` tremor ${r2(c.sx)},${r2(c.sy)}` : ''}${c.fade ? ` fade${r2(c.fade)}` : ''} | ${who.join(' | ')}`);
   }
   await check(group, 'linha_do_tempo.txt', 'text', lines.join('\n') + '\n');
@@ -287,6 +287,67 @@ async function filmCases(file, prefix) {
       if (img.artText) await check(group, `estilo_${id}.txt`, 'text', img.artText);
     }
   }
+}
+
+// at … morph=: a metamorfose (test/casos/metamorfose.weasel). Confere os erros e avisos de morph=, dur=, pairs= e
+// born=, o casamento com e sem pairs= e born=, quem aparece em cada quadro (os dois atores viram um só durante a troca,
+// e no fim um some e o outro aparece) e que, no começo da troca, o quadro é igual ao da aranha sozinha.
+async function morphCase() {
+  console.log(paint('1', '_metamorfose'));
+  const src = fs.readFileSync(path.join(CASES, 'metamorfose.weasel'), 'utf8');
+  const parse = (s) => W.lang.parse(s, { file: 'metamorfose.weasel', resolve: resolver(CASES) });
+  const msgs = (s) => parse(s).errors.map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  const line = 'at 0.5s aranha.pos=130,140 aranha.morph=jacare dur=1.5s pairs=abdomen->corpo born=focinho->cabeca';
+  const head = 'at 0.5s aranha.pos=130,140 aranha.morph=jacare';
+  // as variações (menos a da troca em cima da outra) ficam sem a volta do jacaré para aranha, que só repetiria os avisos
+  const one = src.replace(/\r?\nat 2\.25s jacare\.morph=aranha dur=0\.5s/, '');
+  const lines = [];
+  for (const [what, a, b] of [
+    ['dur= com +', line, `${head} dur=+1.5s`],
+    ['dur= zero', line, `${head} dur=0s`],
+    ['dur= sem morph=', line, 'at 0.5s aranha.pos=130,140 dur=1.5s'],
+    ['pairs= e born= sem morph=', line, 'at 0.5s aranha.pos=130,140 pairs=abdomen->corpo born=focinho->cabeca'],
+    ['ator que não existe', line, 'at 0.5s aranha.morph=sapo'],
+    ['o mesmo ator', line, 'at 0.5s aranha.morph=aranha'],
+    ['pairs= com dois pontos', line, `${head} pairs=abdomen:corpo`],
+    ['pairs= ao contrário', line, `${head} pairs=corpo->abdomen`],
+    ['born= de uma parte que não existe', line, `${head} born=nariz->cabeca`],
+    ['born= com a outra parte no mesmo ator', line, `${head} born=focinho->rabo`],
+    ['jacaré sem hidden', ' anim=anda hidden', ' anim=anda'],
+    ['uma troca em cima da outra', 'at 2.25s jacare.morph=aranha dur=0.5s', 'at 1.5s jacare.morph=aranha dur=0.5s'],
+    ['sem dur= (1s)', line, `${head} pairs=abdomen->corpo`],
+  ]) lines.push(`${what}: ${msgs((what === 'uma troca em cima da outra' ? src : one).replace(a, b)).join(' | ') || 'nenhum aviso'}`);
+  lines.push(`o arquivo: ${msgs(src).join(' | ') || 'nenhum aviso'}`);
+
+  const pn = W.scene.partName, list = (xs) => xs.map(([x, y]) => `${pn(x)}->${pn(y)}`).join(', ') || '-';
+  for (const [what, txt] of [['o arquivo', src], ['sem pairs= e born=', src.replace(' pairs=abdomen->corpo born=focinho->cabeca', '')]]) {
+    const m = parse(txt), sh = m.film.shots[0];
+    for (const mo of sh.morphs) {
+      const p = W.film.morphPlan(sh, mo);
+      lines.push(`plano (${what}) ${mo.from}->${mo.to} em ${mo.t}s, ${mo.dur}s: vira ${list(p.pairs)} · nascem ${list(p.born)} · somem ${list(p.gone)}`);
+    }
+  }
+  const m = parse(src), sh = m.film.shots[0], r2 = (v) => Math.round(v * 100) / 100;
+  const keys = (n) => (sh.tracks.get(`actor:${n}.show`) || { keys: [] }).keys.map((k) => `${k.t}s=${k.v}`).join(' ') || '-';
+  lines.push(`show: aranha ${keys('aranha')} · jacare ${keys('jacare')}`);
+  const free = (t) => parse(t.replace('film fps=8 dur=3s', 'film fps=8')).film.shots[0].dur;
+  lines.push(`sem o dur= do film: o filme vai até o fim da última metamorfose (${free(src)}s; sem ela, ${free(src.replace(' jacare.morph=aranha dur=0.5s', ' aranha.pos=130,140'))}s)`);
+  for (const f of [3, 4, 7, 10, 15, 16, 18, 19, 22, 23]) {
+    const st = W.film.frameState(m, f);
+    lines.push(`#${f} ${r2(f / 8)}s: ${st.who.filter((w) => !w.stage && w.show).map((w) => (w.morph ? `${w.morph.A.ac.name}->${w.morph.B.ac.name} u=${r2(w.morph.u)} depth ${r2(w.depth)} (${w.ac.name} na frente)` : w.ac.name)).join(', ')}`);
+  }
+  // no começo da troca (u=0), o desenho é o da aranha sozinha (o jacaré escondido, sem metamorfose)
+  const solo = parse(src.replace(' aranha.morph=jacare dur=1.5s pairs=abdomen->corpo born=focinho->cabeca', '').replace('at 2.25s jacare.morph=aranha dur=0.5s', 'at 2.25s aranha.pos=130,140'));
+  const px = (mm, f) => { const c = W.film.renderFrame(mm, f, { scale: 1 }); return c.getContext('2d').getImageData(0, 0, c.width, c.height).data; };
+  const A = px(m, 4), B = px(solo, 4);
+  let diff = 0, big = 0;
+  for (let i = 0; i < A.length; i += 4) {
+    const d = Math.max(Math.abs(A[i] - B[i]), Math.abs(A[i + 1] - B[i + 1]), Math.abs(A[i + 2] - B[i + 2]));
+    if (d > 2) diff++;
+    if (d > 40) big++;
+  }
+  lines.push(`#4 (u=0) contra a aranha sozinha: ${diff} pixels diferentes, ${big} muito diferentes`);
+  await check('_metamorfose', 'metamorfose.txt', 'text', lines.join('\n') + '\n');
 }
 
 // som: os .wav dos exemplos são os do gerador, a leitura de WAV (8/16/24 bits, float, estéreo), o lip sync
@@ -766,6 +827,7 @@ async function main() {
   if (!only.length || only.some((o) => '_fase'.includes(o))) await phaseCase();
   if (!only.length || only.some((o) => '_trocar'.includes(o))) await swapCase();
   if (!only.length || only.some((o) => '_virada'.includes(o))) await turnCase();
+  if (!only.length || only.some((o) => '_metamorfose'.includes(o))) await morphCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');

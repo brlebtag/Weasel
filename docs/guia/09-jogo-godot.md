@@ -928,6 +928,8 @@ O `--info` mostra o que o Weasel decidiu, uma vez por linha com `turn`:
 - O normal map da virada acompanha as formas de cada quadro.
 - O `trocar()` toca a virada como qualquer peça: de lado para a frente, e de trás para a frente na volta.
 
+No filme, um ator inteiro também pode virar outro (uma aranha virando jacaré), com as mesmas regras de casar as partes: veja `morph=` no [capítulo 10](10-filme.md#um-ator-vira-outro-morph).
+
 ## Tileset: blocos para montar fases
 
 Com `tileset`, o canvas vira uma **folha de blocos** (de 32×32, por exemplo), e cada `tile` diz qual célula vira bloco e como ela colide:

@@ -862,6 +862,14 @@ shot b dur=3s
 at 0s heroi.pos=900,560      # e o plano b começa com ele lá
 ```
 
+### Na metamorfose (`morph=`), as partes erradas viram uma na outra
+
+**O que você vê:** no meio da troca, a perna de um bicho vira a cabeça do outro, ou uma parte atravessa o desenho inteiro.
+
+**Por quê:** as partes casam sozinhas pelo nome, pelo osso, pela cor e pelo lugar dentro do desenho de cada um. Com nomes diferentes e desenhos muito diferentes, o Weasel pode escolher um par ruim.
+
+**Como resolver:** rode `weasel filme.weasel --info`: embaixo do plano, as linhas `vira:`, `nascem:` e `somem:` mostram cada par. Copie para a linha do `morph=` o par que saiu errado e troque a parte: `pairs=pata3->perna1` casa à mão; `born=focinho->cabeca` desfaz o par do focinho e faz ele nascer da cabeça ([capítulo 10](10-filme.md#quem-vira-quem-pairs-e-born)).
+
 ### O ator ficou parado e depois "pulou" para o lugar
 
 **Por quê:** o `at` muda aos poucos entre um `at` e o seguinte, e o valor do `actor` vale como `at 0s`. Um único `at 2s heroi.pos=…` faz o herói andar devagar desde 0 s, e não a partir de 2 s.

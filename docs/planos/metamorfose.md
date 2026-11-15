@@ -1,6 +1,6 @@
 # Virada e metamorfose: um desenho virando outro
 
-**Situação:** decidido em 15/11/2026, em duas etapas. A etapa 1, a virada (`anim … turn`), saiu na 1.45.0 ([como ficou](#como-ficou-a-virada-1450)). A etapa 2, a metamorfose no filme (`at … morph=`), vem depois, na 1.46.0, com o seu "pode fazer".
+**Situação:** feito. A etapa 1, a virada (`anim … turn`), saiu na 1.45.0 ([como ficou](#como-ficou-a-virada-1450)). A etapa 2, a metamorfose no filme (`at … morph=`), saiu na 1.46.0 ([como ficou](#como-ficou-a-metamorfose-1460)).
 
 **Origem:** duas perguntas suas:
 - num filme, um personagem que muda de forma (uma aranha virando jacaré);
@@ -26,6 +26,26 @@
 - **O que ficou como defeito conhecido** (no [capítulo 13](../guia/13-problemas.md)):
   - o meio da virada "derrete" quando as formas são muito diferentes; poucos quadros e bons pares ajudam;
   - a virada pela esquerda é a da direita espelhada: termina na frente espelhada. Com uma frente assimétrica (a espada do furão), há um pulo no último quadro. Desenhar a virada da esquerda à parte fica para depois, se fizer falta.
+
+## Como ficou a metamorfose (1.46.0)
+
+As escolhas de 15/11/2026, todas as recomendadas:
+
+1. **`dur=`** diz quanto tempo a troca dura, como no `shot`, no `audio` e no `sub`. Sem ele, 1 s.
+2. **No fim, sozinho:** o ator que sai some e o que chega aparece, sem outras linhas. Se o que chega não tiver `hidden`, sai um aviso.
+3. **A troca viaja:** cada parte vai de onde está num ator até onde está no outro; com os dois no mesmo `pos=`, fica no lugar.
+4. **Os pares como na virada:** pelo nome, pelo osso de mesmo nome, pela cor e pelo lugar dentro do desenho de cada um (a caixa do segundo esticada sobre a do primeiro, já com o `flip=` e o giro de cada um).
+
+O que saiu:
+
+- **A linha:** `at 5s aranha.morph=jacare dur=1.5s pairs=abdomen->corpo born=focinho->cabeca`. O `pairs=` vai da parte do ator que sai para a do que chega. No `born=x->y`, `x` nasce de `y` (`x` do ator que chega) ou some em `y` (`x` do ator que sai); um nome que existe nos dois conta como o que nasce. Os nomes errados dão erro com o arquivo de cada ator.
+- **Durante a troca,** os dois atores viram um só. Cada um continua com a animação, o lugar, o tamanho, a luz e o lip sync dele; cada parte é desenhada pelo arquivo do seu ator, com a matriz dele, e o contorno vai de um ao outro na tela. A profundidade, a névoa e a transparência vão aos poucos; a ordem, o `front` e o estilo de arte trocam na metade. Os halos das lâmpadas dos atores se apagam num e se acendem no outro.
+- **O casamento** é feito uma vez, com os dois atores no começo da troca. As partes que só aparecem depois ficam de fora.
+- **Avisos:** `dur=`, `pairs=` ou `born=` sem `morph=` na linha; o ator que chega aparecendo antes; o que sai escondido no começo; uma troca que começa antes de outra do mesmo ator acabar (fica de fora).
+- **Um filme sem `dur=`** vai até o fim da última metamorfose.
+- **`--info`:** embaixo de cada plano, `metamorfose aranha -> jacare em 5s (1.5s)` e as linhas `vira:`, `nascem:` e `somem:`.
+- **Em todo lugar do filme:** editor, PNG, GIF, vídeo e estilos de arte. No jogo, nada mudou.
+- **O que fica como está:** o fundo (`bg`) e as sombras no chão (`cast`) dos atores não entram na troca; com `art pixel`, as cores do meio caem na cor mais perto da paleta.
 
 ## Três coisas parecidas, mas diferentes
 
@@ -126,4 +146,4 @@ at 5s aranha.morph=jacare dur=1.5s
 
 ## Ordem
 1. A virada: feita na 1.45.0.
-2. A metamorfose no filme (`at 5s aranha.morph=jacare dur=1.5s`), reaproveitando o mesmo código: a etapa 2, na 1.46.0.
+2. A metamorfose no filme (`at 5s aranha.morph=jacare dur=1.5s`), reaproveitando o mesmo código: feita na 1.46.0.

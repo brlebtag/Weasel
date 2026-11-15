@@ -461,6 +461,17 @@ function filmInfo(m) {
     if (!s.art && sceneArt) notes.push(`art da cena ${artText(sceneArt.film.art)}`);
     for (const ow of scenes) if (ow.film.artActors.size) notes.push(...artActors(ow.film.artActors).map((t) => `art de ${t} (da cena)`));
     out.push(`  ${e.name.padEnd(16)} ${W.film.timecode(e.start, F.fps)}  ${secs(e.frames / F.fps).padStart(6)}  ${String(e.frames).padStart(5)} quadros  ${notes.join(' · ')}`);
+    // metamorfoses (morph=): quem vira quem, quem nasce e quem some, na escrita do pairs= e do born=
+    for (const mo of s.morphs || []) {
+      if (mo.skip) continue;
+      out.push(`    metamorfose ${mo.from} -> ${mo.to} em ${secs(mo.t)} (${secs(mo.dur)})`);
+      const p = W.film.morphPlan(s, mo);
+      if (!p) continue;
+      const pn = W.scene.partName, list = (xs) => xs.map(([x, y]) => `${pn(x)}->${pn(y)}`).join(', ');
+      if (p.pairs.length) out.push(`      vira: ${list(p.pairs)}`);
+      if (p.born.length) out.push(`      nascem: ${list(p.born)}`);
+      if (p.gone.length) out.push(`      somem: ${list(p.gone)}`);
+    }
   }
   return out.join('\n');
 }

@@ -1,0 +1,25 @@
+# teste: a aranha do metamorfose.weasel (olhando para a direita). As oito patas são traços.
+canvas 160 120 bg=none
+palette ink=#2b2a33 roxo=#5a3d6e claro=#8e6aa8 olho=#f4e04d
+
+bone corpo pivot=80,104
+
+layer patas
+stroke pata1 w=4 c=ink cap=round bone=corpo : 70,70 50,55 36,100
+stroke pata2 w=4 c=ink cap=round bone=corpo : 72,74 56,66 46,102
+stroke pata3 w=4 c=ink cap=round bone=corpo : 74,78 64,76 58,104
+stroke pata4 w=4 c=ink cap=round bone=corpo : 76,80 72,86 70,106
+stroke pata5 w=4 c=ink cap=round bone=corpo : 84,80 88,86 90,106
+stroke pata6 w=4 c=ink cap=round bone=corpo : 86,78 96,76 102,104
+stroke pata7 w=4 c=ink cap=round bone=corpo : 88,74 104,66 114,102
+stroke pata8 w=4 c=ink cap=round bone=corpo : 90,70 110,55 124,100
+
+layer corpo
+ellipse abdomen 64,70 24,20 c=roxo ink=3 bone=corpo
+ellipse cabeca 98,74 14,12 c=claro ink=3 bone=corpo
+ellipse olho 104,70 3,3 c=olho bone=corpo
+
+anim anda frames=8 fps=8
+key 0 corpo=0,0,0
+key 4 corpo=0,-3,0
+key 8 corpo=0,0,0

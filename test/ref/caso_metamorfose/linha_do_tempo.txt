@@ -1,0 +1,5 @@
+quadros 24 fps 8
+   0 00:00:00 metamorfose cam=160,80 z1 | aranha=90,140 anda#0 | jacare=190,140 anda#0 oculto
+   6 00:00:06 metamorfose cam=160,80 z1 | aranha=130,140 anda#6 (metamorfose aranha->jacare 0.07)
+  12 00:01:04 metamorfose cam=160,80 z1 | jacare=190,140 anda#4 (metamorfose aranha->jacare 0.74)
+  18 00:02:02 metamorfose cam=160,80 z1 | jacare=190,140 anda#2 (metamorfose jacare->aranha 0)

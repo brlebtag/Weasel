@@ -565,7 +565,7 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 - O valor declarado (no `actor` ou na `camera`) vale como um `at 0s`.
 - De um `at` para o seguinte, a mudança é **gradual**. O `ease=` diz como ela **chega** naquele `at` (padrão `smooth`; `linear` para velocidade constante; `out` para chegar freando). Repare que é o contrário da `key`, em que o `ease` diz como o movimento **sai**.
 - Para algo ficar parado e só depois andar, repita a posição num `at` anterior. No exemplo, o Cavaleiro fica em `1500,900` até 1,8 s e só então corre até `1000,900`, chegando em 2,4 s.
-- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca. Com `blend=`, a troca de `anim` vira uma [mistura](#misturar-uma-animação-na-outra-blend); com `phase`, a nova animação continua no [mesmo ponto da passada](#trocar-sem-perder-o-passo-phase).
+- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. `morph=` faz um ator [virar outro](#um-ator-vira-outro-morph) aos poucos. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca. Com `blend=`, a troca de `anim` vira uma [mistura](#misturar-uma-animação-na-outra-blend); com `phase`, a nova animação continua no [mesmo ponto da passada](#trocar-sem-perder-o-passo-phase).
 
 **O que o `at` muda:**
 
@@ -766,6 +766,58 @@ at 1.2s placa.show=1
 - Sem nenhum `show=1`, uma forma com `hidden` nunca aparece: ela só serve de molde (para `cut=`, `clip=`, `back=`…). Se um `at` muda a `opacity` ou o `draw` dela sem `show=1`, o Weasel avisa: `aviso: "lua" tem hidden: só aparece com at … lua.show=1`.
 - Também dá para fazer sem `hidden`: `at 0s nome.show=0` esconde no começo, como a bandeira do exemplo abaixo.
 - Isso vale para o filme. Numa animação de jogo (`key`), `hidden` continua querendo dizer "nunca aparece", e o Weasel avisa se uma `key` tenta mostrar a forma ([capítulo 13](13-problemas.md#a-key-de-show-não-faz-a-forma-aparecer)).
+
+### Um ator vira outro: `morph=`
+
+Com `morph=`, um ator **se transforma** em outro: cada parte de um vai virando uma parte do outro, como na [virada](09-jogo-godot.md#virar-de-lado-para-a-frente-turn) do jogo. Aqui, a capivara correndo vira um furão andando, sem parar de correr:
+
+<!-- gerar: img/10_morph.gif -s 0.6 -->
+```weasel
+film fps=12 dur=3.5s
+canvas 900 330 bg=#f4efe6
+
+layer chao
+rect piso 0,290 900,40 c=#d8cbb0
+
+actor capivara "chefe.weasel" 120,290 origin=180,256 anim=run
+actor furao "furao.weasel" 120,290 origin=80,128 scale=2.2 anim=walk_right hidden
+
+at 1s capivara.morph=furao dur=1.5s
+at 3.5s capivara.pos=780,290 furao.pos=780,290 ease=linear
+```
+
+![A capivara de chapéu corre para a direita e, no meio do caminho, vai virando um furão: o chapéu vira a máscara do furão, a cauda cresce e o furão continua andando](img/10_morph.gif)
+
+- `at 1s capivara.morph=furao dur=1.5s`: a troca começa em 1 s e dura 1,5 s. Sem `dur=`, ela dura 1 s. O `ease=` da linha diz o ritmo (padrão `smooth`).
+- O ator que chega começa com `hidden`. No fim da troca, a capivara some e o furão aparece **sozinhos**, sem `show=`. Se o furão não tiver `hidden`, o Weasel avisa, porque os dois apareceriam juntos antes da troca.
+- Os dois continuam tocando a animação de cada um durante a troca: a capivara correndo vira um furão andando.
+- Cada parte vai de onde está num ator até onde está no outro. Aqui os dois andam juntos (o mesmo `pos=`), e a troca acontece no lugar. Com o furão em outro lugar, a troca anda até ele. O tamanho (`scale=`), a profundidade (`depth=`), a transparência e a luz também vão de um ator ao outro.
+- Na metade da troca, a ordem (quem fica na frente de quem) e o estilo de arte (`art`) passam a ser os do ator que chega.
+- Para voltar, outra linha: `at 5s furao.morph=capivara dur=0.5s`. Um ator entra numa troca de cada vez; uma troca que começa antes da outra acabar fica de fora, com um aviso.
+
+#### Quem vira quem: `pairs=` e `born=`
+
+As partes casam sozinhas, como na virada: pelo nome (`olhoL` com `olhoL`), pelo osso de mesmo nome, pela cor e pelo lugar dentro do desenho de cada um (a cabeça na frente casa com a cabeça na frente, mesmo que um bicho seja maior que o outro). Uma parte que sobra encolhe até sumir dentro da parte casada mais perto; uma parte que não existia nasce dela.
+
+O `--info` do filme mostra o que casou, embaixo do plano:
+
+```
+  floresta         00:00:00      8s    192 quadros  câmera 400,300 · 3 mudança(s) com at
+    metamorfose aranha -> jacare em 5s (1.5s)
+      vira: abdomen->corpo, olho->olho, cabeca->cabeca, pata4->perna2, pata5->perna3, pata3->perna1, pata6->perna4
+      nascem: rabo->abdomen, barriga->abdomen, focinho->cabeca
+      somem: pata1->corpo, pata2->corpo, pata7->cabeca, pata8->cabeca
+```
+
+Para corrigir, na mesma linha do `morph=`:
+
+- `pairs=abdomen->corpo` casa uma parte do ator que sai com uma do ator que chega (nessa ordem). Vários pares vão separados por vírgula: `pairs=pata3->perna1,pata6->perna4`.
+- `born=focinho->cabeca`: o focinho do jacaré nasce da cabeça da aranha. Com uma parte que só existe no ator que sai, é o contrário: `born=pata8->cabeca`, a pata some na cabeça do jacaré. O `born=` também desfaz um par automático.
+- Um nome que não existe no arquivo do ator dá erro, dizendo de qual arquivo ele deveria ser.
+
+O casamento é feito uma vez, com os dois atores como estão no começo da troca. As partes que só aparecem depois (numa camada com `only=` de outra animação) ficam de fora. Com partes muito diferentes (patas finas virando um rabo), o meio da troca "derrete" de um desenho no outro: é o visual clássico da metamorfose. Um clarão ou partículas por cima ajudam a esconder.
+
+A metamorfose é só do filme: no jogo, nada muda.
 
 ### Camadas e formas do filme
 
