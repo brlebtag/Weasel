@@ -584,6 +584,14 @@ erro: o osso "b" não tem caminho: use bone b … path=nome_de_uma_linha
 
 O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou o botão **Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas.
 
+### As pernas pulam quando o personagem troca de jeito de andar
+
+**O que você vê:** de `anda` para `trote` (ou de `run` para `run4`), as pernas mudam de lugar de uma vez no quadro da troca.
+
+**Por quê:** trocar de animação recomeça a nova do quadro 0, seja qual for o ponto em que a de antes estava.
+
+**Como resolver:** peça a troca na mesma fase. No filme, `at 3s capivara.anim=trote phase` ([capítulo 10](10-filme.md#trocar-sem-perder-o-passo-phase)); no Godot, `tocar("trote", velocity, true)` ([capítulo 9](09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo)). Com `feet=` nas duas animações, o pé que está no chão continua no chão.
+
 ### O `mix=` dá erro
 
 **O que você vê:**
@@ -1041,5 +1049,21 @@ O GIF só tem transparência de 1 bit: cada pixel é transparente ou não, sem m
 ### O `.tres` do Godot não acha a imagem
 
 O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na mesma pasta do projeto do Godot.
+
+### No Godot, o desenho pula para o lado quando o personagem vira
+
+**O que você vê:** o personagem anda para a direita direitinho; quando vira para a esquerda, o desenho salta para o lado, longe da colisão.
+
+**Por quê:** o sprite da cena tem um `offset`, que põe o `root=` do desenho em cima da origem do nó. `flip_h = true` espelha a imagem, mas não espelha o `offset`, então o desenho espelhado fica fora do lugar. As caixas e os pontos de encaixe também não viram.
+
+**Como resolver:** não vire o sprite à mão. Deixe o `tocar()` escolher a animação `_left`: o Weasel já gera as animações `_left` com o `offset`, as caixas e os pontos espelhados.
+
+```gdscript
+# errado: o desenho pula para o lado
+$Sprite.flip_h = velocity.x < 0
+
+# certo: toca walk_left ou walk_right
+anim.tocar("walk", velocity)
+```
 
 [← Referência rápida](12-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)

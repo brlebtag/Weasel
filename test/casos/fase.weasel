@@ -1,0 +1,14 @@
+# teste: phase no at — a troca de animação continua na mesma fase da passada, em vez de recomeçar do quadro 0.
+# a troca anda → trote pelos pés (o meio do apoio de pe_e) e volta misturada (blend=); b troca do jeito de
+# sempre (o trote começa do quadro 0); c vai de anda para voa pela fração do ciclo (voa não tem feet=).
+film fps=12 dur=2s
+canvas 360 200 bg=#cfe3f0
+
+actor a "fase_boneco.weasel" 60,190 origin=100,180 scale=0.8 anim=anda_right
+actor b "fase_boneco.weasel" 180,190 origin=100,180 scale=0.8 anim=anda_right
+actor c "fase_boneco.weasel" 300,190 origin=100,180 scale=0.8 anim=anda_right
+
+at 0.25s a.anim=trote_right phase
+at 0.25s b.anim=trote_right
+at 0.25s c.anim=voa_right phase
+at 1s a.anim=anda_right phase blend=0.5s

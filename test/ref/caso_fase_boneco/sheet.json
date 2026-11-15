@@ -1,0 +1,1584 @@
+{
+  "frames": {
+    "anda_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 16.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 4.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "anda_right_01": {
+      "frame": {
+        "x": 25,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 13.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 7.2,
+          "y": 43.5
+        }
+      ]
+    },
+    "anda_right_02": {
+      "frame": {
+        "x": 48,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 41.7
+        }
+      ]
+    },
+    "anda_right_03": {
+      "frame": {
+        "x": 71,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 7.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 13.2,
+          "y": 43.5
+        }
+      ]
+    },
+    "anda_right_04": {
+      "frame": {
+        "x": 94,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "passo"
+      ],
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 4.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 16.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "anda_right_05": {
+      "frame": {
+        "x": 117,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 7.2,
+          "y": 43.5
+        },
+        {
+          "name": "pe_d",
+          "x": 13.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "anda_right_06": {
+      "frame": {
+        "x": 140,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 41.7
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "anda_right_07": {
+      "frame": {
+        "x": 163,
+        "y": 2,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 13.2,
+          "y": 43.5
+        },
+        {
+          "name": "pe_d",
+          "x": 7.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "trote_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.7,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 14.7,
+          "y": 45.3
+        }
+      ]
+    },
+    "trote_right_01": {
+      "frame": {
+        "x": 25,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 41.7
+        },
+        {
+          "name": "pe_d",
+          "x": 11.7,
+          "y": 45.3
+        }
+      ]
+    },
+    "trote_right_02": {
+      "frame": {
+        "x": 48,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 12.45,
+          "y": 43.5
+        },
+        {
+          "name": "pe_d",
+          "x": 8.7,
+          "y": 45.3
+        }
+      ]
+    },
+    "trote_right_03": {
+      "frame": {
+        "x": 71,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 14.7,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 5.7,
+          "y": 45.3
+        }
+      ]
+    },
+    "trote_right_04": {
+      "frame": {
+        "x": 94,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 11.7,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 41.7
+        }
+      ]
+    },
+    "trote_right_05": {
+      "frame": {
+        "x": 117,
+        "y": 51,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 8.7,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 12.45,
+          "y": 43.5
+        }
+      ]
+    },
+    "voa_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 32.395,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 32.395,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_01": {
+      "frame": {
+        "x": 25,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 32.173,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 32.173,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_02": {
+      "frame": {
+        "x": 48,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 31.618,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 31.618,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_03": {
+      "frame": {
+        "x": 71,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 30.895,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 30.895,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_04": {
+      "frame": {
+        "x": 94,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 30.173,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 30.173,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_05": {
+      "frame": {
+        "x": 117,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 29.618,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 29.618,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_06": {
+      "frame": {
+        "x": 140,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 29.395,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 29.395,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_07": {
+      "frame": {
+        "x": 163,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 29.618,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 29.618,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_08": {
+      "frame": {
+        "x": 186,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 30.173,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 30.173,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_09": {
+      "frame": {
+        "x": 209,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 30.895,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 30.895,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_10": {
+      "frame": {
+        "x": 232,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 31.618,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 31.618,
+          "rot": -20
+        }
+      ]
+    },
+    "voa_right_11": {
+      "frame": {
+        "x": 255,
+        "y": 100,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 5.07,
+          "y": 32.173,
+          "rot": 20
+        },
+        {
+          "name": "pe_d",
+          "x": 15.33,
+          "y": 32.173,
+          "rot": -20
+        }
+      ]
+    },
+    "pulo_00": {
+      "frame": {
+        "x": 2,
+        "y": 149,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 45.3
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 45.3
+        }
+      ]
+    },
+    "pulo_01": {
+      "frame": {
+        "x": 25,
+        "y": 149,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 42.3
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 42.3
+        }
+      ]
+    },
+    "pulo_02": {
+      "frame": {
+        "x": 48,
+        "y": 149,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 39.3
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 39.3
+        }
+      ]
+    },
+    "pulo_03": {
+      "frame": {
+        "x": 71,
+        "y": 149,
+        "w": 21,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 47
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125,
+      "boxes": [
+        {
+          "name": "caixa",
+          "kind": "body",
+          "shape": "rect",
+          "x": 10.2,
+          "y": 29.55,
+          "w": 16.8,
+          "h": 31.5
+        }
+      ],
+      "points": [
+        {
+          "name": "pe_e",
+          "x": 10.2,
+          "y": 40.8
+        },
+        {
+          "name": "pe_d",
+          "x": 10.2,
+          "y": 40.8
+        }
+      ]
+    }
+  },
+  "animations": {
+    "anda_right": [
+      "anda_right_00",
+      "anda_right_01",
+      "anda_right_02",
+      "anda_right_03",
+      "anda_right_04",
+      "anda_right_05",
+      "anda_right_06",
+      "anda_right_07"
+    ],
+    "trote_right": [
+      "trote_right_00",
+      "trote_right_01",
+      "trote_right_02",
+      "trote_right_03",
+      "trote_right_04",
+      "trote_right_05"
+    ],
+    "voa_right": [
+      "voa_right_00",
+      "voa_right_01",
+      "voa_right_02",
+      "voa_right_03",
+      "voa_right_04",
+      "voa_right_05",
+      "voa_right_06",
+      "voa_right_07",
+      "voa_right_08",
+      "voa_right_09",
+      "voa_right_10",
+      "voa_right_11"
+    ],
+    "pulo": [
+      "pulo_00",
+      "pulo_01",
+      "pulo_02",
+      "pulo_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_fase_boneco.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 278,
+      "h": 198
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 21,
+      "h": 47
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "anda_right",
+        "from": 0,
+        "to": 7,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true,
+        "groundSpeed": 36
+      },
+      {
+        "name": "trote_right",
+        "from": 8,
+        "to": 13,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true,
+        "groundSpeed": 36
+      },
+      {
+        "name": "voa_right",
+        "from": 14,
+        "to": 25,
+        "direction": "forward",
+        "fps": 12,
+        "loop": true
+      },
+      {
+        "name": "pulo",
+        "from": 26,
+        "to": 29,
+        "direction": "forward",
+        "fps": 8,
+        "loop": false
+      }
+    ],
+    "events": [
+      {
+        "animation": "anda_right",
+        "frame": 0,
+        "name": "passo"
+      },
+      {
+        "animation": "anda_right",
+        "frame": 4,
+        "name": "passo"
+      }
+    ],
+    "sourceRect": {
+      "x": 66,
+      "y": 29,
+      "w": 71,
+      "h": 156
+    }
+  }
+}

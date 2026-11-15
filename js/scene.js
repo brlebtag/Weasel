@@ -532,6 +532,30 @@
     model._gait.set(anim.name, r);
     return r;
   }
+  // phase (troca na mesma fase): onde a passada "começa" numa animação, em quadros (pode ser fracionário). Com feet=, o
+  // meio do apoio do primeiro pé (o trecho mais longo em que ele fica no chão, dando a volta no fim do loop); sem
+  // feet=, ou com o pé sempre no chão ou nunca, 0. null quando a animação não tem feet=.
+  function feetPhase(model, anim) {
+    const g = gait(model, anim), ft = g && g.feet[0];
+    if (!ft) return null;
+    const on = ft.on, N = on.length;
+    if (!on.some(Boolean) || on.every(Boolean)) return 0;
+    let best = 0, len = 0;
+    for (let f = 0; f < N; f++) {
+      if (!on[f] || on[(f - 1 + N) % N]) continue;
+      let n = 0;
+      while (n < N && on[(f + n) % N]) n++;
+      if (n > len) { len = n; best = f; }
+    }
+    return (best + (len - 1) / 2) % N;
+  }
+  // A posição (em quadros) em que B continua na mesma fase de A, que está na posição pos: com feet= nas duas, o meio do
+  // apoio do primeiro pé cai no mesmo ponto; senão, a mesma fração do ciclo (40% de A vira 40% de B).
+  function phaseFrame(model, A, pos, B) {
+    const pa = feetPhase(model, A), pb = feetPhase(model, B), feet = pa !== null && pb !== null;
+    const u = (((pos - (feet ? pa : 0)) / A.frames) % 1 + 1) % 1;
+    return ((feet ? pb : 0) + u * B.frames) % B.frames;
+  }
   // Os quadros em que o pé está no chão, em trechos: "0–12", "3–5, 14–15"
   function frameRuns(on) {
     const out = [];
@@ -2848,7 +2872,7 @@
   }
 
   W.scene = {
-    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

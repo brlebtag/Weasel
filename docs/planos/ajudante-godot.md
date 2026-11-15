@@ -1,6 +1,6 @@
 # Ajudante do Godot: quadros, fps e troca na mesma fase
 
-**Situação:** item 1 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem; falta o "pode fazer".
+**Situação:** feito na 1.42.0 (15/11/2026). Item 1 da fila combinada em 10/11/2026. O que ficou está no [capítulo 9 do guia](../guia/09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo), no [capítulo 10](../guia/10-filme.md#trocar-sem-perder-o-passo-phase) e em [Como ficou](#como-ficou-1420), no fim deste arquivo.
 
 **Origem:** sugestões das sessões do ForestPatrol (a capivara e o Chefe/pardal).
 
@@ -40,5 +40,19 @@ Quando a capivara passa de andar para trotar, a nova animação começa do quadr
 - **Weasel:**
   - a exportação ganha funções novas no `weasel_anim.gd`;
   - o filme passa a aceitar `phase` no `at … anim=`;
-  - nenhuma saída existente muda, a não ser o `weasel_anim.gd`: ele ganha as funções novas em toda exportação. Você aprovou isso em 15/11/2026, porque são funções a mais, que os jogos antigos não chamam, e o `tocar()` de hoje continua igual (sem o terceiro parâmetro, faz o mesmo de antes).
+  - nenhuma saída existente muda, a não ser o `weasel_anim.gd`: ele ganha as funções novas em toda exportação. Você aprovou isso em 15/11/2026, porque são funções a mais, que os jogos antigos não chamam, e o `tocar()` de hoje continua igual (sem o terceiro parâmetro, faz o mesmo de antes);
+  - e a `.tscn` dos personagens com `feet=`, que ganha uma linha de dados (`fases = {…}`, ao lado do `velocidades = {…}`) para o Godot alinhar pelos pés como o filme. Você escolheu isso em 15/11/2026; sem `feet=`, a `.tscn` não muda.
 - **Jogo:** os jogos já exportados continuam funcionando. Para usar as funções novas, basta exportar de novo.
+
+## Como ficou (1.42.0)
+
+As escolhas de 15/11/2026:
+- **No Godot, alinhar pelos pés:** a `.tscn` dos personagens com `feet=` ganha `fases = {…}`, com o meio do apoio de cada animação em loop, em fração do ciclo (as espelhadas valem o mesmo). Sem `feet=`, nada muda na cena e vale a fração do ciclo.
+- **Qual ponto da passada coincide:** o meio do apoio do **primeiro** pé do `feet=` (o trecho mais longo em que ele fica no chão, dando a volta no fim do loop). Pé sempre no chão (parado) ou nunca no chão conta como 0.
+
+Detalhes que saíram da construção:
+- **`fps()`:** a cena guarda o tempo de um quadro com 4 casas (1/24 vira 0.0417, que daria 23,98 fps). O ajudante devolve o fps redondo (inteiro, meio, quarto ou décimo) que dá esse mesmo tempo: 24, 7,5. `quadros()` usa esse fps, para não errar nas animações longas.
+- **`mostrar_quadro()`:** toca sem tempo de mistura (`play(nome, 0.0)`), vai para o meio do quadro e pausa. Indo para o meio do quadro, nenhum evento cai exatamente ali, então nenhum é avisado. O próximo `tocar()` da mesma animação continua dali (o Godot retoma uma animação pausada).
+- **`tocar(acao, dir, true)`:** a troca vai para o tempo certo com `seek(tempo, true)`, que mostra o quadro na hora; os eventos que ficaram para trás no salto não são avisados. Virar (de `_right` para `_left`) com `true` também mantém o passo.
+- **No filme:** `phase` é uma palavra solta no `at`, como as flags das formas; antes era "valor solto". Avisa quando a linha não troca `anim=`, quando a de antes ou a nova toca uma vez, com `anim=none` e quando o ator não tinha animação. Junto com `blend=`, a mistura começa com as duas na mesma fase.
+- **Conferido no Godot 4.7.2**, sem janela, nas duas cenas (por quadros e com esqueleto): `quadros()`, `fps()`, a troca pelos pés e pela fração, a troca para `once` (do 0), `mostrar_quadro()` (o quadro do sprite certo, sem eventos, o limite no último quadro) e o `tocar()` depois dele.

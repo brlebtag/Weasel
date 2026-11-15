@@ -565,7 +565,7 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 - O valor declarado (no `actor` ou na `camera`) vale como um `at 0s`.
 - De um `at` para o seguinte, a mudança é **gradual**. O `ease=` diz como ela **chega** naquele `at` (padrão `smooth`; `linear` para velocidade constante; `out` para chegar freando). Repare que é o contrário da `key`, em que o `ease` diz como o movimento **sai**.
 - Para algo ficar parado e só depois andar, repita a posição num `at` anterior. No exemplo, o Cavaleiro fica em `1500,900` até 1,8 s e só então corre até `1000,900`, chegando em 2,4 s.
-- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca. Com `blend=`, a troca de `anim` vira uma [mistura](#misturar-uma-animação-na-outra-blend).
+- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca. Com `blend=`, a troca de `anim` vira uma [mistura](#misturar-uma-animação-na-outra-blend); com `phase`, a nova animação continua no [mesmo ponto da passada](#trocar-sem-perder-o-passo-phase).
 
 **O que o `at` muda:**
 
@@ -701,6 +701,21 @@ at 1.2s b.anim=idle blend=0.6s
 - `blend=` vale só para o `anim=` da mesma linha; sem ele, a troca continua seca. Se outra troca com `blend=` chegar antes do fim, ela parte de onde a mistura estava.
 
 **Experimente:** troque `blend=0.6s` por `blend=1.5s`. A capivara da direita leva mais tempo para parar.
+
+### Trocar sem perder o passo: `phase`
+
+Trocar `anim` recomeça a nova animação do quadro 0. Entre dois jeitos de andar, isso faz as pernas pularem: no meio da passada do `anda`, a capivara está com uma pata no ar; no quadro seguinte, o `trote` começa do começo, com as patas em outro lugar. Com `phase` na mesma linha, a nova animação **continua no mesmo ponto da passada**:
+
+```weasel
+at 3s capivara.anim=trote phase
+```
+
+- Com `feet=` nas duas animações ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)), o Weasel alinha pelos pés: o meio do tempo em que o **primeiro** pé do `feet=` fica no chão cai no mesmo ponto nas duas. Assim, o pé que está no chão continua no chão.
+- Sem `feet=` (numa delas ou nas duas), vale a fração do ciclo: a 40% da passada de `anda`, o `trote` começa nos 40% dele.
+- `phase` só alinha duas animações em loop. Se a de antes ou a nova toca uma vez (`once`), a nova começa do quadro 0, com um aviso.
+- Junto com `blend=`, a mistura começa com as duas já na mesma fase: `at 3s capivara.anim=trote phase blend=0.4s`.
+- `phase` vale só para o `anim=` da mesma linha. As outras trocas recomeçam do quadro 0, como sempre.
+- No Godot, a mesma troca é `tocar("trote", velocity, true)` ([capítulo 9](09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo)).
 
 ### Aparecer: `show` ou `opacity`
 

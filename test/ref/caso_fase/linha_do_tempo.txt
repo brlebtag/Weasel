@@ -1,0 +1,5 @@
+quadros 24 fps 12
+   0 00:00:00 fase cam=180,100 z1 | a=60,190 anda_right#0 | b=180,190 anda_right#0 | c=300,190 anda_right#0
+   6 00:00:06 fase cam=180,100 z1 | a=60,190 trote_right#2 | b=180,190 trote_right#3 | c=300,190 voa_right#7
+  12 00:01:00 fase cam=180,100 z1 | a=60,190 trote_right#2 | b=180,190 trote_right#3 | c=300,190 voa_right#1
+  18 00:01:06 fase cam=180,100 z1 | a=60,190 anda_right#5 | b=180,190 trote_right#3 | c=300,190 voa_right#7

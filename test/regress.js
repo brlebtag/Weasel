@@ -546,6 +546,42 @@ async function blendCase() {
   await check('_mistura', 'mistura.txt', 'text', lines.join('\n') + '\n');
 }
 
+// at … phase e tocar(acao, dir, true): a troca na mesma fase da passada (test/casos/fase.weasel). Confere os avisos,
+// onde fica o meio do apoio de cada animação (e as fases da cena do Godot), os quadros dos atores em volta das trocas
+// (pelos pés, do jeito de sempre, pela fração do ciclo e de volta com blend=) e o ajudante do Godot com as funções novas.
+async function phaseCase() {
+  console.log(paint('1', '_fase'));
+  const src = fs.readFileSync(path.join(CASES, 'fase.weasel'), 'utf8');
+  const parse = (s) => W.lang.parse(s, { file: 'fase.weasel', resolve: resolver(CASES) });
+  const lines = [];
+  const warns = (s) => parse(s).errors.map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  const last = 'at 1s a.anim=anda_right phase blend=0.5s';
+  for (const [what, to] of [
+    ['sem anim= na linha', 'at 1s a.pos=60,190 phase'],
+    ['para uma que toca uma vez', 'at 1s a.anim=pulo phase'],
+    ['a de antes toca uma vez', 'at 1s a.anim=pulo\nat 1.5s a.anim=anda_right phase'],
+    ['anim=none', 'at 1s a.anim=none phase'],
+    ['sem animação antes', 'actor d "fase_boneco.weasel" 300,100\nat 1s d.anim=anda_right phase'],
+    ['outra palavra solta', 'at 1s a.anim=anda_right fase'],
+    ['ator sem arquivo (só o erro do arquivo)', 'actor d "nao_existe.weasel" 300,100\nat 1s d.anim=anda_right phase blend=0.5s'],
+  ]) lines.push(`${what}: ${warns(src.replace(last, to)).join(' | ') || 'nenhum aviso'}`);
+  lines.push(`o arquivo: ${warns(src).join(' | ') || 'nenhum aviso'}`);
+
+  const m = parse(src), s = m.film.shots[0], boneco = s.actorMap.get('a').model;
+  lines.push(`meio do apoio (quadro): ${boneco.anims.map((a) => `${a.name} ${W.scene.feetPhase(boneco, a)}`).join(', ')}`);
+  lines.push(`godot: ${W.godot.phasesProp(boneco, W.godot.playerAnims(boneco, true)).replace(/\n/g, ' ')}`);
+  const state = (n, t) => W.film.actorState(s, s.actorMap.get(n), t);
+  for (const n of ['a', 'b', 'c']) lines.push(`${n}: ${[0, 0.2, 0.25, 0.3, 0.5, 0.95, 1, 1.25, 1.5, 1.75].map((t) => { const st = state(n, t); return `${t}s ${st.anim}#${st.animFrame}`; }).join(' · ')}`);
+  // sem nenhum phase, os quadros são os de sempre (a troca recomeça do quadro 0)
+  const plain = parse(src.replace(/ phase/g, '')), sp = plain.film.shots[0];
+  const sig = (st) => `${st.anim}#${st.animFrame}`;
+  const same = ['b'].every((n) => [0, 0.3, 0.6, 1.2, 1.9].every((t) => sig(W.film.actorState(sp, sp.actorMap.get(n), t)) === sig(state(n, t))));
+  lines.push(`b (sem phase) igual com e sem os phase dos outros: ${same}`);
+  const gd = W.godot.SCRIPT;
+  lines.push(`ajudante: ${['func tocar(acao: String, dir := Vector2.ZERO, mesma_fase := false)', 'func quadros(', 'func fps(', 'func mostrar_quadro(', '@export var fases'].map((t) => `${t.split('(')[0]} ${gd.includes(t) ? 'sim' : 'não'}`).join(', ')}`);
+  await check('_fase', 'fase.txt', 'text', lines.join('\n') + '\n');
+}
+
 // anim … from= to=: as peças de transição da sprite sheet (test/casos/transicao_pecas.weasel). Confere os erros
 // e avisos, que as animações de antes saem iguais com e sem transições, as peças (nomes, de onde partem, o peso,
 // a animação que vale para only=), o once com every= e o Godot (sem loop; com esqueleto, espelhadas).
@@ -618,6 +654,7 @@ async function main() {
   if (!only.length || only.some((o) => '_animado'.includes(o))) await animCase();
   if (!only.length || only.some((o) => '_mistura'.includes(o))) await blendCase();
   if (!only.length || only.some((o) => '_transicao'.includes(o))) await transCase();
+  if (!only.length || only.some((o) => '_fase'.includes(o))) await phaseCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

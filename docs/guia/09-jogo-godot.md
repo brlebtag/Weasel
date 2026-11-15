@@ -399,6 +399,22 @@ func _physics_process(_delta: float) -> void:
 
 Na sprite sheet, a medida vai no JSON, em `meta.frameTags` (`groundSpeed`, px por segundo na escala da folha).
 
+### Trocar de animação sem perder o passo
+
+`tocar()` recomeça a animação do quadro 0 quando ela muda. Entre dois jeitos de andar (de `anda` para `trote`, quando o jogador acelera), isso faz as pernas pularem: o pé que estava no chão aparece de repente no ar. Com `true` no terceiro parâmetro, a nova animação **continua no mesmo ponto da passada**:
+
+```gdscript
+	var correndo := Input.is_action_pressed("correr")
+	anim.tocar("trote" if correndo else "anda", Vector2(dir, 0), true)
+```
+
+- Com `feet=` nas duas animações, o pé que está no chão continua no chão. A cena guarda em `fases`, ao lado de `velocidades`, onde fica o meio do apoio do **primeiro** pé do `feet=` em cada animação, em fração do ciclo. Essa linha só aparece nos personagens com `feet=`.
+- Sem `feet=`, vale a fração do ciclo: a 40% da passada de `anda`, o `trote` começa nos 40% dele.
+- Só vale entre animações em loop. Para uma animação `once`, ou vindo de uma, a nova começa do quadro 0, como sem o `true`.
+- Virar com `true` também mantém o passo: de `anda_right` para `anda_left` sem recomeçar.
+- Sem o terceiro parâmetro, `tocar()` faz o mesmo de sempre.
+- No filme, a mesma troca é `at … anim=trote phase` ([capítulo 10](10-filme.md#trocar-sem-perder-o-passo-phase)).
+
 ## O nó do Godot: `godot`
 
 ```
@@ -440,7 +456,7 @@ salvo godot/moeda.png  52×52, 1 quadros de 48×48 · 2 KB
 salvo godot/moeda_normal.png  52×52, normal map · 3 KB
 salvo godot/moeda.tres  SpriteFrames do Godot 4 · 1 KB
 salvo godot/moeda.tscn  cena do Godot 4 (1 caixa) · 1 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 2 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
 ```
 
 Dentro do `moeda.tscn`:
@@ -492,7 +508,7 @@ Um **normal map** é uma segunda imagem, em tons de azul e roxo, que diz para on
 salvo godot/moeda.png  52×52, 1 quadros de 48×48 · 2 KB
 salvo godot/moeda.tres  SpriteFrames do Godot 4 · 1 KB
 salvo godot/moeda.tscn  cena do Godot 4 (1 caixa) · 1 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 2 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
 ```
 
 ## Exportando para o Godot
@@ -508,7 +524,7 @@ salvo godot/gosma.png  490×354, 14 quadros de 120×86 · 35 KB
 salvo godot/gosma_normal.png  490×354, normal map · 82 KB
 salvo godot/gosma.tres  SpriteFrames do Godot 4 · 3 KB
 salvo godot/gosma.tscn  cena do Godot 4 (3 caixas, espelhadas: idle_left, attack_left) · 13 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 2 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
 ```
 
 Isso gera uma pasta pronta para copiar para dentro do projeto do Godot:
@@ -519,7 +535,7 @@ Isso gera uma pasta pronta para copiar para dentro do projeto do Godot:
 | `gosma_normal.png` | o **normal map**, para a luz 2D do Godot (`PointLight2D`) iluminar o personagem com relevo |
 | `gosma.tres` | o `SpriteFrames` com as animações |
 | `gosma.tscn` | a **cena pronta**: o personagem com sprite, colisão, hitbox, hurtbox e AnimationPlayer |
-| `weasel_anim.gd` | o ajudante do AnimationPlayer (`tocar()` e o sinal `evento`) |
+| `weasel_anim.gd` | o ajudante do AnimationPlayer (`tocar()`, `quadros()`, `fps()`, `mostrar_quadro()` e o sinal `evento`) |
 
 A cena fica assim:
 
@@ -537,6 +553,10 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 - `tocar("attack", velocity)` escolhe a direção sozinho: toca `attack_right` ou `attack_left` (ou `_up`, `_down` e as diagonais, se existirem), e só recomeça quando a animação muda.
 - Os eventos chegam pelo sinal `evento(nome)`. Dois ou mais no mesmo quadro chegam um depois do outro, na ordem do código.
 - Com `feet=`, `velocidade()` diz quanto o personagem anda por segundo na animação tocando agora sem os pés escorregarem ([acima](#no-jogo)).
+- `tocar("trote", velocity, true)` troca de animação sem perder o passo ([acima](#trocar-de-animação-sem-perder-o-passo)).
+- `quadros("attack")` e `fps("attack")` dizem quantos quadros a animação tem e quantos ela toca por segundo, com a direção escolhida como no `tocar()`. Sem nome, valem para a animação tocando agora. O jogo não precisa copiar esses números à mão: se a animação mudar no Weasel, basta exportar de novo.
+- `mostrar_quadro("attack", 3, velocity)` para a animação no quadro 3 (de 0 a `quadros() - 1`). Ela fica parada no meio do quadro, sem avisar os eventos, e o próximo `tocar()` da mesma animação continua dali. Serve quando o jogo escolhe o quadro: uma barra de força que enche, uma porta que abre conforme o jogador empurra.
+- Para virar o personagem, deixe o `tocar()` escolher a animação `_left`. Não vire o sprite com `flip_h`: a imagem espelha, mas o `offset` dela não, e o desenho pula para o lado ([capítulo 13](13-problemas.md#no-godot-o-desenho-pula-para-o-lado-quando-o-personagem-vira)).
 - `--no-normal` tira o normal map; `--no-mirror` não gera o lado espelhado; `--rig` exporta com esqueleto de verdade ([abaixo](#esqueleto-de-verdade-rigbones-experimental)).
 
 Um script de jogo usando a cena:

@@ -1,0 +1,15 @@
+sem anim= na linha: warn linha 14: phase só vale numa troca de anim= da mesma linha (ex.: at 3s capivara.anim=trote phase)
+para uma que toca uma vez: warn linha 14: phase só alinha animações em loop: "pulo" toca uma vez e começa do quadro 0
+a de antes toca uma vez: warn linha 15: phase só alinha animações em loop: "pulo", a de antes, toca uma vez; "anda_right" começa do quadro 0
+anim=none: warn linha 14: phase não tem o que alinhar com anim=none
+sem animação antes: warn linha 15: phase: o ator "d" não está tocando nenhuma animação antes; "anda_right" começa do quadro 0
+outra palavra solta: warn linha 14: valor solto "fase" (use alvo.propriedade=valor)
+ator sem arquivo (só o erro do arquivo): error linha 14: não achei o arquivo "nao_existe.weasel"
+o arquivo: nenhum aviso
+meio do apoio (quadro): anda_right 2, trote_right 4.5, voa_right null, pulo null
+godot: fases = { "anda_right": 0.25, "trote_right": 0.75, "anda_left": 0.25, "trote_left": 0.75 }
+a: 0s anda_right#0 · 0.2s anda_right#2 · 0.25s trote_right#5 · 0.3s trote_right#5 · 0.5s trote_right#2 · 0.95s trote_right#1 · 1s trote_right#2 · 1.25s anda_right#2 · 1.5s anda_right#5 · 1.75s anda_right#0
+b: 0s anda_right#0 · 0.2s anda_right#2 · 0.25s trote_right#0 · 0.3s trote_right#0 · 0.5s trote_right#3 · 0.95s trote_right#2 · 1s trote_right#3 · 1.25s trote_right#0 · 1.5s trote_right#3 · 1.75s trote_right#0
+c: 0s anda_right#0 · 0.2s anda_right#2 · 0.25s voa_right#4 · 0.3s voa_right#5 · 0.5s voa_right#7 · 0.95s voa_right#0 · 1s voa_right#1 · 1.25s voa_right#4 · 1.5s voa_right#7 · 1.75s voa_right#10
+b (sem phase) igual com e sem os phase dos outros: true
+ajudante: func tocar sim, func quadros sim, func fps sim, func mostrar_quadro sim, @export var fases sim

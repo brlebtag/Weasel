@@ -1498,6 +1498,7 @@
     for (const n of m.named.keys()) for (const p of Object.keys(L.SHAPE_AT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'forma' });
     out.push({ label: 'ease=' });
     out.push({ label: 'blend=', detail: 'mistura a troca de anim= (ex.: 0.4s)' });
+    out.push({ label: 'phase', detail: 'a troca de anim= continua na mesma fase da passada' });
     return out;
   }
   function complete({ before }) {

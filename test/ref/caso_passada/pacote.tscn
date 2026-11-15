@@ -965,3 +965,10 @@ velocidades = {
 "anda_left": 36.0,
 "escorrega_left": 36.0
 }
+fases = {
+"anda_right": 0.25,
+"escorrega_right": 0.25,
+"parado": 0.0,
+"anda_left": 0.25,
+"escorrega_left": 0.25
+}

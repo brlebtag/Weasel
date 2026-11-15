@@ -673,6 +673,8 @@
     player.push('script = ExtResource("2_script")');
     const speeds = Gd.speedsProp(model, anims, k);
     if (speeds) player.push(speeds);
+    const phases = Gd.phasesProp(model, anims);
+    if (phases) player.push(phases);
     nodes.push(player.join('\n'));
     const text = [`[gd_scene load_steps=${blocks.length + ext.length + 1} format=3]`, ext.join('\n'), ...blocks, ...nodes].join('\n\n') + '\n';
 

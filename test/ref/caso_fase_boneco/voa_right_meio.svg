@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100" viewBox="0 0 200 200">
+<defs><g id="L1"><g><path d="M100 80C105.24 94.41 110.49 108.82 115.73 123.23" fill="none" stroke="#2a2433" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M128.29 119.72C129.05 121.8 125.87 124.86 121.2 126.56C116.53 128.26 112.13 127.95 111.38 125.88C110.62 123.8 113.79 120.74 118.47 119.04C123.14 117.34 127.54 117.64 128.29 119.72Z" fill="#2a2433"/></g></g>
+<g id="L2"><g><path d="M128 65C128 81.57 115.46 95 100 95C84.54 95 72 81.57 72 65C72 48.43 84.54 35 100 35C115.46 35 128 48.43 128 65Z" fill="#7fb3a8"/><path d="M128 65C128 81.57 115.46 95 100 95C84.54 95 72 81.57 72 65C72 48.43 84.54 35 100 35C115.46 35 128 48.43 128 65Z" fill="none" stroke="#2a2433" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M115 56C115 58.21 113.66 60 112 60C110.34 60 109 58.21 109 56C109 53.79 110.34 52 112 52C113.66 52 115 53.79 115 56Z" fill="#2a2433"/></g></g>
+<g id="L3"><g><path d="M100 80C94.76 94.41 89.51 108.82 84.27 123.23" fill="none" stroke="#2a2433" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M96.14 128.61C95.39 130.69 90.99 130.99 86.32 129.29C81.64 127.59 78.47 124.53 79.23 122.46C79.98 120.38 84.38 120.07 89.05 121.77C93.72 123.47 96.9 126.54 96.14 128.61Z" fill="#2a2433"/></g></g></defs>
+<rect x="0" y="0" width="200" height="200" fill="#f4f1ea"/>
+<g data-layer="perna_atras"><use href="#L1" xlink:href="#L1"/></g>
+<g data-layer="corpo"><use href="#L2" xlink:href="#L2"/></g>
+<g data-layer="perna_frente"><use href="#L3" xlink:href="#L3"/></g>
+</svg>

@@ -2810,14 +2810,12 @@
               if (!o) continue;
               off = mt[2] === '-' ? -o.v : o.v;
             }
-            shot.ats.push({ st, mark: mt[1], off, tok: st.pos[0] });
-            for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
+            shot.ats.push({ st, mark: mt[1], off, tok: st.pos[0], phase: atFlags(st) });
             continue;
           }
           const t = timeOf(st, st.pos[0], F.fps, 'o tempo (ex.: at 2s heroi.pos=400,560)');
           if (!t) continue;
-          shot.ats.push({ st, v: t.v, rel: t.rel });
-          for (const f of st.pos.slice(1)) err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
+          shot.ats.push({ st, v: t.v, rel: t.rel, phase: atFlags(st) });
         }
       }
       // começo de cada shot no filme (os marcadores dentro de um shot contam dele)
@@ -2844,7 +2842,7 @@
           prev = x.t;
         }
         s.ats = s.ats.filter((x) => x.t !== null);
-        for (const { st, t } of s.ats) readAt(st, t, s, actors, F.fps);
+        for (const { st, t, phase } of s.ats) readAt(st, t, s, actors, F.fps, phase);
         for (const u of s.hiddenUse || []) if (!s.tracks.has(u.id)) bad(u.st, u.a, `"${u.name}" tem hidden: só aparece com at … ${u.name}.show=1`, 'warn');
         delete s.hiddenUse;
         if (s.implicit && s.dur === null) {
@@ -2857,6 +2855,20 @@
           const over = tr.keys.find((k) => k.t > s.dur + 1e-9);
           if (over) err(over.line, `at ${round3(over.t)}s passa do fim do shot "${s.name}" (dur=${round3(s.dur)}s)`, 0, 2, 'warn');
         }
+        // phase: só alinha duas animações em loop (a que estava tocando e a nova); senão a nova começa do quadro 0
+        for (const u of s.phaseUse || []) {
+          const ac = actors.get(u.actor), tr = s.tracks.get(`actor:${u.actor}.anim`), i = tr ? tr.keys.indexOf(u.k) : -1;
+          if (!ac || !ac.model || i < 0) continue;
+          const prev = i > 0 ? tr.keys[i - 1].v : ac.anim;
+          const A = prev ? ac.model.animMap.get(prev) : null, B = u.k.v ? ac.model.animMap.get(u.k.v) : null;
+          const once = [A, B].find((x) => x && !x.loop);
+          let msg = null;
+          if (!B) msg = 'phase não tem o que alinhar com anim=none';
+          else if (!A) msg = `phase: o ator "${u.actor}" não está tocando nenhuma animação antes; "${B.name}" começa do quadro 0`;
+          else if (once) msg = once === B ? `phase só alinha animações em loop: "${B.name}" toca uma vez e começa do quadro 0` : `phase só alinha animações em loop: "${A.name}", a de antes, toca uma vez; "${B.name}" começa do quadro 0`;
+          if (msg) err(u.k.line, msg, u.tok.from, u.tok.to, 'warn');
+        }
+        delete s.phaseUse;
         // câmera seguindo um ator que não existe
         if (s.cam.follow && !actors.has(s.cam.follow) && s.cam.followAt) bad(s.cam.followAt.st, s.cam.followAt.a, `ator "${s.cam.follow}" não existe aqui`);
         for (const a of s.audios) checkLips(a, actors);
@@ -2959,8 +2971,18 @@
       info(st, { sub: s, block });
     }
 
+    // at 2s heroi.anim=trote phase: as palavras soltas depois do tempo; phase (a troca de anim= continua na mesma fase
+    // da passada) é a única; devolve o token dela (ou null)
+    function atFlags(st) {
+      let phase = null;
+      for (const f of st.pos.slice(1)) {
+        if (f.text === 'phase') phase = f;
+        else err(st.line, `valor solto "${f.text}" (use alvo.propriedade=valor)`, f.from, f.to, 'warn');
+      }
+      return phase;
+    }
     // at 2s heroi.pos=900,560 heroi.anim=walk camera.zoom=1.4 ease=out
-    function readAt(st, t, shot, actors, fps) {
+    function readAt(st, t, shot, actors, fps, phase) {
       let ease = 'smooth';
       if (st.attrs.has('ease')) {
         const a = st.attrs.get('ease');
@@ -2968,7 +2990,7 @@
         else bad(st, a, `ease desconhecido "${a.text}" (use ${Object.keys(W.geom.EASE).join(', ')})`);
       }
       // blend=0.4s: a troca de anim= desta linha mistura a animação de antes na nova, em vez do corte seco
-      let blend = 0, blendUsed = false;
+      let blend = 0, animSeen = false;
       if (st.attrs.has('blend')) {
         const a = st.attrs.get('blend'), b = timeOf(st, a, fps, 'o tempo da mistura');
         if (b && b.rel) bad(st, a, 'blend= é quanto tempo a mistura dura (ex.: blend=0.4s), sem o +');
@@ -2981,7 +3003,8 @@
         if (!shot.tracks.has(id)) shot.tracks.set(id, { kind, name, prop, interp, keys: [] });
         const tr = shot.tracks.get(id);
         const k = { t, v, ease, line: st.line };
-        if (blend && prop === 'anim') { k.blend = blend; blendUsed = true; }
+        if (blend && prop === 'anim') k.blend = blend;
+        if (phase && prop === 'anim') { k.phase = true; (shot.phaseUse || (shot.phaseUse = [])).push({ k, tok: phase, actor: name }); }
         const same = tr.keys.findIndex((x) => Math.abs(x.t - t) < 1e-9);
         if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
         return a;
@@ -2993,6 +3016,8 @@
         const dot = a.key.lastIndexOf('.');
         if (dot <= 0) { bad(st, a, 'use alvo.propriedade=valor (ex.: heroi.pos=400,560 ou camera.zoom=1.5)'); continue; }
         const name = a.key.slice(0, dot), prop = a.key.slice(dot + 1);
+        // blend= e phase só reclamam quando a linha não tem nenhum anim= (um ator sem arquivo já tem o erro dele)
+        if (prop === 'anim') animSeen = true;
         const ac = actors.get(name);
         let kind, table;
         if (name === 'camera') { kind = 'camera'; table = CAMERA_PROPS; } else if (ac) { kind = 'actor'; table = ACTOR_PROPS; } else if (m.lights.has(name)) { kind = 'light'; table = LIGHT_PROPS; } else if (m.layerMap.has(name)) { kind = 'layer'; table = LAYER_PROPS; } else if (m.named.has(name)) { kind = 'shape'; table = SHAPE_AT_PROPS; } else { bad(st, a, `"${name}" não é ator, camera, luz, camada nem forma deste filme`); continue; }
@@ -3044,7 +3069,8 @@
         }
       }
       if (!n) err(st.line, 'at sem mudança (ex.: at 2s heroi.pos=400,560 camera.zoom=1.4)', st.cmdTok.from, st.cmdTok.to);
-      else if (blend && !blendUsed) bad(st, st.attrs.get('blend'), 'blend= só mistura uma troca de anim= da mesma linha (ex.: at 5s heroi.anim=pula blend=0.4s)', 'warn');
+      else if (blend && !animSeen) bad(st, st.attrs.get('blend'), 'blend= só mistura uma troca de anim= da mesma linha (ex.: at 5s heroi.anim=pula blend=0.4s)', 'warn');
+      if (n && phase && !animSeen) err(st.line, 'phase só vale numa troca de anim= da mesma linha (ex.: at 3s capivara.anim=trote phase)', phase.from, phase.to, 'warn');
     }
 
     // ---- prévia de um def (o editor, com o cursor dentro dele): uma cópia em 0,0, com as variáveis do painel ----

@@ -1,0 +1,4 @@
+filme    360 × 200, 12 fps, 2s (24 quadros, 00:02:00), fundo #cfe3f0
+atores   a (fase_boneco.weasel, anim anda_right), b (fase_boneco.weasel, anim anda_right), c (fase_boneco.weasel, anim anda_right)
+planos   1
+  fase             00:00:00      2s     24 quadros  câmera 180,100 · 4 mudança(s) com at

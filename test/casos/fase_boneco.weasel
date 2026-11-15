@@ -1,0 +1,58 @@
+# teste: as fases da passada (a troca na mesma fase: at … phase no filme e tocar(acao, dir, true) no Godot).
+# anda e trote têm feet= (alinham pelo meio do apoio do primeiro pé, pe_e); voa não tem (alinha pela fração do
+# ciclo); pulo toca uma vez (não alinha). A cena do Godot ganha fases = {…} ao lado de velocidades = {…}.
+canvas 200 200 bg=#f4f1ea
+palette ink=#2a2433 line=4 pele=#7fb3a8
+
+godot body=character root=100,180 name=Saltitante
+
+bone corpo pivot=100,110
+bone perna_e pivot=100,130 parent=corpo
+bone perna_d pivot=100,130 parent=corpo
+
+layer guia guide
+line chao c=#b9b2a2 w=1 : 0,180 200,180
+
+layer perna_atras
+stroke coxa_d w=8 c=ink bone=perna_d : 100,130 100,176
+ellipse sapato_d 104,177 9,4 c=ink bone=perna_d
+layer corpo
+ellipse tronco 100,105 28,30 c=pele ink=line bone=corpo
+ellipse olho 112,96 3,4 c=ink bone=corpo
+layer perna_frente
+stroke coxa_e w=8 c=ink bone=perna_e : 100,130 100,176
+ellipse sapato_e 104,177 9,4 c=ink bone=perna_e
+
+point pe_e 100,180 bone=perna_e
+point pe_d 100,180 bone=perna_d
+box caixa body rect 72,75 56,105
+
+# pe_e no chão nos quadros 0–4: o meio do apoio é o quadro 2 (25% do ciclo)
+anim anda_right frames=8 fps=12 feet=pe_e,pe_d
+key 0 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+key 2 perna_d=0,-12,0 ease=linear
+key 4 perna_e=-20,0,0 perna_d=20,0,0 ease=linear
+key 6 perna_e=0,-12,0 ease=linear
+key 8 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+event 0 passo
+event 4 passo
+
+# pe_e no ar nos quadros 1 e 2, no chão de 3 a 6 (= 0): o meio do apoio é o quadro 4,5 (75% do ciclo)
+anim trote_right frames=6 fps=12 feet=pe_e,pe_d
+key 0 perna_e=-15,0,0 perna_d=15,0,0 ease=linear
+key 1 perna_e=0,-12,0 ease=linear
+key 3 perna_e=15,0,0 perna_d=-15,0,0 ease=linear
+key 4 perna_d=0,-12,0 ease=linear
+key 6 perna_e=-15,0,0 perna_d=15,0,0 ease=linear
+
+# sem feet=: alinha pela fração do ciclo
+anim voa_right frames=12 fps=12
+key 0 corpo=0,-30,0 perna_e=0,-10,20 perna_d=0,-10,-20
+key 6 corpo=0,-40,0
+key 12 corpo=0,-30,0
+
+# toca uma vez: não alinha
+anim pulo frames=4 fps=8 once
+key 0 corpo=0,0,0
+key 2 corpo=0,-20,0
+key 4 corpo=0,-10,0

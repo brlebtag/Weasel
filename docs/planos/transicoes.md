@@ -15,8 +15,8 @@ Tudo aqui é **a mais** e só liga quando você pede:
 - **Nenhum arquivo de hoje usa as palavras novas** (conferido em 15/11/2026 nos exemplos, no guia e nos testes):
   - um `blend=` solto no `at` hoje é erro;
   - `from=`, `to=` e `every=` no `anim` hoje são "atributo desconhecido".
-- **O `tocar()` do Godot não muda.** Ele continua chamando `play(nome)` sem tempo de mistura, então os tempos de mistura que você já acertou no AnimationPlayer do Godot continuam valendo. A mistura entra numa função nova, `trocar()`.
-- **O `.gd` ganha o `trocar()` sempre**, como as funções do [ajudante do Godot](ajudante-godot.md) (decidido em 15/11/2026). Função a mais não quebra nada: os jogos antigos não a chamam. Não precisa de opção na linha `godot` nem de declarar nada a mais.
+- **O `tocar()` do Godot não muda.** Ele continua chamando `play(nome)` sem tempo de mistura, então os tempos de mistura que você já acertou no AnimationPlayer do Godot continuam valendo. (O terceiro parâmetro da 1.42.0, `tocar(acao, dir, true)`, só escolhe em que ponto a nova animação começa.) A mistura entra numa função nova, `trocar()`.
+- **O `.gd` ganha o `trocar()` sempre**, como as funções do [ajudante do Godot](ajudante-godot.md), feito na 1.42.0 (decidido em 15/11/2026). Função a mais não quebra nada: os jogos antigos não a chamam. Não precisa de opção na linha `godot` nem de declarar nada a mais.
 - **Peças geradas nunca apagam nada:** se o nome de uma peça (`para_galope_0_right`) já for de uma animação sua, é erro com o nome em conflito; o Weasel não sobrescreve.
 - **Tudo é configurável:**
   - o `blend=` vale por linha do `at`;
@@ -55,7 +55,7 @@ Depende de como a animação de saída termina:
 |---|---|---|---|
 | loop | pose ou começo de outra | galope → pisca | **várias**: o jogo pode parar em qualquer quadro, então há uma peça a cada `every=` quadros (`every=2` por padrão) |
 | `once` | qualquer uma | ataque → parado | **uma só**: a animação `once` sempre acaba no mesmo quadro |
-| loop | outro loop | anda → trote | **muitas vezes nenhuma**: a troca na mesma fase (`phase`, do [ajudante do Godot](ajudante-godot.md)) já resolve. Só quando as passadas são muito diferentes (trote → galope) valem peças que vão mirando o loop novo enquanto ele anda |
+| loop | outro loop | anda → trote | **muitas vezes nenhuma**: a troca na mesma fase (`phase` no filme e `tocar(acao, dir, true)` no Godot, da 1.42.0) já resolve. Só quando as passadas são muito diferentes (trote → galope) valem peças que vão mirando o loop novo enquanto ele anda |
 | `once` interrompida no meio | qualquer uma | levar um golpe durante o ataque | como o loop: várias peças |
 
 ### O que é misturado em cada quadro
@@ -77,7 +77,7 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 - `trocar(de, para)` no lugar do `parar("galope", "pisca")` do plano antigo:
   - **por quadros:** escolhe a peça certa pelo quadro atual de `de` e, no fim dela, toca `para`;
   - **com esqueleto:** só mistura as duas animações.
-- Depende do [ajudante do Godot](ajudante-godot.md) (item 1 da fila).
+- Usa o [ajudante do Godot](ajudante-godot.md), feito na 1.42.0.
 
 ## O custo na folha
 
@@ -107,6 +107,6 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 
 1. O `blend=` do filme. O jogo não muda nada. **Feito na 1.40.0.**
 2. As peças na sprite sheet (`anim … from= to=`), com `every=` e `frames=`. **Feito na 1.41.0**, com as escolhas de 15/11/2026: direções automáticas (`from=walk` acha `walk_right`…; o nome exato também serve), a peça chega no primeiro quadro do `to` (o jogo toca o `to` do começo), um `once` gera uma peça só, do último quadro (com `every=` escrito, também ao longo dele), e a peça toca no fps do `from` (`fps=` muda).
-3. O `trocar()` no Godot, depois do [ajudante do Godot](ajudante-godot.md) (item 1 da fila).
+3. O `trocar()` no Godot. O [ajudante do Godot](ajudante-godot.md), que vinha antes, saiu na 1.42.0.
 
 Cada etapa começa com o seu "pode fazer".

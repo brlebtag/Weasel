@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.41.0">
+<link rel="stylesheet" href="css/style.css?v=1.42.0">
 </head>
 <body>
 <header class="top">
@@ -220,7 +220,7 @@
       <tr><td><code>tile nome coluna,linha [solid] [oneway] collision=forma</code></td><td>Um bloco: <code>solid</code> colide no quadrado todo, <code>oneway</code> só por cima, <code>collision=</code> usa o formato de uma forma (rampa). O nome vai como dado do bloco.</td></tr>
       <tr><td><code>point nome x,y bone=</code></td><td>Ponto de encaixe que segue o osso (posição e rotação): de onde sai o tiro, onde a mão segura, onde nasce a poeira. No Godot vira um <code>Marker2D</code> que o AnimationPlayer move; na sprite sheet, vai no JSON de cada quadro.</td></tr>
     </table>
-    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). Com <code>feet=</code>, <code>velocidade()</code> diz quanto o personagem anda por segundo sem os pés escorregarem. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Hitboxes</b> ligado, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas); desligado, só a da linha do cursor. Com <b>Guias</b>, os pontos de encaixe aparecem em roxo, com uma seta para onde o osso aponta.</p>
+    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). Com <code>feet=</code>, <code>velocidade()</code> diz quanto o personagem anda por segundo sem os pés escorregarem. <code>tocar("trote", velocity, true)</code> troca sem perder o passo; <code>quadros("walk")</code> e <code>fps("walk")</code> dizem o tamanho e a velocidade da animação; <code>mostrar_quadro("walk", 3)</code> para num quadro. Para virar, use as animações <code>_left</code>, não <code>flip_h</code>. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Hitboxes</b> ligado, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas); desligado, só a da linha do cursor. Com <b>Guias</b>, os pontos de encaixe aparecem em roxo, com uma seta para onde o osso aponta.</p>
 
     <h3>Filme</h3>
     <p>Um arquivo com <code>film</code> vira um filme e sai em vídeo. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo), postos em cena com <code>actor</code>.</p>
@@ -236,7 +236,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <tr><td><code>actor nome "arquivo" x,y scale= rot= flip= depth= anim= speed= opacity= origin= variant= hide= [screen] [bg] [hidden] [unlit] [front]</code></td><td>Põe outro arquivo em cena. <code>x,y</code> é onde vai o <code>root=</code> do <code>unity</code> dele (os pés), ou o canto 0,0; <code>origin=</code> escolhe outro ponto. <code>hide=</code> esconde camadas do arquivo, <code>bg</code> desenha o fundo dele, <code>screen</code> prende na tela. Antes do primeiro <code>shot</code>, vale para todos.</td></tr>
       <tr><td><code>shot nome dur= in=tipo,duração</code></td><td>Um plano. Os planos tocam em sequência; o que vem abaixo vale só para ele. <code>in=</code> é a transição de entrada: <code>fade</code>, <code>wipe</code>, <code>slide</code>, <code>zoom</code> ou <code>iris</code> (padrão 0.5s); o plano anterior fica parado no último quadro enquanto este entra.</td></tr>
       <tr><td><code>camera x,y zoom= rot= shake= follow= offset= lag= fade= fadec=</code></td><td>Para onde a câmera olha (centro do quadro). <code>follow=ator</code> segue um ator; <code>lag=</code> (segundos) atrasa e suaviza; <code>shake=</code> treme; <code>fade=1</code> escurece. <code>lens=</code> é a lente (tudo cresce igual; com <code>zoom</code> ao contrário, dá o <i>Vertigo</i>); <code>fog=cor haze=</code> põe névoa no que está longe.</td></tr>
-      <tr><td><code>at tempo alvo.prop=valor … ease= blend=</code></td><td>Muda algo naquele momento do plano. <code>blend=0.6s</code> mistura a troca de <code>anim</code> da linha, em vez do corte seco. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também, e as formas do arquivo do filme: <code>draw</code>, <code>opacity</code> e <code>show</code>. Ator: também <code>expr</code> e <code>along</code> (com <code>actor … path=linha</code>).</td></tr>
+      <tr><td><code>at tempo alvo.prop=valor … ease= blend= phase</code></td><td>Muda algo naquele momento do plano. <code>blend=0.6s</code> mistura a troca de <code>anim</code> da linha, em vez do corte seco; <code>phase</code> faz a nova animação continuar no mesmo ponto da passada. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também, e as formas do arquivo do filme: <code>draw</code>, <code>opacity</code> e <code>show</code>. Ator: também <code>expr</code> e <code>along</code> (com <code>actor … path=linha</code>).</td></tr>
       <tr><td><code>scene "arquivo"</code></td><td>Acrescenta os planos de outro arquivo de filme (um arquivo por cena).</td></tr>
       <tr><td><code>mark nome tempo</code></td><td>Um momento com nome: <code>at trovao</code>, <code>at trovao+0.3s</code>. Na linha do tempo, arrastar o marcador muda o tempo, e tudo o que depende dele vai junto.</td></tr>
       <tr><td><code>audio nome "arquivo" at= from= dur= vol= lips=ator cues= text= [loop]</code></td><td>Som de referência (fala, música). Num <code>shot</code>, <code>at=</code> conta do começo dele; fora, do começo do filme. <code>lips=</code> faz a boca do ator seguir a fala (pelo .wav, ou pelas bocas do Rhubarb em <code>cues=</code>); <code>text=</code> vira legenda. Abra os sons com <b>Abrir…</b>.</td></tr>
@@ -372,26 +372,26 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.41.0"></script>
-<script src="js/lang.js?v=1.41.0"></script>
-<script src="js/art.js?v=1.41.0"></script>
-<script src="js/scene.js?v=1.41.0"></script>
-<script src="js/film.js?v=1.41.0"></script>
-<script src="js/audio.js?v=1.41.0"></script>
-<script src="js/nle.js?v=1.41.0"></script>
-<script src="js/webm.js?v=1.41.0"></script>
-<script src="js/svg.js?v=1.41.0"></script>
-<script src="js/gif.js?v=1.41.0"></script>
-<script src="js/webp.js?v=1.41.0"></script>
-<script src="js/mp4.js?v=1.41.0"></script>
-<script src="js/zip.js?v=1.41.0"></script>
-<script src="js/normal.js?v=1.41.0"></script>
-<script src="js/export.js?v=1.41.0"></script>
-<script src="js/godot.js?v=1.41.0"></script>
-<script src="js/rig.js?v=1.41.0"></script>
-<script src="js/editor.js?v=1.41.0"></script>
-<script src="js/examples.js?v=1.41.0"></script>
-<script src="js/timeline.js?v=1.41.0"></script>
-<script src="js/app.js?v=1.41.0"></script>
+<script src="js/geom.js?v=1.42.0"></script>
+<script src="js/lang.js?v=1.42.0"></script>
+<script src="js/art.js?v=1.42.0"></script>
+<script src="js/scene.js?v=1.42.0"></script>
+<script src="js/film.js?v=1.42.0"></script>
+<script src="js/audio.js?v=1.42.0"></script>
+<script src="js/nle.js?v=1.42.0"></script>
+<script src="js/webm.js?v=1.42.0"></script>
+<script src="js/svg.js?v=1.42.0"></script>
+<script src="js/gif.js?v=1.42.0"></script>
+<script src="js/webp.js?v=1.42.0"></script>
+<script src="js/mp4.js?v=1.42.0"></script>
+<script src="js/zip.js?v=1.42.0"></script>
+<script src="js/normal.js?v=1.42.0"></script>
+<script src="js/export.js?v=1.42.0"></script>
+<script src="js/godot.js?v=1.42.0"></script>
+<script src="js/rig.js?v=1.42.0"></script>
+<script src="js/editor.js?v=1.42.0"></script>
+<script src="js/examples.js?v=1.42.0"></script>
+<script src="js/timeline.js?v=1.42.0"></script>
+<script src="js/app.js?v=1.42.0"></script>
 </body>
 </html>
