@@ -1,0 +1,13 @@
+passada.png:
+salvo 492×421, folha de conferência: 24 quadros de 4 animações
+aviso: escorrega_right: pe_d escorrega nos quadros 0, 5, 6, 7
+filme.png:
+salvo 729×368, folha de conferência: 21 quadros, um a cada 1s, 4 planos
+cavaleiro.weasel --contact=2: saída 2
+weasel: --contact=N (o intervalo) vale para filmes; num desenho, a folha tem todos os quadros
+cavaleiro.weasel --contact -f gif: saída 2
+weasel: --contact sai em png ou jpg
+filme.weasel --contact=abc: saída 2
+weasel: --contact: intervalo inválido "abc" (ex.: --contact=2, 2s, 500ms ou 12f)
+filme.weasel --contact --shots: saída 2
+weasel: a folha de conferência já tem uma linha por plano: use --contact sem --shots e --frames

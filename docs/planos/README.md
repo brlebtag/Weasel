@@ -12,13 +12,13 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 
 ## Fila combinada (10/11/2026)
 
-Você aprovou a análise e a ordem. Os itens 1 e 2 estão feitos.
+Você aprovou a análise e a ordem. Os quatro itens estão feitos.
 
 | # | Plano | Em uma frase |
 |---|---|---|
 | 1 | [Ajudante do Godot](ajudante-godot.md) | `quadros()`, `fps()`, `mostrar_quadro()` e trocar de animação na mesma fase da passada; feito na 1.42.0 |
 | 2 | [Contas novas](expressoes.md) | `smoothstep`, comparações, `c ? a : b` e `mod()` dentro de `{}`; feito na 1.38.0 |
-| 3 | [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro |
+| 3 | [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro; feito na 1.44.0 |
 | 4 | [Transições](transicoes.md) | de qualquer animação para qualquer outra: mistura na hora no filme e no Godot com esqueleto; quadros gerados na sprite sheet. Decisões fechadas em 15/11/2026; a etapa 1 (`blend=` no filme) feita na 1.40.0, a etapa 2 (peças na sprite sheet) na 1.41.0 e a etapa 3 (`trocar()` no Godot) na 1.43.0: plano feito |
 
 ## Propostas novas

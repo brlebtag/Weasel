@@ -607,6 +607,34 @@ async function swapCase() {
   await check('_trocar', 'trocar.txt', 'text', lines.join('\n') + '\n');
 }
 
+// --contact: a folha de conferência pela linha de comando. Num desenho (test/casos/passada.weasel), os quadros
+// numerados, uma linha por animação, com os eventos, os pés no chão e o escorregão do escorrega_right; num filme
+// (exemplos/filme.weasel), uma linha por plano, um quadro a cada segundo (o intervalo automático) com o tempo
+// embaixo. O texto guarda o que a linha de comando escreveu (sem o caminho e o tamanho do arquivo) e os erros.
+async function contactCase() {
+  console.log(paint('1', '_conferencia'));
+  fs.mkdirSync(OUT, { recursive: true });
+  const env = Object.assign({}, process.env, { NO_COLOR: '1' });
+  const say = (r) => (r.stdout + r.stderr).split(/\r?\n/).filter((l) => l && !/^Use "weasel/.test(l) && !/^\s/.test(l) && !/: aviso: /.test(l))
+    .map((l) => l.replace(/^salvo \S+\s+/, 'salvo ').replace(/ · \d+(\.\d+)? (KB|MB)$/, ''));
+  const lines = [];
+  for (const [name, args] of [['passada.png', [path.join(CASES, 'passada.weasel'), '--contact', '-s', '0.4']], ['filme.png', [path.join(EX, 'filme.weasel'), '--contact', '-s', '0.05']]]) {
+    const out = path.join(OUT, `_conferencia_${name}`);
+    const r = spawnSync(process.execPath, [CLI, ...args, '-o', out], { encoding: 'utf8', env });
+    lines.push(`${name}:`, ...say(r));
+    if (r.status) { record(false, `_conferencia/${name}`, r.stderr.trim()); continue; }
+    const img = await loadImage(fs.readFileSync(out));
+    const c = createCanvas(img.width, img.height);
+    c.getContext('2d').drawImage(img, 0, 0);
+    await check('_conferencia', name, 'png', c);
+  }
+  for (const args of [[path.join(EX, 'cavaleiro.weasel'), '--contact=2'], [path.join(EX, 'cavaleiro.weasel'), '--contact', '-f', 'gif'], [path.join(EX, 'filme.weasel'), '--contact=abc'], [path.join(EX, 'filme.weasel'), '--contact', '--shots']]) {
+    const r = spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', env });
+    lines.push(`${path.basename(args[0])} ${args.slice(1).join(' ')}: saída ${r.status}`, ...say(r));
+  }
+  await check('_conferencia', 'conferencia.txt', 'text', lines.join('\n') + '\n');
+}
+
 // anim … from= to=: as peças de transição da sprite sheet (test/casos/transicao_pecas.weasel). Confere os erros
 // e avisos, que as animações de antes saem iguais com e sem transições, as peças (nomes, de onde partem, o peso,
 // a animação que vale para only=), o once com every= e o Godot (sem loop; com esqueleto, espelhadas).
@@ -681,6 +709,7 @@ async function main() {
   if (!only.length || only.some((o) => '_transicao'.includes(o))) await transCase();
   if (!only.length || only.some((o) => '_fase'.includes(o))) await phaseCase();
   if (!only.length || only.some((o) => '_trocar'.includes(o))) await swapCase();
+  if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

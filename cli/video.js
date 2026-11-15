@@ -199,6 +199,44 @@ async function exportFilm(model, o, format, source, h) {
     for (const e of list) for (let f = e.start; f < e.start + e.frames; f++) if (f >= from && f < to) out.push(f);
     return out;
   };
+
+  // --contact: a folha de conferência, uma linha por plano, um quadro a cada N segundos contados do começo do plano
+  // (ou do --from); sem N, o menor intervalo (1, 2, 5, 10 s…) que dá até uns 120 quadros
+  if (o.contact) {
+    if (format !== 'png' && format !== 'jpg') h.usage('--contact sai em png ou jpg');
+    if (o.shots || o.frames) h.usage('a folha de conferência já tem uma linha por plano: use --contact sem --shots e --frames');
+    const lo = (e) => Math.max(e.start, from), hi = (e) => Math.min(e.start + e.frames, to);
+    const pick = (N) => entries.filter((e) => hi(e) > lo(e)).map((e) => {
+      const frames = [];
+      for (let k = 0; ; k++) {
+        const f = lo(e) + Math.round(k * N * fps);
+        if (f >= hi(e)) break;
+        frames.push(f);
+      }
+      return { title: e.name, info: `${W.exporter.contactTime(lo(e) / fps)} a ${W.exporter.contactTime(hi(e) / fps)}`, frames };
+    });
+    const count = (gs) => gs.reduce((n, g) => n + g.frames.length, 0);
+    let N, groups;
+    if (o.contact === true) {
+      for (N of [1, 2, 5, 10, 15, 30, 60, 120, 300, 600]) { groups = pick(N); if (count(groups) <= 120) break; }
+    } else {
+      N = parseTime(o.contact, fps);
+      if (!(N > 0)) h.usage(`--contact: intervalo inválido "${o.contact}" (ex.: --contact=2, 2s, 500ms ou 12f)`);
+      N = Math.max(N, 1 / fps);
+      groups = pick(N);
+    }
+    if (!groups.length) h.usage('nenhum quadro no trecho pedido');
+    let cv;
+    try {
+      cv = W.exporter.filmContactCanvas(model, groups, { scale: o.scaleSet ? o.scale : null, cols: o.cols, fps, subs: !!(o.burnSubs || model.film.burn), lang: o.lang });
+    } catch (e) {
+      if (!e.big) throw e;
+      h.usage(`${e.message}: aumente o intervalo (--contact=10), recorte (--shot, --from, --to) ou diminua a escala (-s)`);
+    }
+    const buf = format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png');
+    h.save(o.out || `${source.base}_conferencia.${format}`, buf, `${cv.width}×${cv.height}, folha de conferência: ${count(groups)} quadros, um a cada ${W.exporter.contactTime(N)}, ${groups.length} plano${groups.length > 1 ? 's' : ''}`, o.quiet);
+    return;
+  }
   const tag = (e) => e.name.replace(/[\\/]+/g, '-');
   // --shots: um arquivo por plano, com o nome do plano no fim; --shot com -o: o nome que você deu
   const parts = o.shots ? entries.map((e) => ({ suffix: '_' + tag(e), frames: range([e]) })) : [{ suffix: o.shot && !o.out ? '_' + tag(entries[0]) : '', frames: range(entries) }];

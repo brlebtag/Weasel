@@ -308,6 +308,7 @@ Num jogo, o personagem anda **no lugar**, como numa esteira: o corpo fica parado
 
 <!-- gerar: img/09_passada.gif -a anda_right --guides -->
 <!-- gerar: img/09_passada_trajetoria.png -a anda_right --trajectory -->
+<!-- gerar: img/09_passada_conferencia.png --contact -->
 ```weasel
 canvas 200 200 bg=#e8eef5
 palette ink=#2a2433 line=4 pele=#7cc4e8
@@ -379,6 +380,34 @@ Quando um pé, no chão, anda diferente dos outros, o `--info`, o `--trajectory`
 ```
                  aviso: pe_d escorrega: no chão vai para trás de 6 a 14 px por quadro (os outros, 10)
 ```
+
+### A folha de conferência
+
+![Os oito quadros do anda_right numerados, numa linha, com uma bolinha por pé embaixo de cada um (cheia no chão, vazia no ar) e o evento passo nos quadros 0 e 4](img/09_passada_conferencia.png)
+
+Para dizer "o pé escorrega no quadro 7", `--contact` monta uma folha com todos os quadros numerados: uma linha por animação, com o nome no começo, e o número de cada quadro no canto. Embaixo de cada quadro ficam as marcas:
+- uma bolinha por pé do `feet=`, na cor do pé (a legenda fica em cima): **cheia** no chão, **vazia** no ar;
+- **vermelha**, com o quadro contornado de vermelho, quando o pé escorrega: está no chão e, desde o quadro anterior, andou diferente da medida;
+- o nome dos eventos (`event`), em laranja, com um canto laranja no quadro.
+
+```bash
+node cli/weasel.js andador.weasel --contact -o folha.png
+```
+
+```
+salvo folha.png  1093×247, folha de conferência: 8 quadros de anda_right · 24 KB
+```
+
+Quando um pé escorrega, o terminal também diz em que quadros:
+
+```
+aviso: anda_right: pe_d escorrega nos quadros 5, 6
+```
+
+- Sem `-a`, entram todas as animações; `-a "parado anda_right"` escolhe quais, nessa ordem.
+- Todos os quadros têm o mesmo recorte, para comparar as posições, e cada um fica com uns 160 px no lado maior; `-s` escolhe a escala. Uma animação longa quebra em linhas de 12 quadros (`--cols` muda).
+- Sai em PNG ou JPG, com fundo claro. A folha serve para conferir e não vai para o jogo: a sprite sheet (`-f sheet`) continua sem números.
+- Num filme, a folha tem uma linha por plano e um quadro a cada segundo ([capítulo 10](10-filme.md#exportando-o-filme)).
 
 ### No jogo
 

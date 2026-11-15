@@ -51,6 +51,10 @@ Saída:
       --trajectory[=pontos]  png/jpg: a trajetória dos pés (anim feet=) em todos os quadros da
                           animação, numerada, por cima do personagem clarinho; =pe,mao segue
                           esses pontos
+      --contact           png/jpg: folha de conferência, para achar um quadro: os quadros em grade,
+                          numerados, uma linha por animação (todas, ou -a "idle walk"), com os
+                          eventos, os pés no chão (feet=) e o escorregão em vermelho; -s muda o
+                          tamanho, --cols a quebra das linhas (padrão 12)
 
 Godot:
   -o personagem.tscn      pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
@@ -75,6 +79,8 @@ Filme (arquivo com a linha film):
       --shot <nome>       só um plano (shot); --shots: um arquivo por plano
       --from <t> --to <t> só um trecho (2s, 48f, 1m30s ou 00:01:12 = min:seg:quadro)
       --time <t>          png/jpg: o quadro nesse tempo (--frame <n> também vale)
+      --contact[=N]       png/jpg: folha de conferência, uma linha por plano, um quadro a cada N
+                          segundos (padrão: automático, uns 120 quadros), com o tempo embaixo
   -j, --jobs <n>          threads de render (padrão: núcleos − 1, até 8)
       --crf <n>           qualidade do mp4/webm (menor = melhor; padrão 18 no mp4, 30 no webm)
       --small             vídeo menor, para mandar (WhatsApp, e-mail): H.264 mais lento e ajustado
@@ -117,6 +123,8 @@ Exemplos:
   weasel filme.weasel -o render/filme.mov --shots -s 0.5
   weasel filme.weasel --frames -o quadros/q.png --from 10s --to 20s
   weasel filme.weasel -o capa.png --time 4s
+  weasel capivara.weasel --contact -o folha.png
+  weasel filme.weasel --contact=5 -o folha.png
   weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
   weasel filme.weasel -o para_mandar.mp4 --small --burn-subs
   weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
@@ -182,7 +190,7 @@ function parseArgs(argv) {
       case '--ext': o.ext = val().replace(/^\./, ''); break;
       case '--frames': o.frames = true; break;
       case '--variant': o.variant = val(); break;
-      case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); break;
+      case '-s': case '--scale': o.scale = num('--scale', val(), 0.05, 16); o.scaleSet = true; break;
       case '-t': case '--transparent': o.transparent = true; break;
       case '--trim':
         o.trim = true;
@@ -198,6 +206,7 @@ function parseArgs(argv) {
       case '--guides': o.guides = true; break;
       case '--refs': o.refs = true; break;
       case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
+      case '--contact': o.contact = inline || true; break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -393,6 +402,38 @@ async function drawingVideo(model, o, format, source, opts, outName) {
 async function exportModel(model, o, format, base, sfx) {
   const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, refs: o.refImages || null, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
+  // --contact: a folha de conferência, os quadros numerados, uma linha por animação, com as marcas (eventos, pés no
+  // chão e escorregão)
+  if (o.contact) {
+    if (format !== 'png' && format !== 'jpg') usage('--contact sai em png ou jpg');
+    if (o.contact !== true) usage('--contact=N (o intervalo) vale para filmes; num desenho, a folha tem todos os quadros');
+    if (o.trajectory) usage('use --contact ou --trajectory, não os dois');
+    if (o.frames) usage('use --contact ou --frames, não os dois');
+    if (!model.anims.length) usage('o desenho não tem animações (anim/key): a folha de conferência mostra os quadros delas');
+    const all = !o.anim || o.anim === 'all';
+    const names = all ? model.anims.map((a) => a.name) : [...new Set(o.anim.split(/[\s,]+/).filter(Boolean))];
+    for (const n of names) pickAnim(model, n, true);
+    let cv;
+    try {
+      cv = X.contactCanvas(model, names, { scale: o.scaleSet ? o.scale : null, margin: o.margin, cols: o.cols, guides: o.guides });
+    } catch (e) {
+      if (!e.big) throw e;
+      usage(`${e.message}: diminua a escala (-s), as colunas (--cols) ou escolha as animações (-a "idle walk")`);
+    }
+    const n = names.reduce((k, x) => k + model.animMap.get(x).frames, 0);
+    const tag = all && names.length > 1 ? 'todas' : names.join('_');
+    save(named(o.out || `${base}_${tag}_conferencia.${format}`), format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), `${cv.width}×${cv.height}, folha de conferência: ${n} quadros${names.length > 1 ? ` de ${names.length} animações` : ` de ${names[0]}`}`, o.quiet);
+    // os escorregões também no terminal, com os quadros
+    if (!o.quiet) {
+      for (const name of names) {
+        for (const [foot, set] of W.scene.slipFrames(model, model.animMap.get(name))) {
+          if (set.size) console.log(paint('33', `aviso: ${name}: ${foot} escorrega no${set.size > 1 ? 's quadros' : ' quadro'} ${[...set].sort((a, b) => a - b).join(', ')}`));
+        }
+      }
+    }
+    return;
+  }
+
   const animated = format === 'gif' || format === 'webp' || format === 'build' || V.VIDEO.includes(format);
   if (!animated && X.isSeq(o.anim)) usage('uma sequência de animações (-a "idle walk*3") vale para gif, webp e vídeo');
   if (!animated && o.sticker) usage('--sticker vale para webp');
@@ -570,7 +611,7 @@ async function run(o) {
   }
   if (o.variant && o.variant !== 'all' && !model.variants.includes(o.variant)) usage(`variante "${o.variant}" não existe${model.variants.length ? ` (tem: ${model.variants.join(', ')})` : ''}`);
 
-  let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null ? 'png' : 'mp4') : 'png');
+  let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null || o.contact ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
   if (![...['png', 'jpg', 'gif', 'webp', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, webp, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {

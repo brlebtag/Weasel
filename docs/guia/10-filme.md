@@ -1359,6 +1359,7 @@ Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 | prévia rápida em meia resolução | `node cli/weasel.js filme.weasel -o previa.mp4 -s 0.5` |
 | vídeo menor, para mandar por WhatsApp ou e-mail | `node cli/weasel.js filme.weasel -o para_mandar.mp4 --small --burn-subs` |
 | um quadro (capa, miniatura) | `node cli/weasel.js filme.weasel -o capa.png --time 4s` |
+| uma folha para achar um momento (um quadro a cada segundo, uma linha por plano) | `node cli/weasel.js filme.weasel --contact -o folha.png` |
 | só um plano, ou um trecho | `--shot susto` · `--from 10s --to 20s` |
 | ProRes para o editor de vídeo, um arquivo por plano, com a linha do tempo | `node cli/weasel.js filme.weasel -o render/filme.mov --shots --fcpxml --edl` |
 | GIF (filmes curtos) | `node cli/weasel.js filme.weasel -o filme.gif -s 0.25` |
@@ -1382,6 +1383,18 @@ Só um quadro, como imagem:
 > node cli/weasel.js conversa.weasel -o capa.png --time 1.5s -s 0.25
 salvo capa.png  480×270, quadro 36 (00:01:12, shot conversa) · 8 KB
 ```
+
+Uma **folha de conferência**, para achar um momento do filme sem assistir tudo: uma linha por plano, com o nome do plano no começo, e um quadro a cada N segundos, contados do começo do plano. Cada quadro tem o número dele no canto e o tempo embaixo, escrito do jeito que o `--time` aceita (`12s`, `1m05s`). Com o filme de exemplo do Weasel:
+
+```
+> node cli/weasel.js exemplos/filme.weasel --contact -o folha.png
+salvo folha.png  1593×692, folha de conferência: 21 quadros, um a cada 1s, 4 planos · 378 KB
+```
+
+- Sem número, o intervalo é automático: 1 segundo, ou, num filme longo, o menor entre 2, 5, 10, 15, 30 s… que dê até uns 120 quadros. `--contact=5` escolhe o intervalo (também vale `500ms` ou `12f`).
+- Todo plano aparece, mesmo um mais curto que o intervalo. `--shot`, `--from` e `--to` recortam, como no vídeo.
+- Cada quadro fica com uns 240 px no lado maior; `-s` escolhe a escala, e `--cols` quantos quadros cabem numa linha (padrão 8).
+- Sai em PNG ou JPG. As legendas só aparecem desenhadas com `--burn-subs` (ou `film subs=burn`), como no PNG de um quadro.
 
 Para o editor de vídeo (DaVinci Resolve, Final Cut, Premiere): um `.mov` por plano e a **linha do tempo** pronta em dois formatos, `.edl` e `.fcpxml` (arquivos que esses programas abrem com os vídeos e os sons já no lugar, cada som na sua trilha):
 

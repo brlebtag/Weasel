@@ -582,7 +582,7 @@ erro: o osso "b" não tem caminho: use bone b … path=nome_de_uma_linha
 
 ### Os pés escorregam no jogo
 
-O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou o botão **Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas.
+O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou o botão **Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas. A folha de conferência (`--contact`) mostra em vermelho os quadros em que o pé escorrega ([capítulo 9](09-jogo-godot.md#a-folha-de-conferência)).
 
 ### As pernas pulam quando o personagem troca de jeito de andar
 

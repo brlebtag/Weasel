@@ -503,6 +503,8 @@
   // dx = px do desenho por quadro (negativo: os pés vão para a esquerda, o personagem anda para a direita);
   // speed = px do desenho por segundo, com o sinal da direção em que o personagem anda.
   // slips: os pés que, no chão, andam diferente dessa velocidade (escorregam).
+  // a folga do escorregão: um passo no chão que foge mais que isso da medida (px por quadro) é um escorregão
+  const slipTol = (dx) => Math.max(0.75, Math.abs(dx) * 0.15);
   function gait(model, anim) {
     if (!anim || !anim.feet || !anim.feet.length) return null;
     model._gait = model._gait || new Map();
@@ -522,7 +524,7 @@
     const dx = all.length ? median(all) : null;
     const r = { anim, feet, dx, speed: dx === null ? null : -dx * anim.fps, slips: [] };
     if (dx !== null) {
-      const tol = Math.max(0.75, Math.abs(dx) * 0.15);
+      const tol = slipTol(dx);
       for (const ft of feet) {
         if (!ft.steps.length) continue;
         const lo = Math.min(...ft.steps), hi = Math.max(...ft.steps);
@@ -531,6 +533,24 @@
     }
     model._gait.set(anim.name, r);
     return r;
+  }
+  // Os quadros em que cada pé escorrega (a folha de conferência, --contact): o pé está no chão no quadro e no anterior,
+  // mas andou diferente da medida, com a mesma folga do aviso. Map nome do pé → Set dos quadros; vazio sem medida.
+  function slipFrames(model, anim) {
+    const g = gait(model, anim), out = new Map();
+    if (!g) return out;
+    const N = anim.frames, tol = g.dx === null ? 0 : slipTol(g.dx);
+    for (const ft of g.feet) {
+      const set = new Set();
+      if (g.dx !== null && N > 1) {
+        for (let f = 0; f < (anim.loop ? N : N - 1); f++) {
+          const h = (f + 1) % N;
+          if (ft.on[f] && ft.on[h] && Math.abs(ft.pts[h][0] - ft.pts[f][0] - g.dx) > tol) set.add(h);
+        }
+      }
+      out.set(ft.name, set);
+    }
+    return out;
   }
   // phase (troca na mesma fase): onde a passada "começa" numa animação, em quadros (pode ser fracionário). Com feet=, o
   // meio do apoio do primeiro pé (o trecho mais longo em que ele fica no chão, dando a volta no fim do loop); sem
@@ -2872,7 +2892,7 @@
   }
 
   W.scene = {
-    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

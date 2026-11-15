@@ -92,6 +92,157 @@
     return out;
   }
 
+  // Folha de conferência (linha de comando --contact): os quadros em grade, cada um com o número no canto, e uma linha
+  // por animação (no filme, por plano) com o nome no começo; uma animação longa quebra em mais linhas (o.cols). Embaixo
+  // de cada quadro, as marcas: uma bolinha por pé do feet= (cheia no chão, vazia no ar, vermelha quando escorrega), o
+  // nome dos eventos (em laranja, com um canto laranja no quadro) e, no filme, o tempo. O fundo é sempre claro: a folha
+  // serve para conferir, não vai para o jogo.
+  const CONTACT = { bg: '#f4f3ef', ink: '#222222', soft: '#6b6b6b', line: '#d3d0c8', event: '#ea580c', slip: '#dc2626', feet: ['#0d9488', '#2563eb', '#9333ea', '#65a30d', '#db2777', '#0891b2'] };
+  const CONTACT_MAX = 16384;
+  // rows: [{ title, info, cells: [{ img, num, feet: [{ c, on, slip }], events: [nomes], time }] }]; o.feet = os nomes
+  // dos pés, na ordem das cores (para a legenda em cima)
+  function contactGrid(rows, o) {
+    const font = '11px ui-monospace, Menlo, Consolas, monospace', bold = 'bold 13px ui-monospace, Menlo, Consolas, monospace';
+    const probe = document.createElement('canvas').getContext('2d');
+    const textW = (t, f) => { probe.font = f; return Math.ceil(probe.measureText(t).width); };
+    const fit = (t, w) => { if (textW(t, font) <= w) return t; while (t.length > 1 && textW(t + '…', font) > w) t = t.slice(0, -1); return t + '…'; };
+    const M = 14, gap = 8, sep = 16;
+    const cw = Math.max(...rows.flatMap((r) => r.cells.map((c) => c.img.width)));
+    const ch = Math.max(...rows.flatMap((r) => r.cells.map((c) => c.img.height)));
+    const cols = Math.max(1, Math.min(o.cols, Math.max(...rows.map((r) => r.cells.length))));
+    const labelW = Math.max(...rows.map((r) => Math.max(textW(r.title, bold), r.info ? textW(r.info, font) : 0))) + 18;
+    // a legenda: a cor de cada pé e o que as marcas querem dizer
+    const legend = [];
+    (o.feet || []).forEach((name, i) => legend.push({ dot: CONTACT.feet[i % CONTACT.feet.length], text: name }));
+    if (legend.length) legend.push({ text: 'cheia = no chão, vazia = no ar' }, { dot: CONTACT.slip, text: 'escorrega' });
+    if (rows.some((r) => r.cells.some((c) => c.events && c.events.length))) legend.push({ flag: true, text: 'evento' });
+    const legendW = legend.reduce((w, it) => w + (it.dot || it.flag ? 14 : 0) + textW(it.text, font) + 16, 0);
+    // a altura de cada animação: as linhas da grade (o quadro e a faixa das marcas embaixo), e no mínimo o nome
+    let y = M + (legend.length ? 26 : 0);
+    const lay = rows.map((r) => {
+      const feetH = r.cells.some((c) => c.feet && c.feet.length) ? 14 : 0;
+      const textH = r.cells.some((c) => (c.events && c.events.length) || c.time) ? 15 : 0;
+      const lineH = ch + 4 + feetH + textH, lines = Math.ceil(r.cells.length / cols);
+      const L = { r, top: y, lineH, feetH };
+      y += Math.max(lines * lineH + (lines - 1) * gap, r.info ? 34 : 18) + sep;
+      return L;
+    });
+    const width = Math.max(M * 2 + labelW + cols * (cw + gap) - gap, M * 2 + legendW), height = y - sep + M;
+    if (width > CONTACT_MAX || height > CONTACT_MAX) {
+      const e = new Error(`a folha de conferência ficaria grande demais (${width}×${height}; o limite é ${CONTACT_MAX})`);
+      e.big = true;
+      throw e;
+    }
+    const out = document.createElement('canvas');
+    out.width = width;
+    out.height = height;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = CONTACT.bg;
+    ctx.fillRect(0, 0, width, height);
+    ctx.textBaseline = 'middle';
+    const dot = (x, cy, c, fill) => {
+      ctx.beginPath();
+      ctx.arc(x, cy, fill ? 4.5 : 3.8, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = c; ctx.fill(); } else { ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.stroke(); }
+    };
+    const flag = (x, fy, size) => { ctx.fillStyle = CONTACT.event; ctx.beginPath(); ctx.moveTo(x, fy); ctx.lineTo(x + size, fy); ctx.lineTo(x + size, fy + size); ctx.closePath(); ctx.fill(); };
+    if (legend.length) {
+      let x = M;
+      const ly = M + 8;
+      ctx.font = font;
+      for (const it of legend) {
+        if (it.dot) { dot(x + 5, ly, it.dot, true); x += 14; }
+        if (it.flag) { flag(x, ly - 5, 10); x += 14; }
+        ctx.fillStyle = CONTACT.soft;
+        ctx.fillText(it.text, x, ly);
+        x += textW(it.text, font) + 16;
+      }
+    }
+    lay.forEach((L, k) => {
+      const { r, top, lineH, feetH } = L;
+      if (k) {
+        ctx.strokeStyle = CONTACT.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(M, Math.round(top - sep / 2) + 0.5);
+        ctx.lineTo(width - M, Math.round(top - sep / 2) + 0.5);
+        ctx.stroke();
+      }
+      ctx.fillStyle = CONTACT.ink;
+      ctx.font = bold;
+      ctx.fillText(r.title, M, top + 9);
+      if (r.info) { ctx.fillStyle = CONTACT.soft; ctx.font = font; ctx.fillText(r.info, M, top + 26); }
+      r.cells.forEach((c, i) => {
+        const x = M + labelW + (i % cols) * (cw + gap), cy = top + Math.floor(i / cols) * (lineH + gap);
+        const w = c.img.width, h = c.img.height;
+        ctx.drawImage(c.img, x, cy);
+        const slip = c.feet && c.feet.some((f) => f.slip), ev = c.events && c.events.length;
+        ctx.strokeStyle = slip ? CONTACT.slip : CONTACT.line;
+        ctx.lineWidth = slip ? 2 : 1;
+        if (slip) ctx.strokeRect(x - 1, cy - 1, w + 2, h + 2);
+        else ctx.strokeRect(x - 0.5, cy - 0.5, w + 1, h + 1);
+        // o número do quadro no canto
+        ctx.font = font;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(x, cy, textW(c.num, font) + 6, 15);
+        ctx.fillStyle = CONTACT.ink;
+        ctx.fillText(c.num, x + 3, cy + 8);
+        if (ev) flag(x + w - 12, cy, 12);
+        // embaixo: os pés, depois o tempo (filme) e os eventos
+        let my = cy + h + 4;
+        if (feetH) { (c.feet || []).forEach((f, j) => dot(x + 6 + j * 13, my + 6, f.slip ? CONTACT.slip : f.c, f.on || f.slip)); my += feetH; }
+        let tx = x;
+        if (c.time) { ctx.fillStyle = CONTACT.soft; const t = fit(c.time, w); ctx.fillText(t, tx, my + 6); tx += textW(t, font) + 6; }
+        if (ev && tx < x + w - 8) { ctx.fillStyle = CONTACT.event; ctx.fillText(fit(c.events.join(', '), x + w - tx), tx, my + 6); }
+      });
+    });
+    return out;
+  }
+
+  // A folha de conferência de um desenho: names = as animações, uma por linha. Todas com o mesmo recorte (para
+  // comparar as posições), ampliadas até uns 160 px no lado maior; o.scale (-s) escolhe a escala. o.cols: padrão 12.
+  function contactCanvas(model, names, o) {
+    const rect0 = contentRect(model, names, o.margin);
+    const rect = W.art ? W.art.snapRect(model, rect0) : rect0;
+    const z = o.scale || Math.max(0.1, Math.min(4, 160 / Math.max(rect.w, rect.h)));
+    const feet = [];
+    for (const name of names) { const g = S.gait(model, model.animMap.get(name)); if (g) for (const ft of g.feet) if (!feet.includes(ft.name)) feet.push(ft.name); }
+    const rows = names.map((name) => {
+      const a = model.animMap.get(name), g = S.gait(model, a), slips = S.slipFrames(model, a);
+      const cells = [];
+      for (let f = 0; f < a.frames; f++) {
+        // sem os efeitos de tela (oldfilm, vhs…), como na sprite sheet: a folha mostra o desenho
+        const img = S.renderImage(model, S.makePose(model, name, f), { scale: z, rect, transparent: false, guides: o.guides, screen: false });
+        cells.push({
+          img, num: String(f), events: a.events.filter((e) => e.frame === f).map((e) => e.name),
+          feet: g ? g.feet.map((ft) => ({ c: CONTACT.feet[feet.indexOf(ft.name) % CONTACT.feet.length], on: ft.on[f], slip: slips.get(ft.name).has(f) })) : [],
+        });
+      }
+      return { title: name, info: `${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}`, cells };
+    });
+    return contactGrid(rows, { cols: o.cols || 12, feet });
+  }
+
+  // O tempo embaixo dos quadros do filme, no jeito que o --time aceita: 0s, 0.5s, 12s, 1m05s
+  function contactTime(t) {
+    const r = Math.round(t * 100) / 100;
+    if (r < 60) return `${r}s`;
+    const m = Math.floor(r / 60), sec = Math.round((r - m * 60) * 100) / 100;
+    return `${m}m${sec < 10 ? '0' : ''}${sec}s`;
+  }
+
+  // A folha de conferência de um filme: groups = [{ title, info, frames: [quadros do filme] }], uma linha por plano, com o
+  // número do quadro no canto e o tempo embaixo. Cada quadro com uns 240 px no lado maior; o.scale (-s) escolhe a
+  // escala. o.fps; o.subs e o.lang: as legendas desenhadas, como no PNG de um quadro. o.cols: padrão 8.
+  function filmContactCanvas(model, groups, o) {
+    const z = o.scale || Math.max(0.02, 240 / Math.max(model.canvas.w, model.canvas.h));
+    const rows = groups.map((g) => ({
+      title: g.title, info: g.info,
+      cells: g.frames.map((f) => ({ img: W.film.renderFrame(model, f, { scale: z, transparent: false, subs: o.subs, lang: o.lang }), num: String(f), time: contactTime(f / o.fps) })),
+    }));
+    return contactGrid(rows, { cols: o.cols || 8 });
+  }
+
   function svgText(model, animName, frame, o) {
     const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
     return W.svg.render(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides });
@@ -893,5 +1044,5 @@
     };
   }
 
-  W.exporter = { imageCanvas, trajectoryCanvas, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg };
+  W.exporter = { imageCanvas, trajectoryCanvas, contactCanvas, filmContactCanvas, contactTime, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg };
 })(window.Weasel = window.Weasel || {});

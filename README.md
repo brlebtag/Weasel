@@ -86,6 +86,7 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.webp`, `.svg`, `.t
 | PNG da pose parada | `node cli/weasel.js exemplos/cavaleiro.weasel -o cavaleiro.png` |
 | JPG de um quadro, em 2× e recortado | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --frame 11 -s 2 --trim -o pulo.jpg` |
 | Um PNG por quadro | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --frames -o quadros/pulo.png` |
+| Folha de conferência: os quadros numerados, uma linha por animação, com os eventos, os pés no chão e o escorregão | `node cli/weasel.js exemplos/cavaleiro.weasel --contact -o folha.png` |
 | SVG vetorial | `node cli/weasel.js exemplos/coruja.weasel -o coruja.svg` |
 | Texto de um desenho com `art ascii` | `node cli/weasel.js meu.weasel -o meu.txt` |
 | GIF de uma animação | `node cli/weasel.js exemplos/cavaleiro.weasel -a jump --trim -t -o pulo.gif` |
@@ -115,6 +116,7 @@ No `.tscn`, `--no-normal` tira o normal map, `--no-mirror` não gera o lado espe
 | Só um plano, ou só um trecho | `--shot pulo` · `--from 10s --to 20s` (também `48f`, `1m30s` ou `00:01:12`) |
 | Sequência de PNG | `node cli/weasel.js exemplos/filme.weasel --frames -o quadros/q.png` |
 | Um quadro (capa, miniatura) | `node cli/weasel.js exemplos/filme.weasel -o capa.png --time 4s` |
+| Folha de conferência: uma linha por plano, um quadro a cada segundo (`--contact=5`: a cada 5), com o tempo | `node cli/weasel.js exemplos/filme.weasel --contact -o folha.png` |
 | Planos, tempos, atores, sons e legendas | `node cli/weasel.js exemplos/filme.weasel --info` |
 | Só o som de referência (a mistura dos `audio`) | `node cli/weasel.js exemplos/filme.weasel -o som.wav` |
 | Revisão com as legendas desenhadas | `node cli/weasel.js exemplos/filme.weasel -o revisao.mp4 -s 0.5 --burn-subs` |

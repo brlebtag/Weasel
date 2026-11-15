@@ -547,6 +547,7 @@ Para aprender: [capítulo 10](10-filme.md).
 | `--guides` | inclui as camadas `guide` (caixas, pontos e grade do tileset só aparecem no editor) |
 | `--refs` | desenha as imagens guia (`ref`) por baixo, para conferir o traço |
 | `--trajectory[=pontos]` | png/jpg: o caminho dos pés (`feet=`) ou dos pontos em todos os quadros, numerado |
+| `--contact[=N]` | png/jpg: folha de conferência, com os quadros numerados, uma linha por animação, os eventos, os pés no chão e o escorregão em vermelho; no filme, uma linha por plano e um quadro a cada N segundos (padrão automático) |
 | `--check` · `--info` | só procurar erros · mostrar camadas, ossos, animações e eventos |
 | `--watch` | exportar de novo a cada mudança |
 | `-e "código"` · `-` | código direto (`;` separa linhas) · ler da entrada padrão |
