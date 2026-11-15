@@ -1,0 +1,39 @@
+# teste: a virada (anim … from= to= turn). O bicho de lado (idle_right) vira de frente (idle_down): as partes
+# de nome parecido casam sozinhas (corpoL vira corpo), pairs= casa o olho de lado com o esquerdo, born= diz que o
+# olho direito nasce da cabeça de lado; a barriga nasce do corpo, a cauda some, e a sombra (nas duas vistas) fica.
+canvas 120 120 bg=none
+palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 sombra=#00000033
+
+godot body=character root=60,110 rig=bones
+bone corpo pivot=60,100
+bone cabeca pivot=60,66 parent=corpo
+
+layer chao
+ellipse sombra 60,106 26,5 c=sombra
+
+layer lado only=idle_right
+ellipse caudaL 34,86 12,6 c=pelo ink=3 bone=corpo
+ellipse corpoL 58,84 22,18 c=pelo ink=3 bone=corpo
+ellipse cabecaL 66,52 16,15 c=pelo ink=3 bone=cabeca
+ellipse focinhoL 81,57 7,5 c=claro ink=2 bone=cabeca
+ellipse olhoL 72,47 3,3 c=ink bone=cabeca
+
+layer frente only=idle_down
+ellipse corpo 60,84 22,18 c=pelo ink=3 bone=corpo
+ellipse barriga 60,88 12,10 c=claro bone=corpo
+ellipse cabeca 60,52 16,15 c=pelo ink=3 bone=cabeca
+ellipse focinho 60,58 7,5 c=claro ink=2 bone=cabeca
+ellipse olhoE 54,47 3,3 c=ink bone=cabeca
+ellipse olhoD 66,47 3,3 c=ink bone=cabeca
+
+anim idle_right frames=8 fps=8
+key 0 corpo=0,0,0 cabeca=0,0,0
+key 4 corpo=0,2,0 cabeca=0,0,4
+key 8 corpo=0,0,0 cabeca=0,0,0
+
+anim idle_down frames=8 fps=8
+key 0 corpo=0,0,0
+key 4 corpo=0,2,0
+key 8 corpo=0,0,0
+
+anim vira from=idle_right to=idle_down frames=4 every=4 turn pairs=olhoL->olhoE born=olhoD->cabecaL

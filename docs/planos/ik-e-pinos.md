@@ -1,32 +1,25 @@
 # IK e pinos: o que ficou de fora
 
-**Situação:** sem data, nada combinado. São as sobras da 1.28.0 (pinos `@osso` e `ik`) e as ideias da conversa sobre a pata da capivara (11/11/2026).
+**Situação:** sem data, nada combinado. Revisto em 15/11/2026: das sobras da 1.28.0 (pinos `@osso` e `ik`) e das ideias da pata da capivara (11/11/2026), ficaram só duas ideias pequenas, ambas no editor.
 
-## Sobras da 1.28.0
-- **Animar o pé direto numa `key`:** `key 6 perna.foot=…`. Hoje se anima um osso de alvo (`target=`).
-- **`parent=` para um pé fixo:** o alvo do IK fica preso a outro osso, ou ao chão.
-- **`only=anims`:** o IK só vale em algumas animações. Num pulo, por exemplo, a perna fica solta.
-- **Peso `mix=` que se anima:** liga e desliga o IK aos poucos.
-- **Uma alça no editor para arrastar o pé** e escrever as `key`.
-- **Cadeias com mais de 2 ossos.** Hoje o IK move 2 ossos.
-- **Pinos por região:** `pins=osso@raio` prende todos os pontos perto de um osso.
-  - A seleção com caixa que escreve `@osso` já saiu na 1.29.0: é a ferramenta Prender.
-- **A emenda da anca da capivara** deslizando pelo contorno.
+## O que ainda vale
 
-## Da pata da capivara (11/11/2026)
+1. **"Testar giro" no Prender**
+   - Hoje, para ver um osso girar, é preciso escolher uma animação, e arrastar o osso escreve uma `key` no código.
+   - A ideia: no Prender, na pose parada, arrastar a alça de giro de um osso gira só na tela, sem escrever nada, e volta ao soltar.
+   - Serve para achar vão e sobra enquanto se prendem os pontos.
+   - **Weasel:** só o editor; a linguagem não muda. **Jogo:** nada muda.
+2. **Uma alça no editor para arrastar o pé do `ik`** e escrever as `key` do alvo.
+   - **Weasel:** só o editor; mais trabalho que o item 1. **Jogo:** nada muda.
 
-O vão e a sobra entre a perna e a pata já têm solução hoje: prender os pontos de baixo da perna no osso da pata, com a ferramenta Prender (tecla P).
-- **Pontos abaixo da junta:** peso 1 no osso da pata. Eles giram junto com a pata, e o contorno acompanha.
-- **Os dois pontos na altura da junta:** peso 0.5, para a perna dobrar numa curva e não num bico.
-- **O pivô do osso da pata:** no centro do tornozelo, onde a perna dobraria de verdade.
-- **Outra saída, a junta redonda:** o alto da pata vira um arco com centro no pivô, e a ponta da perna cobre esse arco. Nunca abre vão, mas é preciso mudar o desenho.
+## O que saiu, e por quê
 
-**Ideias para o Weasel:**
-- **"Testar giro" no Prender:**
-  - Hoje, para ver um osso girar, é preciso escolher uma animação, e arrastar o osso escreve uma `key` no código.
-  - A ideia: no Prender, na pose parada, arrastar a alça de giro de um osso gira só na tela, sem escrever nada, e volta ao soltar.
-  - Serve para achar vão e sobra enquanto se prendem os pontos.
-  - É uma mudança pequena, só no editor.
-- **Soldar um ponto a outro ponto** (algo como `x,y@=pata.3`): **não recomendo.**
-  - Dois pontos no mesmo lugar, presos ao mesmo osso com o mesmo peso, já andam juntos.
-  - Seria sintaxe nova antes da [limpeza da linguagem](limpeza-da-linguagem.md).
+- **`parent=` para um pé fixo:** o `ik … foot=chão,x` já prende o pé no chão, e no jogo o personagem anda no lugar, com a passada medida pelo `feet=`.
+- **Pinos por região (`pins=osso@raio`):** a ferramenta Prender (1.29.0) já prende com uma caixa e põe cada ponto no osso mais perto.
+- **Soldar um ponto a outro (`x,y@=pata.3`):** dois pontos no mesmo lugar, presos ao mesmo osso com o mesmo peso, já andam juntos.
+- **`only=anims` e `mix=` que se anima no `ik`:** o caso era o pulo, e ele já funciona: fora do alcance, a perna estica e a pata sai do chão. Para mais controle, `target=` com um osso de alvo animado. Volta só se um personagem de verdade precisar.
+- **Cadeias com mais de 2 ossos:** nenhum personagem pediu. Pode voltar com as patas da aranha, se a [metamorfose](metamorfose.md) andar.
+- **Animar o pé direto numa `key`:** `target=` com um osso de alvo faz o mesmo, com uma linha a mais.
+- **A emenda da anca da capivara:** era de um desenho só, e prender os pontos já resolve.
+
+A solução da pata da capivara (prender os pontos de baixo da perna no osso da pata, peso 0.5 na junta, pivô no tornozelo) já funciona hoje com a ferramenta Prender (tecla P).

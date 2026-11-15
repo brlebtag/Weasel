@@ -1,0 +1,16 @@
+canvas   120 × 120, fundo transparente
+camadas  3
+  chao             1 item(ns)
+  lado             5 item(ns)  only=idle_right
+  frente           6 item(ns)  only=idle_down
+formas   12
+ossos    corpo, cabeca←corpo
+animações 4
+  idle_right     8 quadros, 8 fps
+  idle_down      8 quadros, 8 fps
+  vira_0_right   4 quadros, 8 fps, once, virada vira: de idle_right (depois do quadro 0) para idle_down
+                 vira: olhoL->olhoE, corpoL->corpo, cabecaL->cabeca, focinhoL->focinho
+                 nascem: barriga->corpoL, olhoD->cabecaL
+                 somem: caudaL->corpo
+  vira_4_right   4 quadros, 8 fps, once, virada vira: de idle_right (depois do quadro 4) para idle_down
+godot    character, raiz 60,110, esqueleto (Bone2D)

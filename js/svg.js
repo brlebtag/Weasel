@@ -323,15 +323,26 @@
 
     const parts = [];
     if (!o.transparent) parts.push(`<rect x="${n2(rect.x)}" y="${n2(rect.y)}" width="${n2(rect.w)}" height="${n2(rect.h)}" ${c.bg ? fillA(c.bg, null) : 'fill="#ffffff"'}/>`);
-    for (const layer of S.orderLayers(model, pose)) {
-      if (!S.layerVisible(layer, pose, o)) continue;
-      const lp = pose.lprops.get(layer.name) || {};
+    // a virada (anim … turn): as partes de S.turnDraws, cada uma na pose da vista que a carrega; as seguidas da
+    // mesma camada vão juntas (como no canvas), sem sombra projetada nem rastro
+    const runs = [];
+    if (pose.turn) {
+      for (const d of S.turnDraws(model, pose)) {
+        const r = runs[runs.length - 1];
+        if (r && r.layer === d.it.layer) r.draws.push(d);
+        else runs.push({ layer: d.it.layer, draws: [d] });
+      }
+    } else for (const layer of S.orderLayers(model, pose)) runs.push({ layer, draws: null });
+    for (const { layer, draws } of runs) {
+      const LP = draws ? draws[0].sp : pose;
+      if (!S.layerVisible(layer, LP, o)) continue;
+      const lp = LP.lprops.get(layer.name) || {};
       if (lp.show === 0) continue;
       const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
       if (alpha <= 0.001) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
       const useOf = (ref, extra) => `<use href="#${ref}" xlink:href="#${ref}"${extra || ''}/>`;
-      if (layer.cast && lighting) {
+      if (layer.cast && lighting && !draws) {
         // silhueta: a própria camada ou as camadas de from=
         const sil = S.castSources(layer, layer.items).filter((s) => S.layerVisible(s.layer, pose, o)).map((s) => layerBody(s.layer, s.items, pose, false)).join('');
         if (sil) {
@@ -343,13 +354,13 @@
           }
         }
       }
-      const body = layerBody(layer, layer.items, pose, lit);
+      const body = draws ? draws.map((d) => layerBody(layer, [d.it], d.sp, lit)).join('') : layerBody(layer, layer.items, pose, lit);
       if (!body) continue;
       const lid = id('L');
       defs.push(`<g id="${lid}">${body}</g>`);
       const use = (extra) => useOf(lid, extra);
       let g = '';
-      if (layer.trail && pose.anim) {
+      if (layer.trail && pose.anim && !draws) {
         for (let k = layer.trail.n; k >= 1; k--) {
           const tb = layerBody(layer, layer.items, S.makePose(model, pose.anim.name, pose.frame - k), lit);
           if (!tb) continue;

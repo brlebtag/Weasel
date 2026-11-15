@@ -249,22 +249,26 @@
     }
     anims.forEach((p, n) => {
       const a = p.anim, dt = 1 / a.fps, rows = perAnim[n];
+      // uma peça de transição pode tocar de trás para a frente (trocar()): o Godot só põe o valor de uma pista
+      // discreta quando passa pela key, então cada pista ganha uma key logo antes do fim (a do fim exato ele
+      // pula), com o valor do último quadro
+      const vt = (i, path, keys) => valueTrack(i, path, a.blendOf && keys.length ? keys.concat([[a.frames * dt - 0.0001, keys[keys.length - 1][1]]]) : keys);
       animBlock(`Animation_${n}`, p.name, a.frames * dt, a.loop, dt, (add) => {
-        add((i) => valueTrack(i, 'Sprite:animation', [[0, sname(a.name)]]));
-        add((i) => valueTrack(i, 'Sprite:frame', rows.map((_, f) => [f * dt, String(f)])));
-        if (flips) { add((i) => valueTrack(i, 'Sprite:flip_h', [[0, p.flip ? 'true' : 'false']])); add((i) => valueTrack(i, 'Sprite:offset', [[0, vec(p.flip ? offFlip : off)]])); }
+        add((i) => vt(i, 'Sprite:animation', [[0, sname(a.name)]]));
+        add((i) => vt(i, 'Sprite:frame', rows.map((_, f) => [f * dt, String(f)])));
+        if (flips) { add((i) => vt(i, 'Sprite:flip_h', [[0, p.flip ? 'true' : 'false']])); add((i) => vt(i, 'Sprite:offset', [[0, vec(p.flip ? offFlip : off)]])); }
         boxes.forEach((b, k) => {
           if (b.movePos) {
-            add((i) => valueTrack(i, `${b.path}:position`, changes(rows.map((row) => row[k].pos), dt)));
-            add((i) => valueTrack(i, `${b.path}:rotation`, changes(rows.map((row) => row[k].rot), dt)));
+            add((i) => vt(i, `${b.path}:position`, changes(rows.map((row) => row[k].pos), dt)));
+            add((i) => vt(i, `${b.path}:rotation`, changes(rows.map((row) => row[k].rot), dt)));
           }
-          if (b.moveOn) add((i) => valueTrack(i, `${b.path}:disabled`, changes(rows.map((row) => row[k].off), dt)));
+          if (b.moveOn) add((i) => vt(i, `${b.path}:disabled`, changes(rows.map((row) => row[k].off), dt)));
         });
         points.forEach((pt, k) => {
           if (!pt.movePos) return;
           const prow = perAnimP[n];
-          add((i) => valueTrack(i, `${pt.node}:position`, changes(prow.map((row) => row[k].pos), dt)));
-          add((i) => valueTrack(i, `${pt.node}:rotation`, changes(prow.map((row) => row[k].rot), dt)));
+          add((i) => vt(i, `${pt.node}:position`, changes(prow.map((row) => row[k].pos), dt)));
+          add((i) => vt(i, `${pt.node}:rotation`, changes(prow.map((row) => row[k].rot), dt)));
         });
         if (a.events.length) add((i) => methodTrack(i, 'AnimationPlayer', eventKeys(a.events, dt)));
       });

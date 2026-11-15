@@ -1,10 +1,31 @@
 # Virada e metamorfose: um desenho virando outro
 
-**Situação:** análise e protótipo da virada feitos em 13/11/2026, fora do Weasel. Nada implementado. Falta você decidir se vale e dar o "pode fazer".
+**Situação:** decidido em 15/11/2026, em duas etapas. A etapa 1, a virada (`anim … turn`), saiu na 1.45.0 ([como ficou](#como-ficou-a-virada-1450)). A etapa 2, a metamorfose no filme (`at … morph=`), vem depois, na 1.46.0, com o seu "pode fazer".
 
 **Origem:** duas perguntas suas:
 - num filme, um personagem que muda de forma (uma aranha virando jacaré);
 - num jogo de plataforma, um personagem de lado (com ossos) que em algum momento fica de frente (também com ossos).
+
+## O que foi decidido (15/11/2026)
+
+1. **Duas etapas:** primeiro a virada (editor, GIF, sprite sheet e Godot); depois a metamorfose no filme.
+2. **A palavra `turn`** no fim da linha da transição: `anim vira from=idle_right to=idle_down frames=6 turn`. Sem `turn`, a transição continua igual.
+3. **Os nomes `pairs=` e `born=`,** com `->` entre as duas partes nos dois: `pairs=olhoL->olhoE` e `born=olhoD->cabecaL`. Os dois-pontos do protótipo não servem: dentro de uma linha, `:` começa a lista de pontos.
+4. **Com `rig=bones`, a virada sai quadro a quadro:** o personagem inteiro vira uma imagem por quadro durante a virada, e as peças presas aos ossos se escondem.
+
+## Como ficou a virada (1.45.0)
+
+- **A linha:** `anim vira from=idle_right to=idle_down frames=4 turn pairs=olhoL->olhoE born=olhoD->cabecaL`. As peças são as da transição (`vira_0_right`…), com `frames=`, `every=`, `fps=`, o lado espelhado e o `trocar()`.
+- **Os pares sozinhos:** pelo nome (`corpoL` e `corpo`), pelo osso, pela cor e pela distância. A mesma forma nas duas vistas (uma camada sem `only=`) casa com ela mesma.
+- **As partes sem par** nascem da parte casada mais perto (ou somem nela), atrás dela, a não ser que caibam dentro dela (o olho na cabeça). `born=` escolhe a parte; ele também desfaz um par automático.
+- **O desenho:** o contorno de cada par vai de uma vista à outra (72 pontos, alinhados uma vez na pose parada); a cor, o contorno e a opacidade se misturam; as partes que nascem crescem com o contorno afinado. A ordem de pintura é a de uma vista na primeira metade e a da outra na segunda. Os efeitos, o clip e o `cut` de cada camada valem.
+- **Em todo lugar:** editor, PNG, SVG, GIF, sprite sheet, normal map, estilos de arte (`art`).
+- **`--info`:** as linhas `vira:`, `nascem:` e `somem:`, na escrita do `pairs=` e do `born=`.
+- **Godot com `rig=bones`:** a peça `virada` (um `Sprite2D` quadro a quadro) aparece só nas peças da virada; as outras peças se escondem nelas. A exportação avisa.
+- **Uma correção que veio junto:** uma peça tocada de trás para a frente (a volta do `trocar()`) não aplicava no começo as pistas que trocam de uma vez. Na cena por quadros, o sprite ficava na peça errada (desde a 1.43.0); com esqueleto, a virada não aparecia. Cada pista dessas ganhou uma key logo antes do fim da peça.
+- **O que ficou como defeito conhecido** (no [capítulo 13](../guia/13-problemas.md)):
+  - o meio da virada "derrete" quando as formas são muito diferentes; poucos quadros e bons pares ajudam;
+  - a virada pela esquerda é a da direita espelhada: termina na frente espelhada. Com uma frente assimétrica (a espada do furão), há um pulo no último quadro. Desenhar a virada da esquerda à parte fica para depois, se fizer falta.
 
 ## Três coisas parecidas, mas diferentes
 
@@ -66,9 +87,9 @@ anim vira_frente from=idle_right to=idle_down frames=6
   - as partes que nascem pequenas precisam ter o contorno afinado enquanto crescem, senão viram bolinhas pretas;
   - os pontos de onde cada parte nasce foram escolhidos à mão.
 
-### Para virar recurso
-- **Casar as partes sozinho:** pelo osso e pela posição (os nomes mudam entre as vistas: `corpoL` e `corpo`). Você corrige só o que sair errado, com `pairs=corpoL:corpo,…`.
-- **De onde nasce cada parte nova:** da parte casada mais perto, atrás de quem a esconde. Você corrige com algo como `born=olhoD:focinhoL`.
+### Para virar recurso (o plano de antes; o que saiu está em [como ficou](#como-ficou-a-virada-1450))
+- **Casar as partes sozinho:** pelo osso e pela posição (os nomes mudam entre as vistas: `corpoL` e `corpo`). Você corrige só o que sair errado, com `pairs=corpoL->corpo,…`.
+- **De onde nasce cada parte nova:** da parte casada mais perto, atrás de quem a esconde. Você corrige com algo como `born=olhoD->focinhoL`.
 - **No jogo:**
   - a virada sai como uma animação `once` comum, com poucos quadros na sprite sheet, tocada com `tocar()`;
   - se ela sempre começa da pose parada, é uma peça só; se pode começar de qualquer quadro do andar, entra a regra das peças do [plano das transições](transicoes.md);
@@ -103,11 +124,6 @@ at 5s aranha.morph=jacare dur=1.5s
   - nenhuma sintaxe existente muda.
 - **Jogo:** só ganha quadros quem declarar uma virada.
 
-## Ordem sugerida
-1. A virada, junto com as [transições](transicoes.md) (o mesmo `anim … from= to=`).
-2. A metamorfose no filme, depois, reaproveitando o mesmo código.
-
-## Para decidir
-1. A virada entra junto com as transições, ou separada?
-2. Os nomes: `pairs=` e `born=`, ou outros?
-3. A metamorfose no filme interessa agora, ou fica para depois?
+## Ordem
+1. A virada: feita na 1.45.0.
+2. A metamorfose no filme (`at 5s aranha.morph=jacare dur=1.5s`), reaproveitando o mesmo código: a etapa 2, na 1.46.0.

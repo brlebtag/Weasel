@@ -845,6 +845,89 @@ func _physics_process(_delta: float) -> void:
 - Pode chamar o `trocar()` a cada quadro, como o `tocar()`: ele só começa uma troca quando a animação muda. Enquanto a peça toca, não chame `tocar()`: ele corta a peça.
 - Para achar as peças, a cena guarda em `transicoes = {…}` de onde para onde vai cada transição, os quadros de onde as peças partem e os nomes delas. Essa linha só aparece quando o arquivo tem `from=` e `to=`.
 
+## Virar de lado para a frente: `turn`
+
+Num jogo visto de cima, o personagem costuma ter uma vista para cada direção: de lado (`idle_right`), de frente (`idle_down`), de costas (`idle_up`). Cada vista é outro desenho, em camadas com `only=`. Uma transição comum não ajuda aqui: ela mistura as poses, mas as partes de uma vista não existem na outra, e a troca acontece de uma vez no meio da peça.
+
+Com `turn` no fim da linha, a peça é uma **virada**: as partes da vista de lado se transformam nas da vista de frente.
+
+<!-- gerar: img/09_virada.png --contact -a idle_right,vira_0_right,idle_down -->
+```weasel
+canvas 120 120 bg=none
+palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 sombra=#00000033
+
+godot root=60,110
+bone corpo pivot=60,100
+bone cabeca pivot=60,66 parent=corpo
+
+layer chao
+ellipse sombra 60,106 26,5 c=sombra
+
+layer lado only=idle_right
+ellipse caudaL 34,86 12,6 c=pelo ink=3 bone=corpo
+ellipse corpoL 58,84 22,18 c=pelo ink=3 bone=corpo
+ellipse cabecaL 66,52 16,15 c=pelo ink=3 bone=cabeca
+ellipse focinhoL 81,57 7,5 c=claro ink=2 bone=cabeca
+ellipse olhoL 72,47 3,3 c=ink bone=cabeca
+
+layer frente only=idle_down
+ellipse corpo 60,84 22,18 c=pelo ink=3 bone=corpo
+ellipse barriga 60,88 12,10 c=claro bone=corpo
+ellipse cabeca 60,52 16,15 c=pelo ink=3 bone=cabeca
+ellipse focinho 60,58 7,5 c=claro ink=2 bone=cabeca
+ellipse olhoE 54,47 3,3 c=ink bone=cabeca
+ellipse olhoD 66,47 3,3 c=ink bone=cabeca
+
+anim idle_right frames=8 fps=8
+key 0 corpo=0,0,0 cabeca=0,0,0
+key 4 corpo=0,2,0 cabeca=0,0,4
+key 8 corpo=0,0,0 cabeca=0,0,0
+
+anim idle_down frames=8 fps=8
+key 0 corpo=0,0,0
+key 4 corpo=0,2,0
+key 8 corpo=0,0,0
+
+anim vira from=idle_right to=idle_down frames=4 every=4 turn pairs=olhoL->olhoE born=olhoD->cabecaL
+```
+
+![Folha de conferência com três linhas: o bicho de lado respirando, a peça vira_0_right em quatro quadros (o focinho vai para o meio da cabeça, a cauda some, a barriga e o segundo olho aparecem) e o bicho de frente respirando](img/09_virada.png)
+
+Repare:
+
+- **Cada parte acha o seu par** na outra vista, pelo nome (`corpoL` vira `corpo`, `cabecaL` vira `cabeca`), pelo osso e pelo lugar. O contorno de uma se transforma no da outra, e as cores e o contorno se misturam.
+- **`pairs=` casa à mão** quando o Weasel escolhe errado. Sozinho, ele casaria o olho de lado com o olho direito, que está mais perto; `pairs=olhoL->olhoE` diz que o olho de lado vira o esquerdo. Vários pares vão separados por vírgula: `pairs=olhoL->olhoE,brilhoL->brilhoE`.
+- **Uma parte que só existe numa vista nasce ou some.** Ela cresce de dentro de uma parte da outra vista (a barriga nasce do corpo) ou encolhe para dentro dela (a cauda some no corpo).
+- **`born=` diz de onde ela nasce** (ou para onde some): em `born=olhoD->cabecaL`, `olhoD` é a parte que só existe numa vista, e `cabecaL` é uma parte da outra. Vários vão separados por vírgula, como no `pairs=`.
+- Uma parte que nasce fica atrás da parte de onde vem, a não ser que caiba dentro dela (o olho nasce na frente da cabeça).
+- Na primeira metade da peça, a ordem de pintura é a da vista de lado; na segunda, a da vista de frente.
+- O que aparece nas duas vistas (a sombra, numa camada sem `only=`) fica como está.
+- O resto é como numa transição: `frames=`, `every=`, `fps=`, as peças `vira_0_right`…, o lado espelhado e o `trocar()`.
+- Sem `turn`, a linha é uma transição comum, e `pairs=` ou `born=` dão um aviso.
+
+### Conferir o que casou: `--info`
+
+O `--info` mostra o que o Weasel decidiu, uma vez por linha com `turn`:
+
+```
+  vira_0_right   4 quadros, 8 fps, once, virada vira: de idle_right (depois do quadro 0) para idle_down
+                 vira: olhoL->olhoE, corpoL->corpo, cabecaL->cabeca, focinhoL->focinho
+                 nascem: barriga->corpoL, olhoD->cabecaL
+                 somem: caudaL->corpo
+  vira_4_right   4 quadros, 8 fps, once, virada vira: de idle_right (depois do quadro 4) para idle_down
+```
+
+- `vira:` são os pares (as partes de mesmo nome nas duas vistas também casam, mas não aparecem).
+- `nascem:` e `somem:` dizem de onde cada parte nasce e para onde some.
+- As três linhas usam a escrita do `pairs=` e do `born=`: para corrigir, copie o par para a linha `anim` e troque a parte.
+
+### A virada no Godot
+
+- Na cena por quadros, as peças da virada são quadros como os outros.
+- Com esqueleto (`rig=bones`), uma forma que vira outra não cabe nos ossos. Por isso a virada sai **quadro a quadro**: o personagem inteiro, numa peça só chamada `virada` (um `Sprite2D` que troca de imagem). Ela aparece só enquanto uma peça da virada toca, e as outras peças se escondem nesse tempo. A exportação avisa isso.
+- O normal map da virada acompanha as formas de cada quadro.
+- O `trocar()` toca a virada como qualquer peça: de lado para a frente, e de trás para a frente na volta.
+
 ## Tileset: blocos para montar fases
 
 Com `tileset`, o canvas vira uma **folha de blocos** (de 32×32, por exemplo), e cada `tile` diz qual célula vira bloco e como ela colide:

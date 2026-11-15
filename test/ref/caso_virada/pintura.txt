@@ -1,0 +1,2 @@
+ellipse sombra @0.000 +0.474
+total 0.474

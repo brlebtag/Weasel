@@ -497,6 +497,17 @@ anim parado frames=24 fps=12          # ...mas só com uma animação tocando
 
 **Como resolver:** deixe a mola mais dura, com o número mais perto de 1 (`spring=0.8` em vez de `spring=0.3`), ou tire a mola desse osso e anime-o com `key`.
 
+### A virada (`turn`) parece derreter no meio
+
+**O que você vê:** nos quadros do meio de uma virada, as formas ficam moles, como se uma parte escorresse para a outra.
+
+**Por quê:** cada contorno vai, ponto a ponto, do desenho de lado ao de frente. No meio do caminho, ele não é nenhum dos dois desenhos: é uma média deles. Quanto mais diferentes as duas formas (um focinho comprido que vira um focinho curto), mais mole fica o meio.
+
+**Como resolver:**
+
+- Use poucos quadros (`frames=3` ou `4`, o padrão). O meio passa rápido, e no jogo o olho lê a virada como um giro.
+- Confira os pares no `--info` ([capítulo 9](09-jogo-godot.md#conferir-o-que-casou---info)). Uma parte casada com outra muito diferente derrete mais: case com outra (`pairs=`) ou desfaça o par com `born=`. Em `born=focinhoL->cabeca`, o focinho de lado some na cabeça, e o de frente nasce sozinho.
+
 ### O `draw` desenha do lado errado
 
 **Por quê:** `draw` (desenhar aos poucos) vai sempre **do primeiro ponto para o último**.
@@ -1057,6 +1068,14 @@ O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na m
 **Por quê:** o `tocar("idle")` não conhece as peças. E, chamado a cada quadro, ele corta a peça que estiver tocando.
 
 **Como resolver:** troque com `trocar("idle", velocity)` ([capítulo 9](09-jogo-godot.md#no-jogo-trocar)). Ele escolhe a peça, toca o `idle` no fim dela e pode ser chamado a cada quadro.
+
+### No Godot, a virada pela esquerda pula no último quadro
+
+**O que você vê:** a virada de lado para a frente (`turn`) fica boa pela direita. Pela esquerda, no fim dela, o personagem dá um pulo: a espada troca de mão de uma vez.
+
+**Por quê:** o Godot ganha o lado esquerdo espelhando o direito, e isso vale também para as peças. A `vira_0_left` é a `vira_0_right` espelhada: ela termina na vista de frente espelhada. O `idle_down` que vem depois não é espelhado. Com uma frente simétrica, não se nota; com algo de um lado só, o último quadro da virada não bate com o primeiro do `idle_down`.
+
+**Como resolver:** por enquanto, deixe a vista de frente simétrica, ou quase: o que fica de um lado só deve ser pequeno.
 
 ### No Godot, o sprite fica preso na animação de antes
 

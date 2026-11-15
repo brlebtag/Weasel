@@ -684,6 +684,62 @@ async function transCase() {
   await check('_transicao', 'transicao.txt', 'text', lines.join('\n') + '\n');
 }
 
+// anim … from= to= turn: a virada (test/casos/virada.weasel). Confere os erros e avisos de turn, pairs= e born=, o
+// plano (as partes que viram outras, as que nascem e as que somem) com e sem pairs= e born=, que sem turn a linha
+// é a transição de antes, o andamento de cada quadro da peça e o Godot com esqueleto (a peça "virada" aparece só
+// nas peças da virada; as outras se escondem nelas).
+async function turnCase() {
+  console.log(paint('1', '_virada'));
+  const src = fs.readFileSync(path.join(CASES, 'virada.weasel'), 'utf8');
+  const parse = (s) => W.lang.parse(s, { file: 'virada.weasel', resolve: () => null });
+  const msgs = (s) => parse(s).errors.map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  const line = 'anim vira from=idle_right to=idle_down frames=4 every=4 turn pairs=olhoL->olhoE born=olhoD->cabecaL';
+  const head = 'anim vira from=idle_right to=idle_down frames=4';
+  const lines = [];
+  for (const [what, to] of [
+    ['turn sem from=', 'anim vira frames=4 turn'],
+    ['pairs= e born= sem from=', 'anim vira frames=4 pairs=olhoL->olhoE born=olhoD->cabecaL'],
+    ['pairs= sem turn', `${head} pairs=olhoL->olhoE`],
+    ['pairs= com dois pontos', `${head} turn pairs=olhoL:olhoE`],
+    ['pairs= sem a seta', `${head} turn pairs=olhoL`],
+    ['pairs= com uma parte que não está na vista', `${head} turn pairs=olhoX->olhoE`],
+    ['pairs= ao contrário', `${head} turn pairs=olhoE->olhoL`],
+    ['born= de uma parte das duas vistas', `${head} turn born=sombra->cabecaL`],
+    ['born= de uma parte que não existe', `${head} turn born=asa->cabecaL`],
+    ['born= com a outra parte na mesma vista', `${head} turn born=olhoD->cabeca`],
+    ['opção desconhecida', `${head} virar`],
+  ]) lines.push(`${what}: ${msgs(src.replace(line, to)).join(' | ') || 'nenhum aviso'}`);
+  lines.push(`o arquivo: ${msgs(src).join(' | ') || 'nenhum aviso'}`);
+
+  const pn = W.scene.partName, list = (xs) => xs.map(([x, y]) => `${pn(x)}->${pn(y)}`).join(', ') || '-';
+  for (const [what, s] of [['o arquivo', src], ['sem pairs= e born=', src.replace(' pairs=olhoL->olhoE born=olhoD->cabecaL', '')]]) {
+    const m = parse(s), p = W.scene.turnPlan(m, m.anims.find((a) => a.blendOf && a.blendOf.turn));
+    lines.push(`plano (${what}): vira ${list(p.pairs)} · nascem ${list(p.born)} · somem ${list(p.gone)}`);
+  }
+  const plain = parse(src.replace(' turn pairs=olhoL->olhoE born=olhoD->cabecaL', ''));
+  lines.push(`sem turn: ${plain.anims.filter((a) => a.blendOf).map((a) => `${a.name} ${a.blendOf.turn ? 'virada' : 'transição'}`).join(', ')}`);
+  const m = parse(src), r2 = (v) => Math.round(v * 100) / 100;
+  for (const a of m.anims.filter((x) => x.blendOf)) {
+    lines.push(`${a.name}: ${Array.from({ length: a.frames }, (_, f) => { const p = W.scene.makePose(m, a.name, f); return p.turn ? `#${f} t=${r2(p.turn.t)} (${p.turn.A.anim.name}#${p.turn.A.frame} → ${p.turn.B.anim.name}#${p.turn.B.frame})` : `#${f} sem virada`; }).join(', ')}`);
+  }
+  // Godot com esqueleto: a faixa visible da peça "virada" e a de uma peça presa a um osso, em cada animação
+  const pkg = W.rig.packageFiles(m, { base: 't', scale: 0.5, mirror: true });
+  const tscn = pkg.files.find((f) => f.name.endsWith('.tscn')).text;
+  lines.push(`godot (esqueleto): ${pkg.framed} quadro a quadro, ${pkg.rigid} presas aos ossos; ${pkg.notes.join(' | ')}`);
+  const node = (re) => (tscn.match(re) || [])[1];
+  const turnNode = node(/\[node name="(virada_\d+)" type="Sprite2D"/), boneNode = node(/\[node name="(cabeca\w*)" type="Sprite2D"/);
+  for (const b of tscn.split('\n\n').filter((x) => x.startsWith('[sub_resource type="Animation"'))) {
+    const vis = (n) => {
+      const i = (b.match(new RegExp(`tracks/(\\d+)/path = NodePath\\("Visual/Pecas/${n}:visible"\\)`)) || [])[1];
+      if (i === undefined) return 'sem faixa';
+      const k = b.slice(b.indexOf(`tracks/${i}/keys`));
+      return `${k.match(/"times": PackedFloat32Array\(([^)]*)\)/)[1]} → ${k.match(/"values": \[([^\]]*)\]/)[1]}`;
+    };
+    lines.push(`  ${b.match(/resource_name = "(\w+)"/)[1]}: ${turnNode} ${vis(turnNode)} · ${boneNode} ${vis(boneNode)}`);
+  }
+  await check('_virada', 'virada.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -709,6 +765,7 @@ async function main() {
   if (!only.length || only.some((o) => '_transicao'.includes(o))) await transCase();
   if (!only.length || only.some((o) => '_fase'.includes(o))) await phaseCase();
   if (!only.length || only.some((o) => '_trocar'.includes(o))) await swapCase();
+  if (!only.length || only.some((o) => '_virada'.includes(o))) await turnCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');

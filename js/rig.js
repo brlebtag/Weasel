@@ -222,6 +222,11 @@
     const own = [...new Set(anims.map((p) => p.anim))];
     const first = anims.length ? anims[0] : null;
     const an = analyse(model);
+    // a virada (anim … turn): o personagem inteiro sai quadro a quadro numa peça só, que aparece só nela (as outras
+    // peças se escondem enquanto ela toca)
+    const isTurn = (a) => !!(a && a.blendOf && a.blendOf.turn);
+    const turns = own.filter(isTurn);
+    if (turns.length) an.notes.add('a virada (turn) sai quadro a quadro numa peça só ("virada"): enquanto ela toca, as outras peças se escondem');
     const rest = S.makePose(model, null, 0);
     // a pose parada sem o ik: as peças são desenhadas nos ossos de descanso, e o ik vem nas rotações da animação
     if (model.iks.length) rest.bones = S.matsFrom(model, new Map());
@@ -237,7 +242,9 @@
       }
       return imgs.push(im) - 1;
     };
-    const parts = partsOf(model, an).filter((part) => {
+    const list = partsOf(model, an);
+    if (turns.length) list.push({ key: 'turn', kind: 'frames', bone: null, el: null, items: null, layers: null, only: turns.map((a) => a.name), fade: null, name: 'virada', turn: true });
+    const parts = list.filter((part) => {
       if (part.kind === 'rigid' || part.kind === 'skin') {
         const c = render(model, rest, part, k, R), b = alphaBox(c);
         if (!b) return false;
@@ -251,7 +258,7 @@
       const at = (pose) => (part.bone ? Object.assign({}, pose, { bones: rest.bones, cloth: rest.cloth, geo: new Map() }) : pose);
       const take = (key, pose) => { const p = at(pose), c = render(model, p, part, k, R); shots.set(key, { c, p }); box = union(box, alphaBox(c)); };
       for (const a of own) {
-        if (part.only && !S.animIn(part.only, a)) continue;
+        if ((part.only && !S.animIn(part.only, a)) || isTurn(a) !== !!part.turn) continue;
         for (let f = 0; f < a.frames; f++) take(`${a.name}#${f}`, S.makePose(model, a.name, f));
       }
       if (!own.length) take('pose', rest);
@@ -456,7 +463,7 @@
     }
     // troca de ordem (above/below): o z_index de cada peça em cada quadro, o menor que deixa a ordem certa
     const itemPart = new Map();
-    parts.forEach((p, i) => { for (const it of p.items) itemPart.set(it, i); });
+    parts.forEach((p, i) => { if (p.items) for (const it of p.items) itemPart.set(it, i); });
     const reorder = an.order.size || an.orderLayers.size;
     const zOf = (pose) => {
       const seq = [];
@@ -496,7 +503,7 @@
     const rowsB = [], rowsP = [], rowsV = [], rowsZ = [];
     // visibilidade e transparência das peças em cada quadro
     const partState = (pose, a, part) => {
-      let vis = !part.only || (a ? S.animIn(part.only, a) : part.only.includes('pose'));
+      let vis = (!part.only || (a ? S.animIn(part.only, a) : part.only.includes('pose'))) && (!isTurn(a) || !!part.turn);
       let alpha = 1;
       if (part.fade) {
         const pr = pose.props.get(part.fade.id) || {};
@@ -533,7 +540,11 @@
     const flips = anims.some((p) => p.flip);
     // a imagem de uma peça que muda de forma no quadro f (fora das animações em que ela aparece, a inicial)
     const cellOf = (part, a, f) => { const c = part.cells.get(`${a.name}#${f}`); return c === undefined ? part.img : c; };
-    const step = (i, path, keys) => track(i, path, keys, false);
+    // uma peça de transição pode tocar de trás para a frente (trocar()): o Godot só põe o valor de uma pista
+    // discreta quando passa pela key, então nelas cada pista ganha uma key logo antes do fim (endT; a do fim exato
+    // ele pula), com o valor do último quadro
+    let endT = 0;
+    const step = (i, path, keys) => track(i, path, endT && keys.length ? keys.concat([[endT, keys[keys.length - 1][1]]]) : keys, false);
 
     // ---------- o arquivo .tscn ----------
     const blocks = [];
@@ -592,6 +603,7 @@
     });
     anims.forEach((p, n) => {
       const a = p.anim, dt = 1 / a.fps;
+      endT = a.blendOf ? a.frames * dt - 0.0001 : 0;
       animBlock(`Animation_${n}`, p.name, a.frames * dt, a.loop, dt, (add) => {
         for (const g of gbones) boneTracks(add, g, samples.get(a));
         partTracks(add, n, a, p.flip);

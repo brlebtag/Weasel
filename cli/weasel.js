@@ -304,8 +304,20 @@ function info(m, scale) {
   if (m.cloths.size) out.push(`tecidos  ${[...m.cloths.keys()].join(', ')}`);
   if (m.anims.length) {
     out.push(`animações ${m.anims.length}`);
+    const turns = new Set();
     for (const a of m.anims) {
-      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, transição ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
+      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, ${a.blendOf.turn ? 'virada' : 'transição'} ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
+      // a virada: as partes que viram outras (de nome diferente), as que nascem e as que somem (uma vez por linha
+      // anim … turn)
+      const key = a.blendOf && a.blendOf.turn && `${a.trans}|${a.blendOf.from.name}|${a.blendOf.to.name}`;
+      if (key && !turns.has(key)) {
+        turns.add(key);
+        const p = W.scene.turnPlan(m, a), pn = W.scene.partName, list = (xs) => xs.map(([x, y]) => `${pn(x)}->${pn(y)}`).join(', ');
+        const pairs = p.pairs.filter(([x, y]) => pn(x) !== pn(y));
+        if (pairs.length) out.push(`  ${''.padEnd(14)} vira: ${list(pairs)}`);
+        if (p.born.length) out.push(`  ${''.padEnd(14)} nascem: ${list(p.born)}`);
+        if (p.gone.length) out.push(`  ${''.padEnd(14)} somem: ${list(p.gone)}`);
+      }
       if (a.events.length) out.push(`  ${''.padEnd(14)} eventos: ${a.events.map((e) => `${e.name}@${e.frame}`).join(', ')}`);
       const g = W.scene.gait(m, a);
       if (g) {

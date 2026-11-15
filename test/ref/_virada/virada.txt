@@ -1,0 +1,26 @@
+turn sem from=: warn linha 39: turn só vale numa transição: anim nome from=… to=… turn
+pairs= e born= sem from=: warn linha 39: pairs= só vale numa virada: anim nome from=… to=… turn | warn linha 39: born= só vale numa virada: anim nome from=… to=… turn
+pairs= sem turn: warn linha 39: pairs= só vale numa virada: ponha turn no fim da linha
+pairs= com dois pontos: error linha 39: pairs= leva pares parte->parte separados por vírgula (ex.: pairs=olhoL->olhoE) | error linha 39: ponto inválido "olhoE" (use x,y  x,y!  x,y~dx,dy  ou  x,y@osso)
+pairs= sem a seta: error linha 39: pairs= leva pares parte->parte separados por vírgula (ex.: pairs=olhoL->olhoE)
+pairs= com uma parte que não está na vista: error linha 39: a parte "olhoX" não aparece em idle_right
+pairs= ao contrário: error linha 39: a parte "olhoE" não aparece em idle_right | error linha 39: a parte "olhoL" não aparece em idle_down
+born= de uma parte das duas vistas: error linha 39: a parte "sombra" aparece em idle_right e em idle_down: born= é para uma parte que só existe numa das vistas (para casar, use pairs=)
+born= de uma parte que não existe: error linha 39: a parte "asa" não aparece em idle_right nem em idle_down
+born= com a outra parte na mesma vista: error linha 39: a parte "cabeca" não aparece em idle_right (born=olhoD->cabeca: cabeca é uma parte da outra vista)
+opção desconhecida: warn linha 39: opção desconhecida "virar" (use once, loop ou turn)
+o arquivo: nenhum aviso
+plano (o arquivo): vira olhoL->olhoE, corpoL->corpo, cabecaL->cabeca, focinhoL->focinho · nascem barriga->corpoL, olhoD->cabecaL · somem caudaL->corpo
+plano (sem pairs= e born=): vira corpoL->corpo, cabecaL->cabeca, olhoL->olhoD, focinhoL->focinho · nascem barriga->corpoL, olhoE->cabecaL · somem caudaL->corpo
+sem turn: vira_0_right transição, vira_4_right transição
+vira_0_right: #0 t=0.1 (idle_right#1 → idle_down#0), #1 t=0.35 (idle_right#2 → idle_down#0), #2 t=0.65 (idle_right#3 → idle_down#0), #3 t=0.9 (idle_right#4 → idle_down#0)
+vira_4_right: #0 t=0.1 (idle_right#5 → idle_down#0), #1 t=0.35 (idle_right#6 → idle_down#0), #2 t=0.65 (idle_right#7 → idle_down#0), #3 t=0.9 (idle_right#0 → idle_down#0)
+godot (esqueleto): 1 quadro a quadro, 5 presas aos ossos; a virada (turn) sai quadro a quadro numa peça só ("virada"): enquanto ela toca, as outras peças se escondem
+  RESET: virada_5 0 → false · cabecaL_2 0 → true
+  idle_right: virada_5 0 → false · cabecaL_2 0 → true
+  idle_down: virada_5 0 → false · cabecaL_2 0 → false
+  vira_0_right: virada_5 0, 0.4999 → true, true · cabecaL_2 0, 0.4999 → false, false
+  vira_4_right: virada_5 0, 0.4999 → true, true · cabecaL_2 0, 0.4999 → false, false
+  idle_left: virada_5 0 → false · cabecaL_2 0 → true
+  vira_0_left: virada_5 0, 0.4999 → true, true · cabecaL_2 0, 0.4999 → false, false
+  vira_4_left: virada_5 0, 0.4999 → true, true · cabecaL_2 0, 0.4999 → false, false

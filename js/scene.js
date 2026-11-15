@@ -447,6 +447,11 @@
   // a pose do quadro j da peça; src é a animação de origem mais perto (only=, caixas e partículas seguem ela)
   function piecePose(model, anim, j) {
     const { from, to } = anim.blendOf, { fa, u } = pieceAt(anim, j);
+    // virada (turn): cada vista na pose dela; o desenho é o drawTurn
+    if (anim.blendOf.turn) {
+      const A = makePose(model, from.name, fa), B = makePose(model, to.name, 0), near = u < 0.5 ? A : B;
+      return Object.assign({}, near, { anim, frame: j, src: { anim: near.anim, frame: near.frame }, turn: { piece: anim, A, B, t: u } });
+    }
     const P = blendPose(model, makePose(model, from.name, fa), makePose(model, to.name, 0), u);
     return Object.assign({}, P, { anim, frame: j, src: { anim: P.anim, frame: P.frame } });
   }
@@ -1186,6 +1191,274 @@
     const pair = { A, B };
     model._morph.set(key, pair);
     return pair;
+  }
+
+  // ---------- virada (anim … from= to= turn): uma vista do personagem vira a outra ----------
+  // As partes de uma vista casam com as da outra (pairs=, ou sozinhas: nome parecido, mesmo osso, mesma cor, perto e do
+  // mesmo tamanho), e cada par transforma o contorno, a cor e o contorno (ink). Uma parte que só existe numa vista
+  // nasce de um ponto (ou some num ponto) perto da parte casada mais perto, ou da que o born= disser. Até a metade, vale
+  // a ordem de pintura da vista de saída; depois, a da de chegada. Textos e partículas não mudam de forma: os que só
+  // existem numa vista aparecem ou somem aos poucos.
+  const turnKind = (el) => (el.type === 'text' ? 'text' : el.type === 'emitter' ? 'emit' : el.closed ? 'closed' : 'open');
+  const shapeKind = (el) => el.type !== 'text' && el.type !== 'emitter';
+  // os itens de cada vista (as camadas que aparecem na animação), na ordem de pintura
+  function viewItems(model, anim) {
+    const pose = makePose(model, anim.name, 0), out = [];
+    for (const layer of orderLayers(model, pose)) {
+      if (layer.hidden || (layer.only && !animIn(layer.only, anim))) continue;
+      for (const it of orderItems(layer.items, pose)) if (!it.el.hidden) out.push({ el: it.el, part: it.part, layer });
+    }
+    return out;
+  }
+  // o contorno de uma forma nesta pose, com MORPH_N pontos (null para texto e partículas)
+  function contourOf(model, pose, el) {
+    if (!shapeKind(el)) return null;
+    const g = geometry(model, pose, el);
+    return g.segs.length ? resample(G.flatten(g.segs, 1.5), MORPH_N, el.closed) : null;
+  }
+  const centerOf = (P) => { let x = 0, y = 0; for (const p of P) { x += p[0]; y += p[1]; } return [x / P.length, y / P.length]; };
+  function sizeOf(P, closed) {
+    if (closed) return Math.max(0.5, Math.sqrt(Math.abs(area(P)) / Math.PI));
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of P) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    return Math.max(0.5, Math.hypot(x1 - x0, y1 - y0) / 2);
+  }
+  // nomes parecidos, de 0 a 1: o começo e o fim iguais (corpoL e corpo, orelhaLi e orelhaEi)
+  function nameSim(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    let p = 0;
+    while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    if (p < 2) return 0;
+    let q = 0;
+    while (q < a.length - p && q < b.length - p && a[a.length - 1 - q] === b[b.length - 1 - q]) q++;
+    return (p + q) / Math.max(a.length, b.length);
+  }
+  const partName = (el) => el.name || `(${el.type} da linha ${el.line + 1})`;
+  // O plano de uma virada (de from para to): quem vira quem, quem nasce e quem some, de onde, e a ordem de cada item
+  // em cada metade. Calculado uma vez, na pose parada: senão o casamento e o alinhamento mudariam de um quadro para
+  // o outro e o contorno "escorregaria".
+  function turnPlan(model, piece) {
+    const { from, to, turn } = piece.blendOf, key = `${piece.trans}|${from.name}|${to.name}`;
+    model._turn = model._turn || new Map();
+    if (model._turn.has(key)) return model._turn.get(key);
+    const IA = viewItems(model, from), IB = viewItems(model, to);
+    const order = (items) => { const o = new Map(); items.forEach((it, i) => { if (!o.has(it.el)) o.set(it.el, i); }); return o; };
+    const oa = order(IA), ob = order(IB), EA = [...oa.keys()], EB = [...ob.keys()];
+    const rest = makePose(model, null, 0), look = new Map();
+    const info = (el) => {
+      if (!look.has(el)) { const P = contourOf(model, rest, el); look.set(el, P && { P, c: centerOf(P), r: sizeOf(P, el.closed) }); }
+      return look.get(el);
+    };
+    const pairs = new Map(), taken = new Set();
+    const pair = (a, b) => { pairs.set(a, b); taken.add(b); };
+    const named = (list, n) => list.find((e) => e.name === n);
+    // a mesma forma nas duas vistas (numa camada sem only=) fica com ela mesma; pairs= casa à mão
+    for (const a of EA) if (ob.has(a)) pair(a, a);
+    for (const [x, y] of turn.pairs) { const a = named(EA, x), b = named(EB, y); if (a && b && !pairs.has(a) && !taken.has(b)) pair(a, b); }
+    // born=: a parte que só existe numa vista e a parte da outra vista onde ela nasce (ou some)
+    const near = new Map();
+    for (const [x, y] of turn.born) {
+      const a = named(EA, x), b = named(EB, x);
+      if (b && !a && !taken.has(b)) { const n = named(EA, y); if (n) near.set(b, n); } else if (a && !b && !pairs.has(a)) { const n = named(EB, y); if (n) near.set(a, n); }
+    }
+    // sozinho: cada candidato ganha pontos pelo nome, pelo osso e pela cor, e perde pela distância e pela diferença de
+    // tamanho; os melhores casam primeiro
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const el of EA) { const i = info(el); if (i) for (const [x, y] of i.P) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } }
+    const diag = Math.max(1, Math.hypot(x1 - x0, y1 - y0));
+    const colorOf = (el) => (el.closed ? el.fill : el.color);
+    const cands = [];
+    for (const a of EA) {
+      if (pairs.has(a) || near.has(a) || !shapeKind(a) || !info(a)) continue;
+      const ia = info(a);
+      for (const b of EB) {
+        if (taken.has(b) || near.has(b) || turnKind(b) !== turnKind(a) || !info(b)) continue;
+        const ib = info(b), ns = nameSim(a.name, b.name), bone = !!a.bone && a.bone === b.bone;
+        const d = Math.hypot(ia.c[0] - ib.c[0], ia.c[1] - ib.c[1]) / diag, same = typeof colorOf(a) === 'string' && colorOf(a) === colorOf(b);
+        if (!(ns >= 0.5 || (bone && d < 0.2) || (same && d < 0.08))) continue;
+        cands.push([2 * ns + (bone ? 0.6 : 0) + (same ? 0.3 : 0) - 1.5 * d - 0.3 * Math.abs(Math.log(ia.r / ib.r)), a, b]);
+      }
+    }
+    cands.sort((p, q) => q[0] - p[0]);
+    for (const [, a, b] of cands) if (!pairs.has(a) && !taken.has(b)) pair(a, b);
+    // a parte sem par nasce (ou some) junto da parte casada mais perto da mesma vista (perto pelo tamanho dela, e mais
+    // ainda no mesmo osso): o ponto fica no par dela, na outra vista
+    const anchor = (el, born) => {
+      if (near.has(el)) return { other: near.get(el), mine: null };
+      const ie = info(el);
+      if (!ie) return null;
+      let best = null, bd = Infinity;
+      for (const [a, b] of pairs) {
+        const mine = born ? b : a, other = born ? a : b, im = info(mine);
+        if (!im || !info(other) || mine.layer.guide || other.layer.guide) continue;
+        let d = Math.hypot(ie.c[0] - im.c[0], ie.c[1] - im.c[1]) / im.r;
+        if (el.bone && mine.bone === el.bone) d *= 0.7;
+        if (d < bd) { bd = d; best = { other, mine }; }
+      }
+      return best;
+    };
+    const itemsOf = (items, el, o) => items.map((it, i) => ({ it, o: o === undefined ? i : o })).filter((x) => x.it.el === el);
+    const at = (list, el, o) => itemsOf(list, el, o).map((x, k) => ({ it: x.it, o: x.o + k * 1e-3 }));
+    // na outra vista, logo atrás da parte onde nasce: uma parte que não aparece numa vista está escondida atrás de
+    // outra. Só nasce por cima quando fica dentro dela e por cima dela na própria vista (o olho na cabeça).
+    const inside = (el, host) => {
+      const ie = info(el), ih = host && info(host);
+      if (!ie || !ih || !host.closed) return false;
+      const x = ih.c[0] + (ie.c[0] - ih.c[0]) / 0.85, y = ih.c[1] + (ie.c[1] - ih.c[1]) / 0.85, P = ih.P;
+      let inn = false;
+      for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < ((P[j][0] - P[i][0]) * (y - P[i][1])) / (P[j][1] - P[i][1]) + P[i][0]) inn = !inn;
+      return inn;
+    };
+    const placed = (an, o1, o2, el, k) => {
+      if (!an || o1.get(an.other) === undefined) return -1 + k * 1e-3;
+      const top = inside(el, an.mine || an.other) && (!an.mine || o2.get(el) > o2.get(an.mine));
+      return o1.get(an.other) + (top ? 0.5 : -0.5) + k * 1e-3;
+    };
+    const entries = [], born = [], gone = [];
+    for (const [a, b] of pairs) entries.push({ kind: shapeKind(a) ? 'pair' : 'same', a, b, al: shapeKind(a) ? turnAlign(info(a).P, info(b).P, a.closed, a === b) : null, iA: at(IA, a), iB: at(IB, b) });
+    let k = 0;
+    for (const b of EB) {
+      if (taken.has(b)) continue;
+      k++;
+      if (!shapeKind(b)) { entries.push({ kind: 'fade', b, iA: at(IB, b, IA.length + k), iB: at(IB, b) }); continue; }
+      const an = anchor(b, true);
+      if (an) born.push([b, an.other]);
+      entries.push({ kind: 'born', b, anchor: an, iA: at(IB, b, placed(an, oa, ob, b, k)), iB: at(IB, b) });
+    }
+    for (const a of EA) {
+      if (pairs.has(a)) continue;
+      k++;
+      if (!shapeKind(a)) { entries.push({ kind: 'fade', a, iA: at(IA, a), iB: at(IA, a, IB.length + k) }); continue; }
+      const an = anchor(a, false);
+      if (an) gone.push([a, an.other]);
+      entries.push({ kind: 'gone', a, anchor: an, iA: at(IA, a), iB: at(IA, a, placed(an, ob, oa, a, k)) });
+    }
+    const plan = { entries, pairs: [...pairs].filter(([a, b]) => a !== b), born, gone };
+    model._turn.set(key, plan);
+    return plan;
+  }
+  // o alinhamento de dois contornos (o mesmo sentido de volta e o começo que deixa os pontos mais perto dos seus pares)
+  function turnAlign(A, B, closed, same) {
+    if (same) return { rev: false, shift: 0 };
+    if (!closed) {
+      const d = (P, Q) => P.reduce((s, p, i) => s + (p[0] - Q[i][0]) ** 2 + (p[1] - Q[i][1]) ** 2, 0);
+      return { rev: d(A, B.slice().reverse()) < d(A, B), shift: 0 };
+    }
+    const rev = Math.sign(area(A)) !== Math.sign(area(B)), Bb = rev ? B.slice().reverse() : B;
+    let best = 0, bd = Infinity;
+    for (let s = 0; s < Bb.length; s++) {
+      let d = 0;
+      for (let i = 0; i < A.length && d < bd; i++) { const p = A[i], q = Bb[(i + s) % Bb.length]; d += (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2; }
+      if (d < bd) { bd = d; best = s; }
+    }
+    return { rev, shift: best };
+  }
+  const aligned = (P, al) => { const Q = al.rev ? P.slice().reverse() : P; return al.shift ? Q.map((_, i) => Q[(i + al.shift) % Q.length]) : Q; };
+  const mixColor = (a, b, t) => (typeof a === 'string' && typeof b === 'string' && G.parseHex(a) && G.parseHex(b) ? G.lerpColor(a, b, t) : t < 0.5 ? a : b);
+  const inkOf = (pr, el) => { const c = pr.inkc !== undefined ? pr.inkc : el.inkc; return c ? (pr.ink !== undefined ? pr.ink : el.ink) || 0 : 0; };
+  // a cor, o contorno e a opacidade de um par no meio da virada (props por cima das do carregador)
+  function turnStyle(pa, a, pb, b, t, carrier) {
+    const o = {};
+    if (a.closed) {
+      o.c = mixColor(pa.c !== undefined ? pa.c : a.fill, pb.c !== undefined ? pb.c : b.fill, t);
+      const ia = inkOf(pa, a), ib = inkOf(pb, b), ca = pa.inkc !== undefined ? pa.inkc : a.inkc, cb = pb.inkc !== undefined ? pb.inkc : b.inkc;
+      o.ink = ia + (ib - ia) * t;
+      o.inkc = mixColor(ia ? ca : cb, ib ? cb : ca, t);
+    } else {
+      o.c = mixColor(pa.c !== undefined ? pa.c : a.color, pb.c !== undefined ? pb.c : b.color, t);
+      const wa = pa.w !== undefined ? pa.w : a.w, wb = pb.w !== undefined ? pb.w : b.w;
+      if (typeof wa === 'number' && typeof wb === 'number') o.w = wa + (wb - wa) * t;
+    }
+    const oa = (pa.opacity !== undefined ? pa.opacity : 1) * a.opacity, ob = (pb.opacity !== undefined ? pb.opacity : 1) * b.opacity;
+    o.opacity = (oa + (ob - oa) * t) / (carrier.opacity || 1);
+    return o;
+  }
+  const mixPts = (P, Q, t) => P.map((p, i) => [p[0] + (Q[i][0] - p[0]) * t, p[1] + (Q[i][1] - p[1]) * t]);
+  const geoOf = (P, closed) => ({ segs: G.polySegs(P.map(([x, y]) => ({ x, y })), closed), closed, _path: null, _flat: null, flat2: null });
+  // As partes de um quadro da virada, em ordem de pintura: cada uma é desenhada pela forma de uma das vistas (o
+  // "carregador", el), na pose sintética dela (sp), com o contorno transformado e as cores misturadas por cima.
+  function turnDraws(model, pose) {
+    const T = pose.turn, plan = turnPlan(model, T.piece), t = T.t, late = t >= 0.5;
+    const sa = Object.assign({}, T.A, { geo: new Map(), props: new Map(T.A.props) });
+    const sb = Object.assign({}, T.B, { geo: new Map(), props: new Map(T.B.props) });
+    const cen = (pz, el) => { const P = contourOf(model, pz, el); return P ? centerOf(P) : null; };
+    // o ponto de onde nasce (ou onde some) uma parte: no par da parte casada mais perto, um pouco para o lado dela
+    const spot = (el, own, an, other) => {
+      const c = cen(own, el);
+      if (!an) return c;
+      const o = cen(other, an.other);
+      if (!o) return c;
+      const m = an.mine ? cen(own, an.mine) : null;
+      return m && c ? [o[0] + 0.3 * (c[0] - m[0]), o[1] + 0.3 * (c[1] - m[1])] : o;
+    };
+    const set = (sp, el, o, P) => {
+      const pid = el._pid !== undefined ? el._pid : el.id;
+      sp.props.set(pid, Object.assign({}, sp.props.get(pid) || NOPROPS, o));
+      if (P) sp.geo.set(el.id, geoOf(P, el.closed));
+    };
+    const draws = [];
+    for (const e of plan.entries) {
+      let el, sp;
+      if (e.kind === 'pair') {
+        el = late ? e.b : e.a;
+        sp = late ? sb : sa;
+        const PA = contourOf(model, T.A, e.a), PB = contourOf(model, T.B, e.b);
+        set(sp, el, turnStyle(propsOf(T.A, e.a), e.a, propsOf(T.B, e.b), e.b, t, el), PA && PB ? mixPts(PA, aligned(PB, e.al), t) : null);
+      } else if (e.kind === 'born' || e.kind === 'gone') {
+        const isBorn = e.kind === 'born', u = isBorn ? t : 1 - t;
+        el = isBorn ? e.b : e.a;
+        sp = isBorn ? sb : sa;
+        const own = isBorn ? T.B : T.A, P = contourOf(model, own, el), c = P && spot(el, own, e.anchor, isBorn ? T.A : T.B);
+        const pr = propsOf(own, el), o = { opacity: (pr.opacity !== undefined ? pr.opacity : 1) * Math.min(1, u / 0.4) };
+        if (el.closed) o.ink = inkOf(pr, el) * u;
+        set(sp, el, o, P && c ? P.map((q) => [c[0] + (q[0] - c[0]) * u, c[1] + (q[1] - c[1]) * u]) : null);
+      } else if (e.kind === 'fade') {
+        el = e.a || e.b;
+        sp = e.a ? sa : sb;
+        const pr = propsOf(e.a ? T.A : T.B, el);
+        set(sp, el, { opacity: (pr.opacity !== undefined ? pr.opacity : 1) * (e.a ? 1 - t : t) }, null);
+      } else {
+        el = late ? e.b : e.a;
+        sp = late ? sb : sa;
+      }
+      for (const x of late ? e.iB : e.iA) draws.push({ o: x.o, it: x.it, el, sp });
+    }
+    draws.sort((p, q) => p.o - q.o);
+    return draws;
+  }
+  // Um quadro da virada: as partes de turnDraws, cada uma com a camada dela (opacidade, mistura, clip, efeitos).
+  function drawTurn(ctx, model, pose, opts, R) {
+    const draws = turnDraws(model, pose);
+    // as partes seguidas da mesma camada vão juntas (os efeitos da camada valem para elas de uma vez)
+    for (let k = 0; k < draws.length;) {
+      const layer = draws[k].it.layer;
+      let j = k;
+      while (j < draws.length && draws[j].it.layer === layer) j++;
+      const group = draws.slice(k, j);
+      k = j;
+      if ((layer.guide && !opts.guides) || (opts.layers && !opts.layers.has(layer))) continue;
+      const lp = group[0].sp.lprops.get(layer.name) || NOPROPS;
+      if (lp.show === 0) continue;
+      const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
+      if (alpha <= 0.001) continue;
+      const lit = !!R.lighting && !layer.unlit && !layer.guide;
+      const body = (c, a, solo) => {
+        c.save();
+        if (!solo) c.globalCompositeOperation = PASS && PASS.tex ? 'source-over' : layer.blend;
+        for (const d of group) {
+          c.save();
+          if (layer.clip) clipInto(c, model, d.sp, layer.clip);
+          if (layer.cut) clipAway(c, model, d.sp, layer.cut);
+          drawItem0(c, model, d.sp, d.el, d.it.part, layer, a, lit ? R : null);
+          c.restore();
+        }
+        c.restore();
+      };
+      const fx = PASS && PASS.tex ? null : layerFx(layer, lp);
+      if (fx) drawFxLayer(ctx, R, layer, null, alpha, lit, fx, body);
+      else body(ctx, alpha, false);
+    }
   }
 
   function geometry(model, pose, el) {
@@ -1945,6 +2218,12 @@
     if (opts.background !== false && !tex) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
     const lighting = PASS && (PASS.unlit || tex) ? null : opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
     const R = { model, pose, opts, lighting, maps: null };
+    // peça de virada (anim … turn): as partes de uma vista viram as da outra
+    if (pose.turn && !opts.items && !opts.filter) {
+      drawTurn(ctx, model, pose, opts, R);
+      if (lighting && opts.glows !== false) drawLightGlows(ctx, lighting);
+      return;
+    }
     for (const layer of orderLayers(model, pose)) {
       // com opts.layers, quem chama já decidiu o que aparece (no filme, only= também aceita shots)
       if (opts.layers ? !opts.layers.has(layer) : !layerVisible(layer, pose, opts)) continue;
@@ -1974,11 +2253,11 @@
   }
 
   // Camada com efeitos: desenhada à parte e aplicada de uma vez (sombra, brilho, cor, desfoque, rastro).
-  function drawFxLayer(ctx, R, layer, items, alpha, lit, fx) {
+  function drawFxLayer(ctx, R, layer, items, alpha, lit, fx, body) {
     const { model, pose } = R;
     const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
     const T = scratch('fx', W, H);
-    if (layer.trail && pose.anim) {
+    if (layer.trail && pose.anim && !body) {
       for (let k = layer.trail.n; k >= 1; k--) {
         const U = scratch('trail', W, H);
         setMat(U.ctx, m);
@@ -1996,7 +2275,8 @@
       }
     }
     setMat(T.ctx, m);
-    drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
+    if (body) body(T.ctx, 1, true);
+    else drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
     T.ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (fx.tint > 0 && fx.tintc) {
       T.ctx.globalCompositeOperation = 'source-atop';
@@ -2892,7 +3172,7 @@
   }
 
   W.scene = {
-    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

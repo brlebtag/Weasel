@@ -142,42 +142,43 @@
       for (let i = 0; i < a.length; i++) a[i] = img[i * 4 + 3] / 255;
       return a;
     };
-    for (const layer of S.orderLayers(model, pose)) {
+    // uma parte (el, na pose pz) da camada: o relevo dela cobre o que está embaixo
+    const one = (layer, it, el, pz) => {
       // camadas de sombreado (clip, dentro de outra forma) e o que não recebe luz (unlit) não fazem relevo
-      if (layer.clip || layer.unlit || (sel && sel.layers ? !sel.layers.has(layer) || layer.hidden || layer.guide : !S.layerVisible(layer, pose, { guides: false }))) continue;
-      const lp = pose.lprops.get(layer.name) || NOPROPS;
-      if (lp.show === 0 || layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1) <= 0.02) continue;
-      for (const it of S.orderItems(layer.items, pose)) {
-        if (sel && sel.items && !sel.items.has(it)) continue;
-        const el = it.el;
-        if (el.hidden || el.emit || el.type === 'emitter' || el.type === 'text') continue;
-        const pr = pose.props.get(el.id) || NOPROPS;
-        if (pr.show === 0 || el.opacity * (pr.opacity !== undefined ? pr.opacity : 1) <= 0.02 || (pr.draw !== undefined && pr.draw <= 0.02)) continue;
-        const g = S.geometry(model, pose, el);
-        if (!g.segs.length) continue;
-        // o contorno é parte da forma, também quando vem em outra camada (inkon=)
-        let lw = 0;
-        if (el.closed) { const ink = pr.ink !== undefined ? pr.ink : el.ink; if (ink > 0 && !flatInk) lw = ink; } else lw = el.limb ? Math.max(el.limb[0], el.limb[1]) : pr.w !== undefined ? pr.w : el.w;
-        if (!el.closed && !(lw > 0)) continue;
-        const path = S.pathOf(g);
-        let sf = surfaces.get(el);
-        if (sf === undefined) {
-          sf = surface(path, el.closed, lw, S.segsBox(g.segs));
-          surfaces.set(el, sf);
-        }
-        if (!sf) continue;
-        // a parte desta camada (preenchimento, contorno ou os dois) cobre o que está embaixo
-        const a = it.part === 'fill' ? paint(path, sf, true, 0) : it.part === 'ink' ? paint(path, sf, false, lw) : sf.whole;
-        for (let j = 0; j < sf.bh; j++) {
-          for (let i = 0; i < sf.bw; i++) {
-            const q = j * sf.bw + i;
-            if (!a[q]) continue;
-            const p = (sf.y0 + j) * Wd + sf.x0 + i;
-            H[p] += (sf.z[q] - H[p]) * a[q];
-          }
+      if (layer.clip || layer.unlit || (sel && sel.layers ? !sel.layers.has(layer) || layer.hidden || layer.guide : !S.layerVisible(layer, pz, { guides: false }))) return;
+      const lp = pz.lprops.get(layer.name) || NOPROPS;
+      if (lp.show === 0 || layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1) <= 0.02) return;
+      if (sel && sel.items && !sel.items.has(it)) return;
+      if (el.hidden || el.emit || el.type === 'emitter' || el.type === 'text') return;
+      const pr = pz.props.get(el.id) || NOPROPS;
+      if (pr.show === 0 || el.opacity * (pr.opacity !== undefined ? pr.opacity : 1) <= 0.02 || (pr.draw !== undefined && pr.draw <= 0.02)) return;
+      const g = S.geometry(model, pz, el);
+      if (!g.segs.length) return;
+      // o contorno é parte da forma, também quando vem em outra camada (inkon=)
+      let lw = 0;
+      if (el.closed) { const ink = pr.ink !== undefined ? pr.ink : el.ink; if (ink > 0 && !flatInk) lw = ink; } else lw = el.limb ? Math.max(el.limb[0], el.limb[1]) : pr.w !== undefined ? pr.w : el.w;
+      if (!el.closed && !(lw > 0)) return;
+      const path = S.pathOf(g);
+      let sf = surfaces.get(el);
+      if (sf === undefined) {
+        sf = surface(path, el.closed, lw, S.segsBox(g.segs));
+        surfaces.set(el, sf);
+      }
+      if (!sf) return;
+      // a parte desta camada (preenchimento, contorno ou os dois) cobre o que está embaixo
+      const a = it.part === 'fill' ? paint(path, sf, true, 0) : it.part === 'ink' ? paint(path, sf, false, lw) : sf.whole;
+      for (let j = 0; j < sf.bh; j++) {
+        for (let i = 0; i < sf.bw; i++) {
+          const q = j * sf.bw + i;
+          if (!a[q]) continue;
+          const p = (sf.y0 + j) * Wd + sf.x0 + i;
+          H[p] += (sf.z[q] - H[p]) * a[q];
         }
       }
-    }
+    };
+    // a virada (anim … turn): as partes como o quadro as desenha, cada uma na pose da vista que a carrega
+    if (pose.turn && !(sel && sel.items)) for (const d of S.turnDraws(model, pose)) one(d.it.layer, d.it, d.el, d.sp);
+    else for (const layer of S.orderLayers(model, pose)) for (const it of S.orderItems(layer.items, pose)) one(layer, it, it.el, pose);
     return { H, Wd, Hd };
 
     // o relevo da forma inteira: a superfície em que ela se apoia, sem as bordas escondidas, mais um

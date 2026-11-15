@@ -478,6 +478,7 @@ As regras:
 - Para voltar ao normal, faça o morph para a própria forma: `key 20 olho.shape=olho`.
 - A forma que muda mantém a cor, o contorno e o osso dela; só o formato muda.
 - Uma forma não vira texto, e um texto não vira forma: o morph é só entre formas e traços.
+- Para um personagem inteiro mudar de vista (de lado para a frente), com as partes casadas e as que sobram nascendo ou sumindo, use a virada: `anim … from= to= turn` ([capítulo 9](09-jogo-godot.md#virar-de-lado-para-a-frente-turn)).
 
 **Experimente:** acrescente `ease=step` na `key 0`. A bolinha, a boca e a linha deixam de se transformar aos poucos e **trocam de uma vez** no quadro 12, como numa animação de recortes. A volta (do 12 ao 24) continua aos poucos, porque a `key 12` ainda usa o `smooth`.
 

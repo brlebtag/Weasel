@@ -26,14 +26,14 @@ Você aprovou a análise e a ordem. Os quatro itens estão feitos.
 | Plano | Em uma frase | Situação |
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
-| [Virada e metamorfose](metamorfose.md) | um desenho virando outro: o personagem de lado virando de frente (jogo) e a aranha virando jacaré (filme) | análise e protótipo da virada de 13/11/2026; esperando você decidir |
+| [Virada e metamorfose](metamorfose.md) | um desenho virando outro: o personagem de lado virando de frente (jogo) e a aranha virando jacaré (filme) | decidido em 15/11/2026, em duas etapas: a virada (`anim … turn`) feita na 1.45.0; a metamorfose no filme (`morph=`) é a etapa 2, na 1.46.0 |
 | [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, giz, aquarela, cel shading, HQ, recorte de papel, vitral, massinha e outros, a partir do mesmo desenho | estilos escolhidos em 14/11/2026; fase 1 (`art`, `pixel` e `ascii`) feita na 1.30.0; as bases de tom (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`) na 1.31.0; as combinações (`woodcut`, `comic`, `manga` e `riso`) na 1.32.0; os traços `sketch`, `marker`, `pencil`, `lines` e `neon` (primeira metade da fase 4) na 1.33.0; `crayon`, `chalk` e `watercolor` (o fim da fase 4) na 1.34.0; `cutout` e `clay` (a primeira parte da fase 5) na 1.35.0; `glass` e `embroidery` (o fim da fase 5) na 1.36.0; `stitch`, `mosaic`, `knit` e os efeitos de tela (a fase 6, o fim do plano) na 1.37.0 |
 
 ## Para depois
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
-| [IK e pinos: o que ficou de fora](ik-e-pinos.md) | sobras da 1.28.0 e ideias da pata da capivara | sem data |
+| [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender e uma alça para o pé do `ik` (o resto saiu na revisão de 15/11/2026) | sem data |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
 | [Ideias soltas](ideias-soltas.md) | `speed=auto` no filme e traçar imagem | esperando você |
 

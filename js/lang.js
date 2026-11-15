@@ -31,7 +31,7 @@
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     ik: ['bones', 'foot', 'target', 'bend'],
-    anim: ['frames', 'fps', 'mix', 'bones', 'feet', 'from', 'to', 'every'],
+    anim: ['frames', 'fps', 'mix', 'bones', 'feet', 'from', 'to', 'every', 'pairs', 'born'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity', 'z'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
     ambient: ['c', 'power'],
@@ -59,7 +59,7 @@
     tile: ['collision'],
   };
   const FLAGS = {
-    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front', 'floor', 'zsort', 'iso'], anim: ['once', 'loop'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
+    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front', 'floor', 'zsort', 'iso'], anim: ['once', 'loop', 'turn'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
     shape: ['hidden', 'billboard'], stroke: ['hidden', 'billboard'], line: ['hidden', 'billboard'], ellipse: ['hidden', 'billboard'], rect: ['hidden', 'billboard'], text: ['hidden', 'bold', 'italic', 'billboard'], emitter: ['hidden'],
     use: ['billboard'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
@@ -1847,14 +1847,20 @@
         if (A.has('from') || A.has('to')) {
           if (an.mixSpec) { bad(st, A.get('mix'), 'mix= não anda junto com from= e to= (a transição já é uma mistura)'); an.mixSpec = null; }
           an.transSpec = { st };
-        } else if (A.has('every')) bad(st, A.get('every'), 'every= só vale numa transição (anim nome from=… to=…)', 'warn');
+        } else {
+          if (A.has('every')) bad(st, A.get('every'), 'every= só vale numa transição (anim nome from=… to=…)', 'warn');
+          const tt = st.pos.slice(1).find((f) => f.text === 'turn');
+          if (tt) err(st.line, 'turn só vale numa transição: anim nome from=… to=… turn', tt.from, tt.to, 'warn');
+          for (const k of ['pairs', 'born']) if (A.has(k)) bad(st, A.get(k), `${k}= só vale numa virada: anim nome from=… to=… turn`, 'warn');
+        }
         if (A.has('feet')) an.feetSpec = { a: A.get('feet'), st };
         if (A.has('frames')) an.frames = Math.round(number(st, A.get('frames'), 24, 1, 600));
         if (A.has('fps')) an.fps = number(st, A.get('fps'), 12, 1, 60);
         for (const f of st.pos.slice(1)) {
           if (f.text === 'once') an.loop = false;
           else if (f.text === 'loop') an.loop = true;
-          else err(st.line, `opção desconhecida "${f.text}" (use once ou loop)`, f.from, f.to, 'warn');
+          else if (f.text === 'turn') {}
+          else err(st.line, `opção desconhecida "${f.text}" (use once, loop ou turn)`, f.from, f.to, 'warn');
         }
         m.anims.push(an);
         m.animMap.set(name, an);
@@ -2437,7 +2443,47 @@
     // partindo de um quadro de "a" (a cada every= quadros num loop; o último quadro num once) e chegando no
     // primeiro quadro de "b" em frames= quadros, no fps de "a". A linha não vira animação: as peças entram no
     // lugar dela, com o nome nome_quadro (nome_0, nome_2…) e, com direções, nome_0_right. Elas tocam uma vez.
+    // Com turn no fim da linha, a peça é uma virada: as partes da vista de "a" viram as da vista de "b" por morph
+    // (as camadas de cada vista, pelo only=). pairs=parte_a->parte_b casa à mão; born=parte->outra diz onde nasce (ou
+    // some) uma parte que só existe numa das vistas: outra é uma parte da outra vista.
     const TRANS_DIRS = ['_down_right', '_down_left', '_up_right', '_up_left', '_right', '_left', '_down', '_up'];
+    // as partes (com nome) de cada vista: as formas das camadas que aparecem na animação
+    function viewNames(an) {
+      const out = new Set();
+      for (const L of m.layers) {
+        if (L.hidden || (L.only && !(L.only.includes(an.name) || (an.aliases && an.aliases.some((n) => L.only.includes(n)))))) continue;
+        for (const it of L.items) if (it.el.name && !it.el.hidden) out.add(it.el.name);
+      }
+      return out;
+    }
+    function turnSpec(st, pairs) {
+      const A = st.attrs, spec = { pairs: [], born: [] };
+      for (const k of ['pairs', 'born']) {
+        const a = A.get(k);
+        if (!a) continue;
+        for (const p of a.text.split(',').map((x) => x.trim()).filter(Boolean)) {
+          const ab = p.split('->');
+          if (ab.length !== 2 || !IDENT.test(ab[0]) || !IDENT.test(ab[1])) { bad(st, a, `${k}= leva pares parte->parte separados por vírgula (ex.: ${k === 'pairs' ? 'pairs=olhoL->olhoE' : 'born=olhoD->cabecaL'})`); continue; }
+          spec[k].push(ab);
+        }
+      }
+      const said = new Set();
+      const say = (a, msg) => { if (!said.has(msg)) { said.add(msg); bad(st, a, msg); } };
+      for (const [from, to] of pairs) {
+        const NA = viewNames(from), NB = viewNames(to);
+        for (const [x, y] of spec.pairs) {
+          if (!NA.has(x)) say(A.get('pairs'), `a parte "${x}" não aparece em ${from.name}`);
+          if (!NB.has(y)) say(A.get('pairs'), `a parte "${y}" não aparece em ${to.name}`);
+        }
+        for (const [x, y] of spec.born) {
+          const inA = NA.has(x), inB = NB.has(x);
+          if (inA && inB) say(A.get('born'), `a parte "${x}" aparece em ${from.name} e em ${to.name}: born= é para uma parte que só existe numa das vistas (para casar, use pairs=)`);
+          else if (!inA && !inB) say(A.get('born'), `a parte "${x}" não aparece em ${from.name} nem em ${to.name}`);
+          else if (!(inA ? NB : NA).has(y)) say(A.get('born'), `a parte "${y}" não aparece em ${inA ? to.name : from.name} (born=${x}->${y}: ${y} é uma parte da outra vista)`);
+        }
+      }
+      return spec;
+    }
     function transAnims() {
       const out = [];
       const real = (n) => { const x = m.animMap.get(n); return x && !x.transSpec ? x : null; };
@@ -2461,6 +2507,8 @@
         for (const p of lost) pairs.splice(pairs.indexOf(p), 1);
         if (pairs.some((p) => p[0].blendOf || p[1].blendOf)) { bad(st, fa, 'from= e to= precisam ser animações do arquivo, não peças de outra transição'); continue; }
         const frames = A.has('frames') ? an.frames : 4, every = A.has('every') ? Math.round(number(st, A.get('every'), 2, 1, 600)) : 2;
+        const turn = st.pos.slice(1).some((f) => f.text === 'turn') ? turnSpec(st, pairs) : null;
+        if (!turn) for (const k of ['pairs', 'born']) if (A.has(k)) bad(st, A.get(k), `${k}= só vale numa virada: ponha turn no fim da linha`, 'warn');
         for (const [from, to, d] of pairs) {
           const starts = [];
           if (from.loop || A.has('every')) for (let s = 0; s < from.frames; s += every) starts.push(s);
@@ -2468,7 +2516,7 @@
           for (const s of starts) {
             const name = `${an.name}_${s}${d}`;
             if (m.animMap.has(name) && m.animMap.get(name) !== an) { err(st.line, `a peça "${name}" já é o nome de uma animação: dê outro nome à transição`, st.pos[0].from, st.pos[0].to); continue; }
-            const piece = { name, line: an.line, frames, fps: A.has('fps') ? an.fps : from.fps, loop: false, tracks: new Map(), ptracks: new Map(), events: [], blendOf: { from, to, start: s }, trans: an.name };
+            const piece = { name, line: an.line, frames, fps: A.has('fps') ? an.fps : from.fps, loop: false, tracks: new Map(), ptracks: new Map(), events: [], blendOf: { from, to, start: s, turn }, trans: an.name };
             m.animMap.set(name, piece);
             out.push(piece);
           }
