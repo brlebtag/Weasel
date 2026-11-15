@@ -1,0 +1,21 @@
+sem anim= na linha: warn linha 14: blend= só mistura uma troca de anim= da mesma linha (ex.: at 5s heroi.anim=pula blend=0.4s)
+com +: error linha 13: blend= é quanto tempo a mistura dura (ex.: blend=0.4s), sem o +
+zero: error linha 13: blend= precisa de um tempo maior que zero (ex.: blend=0.4s)
+o arquivo: nenhum aviso
+fora da mistura igual ao corte seco: true (12 poses)
+a 0.5s: parado#6 braço -° tronco azul chapéu 1 boca parada
+a 0.75s: parado#9 braço 171.3° tronco #5575c0 chapéu 0.9 boca boca→boca_aberta 0.2
+a 1s: acena#6 braço 195° tronco #8b648b chapéu 0.6 boca boca→boca_aberta 0.5
+a 1.25s: acena#9 braço 198.8° tronco #c05255 chapéu 0.3 boca boca→boca_aberta 0.8
+a 1.5s: acena#0 braço -° tronco #d84a3d chapéu 0.2 boca boca_aberta→boca_aberta 0
+c 1s (da pose solta, linear): sem animação braço -°
+c 1.25s (da pose solta, linear): sem animação braço -38.7°
+c 1.5s (da pose solta, linear): acena braço -70°
+c 1.75s (da pose solta, linear): acena braço -116.2°
+c 2s (da pose solta, linear): acena braço -°
+b 1.8s (mistura dentro de mistura): acena#3 braço -°
+b 2s (mistura dentro de mistura): acena#6 braço -148.2°
+b 2.2s (mistura dentro de mistura): parado#4 braço -172.6°
+b 2.4s (mistura dentro de mistura): parado#7 braço -185.4°
+b 2.6s (mistura dentro de mistura): acena#4 braço 200°
+b 2.8s (mistura dentro de mistura): acena#7 braço -°

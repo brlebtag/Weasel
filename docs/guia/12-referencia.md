@@ -488,7 +488,7 @@ Para aprender: [capítulo 9](09-jogo-godot.md).
 | `actor nome "arquivo" x,y` | `scale=` · `rot=` · `flip=x\|y\|xy\|none` · `depth=` (1) · `anim=` · `speed=` (1) · `opacity=` (1) · `origin=x,y` (o `root=` do `unity` do arquivo, ou 0,0) · `variant=` · `hide=camada,…` · `expr=` · `path=linha` · `turn=1\|0` · `[screen]` `[bg]` `[hidden]` `[unlit]` `[front]` |
 | `shot nome` | `dur=` (obrigatório) · `in=fade\|wipe\|slide\|zoom\|iris[,duração]` (0.5s) |
 | `camera x,y` | `zoom=` (1) · `rot=` (0) · `shake=` (0) · `follow=ator` · `offset=dx,dy` · `lag=` segundos (0) · `fade=` 0–1 (0) · `fadec=` (#000000) · `lens=` lente (1) · `fog=` cor da névoa (nenhuma) · `haze=` profundidade da meia névoa (6). Padrão: o centro do canvas. |
-| `at tempo alvo.prop=valor …` | `ease=` (smooth) |
+| `at tempo alvo.prop=valor …` | `ease=` (smooth) · `blend=` tempo da mistura de uma troca de `anim=` da mesma linha (nenhum: corte seco) |
 | `scene "arquivo"` | os planos de outro filme |
 | `mark nome tempo` | um momento com nome (antes dos `shot`: do começo do filme; dentro de um: do começo dele); `at nome`, `at nome+0.3s` |
 | `audio nome "arquivo"` | `at=` · `from=` · `dur=` · `vol=` 0–4 (1) · `lips=ator` · `cues="arquivo"` · `text="…"` · `lang=` · `[loop]` |

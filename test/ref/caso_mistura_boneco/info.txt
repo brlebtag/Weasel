@@ -1,0 +1,8 @@
+canvas   200 × 200, fundo transparente
+camadas  1
+  boneco           6 item(ns)
+formas   6 (1 ocultas)
+ossos    corpo, braco←corpo
+animações 2
+  parado         12 quadros, 12 fps
+  acena          12 quadros, 12 fps, anima tronco.c chapeu.opacity boca.shape

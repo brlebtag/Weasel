@@ -1,0 +1,4 @@
+filme    360 × 200, 12 fps, 3s (36 quadros, 00:03:00), fundo #cfe3f0
+atores   a (mistura_boneco.weasel, anim parado), b (mistura_boneco.weasel, anim parado), c (mistura_boneco.weasel)
+planos   1
+  mistura          00:00:00      3s     36 quadros  câmera 180,100 · 5 mudança(s) com at

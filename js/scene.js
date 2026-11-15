@@ -292,7 +292,7 @@
     let bones = pose.bones;
     const touched = new Set([...(A ? A.tracks.keys() : []), ...(B ? B.tracks.keys() : [])]);
     if (touched.size) {
-      const base = pose.anim ? boneLocal(model, pose.anim, pose.frame) : null, vals = new Map();
+      const base = pose.vals || (pose.anim ? boneLocal(model, pose.anim, pose.frame) : null), vals = new Map();
       for (const b of model.bones.values()) {
         let v = base ? base.get(b.name) : pose.time !== undefined ? freeValues(b, pose.time) : REST;
         if (touched.has(b.name)) {
@@ -341,6 +341,85 @@
       }
     }
     return Object.assign({}, pose, { bones, props, b3, geo: new Map() });
+  }
+
+  // Mistura de duas poses (at … ator.anim=nova blend=0.4s, no filme): u = 0 é a pose A, 1 é a B.
+  // Ossos, números e cores vão aos poucos (o giro pelo lado mais curto); a mesma troca de forma (morph) nas
+  // duas também. O que liga e desliga, a ordem, as caixas e as trocas de forma diferentes trocam no meio, e
+  // a animação que vale para only=, trail=, partículas e caixas é a de quem está mais perto.
+  const ELEMENT_OWN = (el, k) => (k === 'c' ? (el.closed ? el.fill : el.color) : k === 'inkc' ? el.inkc : k === 'w' ? el.w : k === 'ink' ? el.ink : k === 'yaw' || k === 'pitch' || k === 'z' ? el[k] || 0 : 1);
+  const FX_ONE = new Set(['brightness', 'saturate', 'contrast']);
+  const LAYER_OWN = (L, k) => (k === 'opacity' ? 1 : k === 'yaw' || k === 'pitch' ? L[k] || 0 : L.fx && L.fx[k] !== undefined ? L.fx[k] : FX_ONE.has(k) ? 1 : 0);
+  const SWITCH_PROPS = new Set(['show', 'above', 'below', 'shape']);
+  function poseVals(model, P) {
+    if (P.vals) return P.vals;
+    if (P.anim) return boneLocal(model, P.anim, P.frame);
+    const out = new Map();
+    for (const b of model.bones.values()) out.set(b.name, P.time !== undefined ? freeValues(b, P.time) : REST);
+    return out;
+  }
+  function mixValue(a, b, u, own) {
+    const x = a !== undefined ? a : own, y = b !== undefined ? b : own;
+    if (typeof x === 'number' && typeof y === 'number') return x + (y - x) * u;
+    if (typeof x === 'string' && typeof y === 'string' && G.parseHex(x) && G.parseHex(y)) return G.lerpColor(x, y, u);
+    return u < 0.5 ? a : b;
+  }
+  // o morph como um ponto entre duas formas: a forma parada (sem morph) é o próprio elemento
+  function mixShape(el, a, b, u) {
+    const A = a || { from: el, to: el, t: 0 }, B = b || { from: el, to: el, t: 0 };
+    // a forma em que o morph está parado (no começo, no fim ou de uma forma para ela mesma)
+    const still = (S) => (S.from === S.to || S.t <= 0 ? S.from : S.t >= 1 ? S.to : null);
+    const along = (S, P, Q) => {
+      if (S.from === P && S.to === Q) return S.t;
+      if (S.from === Q && S.to === P) return 1 - S.t;
+      const x = still(S);
+      return x === P ? 0 : x === Q ? 1 : null;
+    };
+    const ends = [A.from, A.to, B.from, B.to];
+    for (const P of ends) for (const Q of ends) {
+      if (!P || !Q || P === Q) continue;
+      const ta = along(A, P, Q), tb = along(B, P, Q);
+      if (ta !== null && tb !== null) return { from: P, to: Q, t: ta + (tb - ta) * u };
+    }
+    return u < 0.5 ? a : b;
+  }
+  // mistura dois mapas de propriedades (nome → { prop: valor }); own(nome, prop) é o valor sem key
+  function mixMaps(ma, mb, u, own) {
+    if (ma === mb) return ma;
+    const out = new Map();
+    for (const name of new Set([...ma.keys(), ...mb.keys()])) {
+      const oa = ma.get(name) || NOPROPS, ob = mb.get(name) || NOPROPS, o = {};
+      for (const k of new Set([...Object.keys(oa), ...Object.keys(ob)])) {
+        const v = SWITCH_PROPS.has(k) ? (k === 'shape' ? own(name, k, oa[k], ob[k]) : u < 0.5 ? oa[k] : ob[k]) : mixValue(oa[k], ob[k], u, own(name, k));
+        if (v !== undefined) o[k] = v;
+      }
+      out.set(name, o);
+    }
+    return out;
+  }
+  function blendPose(model, A, B, u) {
+    if (u <= 0) return A;
+    if (u >= 1) return B;
+    const va = poseVals(model, A), vb = poseVals(model, B), vals = new Map();
+    for (const b of model.bones.values()) {
+      const x = va.get(b.name) || REST, y = vb.get(b.name) || REST;
+      vals.set(b.name, x.map((p, k) => { let d = y[k] - p; if (k === 2) d = (((d % 360) + 540) % 360) - 180; return p + d * u; }));
+    }
+    const cloth = new Map();
+    for (const name of new Set([...A.cloth.keys(), ...B.cloth.keys()])) {
+      const p = A.cloth.get(name) || [0, 0], q = B.cloth.get(name) || [0, 0];
+      cloth.set(name, [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u]);
+    }
+    const props = mixMaps(A.props, B.props, u, (id, k, sa, sb) => {
+      const el = model.elements[id];
+      if (k === 'shape') return el ? mixShape(el, sa, sb, u) : u < 0.5 ? sa : sb;
+      return el ? ELEMENT_OWN(el, k) : undefined;
+    });
+    const lprops = mixMaps(A.lprops, B.lprops, u, (n, k) => { const L = model.layerMap.get(n); return L ? LAYER_OWN(L, k) : undefined; });
+    const liprops = mixMaps(A.liprops, B.liprops, u, (n, k) => { const L = model.lights.get(n); return L ? L[k] : undefined; });
+    const b3 = mixMaps(A.b3 || NONE, B.b3 || NONE, u, (n, k) => { const b = model.bones.get(n); return b ? b[k] || 0 : undefined; });
+    const D = u < 0.5 ? A : B;
+    return Object.assign({}, D, { vals, bones: matsFrom(model, ikVals(model, vals)), cloth, props, lprops, liprops, b3, geo: new Map() });
   }
 
   function makePose(model, animName, frame) {
@@ -2736,7 +2815,7 @@
   }
 
   W.scene = {
-    makePose, timePose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

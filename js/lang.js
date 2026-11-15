@@ -2916,19 +2916,28 @@
         if (W.geom.EASE[a.text]) ease = a.text;
         else bad(st, a, `ease desconhecido "${a.text}" (use ${Object.keys(W.geom.EASE).join(', ')})`);
       }
+      // blend=0.4s: a troca de anim= desta linha mistura a animação de antes na nova, em vez do corte seco
+      let blend = 0, blendUsed = false;
+      if (st.attrs.has('blend')) {
+        const a = st.attrs.get('blend'), b = timeOf(st, a, fps, 'o tempo da mistura');
+        if (b && b.rel) bad(st, a, 'blend= é quanto tempo a mistura dura (ex.: blend=0.4s), sem o +');
+        else if (b && !(b.v > 0)) bad(st, a, 'blend= precisa de um tempo maior que zero (ex.: blend=0.4s)');
+        else if (b) blend = b.v;
+      }
       const rec = info(st, { at: { shot, t } });
       const key = (kind, name, prop, interp, v, a) => {
         const id = `${kind}:${name}.${prop}`;
         if (!shot.tracks.has(id)) shot.tracks.set(id, { kind, name, prop, interp, keys: [] });
         const tr = shot.tracks.get(id);
         const k = { t, v, ease, line: st.line };
+        if (blend && prop === 'anim') { k.blend = blend; blendUsed = true; }
         const same = tr.keys.findIndex((x) => Math.abs(x.t - t) < 1e-9);
         if (same >= 0) tr.keys[same] = k; else tr.keys.push(k);
         return a;
       };
       let n = 0;
       for (const a of st.attrs.values()) {
-        if (a.key === 'ease') continue;
+        if (a.key === 'ease' || a.key === 'blend') continue;
         n++;
         const dot = a.key.lastIndexOf('.');
         if (dot <= 0) { bad(st, a, 'use alvo.propriedade=valor (ex.: heroi.pos=400,560 ou camera.zoom=1.5)'); continue; }
@@ -2984,6 +2993,7 @@
         }
       }
       if (!n) err(st.line, 'at sem mudança (ex.: at 2s heroi.pos=400,560 camera.zoom=1.4)', st.cmdTok.from, st.cmdTok.to);
+      else if (blend && !blendUsed) bad(st, st.attrs.get('blend'), 'blend= só mistura uma troca de anim= da mesma linha (ex.: at 5s heroi.anim=pula blend=0.4s)', 'warn');
     }
 
     // ---- prévia de um def (o editor, com o cursor dentro dele): uma cópia em 0,0, com as variáveis do painel ----

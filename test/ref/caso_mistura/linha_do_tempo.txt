@@ -1,0 +1,7 @@
+quadros 36 fps 12
+   0 00:00:00 mistura cam=180,100 z1 | a=60,190 parado#0 | b=180,190 parado#0 | c=300,190
+   6 00:00:06 mistura cam=180,100 z1 | a=60,190 parado#6 | b=180,190 acena#0 | c=300,190
+  12 00:01:00 mistura cam=180,100 z1 | a=60,190 acena#6 | b=180,190 acena#6 | c=300,190
+  18 00:01:06 mistura cam=180,100 z1 | a=60,190 acena#0 | b=180,190 acena#0 | c=300,190 acena#6
+  24 00:02:00 mistura cam=180,100 z1 | a=60,190 acena#6 | b=180,190 acena#6 | c=300,190 acena#0
+  30 00:02:06 mistura cam=180,100 z1 | a=60,190 acena#0 | b=180,190 parado#8 | c=300,190 acena#6

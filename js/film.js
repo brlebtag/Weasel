@@ -227,24 +227,35 @@
     const v = (prop, base) => valueAt(trackOf(shot, 'actor', ac.name, prop), t, base);
     const variant = v('variant', ac.variant);
     const model = ac.models.get(variant) || ac.model;
-    let anim = ac.anim, start = 0;
+    let anim = ac.anim, start = 0, cur = -1;
     const at = trackOf(shot, 'actor', ac.name, 'anim');
-    if (at) for (const k of at.keys) { if (k.t <= t + 1e-9) { anim = k.v; start = k.t; } else break; }
+    if (at) for (const k of at.keys) { if (k.t <= t + 1e-9) { anim = k.v; start = k.t; cur++; } else break; }
     const p = actorPos(shot, ac, t);
     const s = {
       ac, model, x: p[0], y: p[1], sx: v('sx', ac.sx), sy: v('sy', ac.sy), rot: v('rot', ac.rot) + p[2], opacity: v('opacity', ac.opacity),
       depth: Math.max(0.05, v('depth', ac.depth)), flip: v('flip', ac.flip), show: v('show', ac.show ? 1 : 0), anim: null, animFrame: 0, pose: null,
     };
     if (!model) return s;
-    const a = anim ? model.animMap.get(anim) : null;
-    if (a) {
-      const local = integrate(trackOf(shot, 'actor', ac.name, 'speed'), ac.speed, start, t);
+    // a pose de uma animação tocando desde from (sem animação, a pose solta no relógio do filme)
+    const plain = (name, from) => {
+      const a = name ? model.animMap.get(name) : null;
+      if (!a) return { anim: null, frame: 0, pose: S.timePose(model, t) };
+      const local = integrate(trackOf(shot, 'actor', ac.name, 'speed'), ac.speed, from, t);
       let f = Math.floor(local * a.fps + 1e-6);
       f = a.loop ? ((f % a.frames) + a.frames) % a.frames : Math.min(a.frames - 1, f);
-      s.anim = a.name;
-      s.animFrame = f;
-      s.pose = S.makePose(model, a.name, f);
-    } else s.pose = S.timePose(model, t);
+      return { anim: a.name, frame: f, pose: S.makePose(model, a.name, f) };
+    };
+    // blend=: durante a mistura, a animação de antes continua tocando e vai virando a nova (a de antes pode
+    // estar no meio de outra mistura)
+    const mixed = (i, depth) => {
+      const k = i >= 0 ? at.keys[i] : null, P = plain(k ? k.v : ac.anim, k ? k.t : 0);
+      if (!k || !k.blend || t >= k.t + k.blend - 1e-9 || depth > 16) return P;
+      const u = G.EASE[k.ease]((t - k.t) / k.blend), Q = mixed(i - 1, depth + 1), D = u < 0.5 ? Q : P;
+      return { anim: D.anim, frame: D.frame, pose: S.blendPose(model, Q.pose, P.pose, u) };
+    };
+    const r = cur >= 0 && at.keys[cur].blend ? mixed(cur, 0) : plain(anim, start);
+    if (r.anim) { s.anim = r.anim; s.animFrame = r.frame; }
+    s.pose = r.pose;
     // expressão (expr): muda aos poucos de um at para o seguinte, como a posição
     const et = trackOf(shot, 'actor', ac.name, 'expr');
     if (et || ac.expr) {

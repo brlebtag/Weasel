@@ -506,6 +506,46 @@ async function animCase() {
   await check('_animado', 'animado.txt', 'text', lines.join('\n') + '\n');
 }
 
+// blend= no at do filme: a troca de animação misturada (test/casos/mistura.weasel). Confere os avisos, que fora
+// da mistura tudo fica igual ao corte seco, o giro pelo lado mais curto, a cor, a opacidade que só uma animação
+// muda e a troca de forma (morph) indo aos poucos.
+async function blendCase() {
+  console.log(paint('1', '_mistura'));
+  const file = path.join(CASES, 'mistura.weasel'), src = fs.readFileSync(file, 'utf8');
+  const parse = (s) => W.lang.parse(s, { file: 'mistura.weasel', resolve: resolver(CASES) });
+  const lines = [];
+  const warns = (s) => parse(s).errors.filter((e) => /blend/.test(e.msg)).map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  for (const [what, from, to] of [
+    ['sem anim= na linha', 'at 1.8s b.anim=parado blend=0.8s', 'at 1.8s b.pos=180,190 blend=0.8s'],
+    ['com +', 'blend=1s ease=linear', 'blend=+1s ease=linear'],
+    ['zero', 'blend=1s ease=linear', 'blend=0s ease=linear'],
+  ]) lines.push(`${what}: ${warns(src.replace(from, to)).join(' | ') || 'nenhum aviso'}`);
+  lines.push(`o arquivo: ${warns(src).join(' | ') || 'nenhum aviso'}`);
+  const m = parse(src), cut = parse(src.replace(/ blend=[\d.]+s/g, ''));
+  const s = m.film.shots[0], sc = cut.film.shots[0];
+  const state = (sh, n, t) => W.film.actorState(sh, sh.actorMap.get(n), t);
+  const sig = (st) => [...st.pose.bones.values()].map((mm) => mm.map((x) => x.toFixed(3)).join(',')).join('|');
+  // fora das janelas de mistura, a pose é a mesma do corte seco
+  const outside = Object.entries({ a: [0, 0.4, 1.6, 2.5], b: [0.4, 1.0, 1.7, 2.9], c: [0.4, 0.9, 2.1, 2.9] }).flatMap(([n, ts]) => ts.map((t) => sig(state(s, n, t)) === sig(state(sc, n, t))));
+  lines.push(`fora da mistura igual ao corte seco: ${outside.every(Boolean)} (${outside.length} poses)`);
+  const r1 = (v) => Math.round(v * 10) / 10;
+  for (const t of [0.5, 0.75, 1.0, 1.25, 1.5]) {
+    const st = state(s, 'a', t), pr = st.pose.props, el = (n) => m.film.shots[0].actorMap.get('a').model.named.get(n)[0];
+    const boca = pr.get(el('boca').id) || {}, tronco = pr.get(el('tronco').id) || {}, chapeu = pr.get(el('chapeu').id) || {};
+    const sh = boca.shape ? `${boca.shape.from.name}→${boca.shape.to.name} ${r1(boca.shape.t)}` : 'parada';
+    lines.push(`a ${t}s: ${st.anim}#${st.animFrame} braço ${st.pose.vals ? r1(st.pose.vals.get('braco')[2]) : '-'}° tronco ${tronco.c || 'azul'} chapéu ${chapeu.opacity !== undefined ? r1(chapeu.opacity) : 1} boca ${sh}`);
+  }
+  for (const t of [1.0, 1.25, 1.5, 1.75, 2.0]) {
+    const st = state(s, 'c', t);
+    lines.push(`c ${t}s (da pose solta, linear): ${st.anim || 'sem animação'} braço ${st.pose.vals ? r1(st.pose.vals.get('braco')[2]) : '-'}°`);
+  }
+  for (const t of [1.8, 2.0, 2.2, 2.4, 2.6, 2.8]) {
+    const st = state(s, 'b', t);
+    lines.push(`b ${t}s (mistura dentro de mistura): ${st.anim}#${st.animFrame} braço ${st.pose.vals ? r1(st.pose.vals.get('braco')[2]) : '-'}°`);
+  }
+  await check('_mistura', 'mistura.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -527,6 +567,7 @@ async function main() {
   if (!only.length || only.some((o) => '_contas'.includes(o))) await exprCase();
   if (!only.length || only.some((o) => '_janela'.includes(o))) await jobCase();
   if (!only.length || only.some((o) => '_animado'.includes(o))) await animCase();
+  if (!only.length || only.some((o) => '_mistura'.includes(o))) await blendCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

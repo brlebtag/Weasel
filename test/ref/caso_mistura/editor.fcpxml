@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/12s" width="180" height="100" colorSpace="1-1-1 (Rec. 709)"/>
+    <asset id="r2" name="caso_mistura_mistura" start="0s" duration="36/12s" hasVideo="1" format="r1" hasAudio="0" videoSources="1">
+      <media-rep kind="original-media" src="caso_mistura_mistura.mov"/>
+    </asset>
+  </resources>
+  <library>
+    <event name="caso_mistura">
+      <project name="caso_mistura">
+        <sequence format="r1" duration="36/12s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <asset-clip ref="r2" name="caso_mistura_mistura" offset="0s" start="0s" duration="36/12s" format="r1" tcFormat="NDF">
+              <marker start="0s" duration="1/12s" value="mistura"/>
+            </asset-clip>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>

@@ -1,0 +1,15 @@
+# teste: blend= no at — a troca de animação misturada, em vez do corte seco.
+# b corta seco (o de hoje), a mistura em 1 s; c sai da pose solta (sem animação); depois b volta e,
+# no meio da mistura, troca de novo (uma mistura dentro da outra).
+film fps=12 dur=3s
+canvas 360 200 bg=#cfe3f0
+
+actor a "mistura_boneco.weasel" 60,190 origin=100,160 scale=0.8 anim=parado
+actor b "mistura_boneco.weasel" 180,190 origin=100,160 scale=0.8 anim=parado
+actor c "mistura_boneco.weasel" 300,190 origin=100,160 scale=0.8
+
+at 0.5s a.anim=acena blend=1s
+at 0.5s b.anim=acena
+at 1s c.anim=acena blend=1s ease=linear
+at 1.8s b.anim=parado blend=0.8s
+at 2.2s b.anim=acena blend=0.6s

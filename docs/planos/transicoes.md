@@ -1,12 +1,27 @@
 # Transições entre duas animações
 
-**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem; falta o "pode fazer". Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Você também decide se os quadros extras na sprite sheet valem a pena.
+**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem. Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Em 15/11/2026 você fechou as decisões (veja [Decidido](#decidido-15112026)). A etapa 1 (`blend=` no filme) foi feita na 1.40.0; as etapas 2 e 3 esperam o "pode fazer".
 
 **Origem:** capivara #4: passar do galope para a pose parada sem pular.
 
 ## O problema
 
 Hoje, trocar de animação é sempre um corte seco: num quadro a capivara está esticada no galope; no seguinte, está parada. Isso vale no filme, no Godot por quadros e no Godot com esqueleto. Desenhar a transição à mão dá trabalho e quebra quando o galope muda.
+
+## Regra: nada do que existe muda
+
+Tudo aqui é **a mais** e só liga quando você pede:
+- **Sem as palavras novas, tudo sai igual, byte a byte:** PNG, GIF, WebP, vídeo, sprite sheet, `.tres`, `.tscn` e `.gd`. Os testes de regressão conferem isso: os arquivos de referência não podem mudar.
+- **Nenhum arquivo de hoje usa as palavras novas** (conferido em 15/11/2026 nos exemplos, no guia e nos testes):
+  - um `blend=` solto no `at` hoje é erro;
+  - `from=`, `to=` e `every=` no `anim` hoje são "atributo desconhecido".
+- **O `tocar()` do Godot não muda.** Ele continua chamando `play(nome)` sem tempo de mistura, então os tempos de mistura que você já acertou no AnimationPlayer do Godot continuam valendo. A mistura entra numa função nova, `trocar()`.
+- **O `.gd` só ganha o `trocar()` quando o arquivo pede.** Por quadros, isso é declarar uma transição. Com esqueleto, que não precisa declarar pares, é uma opção na linha `godot`, com o nome a decidir na etapa 3. Sem isso, o script gerado fica igual ao de hoje.
+- **Peças geradas nunca apagam nada:** se o nome de uma peça (`para_galope_0_right`) já for de uma animação sua, é erro com o nome em conflito; o Weasel não sobrescreve.
+- **Tudo é configurável:**
+  - o `blend=` vale por linha do `at`;
+  - o `frames=` e o `every=` valem por transição;
+  - o tempo de mistura é um parâmetro do `trocar()`.
 
 ## Qualquer animação para qualquer animação
 
@@ -15,7 +30,7 @@ Hoje, trocar de animação é sempre um corte seco: num quadro a capivara está 
 | Onde | Hoje | Proposta | Custo |
 |---|---|---|---|
 | **Filme** | corte seco | misturar na hora: `at 5s capivara.anim=pisca blend=0.4s` | nenhum quadro novo; qualquer par, sem declarar nada |
-| **Godot com esqueleto** (`rig=bones`) | `tocar()` troca seco | o Godot já sabe misturar duas animações (`play(nome, tempo_de_mistura)`); o `tocar()` ganharia esse tempo | nenhum quadro novo; qualquer par |
+| **Godot com esqueleto** (`rig=bones`) | `tocar()` troca seco | o Godot já sabe misturar duas animações (`play(nome, tempo_de_mistura)`); a função nova `trocar()` passa esse tempo, e o `tocar()` fica como está | nenhum quadro novo; qualquer par |
 | **Godot por quadros** (sprite sheet) | corte seco | a transição gerada: `anim para_galope from=galope to=pisca` | quadros a mais na folha, só para os pares declarados |
 
 - Gerar quadros só é necessário na sprite sheet.
@@ -25,10 +40,10 @@ Hoje, trocar de animação é sempre um corte seco: num quadro a capivara está 
 ## A transição gerada (sprite sheet)
 
 ```
-anim para_galope from=galope to=pisca frames=5
+anim para_galope from=galope to=pisca frames=4
 ```
 
-- O Weasel gera os quadros do meio: parte de um quadro do galope e chega no `pisca` em 5 quadros.
+- O Weasel gera os quadros do meio: parte de um quadro do galope e chega no `pisca` em 4 quadros (`frames=4` é o padrão; pode omitir).
 - Uma **peça** é uma dessas sequências. Os nomes: `para_galope_0_right`, `para_galope_2_right`… (o número é o quadro de onde ela parte).
 - **Sair da pose parada e voltar a galopar:** é a mesma peça tocada de trás para a frente. Não precisa de quadros novos.
 
@@ -50,8 +65,8 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 - **Cores:** vão aos poucos.
 - **Liga e desliga** (`show`, `above`, a ordem): trocam no meio.
 - **Morph de uma forma em outra:**
-  - se as duas combinam (mesmo tipo e número de pontos), a forma vai aos poucos;
-  - se não combinam, troca no meio, como a troca de boca das [bocas por texto](bocas-por-texto.md).
+  - se as duas animações usam as mesmas formas (a mesma troca, ou uma delas parada numa das formas), a forma vai aos poucos;
+  - se não, troca no meio, como a troca de boca das [bocas por texto](bocas-por-texto.md). (Assim ficou no `blend=` da 1.40.0.)
 - **Eventos:** não entram.
 - **Cuidados:**
   - o que é simulado (balanço, tecido, partículas) pode dar um tranco na transição; testar na capivara;
@@ -66,7 +81,7 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 
 ## O custo na folha
 
-- Cada peça são `frames=` quadros a mais na sprite sheet. Um galope de 12 quadros com `every=2` dá 6 peças × 5 quadros = 30 quadros.
+- Cada peça são `frames=` quadros a mais na sprite sheet. Um galope de 12 quadros com `every=2` dá 6 peças × 4 quadros = 24 quadros.
 - Uma saída de `once` custa só uma peça.
 - Só você pode julgar, olhando o jogo, se compensa. Um `every=` maior gera menos peças, com uma transição menos exata.
 
@@ -79,10 +94,19 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 - **Jogo:**
   - só quem declarar transições ganha quadros novos na folha;
   - com esqueleto, a mistura não aumenta nada;
+  - o `tocar()` não muda; a mistura só existe no `trocar()`, que só aparece no `.gd` quando o arquivo pede (veja a [regra](#regra-nada-do-que-existe-muda));
   - os jogos que não usarem `trocar()` não mudam.
 
-## Para decidir
+## Decidido (15/11/2026)
 
-1. O nome no filme: `blend=0.4s` ou outro?
-2. O `every=` padrão (2?) e o número de quadros de cada peça.
-3. Se compensa gerar peças para a capivara, olhando o tamanho da folha.
+1. **O nome no filme:** `blend=0.4s` solto na linha do `at`, como o `ease=`. Ele vale só para as trocas de `anim=` daquela linha: `at 5s capivara.anim=pisca blend=0.4s`. O nome é o mesmo do `blend=multiply` da `layer`, mas os comandos são diferentes.
+2. **Os padrões:** `every=2` e `frames=4` (uns 0,3 s a 12 fps).
+3. **A capivara:** decidir depois da primeira versão, olhando quantos quadros a folha ganhou (a exportação mostra o tamanho).
+
+## Ordem
+
+1. O `blend=` do filme. O jogo não muda nada. **Feito na 1.40.0.**
+2. As peças na sprite sheet (`anim … from= to=`), com `every=` e `frames=`.
+3. O `trocar()` no Godot, depois do [ajudante do Godot](ajudante-godot.md) (item 1 da fila).
+
+Cada etapa começa com o seu "pode fazer".

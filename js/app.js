@@ -1497,6 +1497,7 @@
     for (const n of m.layerMap.keys()) for (const p of ['opacity', 'show', 'yaw', 'pitch']) out.push({ label: `${n}.${p}=`, detail: 'camada' });
     for (const n of m.named.keys()) for (const p of Object.keys(L.SHAPE_AT_PROPS)) out.push({ label: `${n}.${p}=`, detail: 'forma' });
     out.push({ label: 'ease=' });
+    out.push({ label: 'blend=', detail: 'mistura a troca de anim= (ex.: 0.4s)' });
     return out;
   }
   function complete({ before }) {

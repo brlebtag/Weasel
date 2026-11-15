@@ -565,7 +565,7 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 - O valor declarado (no `actor` ou na `camera`) vale como um `at 0s`.
 - De um `at` para o seguinte, a mudança é **gradual**. O `ease=` diz como ela **chega** naquele `at` (padrão `smooth`; `linear` para velocidade constante; `out` para chegar freando). Repare que é o contrário da `key`, em que o `ease` diz como o movimento **sai**.
 - Para algo ficar parado e só depois andar, repita a posição num `at` anterior. No exemplo, o Cavaleiro fica em `1500,900` até 1,8 s e só então corre até `1000,900`, chegando em 2,4 s.
-- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca.
+- `anim`, `flip`, `show`, `follow`, `speed` e `variant` trocam **de uma vez**. Trocar `anim` recomeça a animação do quadro 0; animações com loop repetem até a próxima troca. Com `blend=`, a troca de `anim` vira uma [mistura](#misturar-uma-animação-na-outra-blend).
 
 **O que o `at` muda:**
 
@@ -670,6 +670,37 @@ Repare:
 - `+0.5s`, `+500ms` e `+6f` são o mesmo intervalo aqui: 500 ms são meio segundo, e 6 quadros (`f`) num filme de 12 quadros por segundo também.
 
 **Experimente:** troque o primeiro `at 0.5s` por `at 1.5s`. A sequência inteira começa um segundo mais tarde, sem mudar mais nada.
+
+### Misturar uma animação na outra: `blend=`
+
+Trocar `anim` é um corte seco: num quadro a capivara está esticada no galope; no seguinte, está parada. Com `blend=` na mesma linha, a troca vira uma **mistura**: a animação de antes continua tocando e vai virando a nova durante o tempo do `blend=`.
+
+<!-- gerar: img/10_blend.gif -s 0.6 -->
+```weasel
+film fps=12 dur=3s
+canvas 900 330 bg=#f4efe6
+
+layer chao
+rect piso 0,290 900,40 c=#d8cbb0
+text t1 225,322 "sem blend=" size=24 align=center c=#1c1f2b
+text t2 675,322 "blend=0.6s" size=24 align=center c=#1c1f2b
+
+actor a "chefe.weasel" 225,290 origin=180,256 anim=run
+actor b "chefe.weasel" 675,290 origin=180,256 anim=run
+
+at 1.2s a.anim=idle
+at 1.2s b.anim=idle blend=0.6s
+```
+
+![Duas capivaras galopando: em 1,2 s, a da esquerda para de uma vez; a da direita vai diminuindo o galope até ficar parada](img/10_blend.gif)
+
+- A da esquerda para de uma vez em 1,2 s. A da direita leva 0,6 s, de 1,2 s a 1,8 s, para ir do galope à pose parada.
+- Os ossos, os números e as cores vão aos poucos, e o giro vai pelo lado mais curto. Uma troca de forma (`boca.shape=`) também vai aos poucos quando as duas animações usam as mesmas formas.
+- O que liga e desliga (`show`), a ordem (`above` e `below`), as caixas e as trocas para formas diferentes mudam no meio da mistura. As partículas seguem a animação que está mais perto e podem dar um pulo no meio.
+- O `ease=` da linha diz o ritmo da mistura (padrão `smooth`).
+- `blend=` vale só para o `anim=` da mesma linha; sem ele, a troca continua seca. Se outra troca com `blend=` chegar antes do fim, ela parte de onde a mistura estava.
+
+**Experimente:** troque `blend=0.6s` por `blend=1.5s`. A capivara da direita leva mais tempo para parar.
 
 ### Aparecer: `show` ou `opacity`
 
