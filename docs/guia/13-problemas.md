@@ -1050,6 +1050,22 @@ O GIF só tem transparência de 1 bit: cada pixel é transparente ou não, sem m
 
 O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na mesma pasta do projeto do Godot.
 
+### No Godot, a peça de transição não aparece
+
+**O que você vê:** o arquivo tem `anim stop from=run to=idle`, as peças estão na folha, mas no jogo o personagem para seco.
+
+**Por quê:** o `tocar("idle")` não conhece as peças. E, chamado a cada quadro, ele corta a peça que estiver tocando.
+
+**Como resolver:** troque com `trocar("idle", velocity)` ([capítulo 9](09-jogo-godot.md#no-jogo-trocar)). Ele escolhe a peça, toca o `idle` no fim dela e pode ser chamado a cada quadro.
+
+### No Godot, o sprite fica preso na animação de antes
+
+**O que você vê:** na cena por quadros, depois de uma troca de animação, o sprite continua mostrando a animação velha (ou mistura quadros das duas).
+
+**Por quê:** um tempo de mistura no AnimationPlayer (`play("idle", 0.3)`, ou o *Blend Times* do editor do Godot) mistura bem os ossos, mas não o quadro do sprite. A troca de sprite acontece de uma vez, e o Godot não a aplica durante a mistura.
+
+**Como resolver:** na cena por quadros, deixe os tempos de mistura em 0 e use as peças de transição (`anim … from= to=` e `trocar()`, no [capítulo 9](09-jogo-godot.md#sair-de-uma-animação-sem-corte-from-e-to)). A mistura na hora vale para a cena com esqueleto (`rig=bones`), e o `trocar()` já cuida dela.
+
 ### No Godot, o desenho pula para o lado quando o personagem vira
 
 **O que você vê:** o personagem anda para a direita direitinho; quando vira para a esquerda, o desenho salta para o lado, longe da colisão.

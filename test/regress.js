@@ -582,6 +582,31 @@ async function phaseCase() {
   await check('_fase', 'fase.txt', 'text', lines.join('\n') + '\n');
 }
 
+// trocar() no Godot: a linha transicoes = {…} das cenas (por quadros e com esqueleto, com o lado espelhado) para o
+// ajudante achar as peças de transição (test/casos/transicao_pecas.weasel), nenhuma linha sem transições, e o
+// ajudante com o trocar() e as funções que ele usa.
+async function swapCase() {
+  console.log(paint('1', '_trocar'));
+  const parse = (name, swap) => {
+    let src = fs.readFileSync(path.join(CASES, name), 'utf8');
+    if (swap) src = src.replace(swap[0], swap[1]);
+    return W.lang.parse(src, { file: name, resolve: resolver(CASES) });
+  };
+  // a linha transicoes é a última da cena (no nó do AnimationPlayer)
+  const block = (text) => { const i = text.indexOf('\ntransicoes = {'); return i < 0 ? 'nenhuma' : text.slice(i).trim(); };
+  const lines = [];
+  const m = parse('transicao_pecas.weasel');
+  const sheet = X.sheetCanvas(m, m.anims.map((a) => a.name), { scale: 0.2, transparent: true, trim: true, margin: 2, layout: 'rows', cols: 0, padding: 2, imageName: 't.png', format: 'sheet' });
+  lines.push('por quadros:', block(W.godot.sceneText(m, sheet, { framesPath: 't.tres', scriptPath: 'weasel_anim.gd', mirror: true })));
+  const bones = parse('transicao_pecas.weasel', ['godot body=character root=60,110', 'godot body=character root=60,110 rig=bones']);
+  lines.push('com esqueleto:', block(W.rig.packageFiles(bones, { base: 't', scale: 0.5, mirror: true }).files.find((x) => x.name.endsWith('.tscn')).text));
+  const plain = parse('transicao_pecas.weasel', [/anim (to_idle|after_attack) from=.*\n/g, '']);
+  lines.push(`sem transições: ${W.godot.transProp(plain, W.godot.playerAnims(plain, true)) || 'nenhuma linha'}`);
+  const gd = W.godot.SCRIPT;
+  lines.push(`ajudante: ${['func trocar(acao: String, dir := Vector2.ZERO, mistura := 0.2)', '@export var transicoes', 'func _fim_da_peca(', 'func _por_quadros(', 'func _aplicar_discretas(', 'play_backwards('].map((t) => `${t.split('(')[0]} ${gd.includes(t) ? 'sim' : 'não'}`).join(', ')}`);
+  await check('_trocar', 'trocar.txt', 'text', lines.join('\n') + '\n');
+}
+
 // anim … from= to=: as peças de transição da sprite sheet (test/casos/transicao_pecas.weasel). Confere os erros
 // e avisos, que as animações de antes saem iguais com e sem transições, as peças (nomes, de onde partem, o peso,
 // a animação que vale para only=), o once com every= e o Godot (sem loop; com esqueleto, espelhadas).
@@ -655,6 +680,7 @@ async function main() {
   if (!only.length || only.some((o) => '_mistura'.includes(o))) await blendCase();
   if (!only.length || only.some((o) => '_transicao'.includes(o))) await transCase();
   if (!only.length || only.some((o) => '_fase'.includes(o))) await phaseCase();
+  if (!only.length || only.some((o) => '_trocar'.includes(o))) await swapCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

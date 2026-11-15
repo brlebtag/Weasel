@@ -115,6 +115,28 @@
     if (!list.length) return null;
     return `fases = {\n${list.map(([n, v, N]) => `${quote(n)}: ${flo(Math.round((v / N) * 10000) / 10000)}`).join(',\n')}\n}`;
   }
+  // transições do ajudante (anim … from= to=): para cada animação de saída e de chegada, os quadros de onde as peças
+  // partem e os nomes delas (no lado espelhado, o par espelhado); trocar() acha a peça certa. null sem nenhuma peça
+  // (a cena fica como antes).
+  const mirrorName = (n) => { const d = dirOf(n), m = d && MIRROR[d]; return m ? n.slice(0, -d.length) + m : n; };
+  function transProp(model, anims) {
+    const by = new Map();
+    for (const p of anims) {
+      const b = p.anim.blendOf;
+      if (!b) continue;
+      const from = p.flip ? mirrorName(b.from.name) : b.from.name, to = p.flip ? mirrorName(b.to.name) : b.to.name;
+      if (!by.has(from)) by.set(from, new Map());
+      const outs = by.get(from);
+      if (!outs.has(to)) outs.set(to, []);
+      outs.get(to).push([b.start, p.name]);
+    }
+    if (!by.size) return null;
+    const pair = (to, list) => {
+      list.sort((p, q) => p[0] - q[0]);
+      return `${quote(to)}: {\n"quadros": [${list.map((x) => x[0]).join(', ')}],\n"pecas": [${list.map((x) => quote(x[1])).join(', ')}]\n}`;
+    };
+    return `transicoes = {\n${[...by].map(([from, outs]) => `${quote(from)}: {\n${[...outs].map(([to, list]) => pair(to, list)).join(',\n')}\n}`).join(',\n')}\n}`;
+  }
   // só as keys em que o valor muda (o resto o Godot mantém)
   function changes(values, dt) {
     const out = [];
@@ -284,6 +306,8 @@
     if (speeds) player.push(speeds);
     const phases = phasesProp(model, anims);
     if (phases) player.push(phases);
+    const trans = transProp(model, anims);
+    if (trans) player.push(trans);
     nodes.push(player.join('\n'));
 
     return [`[gd_scene load_steps=${blocks.length + 3} format=3]`, ext.join('\n'), ...blocks, ...nodes].join('\n\n') + '\n';
@@ -292,7 +316,8 @@
   // Ajudante do AnimationPlayer (o mesmo para todos os personagens).
   const SCRIPT = `# Weasel — ajudante do AnimationPlayer das cenas exportadas pelo Weasel.
 # Toca as animações pelo nome e pela direção (top-down), troca de animação na mesma fase da passada,
-# diz quantos quadros e o fps de cada animação, mostra um quadro parado e avisa os eventos (event).
+# troca com as transições geradas (trocar()), diz quantos quadros e o fps de cada animação, mostra um
+# quadro parado e avisa os eventos (event).
 # É o mesmo arquivo para todos os personagens; pode copiar e mudar à vontade.
 extends AnimationPlayer
 
@@ -312,6 +337,14 @@ var direcao := Vector2.DOWN
 ## Onde fica o meio do apoio do primeiro pé (feet=) em cada animação em loop, em fração do ciclo (0 a 1).
 ## tocar(acao, dir, true) usa para trocar de animação com o pé no chão ainda no chão. Vazio sem feet=.
 @export var fases: Dictionary = {}
+
+## As transições geradas (anim … from= to=): para cada animação de saída e de chegada, os quadros de onde
+## as peças partem e os nomes delas. trocar() acha a peça certa. Vazio sem transições.
+@export var transicoes: Dictionary = {}
+
+var _peca: StringName = &""
+var _destino: StringName = &""
+var _destino_tempo := 0.0
 
 
 ## Toca "acao" virada para a direção: tocar("walk", velocity) escolhe walk_down, walk_up, walk_right
@@ -356,6 +389,54 @@ func velocidade(nome := "") -> float:
 	if not velocidades.has(nome):
 		nome = String(nome_com_direcao(nome, direcao))
 	return float(velocidades.get(nome, 0.0))
+
+
+## Troca para "acao" sem corte seco: trocar("idle", velocity). Pode chamar a cada quadro, como o tocar():
+## só começa uma troca quando a animação muda.
+## - Com uma transição (anim … from= to=) da animação atual para a nova, toca a peça que parte do quadro
+##   em que a atual está (arredondando para baixo) e, no fim dela, a nova, do começo.
+## - Com a transição do caminho contrário (parar de correr, e agora voltar a correr), toca a peça de trás
+##   para a frente, e a nova continua do quadro em que a peça termina.
+## - Sem transição, entre dois loops a nova continua no mesmo ponto da passada (como tocar(acao, dir, true)).
+##   Com esqueleto, mistura as duas em "mistura" segundos; por quadros, corta seco (a mistura do Godot
+##   deixaria o sprite preso na animação de antes).
+## Enquanto a peça toca, chame trocar(), não tocar(): o tocar() da mesma animação corta a peça.
+func trocar(acao: String, dir := Vector2.ZERO, mistura := 0.2) -> void:
+	if dir.length_squared() > 0.0001:
+		direcao = dir.normalized()
+	var para := nome_com_direcao(acao, direcao)
+	if is_playing() and (current_animation == para or (_peca != &"" and current_animation == _peca and _destino == para)):
+		return
+	var de := StringName(current_animation if is_playing() else assigned_animation)
+	_peca = &""
+	var ida := _pecas(de, para)
+	if not ida.is_empty():
+		var quadro := _quadro_atual(de)
+		var inicios: Array = ida["quadros"]
+		for i in range(inicios.size() - 1, -1, -1):
+			if int(inicios[i]) <= quadro:
+				_tocar_peca(ida["pecas"][i], para, 0.0, false)
+				return
+	var volta := _pecas(para, de)
+	if not volta.is_empty() and get_animation(para).loop_mode != Animation.LOOP_NONE:
+		# a peça termina perto do quadro seguinte ao de onde ela parte; "para" continua do outro
+		var n := quadros(para)
+		_tocar_peca(volta["pecas"][0], para, (posmod(int(volta["quadros"][0]) + 2, n) + 0.01) / fps(para), true)
+		return
+	var tempo := _tempo_na_mesma_fase(para)
+	if mistura <= 0.0 or _por_quadros(para):
+		play(para)
+		if tempo >= 0.0:
+			seek(tempo, true)
+		return
+	play(para, mistura)
+	if tempo >= 0.0:
+		seek(tempo, true)
+	# o que troca de uma vez (o lado espelhado, as caixas, os pontos) não entra na mistura do Godot: vale
+	# já no começo e é conferido de novo no fim
+	_aplicar_discretas(para, maxf(tempo, 0.0))
+	if is_inside_tree():
+		get_tree().create_timer(mistura).timeout.connect(_depois_da_mistura.bind(para))
 
 
 ## Quantos quadros a animação tem: quadros("walk") (com a direção, como tocar()); quadros() é a que está
@@ -407,6 +488,70 @@ func _animacao(acao: String) -> Animation:
 	if not has_animation(nome):
 		return null
 	return get_animation(nome)
+
+
+## As peças da transição de "de" para "para": {"quadros": [...], "pecas": [...]}, ou {} se não há.
+func _pecas(de: StringName, para: StringName) -> Dictionary:
+	var saidas: Dictionary = transicoes.get(String(de), {})
+	return saidas.get(String(para), {})
+
+
+## O quadro em que "nome" está (tocando, parada ou já terminada).
+func _quadro_atual(nome: StringName) -> int:
+	var n := quadros(nome)
+	if n <= 0 or (current_animation != nome and assigned_animation != nome):
+		return 0
+	return clampi(floori(current_animation_position * fps(nome) + 0.0001), 0, n - 1)
+
+
+func _tocar_peca(peca: String, destino: StringName, destino_tempo: float, ao_contrario: bool) -> void:
+	_peca = StringName(peca)
+	_destino = destino
+	_destino_tempo = destino_tempo
+	if not animation_finished.is_connected(_fim_da_peca):
+		animation_finished.connect(_fim_da_peca)
+	if ao_contrario:
+		play_backwards(_peca, 0.0)
+	else:
+		play(_peca, 0.0)
+
+
+func _fim_da_peca(nome: StringName) -> void:
+	if _peca == &"" or nome != _peca:
+		return
+	_peca = &""
+	play(_destino, 0.0)
+	if _destino_tempo > 0.0:
+		seek(_destino_tempo, true)
+
+
+## A cena por quadros troca o sprite (a pista Sprite:animation); a com esqueleto, não.
+func _por_quadros(nome: StringName) -> bool:
+	var a := get_animation(nome)
+	return a != null and a.find_track(^"Sprite:animation", Animation.TYPE_VALUE) >= 0
+
+
+## Põe nos nós os valores que trocam de uma vez (pistas discretas) de "nome" no tempo dado.
+func _aplicar_discretas(nome: StringName, tempo: float) -> void:
+	var a := get_animation(nome)
+	var raiz := get_node_or_null(root_node)
+	if a == null or raiz == null:
+		return
+	for i in a.get_track_count():
+		if a.track_get_type(i) != Animation.TYPE_VALUE or a.value_track_get_update_mode(i) != Animation.UPDATE_DISCRETE:
+			continue
+		var k := a.track_find_key(i, tempo)
+		if k < 0:
+			continue
+		var caminho := a.track_get_path(i)
+		var no := raiz.get_node_or_null(NodePath(caminho.get_concatenated_names()))
+		if no != null:
+			no.set_indexed(NodePath(caminho.get_concatenated_subnames()), a.track_get_key_value(i, k))
+
+
+func _depois_da_mistura(nome: StringName) -> void:
+	if assigned_animation == nome:
+		seek(current_animation_position, true)
 
 
 ## Onde "para" continua a passada da animação que está tocando (em segundos), ou -1 se não dá: nada
@@ -558,5 +703,5 @@ func _weasel_eventos(nomes: Array) -> void:
     return { files, kind: 'scene', sheet: r, mirrored, boxes: boxList(model).length, points: model.points.size };
   }
 
-  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, eventKeys, changes, speedsProp, phasesProp };
+  W.godot = { spriteFramesText, sceneText, tilesetText, packageFiles, playerAnims, rootOf, boxList, SCRIPT, dirOf, ROOT_TYPES, pascal, methodTrack, eventKeys, changes, speedsProp, phasesProp, transProp };
 })(window.Weasel = window.Weasel || {});

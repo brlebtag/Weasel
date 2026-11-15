@@ -456,7 +456,7 @@ salvo godot/moeda.png  52×52, 1 quadros de 48×48 · 2 KB
 salvo godot/moeda_normal.png  52×52, normal map · 3 KB
 salvo godot/moeda.tres  SpriteFrames do Godot 4 · 1 KB
 salvo godot/moeda.tscn  cena do Godot 4 (1 caixa) · 1 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 11 KB
 ```
 
 Dentro do `moeda.tscn`:
@@ -508,7 +508,7 @@ Um **normal map** é uma segunda imagem, em tons de azul e roxo, que diz para on
 salvo godot/moeda.png  52×52, 1 quadros de 48×48 · 2 KB
 salvo godot/moeda.tres  SpriteFrames do Godot 4 · 1 KB
 salvo godot/moeda.tscn  cena do Godot 4 (1 caixa) · 1 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 11 KB
 ```
 
 ## Exportando para o Godot
@@ -524,7 +524,7 @@ salvo godot/gosma.png  490×354, 14 quadros de 120×86 · 35 KB
 salvo godot/gosma_normal.png  490×354, normal map · 82 KB
 salvo godot/gosma.tres  SpriteFrames do Godot 4 · 3 KB
 salvo godot/gosma.tscn  cena do Godot 4 (3 caixas, espelhadas: idle_left, attack_left) · 13 KB
-salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 6 KB
+salvo godot/weasel_anim.gd  ajudante do AnimationPlayer · 11 KB
 ```
 
 Isso gera uma pasta pronta para copiar para dentro do projeto do Godot:
@@ -535,7 +535,7 @@ Isso gera uma pasta pronta para copiar para dentro do projeto do Godot:
 | `gosma_normal.png` | o **normal map**, para a luz 2D do Godot (`PointLight2D`) iluminar o personagem com relevo |
 | `gosma.tres` | o `SpriteFrames` com as animações |
 | `gosma.tscn` | a **cena pronta**: o personagem com sprite, colisão, hitbox, hurtbox e AnimationPlayer |
-| `weasel_anim.gd` | o ajudante do AnimationPlayer (`tocar()`, `quadros()`, `fps()`, `mostrar_quadro()` e o sinal `evento`) |
+| `weasel_anim.gd` | o ajudante do AnimationPlayer (`tocar()`, `trocar()`, `quadros()`, `fps()`, `mostrar_quadro()` e o sinal `evento`) |
 
 A cena fica assim:
 
@@ -554,6 +554,7 @@ Gosma (CharacterBody2D)            ← godot body=; a origem é o root=
 - Os eventos chegam pelo sinal `evento(nome)`. Dois ou mais no mesmo quadro chegam um depois do outro, na ordem do código.
 - Com `feet=`, `velocidade()` diz quanto o personagem anda por segundo na animação tocando agora sem os pés escorregarem ([acima](#no-jogo)).
 - `tocar("trote", velocity, true)` troca de animação sem perder o passo ([acima](#trocar-de-animação-sem-perder-o-passo)).
+- `trocar("idle", velocity)` troca com as peças de transição geradas por `anim … from= to=` ([abaixo](#no-jogo-trocar)).
 - `quadros("attack")` e `fps("attack")` dizem quantos quadros a animação tem e quantos ela toca por segundo, com a direção escolhida como no `tocar()`. Sem nome, valem para a animação tocando agora. O jogo não precisa copiar esses números à mão: se a animação mudar no Weasel, basta exportar de novo.
 - `mostrar_quadro("attack", 3, velocity)` para a animação no quadro 3 (de 0 a `quadros() - 1`). Ela fica parada no meio do quadro, sem avisar os eventos, e o próximo `tocar()` da mesma animação continua dali. Serve quando o jogo escolhe o quadro: uma barra de força que enche, uma porta que abre conforme o jogador empurra.
 - Para virar o personagem, deixe o `tocar()` escolher a animação `_left`. Não vire o sprite com `flip_h`: a imagem espelha, mas o `offset` dela não, e o desenho pula para o lado ([capítulo 13](13-problemas.md#no-godot-o-desenho-pula-para-o-lado-quando-o-personagem-vira)).
@@ -794,7 +795,26 @@ Repare:
 - As peças tocam uma vez (sem loop) e entram em tudo o que lista as animações: a folha, o `.tres`, a cena do Godot (também com `rig=bones`), o GIF e o player do editor. Sem `from=` e `to=`, nada disso muda.
 - Cada peça custa `frames=` quadros na folha: um `run` de 12 quadros com `every=2` dá 6 peças de 4 quadros, 24 quadros a mais.
 
-**No jogo:** quando o personagem para, toque a peça do quadro em que o `run` está (arredondando para baixo até um múltiplo do `every=`) e, quando ela acabar, o `idle`. Uma função do ajudante do Godot que escolhe a peça sozinha está planejada para uma próxima versão.
+### No jogo: `trocar()`
+
+No Godot, troque de animação com `trocar()` em vez de `tocar()`, e o ajudante escolhe a peça sozinho:
+
+```gdscript
+func _physics_process(_delta: float) -> void:
+	velocity = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down") * 120.0
+	move_and_slide()
+	if velocity:
+		anim.trocar("run", velocity)
+	else:
+		anim.trocar("idle", velocity)
+```
+
+- **A ida:** quando o personagem para no meio do `run`, o `trocar("idle")` toca a peça do quadro em que o `run` está, arredondando para baixo até uma peça que existe (no quadro 3, a `stop_2`). No fim dela, toca o `idle` do começo.
+- **A volta:** quando ele volta a correr, o `trocar("run")` toca a mesma peça **de trás para a frente**, sem quadros novos, e o `run` continua do quadro em que ela termina. Se o `idle` estiver longe do primeiro quadro, pode haver um pulinho no começo da volta.
+- **Sem peças para o par:** entre dois loops, a nova animação continua no mesmo ponto da passada, como no `tocar(acao, dir, true)` ([acima](#trocar-de-animação-sem-perder-o-passo)). Com esqueleto (`rig=bones`), as duas ainda se misturam em 0,2 s; o terceiro parâmetro muda o tempo (`trocar("idle", velocity, 0.4)`; com 0, corta seco). Por quadros, a troca sem peça é seca: a mistura do Godot deixaria o sprite preso na animação de antes.
+- **Com esqueleto e peças declaradas,** o `trocar()` usa as peças, como na cena por quadros.
+- Pode chamar o `trocar()` a cada quadro, como o `tocar()`: ele só começa uma troca quando a animação muda. Enquanto a peça toca, não chame `tocar()`: ele corta a peça.
+- Para achar as peças, a cena guarda em `transicoes = {…}` de onde para onde vai cada transição, os quadros de onde as peças partem e os nomes delas. Essa linha só aparece quando o arquivo tem `from=` e `to=`.
 
 ## Tileset: blocos para montar fases
 

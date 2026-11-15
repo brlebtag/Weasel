@@ -1575,3 +1575,35 @@ libraries = {
 }
 autoplay = &"walk_right"
 script = ExtResource("2_script")
+transicoes = {
+"walk_right": {
+"idle_right": {
+"quadros": [0, 4],
+"pecas": ["to_idle_0_right", "to_idle_4_right"]
+}
+},
+"walk_down": {
+"idle_down": {
+"quadros": [0, 4],
+"pecas": ["to_idle_0_down", "to_idle_4_down"]
+}
+},
+"attack_right": {
+"idle_right": {
+"quadros": [5],
+"pecas": ["after_attack_5_right"]
+}
+},
+"walk_left": {
+"idle_left": {
+"quadros": [0, 4],
+"pecas": ["to_idle_0_left", "to_idle_4_left"]
+}
+},
+"attack_left": {
+"idle_left": {
+"quadros": [5],
+"pecas": ["after_attack_5_left"]
+}
+}
+}

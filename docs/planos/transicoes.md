@@ -1,6 +1,6 @@
 # Transições entre duas animações
 
-**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem. Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Em 15/11/2026 você fechou as decisões (veja [Decidido](#decidido-15112026)). A etapa 1 (`blend=` no filme) foi feita na 1.40.0 e a etapa 2 (as peças na sprite sheet) na 1.41.0; a etapa 3 espera o "pode fazer".
+**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem. Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Em 15/11/2026 você fechou as decisões (veja [Decidido](#decidido-15112026)). A etapa 1 (`blend=` no filme) foi feita na 1.40.0, a etapa 2 (as peças na sprite sheet) na 1.41.0 e a etapa 3 (o `trocar()` no Godot) na 1.43.0: o plano está feito. O que ficou da etapa 3 está em [Como ficou o trocar()](#como-ficou-o-trocar-1430), no fim deste arquivo.
 
 **Origem:** capivara #4: passar do galope para a pose parada sem pular.
 
@@ -107,6 +107,21 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 
 1. O `blend=` do filme. O jogo não muda nada. **Feito na 1.40.0.**
 2. As peças na sprite sheet (`anim … from= to=`), com `every=` e `frames=`. **Feito na 1.41.0**, com as escolhas de 15/11/2026: direções automáticas (`from=walk` acha `walk_right`…; o nome exato também serve), a peça chega no primeiro quadro do `to` (o jogo toca o `to` do começo), um `once` gera uma peça só, do último quadro (com `every=` escrito, também ao longo dele), e a peça toca no fps do `from` (`fps=` muda).
-3. O `trocar()` no Godot. O [ajudante do Godot](ajudante-godot.md), que vinha antes, saiu na 1.42.0.
+3. O `trocar()` no Godot. **Feito na 1.43.0.** O [ajudante do Godot](ajudante-godot.md), que vinha antes, saiu na 1.42.0.
 
 Cada etapa começa com o seu "pode fazer".
+
+## Como ficou o trocar() (1.43.0)
+
+As escolhas de 15/11/2026 (todas as recomendadas):
+- **A chamada é `trocar("idle", velocity)`:** o ajudante acha sozinho a peça que sai da animação atual. Para isso, a `.tscn` de quem usa `from=`/`to=` ganha `transicoes = {…}` (saída → chegada → os quadros de onde as peças partem e os nomes delas; o lado espelhado com o par espelhado). Sem transições, a cena não muda.
+- **Com esqueleto e peças declaradas, usa as peças**, como por quadros. Sem peças para o par, mistura na hora (`mistura`, padrão 0,2 s).
+- **A volta é automática:** a peça do caminho contrário, de trás para a frente, e a nova continua do quadro em que a peça termina. Só quando a animação de destino é um loop.
+- **Entre dois loops sem peças, mantém o passo** (como `tocar(acao, dir, true)`).
+
+O que o Godot 4.7.2 mostrou, testando sem janela:
+- **Por quadros, a mistura do Godot não funciona:** com `play(nome, tempo)`, o sprite fica preso na animação de antes, mesmo depois da mistura (a pista `Sprite:animation` só tem uma key no tempo 0, e o Godot não a aplica com peso 0). Então, por quadros, a troca sem peça é seca. O `trocar()` reconhece a cena por quadros pela pista `Sprite:animation`.
+- **Com esqueleto, o que troca de uma vez também fica velho:** o lado espelhado (`Visual:scale`), as caixas e os pontos de encaixe. O `trocar()` aplica esses valores da animação nova no começo da mistura e manda o Godot reaplicar tudo no fim (`seek`).
+- As peças tocam sem tempo de mistura (`play(peca, 0.0)`), e a animação nova depois dela também: a peça já é a transição.
+- O fim da peça vem pelo sinal `animation_finished` (ligado na primeira troca), e não pela fila (`queue`), porque a volta precisa começar a animação nova num quadro do meio. Um `tocar()` no meio da peça corta a peça; o próximo `trocar()` começa uma troca nova.
+- Um item novo no capítulo 13: o sprite preso por causa dos *Blend Times* do editor do Godot, na cena por quadros.

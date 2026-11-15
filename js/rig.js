@@ -675,6 +675,8 @@
     if (speeds) player.push(speeds);
     const phases = Gd.phasesProp(model, anims);
     if (phases) player.push(phases);
+    const trans = Gd.transProp(model, anims);
+    if (trans) player.push(trans);
     nodes.push(player.join('\n'));
     const text = [`[gd_scene load_steps=${blocks.length + ext.length + 1} format=3]`, ext.join('\n'), ...blocks, ...nodes].join('\n\n') + '\n';
 
