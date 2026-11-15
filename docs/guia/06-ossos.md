@@ -889,6 +889,13 @@ Escrever `@osso` ponto por ponto cansa numa forma grande. No editor, a ferrament
 
 Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso. Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como na chave **Ossos**).
 
+**Testar giro, sem escrever nada:** na pose parada (sem animação no player), cada osso tem a alça verde de girar. Arraste a ponta dela, e o osso gira **só na tela**: os pontos presos vão junto, e dá para ver onde a forma abre ou sobra antes de escrever a animação.
+
+- Uma nota no canto diz quanto cada osso girou (`Testar giro: corpo 30° · pe -40°`).
+- Os giros ficam até o **Esc**, até escolher uma animação ou até desligar o Prender. O código não muda.
+- O `ik` continua valendo: girando o corpo, a perna dobra e o pé fica no chão. A raiz e o meio de um `ik` não giram pela alça (quem gira é o `ik`): gire o osso de cima.
+- Com o giro, a bolinha do osso não arrasta: um clique nela escolhe os pontos, como no resto do Prender.
+
 **Formas uma por cima da outra:**
 
 - Duas formas coladas costumam dividir um ponto (o mesmo x,y nas duas). Um clique ali escolhe os dois, porque eles precisam ir juntos: se só um anda, a emenda abre. Clique de novo no mesmo lugar para pegar só o da forma de cima; de novo, só o da de baixo; e mais uma vez, os dois.
@@ -989,7 +996,7 @@ Repare:
 
 **Experimente:** na `key 12`, troque `bola=-20,-60` por `bola=60,-60`. A bola sai do alcance: o braço fica reto, apontando para ela, e a mão não chega.
 
-No editor, a raiz e o meio de um `ik` não giram arrastando a bolinha do osso: quem os gira é o `ik`. Mexa no alvo ou no corpo. No Godot com esqueleto ([capítulo 9](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava as rotações da coxa e da canela na animação, e os pontos presos viram pesos da malha.
+No editor, a raiz e o meio de um `ik` não giram arrastando a bolinha do osso: quem os gira é o `ik`. Mexa no alvo ou no corpo. Arrastar a bolinha da ponta (a `mao`) move o **alvo**: o Weasel escreve a `key` da `bola` naquele quadro, e a mão vai junto. Com `foot=`, o pé fica no chão, e a bolinha dele não arrasta (para animar o pé, use `target=` com um osso de alvo). A alça de girar da ponta ainda gira o pé ou a mão. No Godot com esqueleto ([capítulo 9](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava as rotações da coxa e da canela na animação, e os pontos presos viram pesos da malha.
 
 ## Andar por um caminho: `path=`
 

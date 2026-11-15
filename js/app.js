@@ -47,7 +47,7 @@
     mdrag: null,
     // prender: ligada, os pontos escolhidos ("linha:ponto" → a linha sem os @, para conferir depois de editar),
     // a caixa sendo arrastada, o último clique (para pegar o de baixo) e o peso usado da última vez
-    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1 },
+    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1, spin: new Map() },
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -2019,6 +2019,8 @@
     // a prévia é parada: o def como está escrito, sem animação
     const P = pvModel();
     if (P) return S.makePose(P, null, 0);
+    // Testar giro (Prender, pose parada): os ossos girados só na tela
+    if (spinOn() && st.pin.spin.size) return S.spinPose(st.model, st.pin.spin);
     return S.makePose(st.model, st.build ? '' : st.anim, st.frame);
   }
 
@@ -2141,6 +2143,7 @@
     if (st.meas) drawMeasure(ctx, dpr);
     if (ro) drawRulers(ctx, dpr);
     if (gait) drawGaitNote(ctx, dpr, gait);
+    else if (pinning && spinOn() && st.pin.spin.size) drawSpinNote(ctx, dpr);
   }
 
   // prévia do def: a cruz no 0,0, o ponto que vai parar no x,y do use
@@ -2167,7 +2170,16 @@
 
   // trajetória com feet=: em cima, à esquerda, quanto o personagem anda e os pés que escorregam
   function drawGaitNote(ctx, dpr, g) {
-    const t = S.gaitText(g, 1), lines = [`${g.anim.name}: ${t.head}`, ...t.slips];
+    const t = S.gaitText(g, 1);
+    drawNote(ctx, dpr, [`${g.anim.name}: ${t.head}`, ...t.slips]);
+  }
+  // Testar giro: quais ossos estão girados (só na tela)
+  function drawSpinNote(ctx, dpr) {
+    const list = [...st.pin.spin].filter(([n]) => st.model.bones.has(n)).map(([n, a]) => `${n} ${Math.round(a)}°`);
+    if (list.length) drawNote(ctx, dpr, [`Testar giro: ${list.join(' · ')}`, 'só na tela, não escreve nada · Esc volta']);
+  }
+  // uma nota no canto de cima, à esquerda: a primeira linha clara, as outras em âmbar
+  function drawNote(ctx, dpr, lines) {
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.font = '12px ui-monospace, Consolas, monospace';
@@ -2444,20 +2456,37 @@
     });
   }
   function hitBone(e) {
-    if (!posing()) return null;
+    // testando giro, só as alças de girar valem (a bolinha do osso fica para escolher pontos)
+    const spin = !posing() && spinOn();
+    if (!posing() && !spin) return null;
     const [x, y] = toCanvas(e), r = 8 / st.view.z;
     let best = null, bd = r;
     for (const g of boneGrips(st.model, currentPose(), st.view.z)) {
       const dk = Math.hypot(g.knob[0] - x, g.knob[1] - y), dp = Math.hypot(g.p[0] - x, g.p[1] - y);
       if (dk < bd) { bd = dk; best = { bone: g.b.name, mode: 'rot' }; }
-      if (dp < bd) { bd = dp; best = { bone: g.b.name, mode: 'move' }; }
+      if (dp < bd && !spin) { bd = dp; best = { bone: g.b.name, mode: 'move' }; }
     }
     return best;
   }
   function startPose(hb, e) {
     // a raiz e o meio de um ik são girados por ele: a key de giro deles não aparece
     const ik = st.model.iks.find((k) => { const i = k.bones.indexOf(hb.bone); return i === 1 || (i === 0 && hb.mode === 'rot'); });
+    if (ik && !posing()) {
+      const top = st.model.bones.get(ik.bones[0]).parent;
+      hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: ${top ? `gire ${top} e veja o ik acompanhar` : ik.target ? `ele segue o alvo (${ik.target})` : 'ele segue o pé'}.`, 3200);
+      return;
+    }
     if (ik) { hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: mexa ${ik.target ? `no alvo (${ik.target})` : 'no corpo; o pé fica no chão'}.`, 3200); return; }
+    // Testar giro: gira só na tela, sem key
+    if (!posing()) {
+      const wm = currentPose().bones.get(hb.bone), b = st.model.bones.get(hb.bone);
+      st.pose = { spin: true, bone: hb.bone, v0: st.pin.spin.get(hb.bone) || 0, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e) };
+      return;
+    }
+    // a ponta de um ik vai para onde o ik manda: arrastar a bolinha dela move o alvo (com foot=, o pé fica no chão)
+    const tip = hb.mode === 'move' ? st.model.iks.find((k) => k.bones[2] === hb.bone) : null;
+    if (tip && !tip.target) { hint(`O pé do ik ${tip.name} fica no chão (foot=): para animar o pé, use target= com um osso de alvo.`, 3600); return; }
+    if (tip && st.model.bones.has(tip.target)) { hint(`A ponta do ik ${tip.name} segue o alvo: a key vai para ${tip.target}.`, 2400); hb = { bone: tip.target, mode: 'move' }; }
     const m = st.model, an = m.animMap.get(st.anim), b = m.bones.get(hb.bone), f = st.frame;
     const s = W.geom.segment(an.tracks.get(b.name), f, an.frames, an.loop);
     const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
@@ -2465,7 +2494,17 @@
     st.pose = { bone: b.name, mode: hb.mode, v0, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null, anim: an.name, frame: f, key: 'pose' + Date.now() };
   }
   function movePose(e) {
-    const d = st.pose, [x, y] = toCanvas(e), v = d.v0.slice();
+    const d = st.pose, [x, y] = toCanvas(e);
+    if (d.spin) {
+      let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
+      let a = d.v0 + (d.flip ? -da : da);
+      while (a > 180) a -= 360;
+      while (a <= -180) a += 360;
+      st.pin.spin.set(d.bone, a);
+      draw();
+      return;
+    }
+    const v = d.v0.slice();
     if (d.mode === 'rot') {
       let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
       while (da > 180) da -= 360;
@@ -2508,8 +2547,8 @@
 
   function drawBones(ctx, m, pose, z) {
     ctx.save();
-    // posando: a alça de girar de cada osso
-    if (posing()) {
+    // posando (ou testando giro no Prender): a alça de girar de cada osso
+    if (posing() || spinOn()) {
       for (const g of boneGrips(m, pose, z)) {
         ctx.strokeStyle = '#7fe0d0';
         ctx.lineWidth = 1.5 / z;
@@ -3128,6 +3167,8 @@
   // depois de cada ponto escolhido, num Ctrl+Z só. Os presos ficam com a cor do osso; os soltos, cinza.
   const BONE_COLORS = ['#ff6b6b', '#4dabf7', '#8ce99a', '#ffd43b', '#da77f2', '#ff922b', '#3bc9db', '#f783ac', '#c0eb75', '#91a7ff'];
   function pinOn() { return !!(st.pin.on && st.model && !isFilm() && !pvModel() && !st.build); }
+  // Testar giro: no Prender com a pose parada, a alça de um osso gira só na tela (os pontos presos vão junto)
+  function spinOn() { return pinOn() && !st.anim; }
   let boneCols = null;
   function boneColor(m, name) {
     if (!boneCols || boneCols.m !== m) boneCols = { m, map: new Map([...m.bones.keys()].map((n, i) => [n, BONE_COLORS[i % BONE_COLORS.length]])) };
@@ -3141,7 +3182,8 @@
   let pinCache = null;
   function pinSpots() {
     const m = st.model, only = !$('layerPanel').hidden && st.sel.size ? st.sel : null;
-    const key = [st.anim, st.frame, st.show.guides, only ? [...only.keys()].join(',') : ''].join('|');
+    const spin = spinOn() ? [...st.pin.spin].map(([n, a]) => `${n}${a.toFixed(2)}`).join(',') : '';
+    const key = [st.anim, st.frame, st.show.guides, only ? [...only.keys()].join(',') : '', spin].join('|');
     if (pinCache && pinCache.m === m && pinCache.key === key) return pinCache.list;
     const pose = currentPose(), list = [];
     let order = 0;
@@ -3326,10 +3368,10 @@
     st.pin.on = on;
     st.pin.box = null;
     st.pin.pick = null;
-    if (!on) { st.pin.sel.clear(); closePinMenu(false); }
+    if (!on) { st.pin.sel.clear(); st.pin.spin.clear(); closePinMenu(false); }
     if (on && st.measure) setMeasure(false);
     $('pinBtn').classList.toggle('on', on);
-    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : 'Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.', 4200);
+    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : `Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.${!st.anim && st.model.bones.size ? ' A alça de um osso gira só na tela, para testar.' : ''}`, 4200);
     draw();
   }
   // o menu dos ossos (botão direito): o osso mais perto dos pontos primeiro, o peso, cada um no mais perto e soltar
@@ -4301,7 +4343,7 @@
 
   $('animSel').addEventListener('change', (e) => {
     if (isFilm()) { stopSound(); st.playing = false; st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
-    st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
+    st.anim = e.target.value; st.frame = 0; st.pin.spin.clear(); stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
   });
   $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
@@ -4346,6 +4388,7 @@
     st.meas = null;
     st.pin.sel.clear();
     st.pin.pick = null;
+    st.pin.spin.clear();
     st.anim = '';
     st.shot = '';
     st.frame = 0;
@@ -4646,7 +4689,8 @@
     if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
     // Ctrl+H: liga e desliga o hidden das linhas escolhidas no painel Camadas (ou da linha do cursor)
     if (mod && !e.shiftKey && !e.altKey && (e.key === 'h' || e.key === 'H') && (e.target === editor.ta || !(e.target.closest && e.target.closest('textarea, input, select, dialog')))) { e.preventDefault(); toggleHidden(hiddenTargets(), true); return; }
-    // Esc: na ferramenta Prender, solta primeiro os pontos escolhidos
+    // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
+    if (e.key === 'Escape' && st.pin.spin.size && spinOn() && !(e.target.closest && e.target.closest('dialog'))) { st.pin.spin.clear(); st.pose = null; draw(); return; }
     if (e.key === 'Escape' && pinOn() && st.pin.sel.size && !(e.target.closest && e.target.closest('dialog'))) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
     if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
     const t = e.target;

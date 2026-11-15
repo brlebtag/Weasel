@@ -467,6 +467,20 @@
     if (anim.blendOf) return Object.assign({}, d.poses[f], { geo: new Map() });
     return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], b3: d.b3s[f], geo: new Map() };
   }
+  // A pose parada com alguns ossos girados (spins: nome -> graus), sem escrever nada: o "Testar giro" do editor.
+  // O ik continua valendo (a raiz e o meio acompanham, o pé fica onde está).
+  function spinPose(model, spins) {
+    const pose = makePose(model, null, 0);
+    if (!spins || !spins.size) return pose;
+    const vals = new Map();
+    for (const b of model.bones.values()) {
+      const v = REST.slice();
+      if (spins.has(b.name)) v[2] += spins.get(b.name);
+      vals.set(b.name, v);
+    }
+    pose.bones = matsFrom(model, ikVals(model, vals));
+    return pose;
+  }
   // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
   function timePose(model, time) {
     return { anim: null, frame: 0, time, bones: boneMatrices(model, null, 0, null, time), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, b3: NONE, geo: new Map() };
@@ -3277,7 +3291,7 @@
   }
 
   W.scene = {
-    makePose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, spinPose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

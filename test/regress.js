@@ -801,6 +801,36 @@ async function turnCase() {
   await check('_virada', 'virada.txt', 'text', lines.join('\n') + '\n');
 }
 
+// Testar giro do editor: scene.spinPose() gira ossos na pose parada, só na tela (test/casos/pinos.weasel, com um ik
+// de pé no chão e um de braço com alvo). Sem giro, é a pose parada; girando o corpo, o pé fica no chão e o braço vai
+// atrás do alvo (girando para cima, o quadril sobe além do alcance e o pé sai do chão); na raiz e no meio de um ik, a
+// perna fica onde o ik manda e só o pé gira junto (o editor nem deixa girar esses dois); o giro da ponta gira só a ponta.
+async function spinCase() {
+  console.log(paint('1', '_giro'));
+  const m = load(path.join(CASES, 'pinos.weasel')), S = W.scene, r1 = (v) => Math.round(v * 10) / 10;
+  const ap = (mm, p) => [mm[0] * p[0] + mm[2] * p[1] + mm[4], mm[1] * p[0] + mm[3] * p[1] + mm[5]];
+  const at = (pose, n) => ap(pose.bones.get(n), m.bones.get(n).pivot).map(r1).join(',');
+  const ang = (pose, n) => { const mm = pose.bones.get(n); return r1((Math.atan2(mm[1], mm[0]) * 180) / Math.PI); };
+  const box = (pose, name) => { const el = m.elements.find((e) => e.name === name), bb = S.segsBox(S.geometry(m, pose, el).segs); return [bb.x, bb.y, bb.x + bb.w, bb.y + bb.h].map(Math.round).join(','); };
+  const rest = S.makePose(m, null, 0), lines = [];
+  const same = (a, b) => [...m.bones.keys()].every((n) => a.bones.get(n).every((v, k) => Math.abs(v - b.bones.get(n)[k]) < 1e-9));
+  lines.push(`sem giro, igual à pose parada: ${same(S.spinPose(m, new Map()), rest) && same(S.spinPose(m, null), rest)}`);
+  for (const [what, spins] of [
+    ['parada', []],
+    ['corpo 30', [['corpo', 30]]],
+    ['corpo -25', [['corpo', -25]]],
+    ['coxa 40 (raiz do ik)', [['coxa', 40]]],
+    ['canela 40 (meio do ik)', [['canela', 40]]],
+    ['pe -40 (ponta do ik)', [['pe', -40]]],
+    ['alvo 90 (o alvo gira no pivô)', [['alvo', 90]]],
+    ['corpo 30 e pe -40', [['corpo', 30], ['pe', -40]]],
+  ]) {
+    const p = S.spinPose(m, new Map(spins));
+    lines.push(`${what}: ${['corpo', 'coxa', 'canela', 'pe', 'ombro', 'cotovelo', 'mao'].map((n) => `${n} ${at(p, n)}`).join(' · ')} · giro do pe ${ang(p, 'pe')} · bicho ${box(p, 'bicho')} · braco ${box(p, 'braco')}`);
+  }
+  await check('_giro', 'giro.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -828,6 +858,7 @@ async function main() {
   if (!only.length || only.some((o) => '_trocar'.includes(o))) await swapCase();
   if (!only.length || only.some((o) => '_virada'.includes(o))) await turnCase();
   if (!only.length || only.some((o) => '_metamorfose'.includes(o))) await morphCase();
+  if (!only.length || only.some((o) => '_giro'.includes(o))) await spinCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');

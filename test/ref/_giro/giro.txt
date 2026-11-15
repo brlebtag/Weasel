@@ -1,0 +1,9 @@
+sem giro, igual à pose parada: true
+parada: corpo 150,110 · coxa 180,130 · canela 190,160 · pe 186,190 · ombro 120,100 · cotovelo 95,120 · mao 70,110 · giro do pe 0 · bicho 91,72,226,197 · braco 70,100,120,122
+corpo 30: corpo 150,110 · coxa 166,142.3 · canela 192,160.3 · pe 186,190 · ombro 129,86.3 · cotovelo 99.3,98.3 · mao 74.3,108.3 · giro do pe 30 · bicho 95,70,221,202 · braco 74,86,129,108
+corpo -25: corpo 150,110 · coxa 185.6,115.4 · canela 185.8,147.1 · pe 185.9,177.3 · ombro 118.6,113.6 · cotovelo 90,128 · mao 70,110 · giro do pe -25 · bicho 98,61,224,188 · braco 70,110,119,129
+coxa 40 (raiz do ik): corpo 150,110 · coxa 180,130 · canela 190,160 · pe 186,190 · ombro 120,100 · cotovelo 95,120 · mao 70,110 · giro do pe 40 · bicho 91,72,226,204 · braco 70,100,120,122
+canela 40 (meio do ik): corpo 150,110 · coxa 180,130 · canela 190,160 · pe 186,190 · ombro 120,100 · cotovelo 95,120 · mao 70,110 · giro do pe 40 · bicho 91,72,226,204 · braco 70,100,120,122
+pe -40 (ponta do ik): corpo 150,110 · coxa 180,130 · canela 190,160 · pe 186,190 · ombro 120,100 · cotovelo 95,120 · mao 70,110 · giro do pe -40 · bicho 91,72,226,204 · braco 70,100,120,122
+alvo 90 (o alvo gira no pivô): corpo 150,110 · coxa 180,130 · canela 190,160 · pe 186,190 · ombro 120,100 · cotovelo 95,120 · mao 70,110 · giro do pe 0 · bicho 91,72,226,197 · braco 70,100,120,122
+corpo 30 e pe -40: corpo 150,110 · coxa 166,142.3 · canela 192,160.3 · pe 186,190 · ombro 129,86.3 · cotovelo 99.3,98.3 · mao 74.3,108.3 · giro do pe -10 · bicho 95,70,221,199 · braco 74,86,129,108

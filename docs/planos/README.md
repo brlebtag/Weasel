@@ -1,6 +1,6 @@
 # Planos de melhorias
 
-Esta pasta guarda propostas que **ainda não foram feitas**. Cada arquivo explica uma ideia:
+Esta pasta guarda propostas de melhorias. Cada arquivo explica uma ideia:
 - o que muda no Weasel;
 - o que muda no jogo (Godot);
 - as recomendações que já foram dadas;
@@ -10,33 +10,32 @@ Nada aqui é documentação do Weasel. O guia fica em [docs/guia](../guia/README
 
 Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só começa com o seu "pode fazer".
 
-## Fila combinada (10/11/2026)
-
-Você aprovou a análise e a ordem. Os quatro itens estão feitos.
-
-| # | Plano | Em uma frase |
-|---|---|---|
-| 1 | [Ajudante do Godot](ajudante-godot.md) | `quadros()`, `fps()`, `mostrar_quadro()` e trocar de animação na mesma fase da passada; feito na 1.42.0 |
-| 2 | [Contas novas](expressoes.md) | `smoothstep`, comparações, `c ? a : b` e `mod()` dentro de `{}`; feito na 1.38.0 |
-| 3 | [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro; feito na 1.44.0 |
-| 4 | [Transições](transicoes.md) | de qualquer animação para qualquer outra: mistura na hora no filme e no Godot com esqueleto; quadros gerados na sprite sheet. Decisões fechadas em 15/11/2026; a etapa 1 (`blend=` no filme) feita na 1.40.0, a etapa 2 (peças na sprite sheet) na 1.41.0 e a etapa 3 (`trocar()` no Godot) na 1.43.0: plano feito |
-
-## Propostas novas
+## Ainda abertos
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
-| [Virada e metamorfose](metamorfose.md) | um desenho virando outro: o personagem de lado virando de frente (jogo) e a aranha virando jacaré (filme) | decidido em 15/11/2026, em duas etapas: a virada (`anim … turn`) feita na 1.45.0; a metamorfose no filme (`morph=`) feita na 1.46.0: plano feito |
-| [Outros estilos](estilos.md) | pixel art nítido, ASCII, esboço, marcador, lápis de cor, giz, aquarela, cel shading, HQ, recorte de papel, vitral, massinha e outros, a partir do mesmo desenho | estilos escolhidos em 14/11/2026; fase 1 (`art`, `pixel` e `ascii`) feita na 1.30.0; as bases de tom (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`) na 1.31.0; as combinações (`woodcut`, `comic`, `manga` e `riso`) na 1.32.0; os traços `sketch`, `marker`, `pencil`, `lines` e `neon` (primeira metade da fase 4) na 1.33.0; `crayon`, `chalk` e `watercolor` (o fim da fase 4) na 1.34.0; `cutout` e `clay` (a primeira parte da fase 5) na 1.35.0; `glass` e `embroidery` (o fim da fase 5) na 1.36.0; `stitch`, `mosaic`, `knit` e os efeitos de tela (a fase 6, o fim do plano) na 1.37.0 |
-
-## Para depois
-
-| Plano | Em uma frase | Situação |
-|---|---|---|
-| [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender e uma alça para o pé do `ik` (o resto saiu na revisão de 15/11/2026) | sem data |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
-| [Ideias soltas](ideias-soltas.md) | `speed=auto` no filme e traçar imagem | esperando você |
+| [Velocidade automática](velocidade-automatica.md) | `speed=auto` no filme: a animação acompanha o ator andando na tela, e os pés não escorregam | esperando você |
+
+## Já implementados
+
+| Plano | Em uma frase | Versões |
+|---|---|---|
+| ✅ [Contas novas](expressoes.md) | `smoothstep`, comparações, `c ? a : b` e `mod()` dentro de `{}` | 1.38.0 |
+| ✅ [Outros estilos](estilos.md) | pixel art, ASCII, esboço, marcador, lápis de cor, giz, aquarela, cel shading, HQ, recorte, vitral, massinha e outros, a partir do mesmo desenho | 1.30.0 a 1.37.0 (fases 1 a 6) |
+| ✅ [Transições](transicoes.md) | de qualquer animação para qualquer outra: `blend=` no filme, peças na sprite sheet e `trocar()` no Godot | 1.40.0, 1.41.0 e 1.43.0 |
+| ✅ [Ajudante do Godot](ajudante-godot.md) | `quadros()`, `fps()`, `mostrar_quadro()` e trocar de animação na mesma fase da passada | 1.42.0 |
+| ✅ [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro | 1.44.0 |
+| ✅ [Virada e metamorfose](metamorfose.md) | o personagem de lado virando de frente (`anim … turn`, jogo) e a aranha virando jacaré (`morph=`, filme) | 1.45.0 e 1.46.0 |
+| ✅ [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender (gira os ossos só na tela) e a ponta do `ik` que move o alvo (o resto saiu na revisão de 15/11/2026) | 1.47.0 |
+
+A fila combinada de 10/11/2026 (ajudante do Godot, contas novas, folha de conferência e transições) está toda feita.
+
+## O que saiu
+
+- **Traçar uma imagem** (das antigas "ideias soltas", tirado em 15/11/2026): o traçado de verdade fica nos scripts do ForestPatrol; uma versão pequena no Weasel daria muito trabalho para pouco ganho, e nenhum personagem pediu.
 
 ## Como manter esta pasta
-- Uma ideia nova ganha um arquivo aqui e uma linha numa das tabelas.
-- Quando um plano vira versão, a linha dele sai da tabela e o arquivo pode ser apagado. O git guarda o texto, e o commit da versão conta o que foi feito.
+- Uma ideia nova ganha um arquivo aqui e uma linha em "Ainda abertos".
+- Quando um plano vira versão, a linha dele passa para "Já implementados", com as versões. O commit da versão conta o que foi feito.

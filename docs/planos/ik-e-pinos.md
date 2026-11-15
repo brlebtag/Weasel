@@ -1,6 +1,6 @@
 # IK e pinos: o que ficou de fora
 
-**Situação:** sem data, nada combinado. Revisto em 15/11/2026: das sobras da 1.28.0 (pinos `@osso` e `ik`) e das ideias da pata da capivara (11/11/2026), ficaram só duas ideias pequenas, ambas no editor.
+**Situação:** feito na 1.47.0 (15/11/2026). Revisto em 15/11/2026: das sobras da 1.28.0 (pinos `@osso` e `ik`) e das ideias da pata da capivara (11/11/2026), ficaram só duas ideias pequenas, ambas no editor.
 
 ## O que ainda vale
 
@@ -11,6 +11,20 @@
    - **Weasel:** só o editor; a linguagem não muda. **Jogo:** nada muda.
 2. **Uma alça no editor para arrastar o pé do `ik`** e escrever as `key` do alvo.
    - **Weasel:** só o editor; mais trabalho que o item 1. **Jogo:** nada muda.
+
+## As escolhas (15/11/2026)
+
+- **O giro de teste fica até o Esc** (não volta ao soltar): dá para girar dois ou três ossos e olhar a pose com calma. Escolher uma animação ou desligar o Prender também volta.
+- **Só no Prender:** a chave Ossos, sem animação, continua sem alças. É no Prender que se olham os pontos.
+- **Arrastar a ponta de um `ik` move o alvo:** com `target=`, a bolinha da ponta escreve a `key` do osso do alvo (antes, escrevia a `key` de mover da própria ponta, que esticava o osso). Com `foot=`, só avisa: o pé fica no chão.
+
+## Como ficou (1.47.0)
+
+- `scene.spinPose(model, giros)`: a pose parada com alguns ossos girados (graus), com o `ik` resolvido. O editor usa no lugar da pose do quadro enquanto há giro de teste.
+- No Prender com a pose parada, as alças de girar aparecem e só elas pegam (a bolinha do osso fica para escolher pontos). Arrastar muda o giro na tela; nada vai para o código. A raiz e o meio de um `ik` avisam: gire o osso de cima.
+- Uma nota no canto mostra os ossos girados (`Testar giro: corpo 30° · pe -40°`). O primeiro **Esc** volta os giros; o seguinte solta os pontos escolhidos.
+- Numa animação (chave Ossos ou Prender), a bolinha da ponta de um `ik` com `target=` move o alvo, com um aviso curto; com `foot=`, o aviso diz para usar `target=`.
+- **Jogo:** nada muda. **Linguagem:** nada muda.
 
 ## O que saiu, e por quê
 
