@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.40.0">
+<link rel="stylesheet" href="css/style.css?v=1.41.0">
 </head>
 <body>
 <header class="top">
@@ -162,6 +162,7 @@
       <tr><td><code>cloth nome pivot=x,y tension= drag= swing= bone=</code></td><td>Tecido: os pontos longe do pivô balançam atrasados. <code>tension</code> 0–1 (mole a duro).</td></tr>
       <tr><td><code>anim nome frames= fps= [once]</code></td><td>Começa uma animação. Ela repete, a não ser com <code>once</code>.</td></tr>
       <tr><td><code>anim nome … feet=pontos</code></td><td>Os pés (pontos na sola): o Weasel mede quanto o personagem anda por segundo para os pés no chão não escorregarem. Sai no <code>--info</code>, no JSON e no Godot (<code>velocidade()</code>); o botão <b>Trajetória</b> mostra o caminho deles.</td></tr>
+      <tr><td><code>anim nome from=anim to=anim frames= every=</code></td><td>Transição para a sprite sheet: gera as peças <code>nome_0</code>, <code>nome_2</code>…, cada uma partindo de um quadro do <code>from</code> (a cada <code>every=</code> quadros, 2; num <code>once</code>, do último) e chegando no primeiro quadro do <code>to</code> em <code>frames=</code> quadros (4). Com direções, <code>from=walk</code> acha <code>walk_right</code>, <code>walk_down</code>… As peças tocam uma vez.</td></tr>
       <tr><td><code>anim nome mix=base,ação bones=ossos</code></td><td>Junta duas animações: a base inteira, com os ossos listados (e os filhos) vindos da ação. O tempo, as caixas e os eventos são os da ação. Num loop, o tempo tem de fechar o ciclo de onde os ossos vêm, senão eles pulam ao recomeçar (o editor avisa).</td></tr>
       <tr><td><code>key quadro osso=dx,dy,rot,sx,sy … ease=</code></td><td>Pose dos ossos naquele quadro; o meio é interpolado. <code>ease</code>: smooth, linear, in, out, back, step.</td></tr>
       <tr><td><code>key quadro forma.prop=valor</code></td><td>Anima uma forma: <code>opacity</code>, <code>c</code>, <code>inkc</code>, <code>w</code>, <code>ink</code>, <code>show</code> (1/0), <code>shape</code> (morph para outra forma: fechada com fechada, traço com traço) e <code>draw</code> (0 a 1: desenha aos poucos; num texto, as letras aparecem uma a uma). Camadas: <code>camada.opacity</code> e <code>camada.show</code>.</td></tr>
@@ -371,26 +372,26 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.40.0"></script>
-<script src="js/lang.js?v=1.40.0"></script>
-<script src="js/art.js?v=1.40.0"></script>
-<script src="js/scene.js?v=1.40.0"></script>
-<script src="js/film.js?v=1.40.0"></script>
-<script src="js/audio.js?v=1.40.0"></script>
-<script src="js/nle.js?v=1.40.0"></script>
-<script src="js/webm.js?v=1.40.0"></script>
-<script src="js/svg.js?v=1.40.0"></script>
-<script src="js/gif.js?v=1.40.0"></script>
-<script src="js/webp.js?v=1.40.0"></script>
-<script src="js/mp4.js?v=1.40.0"></script>
-<script src="js/zip.js?v=1.40.0"></script>
-<script src="js/normal.js?v=1.40.0"></script>
-<script src="js/export.js?v=1.40.0"></script>
-<script src="js/godot.js?v=1.40.0"></script>
-<script src="js/rig.js?v=1.40.0"></script>
-<script src="js/editor.js?v=1.40.0"></script>
-<script src="js/examples.js?v=1.40.0"></script>
-<script src="js/timeline.js?v=1.40.0"></script>
-<script src="js/app.js?v=1.40.0"></script>
+<script src="js/geom.js?v=1.41.0"></script>
+<script src="js/lang.js?v=1.41.0"></script>
+<script src="js/art.js?v=1.41.0"></script>
+<script src="js/scene.js?v=1.41.0"></script>
+<script src="js/film.js?v=1.41.0"></script>
+<script src="js/audio.js?v=1.41.0"></script>
+<script src="js/nle.js?v=1.41.0"></script>
+<script src="js/webm.js?v=1.41.0"></script>
+<script src="js/svg.js?v=1.41.0"></script>
+<script src="js/gif.js?v=1.41.0"></script>
+<script src="js/webp.js?v=1.41.0"></script>
+<script src="js/mp4.js?v=1.41.0"></script>
+<script src="js/zip.js?v=1.41.0"></script>
+<script src="js/normal.js?v=1.41.0"></script>
+<script src="js/export.js?v=1.41.0"></script>
+<script src="js/godot.js?v=1.41.0"></script>
+<script src="js/rig.js?v=1.41.0"></script>
+<script src="js/editor.js?v=1.41.0"></script>
+<script src="js/examples.js?v=1.41.0"></script>
+<script src="js/timeline.js?v=1.41.0"></script>
+<script src="js/app.js?v=1.41.0"></script>
 </body>
 </html>

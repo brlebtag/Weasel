@@ -296,7 +296,7 @@ function info(m, scale) {
   if (m.anims.length) {
     out.push(`animações ${m.anims.length}`);
     for (const a of m.anims) {
-      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}`);
+      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, transição ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
       if (a.events.length) out.push(`  ${''.padEnd(14)} eventos: ${a.events.map((e) => `${e.name}@${e.frame}`).join(', ')}`);
       const g = W.scene.gait(m, a);
       if (g) {

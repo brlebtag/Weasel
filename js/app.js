@@ -1579,6 +1579,12 @@
       }
       if (cmd === 'variant' && (key === 'show' || key === 'hide')) return [...names(els, 'forma'), ...names([...m.layerMap.keys()], 'camada')];
       if (cmd === 'palette' || cmd === 'variant' || cmd === 'def') return colorList();
+      // anim … from= to=: as animações do arquivo e os nomes sem a direção (walk acha walk_right, walk_down…)
+      if (cmd === 'anim' && (key === 'from' || key === 'to')) {
+        const own = m.anims.filter((a) => !a.blendOf).map((a) => a.name);
+        const bases = own.map((n) => n.replace(/_(down_right|down_left|up_right|up_left|right|left|down|up)$/, '')).filter((b, i, l) => !own.includes(b) && l.indexOf(b) === i);
+        return [...names(bases, 'todas as direções'), ...names(own, 'animação')];
+      }
       switch (key) {
         case 'c': case 'inkc': case 'bg': return colorList();
         case 'w': case 'ink': return cmd === 'art' ? names(['2', '3', '4'], 'espessura da linha') : names(widths, 'espessura');
@@ -2401,7 +2407,8 @@
   // ---------- posar arrastando os ossos ----------
   // Com Ossos ligado, uma animação escolhida e o player parado: arrastar a bolinha de um osso move o osso e
   // arrastar a alça (o traço que sai dele) gira. O Weasel escreve o osso na key daquele quadro (ou cria a key).
-  const posing = () => !!((st.show.bones || pinOn()) && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim));
+  // as peças de uma transição (anim … from= to=) são geradas: não têm key para escrever
+  const posing = () => !!((st.show.bones || pinOn()) && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim) && !st.model.animMap.get(st.anim).blendOf);
   // para onde o osso aponta parado: o meio das formas presas a ele (ou dos ossos filhos); sem nada, para baixo
   function boneDir(m, b) {
     m._boneDir = m._boneDir || new Map();

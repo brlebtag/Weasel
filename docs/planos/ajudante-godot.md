@@ -40,5 +40,5 @@ Quando a capivara passa de andar para trotar, a nova animação começa do quadr
 - **Weasel:**
   - a exportação ganha funções novas no `weasel_anim.gd`;
   - o filme passa a aceitar `phase` no `at … anim=`;
-  - nenhuma saída existente muda.
+  - nenhuma saída existente muda, a não ser o `weasel_anim.gd`: ele ganha as funções novas em toda exportação. Você aprovou isso em 15/11/2026, porque são funções a mais, que os jogos antigos não chamam, e o `tocar()` de hoje continua igual (sem o terceiro parâmetro, faz o mesmo de antes).
 - **Jogo:** os jogos já exportados continuam funcionando. Para usar as funções novas, basta exportar de novo.

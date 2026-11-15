@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="60" height="60" viewBox="0 0 120 120">
+<defs><g id="L1"><g><path d="M82 79C82 88.94 72.15 97 60 97C47.85 97 38 88.94 38 79C38 69.06 47.85 61 60 61C72.15 61 82 69.06 82 79Z" fill="#c98a5a"/><path d="M82 79C82 88.94 72.15 97 60 97C47.85 97 38 88.94 38 79C38 69.06 47.85 61 60 61C72.15 61 82 69.06 82 79Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M74 49C74 56.18 67.73 62 60 62C52.27 62 46 56.18 46 49C46 41.82 52.27 36 60 36C67.73 36 74 41.82 74 49Z" fill="#c98a5a"/><path d="M74 49C74 56.18 67.73 62 60 62C52.27 62 46 56.18 46 49C46 41.82 52.27 36 60 36C67.73 36 74 41.82 74 49Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M69 47C69 48.66 67.66 50 66 50C64.34 50 63 48.66 63 47C63 45.34 64.34 44 66 44C67.66 44 69 45.34 69 47Z" fill="#2b2a33"/><path d="M60 93C60 97.67 60 102.33 60 107" fill="none" stroke="#2b2a33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g></g></defs>
+<rect x="0" y="0" width="120" height="120" fill="#ffffff"/>
+<g data-layer="bicho"><use href="#L1" xlink:href="#L1"/></g>
+</svg>

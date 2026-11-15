@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="60" height="60" viewBox="0 0 120 120">
+<defs><g id="L1"><g><path d="M50 108C50 110.21 45.52 112 40 112C34.48 112 30 110.21 30 108C30 105.79 34.48 104 40 104C45.52 104 50 105.79 50 108Z" fill="#d8cbb0"/></g></g>
+<g id="L2"><g><path d="M82 76C82 85.94 72.15 94 60 94C47.85 94 38 85.94 38 76C38 66.06 47.85 58 60 58C72.15 58 82 66.06 82 76Z" fill="#c98a5a"/><path d="M82 76C82 85.94 72.15 94 60 94C47.85 94 38 85.94 38 76C38 66.06 47.85 58 60 58C72.15 58 82 66.06 82 76Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M74 46C74 53.18 67.73 59 60 59C52.27 59 46 53.18 46 46C46 38.82 52.27 33 60 33C67.73 33 74 38.82 74 46Z" fill="#c98a5a"/><path d="M74 46C74 53.18 67.73 59 60 59C52.27 59 46 53.18 46 46C46 38.82 52.27 33 60 33C67.73 33 74 38.82 74 46Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M69 44C69 45.66 67.66 47 66 47C64.34 47 63 45.66 63 44C63 42.34 64.34 41 66 41C67.66 41 69 42.34 69 44Z" fill="#2b2a33"/><path d="M59.65 90.03C60.46 94.63 61.27 99.22 62.08 103.82" fill="none" stroke="#2b2a33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g></g></defs>
+<rect x="0" y="0" width="120" height="120" fill="#ffffff"/>
+<g data-layer="poeira"><use href="#L1" xlink:href="#L1"/></g>
+<g data-layer="bicho"><use href="#L2" xlink:href="#L2"/></g>
+</svg>

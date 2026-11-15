@@ -116,6 +116,14 @@
     model._anim = model._anim || new Map();
     let d = model._anim.get(anim.name);
     if (d) return d;
+    if (anim.blendOf) {
+      const poses = [];
+      for (let j = 0; j < anim.frames; j++) poses.push(piecePose(model, anim, j));
+      const col = (k) => poses.map((p) => p[k]);
+      d = { mats: col('bones'), cloth: col('cloth'), props: col('props'), lprops: col('lprops'), liprops: col('liprops'), bprops: col('bprops'), b3s: col('b3'), springs: new Map(), poses };
+      model._anim.set(anim.name, d);
+      return d;
+    }
     const N = anim.frames, dt = 1 / anim.fps;
     const idx = (i) => (anim.loop ? ((i % N) + N) % N : Math.max(0, Math.min(N - 1, i)));
     const passes = anim.loop ? 3 : 1, sub = 10, h = dt / sub;
@@ -219,6 +227,7 @@
   // Valores de cada osso (dx, dy, rot, sx, sy) num quadro que pode ser fracionário: o esqueleto do Godot
   // amostra entre os quadros. As molas, calculadas quadro a quadro, são interpoladas.
   function boneLocal(model, anim, f) {
+    if (anim.blendOf) { const { fa, u } = pieceAt(anim, f); return mixVals(model, boneLocal(model, anim.blendOf.from, fa), boneLocal(model, anim.blendOf.to, 0), u); }
     const d = animData(model, anim), N = anim.frames, out = new Map();
     const at = (i) => (anim.loop ? ((i % N) + N) % N : Math.max(0, Math.min(N - 1, i)));
     for (const b of model.bones.values()) {
@@ -397,14 +406,19 @@
     }
     return out;
   }
-  function blendPose(model, A, B, u) {
-    if (u <= 0) return A;
-    if (u >= 1) return B;
-    const va = poseVals(model, A), vb = poseVals(model, B), vals = new Map();
+  // os valores dos ossos (dx, dy, rot, sx, sy) de duas poses misturados; o giro pelo lado mais curto
+  function mixVals(model, va, vb, u) {
+    const vals = new Map();
     for (const b of model.bones.values()) {
       const x = va.get(b.name) || REST, y = vb.get(b.name) || REST;
       vals.set(b.name, x.map((p, k) => { let d = y[k] - p; if (k === 2) d = (((d % 360) + 540) % 360) - 180; return p + d * u; }));
     }
+    return vals;
+  }
+  function blendPose(model, A, B, u) {
+    if (u <= 0) return A;
+    if (u >= 1) return B;
+    const vals = mixVals(model, poseVals(model, A), poseVals(model, B), u);
     const cloth = new Map();
     for (const name of new Set([...A.cloth.keys(), ...B.cloth.keys()])) {
       const p = A.cloth.get(name) || [0, 0], q = B.cloth.get(name) || [0, 0];
@@ -422,11 +436,30 @@
     return Object.assign({}, D, { vals, bones: matsFrom(model, ikVals(model, vals)), cloth, props, lprops, liprops, b3, geo: new Map() });
   }
 
+  // Peça de uma transição (anim … from= to=): o from continua do quadro seguinte ao de partida e vai virando o
+  // primeiro quadro do to, parado; o peso sobe em curva suave e fica perto de 1 no último quadro (o quadro
+  // seguinte já é o to). f pode ser fracionário (o esqueleto do Godot amostra entre os quadros).
+  function pieceAt(anim, f) {
+    const { from, start } = anim.blendOf, N = from.frames;
+    const fa = start + 1 + f;
+    return { fa: from.loop ? ((fa % N) + N) % N : Math.min(N - 1, fa), u: G.EASE.smooth((f + 1) / (anim.frames + 1)) };
+  }
+  // a pose do quadro j da peça; src é a animação de origem mais perto (only=, caixas e partículas seguem ela)
+  function piecePose(model, anim, j) {
+    const { from, to } = anim.blendOf, { fa, u } = pieceAt(anim, j);
+    const P = blendPose(model, makePose(model, from.name, fa), makePose(model, to.name, 0), u);
+    return Object.assign({}, P, { anim, frame: j, src: { anim: P.anim, frame: P.frame } });
+  }
+  // a animação que vale para only=, caixas e partículas: a própria, ou a de origem numa peça de transição
+  const srcAnim = (pose) => (pose.src ? pose.src.anim : pose.anim);
+  const srcFrame = (pose) => (pose.src ? pose.src.frame : pose.frame);
+
   function makePose(model, animName, frame) {
     const anim = animName ? model.animMap.get(animName) || null : null;
     if (!anim) return { anim: null, frame: 0, bones: boneMatrices(model, null, 0, null), cloth: NONE, props: NONE, lprops: NONE, liprops: NONE, bprops: NONE, b3: NONE, geo: new Map() };
     const d = animData(model, anim);
     const f = ((Math.round(frame) % anim.frames) + anim.frames) % anim.frames;
+    if (anim.blendOf) return Object.assign({}, d.poses[f], { geo: new Map() });
     return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], b3: d.b3s[f], geo: new Map() };
   }
   // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
@@ -440,7 +473,7 @@
   function boxState(model, pose, b) {
     const bp = (pose.bprops && pose.bprops.get(b.name)) || NOPROPS;
     let on = bp.show !== undefined ? bp.show !== 0 : b.on;
-    if (b.only && !(pose.anim ? animIn(b.only, pose.anim) : b.only.includes('pose'))) on = false;
+    if (b.only && !(srcAnim(pose) ? animIn(b.only, srcAnim(pose)) : b.only.includes('pose'))) on = false;
     const cx = b.shape === 'rect' ? b.x + b.w / 2 : b.x, cy = b.shape === 'rect' ? b.y + b.h / 2 : b.y;
     const m = b.bone ? pose.bones.get(b.bone) : null;
     const c = m ? M.apply(m, cx, cy) : [cx, cy];
@@ -617,7 +650,7 @@
   // ---------- imagens guia (ref) ----------
   // Só no editor (e na linha de comando com --refs): nunca saem nas exportações. A posição é o canto de cima à
   // esquerda da imagem (já na escala); a rotação gira em volta do centro.
-  const refOn = (r, pose) => !r.hidden && (!r.only || (pose.anim ? animIn(r.only, pose.anim) : r.only.includes('pose'))) && (!r.frames || !pose.anim || (pose.frame >= r.frames[0] && pose.frame <= r.frames[1]));
+  const refOn = (r, pose) => !r.hidden && (!r.only || (srcAnim(pose) ? animIn(r.only, srcAnim(pose)) : r.only.includes('pose'))) && (!r.frames || !srcAnim(pose) || (srcFrame(pose) >= r.frames[0] && srcFrame(pose) <= r.frames[1]));
   // da imagem (w × h pixels) para o desenho
   function refMatrix(r, w, h) {
     const hw = (w * r.scale) / 2, hh = (h * r.scale) / 2;
@@ -1619,10 +1652,10 @@
   // Estado das partículas num quadro. O sorteio depende só do número da partícula: o loop fecha
   // certinho e a exportação sai igual toda vez.
   function particles(model, pose, el) {
-    const anim = pose.anim;
+    const anim = srcAnim(pose);
     const fps = anim ? anim.fps : 12;
     const loopD = anim && anim.loop ? anim.frames / anim.fps : 0;
-    const t = anim ? pose.frame / anim.fps : pose.time !== undefined ? pose.time : el.rate > 0 ? el.life * 1.25 : el.life * 0.35;
+    const t = anim ? srcFrame(pose) / anim.fps : pose.time !== undefined ? pose.time : el.rate > 0 ? el.life * 1.25 : el.life * 0.35;
     const data = anim ? animData(model, anim) : null;
     const out = [];
     const origin = (ts, k) => {
@@ -1774,7 +1807,7 @@
     if (layer.hidden) return false;
     if (layer.guide && !opts.guides) return false;
     // only=: só nessas animações; o nome pose vale para a pose parada (sem animação)
-    if (layer.only && !(pose.anim ? animIn(layer.only, pose.anim) : layer.only.includes('pose'))) return false;
+    if (layer.only && !(srcAnim(pose) ? animIn(layer.only, srcAnim(pose)) : layer.only.includes('pose'))) return false;
     return true;
   }
 

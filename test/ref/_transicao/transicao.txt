@@ -1,0 +1,23 @@
+sem to=: error linha 50: a transição precisa de from= e to= (ex.: anim para_galope from=galope to=pisca)
+from= que não existe: error linha 50: animação "run" não existe (nem com direção, como run_right)
+to= que não existe (nome exato): error linha 50: animação "sleep" não existe
+uma direção sem o to=: warn linha 50: walk_up fica sem peças: não há "idle_up" (nem "idle")
+loop: warn linha 50: as peças de uma transição tocam uma vez (sem loop)
+key na transição: error linha 50: a transição "to_idle" é gerada: as key e os event vão nas animações de from= e to=
+nome de peça repetido: error linha 50: a peça "to_idle_0_right" já é o nome de uma animação: dê outro nome à transição
+every= sem from=: warn linha 50: every= só vale numa transição (anim nome from=… to=…)
+mix= com from=: error linha 50: mix= não anda junto com from= e to= (a transição já é uma mistura)
+from= uma peça: error linha 51: from= e to= precisam ser animações do arquivo, não peças de outra transição
+o arquivo: nenhum aviso
+as 5 animações de antes saem iguais com as transições: true
+animações: walk_right, walk_down, idle_right, idle_down, attack_right, to_idle_0_right (walk_right→idle_right, depois do quadro 0, 3 quadros a 12 fps), to_idle_4_right (walk_right→idle_right, depois do quadro 4, 3 quadros a 12 fps), to_idle_0_down (walk_down→idle_down, depois do quadro 0, 3 quadros a 12 fps), to_idle_4_down (walk_down→idle_down, depois do quadro 4, 3 quadros a 12 fps), after_attack_5_right (attack_right→idle_right, depois do quadro 5, 3 quadros a 12 fps)
+  to_idle_4_right#0: vale walk_right#5 · corpo 0,-4.27,0,1,1 · cabeça 3.65° · pé -14.5° · poeira sim · golpe desligado
+  to_idle_4_right#1: vale idle_right#0 · corpo 0,-1.5,0,1,1 · cabeça -0.5° · pé 0° · poeira não · golpe desligado
+  to_idle_4_right#2: vale idle_right#0 · corpo 0,-0.15,0,1,1 · cabeça -3.23° · pé 2.69° · poeira não · golpe desligado
+  after_attack_5_right#0: vale attack_right#5 · corpo 8.44,0,-10.12,1,1 · cabeça -17.5° · pé 0° · poeira não · golpe ligado
+  after_attack_5_right#1: vale idle_right#0 · corpo 5,0,-6,1,1 · cabeça -12° · pé 0° · poeira não · golpe desligado
+  after_attack_5_right#2: vale idle_right#0 · corpo 1.56,0,-1.87,1,1 · cabeça -6.5° · pé 0° · poeira não · golpe desligado
+once com every=2: after_attack_0_right, after_attack_2_right, after_attack_4_right, after_attack_5_right
+fps=: 24
+godot (quadros): walk_right loop, walk_down loop, idle_right loop, idle_down loop, attack_right uma vez, to_idle_0_right uma vez, to_idle_4_right uma vez, to_idle_0_down uma vez, to_idle_4_down uma vez, after_attack_5_right uma vez
+godot (esqueleto): walk_right 0.6667s loop, walk_down 0.6667s loop, idle_right 1.3333s loop, idle_down 1.3333s loop, attack_right 0.5s, to_idle_0_right 0.25s, to_idle_4_right 0.25s, to_idle_0_down 0.25s, to_idle_4_down 0.25s, after_attack_5_right 0.25s, walk_left 0.6667s loop, idle_left 1.3333s loop, attack_left 0.5s, to_idle_0_left 0.25s, to_idle_4_left 0.25s, after_attack_5_left 0.25s

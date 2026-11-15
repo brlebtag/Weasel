@@ -729,6 +729,53 @@ salvo godot/bolinha.tscn  cena do Godot 4 (0 caixas, espelhadas: walk_left, walk
 
 No jogo, `anim.tocar("walk", velocity)` olha para onde o personagem está andando e escolhe uma das oito. Como existem diagonais (`walk_down_right` e `walk_up_right`), ele divide o círculo em oito fatias de 45 graus; sem diagonais, usa só as quatro direções retas. Quando o personagem para (`velocity` zero), ele continua virado para a última direção.
 
+## Sair de uma animação sem corte: `from=` e `to=`
+
+Trocar de animação no jogo é um corte seco: num quadro a bolinha está inclinada no meio da corrida; no seguinte, está parada. Uma **transição** gera os quadros do meio na sprite sheet:
+
+<!-- gerar: img/09_transicao.png -f sheet -a all --layout rows -->
+```weasel
+canvas 64 64 bg=none
+palette ink=#2a2433 line=3 pelo=#f0b060
+
+godot root=32,58 name=Bolinha
+
+bone corpo pivot=32,58
+bone orelha pivot=32,18 parent=corpo
+
+layer corpo
+shape orelhas c=pelo ink=2 bone=orelha : 22,22 26,8 32,18 38,8 42,22
+ellipse bola 32,36 20,22 c=pelo ink=line bone=corpo
+ellipse olhoE 25,31 3,4 c=ink bone=corpo
+ellipse olhoD 39,31 3,4 c=ink bone=corpo
+
+anim run frames=6 fps=12
+key 0 corpo=0,0,-12 orelha=0,0,10
+key 3 corpo=0,-8,12 orelha=0,0,-10
+key 6 corpo=0,0,-12 orelha=0,0,10
+
+anim idle frames=8 fps=6
+key 0 corpo=0,0,0
+key 4 corpo=0,1,0,1.03,0.97
+key 8 corpo=0,0,0
+
+anim stop from=run to=idle
+```
+
+![Uma folha com cinco linhas: a bolinha correndo (inclinada para um lado e para o outro), parada (respirando) e três linhas de quatro quadros em que ela sai da corrida e vai ficando reta](img/09_transicao.png)
+
+Repare:
+
+- `anim stop` não vira uma animação: no lugar dela, o Weasel gera as **peças** `stop_0`, `stop_2` e `stop_4`. Cada peça parte de um quadro do `run` (o número no nome) e chega no primeiro quadro do `idle` em `frames=` quadros (4 por padrão), no fps do `run` (`fps=` muda).
+- O `run` é um loop: o jogo pode parar em qualquer quadro. Por isso há uma peça a cada `every=` quadros (2 por padrão). Um `every=` maior gera menos peças, com uma transição menos exata.
+- Uma animação `once` (um ataque) sempre acaba no mesmo quadro, então gera uma peça só, a do último quadro. Com `every=` escrito, ela gera também peças ao longo do caminho, para quando o golpe é interrompido.
+- Com direções, `from=walk to=idle` acha sozinho `walk_right` → `idle_right`, `walk_down` → `idle_down`…, e as peças levam a direção no fim (`stop_0_right`), para o lado espelhado e o `tocar()` funcionarem. O nome exato também serve: `from=walk_right to=idle_right`.
+- Nas peças, os ossos, os números e as cores vão aos poucos, e o giro vai pelo lado mais curto. O que liga e desliga, as caixas e o `only=` trocam no meio da peça, como no [`blend=` do filme](10-filme.md#misturar-uma-animação-na-outra-blend).
+- As peças tocam uma vez (sem loop) e entram em tudo o que lista as animações: a folha, o `.tres`, a cena do Godot (também com `rig=bones`), o GIF e o player do editor. Sem `from=` e `to=`, nada disso muda.
+- Cada peça custa `frames=` quadros na folha: um `run` de 12 quadros com `every=2` dá 6 peças de 4 quadros, 24 quadros a mais.
+
+**No jogo:** quando o personagem para, toque a peça do quadro em que o `run` está (arredondando para baixo até um múltiplo do `every=`) e, quando ela acabar, o `idle`. Uma função do ajudante do Godot que escolhe a peça sozinha está planejada para uma próxima versão.
+
 ## Tileset: blocos para montar fases
 
 Com `tileset`, o canvas vira uma **folha de blocos** (de 32×32, por exemplo), e cada `tile` diz qual célula vira bloco e como ela colide:

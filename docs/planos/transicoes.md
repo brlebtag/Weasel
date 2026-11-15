@@ -1,6 +1,6 @@
 # Transições entre duas animações
 
-**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem. Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Em 15/11/2026 você fechou as decisões (veja [Decidido](#decidido-15112026)). A etapa 1 (`blend=` no filme) foi feita na 1.40.0; as etapas 2 e 3 esperam o "pode fazer".
+**Situação:** item 4 da fila combinada em 10/11/2026. Você aprovou a análise e a ordem. Em 13/11/2026 o plano passou a valer para quaisquer duas animações, e não só para galope → pisca. Em 15/11/2026 você fechou as decisões (veja [Decidido](#decidido-15112026)). A etapa 1 (`blend=` no filme) foi feita na 1.40.0 e a etapa 2 (as peças na sprite sheet) na 1.41.0; a etapa 3 espera o "pode fazer".
 
 **Origem:** capivara #4: passar do galope para a pose parada sem pular.
 
@@ -16,7 +16,7 @@ Tudo aqui é **a mais** e só liga quando você pede:
   - um `blend=` solto no `at` hoje é erro;
   - `from=`, `to=` e `every=` no `anim` hoje são "atributo desconhecido".
 - **O `tocar()` do Godot não muda.** Ele continua chamando `play(nome)` sem tempo de mistura, então os tempos de mistura que você já acertou no AnimationPlayer do Godot continuam valendo. A mistura entra numa função nova, `trocar()`.
-- **O `.gd` só ganha o `trocar()` quando o arquivo pede.** Por quadros, isso é declarar uma transição. Com esqueleto, que não precisa declarar pares, é uma opção na linha `godot`, com o nome a decidir na etapa 3. Sem isso, o script gerado fica igual ao de hoje.
+- **O `.gd` ganha o `trocar()` sempre**, como as funções do [ajudante do Godot](ajudante-godot.md) (decidido em 15/11/2026). Função a mais não quebra nada: os jogos antigos não a chamam. Não precisa de opção na linha `godot` nem de declarar nada a mais.
 - **Peças geradas nunca apagam nada:** se o nome de uma peça (`para_galope_0_right`) já for de uma animação sua, é erro com o nome em conflito; o Weasel não sobrescreve.
 - **Tudo é configurável:**
   - o `blend=` vale por linha do `at`;
@@ -94,7 +94,7 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 - **Jogo:**
   - só quem declarar transições ganha quadros novos na folha;
   - com esqueleto, a mistura não aumenta nada;
-  - o `tocar()` não muda; a mistura só existe no `trocar()`, que só aparece no `.gd` quando o arquivo pede (veja a [regra](#regra-nada-do-que-existe-muda));
+  - o `tocar()` não muda; a mistura só existe no `trocar()`, que entra no `.gd` em toda exportação, como uma função a mais (veja a [regra](#regra-nada-do-que-existe-muda));
   - os jogos que não usarem `trocar()` não mudam.
 
 ## Decidido (15/11/2026)
@@ -106,7 +106,7 @@ O Weasel já faz quase tudo isso no `mix=` (js/lang.js, `mixAnim`): lê qualquer
 ## Ordem
 
 1. O `blend=` do filme. O jogo não muda nada. **Feito na 1.40.0.**
-2. As peças na sprite sheet (`anim … from= to=`), com `every=` e `frames=`.
+2. As peças na sprite sheet (`anim … from= to=`), com `every=` e `frames=`. **Feito na 1.41.0**, com as escolhas de 15/11/2026: direções automáticas (`from=walk` acha `walk_right`…; o nome exato também serve), a peça chega no primeiro quadro do `to` (o jogo toca o `to` do começo), um `once` gera uma peça só, do último quadro (com `every=` escrito, também ao longo dele), e a peça toca no fps do `from` (`fps=` muda).
 3. O `trocar()` no Godot, depois do [ajudante do Godot](ajudante-godot.md) (item 1 da fila).
 
 Cada etapa começa com o seu "pode fazer".

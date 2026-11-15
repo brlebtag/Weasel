@@ -1,0 +1,21 @@
+canvas   120 × 120, fundo transparente
+camadas  2
+  poeira           1 item(ns)  only=walk_right,walk_down
+  bicho            4 item(ns)
+formas   5
+ossos    corpo, cabeca←corpo, pe←corpo
+animações 10
+  walk_right     8 quadros, 12 fps
+  walk_down      8 quadros, 12 fps
+  idle_right     8 quadros, 6 fps, anima olho.c
+  idle_down      8 quadros, 6 fps
+  attack_right   6 quadros, 12 fps, once
+  to_idle_0_right 3 quadros, 12 fps, once, transição to_idle: de walk_right (depois do quadro 0) para idle_right
+  to_idle_4_right 3 quadros, 12 fps, once, transição to_idle: de walk_right (depois do quadro 4) para idle_right
+  to_idle_0_down 3 quadros, 12 fps, once, transição to_idle: de walk_down (depois do quadro 0) para idle_down
+  to_idle_4_down 3 quadros, 12 fps, once, transição to_idle: de walk_down (depois do quadro 4) para idle_down
+  after_attack_5_right 3 quadros, 12 fps, once, transição after_attack: de attack_right (depois do quadro 5) para idle_right
+godot    character, raiz 60,110
+caixas   2
+  corpo          body rect
+  golpe          hit circle só em attack_right

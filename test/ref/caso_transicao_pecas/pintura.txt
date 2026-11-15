@@ -1,0 +1,5 @@
+ellipse barriga @0.000 +0.510
+ellipse rosto @0.510 +0.419
+ellipse olho @0.929 +0.196
+stroke pata @1.125 +0.180
+total 1.305

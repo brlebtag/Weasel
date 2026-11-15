@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="60" height="60" viewBox="0 0 120 120">
+<defs><g id="L1"><g><path d="M50 108C50 110.21 45.52 112 40 112C34.48 112 30 110.21 30 108C30 105.79 34.48 104 40 104C45.52 104 50 105.79 50 108Z" fill="#d8cbb0"/></g></g>
+<g id="L2"><g><path d="M82 74C82 83.94 72.15 92 60 92C47.85 92 38 83.94 38 74C38 64.06 47.85 56 60 56C72.15 56 82 64.06 82 74Z" fill="#c98a5a"/><path d="M82 74C82 83.94 72.15 92 60 92C47.85 92 38 83.94 38 74C38 64.06 47.85 56 60 56C72.15 56 82 64.06 82 74Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M74.76 45.51C74.01 52.65 67.17 57.78 59.48 56.97C51.79 56.16 46.16 49.72 46.91 42.58C47.66 35.44 54.51 30.31 62.2 31.12C69.88 31.92 75.51 38.37 74.76 45.51Z" fill="#c98a5a"/><path d="M74.76 45.51C74.01 52.65 67.17 57.78 59.48 56.97C51.79 56.16 46.16 49.72 46.91 42.58C47.66 35.44 54.51 30.31 62.2 31.12C69.88 31.92 75.51 38.37 74.76 45.51Z" fill="none" stroke="#2b2a33" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M70 43C69.82 44.64 68.35 45.84 66.7 45.67C65.05 45.49 63.86 44.02 64.03 42.37C64.2 40.72 65.68 39.53 67.33 39.7C68.97 39.87 70.17 41.35 70 43Z" fill="#2b2a33"/><path d="M59.15 88.19C61.13 92.42 63.1 96.65 65.07 100.88" fill="none" stroke="#2b2a33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g></g></defs>
+<rect x="0" y="0" width="120" height="120" fill="#ffffff"/>
+<g data-layer="poeira"><use href="#L1" xlink:href="#L1"/></g>
+<g data-layer="bicho"><use href="#L2" xlink:href="#L2"/></g>
+</svg>

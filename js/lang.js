@@ -31,7 +31,7 @@
     bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     ik: ['bones', 'foot', 'target', 'bend'],
-    anim: ['frames', 'fps', 'mix', 'bones', 'feet'],
+    anim: ['frames', 'fps', 'mix', 'bones', 'feet', 'from', 'to', 'every'],
     use: ['scale', 'rot', 'flip', 'bone', 'cloth', 'opacity', 'z'],
     light: ['c', 'power', 'radius', 'glow', 'bone', 'flicker', 'aim', 'cone', 'rim'],
     ambient: ['c', 'power'],
@@ -1844,6 +1844,10 @@
         if (name === 'pose') err(st.line, '"pose" já é o nome da pose parada (only=pose valeria nas duas): dê outro nome à animação', st.pos[0].from, st.pos[0].to, 'warn');
         const an ={ name, line: st.line, frames: 24, fps: 12, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
         if (A.has('mix')) an.mixSpec = { a: A.get('mix'), st };
+        if (A.has('from') || A.has('to')) {
+          if (an.mixSpec) { bad(st, A.get('mix'), 'mix= não anda junto com from= e to= (a transição já é uma mistura)'); an.mixSpec = null; }
+          an.transSpec = { st };
+        } else if (A.has('every')) bad(st, A.get('every'), 'every= só vale numa transição (anim nome from=… to=…)', 'warn');
         if (A.has('feet')) an.feetSpec = { a: A.get('feet'), st };
         if (A.has('frames')) an.frames = Math.round(number(st, A.get('frames'), 24, 1, 600));
         if (A.has('fps')) an.fps = number(st, A.get('fps'), 12, 1, 60);
@@ -2429,6 +2433,52 @@
       an.events.sort((p, q) => p.frame - q.frame);
     }
 
+    // anim nome from=a to=b frames=4 every=2 — a transição para a sprite sheet: o Weasel gera as peças, cada uma
+    // partindo de um quadro de "a" (a cada every= quadros num loop; o último quadro num once) e chegando no
+    // primeiro quadro de "b" em frames= quadros, no fps de "a". A linha não vira animação: as peças entram no
+    // lugar dela, com o nome nome_quadro (nome_0, nome_2…) e, com direções, nome_0_right. Elas tocam uma vez.
+    const TRANS_DIRS = ['_down_right', '_down_left', '_up_right', '_up_left', '_right', '_left', '_down', '_up'];
+    function transAnims() {
+      const out = [];
+      const real = (n) => { const x = m.animMap.get(n); return x && !x.transSpec ? x : null; };
+      const dirOf = (n) => TRANS_DIRS.find((d) => n.endsWith(d) && n.length > d.length) || '';
+      for (const an of m.anims) {
+        if (!an.transSpec) { out.push(an); continue; }
+        const { st } = an.transSpec, A = st.attrs, fa = A.get('from'), ta = A.get('to');
+        if (!fa || !ta) { bad(st, fa || ta, 'a transição precisa de from= e to= (ex.: anim para_galope from=galope to=pisca)'); continue; }
+        if (an.tracks.size || an.ptracks.size || an.events.length) err(st.line, `a transição "${an.name}" é gerada: as key e os event vão nas animações de from= e to=`, st.pos[0].from, st.pos[0].to);
+        if (st.pos.slice(1).some((f) => f.text === 'loop')) bad(st, null, 'as peças de uma transição tocam uma vez (sem loop)', 'warn');
+        // os pares (de, para, direção): o nome exato ou, sem ele, cada direção que o from= tenha
+        const pairs = [];
+        if (real(fa.text)) pairs.push([real(fa.text), real(ta.text), dirOf(fa.text)]);
+        else for (const x of m.anims) { const d = dirOf(x.name); if (d && x.name === fa.text + d && !x.transSpec) pairs.push([x, real(ta.text + d) || real(ta.text), d]); }
+        if (!pairs.length) { bad(st, fa, `animação "${fa.text}" não existe (nem com direção, como ${fa.text}_right)`); continue; }
+        if (real(fa.text) && !pairs[0][1]) { bad(st, ta, `animação "${ta.text}" não existe`); continue; }
+        // uma direção do from= sem o to= dela (nem o to= sem direção) fica sem peças
+        const lost = pairs.filter((p) => !p[1]);
+        if (lost.length === pairs.length) { bad(st, ta, `animação "${ta.text}${lost[0][2]}" não existe (nem "${ta.text}")`); continue; }
+        if (lost.length) bad(st, ta, `${lost.map((p) => p[0].name).join(', ')} fica${lost.length > 1 ? 'm' : ''} sem peças: não há ${lost.map((p) => `"${ta.text}${p[2]}"`).join(', ')} (nem "${ta.text}")`, 'warn');
+        for (const p of lost) pairs.splice(pairs.indexOf(p), 1);
+        if (pairs.some((p) => p[0].blendOf || p[1].blendOf)) { bad(st, fa, 'from= e to= precisam ser animações do arquivo, não peças de outra transição'); continue; }
+        const frames = A.has('frames') ? an.frames : 4, every = A.has('every') ? Math.round(number(st, A.get('every'), 2, 1, 600)) : 2;
+        for (const [from, to, d] of pairs) {
+          const starts = [];
+          if (from.loop || A.has('every')) for (let s = 0; s < from.frames; s += every) starts.push(s);
+          if (!from.loop && !starts.includes(from.frames - 1)) starts.push(from.frames - 1);
+          for (const s of starts) {
+            const name = `${an.name}_${s}${d}`;
+            if (m.animMap.has(name) && m.animMap.get(name) !== an) { err(st.line, `a peça "${name}" já é o nome de uma animação: dê outro nome à transição`, st.pos[0].from, st.pos[0].to); continue; }
+            const piece = { name, line: an.line, frames, fps: A.has('fps') ? an.fps : from.fps, loop: false, tracks: new Map(), ptracks: new Map(), events: [], blendOf: { from, to, start: s }, trans: an.name };
+            m.animMap.set(name, piece);
+            out.push(piece);
+          }
+        }
+      }
+      for (const an of m.anims) if (an.transSpec && m.animMap.get(an.name) === an) m.animMap.delete(an.name);
+      m.anims.length = 0;
+      m.anims.push(...out);
+    }
+
     // key/at camada.tint=: muda só o quanto; a cor vem do tint=cor,quanto da própria camada
     function tintKey(st, a, Ly) {
       if (!(Ly.fx && Ly.fx.tintc)) bad(st, a, `a camada "${Ly.name}" não tem tint=cor,quanto: sem a cor, ${a.key}= não pinta nada`, 'warn');
@@ -2453,6 +2503,7 @@
       for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);
     }
     for (const an of m.anims) if (an.mixSpec) mixAnim(an);
+    if (m.anims.some((an) => an.transSpec)) transAnims();
     for (const an of m.anims) {
       for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
       for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);

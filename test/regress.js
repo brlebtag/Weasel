@@ -546,6 +546,55 @@ async function blendCase() {
   await check('_mistura', 'mistura.txt', 'text', lines.join('\n') + '\n');
 }
 
+// anim … from= to=: as peças de transição da sprite sheet (test/casos/transicao_pecas.weasel). Confere os erros
+// e avisos, que as animações de antes saem iguais com e sem transições, as peças (nomes, de onde partem, o peso,
+// a animação que vale para only=), o once com every= e o Godot (sem loop; com esqueleto, espelhadas).
+async function transCase() {
+  console.log(paint('1', '_transicao'));
+  const src = fs.readFileSync(path.join(CASES, 'transicao_pecas.weasel'), 'utf8');
+  const parse = (s) => W.lang.parse(s, { file: 'transicao_pecas.weasel', resolve: () => null });
+  const lines = [];
+  const msgs = (s) => parse(s).errors.map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  const tail = 'anim to_idle from=walk to=idle frames=3 every=4';
+  for (const [what, to] of [
+    ['sem to=', 'anim to_idle from=walk'],
+    ['from= que não existe', 'anim to_idle from=run to=idle'],
+    ['to= que não existe (nome exato)', 'anim to_idle from=walk_right to=sleep'],
+    ['uma direção sem o to=', 'anim to_idle from=walk to=idle\nanim walk_up frames=8 fps=12'],
+    ['loop', 'anim to_idle from=walk to=idle loop'],
+    ['key na transição', 'anim to_idle from=walk to=idle\nkey 0 corpo=0,0,5'],
+    ['nome de peça repetido', 'anim to_idle from=walk to=idle every=4\nanim to_idle_0_right frames=2'],
+    ['every= sem from=', 'anim pisca frames=4 every=2'],
+    ['mix= com from=', 'anim to_idle from=walk to=idle mix=walk_right,idle_right bones=cabeca'],
+    ['from= uma peça', 'anim to_idle from=walk to=idle every=4\nanim de_novo from=to_idle_0_right to=idle_down'],
+  ]) lines.push(`${what}: ${msgs(src.replace(tail, to)).join(' | ') || 'nenhum aviso'}`);
+  lines.push(`o arquivo: ${msgs(src).join(' | ') || 'nenhum aviso'}`);
+
+  const m = parse(src), plain = parse(src.replace(tail, '').replace('anim after_attack from=attack_right to=idle_right frames=3', ''));
+  const sig = (p) => [...p.bones.values()].map((mm) => mm.map((x) => x.toFixed(4)).join(',')).join('|') + JSON.stringify([...p.props]);
+  const same = plain.anims.every((a) => Array.from({ length: a.frames }, (_, f) => f).every((f) => sig(W.scene.makePose(m, a.name, f)) === sig(W.scene.makePose(plain, a.name, f))));
+  lines.push(`as ${plain.anims.length} animações de antes saem iguais com as transições: ${same}`);
+  lines.push(`animações: ${m.anims.map((a) => a.blendOf ? `${a.name} (${a.blendOf.from.name}→${a.blendOf.to.name}, depois do quadro ${a.blendOf.start}, ${a.frames} quadros a ${a.fps} fps)` : a.name).join(', ')}`);
+  const r2 = (v) => Math.round(v * 100) / 100;
+  for (const name of ['to_idle_4_right', 'after_attack_5_right']) {
+    const a = m.animMap.get(name);
+    for (let j = 0; j < a.frames; j++) {
+      const p = W.scene.makePose(m, name, j), v = p.vals;
+      lines.push(`  ${name}#${j}: vale ${p.src.anim.name}#${p.src.frame} · corpo ${v.get('corpo').map(r2).join(',')} · cabeça ${r2(v.get('cabeca')[2])}° · pé ${r2(v.get('pe')[2])}° · poeira ${W.scene.layerVisible(m.layerMap.get('poeira'), p, {}) ? 'sim' : 'não'} · golpe ${W.scene.boxState(m, p, m.boxes.get('golpe')).on ? 'ligado' : 'desligado'}`);
+    }
+  }
+  const ev = parse(src.replace('anim after_attack from=attack_right to=idle_right frames=3', 'anim after_attack from=attack_right to=idle_right frames=3 every=2'));
+  lines.push(`once com every=2: ${ev.anims.filter((a) => a.trans === 'after_attack').map((a) => a.name).join(', ')}`);
+  lines.push(`fps=: ${parse(src.replace(tail, tail + ' fps=24')).animMap.get('to_idle_0_right').fps}`);
+  const sheet = X.sheetCanvas(m, m.anims.map((a) => a.name), { scale: 0.2, transparent: true, trim: true, margin: 2, layout: 'rows', cols: 0, padding: 2, imageName: 't.png', format: 'sheet' });
+  const tres = X.godotText(m, sheet, 't.png');
+  lines.push(`godot (quadros): ${[...tres.matchAll(/"loop": (\w+),\n"name": &"(\w+)"/g)].map((x) => `${x[2]} ${x[1] === 'true' ? 'loop' : 'uma vez'}`).join(', ')}`);
+  const bones = parse(src.replace('godot body=character root=60,110', 'godot body=character root=60,110 rig=bones'));
+  const tscn = W.rig.packageFiles(bones, { base: 't', scale: 0.5, mirror: true }).files.find((f) => f.name.endsWith('.tscn')).text;
+  lines.push(`godot (esqueleto): ${[...tscn.matchAll(/resource_name = "(\w+)"\nlength = ([\d.]+)\n(loop_mode = 1)?/g)].filter((x) => x[1] !== 'RESET').map((x) => `${x[1]} ${x[2]}s${x[3] ? ' loop' : ''}`).join(', ')}`);
+  await check('_transicao', 'transicao.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -568,6 +617,7 @@ async function main() {
   if (!only.length || only.some((o) => '_janela'.includes(o))) await jobCase();
   if (!only.length || only.some((o) => '_animado'.includes(o))) await animCase();
   if (!only.length || only.some((o) => '_mistura'.includes(o))) await blendCase();
+  if (!only.length || only.some((o) => '_transicao'.includes(o))) await transCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);
