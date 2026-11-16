@@ -8,7 +8,7 @@ const { parentPort, workerData } = require('worker_threads');
 const { W } = require('./runtime');
 const { makeMediaResolver } = require('./media');
 
-const { src, name, dir, scale, transparent, subs, lang } = workerData;
+const { src, name, dir, scale, transparent, subs, lang, cues } = workerData;
 const dirs = new Map([[name, dir]]);
 const resolve = (file, from) => {
   const p = path.resolve(dirs.get(from) || dir, file);
@@ -20,7 +20,8 @@ const resolve = (file, from) => {
     return null;
   }
 };
-const media = makeMediaResolver((from) => dirs.get(from) || dir);
+// dos sons, só o cabeçalho (a duração); as bocas do lip sync automático vêm prontas da linha de comando
+const media = makeMediaResolver((from) => dirs.get(from) || dir, null, { header: true, cues: cues || {} });
 const model = W.lang.parse(src, { file: name, resolve, media });
 
 parentPort.on('message', (job) => {

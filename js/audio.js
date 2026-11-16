@@ -9,28 +9,15 @@
   function parseWav(bytes) {
     const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-    const tag = (o) => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
-    if (u8.length < 12 || tag(0) !== 'RIFF' || tag(8) !== 'WAVE') throw new Error('não é um arquivo WAV');
-    let fmt = null, data = null;
-    for (let o = 12; o + 8 <= u8.length;) {
-      const id = tag(o), size = dv.getUint32(o + 4, true), body = o + 8;
-      if (id === 'fmt ') {
-        fmt = { format: dv.getUint16(body, true), channels: dv.getUint16(body + 2, true), rate: dv.getUint32(body + 4, true), bits: dv.getUint16(body + 14, true) };
-        if (fmt.format === 0xfffe && size >= 26) fmt.format = dv.getUint16(body + 24, true);
-      } else if (id === 'data') data = { o: body, size: Math.min(size, u8.length - body) };
-      o = body + size + (size & 1);
-    }
-    if (!fmt || !data) throw new Error('WAV sem as partes fmt e data');
-    const { format, channels, rate, bits } = fmt;
-    const bps = bits / 8, frames = Math.floor(data.size / (bps * channels));
+    const L = wavLayout((o, n) => u8.subarray(o, o + n), u8.length);
+    const { format, channels, rate, bits, bps, data, frames } = L;
     let read;
     if (format === 1 && bits === 8) read = (o) => (u8[o] - 128) / 128;
     else if (format === 1 && bits === 16) read = (o) => dv.getInt16(o, true) / 32768;
     else if (format === 1 && bits === 24) read = (o) => (((u8[o] | (u8[o + 1] << 8) | (u8[o + 2] << 16)) << 8) >> 8) / 8388608;
     else if (format === 1 && bits === 32) read = (o) => dv.getInt32(o, true) / 2147483648;
     else if (format === 3 && bits === 32) read = (o) => dv.getFloat32(o, true);
-    else if (format === 3 && bits === 64) read = (o) => dv.getFloat64(o, true);
-    else throw new Error(`WAV em formato que não sei ler (formato ${format}, ${bits} bits): use PCM 16 bits`);
+    else read = (o) => dv.getFloat64(o, true);
     const mono = new Float32Array(frames);
     for (let i = 0; i < frames; i++) {
       let s = 0;
@@ -38,6 +25,38 @@
       mono[i] = s / channels;
     }
     return { kind: 'wav', sampleRate: rate, channels, frames, duration: frames / rate, mono };
+  }
+  // Só o que o cabeçalho diz (sem as amostras: mono = null). at(o, n): os n bytes do arquivo a partir de o; total:
+  // o tamanho do arquivo. Serve para quem só precisa da duração (as threads do filme, que não tocam o som).
+  function wavInfo(at, total) {
+    const { channels, rate, frames } = wavLayout(at, total);
+    // o mesmo erro que o parseWav daria ao criar as amostras (WAV estragado, com 0 canais e algum dado)
+    if (frames === Infinity) throw new RangeError('WAV com tamanho inválido');
+    return { kind: 'wav', sampleRate: rate, channels, frames, duration: frames / rate, mono: null };
+  }
+  // as partes do WAV (o formato e onde ficam as amostras), lidas por at(o, n) num arquivo de total bytes
+  function wavLayout(at, total) {
+    const head = at(0, 12);
+    const tag = (b, o) => String.fromCharCode(b[o], b[o + 1], b[o + 2], b[o + 3]);
+    const view = (b) => new DataView(b.buffer, b.byteOffset, b.byteLength);
+    if (total < 12 || head.length < 12 || tag(head, 0) !== 'RIFF' || tag(head, 8) !== 'WAVE') throw new Error('não é um arquivo WAV');
+    let fmt = null, data = null;
+    for (let o = 12; o + 8 <= total;) {
+      const h = at(o, 8), size = view(h).getUint32(4, true), body = o + 8;
+      const id = tag(h, 0);
+      if (id === 'fmt ') {
+        const dv = view(at(body, 26));
+        fmt = { format: dv.getUint16(0, true), channels: dv.getUint16(2, true), rate: dv.getUint32(4, true), bits: dv.getUint16(14, true) };
+        if (fmt.format === 0xfffe && size >= 26) fmt.format = dv.getUint16(24, true);
+      } else if (id === 'data') data = { o: body, size: Math.min(size, total - body) };
+      o = body + size + (size & 1);
+    }
+    if (!fmt || !data) throw new Error('WAV sem as partes fmt e data');
+    const { format, channels, rate, bits } = fmt;
+    const ok = (format === 1 && (bits === 8 || bits === 16 || bits === 24 || bits === 32)) || (format === 3 && (bits === 32 || bits === 64));
+    if (!ok) throw new Error(`WAV em formato que não sei ler (formato ${format}, ${bits} bits): use PCM 16 bits`);
+    const bps = bits / 8;
+    return { format, channels, rate, bits, bps, data, frames: Math.floor(data.size / (bps * channels)) };
   }
 
   // WAV PCM de 16 bits, um canal
@@ -58,18 +77,41 @@
   // G dentes no lábio (F, V), H língua (L), X descanso (silêncio).
   const VISEMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'X'];
 
-  // filtro passa-faixa (biquad do "Audio EQ Cookbook"), para medir a energia perto de um formante
-  function bandpass(x, rate, f, q) {
-    const w = (2 * Math.PI * f) / rate, al = Math.sin(w) / (2 * q), a0 = 1 + al;
-    const b0 = al / a0, b2 = -al / a0, a1 = (-2 * Math.cos(w)) / a0, a2 = (1 - al) / a0;
-    const y = new Float32Array(x.length);
-    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-    for (let i = 0; i < x.length; i++) {
-      const v = b0 * x[i] + b2 * x2 - a1 * y1 - a2 * y2;
-      x2 = x1; x1 = x[i]; y2 = y1; y1 = v;
-      y[i] = v;
+  // A energia perto de cada frequência de fs (filtro passa-faixa, biquad do "Audio EQ Cookbook") em cada janela de
+  // 2·hop amostras, uma a cada hop: E[faixa][janela]. A faixa filtrada não fica guardada (20 minutos de som a
+  // 48 kHz seriam 2,3 GB por thread): cada amostra entra direto na soma das duas janelas que passam por ela, na
+  // ordem de antes, então as contas saem iguais às de guardar a faixa e somar a janela depois.
+  // As faixas andam de duas em duas: cada uma depende da conta anterior dela, e com duas ao mesmo tempo o processador
+  // não fica esperando (quase 2 vezes mais rápido). Com um número ímpar de faixas, a última vai em par com ela mesma.
+  function bandEnergies(x, rate, fs, q, hop, n) {
+    const co = fs.map((f) => {
+      const w = (2 * Math.PI * f) / rate, al = Math.sin(w) / (2 * q), a0 = 1 + al;
+      return [al / a0, -al / a0, (-2 * Math.cos(w)) / a0, (1 - al) / a0];
+    });
+    const E = fs.map(() => new Float64Array(n));
+    // a última janela (n − 1) termina no bloco n
+    const end = Math.min(x.length, (n + 1) * hop);
+    for (let k = 0; k < fs.length; k += 2) {
+      const [b0, b2, a1, a2] = co[k], [c0, c2, d1, d2] = co[k + 1] || co[k];
+      const P = E[k], Q = E[k + 1] || P;
+      let x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
+      // cur: a janela h, que começa neste bloco; prev: a janela h − 1, que termina nele
+      let pcur = 0, pprev = 0, qcur = 0, qprev = 0, h = 0, j = 0;
+      for (let i = 0; i < end; i++) {
+        const xi = x[i];
+        const v = b0 * xi + b2 * x2 - a1 * y1 - a2 * y2;
+        const u = c0 * xi + c2 * x2 - d1 * z1 - d2 * z2;
+        x2 = x1; x1 = xi; y2 = y1; y1 = v; z2 = z1; z1 = u;
+        // o valor como ele ficaria guardado (Float32), ao quadrado
+        const fv = Math.fround(v), fu = Math.fround(u), vv = fv * fv, uu = fu * fu;
+        pcur += vv; pprev += vv; qcur += uu; qprev += uu;
+        if (++j === hop) {
+          if (h > 0) { P[h - 1] = pprev; Q[h - 1] = qprev; }
+          pprev = pcur; qprev = qcur; pcur = 0; qcur = 0; h++; j = 0;
+        }
+      }
     }
-    return y;
+    return E;
   }
 
   // formantes (1º e 2º) de cada vogal e a boca que ela pede
@@ -86,21 +128,20 @@
     const hop = Math.max(1, Math.round(rate / 100)), win = hop * 2;
     const n = Math.max(0, Math.floor((mono.length - win) / hop) + 1);
     const freqs = [...new Set(VOWELS.flatMap((x) => x.f))].filter((f) => f < rate / 2);
-    const bands = new Map(freqs.map((f) => [f, bandpass(mono, rate, f, 2.5)]));
+    const E = bandEnergies(mono, rate, freqs, 2.5, hop, n);
+    // os formantes de cada vogal como posições em freqs (-1: acima da metade da taxa, energia 0)
+    const at = VOWELS.map((x) => [freqs.indexOf(x.f[0]), freqs.indexOf(x.f[1])]);
     const rms = new Float32Array(n), vowel = new Array(n);
     for (let i = 0; i < n; i++) {
+      const k0 = i * hop;
       let s = 0;
-      const e = new Map(freqs.map((f) => [f, 0]));
-      for (let j = 0; j < win; j++) {
-        const k = i * hop + j;
-        s += mono[k] * mono[k];
-        for (const f of freqs) { const b = bands.get(f)[k]; e.set(f, e.get(f) + b * b); }
-      }
+      for (let j = 0; j < win; j++) { const v = mono[k0 + j]; s += v * v; }
       rms[i] = Math.sqrt(s / win);
       let best = VOWELS[0], bs = -1;
-      for (const x of VOWELS) {
-        const sc = Math.sqrt((e.get(x.f[0]) || 0) * (e.get(x.f[1]) || 0));
-        if (sc > bs) { bs = sc; best = x; }
+      for (let v = 0; v < VOWELS.length; v++) {
+        const [p, q] = at[v];
+        const sc = Math.sqrt((p < 0 ? 0 : E[p][i] || 0) * (q < 0 ? 0 : E[q][i] || 0));
+        if (sc > bs) { bs = sc; best = VOWELS[v]; }
       }
       vowel[i] = best;
     }
@@ -175,5 +216,5 @@
     return 'WEBVTT\n\n' + list.map((s) => `${clock(s.start, '.')} --> ${clock(s.end, '.')}\n${s.text}\n`).join('\n');
   }
 
-  W.audio = { parseWav, encodeWav, lipCues, parseCues, cueAt, srt, vtt, VISEMES };
+  W.audio = { parseWav, wavInfo, encodeWav, lipCues, parseCues, cueAt, srt, vtt, VISEMES };
 })(window.Weasel = window.Weasel || {});

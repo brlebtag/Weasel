@@ -3034,7 +3034,7 @@
       const ac = actors.get(a.lips);
       if (!ac) { bad(a.lipsAt.st, a.lipsAt.a, `ator "${a.lips}" não existe aqui`); return; }
       if (ac.model && !ac.model.mouth) bad(a.lipsAt.st, a.lipsAt.a, `o ator "${a.lips}" não tem boca para o lip sync (falta mouth no arquivo dele)`, 'warn');
-      if (!a.cues && a.media && !a.media.mono) bad(a.lipsAt.st, a.lipsAt.a, 'o lip sync automático precisa de um .wav (ou das bocas do Rhubarb em cues=)', 'warn');
+      if (!a.cues && a.media && !a.media.mono && !a.media.autoCues) bad(a.lipsAt.st, a.lipsAt.a, 'o lip sync automático precisa de um .wav (ou das bocas do Rhubarb em cues=)', 'warn');
     }
     // sub 2s "texto" dur= lang=   (+0.5s = meio segundo depois do fim da legenda anterior)
     function readSub(st, F, block) {

@@ -57,10 +57,11 @@
   // ---------- lip sync ----------
   // Quando a boca não existe no personagem, a próxima da lista (a última opção é a boca parada).
   const LIP_CHAIN = { A: ['A', 'X'], B: ['B', 'C', 'A'], C: ['C', 'B', 'D'], D: ['D', 'C', 'B'], E: ['E', 'C', 'B'], F: ['F', 'A', 'B'], G: ['G', 'B', 'A'], H: ['H', 'C', 'B'], X: ['X'] };
-  // as bocas de um som: do Rhubarb (cues=) ou calculadas do .wav (uma vez só)
+  // as bocas de um som: do Rhubarb (cues=) ou calculadas do .wav (uma vez só; nas threads da linha de comando, elas
+  // chegam prontas em media.autoCues)
   function cuesOf(a) {
     if (a.cues) return a.cues;
-    if (a._auto === undefined) a._auto = a.media && a.media.mono ? W.audio.lipCues(a.media.mono, a.media.sampleRate) : null;
+    if (a._auto === undefined) a._auto = !a.media ? null : a.media.autoCues ? a.media.autoCues : a.media.mono ? W.audio.lipCues(a.media.mono, a.media.sampleRate) : null;
     return a._auto;
   }
   // a boca que o ator faz no segundo T do filme (null = sem fala agora)

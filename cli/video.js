@@ -85,6 +85,19 @@ function ffmpegArgs(fmt, w, h, fps, o, out) {
 }
 
 // ---------- threads ----------
+// As bocas do lip sync automático de cada .wav (caminho → deixas), calculadas aqui uma vez: as threads só leem o
+// cabeçalho dos sons (cli/media.js) e recebem as bocas prontas.
+function autoCues(model) {
+  const out = {};
+  for (const c of W.film.timeline(model).audios) {
+    const m = c.a.media;
+    if (!c.a.lips || c.a.cues || !m || !m.mono || !m.path || out[m.path]) continue;
+    const cues = W.film.cuesOf(c.a);
+    if (cues) out[m.path] = cues;
+  }
+  return out;
+}
+
 class Pool {
   constructor(n, data) {
     this.queue = [];
@@ -328,7 +341,7 @@ async function exportFilm(model, o, format, source, h) {
   jobs = Math.max(1, Math.min(jobs, total));
   const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang };
   if (o.transparent && (format === 'mp4' || format === 'mkv') && !o.quiet) console.error(h.paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou --frames (PNG)`);
-  if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang });
+  if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang, cues: autoCues(model) });
   const summary = (secs, n) => { n = n || total; return `${n} quadros em ${secs.toFixed(1)}s (${(n / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`; };
 
   try {
