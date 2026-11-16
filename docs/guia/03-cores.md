@@ -125,6 +125,8 @@ Repare:
 - Um nome da `palette` pode valer outro nome: `palette sombra=cabelo` copia a cor de `cabelo` (com um exemplo [mais abaixo](#um-nome-que-copia-outro-sombracabelo)). Aqui a ordem importa: `cabelo` precisa vir antes.
 - O fundo também aceita nome: `bg=ceu`. Repare que o `canvas` está **acima** da `palette` que cria `ceu`, e funciona. A seção [Antes ou depois](#antes-ou-depois-onde-um-nome-da-palette-vale) explica por que usar pode vir antes e copiar não.
 
+> **Dica do editor:** as cores e os números da `palette` aparecem no painel **Amostras**, na coluna da direita do desenho (**Janela › Amostras**). Escolha uma forma e clique numa cor: ela vira o `c=` da forma. Com **Contorno** marcado em cima (ou com **Alt** + clique), vira o `inkc=`; no `stroke` e na `line`, a cor do traço. Os números (as espessuras) vão para o `ink=`, ou para o `w=` do traço. Os gradientes e os padrões também estão lá, e as variantes trocam com um clique. **+ nova** guarda na `palette` a cor da forma escolhida, com um nome livre (`cor1`, `cor2`…), e a forma passa a usar o nome. Duplo clique numa amostra leva à linha dela no código.
+
 ### Nomes que já existem
 
 Quatro nomes vêm prontos em todo desenho, mesmo sem nenhuma linha `palette`. É como se todo arquivo começasse com esta linha escondida:

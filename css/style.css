@@ -374,7 +374,7 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .errlist .warn .msg { color: #ffe39a; }
 
 /* ---------- vista do desenho ---------- */
-.viewp { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; min-width: 0; min-height: 0; background: var(--bg); }
+.viewp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr) auto auto; min-width: 0; min-height: 0; background: var(--bg); }
 .viewp > .timeline, .viewp > .player { grid-column: 1 / -1; }
 /* a barra de ferramentas, na beirada esquerda do desenho (js/ui-shell.js) */
 .tools { grid-row: 1; grid-column: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; }
@@ -418,6 +418,57 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .stage.space canvas { cursor: grab !important; }
 .stage.pan canvas { cursor: grabbing !important; }
+/* a coluna da direita: Propriedades e Amostras (js/ui-props.js) */
+.dock { grid-row: 1; grid-column: 3; width: 250px; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--panel); border-left: 1px solid var(--line); font-size: 12px; }
+.dock[hidden], .dk-sec[hidden] { display: none; }
+.dk-sec + .dk-sec { border-top: 1px solid var(--line); }
+.dk-head { display: flex; align-items: center; gap: 8px; padding: 6px 6px 4px 10px; position: sticky; top: 0; z-index: 1; background: var(--panel); }
+.dk-head b { font-size: 12px; }
+.dk-what { flex: 1; min-width: 0; color: var(--dim); font: 11px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-head .x { padding: 0 6px; border: none; background: none; color: var(--dim); }
+.dk-body { padding: 0 10px 8px; }
+.pp-grp { padding: 6px 0 4px; border-top: 1px solid var(--line); }
+.pp-grp:first-child { border-top: none; }
+.pp-t { font-size: 11px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+.pp-t code, .pp-go { font: 600 11px var(--mono); text-transform: none; letter-spacing: 0; color: var(--kw-setup); }
+.pp-go { border: none; background: none; padding: 0 2px; text-decoration: underline dotted; text-underline-offset: 3px; }
+.pp-sub { font-size: 11px; color: var(--dim); margin: 6px 0 3px; display: flex; align-items: center; gap: 6px; }
+.pp-row { display: flex; align-items: center; gap: 5px; min-height: 26px; }
+.pp-k { width: 70px; flex: none; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none; }
+.pp-k.scrub { cursor: ew-resize; text-decoration: underline dotted var(--dim); text-underline-offset: 3px; }
+.pp-row input[type=text], .pp-row select { height: 24px; padding: 0 5px; font: 12px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; min-width: 0; }
+.pp-num { width: 62px; flex: none; }
+.pp-txt, .pp-sel { flex: 1; }
+.pp-col { width: 28px; height: 24px; padding: 0 1px; flex: none; }
+.pp-col.none { opacity: .35; }
+.pp-range { flex: 1; min-width: 0; }
+.pp-back { padding: 0 5px; border: none; background: none; color: var(--dim); }
+.pp-back[hidden] { display: none; }
+.pp-chk { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; white-space: nowrap; }
+.pp-note { color: var(--dim); line-height: 1.45; padding: 4px 0; }
+.pp-tf { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; position: relative; padding-right: 22px; }
+.pp-tf .pp-k { width: 16px; }
+.pp-tf .pp-num { width: 100%; flex: 1; }
+.pp-lock { position: absolute; right: 0; top: 30px; width: 20px; height: 22px; padding: 0; display: grid; place-items: center; border: none; background: none; color: var(--dim); }
+.pp-lock.on { color: var(--accent); }
+.pp-lock svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.pp-fx { display: flex; align-items: center; gap: 4px; min-height: 26px; }
+.pp-fx .pp-chk { width: 86px; flex: none; margin: 0; color: var(--dim); }
+.pp-fx.on .pp-chk { color: var(--text); }
+.pp-fxv { display: flex; gap: 3px; flex: 1; min-width: 0; }
+.pp-fxv input[type=text] { width: 38px; height: 22px; padding: 0 3px; font: 11px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; }
+.pp-fxv input:disabled { opacity: .35; }
+.pp-fxv .pp-col { width: 24px; height: 22px; }
+.sw-to { display: flex; align-items: center; gap: 4px; padding: 2px 0 4px; color: var(--dim); }
+.sw-to button, .sw-vars button { padding: 1px 7px; font-size: 11px; }
+.sw-to button.on, .sw-vars button.on { background: #1c3050; border-color: #2c4a78; color: var(--text); }
+.sw-vars { display: flex; flex-wrap: wrap; gap: 4px; }
+.sw-add { margin-left: auto; padding: 0 6px; font-size: 11px; }
+.sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.sw-chip { display: flex; align-items: center; gap: 6px; padding: 2px 5px 2px 3px; min-width: 0; text-align: left; font: 11px var(--mono); color: var(--text); }
+.sw-c { width: 16px; height: 16px; flex: none; border-radius: 3px; border: 1px solid rgba(255, 255, 255, .25); }
+.sw-chip.width .sw-c { border: none; border-radius: 2px; color: var(--dim); }
+.sw-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* a vista Camadas em 3D (js/ui-3d.js): por cima do desenho, abaixo dos painéis */
 .v3 { position: absolute; inset: 0; z-index: 2; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none; }
 .v3[hidden] { display: none; }
@@ -594,4 +645,8 @@ pre.ex u { color: var(--num); text-decoration: none; }
   .statusbar { flex-wrap: wrap; }
   .divider { cursor: row-resize; }
   .dlg-body { grid-template-columns: 1fr; }
+}
+/* numa tela de celular, a coluna da direita some (o desenho precisa do espaço) */
+@media (max-width: 640px) {
+  .dock { display: none; }
 }

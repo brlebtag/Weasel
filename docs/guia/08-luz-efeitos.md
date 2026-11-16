@@ -853,6 +853,8 @@ text t5 460,160 "hue=150" size=14 align=center c=#d8dcef
 
 Os efeitos animam com `key`: `key 4 aura.glow=40`, `key 6 heroi.tint=0.6`, `key 0 neblina.blur=8`. Eles usam o recurso de filtro do navegador; onde ele não existe, o desfoque vira uma aproximação e os ajustes de cor são ignorados.
 
+> **Dica do editor:** escolha uma forma da camada e use o menu **Efeito** (liga e desliga cada efeito com um valor de partida) ou a parte **Camada** do painel **Propriedades**, que mostra a opacidade, a mistura (`blend=`) e os efeitos com os números de cada um. O que você muda lá é escrito na linha `layer`. Uma camada sem linha `layer` (a automática) não tem efeitos: escreva `layer nome` antes das formas.
+
 ### Os números do `glow=` e do `shadow=`
 
 O `glow=` e o `shadow=` têm vários números. Aqui estão eles mudando um de cada vez:

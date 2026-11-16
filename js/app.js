@@ -2139,8 +2139,10 @@
 
   function draw() {
     if (!st.model) return;
+    // quem acompanha o desenho (o painel Propriedades, a vista 3D) fica sabendo
+    emit('draw');
     // com a vista Camadas em 3D aberta, ela pinta (o desenho de baixo fica parado, escondido)
-    if (st.view3d) { emit('draw'); return; }
+    if (st.view3d) return;
     const cv = $('view'), ctx = cv.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const cw = Math.max(1, Math.round(cv.clientWidth * dpr)), ch = Math.max(1, Math.round(cv.clientHeight * dpr));
@@ -4230,6 +4232,102 @@
   }
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
 
+  // ---------- para o painel Propriedades (js/ui-props.js) ----------
+  // as linhas que o painel mostra: as escolhidas ou, sem escolha, a forma (ou a camada) da linha do cursor
+  function propTargets() {
+    if (!st.model || isFilm()) return [];
+    if (st.sel.size) return [...st.sel.keys()].sort((a, b) => a - b);
+    const line = st.caret.line, rec = st.model.byLine.get(line);
+    if (nodeSigs().has(line) || (rec && rec.layer && !rec.layer.implicit)) return [line];
+    return [];
+  }
+  // A caixa das linhas (sem a grossura do contorno), nas coordenadas do desenho.
+  function boxOf(lines) {
+    const m = st.model, pose = currentPose(), set = new Set(lines);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+    for (const t of layerTree(m)) for (const k of t.kids) {
+      if (!set.has(k.line)) continue;
+      for (const el of k.els) {
+        const g = S.geometry(m, pose, el);
+        if (g.segs.length) { const b = tightBox(g.segs); add(b.x0, b.y0); add(b.x1, b.y1); } else if (el.at) add(el.at[0], el.at[1]);
+      }
+    }
+    return x0 > x1 ? null : { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+  }
+  // Troca, põe ou tira atributos (attrs: { chave: valor, ou null para tirar }) e palavras soltas (flags: { bold: true })
+  // nas linhas, numa edição só. O que entra vai depois da última palavra antes do ":" (ou do comentário).
+  function setAttrs(lines, attrs, flags, key) {
+    const out = new Map();
+    const cut = (text, a, b) => { while (a > 0 && /[ \t]/.test(text[a - 1])) a--; return [a, b, '']; };
+    for (const line of lines) {
+      const text = lineOf(line), ws = L.splitLine(text).words;
+      if (!ws.length) continue;
+      const ed = [], end = ws[ws.length - 1].to;
+      let tail = '';
+      for (const [k, v] of Object.entries(attrs || {})) {
+        const w = ws.slice(1).find((t) => t.text.startsWith(k + '='));
+        if (v === null || v === undefined || v === '') { if (w) ed.push(cut(text, w.from, w.to)); } else if (w) ed.push([w.from + k.length + 1, w.to, String(v)]);
+        else tail += ` ${k}=${v}`;
+      }
+      for (const [f, on] of Object.entries(flags || {})) {
+        const w = ws.slice(1).find((t) => t.text === f);
+        if (on && !w) tail += ' ' + f;
+        else if (!on && w) ed.push(cut(text, w.from, w.to));
+      }
+      if (tail) ed.push([end, end, tail]);
+      ed.sort((a, b) => b[0] - a[0]);
+      let t = text;
+      for (const [a, b, x] of ed) t = t.slice(0, a) + x + t.slice(b);
+      if (t !== text) out.set(line, t);
+    }
+    if (out.size) writeLines(out, key || 'props' + Date.now());
+    return out.size;
+  }
+  // troca uma palavra da linha (pela posição: 1 = a que vem depois do comando) por outro texto
+  function setWord(line, i, txt, key) {
+    const text = lineOf(line), w = L.splitLine(text).words[i];
+    if (!w || w.text === txt) return false;
+    writeLines(new Map([[line, text.slice(0, w.from) + txt + text.slice(w.to)]]), key || 'props' + Date.now());
+    return true;
+  }
+  // Mover, esticar e girar as linhas por número (o painel Propriedades), com as mesmas contas da caixa da escolha:
+  // move { dx, dy }, scale { sx, sy } a partir do canto de cima à esquerda da caixa, spin { deg } em volta do meio.
+  function transformLines(lines, mode, o, key) {
+    if (st.anim) { hint('Para mudar a posição ou o tamanho, escolha "pose parada" no player.', 2600); return 0; }
+    const plans = lines.map(editPlan);
+    if (mode === 'scale') for (const p of plans) if (!p.why) p.noScale = scaleInfo(p);
+    const stop = (p) => p.why || (mode === 'spin' && p.noSpin) || (mode === 'scale' && p.noScale) || '';
+    const ok = plans.filter((p) => !stop(p));
+    if (!ok.length) { if (plans.length) hint(`Isto não muda pelo painel: ${stop(plans[0])}.`, 3000); return 0; }
+    const b = boxOf(lines);
+    if (!b) return 0;
+    const dec = st.view.z > 3 ? 1 : 0, out = new Map();
+    for (const p of ok) {
+      if (mode === 'move') {
+        const a = localOf(p.rec, p.ref, b.x0, b.y0), c = localOf(p.rec, p.ref, b.x0 + o.dx, b.y0 + o.dy);
+        if (a && c) out.set(p.line, planText(p, (x, y) => [x + c[0] - a[0], y + c[1] - a[1]], 0, dec));
+      } else if (mode === 'spin') {
+        const c = localOf(p.rec, p.ref, b.cx, b.cy);
+        if (c) out.set(p.line, planText(p, (x, y) => turn(c[0], c[1], o.deg, x, y), o.deg, dec));
+      } else {
+        const W = Math.max(1e-6, b.x1 - b.x0), H = Math.max(1e-6, b.y1 - b.y0);
+        const q = localOf(p.rec, p.ref, b.x0, b.y0), u = localOf(p.rec, p.ref, b.x0 + W, b.y0), v = localOf(p.rec, p.ref, b.x0, b.y0 + H);
+        if (!q || !u || !v) continue;
+        const J = [(u[0] - q[0]) / W, (v[0] - q[0]) / H, (u[1] - q[1]) / W, (v[1] - q[1]) / H], det = J[0] * J[3] - J[1] * J[2];
+        if (Math.abs(det) < 1e-12) continue;
+        const i0 = J[3] / det, i1 = -J[1] / det, i2 = -J[2] / det, i3 = J[0] / det, sx = o.sx, sy = o.sy;
+        const T = [J[0] * sx * i0 + J[1] * sy * i2, J[0] * sx * i1 + J[1] * sy * i3, J[2] * sx * i0 + J[3] * sy * i2, J[2] * sx * i1 + J[3] * sy * i3];
+        const kx = p.rec.xf ? Math.sqrt(Math.abs(M.det(p.rec.xf))) : 1;
+        out.set(p.line, scaleText(p, T, q, kx > 1.5 || st.view.z > 3 ? 1 : 0));
+      }
+    }
+    if (out.size) writeLines(out, key || 'props' + Date.now());
+    const left = plans.length - ok.length;
+    if (left) hint(`${left} ${left > 1 ? 'linhas ficam paradas' : 'linha fica parada'}: ${stop(plans.find(stop))}.`, 3200);
+    return out.size;
+  }
+
   const handleCursor = (h) => (h.kind === 'size' ? (h.axis === 'x' ? 'ew-resize' : h.axis === 'y' ? 'ns-resize' : 'nwse-resize') : h.kind === 'round' ? 'ew-resize' : h.kind === 'fsize' ? (h.align === 'right' ? 'nwse-resize' : 'nesw-resize') : h.kind === 'rot' ? 'alias' : h.kind === 'mid' ? 'copy' : 'move');
 
   // bolinha do meio de um lado: escreve um ponto ali (logo depois do ponto idx) e já começa a arrastá-lo;
@@ -5090,5 +5188,16 @@
     layerTree: (m) => layerTree(m),
     selected: () => [...selSet().keys()],
     pickLine,
+    // para o painel Propriedades e as Amostras (js/ui-props.js)
+    targets: propTargets,
+    boxOf,
+    setAttrs,
+    setWord,
+    transformLines,
+    lineText: (line) => lineOf(line),
+    setLines: (map, key) => writeLines(map, key),
+    gotoCode,
+    setVariant: (v) => { const sel = $('variantSel'); if (sel && [...sel.options].some((o) => o.value === v)) { sel.value = v; sel.dispatchEvent(new Event('change')); } },
+    insertLine: (at, text, key) => { const off = editor.lineStart(at); editor.replaceRange(off, off, text + '\n', { key: key || 'props' + Date.now() }); },
   };
 })(window.Weasel = window.Weasel || {});

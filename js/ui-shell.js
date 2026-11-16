@@ -74,6 +74,9 @@
   const panelOn = (id) => () => !$(id).hidden;
   const film = () => A.isFilm();
   const drawing = () => !A.isFilm();
+  // o painel Propriedades carrega depois desta casca (js/ui-props.js)
+  const NOP = new Proxy({}, { get: () => () => false });
+  const P = () => W.props || NOP;
   const MENUS = [
     { label: 'Arquivo', items: [
       { label: 'Novo', run: A.newFile },
@@ -100,6 +103,23 @@
       '-',
       { label: 'Esconder / mostrar (hidden)', key: 'Ctrl+3', enabled: drawing, run: A.hide },
     ] },
+    // Texto e Efeito: o que o painel Propriedades também faz, pelo menu (js/ui-props.js)
+    { label: 'Texto', items: [
+      { label: 'Negrito', enabled: () => P().textOn(), on: () => P().flagOn('bold'), run: () => P().flag('bold') },
+      { label: 'Itálico', enabled: () => P().textOn(), on: () => P().flagOn('italic'), run: () => P().flag('italic') },
+      '-',
+      { label: 'Alinhar à esquerda', enabled: () => P().textOn(), radio: true, on: () => P().alignOn('left'), run: () => P().align('left') },
+      { label: 'Centralizar', enabled: () => P().textOn(), radio: true, on: () => P().alignOn('center'), run: () => P().align('center') },
+      { label: 'Alinhar à direita', enabled: () => P().textOn(), radio: true, on: () => P().alignOn('right'), run: () => P().align('right') },
+      '-',
+      { label: 'Aumentar o tamanho', enabled: () => P().textOn(), run: () => P().bump(1) },
+      { label: 'Diminuir o tamanho', enabled: () => P().textOn(), run: () => P().bump(-1) },
+    ] },
+    { label: 'Efeito', items: () => [
+      ...P().FX.map((x) => ({ label: x.label, enabled: () => P().layerOk(), on: () => P().fxOn(x.k), run: () => P().fx(x.k) })),
+      '-',
+      { label: 'Tirar os efeitos', enabled: () => P().layerOk() && P().FX.some((x) => P().fxOn(x.k)), run: () => P().fxNone() },
+    ] },
     { label: 'Exibir', items: [
       { label: 'Código', radio: true, on: () => st.layout === 'code', run: () => A.setLayout('code') },
       { label: 'Dividido', radio: true, on: () => st.layout === 'split', run: () => A.setLayout('split') },
@@ -123,6 +143,8 @@
       Object.assign({ label: 'Linha do tempo', visible: film }, chk('tTimeline')),
     ] },
     { label: 'Janela', items: [
+      { label: 'Propriedades', visible: drawing, on: () => P().isOn('props'), run: () => P().toggle('props') },
+      { label: 'Amostras', visible: drawing, on: () => P().isOn('sw'), run: () => P().toggle('sw') },
       { label: 'Camadas', visible: drawing, on: panelOn('layerPanel'), run: () => $('layerBtn').click() },
       { label: 'Referências', visible: drawing, on: panelOn('refPanel'), run: () => $('refBtn').click() },
       { label: 'Sons guardados', visible: shown('mediaBtn'), on: panelOn('mediaList'), run: () => $('mediaBtn').click() },
