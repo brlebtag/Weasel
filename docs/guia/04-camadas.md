@@ -129,6 +129,8 @@ Os números mostram a ordem em que cada coisa foi pintada. O verde (3) cobre o v
 
 **Experimente:** mova a linha `use selo 410,50` para logo depois do `end`. Agora o selo é pintado antes do cartão, e o cartão cobre quase todo ele: só a pontinha que passa da borda continua aparecendo.
 
+> **Dica do editor:** para ver a ordem de pintura de um desenho inteiro, use **Exibir › Camadas em 3D** (ou o botão de camadas na ponta direita da barra de baixo). As camadas se afastam no espaço, a de baixo no fundo e a de cima mais perto de você, e cada linha do painel **Camadas** vira uma peça. Arraste para girar; **Espaço**, a **Mão** ou o botão do meio movem a vista, e a roda aproxima. Clique numa peça para escolher a linha dela (**Shift** soma ou tira); as setas, **Ctrl+3**, **Ctrl+D** e **Ctrl+Z** valem como no desenho. A barrinha de cima tem **Explodir**, **De frente**, **De lado** e **Juntar**, quanto as camadas (e as formas de uma mesma camada) se afastam e as molduras com os nomes. O olho de cada nome esconde a camada só nessa vista. Passe o mouse numa linha do painel Camadas e as outras peças se apagam. A vista acompanha o player, sem estilo de arte e sem os halos das luzes, e não aparece em filmes.
+
 ### Linhas que não pintam
 
 Só as linhas que desenham entram nessa fila: `shape`, `ellipse`, `rect`, `stroke`, `line`, `text`, `use` e os emissores de partículas (`emitter`). As outras (`canvas`, `palette`, `let`, `bone`, `light`, `anim`, `key`, `box`…) não mudam quem fica na frente, seja qual for a posição delas no arquivo. É por isso que um `let` vale no arquivo inteiro e as `key` podem vir fora de ordem: tudo é lido antes de qualquer coisa ser pintada.

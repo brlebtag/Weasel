@@ -44,7 +44,8 @@
     bar.appendChild(b);
   }
   function syncTools() {
-    const film = A.isFilm();
+    // no filme e na vista Camadas em 3D, só as ferramentas que valem lá
+    const film = A.isFilm() || st.view3d;
     bar.querySelectorAll('button[data-tool]').forEach((b) => {
       b.classList.toggle('on', b.dataset.tool === st.tool);
       b.setAttribute('aria-pressed', String(b.dataset.tool === st.tool));
@@ -109,6 +110,8 @@
       { label: 'Ajustar à tela', key: 'Ctrl+0', run: A.fit },
       { label: 'Tamanho real (100%)', key: 'Ctrl+1', run: A.zoomActual },
       '-',
+      { label: 'Camadas em 3D', visible: drawing, on: () => st.view3d, run: () => A.set3d(!st.view3d) },
+      '-',
       Object.assign({ label: 'Réguas', key: 'Ctrl+R', visible: drawing }, chk('tRulers')),
       Object.assign({ label: 'Guias (camadas guide, luzes, encaixes)' }, chk('tGuides')),
       Object.assign({ label: 'Hitboxes', visible: drawing }, chk('tBoxes')),
@@ -143,7 +146,7 @@
     const tool = TOOLS.find((x) => x !== '-' && x.key === k && !!x.shift === e.shiftKey);
     if (tool) {
       e.preventDefault();
-      if (A.isFilm() && !FILM_TOOLS.includes(tool.id)) return;
+      if ((A.isFilm() || st.view3d) && !FILM_TOOLS.includes(tool.id)) return;
       A.setTool(tool.id);
       return;
     }
@@ -152,6 +155,7 @@
 
   A.on('tool', syncTools);
   A.on('model', syncTools);
+  A.on('view3d', syncTools);
   A.on('layout', syncLayout);
   syncTools();
   syncLayout();

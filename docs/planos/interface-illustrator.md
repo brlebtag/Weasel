@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), e a etapa 1 (a casca) saiu na 1.50.0, no mesmo dia. A próxima é a 1b (camadas em 3D).
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0 e a 1b (camadas em 3D) na 1.51.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -523,6 +523,31 @@ O que entra, e as escolhas pequenas feitas na hora (marcadas com *):
 - **O guia e a referência do editor (F1)** mudam junto, nos trechos dos atalhos e dos botões.
 
 **Como ficou (16/11/2026):** feita e conferida no navegador, nas três vistas, no filme e numa tela estreita. Os menus e a barra de ferramentas estão em `js/ui-menu.js` e `js/ui-shell.js`; o `app.js` expõe o que eles chamam em `W.app`. O guia, o README e a referência (F1) contam os menus, as ferramentas e os atalhos novos. A pergunta que sobrou (o Ctrl+D no desenho até a etapa 3) foi respondida no mesmo dia: ele duplica a escolha. As cópias de linhas seguidas ficam juntas, logo abaixo, e os nomes que uma usa da outra mudam junto; um Ctrl+Z desfaz tudo.
+
+### 11.2 A etapa 1b em detalhe (16/11/2026)
+
+Respondido por você no mesmo dia: a vista **acompanha o player** (num desenho grande, pula quadros em vez de travar), vale **só em desenhos** por enquanto (o filme fica para a etapa 7), sai **sem o estilo de arte**, e as ideias dos fantasmas e da cor do osso ficam **para depois**.
+
+Depois disso você pediu que eu fizesse todas as etapas sozinho. As escolhas marcadas com **(R)** são minhas recomendações e esperam a sua confirmação:
+- **Abrir:** **Exibir › Camadas em 3D** e um botão na barra de baixo, ao lado do zoom. Sem atalho de teclado, porque o Illustrator não tem um para isso **(R)**. A vista abre de frente, igual ao desenho, e se abre em leque em um segundo, como no protótipo **(R)**.
+- **A barrinha em cima da vista:** Explodir, De frente, De lado e Juntar; os dois controles (distância entre camadas e entre formas, em pixels do desenho, até um quarto do tamanho dele); a chave Molduras e nomes; e o ✕ que volta ao desenho.
+- **Ferramentas na vista:** as mesmas do filme. Com as duas seleções, clicar escolhe (Shift+clique soma ou tira) e arrastar gira. A Mão, o Espaço segurado ou o botão do meio movem. O Zoom aproxima com um clique (Alt afasta), e a roda dá zoom. As outras ferramentas somem enquanto a vista está aberta **(R)**.
+- **Teclas:** Ctrl+0 volta de frente e ajusta; Ctrl+1 é 100% no meio da pilha; Ctrl+= e Ctrl+- dão zoom. As setas, o Ctrl+3, o Ctrl+D, o Ctrl+Z e o Esc fazem o mesmo que no desenho, e a vista se pinta de novo **(R)**.
+- **Peças:** uma por linha do painel Camadas (um `use` é uma peça, e as linhas de um `include` também), pintada pelo `drawScene` com a camada dela (recorte, efeitos e luz como no desenho). Fica na ordem de pintura do quadro. O fundo (`bg=`) é o plano de trás.
+- **Escolha:** a forma escolhida brilha em laranja. Passar o mouse acende a peça e mostra, embaixo à esquerda, a linha, o tipo, o nome e a camada. Passar o mouse numa linha ou camada do painel Camadas apaga as outras peças.
+- **O olho:** fica na etiqueta de cada camada (e do fundo), ao lado do nome, e esconde só na vista. Ele dura enquanto a página estiver aberta **(R)**.
+- **Nitidez:** as peças são imagens. Quando o zoom para, elas são pintadas de novo na resolução da tela.
+- **O desenho de baixo** não é pintado enquanto a vista está aberta, para sobrar tempo para ela **(R)**.
+- **Mistura de camadas:** o `blend=` de uma camada vira o `mix-blend-mode` das peças dela, para o Juntar ficar igual ao desenho **(R)**. As auréolas das luzes (`glow`) não aparecem na vista **(R)**.
+
+Escolhas que apareceram durante o trabalho:
+- **Explodir:** gira 45° para o lado e 18° para cima, e afasta as camadas de modo que a pilha toda tenha perto de 90% do tamanho do desenho (cada vão entre 3% e 12% dele). Num desenho de uma camada só, quem se afasta são as formas **(R)**.
+- **Os nomes:** cada um no canto do papel da sua camada. Quando dois cairiam um em cima do outro, fica o mais perto de você, e os outros aparecem quando as camadas se afastam mais **(R)**. Uma camada escondida pelo olho continua com o nome (e um —), para dar para mostrar de novo.
+- **A informação de baixo** fica à esquerda e anda para o lado quando o painel Camadas está aberto; a barrinha de cima também **(R)**.
+- **Uma linha em duas camadas** (uma forma com `inkon=`, por exemplo) vira duas peças, e as duas brilham quando ela é escolhida.
+- **Limite:** num quadro de virada (`anim … turn`), as peças mostram as partes como estão escritas, sem a virada. Fica para quando a vista chegar ao filme (etapa 7).
+
+**Como ficou (16/11/2026):** saiu na 1.51.0, em `js/ui-3d.js`. Conferida no navegador com o cavaleiro e a coruja: abrir e fechar pelo menu, pelo botão e pelo ✕; Explodir, De frente, De lado e Juntar; os dois controles; girar arrastando, mover, a roda, Ctrl+0 e Ctrl+1; clicar escolhe a linha (e o código vai até ela); as setas mexem e a vista se pinta de novo; Ctrl+Z volta; o olho; o realce pelo painel Camadas; o player trocando de quadro; e o filme, que fecha a vista e esconde o botão. O guia (capítulo 4, na ordem de pintura), o README e a referência (F1) contam a vista.
 
 ### Como ficaria por dentro
 

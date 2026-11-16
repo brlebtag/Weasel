@@ -58,6 +58,7 @@
     layout: 'split',
     space: null,
     vpress: null, // Seleção: apertou numa forma e ainda não arrastou ({ x, y, pick })
+    view3d: false, // a vista Camadas em 3D (js/ui-3d.js) no lugar do desenho
   };
   // prévia do def: ligada/desligada por def (sem entrada, ligada só sem use), os valores do painel por def,
   // o def mostrado agora e a vista de antes da prévia (volta quando ela some)
@@ -1407,6 +1408,7 @@
     fillLayerPanel();
     syncRulers();
     updateErrors();
+    if (isFilm() && st.view3d) set3d(false);
     if (isFilm() && !FILM_TOOLS.includes(st.tool)) { st.tool = 'select'; stage.dataset.tool = 'select'; emit('tool'); }
     selMemo = null;
     updateCaretInfo();
@@ -2137,6 +2139,8 @@
 
   function draw() {
     if (!st.model) return;
+    // com a vista Camadas em 3D aberta, ela pinta (o desenho de baixo fica parado, escondido)
+    if (st.view3d) { emit('draw'); return; }
     const cv = $('view'), ctx = cv.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const cw = Math.max(1, Math.round(cv.clientWidth * dpr)), ch = Math.max(1, Math.round(cv.clientHeight * dpr));
@@ -3796,7 +3800,7 @@
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   const INSERT_TOOLS = { text: 'text', rect: 'rect', ellipse: 'ellipse', line: 'line' };
   function setTool(id) {
-    if (!TOOLS.includes(id) || (isFilm() && !FILM_TOOLS.includes(id))) return;
+    if (!TOOLS.includes(id) || ((isFilm() || st.view3d) && !FILM_TOOLS.includes(id))) return;
     if (id === 'pin' && pvModel()) { hint('O Prender não funciona dentro da prévia do def: tire o cursor de dentro do def.', 3200); return; }
     st.tool = id;
     if (id !== 'measure' && st.measure) setMeasure(false);
@@ -3809,6 +3813,21 @@
     emit('tool');
     draw();
   }
+  // a vista Camadas em 3D (js/ui-3d.js): toma o lugar do desenho, só em desenhos (no filme, não). Nela valem as
+  // ferramentas do filme; o zoom e o ajustar da barra de baixo e do teclado vão para ela (v3, que ela registra).
+  let v3 = null;
+  function set3d(on) {
+    on = !!on && !!st.model && !isFilm();
+    if (on === st.view3d) return;
+    st.view3d = on;
+    stage.classList.toggle('v3-on', on);
+    if (on && !FILM_TOOLS.includes(st.tool)) setTool('select');
+    emit('view3d');
+    emit('tool');
+    draw();
+  }
+  const zoomBy = (f) => { if (st.view3d && v3) v3.zoom(f); else zoomAt(view.clientWidth / 2, view.clientHeight / 2, f); };
+  const fitView = () => { if (st.view3d && v3) v3.fit(); else { st.view.auto = true; draw(); } };
   // a vista: só o código, os dois lado a lado ou só o desenho (o código continua lá, escondido)
   function setLayout(v, keep) {
     if (!['code', 'split', 'design'].includes(v)) v = 'split';
@@ -3916,6 +3935,7 @@
   }
   // 100%: um pixel do desenho, um pixel da tela, com o meio da vista parado
   function zoomActual() {
+    if (st.view3d && v3) { v3.actual(); return; }
     const f = 1 / st.view.z;
     if (Math.abs(f - 1) > 1e-9) zoomAt(view.clientWidth / 2, view.clientHeight / 2, f);
   }
@@ -4194,6 +4214,19 @@
     setSel(nodeSigs().has(line) ? [line] : [], line);
     st.selAnchor = line;
     if (lines.length > 1) hint(`${k + 1} de ${lines.length} figuras aqui: clique de novo no mesmo lugar para pegar a de baixo.`, 2600);
+  }
+  // escolher uma linha de fora do desenho (a vista Camadas em 3D): como o clique; add (Shift) soma ou tira
+  function pickLine(line, add) {
+    if (add) {
+      const cur = [...st.sel.keys()];
+      if (!cur.length && nodeSigs().has(st.caret.line)) cur.push(st.caret.line);
+      const next = cur.includes(line) ? cur.filter((l) => l !== line) : [...cur, line];
+      setSel(next, next.length === 1 ? next[0] : st.caret.line);
+      return;
+    }
+    editor.reveal(line, 0);
+    setSel(nodeSigs().has(line) ? [line] : [], line);
+    st.selAnchor = line;
   }
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
 
@@ -4599,10 +4632,10 @@
   const toggleRulers = () => $('tRulers').click();
   $('measureBtn').addEventListener('click', () => setMeasure(!st.measure));
   $('pinBtn').addEventListener('click', () => setPin(!st.pin.on));
-  $('zFit').addEventListener('click', () => { st.view.auto = true; draw(); });
+  $('zFit').addEventListener('click', () => fitView());
   $('zoomPct').addEventListener('click', () => zoomActual());
-  $('zIn').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25));
-  $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
+  $('zIn').addEventListener('click', () => zoomBy(1.25));
+  $('zOut').addEventListener('click', () => zoomBy(0.8));
   $('variantSel').addEventListener('change', (e) => { st.variant = e.target.value; reparse(); });
 
   $('animSel').addEventListener('change', (e) => {
@@ -4980,7 +5013,7 @@
     // zoom: Ctrl+0 ajusta à tela, Ctrl+1 é 100%, Ctrl+= e Ctrl+- aproximam e afastam
     if (mod && !e.altKey && (k === '0' || k === '1' || k === '=' || k === '+' || k === '-')) {
       e.preventDefault();
-      if (k === '0') { st.view.auto = true; draw(); } else if (k === '1') zoomActual(); else zoomAt(view.clientWidth / 2, view.clientHeight / 2, k === '-' ? 0.8 : 1.25);
+      if (k === '0') fitView(); else if (k === '1') zoomActual(); else zoomBy(k === '-' ? 0.8 : 1.25);
       return;
     }
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
@@ -5043,10 +5076,19 @@
     duplicate: () => { if (!duplicateSel()) hint('Escolha uma forma (clique nela com a Seleção, V) para duplicar.', 2800); },
     shapes: () => NEW_SHAPES.map((x) => ({ cmd: x.cmd, label: x.label })),
     insert: (i) => { if (st.model && !isFilm()) insertShapeAt(i, viewCenter()); },
-    fit: () => { st.view.auto = true; draw(); },
-    zoomIn: () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25),
-    zoomOut: () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8),
+    fit: fitView,
+    zoomIn: () => zoomBy(1.25),
+    zoomOut: () => zoomBy(0.8),
     zoomActual,
     selectNone: () => { clearSel(); },
+    // para a vista Camadas em 3D (js/ui-3d.js)
+    set3d,
+    register3d: (o) => { v3 = o; },
+    model: () => (isFilm() ? null : pvModel() || st.model),
+    pose: () => currentPose(),
+    paper: () => viewRect(),
+    layerTree: (m) => layerTree(m),
+    selected: () => [...selSet().keys()],
+    pickLine,
   };
 })(window.Weasel = window.Weasel || {});
