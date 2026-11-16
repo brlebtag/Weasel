@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 e a 2 (Propriedades e Amostras) na 1.52.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0 e a 3a (escolher, copiar, apagar e organizar) na 1.53.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -564,6 +564,32 @@ Feita sozinho, como você pediu. As escolhas marcadas com **(R)** esperam a sua 
 - **Menu Texto:** Negrito, Itálico, as três posições e Aumentar e Diminuir o tamanho (20% por vez) **(R)**. **Menu Efeito:** os oito efeitos da camada, cada um ligando e desligando com o valor de partida, e Tirar os efeitos. O menu Selecionar fica para a etapa 3.
 
 **Como ficou (16/11/2026):** saiu na 1.52.0, em `js/ui-props.js` (o painel e as amostras), com o `app.js` dando a ele o que escreve no código: a lista do que está escolhido, a caixa, trocar atributos e chaves, trocar uma palavra e mover, esticar e girar linhas. Conferido no navegador com o cavaleiro: mover, esticar e girar pelos campos (e o Ctrl+Z de cada um); arrastar o nome de um campo; preenchimento e contorno pelo campo, pelo seletor e pelas amostras (com Alt e com Contorno marcado); uma largura da `palette`; + nova; trocar a variante; o texto, a fonte, negrito e alinhar (pelo painel e pelo menu Texto); a opacidade, a mistura e os efeitos da camada (pelo painel e pelo menu Efeito); o documento; e fechar e abrir as duas partes. O guia (capítulos 3 e 8), o README e a referência (F1) contam o painel e os menus novos.
+
+### 11.4 A etapa 3 em detalhe (16/11/2026)
+
+Dividi a etapa em duas **(R)**, para cada uma sair testada: a **3a** só mexe no editor (escolher, copiar, apagar, organizar, repetir); a **3b** mexe na linguagem (`lock` e `group … end`) e traz Travar, Alinhar e Grupos.
+
+**A 3a.** As escolhas marcadas com **(R)** esperam a sua confirmação:
+- **Caixa de seleção:** arrastar no vazio, com a Seleção (V) e também com a Seleção direta (A), onde ela escolhe formas inteiras e não pontos, por enquanto **(R)**. Entra a forma que a caixa toca (um pedaço do contorno dentro dela), como no Illustrator. **Shift** soma e **Alt** tira **(R)** (no Illustrator, o Shift troca: tira o que já estava). As camadas guia ficam de fora da caixa, mas o clique ainda pega uma linha guia **(R)**.
+- **Clique no vazio** tira a escolha, inclusive a forma da linha do cursor, até o cursor andar no código **(R)**. O Esc faz o mesmo (no código, o Esc só solta a escolha do painel, como antes).
+- **Laço (Q):** não estava na lista da etapa, mas saiu quase de graça junto com a caixa **(R)**. Entra a forma que tem um pedaço do contorno dentro do laço.
+- **Varinha mágica (Y):** as formas com a **mesma cor de preenchimento**, sem tolerância; um nome da `palette` vale pela cor dele, então `c=pele` e `c=#f0c8a0` são a mesma **(R)**. As formas sem `c=` combinam entre si. Shift soma, Alt tira.
+- **Menu Selecionar:** Tudo (Ctrl+A), Nada (Ctrl+Shift+A), Inverter e **A mesma** (cor de preenchimento, cor do contorno, camada). O Tudo deixa de fora as formas escondidas (`hidden`) e as das camadas guia **(R)**.
+- **Copiar, recortar e colar:** o que vai para a área de transferência é o **texto das linhas**, então dá para colar no código, em outro arquivo ou em outro programa **(R)**. O desenho só cola formas (`shape`, `stroke`, `line`, `ellipse`, `rect`, `text`, `emitter`, `use`, `include`, `repeat`); o resto se cola no código **(R)**.
+  - **Ctrl+V:** no fim da camada da escolha (sem escolha, a da linha do cursor; sem ela, a de cima), e as formas vão para o meio da vista, como no Illustrator **(R)**;
+  - **Ctrl+F:** logo depois da última escolhida (na frente dela), no mesmo lugar; **Ctrl+B:** logo antes da primeira (atrás). Sem escolha, na frente ou atrás de tudo da camada **(R)**;
+  - os nomes só ganham número quando já existe uma forma com o mesmo nome. Assim, depois de um **Ctrl+X**, colar devolve os nomes, e as `key` que usavam esses nomes voltam a valer **(R)**;
+  - **Editar › Colar** (pelo menu) usa o que foi copiado no Weasel; colar o que veio de fora é pelo Ctrl+V **(R)**.
+- **Delete:** com a caixa da escolha, apaga as linhas das formas; na Seleção direta, com um ponto laranja, apaga o ponto, como antes. Os comentários ficam **(R)**. Se o nome de uma forma apagada ainda aparece em outra linha (uma `key`, um `clip=`), o aviso diz onde **(R)**.
+- **Organizar:** Ctrl+] sobe um passo, Ctrl+[ desce, e com Shift vai para a frente ou para trás de tudo, **dentro da camada** (como no Illustrator). A linha muda de lugar no código, e os comentários logo acima dela vão junto **(R)**; o que não é forma (um `bone`, um `anim`) fica onde estava. Uma forma de dentro de um `repeat` leva o `repeat` inteiro **(R)**. Escolhas em camadas diferentes andam cada uma na sua.
+- **Ctrl+D = repetir a última transformação:** a última vez que a escolha andou, girou ou esticou (pelo desenho, pelas setas ou pelo painel Propriedades). Se ela veio de um **Alt+arrastar**, o Ctrl+D copia de novo antes: cópias em fila, com o mesmo passo, como no Illustrator. **Editar › Duplicar** continua no menu, sem atalho **(R)**; no código, o Ctrl+D continua duplicando a linha.
+- **Alt+arrastar** com a Seleção (V) leva uma cópia: ela nasce logo abaixo da original no código (na frente dela) e é ela que anda; um Ctrl+Z desfaz a cópia e o arraste juntos. Na Seleção direta, Alt+arrastar um ponto continua puxando a alça da curva, até a etapa 4 trazer a ferramenta Ponto de ancoragem **(R)**.
+- **Linhas de `repeat`** não se copiam nem se apagam pelo desenho (a linha de dentro vale para todas as cópias, e as contas dela usam a variável do `repeat`): o aviso manda para o código **(R)**.
+- **Achado no caminho:** uma forma com `inkon=` pegava o clique pelo meio na camada do contorno (que fica por cima), e escondia o que estava embaixo, como os olhos do cavaleiro. Agora a parte do contorno só pega pela borda.
+
+**Como ficou (16/11/2026):** a 3a saiu na 1.53.0. O que muda no código pela escolha está em `js/ui-select.js` (a Varinha, o menu Selecionar, copiar e colar, apagar, organizar); a caixa, o Laço, o Alt+arrastar e o Ctrl+D ficam no `app.js`, junto com o resto do desenho. Conferido no navegador com o cavaleiro: a caixa (com Shift e Alt), o clique no vazio, o Laço, a Varinha, Tudo, Inverter e A mesma camada; copiar e colar no meio da vista, na frente e atrás; recortar e colar de volta com os mesmos nomes; Delete (com o aviso do nome que ficou numa `key`); subir, descer, para a frente e para trás; Alt+arrastar e o Ctrl+D fazendo cópias em fila; girar e esticar pelo painel e repetir com o Ctrl+D; e o Ctrl+Z de cada um. O guia (capítulos 2 e 4), o README e a referência (F1) contam o que mudou.
+
+**A 3b** (Travar, Alinhar e Grupos) vem em seguida.
 
 ### Como ficaria por dentro
 

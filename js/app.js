@@ -57,7 +57,11 @@
     tool: 'select',
     layout: 'split',
     space: null,
-    vpress: null, // Seleção: apertou numa forma e ainda não arrastou ({ x, y, pick })
+    vpress: null, // Seleção: apertou numa forma e ainda não arrastou ({ x, y, pick, alt })
+    marq: null, // a caixa de seleção (ou o laço) sendo arrastada no vazio
+    none: -1, // a escolha foi tirada de propósito (clique no vazio, Esc) com o cursor nesta linha: a forma dela não vale
+    lastXf: null, // a última transformação da escolha (o Ctrl+D repete): { mode, dx, dy | deg | sx, sy, fx, fy, copy }
+    clip: null, // o que o Ctrl+C copiou ({ text, n }), para o Ctrl+F e o Ctrl+B (js/ui-select.js)
     view3d: false, // a vista Camadas em 3D (js/ui-3d.js) no lugar do desenho
   };
   // prévia do def: ligada/desligada por def (sem entrada, ligada só sem use), os valores do painel por def,
@@ -84,10 +88,11 @@
 
   // ---------- editor ----------
   const editor = new W.Editor($('editor'), {
-    onChange: () => reparse(),
+    onChange: () => { st.none = -1; reparse(); },
     // o cursor indo para uma linha fora da escolha (no código) solta a escolha do painel das camadas
     onCaret: (c) => {
       st.caret = c;
+      if (c.line !== st.none) st.none = -1;
       if (st.sel.size && c.line !== st.selCaret && !st.sel.has(c.line)) clearSel();
       // entrou num def (ou saiu dele): o desenho troca para a prévia (ou volta)
       if (st.model && pvWanted() !== (st.model.preview ? st.model.preview.def : null)) { reparse(); return; }
@@ -468,6 +473,7 @@
   }
   function setSel(lines, caretLine) {
     const sigs = nodeSigs();
+    st.none = -1;
     // o cursor vai antes: o goto avisa primeiro a linha antiga (ao focar o código), e isso soltaria a escolha nova
     st.sel = new Map();
     st.selCaret = caretLine;
@@ -478,6 +484,16 @@
   }
   function clearSel() {
     if (!st.sel.size) return;
+    st.sel = new Map();
+    st.selAnchor = -1;
+    markLayerPanel();
+    draw();
+  }
+  // tirar a escolha de propósito (clique no vazio, Esc, Selecionar › Nada): nem a forma da linha do cursor fica
+  // escolhida, até o cursor andar
+  function deselect() {
+    st.none = st.caret.line;
+    selMemo = null;
     st.sel = new Map();
     st.selAnchor = -1;
     markLayerPanel();
@@ -749,13 +765,16 @@
   }
   // as alças da linha do cursor (pontos, tamanho, giro…): na Seleção direta e nas outras ferramentas; na Seleção (V),
   // só a caixa da escolha. No filme e na prévia do def não há formas para escolher: a Seleção mostra as alças também.
-  const pointsOn = () => st.tool !== 'select' || isFilm() || !!pvModel();
+  // as ferramentas que escolhem formas inteiras (a caixa da escolha, sem os pontos)
+  const SELECTY = new Set(['select', 'wand', 'lasso']);
+  const pointsOn = () => !SELECTY.has(st.tool) || isFilm() || !!pvModel();
   // o que está escolhido: as linhas do painel Camadas (ou dos cliques no desenho); na Seleção, sem escolha, a forma
   // da linha do cursor (o cursor andando no código escolhe a forma da linha, como no Dreamweaver)
   let selMemo = null;
   function selSet() {
-    if (st.sel.size || st.tool !== 'select' || !st.model) return st.sel;
+    if (st.sel.size || !SELECTY.has(st.tool) || !st.model) return st.sel;
     const line = st.caret.line;
+    if (st.none === line) return st.sel;
     if (!selMemo || selMemo.m !== st.model || selMemo.line !== line) {
       const sig = nodeSigs().get(line);
       selMemo = { m: st.model, line, set: sig ? new Map([[line, sig]]) : new Map() };
@@ -764,7 +783,7 @@
   }
   // a escolha vira uma caixa no desenho: na Seleção, já com uma forma; nas outras, com mais de uma (com uma só,
   // valem as alças de sempre)
-  const groupOn = () => !!st.model && !isFilm() && !st.build && !pvModel() && (st.tool === 'select' ? selSet().size > 0 : st.sel.size > 1);
+  const groupOn = () => !!st.model && !isFilm() && !st.build && !pvModel() && (SELECTY.has(st.tool) ? selSet().size > 0 : st.sel.size > 1);
   function groupBox(m, pose) {
     const lines = selSet(), geo = [];
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -823,7 +842,8 @@
   }
   // o ✥, a bolinha de girar ('spin', 'move') ou um quadradinho de esticar ({ k }) sob o mouse
   function hitGroup(e) {
-    if (!groupOn()) return null;
+    // a Varinha e o Laço só escolhem: a caixa aparece, mas não pega o clique
+    if (!groupOn() || st.tool === 'wand' || st.tool === 'lasso') return null;
     const b = groupBox(st.model, currentPose());
     if (!b) return null;
     const [x, y] = toCanvas(e), z = st.view.z, s = groupSpots(b, z), r = 10 / z;
@@ -838,7 +858,7 @@
     if (el && !e.shiftKey) { const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i; if (selSet().has(line)) return 'move'; }
     return null;
   }
-  function startGroup(mode, e, k) {
+  function startGroup(mode, e, k, key) {
     const verb = mode === 'spin' ? 'girar' : mode === 'scale' ? 'esticar' : 'mover';
     if (st.playing || st.anim) { hint(`Para ${verb} a escolha, escolha "pose parada" no player.`, 2600); return; }
     const plans = [...selSet().keys()].map(editPlan);
@@ -863,7 +883,7 @@
       Object.assign(p, { J, o, dec: kx > 1.5 || st.view.z > 3 ? 1 : 0 });
     }
     const live = ok.filter((p) => (mode === 'scale' ? p.J : p.l0 && p.lc));
-    st.gdrag = { mode, key: 'grupo' + Date.now(), plans: live, cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left, sn: { self: false, ref: [px, py], box: b } };
+    st.gdrag = { mode, key: key || 'grupo' + Date.now(), copy: !!key, p0: [px, py], plans: live, cx: b.cx, cy: b.cy, a0: Math.atan2(py - b.cy, px - b.cx), ang: 0, left, sn: { self: false, ref: [px, py], box: b } };
     if (mode === 'scale') {
       // o lado (ou o canto) que anda gruda nas linhas guia, só no sentido em que ele anda
       const ex = b.x0 + k.bx * (b.x1 - b.x0), ey = b.y0 + k.by * (b.y1 - b.y0), gx = k.bx === 0.5 ? NaN : ex, gy = k.by === 0.5 ? NaN : ey;
@@ -886,8 +906,10 @@
       if (snap) deg = Math.round(deg / 15) * 15;
       deg = ((((deg + 180) % 360) + 360) % 360) - 180;
       d.ang = deg;
+      d.done = { mode: 'spin', deg };
       hint(`girando ${deg}°${d.left ? ` (${d.left} ${d.left > 1 ? 'linhas paradas' : 'linha parada'})` : ''}`, 1500);
     }
+    if (d.mode === 'move') d.done = { mode: 'move', dx: x - d.p0[0], dy: y - d.p0[1] };
     for (const p of d.plans) {
       if (d.mode === 'spin') { const [cx, cy] = p.lc; out.set(p.line, planText(p, (px, py) => turn(cx, cy, deg, px, py), deg, dec)); continue; }
       const l = localOf(p.rec, p.ref, x, y);
@@ -1065,6 +1087,8 @@
       out.set(p.line, scaleText(p, T, o, p.dec));
     }
     writeLines(out, d.key);
+    const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+    d.done = { mode: 'scale', sx, sy, fx: bw > 1e-9 ? (ax - b.x0) / bw : 0, fy: bh > 1e-9 ? (ay - b.y0) / bh : 0 };
     const say = `${fmtN(Math.abs((b.x1 - b.x0) * sx), 0)} × ${fmtN(Math.abs((b.y1 - b.y0) * sy), 0)} (${Math.round(Math.abs(sx) * 100)}% × ${Math.round(Math.abs(sy) * 100)}%)${sx < 0 || sy < 0 ? ', espelhada' : ''}${d.left ? ` (${d.left} ${d.left > 1 ? 'linhas paradas' : 'linha parada'})` : ''}`;
     if (say !== c.said) { c.said = say; hint(`esticando: ${say}`, 1500); }
   }
@@ -2225,6 +2249,7 @@
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (pinning) drawPins(ctx, m, pose, z);
     else if (pointsOn()) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); } else if (groupOn()) drawGroup(ctx, m, pose, z);
+    if (st.marq && st.marq.moved) drawMarq(ctx, z);
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
     if (st.meas) drawMeasure(ctx, dpr);
@@ -2809,6 +2834,8 @@
   function handleList(m, pose) {
     // com várias linhas escolhidas no painel das camadas, valem só a caixa da escolha e as alças dela
     if (groupOn()) return null;
+    // a escolha tirada de propósito (clique no vazio, Esc): os pontos somem até o cursor andar (no filme, não)
+    if (st.none === st.caret.line && !isFilm()) return null;
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
     // onde uma alça (ou um ponto com o mesmo jeito de alça) aparece na tela
@@ -3798,7 +3825,7 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'text', 'rect', 'ellipse', 'line', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'line', 'measure', 'pin', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   const INSERT_TOOLS = { text: 'text', rect: 'rect', ellipse: 'ellipse', line: 'line' };
   function setTool(id) {
@@ -3870,7 +3897,7 @@
       if (!c) { stuck.push(`linha ${line + 1}: ${p.why || 'não anda pelo desenho'}`); continue; }
       out.set(line, planText(p, (px, py) => [px + c[0] - a[0], py + c[1] - a[1]], 0, dec));
     }
-    if (out.size) writeLines(out, 'nudge' + Date.now());
+    if (out.size) { writeLines(out, 'nudge' + Date.now()); st.lastXf = { mode: 'move', dx, dy, copy: false }; }
     if (stuck.length) hint(`${stuck.length > 1 ? `${stuck.length} linhas ficam paradas` : 'Fica parada'} (${stuck.slice(0, 2).join('; ')}${stuck.length > 2 ? '…' : ''}).`, 3600);
     return true;
   }
@@ -3878,7 +3905,7 @@
   // (ou a da linha do cursor) como o Ctrl+D do código. A cópia ganha nome novo e entra logo abaixo da original, no
   // mesmo lugar do desenho, e vira a escolha: é só arrastar. Linhas seguidas ficam juntas; os nomes que uma cópia usa
   // de outra mudam junto (renameCopy recebe todas as linhas de uma vez). Um Ctrl+Z desfaz tudo.
-  function duplicateSel() {
+  function duplicateSel(key) {
     if (!st.model || isFilm() || st.build) return false;
     let lines = [...selSet().keys()];
     if (!lines.length && nodeSigs().has(st.caret.line)) lines = [st.caret.line];
@@ -3901,11 +3928,24 @@
     const caret = sel.has(st.caret.line) ? fresh[lines.indexOf(st.caret.line)] : fresh[0];
     let off = from;
     for (let i = 0; i < caret - first; i++) off += seg[i].length + 1;
-    editor.replaceRange(from, to, seg.join('\n'), { select: [off, off] });
+    editor.replaceRange(from, to, seg.join('\n'), { select: [off, off], key: key || null });
     const sigs = nodeSigs(), ok = fresh.filter((l) => sigs.has(l));
     setSel(ok, ok.includes(caret) ? caret : ok[0] !== undefined ? ok[0] : caret);
     if (!copy) hint(`${fresh.length > 1 ? `${fresh.length} cópias` : 'Cópia'} na linha ${fresh[0] + 1}: arraste para o lugar (Ctrl+Z desfaz).`, 2600);
     return true;
+  }
+  // Ctrl+D no desenho (Objeto › Transformar › Repetir): a última transformação da escolha de novo, com as mesmas
+  // contas do painel Propriedades. Se ela veio de uma cópia (Alt+arrastar), copia de novo antes: cópias em fila.
+  function transformAgain() {
+    const x = st.lastXf;
+    if (!st.model || isFilm()) return;
+    if (!x) { hint('Ctrl+D repete a última transformação da escolha (mover, girar ou esticar). Ainda não houve nenhuma.', 3200); return; }
+    if (!selSet().size) { hint('Escolha uma forma para repetir a transformação (Ctrl+D).', 2600); return; }
+    const key = 'again' + Date.now();
+    if (x.copy && !duplicateSel(key)) return;
+    const lines = [...selSet().keys()].sort((a, b) => a - b);
+    transformLines(lines, x.mode, x, key);
+    st.lastXf = x;
   }
   // o caminho da barra de status no Design: arquivo › camada › forma › ponto
   function crumbs() {
@@ -3969,6 +4009,8 @@
     // numa régua: puxar uma linha guia nova (no quadradinho do canto, só o duplo clique faz algo: apaga todas)
     const ru = e.button === 0 ? rulerAt(e) : null;
     if (ru) { if (ru !== 'corner') startGuide(ru === 'top' ? 'h' : 'v', -1, e); return; }
+    // o Laço: arrastar desenha o contorno, em cima do que for (Shift soma, Alt tira)
+    if (e.button === 0 && st.tool === 'lasso' && !isFilm() && !st.build) { const p = toCanvas(e); st.marq = { lasso: true, pts: [p], a: p, b: p, x: e.clientX, y: e.clientY, add: e.shiftKey, sub: e.altKey, moved: false }; return; }
     // prender: o clique escolhe pontos e arrastar no fundo faz uma caixa (com uma animação escolhida, a bolinha
     // de um osso ainda posa, para ver os pontos presos irem junto)
     if (e.button === 0 && pinOn()) {
@@ -4005,7 +4047,7 @@
     if (hb) { startPose(hb, e); return; }
     const hg = e.button === 0 ? hitGroup(e) : null;
     // na Seleção, mover espera o mouse andar: um clique sem arrastar só escolhe (e pega a forma de baixo)
-    if (hg === 'move' && st.tool === 'select') { st.vpress = { x: e.clientX, y: e.clientY, pick: false }; return; }
+    if (hg === 'move' && st.tool === 'select') { st.vpress = { x: e.clientX, y: e.clientY, pick: false, alt: e.altKey }; return; }
     if (hg) { if (hg.k) startGroup('scale', e, hg.k); else startGroup(hg, e); return; }
     const hs = e.button === 0 ? hitScale(e) : null;
     if (hs) { startScale(hs, e); return; }
@@ -4055,13 +4097,19 @@
       return;
     }
     // na Seleção, apertar numa forma e arrastar: ela vira a escolha e anda junto (sem arrastar, é um clique)
-    if (e.button === 0 && st.tool === 'select' && !e.shiftKey && !isFilm() && hitsAt(e).length) { st.vpress = { x: e.clientX, y: e.clientY, pick: true }; return; }
-    // arrastar move a vista; soltar sem ter arrastado (clique simples) escolhe a figura sob o mouse (ou, nas
-    // ferramentas de forma, põe uma ali)
+    // (com Alt, arrastar faz uma cópia e leva a cópia)
+    if (e.button === 0 && st.tool === 'select' && !e.shiftKey && !isFilm() && hitsAt(e).length) { st.vpress = { x: e.clientX, y: e.clientY, pick: true, alt: e.altKey }; return; }
+    // nas duas seleções, arrastar no vazio faz a caixa de seleção (Shift soma, Alt tira); soltar sem ter arrastado
+    // é um clique (escolhe a forma sob o mouse, ou tira a escolha)
+    if (e.button === 0 && (st.tool === 'select' || st.tool === 'direct') && !isFilm() && !st.build) { const p = toCanvas(e); st.marq = { a: p, b: p, x: e.clientX, y: e.clientY, add: e.shiftKey, sub: e.altKey, moved: false }; return; }
+    // nas outras, arrastar move a vista; o clique simples escolhe a figura sob o mouse (ou, nas ferramentas de
+    // forma, põe uma ali)
     if (e.button === 0) st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: true, moved: false };
   });
   // o clique sem arrastar: escolher, pôr uma forma pronta ou, no Texto, escrever
   function clickAt(e) {
+    // a Varinha: as formas com a mesma cor da clicada (js/ui-select.js)
+    if (st.tool === 'wand' && !isFilm()) { const l = linesAt(e)[0]; if (W.sel) W.sel.wand(l === undefined ? -1 : l, e); return; }
     const ins = INSERT_TOOLS[st.tool];
     if (!ins || isFilm()) { pickShape(e); return; }
     if (ins === 'text') {
@@ -4105,8 +4153,20 @@
       st.vpress = null;
       const at = { clientX: v.x, clientY: v.y, shiftKey: false };
       if (v.pick) pickShape(at);
-      if (groupOn()) startGroup('move', at);
+      // Alt: a cópia nasce no lugar (logo abaixo da original no código, na frente dela) e é ela que anda
+      let key = null;
+      if (v.alt && groupOn()) { key = 'grupo' + Date.now(); if (!duplicateSel(key)) key = null; else hint('Levando uma cópia (Ctrl+D depois repete: cópias em fila).', 2400); }
+      if (groupOn()) startGroup('move', at, null, key);
       if (st.gdrag) { const [sx, sy] = snapMouse(st.gdrag.sn, x, y, e); moveGroup(st.gdrag, sx, sy, e.shiftKey); }
+      return;
+    }
+    if (st.marq) {
+      const q = st.marq;
+      if (!q.moved && Math.hypot(e.clientX - q.x, e.clientY - q.y) < 4) return;
+      q.moved = true;
+      q.b = [x, y];
+      if (q.lasso) q.pts.push([x, y]);
+      draw();
       return;
     }
     if (st.pan) {
@@ -4135,19 +4195,22 @@
     const hb = hitBone(e), hg = hb ? null : hitGroup(e), hs = hb || hg ? null : hitScale(e), hi = hb || hg || hs ? -1 : hitHandle(e);
     const hgd = hb || hg || hs || hi >= 0 ? null : hitGuide(e);
     const hr = hb || hg || hs || hi >= 0 || hgd ? null : hitRef(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : (e.ctrlKey || e.metaKey) && st.layout !== 'design' ? 'crosshair' : st.tool === 'text' ? 'text' : INSERT_TOOLS[st.tool] ? 'crosshair' : 'default';
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : (e.ctrlKey || e.metaKey) && st.layout !== 'design' ? 'crosshair' : st.tool === 'text' ? 'text' : INSERT_TOOLS[st.tool] || st.tool === 'lasso' ? 'crosshair' : st.tool === 'wand' ? 'cell' : 'default';
   });
 
-  const endPointer = () => { st.vpress = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.vpress = null; st.marq = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan, pb = st.pin.box, vp = st.vpress;
+    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag;
     if (st.guideDrag) endGuide(st.guideDrag);
+    // a transformação que o Ctrl+D repete
+    if (gd && gd.done) st.lastXf = Object.assign({ copy: gd.copy }, gd.done);
     // no Medir, um clique sem arrastar tira a medida
     const mm = st.meas;
     if (st.mdrag && mm && mm.a[0] === mm.b[0] && mm.a[1] === mm.b[1]) st.meas = null;
     endPointer();
     if (pb) pinBoxEnd(pb, e);
     if (vp) pickShape(e);
+    if (mq) { if (mq.moved) marqueeEnd(mq); else clickAt(e); }
     if (p && p.click && !p.moved) clickAt(e);
   });
   view.addEventListener('pointercancel', endPointer);
@@ -4156,15 +4219,9 @@
   let pickCtx = null;
   // as linhas das figuras sob o mouse, da de cima para a de baixo (cópia de um def: a linha do use)
   // as figuras sob o mouse, a de cima primeiro
-  function hitsAt(e) {
-    if (!st.model || isFilm() || st.build) return [];
-    const m = pvModel() || st.model, R = viewRect();
-    const pose = currentPose(), [x, y] = toCanvas(e), z = st.view.z;
-    if (x < R.x || y < R.y || x > R.x + R.w || y > R.y + R.h) return [];
-    const ctx = pickCtx || (pickCtx = document.createElement('canvas').getContext('2d'));
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    const hits = [];
+  // as figuras que aparecem no desenho (e que o clique pega), de baixo para cima: fn(el, geometria)
+  function eachShown(fn) {
+    const m = pvModel() || st.model, pose = currentPose();
     for (const layer of S.orderLayers(m, pose)) {
       if (!S.layerVisible(layer, pose, { guides: st.show.guides })) continue;
       const lp = pose.lprops.get(layer.name);
@@ -4175,28 +4232,121 @@
         const el = it.el, pr = S.propsOf(pose, el);
         if ((el.hidden && !pr.reveal) || pr.show === 0 || pr.opacity === 0) continue;
         const g = S.geometry(m, pose, el);
-        if (!g.segs.length) continue;
-        const path = S.pathOf(g), open = el.type === 'stroke' || el.type === 'line';
-        // a borda conta, com uns pixels de folga (um traço fino também dá para pegar)
-        ctx.lineWidth = (open ? el.w || 1 : el.ink || 0) + 10 / z;
-        if ((!open && ctx.isPointInPath(path, x, y)) || ctx.isPointInStroke(path, x, y)) hits.push(el);
+        if (g.segs.length) fn(el, g, layer, it.part);
       }
     }
+  }
+  function hitsAt(e) {
+    if (!st.model || isFilm() || st.build) return [];
+    const R = viewRect(), [x, y] = toCanvas(e), z = st.view.z;
+    if (x < R.x || y < R.y || x > R.x + R.w || y > R.y + R.h) return [];
+    const ctx = pickCtx || (pickCtx = document.createElement('canvas').getContext('2d'));
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const hits = [];
+    eachShown((el, g, layer, part) => {
+      const path = S.pathOf(g), open = el.type === 'stroke' || el.type === 'line';
+      // a borda conta, com uns pixels de folga (um traço fino também dá para pegar); o contorno que uma forma com
+      // inkon= pinta em outra camada só pega pela borda
+      ctx.lineWidth = (open ? el.w || 1 : el.ink || 0) + 10 / z;
+      if ((!open && part !== 'ink' && ctx.isPointInPath(path, x, y)) || ctx.isPointInStroke(path, x, y)) hits.push(el);
+    });
     return hits.reverse();
+  }
+  // a linha do código de uma figura (a cópia de um componente leva à linha do use)
+  const lineOfEl = (el) => { const m = st.model, i = el.use !== undefined ? el.use : el.line; return m.lineMap ? m.lineMap[i] : i; };
+  // A caixa de seleção e o Laço: as formas que eles tocam (um pedaço do contorno dentro). O contorno é lido em 16
+  // pedaços retos por curva; na caixa, um pedaço que só a atravessa também conta. As camadas guia ficam de fora
+  // (o clique ainda pega uma linha guia).
+  function linesInArea(inside, cross) {
+    const out = [];
+    const at = (s, t) => { const u = 1 - t; return [u * u * u * s[0] + 3 * u * u * t * s[2] + 3 * u * t * t * s[4] + t * t * t * s[6], u * u * u * s[1] + 3 * u * u * t * s[3] + 3 * u * t * t * s[5] + t * t * t * s[7]]; };
+    eachShown((el, g, layer) => {
+      const line = lineOfEl(el);
+      if (layer.guide || line === undefined || line < 0 || out.includes(line)) return;
+      const hit = g.segs.some((s) => {
+        let prev = null;
+        for (let k = 0; k <= 16; k++) {
+          const q = at(s, k / 16);
+          if (inside(q[0], q[1]) || (cross && prev && cross(prev[0], prev[1], q[0], q[1]))) return true;
+          prev = q;
+        }
+        return false;
+      });
+      if (hit) out.push(line);
+    });
+    return out;
+  }
+  // um pedaço reto passa pela caixa? (o recorte de Liang-Barsky)
+  function segInRect(ax, ay, bx, by, r) {
+    let t0 = 0, t1 = 1;
+    const dx = bx - ax, dy = by - ay;
+    for (const [p, q] of [[-dx, ax - r.x0], [dx, r.x1 - ax], [-dy, ay - r.y0], [dy, r.y1 - ay]]) {
+      if (p === 0) { if (q < 0) return false; continue; }
+      const t = q / p;
+      if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+    }
+    return true;
+  }
+  // o ponto está dentro do contorno do Laço? (o raio que cruza as bordas)
+  function inPoly(P, x, y) {
+    let inside = false;
+    for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+      const [xi, yi] = P[i], [xj, yj] = P[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  // soltou a caixa (ou o Laço): escolhe o que ela tocou; Shift soma, Alt tira
+  function marqueeEnd(q) {
+    let inside, cross = null;
+    if (q.lasso) {
+      if (q.pts.length < 3) return;
+      inside = (x, y) => inPoly(q.pts, x, y);
+    } else {
+      const r = { x0: Math.min(q.a[0], q.b[0]), y0: Math.min(q.a[1], q.b[1]), x1: Math.max(q.a[0], q.b[0]), y1: Math.max(q.a[1], q.b[1]) };
+      inside = (x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
+      cross = (ax, ay, bx, by) => segInRect(ax, ay, bx, by, r);
+    }
+    const sigs = nodeSigs(), got = linesInArea(inside, cross).filter((l) => sigs.has(l) && selectable(l));
+    const cur = [...st.sel.keys()];
+    if (!cur.length && (q.add || q.sub)) cur.push(...selSet().keys());
+    const next = q.sub ? cur.filter((l) => !got.includes(l)) : q.add ? [...new Set([...cur, ...got])] : got;
+    if (!next.length) { deselect(); return; }
+    next.sort((a, b) => a - b);
+    setSel(next, next.includes(st.caret.line) ? st.caret.line : next[0]);
+    if (next.length > 1) hint(`${next.length} formas escolhidas.`, 1600);
+  }
+  // pode ser escolhida pelo desenho? (a 3b soma as travadas)
+  const selectable = (line) => line >= 0;
+  function drawMarq(ctx, z) {
+    const q = st.marq;
+    ctx.save();
+    ctx.beginPath();
+    if (q.lasso) { q.pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); } else ctx.rect(Math.min(q.a[0], q.b[0]), Math.min(q.a[1], q.b[1]), Math.abs(q.b[0] - q.a[0]), Math.abs(q.b[1] - q.a[1]));
+    ctx.fillStyle = 'rgba(92,198,212,.08)';
+    ctx.fill();
+    ctx.lineWidth = 1 / z;
+    ctx.strokeStyle = '#14141c';
+    ctx.stroke();
+    ctx.setLineDash([4 / z, 3 / z]);
+    ctx.strokeStyle = '#5cc6d4';
+    ctx.stroke();
+    ctx.restore();
   }
   // as linhas das figuras sob o mouse (a cópia de um componente leva à linha do use)
   function linesAt(e) {
-    const m = st.model, out = [];
+    const out = [];
     for (const el of hitsAt(e)) {
-      const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i;
-      if (line !== undefined && line >= 0 && !out.includes(line)) out.push(line);
+      const line = lineOfEl(el);
+      if (line !== undefined && line >= 0 && !out.includes(line) && selectable(line)) out.push(line);
     }
     return out;
   }
   // clicar de novo no mesmo lugar pega a figura de baixo (e depois volta para a de cima)
   function pickShape(e) {
     const lines = linesAt(e);
-    if (!lines.length) { st.pick = null; clearSel(); return; }
+    if (!lines.length) { st.pick = null; if (!e.shiftKey) deselect(); return; }
     // Shift+clique: soma a forma à escolha do painel das camadas (ou tira, se já estava)
     if (e.shiftKey) {
       const line = lines[0], cur = [...st.sel.keys()];
@@ -4238,6 +4388,7 @@
     if (!st.model || isFilm()) return [];
     if (st.sel.size) return [...st.sel.keys()].sort((a, b) => a - b);
     const line = st.caret.line, rec = st.model.byLine.get(line);
+    if (st.none === line) return [];
     if (nodeSigs().has(line) || (rec && rec.layer && !rec.layer.implicit)) return [line];
     return [];
   }
@@ -4292,7 +4443,8 @@
     return true;
   }
   // Mover, esticar e girar as linhas por número (o painel Propriedades), com as mesmas contas da caixa da escolha:
-  // move { dx, dy }, scale { sx, sy } a partir do canto de cima à esquerda da caixa, spin { deg } em volta do meio.
+  // move { dx, dy }, scale { sx, sy } a partir de um ponto da caixa (fx, fy: de 0 a 1; sem eles, o canto de cima à
+  // esquerda), spin { deg } em volta do meio. Vira a transformação que o Ctrl+D repete.
   function transformLines(lines, mode, o, key) {
     if (st.anim) { hint('Para mudar a posição ou o tamanho, escolha "pose parada" no player.', 2600); return 0; }
     const plans = lines.map(editPlan);
@@ -4313,16 +4465,20 @@
       } else {
         const W = Math.max(1e-6, b.x1 - b.x0), H = Math.max(1e-6, b.y1 - b.y0);
         const q = localOf(p.rec, p.ref, b.x0, b.y0), u = localOf(p.rec, p.ref, b.x0 + W, b.y0), v = localOf(p.rec, p.ref, b.x0, b.y0 + H);
-        if (!q || !u || !v) continue;
+        const qa = localOf(p.rec, p.ref, b.x0 + (o.fx || 0) * W, b.y0 + (o.fy || 0) * H);
+        if (!q || !u || !v || !qa) continue;
         const J = [(u[0] - q[0]) / W, (v[0] - q[0]) / H, (u[1] - q[1]) / W, (v[1] - q[1]) / H], det = J[0] * J[3] - J[1] * J[2];
         if (Math.abs(det) < 1e-12) continue;
         const i0 = J[3] / det, i1 = -J[1] / det, i2 = -J[2] / det, i3 = J[0] / det, sx = o.sx, sy = o.sy;
         const T = [J[0] * sx * i0 + J[1] * sy * i2, J[0] * sx * i1 + J[1] * sy * i3, J[2] * sx * i0 + J[3] * sy * i2, J[2] * sx * i1 + J[3] * sy * i3];
         const kx = p.rec.xf ? Math.sqrt(Math.abs(M.det(p.rec.xf))) : 1;
-        out.set(p.line, scaleText(p, T, q, kx > 1.5 || st.view.z > 3 ? 1 : 0));
+        out.set(p.line, scaleText(p, T, qa, kx > 1.5 || st.view.z > 3 ? 1 : 0));
       }
     }
-    if (out.size) writeLines(out, key || 'props' + Date.now());
+    if (out.size) {
+      writeLines(out, key || 'props' + Date.now());
+      st.lastXf = mode === 'move' ? { mode, dx: o.dx, dy: o.dy, copy: false } : mode === 'spin' ? { mode, deg: o.deg, copy: false } : { mode, sx: o.sx, sy: o.sy, fx: o.fx || 0, fy: o.fy || 0, copy: false };
+    }
     const left = plans.length - ok.length;
     if (left) hint(`${left} ${left > 1 ? 'linhas ficam paradas' : 'linha fica parada'}: ${stop(plans.find(stop))}.`, 3200);
     return out.size;
@@ -5100,14 +5256,13 @@
     // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
     if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
-    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
+    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else deselect(); if (st.meas) { st.meas = null; draw(); } return; }
     if (inField(t)) return;
     // daqui em diante, o foco está no desenho (ou num botão)
     if (mod && !e.altKey && low === 'z') { e.preventDefault(); undoRedo(e.shiftKey); return; }
     if (mod && low === 'y') { e.preventDefault(); undoRedo(true); return; }
-    // Ctrl+D no desenho: duplica a escolha, como no código, até a etapa 3 (lá vira repetir a última transformação);
-    // sem escolha, só não deixa o navegador abrir o favorito
-    if (mod && low === 'd') { e.preventDefault(); if (!duplicateSel()) hint('Escolha uma forma (clique nela com a Seleção, V) para duplicar com Ctrl+D.', 2800); return; }
+    // Ctrl+D no desenho: repete a última transformação (no código, continua duplicando a linha)
+    if (mod && low === 'd') { e.preventDefault(); transformAgain(); return; }
     // zoom: Ctrl+0 ajusta à tela, Ctrl+1 é 100%, Ctrl+= e Ctrl+- aproximam e afastam
     if (mod && !e.altKey && (k === '0' || k === '1' || k === '=' || k === '+' || k === '-')) {
       e.preventDefault();
@@ -5115,7 +5270,8 @@
       return;
     }
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
-    if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
+    // Delete: na Seleção direta, o ponto escolhido; com formas escolhidas (a caixa), as formas (js/ui-select.js)
+    if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) { e.preventDefault(); return; } if (groupOn() && W.sel) { e.preventDefault(); W.sel.del(); } return; }
     // Espaço: tocado (sem arrastar), toca e pausa; segurado, arrastar no desenho move a vista
     if (k === ' ') { e.preventDefault(); if (!st.space && !e.repeat) { st.space = { panned: false }; stage.classList.add('space'); } return; }
     // Enter também toca e pausa (num botão, o Enter é do botão)
@@ -5178,7 +5334,7 @@
     zoomIn: () => zoomBy(1.25),
     zoomOut: () => zoomBy(0.8),
     zoomActual,
-    selectNone: () => { clearSel(); },
+    selectNone: () => { deselect(); },
     // para a vista Camadas em 3D (js/ui-3d.js)
     set3d,
     register3d: (o) => { v3 = o; },
@@ -5199,5 +5355,16 @@
     gotoCode,
     setVariant: (v) => { const sel = $('variantSel'); if (sel && [...sel.options].some((o) => o.value === v)) { sel.value = v; sel.dispatchEvent(new Event('change')); } },
     insertLine: (at, text, key) => { const off = editor.lineStart(at); editor.replaceRange(off, off, text + '\n', { key: key || 'props' + Date.now() }); },
+    // para a seleção completa (js/ui-select.js)
+    sigs: () => nodeSigs(),
+    setSel: (lines, caret) => { const l = [...new Set(lines)].sort((a, b) => a - b); if (!l.length) deselect(); else setSel(l, caret !== undefined ? caret : l.includes(st.caret.line) ? st.caret.line : l[0]); },
+    deselect,
+    renameCopy: (block) => renameCopy(block),
+    duplicate2: (key) => duplicateSel(key),
+    again: transformAgain,
+    viewCenter: () => viewCenter(),
+    editPlan: (line) => editPlan(line),
+    groupOn: () => groupOn(),
+    selectable: (line) => selectable(line),
   };
 })(window.Weasel = window.Weasel || {});

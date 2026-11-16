@@ -14,8 +14,10 @@
   const svg = (inner) => `<svg viewBox="0 0 16 16" aria-hidden="true">${inner}</svg>`;
   const ARROW = 'M3.5 1.8v11.6l3.1-3 2.1 4.4 2-.95-2.1-4.35 4.3-.15z';
   const TOOLS = [
-    { id: 'select', key: 'v', label: 'Seleção', tip: 'escolhe e move formas; a caixa gira e estica. Shift+clique soma', icon: svg(`<path class="f" d="${ARROW}"/>`) },
-    { id: 'direct', key: 'a', label: 'Seleção direta', tip: 'os pontos e as alças da forma do cursor', icon: svg(`<path d="${ARROW}"/>`) },
+    { id: 'select', key: 'v', label: 'Seleção', tip: 'escolhe e move formas; a caixa gira e estica. Shift+clique soma; arrastar no vazio faz a caixa de seleção; Alt+arrastar copia', icon: svg(`<path class="f" d="${ARROW}"/>`) },
+    { id: 'direct', key: 'a', label: 'Seleção direta', tip: 'os pontos e as alças da forma do cursor; arrastar no vazio faz a caixa de seleção', icon: svg(`<path d="${ARROW}"/>`) },
+    { id: 'wand', key: 'y', label: 'Varinha mágica', tip: 'clique numa forma: escolhe todas com a mesma cor (Shift soma, Alt tira)', icon: svg('<path d="M2.5 13.5l7-7"/><path class="f" d="M11.6 1.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/><path d="M13.6 7.4v1.6M12.8 8.2h1.6M7.4 1.6v1.6M6.6 2.4h1.6"/>') },
+    { id: 'lasso', key: 'q', label: 'Laço', tip: 'arraste em volta: escolhe as formas que o contorno pega (Shift soma, Alt tira)', icon: svg('<path d="M8 2.5c3.3 0 5.8 1.6 5.8 3.7S11.3 9.9 8 9.9 2.2 8.3 2.2 6.2 4.7 2.5 8 2.5z"/><path d="M4.3 9.2c-.9.9-.6 2.3.6 2.6 1 .3 1.4 1.1.9 2.2"/>') },
     '-',
     { id: 'text', key: 't', label: 'Texto', tip: 'clique para escrever um texto ali; clique num texto para mudar as letras', icon: svg('<path d="M3 3.5h10M8 3.5v10M6 13.5h4"/>') },
     { id: 'rect', key: 'm', label: 'Retângulo', tip: 'clique para pôr um retângulo ali', icon: svg('<rect x="2.5" y="3.5" width="11" height="9" rx=".6"/>') },
@@ -77,6 +79,9 @@
   // o painel Propriedades carrega depois desta casca (js/ui-props.js)
   const NOP = new Proxy({}, { get: () => () => false });
   const P = () => W.props || NOP;
+  // a seleção completa também (js/ui-select.js)
+  const X = () => W.sel || NOP;
+  const hasSel = () => drawing() && X().has();
   const MENUS = [
     { label: 'Arquivo', items: [
       { label: 'Novo', run: A.newFile },
@@ -96,9 +101,26 @@
       { label: 'Desfazer', key: 'Ctrl+Z', run: A.undo },
       { label: 'Refazer', key: 'Ctrl+Shift+Z', run: A.redo },
       '-',
-      { label: 'Duplicar', key: 'Ctrl+D', enabled: drawing, run: A.duplicate },
+      { label: 'Recortar', key: 'Ctrl+X', enabled: hasSel, run: () => X().cut() },
+      { label: 'Copiar', key: 'Ctrl+C', enabled: hasSel, run: () => X().copy() },
+      { label: 'Colar', key: 'Ctrl+V', enabled: () => drawing() && X().hasClip(), run: () => X().paste('view') },
+      { label: 'Colar na frente', key: 'Ctrl+F', enabled: () => drawing() && X().hasClip(), run: () => X().paste('front') },
+      { label: 'Colar atrás', key: 'Ctrl+B', enabled: () => drawing() && X().hasClip(), run: () => X().paste('back') },
+      { label: 'Apagar', key: 'Delete', enabled: hasSel, run: () => X().del() },
+      '-',
+      { label: 'Duplicar', enabled: drawing, run: A.duplicate },
     ] },
     { label: 'Objeto', items: [
+      { label: 'Transformar', enabled: drawing, sub: () => [
+        { label: 'Repetir a transformação', key: 'Ctrl+D', enabled: () => !!st.lastXf, run: A.again },
+      ] },
+      { label: 'Organizar', enabled: hasSel, sub: () => [
+        { label: 'Trazer para a frente', key: 'Ctrl+Shift+]', run: () => X().arrange('front') },
+        { label: 'Trazer para cima', key: 'Ctrl+]', run: () => X().arrange('fwd') },
+        { label: 'Enviar para baixo', key: 'Ctrl+[', run: () => X().arrange('bwd') },
+        { label: 'Enviar para trás', key: 'Ctrl+Shift+[', run: () => X().arrange('back') },
+      ] },
+      '-',
       { label: 'Inserir', enabled: drawing, sub: () => A.shapes().map((s, i) => ({ label: `${s.label} (${s.cmd})`, run: () => A.insert(i) })) },
       '-',
       { label: 'Esconder / mostrar (hidden)', key: 'Ctrl+3', enabled: drawing, run: A.hide },
@@ -114,6 +136,17 @@
       '-',
       { label: 'Aumentar o tamanho', enabled: () => P().textOn(), run: () => P().bump(1) },
       { label: 'Diminuir o tamanho', enabled: () => P().textOn(), run: () => P().bump(-1) },
+    ] },
+    { label: 'Selecionar', items: [
+      { label: 'Tudo', key: 'Ctrl+A', enabled: drawing, run: () => X().all() },
+      { label: 'Nada', key: 'Ctrl+Shift+A', enabled: hasSel, run: () => X().none() },
+      { label: 'Inverter', enabled: drawing, run: () => X().invert() },
+      '-',
+      { label: 'A mesma', enabled: hasSel, sub: () => [
+        { label: 'Cor de preenchimento', run: () => X().same('c') },
+        { label: 'Cor do contorno', run: () => X().same('inkc') },
+        { label: 'Camada', run: () => X().same('layer') },
+      ] },
     ] },
     { label: 'Efeito', items: () => [
       ...P().FX.map((x) => ({ label: x.label, enabled: () => P().layerOk(), on: () => P().fxOn(x.k), run: () => P().fx(x.k) })),
