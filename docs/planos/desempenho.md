@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2 e o item 5b na 1.48.3 (16/11/2026). O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3 e o item 7a na 1.48.4 (16/11/2026). O resto está aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -17,7 +17,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 5a | Estilos de arte: ganhar com os itens 2 a 4 | `art.js` (passes do estilo) | gravura: 886 → 403 ms no protótipo | 🔶 ganham o cache de luz e o bloom; as telas do tamanho do desenho ficam desligadas nos passes |
 | 5b | Estilos de arte: laços por pixel | `art.js` `field`, `noiseP`, `knitLeg`, `mix` do riso | riso −31%, gravura −22%, tricô −18%, retícula −16% | ✅ 1.48.3 |
 | 6 | Lip sync automático: mais rápido, menos memória, uma vez só | `audio.js` `lipCues`, `cli/media.js`, `cli/video.js`, `cli/film-worker.js` | 20 min a 48 kHz: 27,4 s e 2,5 GB → 2,2 s e 286 MB por thread | ✅ 1.48.2 |
-| 7a | GIF de filme: não guardar todos os quadros na memória | `cli/video.js` | 20 s em 1080p: ~4 GB hoje | ⬜ |
+| 7a | GIF de filme: não guardar todos os quadros na memória; e a memória do canvas com 1 thread | `gif.js`, `cli/gifframe.js`, `cli/video.js`, `cli/film-worker.js` | 20 s em 1080p: 5,3 → 1,5 GB; 5 s com 1 thread: 3,1 → 0,33 GB | ✅ 1.48.4 |
 | 7b | GIF: gravar só a área que mudou | `gif.js` | arquivos bem menores | ⬜ muda os bytes |
 | 7c | GIF: cor mais próxima pela cor do pixel, não pelo centro da caixa | `gif.js` | menos faixas | ⬜ muda os bytes |
 | 7d | PNG: modo rápido, como opção | encoder do canvas | 3× mais rápido, arquivo 25–40% maior | ⬜ |
@@ -32,6 +32,8 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
   - `drawImage` de uma tela custa pelo tamanho da tela de **origem**, mesmo copiando um pedaço pequeno (1920×1080: 1,5–3 ms; uma tela do tamanho do desenho: 0,02 ms).
   - Ler `canvas.width` é uma chamada ao código nativo (~100 ns). Nunca dentro de um laço de pixels.
   - O serrilhado do canvas muda com 1/10000 de pixel de deslocamento: bordas soltas com até ~27 níveis de diferença são ruído, não erro.
+  - O canvas só devolve a memória das telas e dos pixels lidos (`getImageData`) quando o laço de eventos do Node dá uma volta (`setImmediate`). Num laço que só faz `await` de promessas prontas, nada volta, nem com o GC forçado: ~24 MB por quadro 1080p.
+- **Para medir a memória:** um gancho com `node -r` também roda dentro de cada thread. Meça só na thread principal (`isMainThread`), por uma thread à parte, porque a principal pode ficar presa no GIF.
 - A máquina varia de carga durante uma sessão: compare só números do mesmo teste.
 
 ## Os itens
@@ -118,9 +120,35 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
   - sem as bocas recebidas, 13 de 20 quadros mudam: as threads usam mesmo as bocas prontas;
   - o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
 
+### ✅ 7a. GIF de filme sem os quadros na memória (1.48.4)
+
+- **Problema:**
+  - Todos os quadros RGBA ficavam na memória até o fim: ~1 GB a cada 5 s de filme 1080p.
+  - Achado junto: com 1 thread, o laço dos quadros não dava volta no laço de eventos, então o canvas não devolvia a memória. Isso valia também para a sequência de PNG.
+- **Feito, com o GIF byte a byte igual:**
+  - `gif.js`: o `encode` foi dividido em partes, que ele mesmo usa:
+    - `histogram` e `sample`: as cores de um quadro de cada vez, para a paleta. As somas são de inteiros, então a ordem não muda nada.
+    - `keysOf`: a cor de 15 bits de cada ponto, depois do pontilhado.
+    - `writer`: o cabeçalho, um quadro de cada vez, e o fim.
+  - `cli/gifframe.js` (novo): cada thread de render devolve o quadro pronto para o GIF: as cores que apareceram (`takeColors`) e as chaves comprimidas (deflate nível 1, ~1/60 do RGBA). Os pixels não viajam entre as threads.
+  - `cli/video.js`: com a paleta pronta, cada quadro é descomprimido e gravado direto no arquivo. Com 1 thread, uma volta no laço de eventos a cada quadro.
+- **Resultado** (`filme.weasel` em 1080p; o menor tempo de 3, alternando o motor antigo e o novo):
+  - 20 s com 8 threads: 5,3 → 1,5 GB, no mesmo tempo (19,6 → 19,9 s). Quase tudo o que sobra é das 8 threads, como no MP4. O GIF guardado ocupa uns 60 MB.
+  - 5 s com 8 threads: 2,3 → 1,5 GB, no mesmo tempo (4,9 s).
+  - 3 s com pontilhado e 8 threads: 4,1 → 3,3 s.
+  - 5 s com 1 thread: 3,1 → 0,33 GB, mas 10,8 → 12,1 s (comprimir e descomprimir, e o canvas agora devolve a memória durante o render).
+  - Sequência de PNG, 4 s com 1 thread: 1,7 → 0,26 GB, no mesmo tempo.
+- **Conferido:**
+  - o GIF sai byte a byte igual com 1, 2, 4 e 8 threads, com pontilhado, transparente, os dois juntos, escala menor, um quadro só e `--shots`;
+  - no navegador (Chrome), o `encode` novo dá os mesmos bytes do antigo;
+  - os PNGs da sequência saem idênticos;
+  - o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
+- **Ficou de fora:**
+  - No editor, o GIF de filme ainda guarda todos os quadros. Dá para guardar só as chaves com as mesmas partes do `gif.js`, com metade da memória.
+  - Outros laços da linha de comando que desenham muitos quadros seguidos (as folhas e sequências dos desenhos de jogo) também só devolvem a memória no fim. São curtos, então ficaram como estão.
+
 ### ⬜ 7. Menores
 
-- **7a. GIF de filme:** todos os quadros RGBA ficam na memória até o fim (20 s em 1080p dão ~4 GB). Dá para codificar a paleta e os quadros aos poucos.
 - **7b. GIF só com a área que mudou:** os GIFs ficam bem menores, mas os bytes mudam, e as referências `_gif` dos testes precisam ser refeitas.
 - **7c. Cor mais próxima no GIF:** hoje usa o centro da caixa de 5 bits, não a cor real do pixel, o que cria faixas. Também muda os bytes.
 - **7d. PNG rápido:** o encoder do canvas equivale ao zlib nível 6 (93 ms por quadro 1080p; 0,7–1 s por folha grande). Um modo rápido seria 3× mais rápido, com arquivos 25–40% maiores. Só como opção.
@@ -130,6 +158,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 - Na 1.48.1, 8 threads fazem o filme só 3× mais rápido que 1 (antes, 3,6×). O ffmpeg sozinho faz 170 quadros/s, então não é ele.
 - **A investigar:** a fila de quadros prontos (`eachFrame`), a cópia dos pixels entre as threads e o tempo de cada thread abrindo o filme.
+- **Achado no 7a:** a thread principal só manda o próximo quadro para uma thread quando lê a resposta dela. Enquanto a principal trabalha, as threads que terminaram ficam paradas. Mandar 2 quadros por thread deve ajudar.
 
 ## Conferências pendentes
 
@@ -143,8 +172,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Ordem sugerida para o que falta
 
-1. 7a, a memória do GIF de filme.
-2. 8, a escala das threads.
-3. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
-4. 7d e 7e.
-5. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
+1. 8, a escala das threads.
+2. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
+3. 7d e 7e.
+4. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.

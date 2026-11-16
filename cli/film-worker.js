@@ -7,6 +7,7 @@ const path = require('path');
 const { parentPort, workerData } = require('worker_threads');
 const { W } = require('./runtime');
 const { makeMediaResolver } = require('./media');
+const { packFrame } = require('./gifframe');
 
 const { src, name, dir, scale, transparent, subs, lang, cues } = workerData;
 const dirs = new Map([[name, dir]]);
@@ -27,7 +28,11 @@ const model = W.lang.parse(src, { file: name, resolve, media });
 parentPort.on('message', (job) => {
   try {
     const cv = W.film.renderFrame(model, job.f, { scale, transparent, subs, lang });
-    if (job.kind === 'raw') {
+    if (job.kind === 'gif') {
+      // o quadro pronto para o GIF (as cores e as chaves comprimidas), sem mandar os pixels
+      const r = packFrame(cv, transparent, job.dither), keys = r.keys.buffer.slice(r.keys.byteOffset, r.keys.byteOffset + r.keys.length), c = r.colors;
+      parentPort.postMessage({ f: job.f, w: r.w, h: r.h, keys, colors: c }, [keys, c.k.buffer, c.n.buffer, c.s.buffer]);
+    } else if (job.kind === 'raw') {
       const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
       const buf = d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength);
       parentPort.postMessage({ f: job.f, w: cv.width, h: cv.height, buf }, [buf]);

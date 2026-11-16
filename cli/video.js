@@ -7,6 +7,7 @@ const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const { Worker } = require('worker_threads');
 const { W } = require('./runtime');
+const { packFrame, unpackKeys } = require('./gifframe');
 
 const VIDEO = ['mp4', 'mov', 'webm', 'mkv'];
 
@@ -144,7 +145,9 @@ async function eachFrame(frames, ctx, kind, onFrame) {
   if (!ctx.pool) {
     for (const f of frames) {
       const cv = W.film.renderFrame(ctx.model, f, { scale: ctx.scale, transparent: ctx.transparent, subs: ctx.subs, lang: ctx.lang });
-      if (kind === 'raw') {
+      if (kind === 'gif') {
+        await onFrame(f, packFrame(cv, ctx.transparent, ctx.dither));
+      } else if (kind === 'raw') {
         const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
         await onFrame(f, { w: cv.width, h: cv.height, buf: Buffer.from(d.buffer, d.byteOffset, d.byteLength) });
       } else {
@@ -154,11 +157,14 @@ async function eachFrame(frames, ctx, kind, onFrame) {
         fs.writeFileSync(out, bytes);
         await onFrame(f, { w: cv.width, h: cv.height, bytes: bytes.length });
       }
+      // uma volta no laço de eventos: o canvas só devolve a memória das telas e dos pixels lidos aí (sem isso,
+      // ~24 MB por quadro 1080p ficam presos até o fim)
+      await new Promise((res) => setImmediate(res));
     }
     return;
   }
   const win = ctx.jobs * 3, inflight = new Map();
-  const send = (i) => inflight.set(i, ctx.pool.run({ f: frames[i], kind, out: kind === 'raw' ? null : path.resolve(ctx.nameOf(frames[i])), quality: ctx.quality }));
+  const send = (i) => inflight.set(i, ctx.pool.run({ f: frames[i], kind, out: kind === 'raw' || kind === 'gif' ? null : path.resolve(ctx.nameOf(frames[i])), quality: ctx.quality, dither: ctx.dither }));
   for (let i = 0; i < Math.min(win, frames.length); i++) send(i);
   for (let i = 0; i < frames.length; i++) {
     const r = await inflight.get(i);
@@ -339,7 +345,7 @@ async function exportFilm(model, o, format, source, h) {
 
   let jobs = o.jobs === null ? (total >= 48 ? Math.max(1, Math.min(8, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1)) : 1) : o.jobs;
   jobs = Math.max(1, Math.min(jobs, total));
-  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang };
+  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang, dither: o.dither };
   if (o.transparent && (format === 'mp4' || format === 'mkv') && !o.quiet) console.error(h.paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou --frames (PNG)`);
   if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang, cues: autoCues(model) });
   const summary = (secs, n) => { n = n || total; return `${n} quadros em ${secs.toFixed(1)}s (${(n / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`; };
@@ -396,12 +402,42 @@ async function exportFilm(model, o, format, source, h) {
       for (const p of parts) {
         const out = h.withSuffix(o.out || `${source.base}.gif`, p.suffix);
         const bar = progress(path.basename(out), p.frames.length, o.quiet);
-        const frames = [];
-        await eachFrame(p.frames, ctx, 'raw', async (f, r) => { frames.push({ width: r.w, height: r.h, data: new Uint8ClampedArray(r.buf.buffer, r.buf.byteOffset, r.buf.byteLength) }); bar.tick(frames.length); });
-        const delay = frames.map((_, i) => Math.round(((i + 1) * 100) / fps) - Math.round((i * 100) / fps));
-        const bytes = W.gif.encode(frames, { delay, loop: 0, transparent: ctx.transparent, dither: o.dither });
+        // quadro a quadro, sem guardar os pixels: as cores de cada quadro entram na conta da paleta, e ele fica
+        // guardado só como a cor de 15 bits de cada ponto, comprimida (gifframe.js; o mesmo GIF de W.gif.encode,
+        // com ~1/60 da memória)
+        const H = W.gif.histogram(), packs = [];
+        let size = null;
+        await eachFrame(p.frames, ctx, 'gif', async (f, r) => {
+          W.gif.addColors(H, r.colors);
+          packs.push(r.keys);
+          size = size || [r.w, r.h];
+          bar.tick(packs.length);
+        });
+        // a paleta pronta: cada quadro de volta, direto para o arquivo
+        const delay = packs.map((_, i) => Math.round(((i + 1) * 100) / fps) - Math.round((i * 100) / fps));
+        const g = W.gif.writer(W.gif.paletteOf(H, ctx.transparent ? 255 : 256), size[0], size[1], packs.length, { delay, loop: 0, transparent: ctx.transparent });
+        fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+        const fd = fs.openSync(out, 'w');
+        let bytes = 0, done = false;
+        const flush = () => { const b = g.out.drain(); fs.writeSync(fd, b); bytes += b.length; };
+        try {
+          flush();
+          for (let i = 0; i < packs.length; i++) {
+            const K = unpackKeys(packs[i]);
+            packs[i] = null;
+            g.frame(K, i);
+            flush();
+          }
+          g.end();
+          flush();
+          done = true;
+        } finally {
+          fs.closeSync(fd);
+          // sem o GIF pela metade
+          if (!done) fs.rmSync(out, { force: true });
+        }
         const secs = bar.end();
-        h.save(out, Buffer.from(bytes), `${frames[0].width}×${frames[0].height} · ${summary(secs)}`, o.quiet);
+        if (!o.quiet) console.log(`${h.paint('32', 'salvo')} ${out}  ${h.paint('2', `${size[0]}×${size[1]} · ${summary(secs)} · ${h.kb(bytes)}`)}`);
       }
       return;
     }
