@@ -23,10 +23,13 @@
       for (const f of frameIdx(model, name)) {
         if (progress) progress('recorte', ++done, total);
         const img = S.renderImage(model, S.makePose(model, name, f), { scale: s, transparent: true, screen: false });
-        const d = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
-        for (let y = 0; y < img.height; y++) {
-          for (let x = 0; x < img.width; x++) {
-            if (d[(y * img.width + x) * 4 + 3] > 6) {
+        // a largura e a altura numa variável: no canvas da linha de comando, cada leitura de img.width é uma
+        // chamada ao código nativo (100 vezes mais lenta que ler uma variável), e o laço passa por todos os pixels
+        const w = img.width, h = img.height;
+        const d = img.getContext('2d').getImageData(0, 0, w, h).data;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (d[(y * w + x) * 4 + 3] > 6) {
               if (x < x0) x0 = x;
               if (x > x1) x1 = x;
               if (y < y0) y0 = y;

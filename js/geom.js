@@ -239,8 +239,11 @@
 
   // Com transparência, os trechos sobrepostos escureceriam: desenha opaco à parte e aplica o alpha uma vez.
   let scratch = null;
-  function drawVar(ctx, p, widths) {
+  // tight (filme): a tela de rascunho só do tamanho do traço, com folga (no canvas da linha de comando, pôr uma tela em
+  // outra custa o tamanho da tela de origem, mesmo quando o desenho nela é pequeno)
+  function drawVar(ctx, p, widths, tight) {
     if (ctx.globalAlpha >= 0.999) { strokeVar(ctx, p, widths); return; }
+    if (tight) { drawVarTight(ctx, p, widths); return; }
     const c = ctx.canvas;
     if (!scratch) scratch = document.createElement('canvas');
     if (scratch.width !== c.width || scratch.height !== c.height) { scratch.width = c.width; scratch.height = c.height; }
@@ -253,6 +256,39 @@
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(scratch, 0, 0);
+    ctx.restore();
+  }
+  let tightScratch = null;
+  function drawVarTight(ctx, p, widths) {
+    const c = ctx.canvas, t = ctx.getTransform(), W = c.width, H = c.height;
+    // a caixa do traço em pixels da tela: os pontos, mais a largura inteira esticada pela matriz
+    let wmax = 0;
+    for (const w of widths) if (w > wmax) wmax = w;
+    const pad = wmax * (Math.hypot(t.a, t.b) + Math.hypot(t.c, t.d)) + 4;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < p.length; i += 2) {
+      const X = t.a * p[i] + t.c * p[i + 1] + t.e, Y = t.b * p[i] + t.d * p[i + 1] + t.f;
+      if (X < x0) x0 = X;
+      if (X > x1) x1 = X;
+      if (Y < y0) y0 = Y;
+      if (Y > y1) y1 = Y;
+    }
+    const bx = Math.max(0, Math.floor(x0 - pad)), by = Math.max(0, Math.floor(y0 - pad));
+    const bw = Math.min(W, Math.ceil(x1 + pad)) - bx, bh = Math.min(H, Math.ceil(y1 + pad)) - by;
+    if (!(bw > 0 && bh > 0)) return;
+    // o tamanho em passos de 64, para não refazer a tela a cada traço
+    const sw = Math.ceil(bw / 64) * 64, sh = Math.ceil(bh / 64) * 64;
+    if (!tightScratch) tightScratch = document.createElement('canvas');
+    if (tightScratch.width !== sw || tightScratch.height !== sh) { tightScratch.width = sw; tightScratch.height = sh; }
+    const o = tightScratch.getContext('2d');
+    o.setTransform(1, 0, 0, 1, 0, 0);
+    o.clearRect(0, 0, bw, bh);
+    o.setTransform(t.a, t.b, t.c, t.d, t.e - bx, t.f - by);
+    o.strokeStyle = ctx.strokeStyle;
+    strokeVar(o, p, widths);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(tightScratch, 0, 0, bw, bh, bx, by, bw, bh);
     ctx.restore();
   }
 

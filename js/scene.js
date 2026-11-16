@@ -1544,8 +1544,9 @@
   // opts: pass (o passe do estilo de arte), glows (false: sem os halos das lâmpadas dos atores).
   function drawMorph(ctx, A, B, u, plan, opts) {
     opts = opts || {};
-    const prev = PASS;
+    const prev = PASS, prevFilm = FILM;
     if (opts.pass !== undefined) PASS = opts.pass || null;
+    if (opts.film !== undefined) FILM = opts.film || null;
     try {
       const dark = !!(PASS && (PASS.unlit || PASS.tex));
       const side = (S) => {
@@ -1577,7 +1578,7 @@
           ctx.restore();
         }
       }
-    } finally { PASS = prev; }
+    } finally { PASS = prev; FILM = prevFilm; }
   }
 
   function geometry(model, pose, el) {
@@ -1765,6 +1766,10 @@
   function scratch(name, w, h) {
     let c = pool.get(name);
     if (!c) { c = document.createElement('canvas'); pool.set(name, c); }
+    return { canvas: c, ctx: cleanCanvas(c, w, h) };
+  }
+  // a tela no tamanho w×h, limpa e com o estado do contexto de volta ao padrão
+  function cleanCanvas(c, w, h) {
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
     const x = c.getContext('2d');
     x.setTransform(1, 0, 0, 1, 0, 0);
@@ -1774,8 +1779,38 @@
     x.shadowColor = 'rgba(0,0,0,0)';
     x.shadowBlur = 0;
     x.clearRect(0, 0, w, h);
-    return { canvas: c, ctx: x };
+    return x;
   }
+  // No filme, as telas de rascunho do efeito de uma camada, da sombra projetada e do traço com espessura variável têm o
+  // tamanho do que é pintado nelas, e não o do quadro: no canvas da linha de comando, pôr uma tela em outra custa o
+  // tamanho da tela de origem (uns 2 ms para 1920×1080), mesmo quando o desenho nela é pequeno.
+  // A tela de rascunho só da caixa b (em pixels da tela parent; null = a tela inteira), presa à grade dela: devolve
+  // { canvas, ctx, x, y, w, h }, com o ponto (x, y) da tela no canto do rascunho; null quando a caixa fica fora da tela.
+  function scratchBox(name, b, parent) {
+    const a = boxArea(b, parent.width, parent.height);
+    if (!a) return null;
+    const T = Object.assign(scratch(name, a.w, a.h), a);
+    if (FILM) placeCanvas(T.canvas, parent, a.x, a.y); else PLACE.delete(T.canvas);
+    return T;
+  }
+  // a caixa b (null = a tela inteira) em pixels inteiros, cortada na tela W×H; null quando fica fora dela
+  function boxArea(b, W, H) {
+    if (!b) return { x: 0, y: 0, w: W, h: H };
+    const x = Math.max(0, Math.floor(b.x)), y = Math.max(0, Math.floor(b.y));
+    const w = Math.min(W, Math.ceil(b.x + b.w)) - x, h = Math.min(H, Math.ceil(b.y + b.h)) - y;
+    return w > 0 && h > 0 ? { x, y, w, h } : null;
+  }
+  // Filme: onde cada tela de rascunho fica no quadro (o canto dela em x, y; o quadro tem W×H). Os mapas de luz são
+  // do quadro inteiro, e uma tela menor lê só o pedaço dela (lightMaps, lightRaster).
+  const PLACE = new WeakMap();
+  const placeOf = (c) => PLACE.get(c) || { x: 0, y: 0, W: c.width, H: c.height };
+  // a tela c com o canto no ponto (x, y) da tela parent
+  function placeCanvas(c, parent, x, y) {
+    const p = placeOf(parent);
+    PLACE.set(c, { x: p.x + x, y: p.y + y, W: p.W, H: p.H });
+  }
+  // a matriz m com a origem levada para (x, y): para desenhar no rascunho de scratchBox
+  const shiftMat = (m, x, y) => [m[0], m[1], m[2], m[3], m[4] - x, m[5] - y];
   const matOf = (ctx) => { const t = ctx.getTransform(); return [t.a, t.b, t.c, t.d, t.e, t.f]; };
   const setMat = (ctx, m) => ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
   const scaleOf = (m) => Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2])) || 1;
@@ -1911,23 +1946,75 @@
     }
   }
   // Mapa de luz (ambiente + luzes) e mapa só das luzes, no tamanho e na transformação da tela de destino.
+  // ox, oy: onde a tela fica no mapa (no filme, uma tela de rascunho menor que o quadro lê o pedaço dela).
   function lightMaps(R, ctx) {
     const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx);
-    const key = `${W}x${H}:${m.join(',')}`;
-    if (R.maps && R.maps.key === key) return R.maps;
-    const lm = scratch('lm', W, H), add = scratch('lmadd', W, H);
-    lm.ctx.fillStyle = rgbStr(R.lighting.amb.rgb, R.lighting.amb.power);
-    lm.ctx.fillRect(0, 0, W, H);
+    const P = FILM ? placeOf(ctx.canvas) : null;
+    const key = `${W}x${H}:${m.join(',')}` + (P ? `@${P.x},${P.y}` : '');
+    if (R.maps && R.maps.key === key && (!R.maps.e || R.maps.e.slot.owner === R.maps.e)) return R.maps;
+    if (P) {
+      // filme: os mapas do quadro inteiro ficam guardados pela luz em pixels do quadro, e os atores e as camadas com a
+      // mesma luz (cada um tem a matriz dele e a tela dele) usam o mesmo mapa
+      const mf = shiftMat(m, -P.x, -P.y);
+      const lk = lightKey(R.lighting, P.W, P.H, mf);
+      let e = FILM.lights.get(lk);
+      if (!e || e.slot.owner !== e) {
+        // cada mapa com as telas dele (reaproveitar uma tela cheia já usada no quadro custaria uma cópia inteira dela);
+        // passando de LIGHT_SLOTS mapas num quadro, o mais antigo dá lugar
+        const i = FILM.n++ % LIGHT_SLOTS;
+        const slot = lightPool[i] || (lightPool[i] = { lm: document.createElement('canvas'), add: document.createElement('canvas'), owner: null });
+        e = { slot };
+        slot.owner = e;
+        paintMaps(R.lighting, cleanCanvas(slot.lm, P.W, P.H), cleanCanvas(slot.add, P.W, P.H), P.W, P.H, mf);
+        FILM.lights.set(lk, e);
+      }
+      R.maps = { key, lm: e.slot.lm, add: e.slot.add, ox: P.x, oy: P.y, e };
+      return R.maps;
+    }
+    const a = scratch('lm', W, H), b = scratch('lmadd', W, H);
+    paintMaps(R.lighting, a.ctx, b.ctx, W, H, m);
+    R.maps = { key, lm: a.canvas, add: b.canvas, ox: 0, oy: 0 };
+    return R.maps;
+  }
+  function paintMaps(lighting, lm, add, W, H, m) {
+    lm.fillStyle = rgbStr(lighting.amb.rgb, lighting.amb.power);
+    lm.fillRect(0, 0, W, H);
     // mapa do brilho: cinza 50% (neutro no overlay) + metade da luz
-    add.ctx.fillStyle = 'rgb(128,128,128)';
-    add.ctx.fillRect(0, 0, W, H);
-    for (const [x, k] of [[lm.ctx, 1], [add.ctx, 0.5]]) {
+    add.fillStyle = 'rgb(128,128,128)';
+    add.fillRect(0, 0, W, H);
+    for (const [x, k] of [[lm, 1], [add, 0.5]]) {
       setMat(x, m);
       x.globalCompositeOperation = 'lighter';
-      for (const L of R.lighting.lights) paintLight(x, k === 1 ? L : Object.assign({}, L, { power: L.power * k }));
+      for (const L of lighting.lights) paintLight(x, k === 1 ? L : Object.assign({}, L, { power: L.power * k }));
     }
-    R.maps = { key, lm: lm.canvas, add: add.canvas };
-    return R.maps;
+  }
+  const LIGHT_SLOTS = 8, lightPool = [];
+  // Filme (drawScene com opts.film): o que vale para o quadro inteiro. lights = os mapas de luz do quadro; n = quantos.
+  const filmFrame = () => ({ lights: new Map(), n: 0 });
+  // A luz como ela cai na tela W×H pela matriz m: as luzes com a posição, o raio e a mira em pixels da tela. Com
+  // a mesma chave, os mapas saem iguais (a não ser pelo arredondamento, menos de um nível de cor). Uma matriz que
+  // estica a figura mais num sentido que no outro só combina com ela mesma.
+  const r3 = (v) => Math.round(v * 1000) / 1000;
+  function lightKey(lighting, W, H, m) {
+    const a = lighting.amb;
+    let key = `${W}x${H}|${a.rgb.join(',')}*${a.power}`;
+    const same = Math.abs(m[0] - m[3]) < 1e-9 && Math.abs(m[1] + m[2]) < 1e-9, mirror = Math.abs(m[0] + m[3]) < 1e-9 && Math.abs(m[1] - m[2]) < 1e-9;
+    if (!same && !mirror) {
+      key += `|m${m.join(',')}`;
+      for (const L of lighting.lights) key += `|${L.type}:${L.rgb.join(',')}:${L.power}:${L.x}:${L.y}:${L.radius}:${L.aim}:${L.cone}`;
+      return key;
+    }
+    const k = Math.hypot(m[0], m[1]);
+    for (const L of lighting.lights) {
+      key += `|${L.type}:${L.rgb.join(',')}:${L.power}`;
+      if (L.type === 'dir') continue;
+      key += `:${r3(m[0] * L.x + m[2] * L.y + m[4])}:${r3(m[1] * L.x + m[3] * L.y + m[5])}:${r3(L.radius * k)}`;
+      if (L.type === 'spot') {
+        const t = (L.aim * Math.PI) / 180, dx = m[0] * Math.cos(t) + m[2] * Math.sin(t), dy = m[1] * Math.cos(t) + m[3] * Math.sin(t);
+        key += `:${r3((Math.atan2(dy, dx) * 180) / Math.PI)}:${L.cone}`;
+      }
+    }
+    return key;
   }
   // Ilumina o que já foi pintado dentro do contorno de uma forma (só na caixa dela, para ser rápido).
   function lightRaster(ctx, R, path, bb, alpha) {
@@ -1942,10 +2029,10 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(maps.lm, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.drawImage(maps.lm, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
     ctx.globalCompositeOperation = 'overlay';
     ctx.globalAlpha = alpha * ADD;
-    ctx.drawImage(maps.add, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.drawImage(maps.add, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
     ctx.restore();
   }
   // Lado da forma virado para a luz mais claro, lado oposto mais escuro.
@@ -2029,6 +2116,72 @@
     }
     return x0 === Infinity ? null : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
+  // Filme (scratchBox): a caixa, em pixels da tela (m = a matriz até ela), que cobre tudo o que os itens pintam: a
+  // curva (pelos pontos de controle, que a cercam), o contorno com o weight, o traço, o membro e o brilho do emit=,
+  // com folga. null quando não dá para saber (texto, partículas, 3D, passe de estilo de arte): aí vale a tela
+  // inteira. Sem nada visível, a caixa é vazia (w = h = 0).
+  const matK = (m) => Math.hypot(m[0], m[1]) + Math.hypot(m[2], m[3]); // mais que o maior esticão da matriz
+  function paintBox(model, pose, items, m) {
+    if (PASS || model.has3d) return null;
+    const k = matK(m);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const it of items) {
+      const el = it.el;
+      if (el.type === 'text' || el.type === 'emitter') return null;
+      const pr = propsOf(pose, el);
+      if ((el.hidden && !pr.reveal) || pr.show === 0) continue;
+      const g = geometry(model, pose, el);
+      if (!g.segs.length) continue;
+      // a largura inteira (e não a metade) do que passa da curva: cobre a ponta quadrada e as quinas
+      const ink = pr.ink !== undefined ? pr.ink : el.ink, w = pr.w !== undefined ? pr.w : el.w;
+      let wide = Math.max(0, ink || 0) * (1 + 2.6 * Math.max(0, el.weight || 0));
+      if (!el.closed) wide = Math.max(wide, w || 0, el.limb ? Math.max(el.limb[0], el.limb[1]) * ((w || 1) / (el.w || 1)) : 0);
+      let pad = wide * k + 2;
+      if (el.emit) pad += 24 * (el.emit.s || 1) * k; // o brilho: shadowBlur de 16·s, que se espalha uns 1,5×
+      for (const s of g.segs) {
+        for (let i = 0; i < 8; i += 2) {
+          const X = m[0] * s[i] + m[2] * s[i + 1] + m[4], Y = m[1] * s[i] + m[3] * s[i + 1] + m[5];
+          if (X - pad < x0) x0 = X - pad;
+          if (X + pad > x1) x1 = X + pad;
+          if (Y - pad < y0) y0 = Y - pad;
+          if (Y + pad > y1) y1 = Y + pad;
+        }
+      }
+    }
+    return x0 === Infinity ? { x: 0, y: 0, w: 0, h: 0 } : { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
+  const boxUnion = (a, b) => (!a ? b : { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.max(a.x + a.w, b.x + b.w) - Math.min(a.x, b.x), h: Math.max(a.y + a.h, b.y + b.h) - Math.min(a.y, b.y) });
+  // Filme: a caixa do que as camadas de um ator pintam (para a transparência e a névoa dele usarem uma tela só desse
+  // tamanho), com o espalhamento dos efeitos das camadas (desfoque, brilho, sombra) e os halos das lâmpadas
+  // (lighting: quando o grupo desenha os halos). null = o quadro inteiro (sombra projetada, rastro, virada...).
+  function plateBox(model, pose, layers, m, lighting) {
+    if (pose.turn) return null;
+    const k = matK(m);
+    let box = null;
+    for (const layer of layers) {
+      if (layer.cast || layer.trail) return null;
+      const b = paintBox(model, pose, layer.items, m);
+      if (!b) return null;
+      if (!b.w && !b.h) continue;
+      const fx = layerFx(layer, pose.lprops.get(layer.name) || NOPROPS);
+      let pad = 2;
+      if (fx) {
+        // o desfoque (blur(r): desvio r) e as sombras do canvas (shadowBlur b: desvio b/2) vão até uns 3 desvios
+        if (fx.blur > 0) pad += 3 * fx.blur * k;
+        if (fx.glow > 0) pad += 1.5 * fx.glow * k;
+        if (fx.shadow) pad += (Math.abs(fx.shadow.dx) + Math.abs(fx.shadow.dy) + 1.5 * fx.shadow.b) * k;
+      }
+      box = boxUnion(box, { x: b.x - pad, y: b.y - pad, w: b.w + 2 * pad, h: b.h + 2 * pad });
+    }
+    if (lighting) {
+      for (const L of lighting.lights) {
+        if (L.type === 'dir' || !(L.glow > 0)) continue;
+        const r = L.glow * k + 2, X = m[0] * L.x + m[2] * L.y + m[4], Y = m[1] * L.x + m[3] * L.y + m[5];
+        box = boxUnion(box, { x: X - r, y: Y - r, w: 2 * r, h: 2 * r });
+      }
+    }
+    return box || { x: 0, y: 0, w: 0, h: 0 };
+  }
   // de quem é a silhueta: a própria camada ou as camadas de from=
   const castSources = (layer, items) => (layer.cast.from ? layer.cast.from.map((L) => ({ layer: L, items: L.items })) : [{ layer, items }]);
   // Para cada luz: matriz que achata a silhueta no chão, inclinada para longe da luz, e a força da sombra.
@@ -2061,16 +2214,17 @@
   function drawCast(ctx, R, layer, items, alpha) {
     const casts = castShadows(R.model, R.pose, R.lighting, layer, items);
     if (!casts.length) return;
-    const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
-    const T = scratch('cast', W, H);
-    setMat(T.ctx, m);
-    for (const s of castSources(layer, items)) {
-      if (layerVisible(s.layer, R.pose, R.opts)) drawLayer(T.ctx, R, s.layer, s.items, 1, false, R.pose, true, true);
-    }
+    const m = matOf(ctx), s = scaleOf(m);
+    const srcs = castSources(layer, items).filter((x) => layerVisible(x.layer, R.pose, R.opts));
+    // no filme, a silhueta numa tela do tamanho dela (scratchBox)
+    const T = scratchBox('cast', FILM ? paintBox(R.model, R.pose, srcs.flatMap((x) => x.items), m) : null, ctx.canvas);
+    if (!T) return;
+    setMat(T.ctx, shiftMat(m, T.x, T.y));
+    for (const x of srcs) drawLayer(T.ctx, R, x.layer, x.items, 1, false, R.pose, true, true);
     T.ctx.setTransform(1, 0, 0, 1, 0, 0);
     T.ctx.globalCompositeOperation = 'source-in';
     T.ctx.fillStyle = '#000';
-    T.ctx.fillRect(0, 0, W, H);
+    T.ctx.fillRect(0, 0, T.w, T.h);
     const inv = M.invert(m);
     for (const c of casts) {
       ctx.save();
@@ -2078,7 +2232,7 @@
       ctx.globalAlpha = alpha * c.opacity;
       ctx.globalCompositeOperation = 'source-over';
       if (layer.cast.blur > 0 && canFilter()) ctx.filter = `blur(${(layer.cast.blur * s).toFixed(1)}px)`;
-      ctx.drawImage(T.canvas, 0, 0);
+      ctx.drawImage(T.canvas, T.x, T.y);
       ctx.restore();
     }
   }
@@ -2324,12 +2478,17 @@
   //   ela (sem luz, sem contorno, sem traços, textos, partículas nem efeitos de camada) · stroke: { fill, ink,
   //   line }: o estilo pinta cada forma e cada traço, na ordem do desenho (ver strokeInfo).
   // Sem opts.pass, o desenho é o de sempre (e um drawScene de dentro herda o passe de quem chamou).
-  let PASS = null;
+  // opts.film (filmFrame(), um por quadro do filme): o quadro é grande e tem muitos atores e camadas, então os mapas
+  // de luz são divididos entre eles e as telas de rascunho ficam do tamanho do desenho (ver scratchBox); um drawScene
+  // de dentro herda. O desenho fica igual a menos de um ou dois níveis de cor; sem opts.film (as imagens do jogo),
+  // nada muda.
+  let PASS = null, FILM = null;
   function drawScene(ctx, model, pose, opts) {
-    if (!opts || opts.pass === undefined) return drawScene0(ctx, model, pose, opts);
-    const prev = PASS;
-    PASS = opts.pass || null;
-    try { return drawScene0(ctx, model, pose, opts); } finally { PASS = prev; }
+    if (!opts || (opts.pass === undefined && opts.film === undefined)) return drawScene0(ctx, model, pose, opts);
+    const prev = PASS, prevFilm = FILM;
+    if (opts.pass !== undefined) PASS = opts.pass || null;
+    if (opts.film !== undefined) FILM = opts.film || null;
+    try { return drawScene0(ctx, model, pose, opts); } finally { PASS = prev; FILM = prevFilm; }
   }
   function drawScene0(ctx, model, pose, opts) {
     opts = opts || {};
@@ -2375,10 +2534,14 @@
   function drawFxLayer(ctx, R, layer, items, alpha, lit, fx, body) {
     const { model, pose } = R;
     const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
-    const T = scratch('fx', W, H);
-    if (layer.trail && pose.anim && !body) {
+    // no filme, a camada numa tela do tamanho do desenho dela (scratchBox); o rastro desenha outras poses, e o body
+    // (a virada, a metamorfose) outras partes: aí a tela inteira
+    const trail = !!(layer.trail && pose.anim && !body);
+    const T = scratchBox('fx', FILM && !trail && !body ? paintBox(model, pose, items, m) : null, ctx.canvas);
+    if (!T) return;
+    if (trail) {
       for (let k = layer.trail.n; k >= 1; k--) {
-        const U = scratch('trail', W, H);
+        const U = scratchBox('trail', null, T.canvas);
         setMat(U.ctx, m);
         drawLayer(U.ctx, R, layer, items, 1, lit, makePose(model, pose.anim.name, pose.frame - k), true);
         if (layer.trail.c) {
@@ -2393,7 +2556,7 @@
         T.ctx.globalAlpha = 1;
       }
     }
-    setMat(T.ctx, m);
+    setMat(T.ctx, shiftMat(m, T.x, T.y));
     if (body) body(T.ctx, 1, true);
     else drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
     T.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -2401,7 +2564,7 @@
       T.ctx.globalCompositeOperation = 'source-atop';
       T.ctx.globalAlpha = Math.min(1, fx.tint);
       T.ctx.fillStyle = fx.tintc;
-      T.ctx.fillRect(0, 0, W, H);
+      T.ctx.fillRect(0, 0, T.w, T.h);
       T.ctx.globalCompositeOperation = 'source-over';
       T.ctx.globalAlpha = 1;
     }
@@ -2419,7 +2582,7 @@
       ctx.shadowOffsetX = big + fx.shadow.dx * s;
       ctx.shadowOffsetY = fx.shadow.dy * s;
       ctx.globalAlpha = alpha;
-      ctx.drawImage(img, -big, 0);
+      ctx.drawImage(img, T.x - big, T.y);
     }
     if (fx.glow > 0) {
       const strength = fx.glows !== undefined ? fx.glows : 1;
@@ -2429,7 +2592,7 @@
         ctx.shadowOffsetX = big;
         ctx.shadowOffsetY = 0;
         ctx.globalAlpha = alpha * Math.min(1, strength - i);
-        ctx.drawImage(img, -big, 0);
+        ctx.drawImage(img, T.x - big, T.y);
       }
     }
     ctx.shadowColor = 'rgba(0,0,0,0)';
@@ -2437,7 +2600,7 @@
     ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
     if (filt && canFilter()) ctx.filter = filt;
     ctx.globalAlpha = alpha;
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, T.x, T.y);
     ctx.restore();
   }
 
@@ -2478,7 +2641,7 @@
   // o começo (t de 0 a 1) de um traço com espessura variável: as espessuras são as do traço inteiro
   function drawVarPart(ctx, p, widths, t) {
     const q = G.polyPrefix(p, t);
-    if (q.length >= 4) G.drawVar(ctx, q, widths.slice(0, q.length / 2));
+    if (q.length >= 4) G.drawVar(ctx, q, widths.slice(0, q.length / 2), !!FILM);
   }
 
   // R: iluminação da camada (null = sem luz). flat: só a silhueta (sombra projetada), sem brilho próprio.
@@ -2675,7 +2838,7 @@
       const p = el.limb || el.taper[0] > 0 || el.taper[1] > 0 ? flatOf(g) : null;
       const ws = !p ? null : el.limb ? G.taperWidths(p, el.limb[0] * (w / (el.w || 1)), el.limb[1] * (w / (el.w || 1)), [0, 0]) : G.taperWidths(p, w, w, el.taper);
       const body = (x) => {
-        if (ws) { G.drawVar(x, p, ws); return; }
+        if (ws) { G.drawVar(x, p, ws, !!FILM); return; }
         x.lineWidth = w;
         x.lineCap = el.cap;
         x.lineJoin = 'round';
@@ -2690,11 +2853,11 @@
       const p = flatOf(g);
       const s = w / (el.w || 1);
       const ws = G.taperWidths(p, el.limb[0] * s, el.limb[1] * s, [0, 0]);
-      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws);
+      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws, !!FILM);
     } else if (el.taper[0] > 0 || el.taper[1] > 0) {
       const p = flatOf(g);
       const ws = G.taperWidths(p, w, w, el.taper);
-      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws);
+      if (pre) drawVarPart(ctx, p, ws, dr); else G.drawVar(ctx, p, ws, !!FILM);
     } else if (pre) strokePoly(ctx, pre, w, el.cap);
     else {
       ctx.lineWidth = w;
@@ -2794,7 +2957,7 @@
       return;
     }
     const p = flatOf(g);
-    G.drawVar(ctx, p, G.inkWidths(p, ink, el.weight, model.canvas.light));
+    G.drawVar(ctx, p, G.inkWidths(p, ink, el.weight, model.canvas.light), !!FILM);
   }
 
   // dr < 1: as letras aparecem uma a uma, no lugar que ocupam no texto inteiro
@@ -2877,25 +3040,34 @@
     x.putImageData(img, 0, 0);
   }
   // bloom, vinheta, granulado e posterização, aplicados na imagem pronta, e depois os efeitos de tela. o.base ===
-  // false: só os de tela (a imagem pixelada já passou pelos outros); o.screen === false: sem os de tela
+  // false: só os de tela (a imagem pixelada já passou pelos outros); o.screen === false: sem os de tela;
+  // o.film: o bloom do filme, desfocado numa cópia menor da imagem (bem mais rápido; a diferença não passa de 2 níveis)
   function postFx(cv, model, seed, o) {
     o = o || {};
     const f = model.finish;
-    if (o.base !== false && hasBase(f)) baseFx(cv, model, seed);
+    if (o.base !== false && hasBase(f)) baseFx(cv, model, seed, !!o.film);
     if (o.screen !== false && hasScreen(model)) screenFx(cv, f, seed || 0);
   }
-  function baseFx(cv, model, seed) {
+  function baseFx(cv, model, seed, film) {
     const f = model.finish, W = cv.width, H = cv.height, x = cv.getContext('2d');
     x.save();
     x.setTransform(1, 0, 0, 1, 0, 0);
     x.globalAlpha = 1;
     if (f.bloom > 0 && canFilter()) {
-      const B = scratch('bloom', W, H), r = Math.max(2, Math.round(Math.max(W, H) * 0.025));
-      B.ctx.filter = `brightness(0.85) contrast(2.2) blur(${r}px)`;
-      B.ctx.drawImage(cv, 0, 0);
+      const r = Math.max(2, Math.round(Math.max(W, H) * 0.025));
+      // q: quanto a cópia é menor (o desfoque largo apaga os detalhes que ela perde)
+      const q = film ? (r >= 24 ? 4 : r >= 12 ? 2 : 1) : 1;
+      const w = Math.ceil(W / q), h = Math.ceil(H / q);
+      const B = scratch(q > 1 ? 'bloomq' : 'bloom', w, h);
+      B.ctx.filter = `brightness(0.85) contrast(2.2) blur(${r / q}px)`;
+      if (q > 1) B.ctx.drawImage(cv, 0, 0, w, h); else B.ctx.drawImage(cv, 0, 0);
       B.ctx.filter = 'none';
       x.globalCompositeOperation = 'screen';
-      for (let a = f.bloom; a > 0; a -= 1) { x.globalAlpha = Math.min(1, a); x.drawImage(B.canvas, 0, 0); }
+      for (let a = f.bloom; a > 0; a -= 1) {
+        x.globalAlpha = Math.min(1, a);
+        // a cópia volta ao tamanho exato da imagem (a mesma escala da ida)
+        if (q > 1) x.drawImage(B.canvas, 0, 0, W, H); else x.drawImage(B.canvas, 0, 0);
+      }
     }
     if (f.vignette > 0) {
       const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) / 2);
@@ -3295,5 +3467,6 @@
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,
+    filmFrame, plateBox, boxArea, placeCanvas,
   };
 })(window.Weasel = window.Weasel || {});

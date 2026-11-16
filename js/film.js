@@ -624,14 +624,16 @@
   const matOf = (ctx) => { const t = ctx.getTransform(); return [t.a, t.b, t.c, t.d, t.e, t.f]; };
   const setMat = (ctx, m) => ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
   let alphaCanvas = null;
-  function alphaLayer(w, h) {
+  // a tela da transparência e da névoa de um ator: só do tamanho a (o pedaço da tela parent onde ele pinta)
+  function alphaLayer(a, parent) {
     if (!alphaCanvas) alphaCanvas = document.createElement('canvas');
-    if (alphaCanvas.width !== w || alphaCanvas.height !== h) { alphaCanvas.width = w; alphaCanvas.height = h; }
+    if (alphaCanvas.width !== a.w || alphaCanvas.height !== a.h) { alphaCanvas.width = a.w; alphaCanvas.height = a.h; }
+    S.placeCanvas(alphaCanvas, parent, a.x, a.y);
     const x = alphaCanvas.getContext('2d');
     x.setTransform(1, 0, 0, 1, 0, 0);
     x.globalAlpha = 1;
     x.globalCompositeOperation = 'source-over';
-    x.clearRect(0, 0, w, h);
+    x.clearRect(0, 0, a.w, a.h);
     return x;
   }
 
@@ -776,16 +778,26 @@
       // passe de textura dos estilos de arte: sem névoa, sem transparência e sem o fundo do ator
       const tex = !!(opts.artPass && opts.artPass.tex);
       const faded = !tex && (w.opacity < 0.999 || fog > 0.002);
-      const x = faded ? alphaLayer(ctx.canvas.width, ctx.canvas.height) : ctx;
+      const lighting = w.stage ? fs.stageLighting : w.lighting;
+      // a tela da transparência só do tamanho do que o ator pinta (S.plateBox; null = o quadro inteiro): no canvas da
+      // linha de comando, pôr uma tela em outra custa o tamanho dela. A metamorfose, o fundo do ator, as guias e os
+      // passes dos estilos de arte ficam com o quadro inteiro.
+      let area = null;
+      if (faded) {
+        const box = g.morph || g.bg || opts.artPass || (w.stage && opts.guides) ? null : S.plateBox(w.model, w.pose, g.layers, m, g.glows ? lighting : null);
+        area = S.boxArea(box, ctx.canvas.width, ctx.canvas.height);
+        if (!area) continue; // nada do ator cai dentro do quadro
+      }
+      const x = faded ? alphaLayer(area, ctx.canvas) : ctx;
       if (!faded) ctx.save();
       if (g.morph) {
         const { A, B, u, plan } = w.morph;
         const side = (s) => ({ model: s.model, pose: s.pose, lighting: s.lighting, m: M.mul(top, M.mul(s.ac.screen ? M.id() : viewMatrix(fs.cam, s.depth, fs.W, fs.H), s.mat)) });
-        S.drawMorph(x, side(A), side(B), u, plan, { glows: g.glows, pass: opts.artPass });
+        S.drawMorph(x, side(A), side(B), u, plan, { glows: g.glows, pass: opts.artPass, film: opts.film });
       }
-      setMat(x, m);
+      setMat(x, faded ? [m[0], m[1], m[2], m[3], m[4] - area.x, m[5] - area.y] : m);
       if (g.bg && !tex) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
-      if (!g.morph && (g.layers.size || g.glows)) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting: w.stage ? fs.stageLighting : w.lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass });
+      if (!g.morph && (g.layers.size || g.glows)) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass, film: opts.film });
       if (faded) {
         if (fog > 0.002) {
           // a névoa pinta por cima só onde já tem desenho
@@ -793,12 +805,12 @@
           x.globalAlpha = Math.min(1, fog);
           x.globalCompositeOperation = 'source-atop';
           x.fillStyle = fs.cam.fog;
-          x.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          x.fillRect(0, 0, area.w, area.h);
         }
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalAlpha = w.opacity;
-        ctx.drawImage(alphaCanvas, 0, 0);
+        ctx.drawImage(alphaCanvas, area.x, area.y);
         ctx.restore();
       } else ctx.restore();
     }
@@ -817,6 +829,8 @@
   function drawShot(ctx, model, frame, opts) {
     const fs = frameState(model, frame, opts);
     if (!fs) return null;
+    // film: o que o desenho guarda durante o quadro (os mapas de luz) e o jeito mais rápido do filme (S.drawScene)
+    opts = Object.assign({}, opts, { film: S.filmFrame() });
     const base = matOf(ctx);
     fs.stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
     for (const w of fs.who) {
@@ -874,7 +888,7 @@
       const sx = small.getContext('2d');
       sx.setTransform(scale / px, 0, 0, scale / px, 0, 0);
       drawFrame(sx, model, frame, o);
-      if (!opts.noPost) S.postFx(small, post, frame, { screen: false });
+      if (!opts.noPost) S.postFx(small, post, frame, { screen: false, film: true });
       octx.imageSmoothingEnabled = false;
       octx.drawImage(small, 0, 0, W2, H2);
       if (!opts.noPost) S.postFx(out, post, frame, { base: false });
@@ -882,7 +896,7 @@
       octx.setTransform(scale, 0, 0, scale, 0, 0);
       const fs = drawFrame(octx, model, frame, o);
       octx.setTransform(1, 0, 0, 1, 0, 0);
-      if (!opts.noPost) S.postFx(out, post, frame);
+      if (!opts.noPost) S.postFx(out, post, frame, { film: true });
       if (fs && fs.artText) out.artText = fs.artText;
     }
     return out;

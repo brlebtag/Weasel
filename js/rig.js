@@ -151,11 +151,13 @@
   }
   // o retângulo com algum pixel visível (null = vazio)
   function alphaBox(c) {
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    // o tamanho numa variável: c.width é uma chamada ao código nativo, cara dentro do laço dos pixels
+    const w = c.width, h = c.height;
+    const d = c.getContext('2d').getImageData(0, 0, w, h).data;
     let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
-    for (let y = 0; y < c.height; y++) {
-      for (let x = 0; x < c.width; x++) {
-        if (d[(y * c.width + x) * 4 + 3] > 2) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (d[(y * w + x) * 4 + 3] > 2) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
       }
     }
     return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
