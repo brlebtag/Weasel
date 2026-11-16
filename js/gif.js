@@ -187,7 +187,8 @@
       out.byte(0x21); out.byte(0xff); out.byte(11); out.str('NETSCAPE2.0');
       out.byte(3); out.byte(1); out.word(opts.loop || 0); out.byte(0);
     }
-    const idx = new Uint8Array(w * h);
+    let idx = new Uint8Array(w * h), prev = null; // prev: a tela depois do quadro anterior (sem transparência)
+    const sub = new Uint8Array(w * h);
     return {
       out,
       frame(K, fi) {
@@ -197,13 +198,42 @@
           const c = cache[k];
           idx[j] = c >= 0 ? c : nearest(k, (k >> 10) * 8 + 4, ((k >> 5) & 31) * 8 + 4, (k & 31) * 8 + 4);
         }
+        // a área gravada: sem transparência, só o que mudou desde o quadro anterior (o resto continua na tela,
+        // descarte 1); com transparência, só o que aparece (o quadro some depois de mostrado, descarte 2). O que
+        // aparece na tela é o mesmo de gravar o quadro inteiro; o arquivo fica menor.
+        let x0 = 0, y0 = 0, x1 = w - 1, y1 = h - 1;
+        if (transparent || prev) {
+          x0 = w; y0 = h; x1 = -1; y1 = -1;
+          for (let y = 0; y < h; y++) {
+            const o = y * w;
+            let a = -1, b = -1;
+            if (transparent) { for (let x = 0; x < w; x++) if (idx[o + x] !== tIndex) { a = x; break; } }
+            else { for (let x = 0; x < w; x++) if (idx[o + x] !== prev[o + x]) { a = x; break; } }
+            if (a < 0) continue;
+            if (transparent) { for (let x = w - 1; x >= a; x--) if (idx[o + x] !== tIndex) { b = x; break; } }
+            else { for (let x = w - 1; x >= a; x--) if (idx[o + x] !== prev[o + x]) { b = x; break; } }
+            if (a < x0) x0 = a;
+            if (b > x1) x1 = b;
+            if (y0 > y) y0 = y;
+            y1 = y;
+          }
+          if (x1 < 0) { x0 = 0; y0 = 0; x1 = 0; y1 = 0; } // nada: um ponto só, igual ao que já está lá
+        }
+        const rw = x1 - x0 + 1, rh = y1 - y0 + 1;
+        let data = idx;
+        if (rw !== w || rh !== h) {
+          data = sub.subarray(0, rw * rh);
+          for (let y = 0; y < rh; y++) data.set(idx.subarray((y0 + y) * w + x0, (y0 + y) * w + x0 + rw), y * rw);
+        }
         const delay = Array.isArray(opts.delay) ? opts.delay[fi] : opts.delay || 8;
         out.byte(0x21); out.byte(0xf9); out.byte(4);
         out.byte(((transparent ? 2 : 1) << 2) | (transparent ? 1 : 0));
         out.word(Math.max(2, Math.round(delay)));
         out.byte(tIndex); out.byte(0);
-        out.byte(0x2c); out.word(0); out.word(0); out.word(w); out.word(h); out.byte(0);
-        lzw(out, idx, 8);
+        out.byte(0x2c); out.word(x0); out.word(y0); out.word(rw); out.word(rh); out.byte(0);
+        lzw(out, data, 8);
+        // o quadro de agora vira o anterior (as duas listas trocam de lugar, sem copiar)
+        if (!transparent && count > 1) { const t = prev || new Uint8Array(w * h); prev = idx; idx = t; }
       },
       end() { out.byte(0x3b); },
     };

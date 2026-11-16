@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5 o item 5a na 1.48.6 e os itens 7d e 7e na 1.48.7 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b ficou de lado. O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5, o item 5a na 1.48.6, os itens 7d e 7e na 1.48.7 e o item 7b na 1.48.8 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b e o 7c ficaram de lado. Não sobra nenhum item aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -18,8 +18,8 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 5b | Estilos de arte: laços por pixel | `art.js` `field`, `noiseP`, `knitLeg`, `mix` do riso | riso −31%, gravura −22%, tricô −18%, retícula −16% | ✅ 1.48.3 |
 | 6 | Lip sync automático: mais rápido, menos memória, uma vez só | `audio.js` `lipCues`, `cli/media.js`, `cli/video.js`, `cli/film-worker.js` | 20 min a 48 kHz: 27,4 s e 2,5 GB → 2,2 s e 286 MB por thread | ✅ 1.48.2 |
 | 7a | GIF de filme: não guardar todos os quadros na memória; e a memória do canvas com 1 thread | `gif.js`, `cli/gifframe.js`, `cli/video.js`, `cli/film-worker.js` | 20 s em 1080p: 5,3 → 1,5 GB; 5 s com 1 thread: 3,1 → 0,33 GB | ✅ 1.48.4 |
-| 7b | GIF: gravar só a área que mudou | `gif.js` | arquivos bem menores | ⬜ muda os bytes |
-| 7c | GIF: cor mais próxima pela cor do pixel, não pelo centro da caixa | `gif.js` | menos faixas | ⬜ muda os bytes |
+| 7b | GIF: gravar só a área que mudou (opaco) ou só a que aparece (transparente) | `gif.js` `writer` | pintura (`-f build`) −79%, filmes com partes paradas −36 a −70%, sprites −5 a −27%; filmes com câmera ou granulado ~−1% | ✅ 1.48.8 |
+| 7c | GIF: cor mais próxima pela cor do pixel, não pelo centro da caixa | `gif.js` | só no degradê escuro sem `--dither`; no GIF de filme, 4× a memória das cores e 8–25 ms a mais por quadro | ➖ deixado de lado |
 | 7d | PNG: comprimir nas threads do libuv (`encode`), com os mesmos bytes, em vez de um modo rápido; e o JPG dos quadros de filme com a qualidade certa | `cli/weasel.js`, `cli/video.js` | `.tscn` do Cavaleiro 5,4 → 3,0 s (com o 7e); quadros de filme com 1 thread −68% | ✅ 1.48.7 |
 | 7e | Normal map do Godot: desfoque e Sobel lendo a memória em sequência | `normal.js` `boxBlur`, `frame` | folha do Cavaleiro: 3,4 → 2,0 s (−40%) | ✅ 1.48.7 |
 | 8 | Filme com várias threads: o limite é a memória; os mapas de luz pintados só onde são lidos | `scene.js` `lightMaps` e `lightPiece`, `film.js` | MP4 de 10 s: `-j 1` 16,7 → 14,0 s, `-j 8` 5,3 → 4,7 s | ✅ 1.48.5 |
@@ -161,11 +161,39 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
   - No editor, o GIF de filme ainda guarda todos os quadros. Dá para guardar só as chaves com as mesmas partes do `gif.js`, com metade da memória.
   - Outros laços da linha de comando que desenham muitos quadros seguidos (as folhas e sequências dos desenhos de jogo) também só devolvem a memória no fim. São curtos, então ficaram como estão.
 
-### ⬜ 7. Menores
+### ✅ 7b. GIF só com a área que mudou (1.48.8)
 
-- **7b. GIF só com a área que mudou:** os GIFs ficam bem menores, mas os bytes mudam, e as referências `_gif` dos testes precisam ser refeitas.
-- **7c. Cor mais próxima no GIF:** hoje usa o centro da caixa de 5 bits, não a cor real do pixel, o que cria faixas. Também muda os bytes.
-- 7d e 7e: nas seções abaixo.
+- **Problema:** cada quadro do GIF gravava a imagem inteira, mesmo com quase tudo igual ao quadro anterior.
+- **Feito, com os mesmos quadros na tela** (`writer` em `gif.js`; vale para o editor e para a linha de comando):
+  - Sem transparência: cada quadro grava só o retângulo que mudou desde o anterior, e o resto continua na tela (descarte 1, como antes). O primeiro quadro é inteiro.
+  - Com transparência: cada quadro grava só o retângulo onde há desenho. O quadro já some depois de mostrado (descarte 2, como antes).
+  - Se nada mudou, o quadro grava um ponto só, igual ao que já está lá.
+- **Resultado** (o motor da 1.48.7 e o novo):
+  - pintura (`-f build`): a da bola 82 → 17 KB (−79%), a do `contas.weasel` 150 → 30 KB (−80%);
+  - filmes de teste com vitral e com transições: −70% e −36%;
+  - fantasma −27%; sprites do cavaleiro, do furão e do chefe: −5 a −15%;
+  - filmes com câmera andando, granulado ou desenho grande se mexendo: 0 a −1%, porque a tela inteira muda;
+  - o tempo fica igual.
+- **Tentado e deixado de lado:** dentro da área, gravar como transparente o ponto igual ao do quadro anterior, quando a paleta tem um índice sobrando. O resultado foi misto: o furão com pontilhado foi de −15% para −30%, mas o cavaleiro de −10% para −4%.
+- **Conferido:**
+  - 17 GIFs (desenhos opacos e transparentes, com pontilhado, sequência, pintura, filmes com e sem threads, transparentes e com pontilhado): um decodificador próprio monta os mesmos quadros, com os mesmos tempos, do motor da 1.48.7;
+  - o decodificador do Chrome (`ImageDecoder`) dá os mesmos quadros em 9 GIFs da linha de comando e em 9 do editor (o `gif.js` antigo e o novo na mesma página);
+  - as referências `_gif` (o GIF sintético: 5280 → 1990 bytes) e `_janela` (a pintura: 95 → 74 KB) foram regravadas depois de conferir que os quadros são os mesmos;
+  - o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
+- **Ficou de fora:** GIFs transparentes com desenho grande que se mexe (coruja, filmes com `-t`) quase não ganham. Gravar só o que mudou neles pediria saber o quadro seguinte antes de gravar o atual, para escolher o descarte.
+
+### ➖ 7c. Cor mais próxima no GIF
+
+- **Ideia:** escolher a cor da paleta pela cor real do ponto, e não pelo centro da caixa de 5 bits, para ter menos faixas.
+- **Medido (16/11/2026)**, pela qualidade (PSNR) em 5 casos (filme, noite, cavaleiro, cenário, estilo tom):
+  - pela cor real, com as caixas de 5 bits: +1,3 a +3 dB;
+  - com caixas de 6 bits e a cor real (a melhor): +1,6 a +7 dB; no filme, 43,9 → 46,4 dB.
+- **Na imagem:** só aparece no degradê escuro sem `--dither`: os degraus em volta da lua do `filme.weasel` diminuem. Com `--dither`, o de hoje já fica tão bom quanto.
+- **Custo no GIF de filme:**
+  - as cores guardadas de cada quadro 1080p passam de 138 para 529 KB (20 s: ~66 → ~254 MB);
+  - escolher as cores fica 8 a 25 ms mais lento por quadro, na thread principal.
+  - Fazer só no GIF de desenho deixaria o GIF de filme da linha de comando diferente do editor.
+- **Decisão (16/11/2026):** deixado de lado. Para menos faixas, use `--dither`.
 
 ### ✅ 7d. PNG comprimido nas threads do libuv (1.48.7)
 
@@ -280,4 +308,4 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Ordem sugerida para o que falta
 
-1. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
+Nenhum item aberto. O que ficou de fora de cada item está na seção dele.

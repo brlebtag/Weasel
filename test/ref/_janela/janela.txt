@@ -6,6 +6,6 @@ godot {"anim":"pisca","normal":false,"scene":false}: contas_godot.zip · 1154 ×
   contas_pisca.png contas_pisca.tres
 gif {"anim":"pisca"}: contas_pisca.gif · 286 × 188 px · 4 quadros · 6 KB
   contas_pisca.gif
-gif {"anim":"__build__"}: contas_pintura.gif · 286 × 188 px · 109 quadros · 95 KB
+gif {"anim":"__build__"}: contas_pintura.gif · 286 × 188 px · 109 quadros · 74 KB
   contas_pintura.gif
 avisos de progresso: recorte 17, quadros 125, normal 4
