@@ -2305,6 +2305,7 @@
     if (st.marq && st.marq.moved) drawMarq(ctx, z);
     const tk = toolHooks[st.tool];
     if (tk && tk.overlay) { ctx.save(); tk.overlay(ctx, z, dpr); ctx.restore(); T(); }
+    for (const f of overlays) { ctx.save(); f(ctx, z, dpr); ctx.restore(); T(); }
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
     if (st.meas) drawMeasure(ctx, dpr);
@@ -3897,13 +3898,15 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'brush', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   // o Texto põe o texto pronto com um clique; as formas, o Conta-gotas e o Degradê moram em js/ui-draw.js
   const INSERT_TOOLS = { text: 'text' };
   // As ferramentas de fora (js/ui-draw.js) se registram aqui: { down(e) → true se o aperto é dela, move(e), up(e),
   // overlay(ctx, z, dpr), cursor(e), handles: as alças da forma do cursor continuam valendo nela }
   const toolHooks = {};
+  // desenhos por cima que não são de uma ferramenta (a prévia do Simplificar, js/ui-pencil.js)
+  const overlays = [];
   let ctxMenu = null;
   function setTool(id) {
     if (!TOOLS.includes(id) || ((isFilm() || st.view3d) && !FILM_TOOLS.includes(id))) return;
@@ -5754,6 +5757,15 @@
     setLock,
     // as ferramentas de desenhar (js/ui-draw.js, etapa 4a) e o menu do botão direito (js/ui-shell.js)
     addTool: (id, hooks) => { toolHooks[id] = hooks; },
+    addOverlay: (f) => { overlays.push(f); },
+    // um ponto nas coordenadas da linha (x, y) até o desenho, como os pontos dela aparecem agora (com os ossos;
+    // i é o índice do ponto, para o @osso dele)
+    localMap: (line) => {
+      const m = st.model, rec = m && !isFilm() ? m.byLine.get(line) : null;
+      if (!rec || !rec.el) return null;
+      const pose = currentPose();
+      return (x, y, i) => S.handlePos(m, pose, rec, { kind: 'pt', idx: i === undefined ? -1 : i, x, y });
+    },
     setCtxMenu: (f) => { ctxMenu = f; },
     toCanvas: (e) => toCanvas(e),
     snapPt: (e, x, y) => snapMouse({ self: true, ref: [x, y] }, x, y, e),

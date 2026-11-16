@@ -549,6 +549,7 @@ Para aprender: [capítulo 10](10-filme.md).
 | `--refs` | desenha as imagens guia (`ref`) por baixo, para conferir o traço |
 | `--trajectory[=pontos]` | png/jpg: o caminho dos pés (`feet=`) ou dos pontos em todos os quadros, numerado |
 | `--contact[=N]` | png/jpg: folha de conferência, com os quadros numerados, uma linha por animação, os eventos, os pés no chão e o escorregão em vermelho; no filme, uma linha por plano e um quadro a cada N segundos (padrão automático) |
+| `--simplify tol` | tira pontos dos `shape`, `stroke` e `line` (cada forma se afasta no máximo `tol` pixels; as pontas ganham `!`) e grava `arquivo_simples.weasel` (ou o `-o`, que precisa ser `.weasel`) |
 | `--check` · `--info` | só procurar erros · mostrar camadas, ossos, animações e eventos |
 | `--watch` | exportar de novo a cada mudança |
 | `-e "código"` · `-` | código direto (`;` separa linhas) · ler da entrada padrão |

@@ -51,6 +51,11 @@ Saída:
       --trajectory[=pontos]  png/jpg: a trajetória dos pés (anim feet=) em todos os quadros da
                           animação, numerada, por cima do personagem clarinho; =pe,mao segue
                           esses pontos
+      --simplify <tol>    tira pontos dos shape, stroke e line e grava um .weasel novo (o Simplificar
+                          do editor): cada forma se afasta no máximo <tol> pixels da original;
+                          cantos vivos ganham !. Grava arquivo_simples.weasel (ou o -o .weasel; com
+                          -e ou stdin, na saída padrão). Formas usadas na troca de forma (shape=, mouth)
+                          ficam como estão, a não ser com --force
       --contact           png/jpg: folha de conferência, para achar um quadro: os quadros em grade,
                           numerados, uma linha por animação (todas, ou -a "idle walk"), com os
                           eventos, os pés no chão (feet=) e o escorregão em vermelho; -s muda o
@@ -128,6 +133,7 @@ Exemplos:
   weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
   weasel filme.weasel -o para_mandar.mp4 --small --burn-subs
   weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
+  weasel vetorizado.weasel --simplify 1.5           -> vetorizado_simples.weasel
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -140,7 +146,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
+    simplify: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -207,6 +213,7 @@ function parseArgs(argv) {
       case '--refs': o.refs = true; break;
       case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '--contact': o.contact = inline || true; break;
+      case '--simplify': o.simplify = num('--simplify', val(), 0.01, 1000); break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -627,6 +634,7 @@ async function run(o) {
   }
   const nErr = model.errors.filter((e) => e.level === 'error').length;
   report(model, source.src, source.name);
+  if (o.simplify !== null) return simplifyFile(o, source, nErr, (text) => W.lang.parse(text, { file: path.basename(source.name), resolve, media: resolve.media, image }), watched);
 
   if (o.info) info(model, o.scale);
   if (o.check) {
@@ -662,6 +670,45 @@ async function run(o) {
   } else {
     await exportModel(model, o, format, source.base, '');
   }
+  return { code: 0, watched };
+}
+
+// --simplify: o Simplificar do editor em todas as linhas shape, stroke e line do arquivo (não nos include), e um
+// .weasel novo. As formas usadas na troca de forma (x.shape=, shape=x, mouth) ficam como estão (sem --force), porque
+// com outro número de pontos a troca deixa de ir ponto a ponto.
+function simplifyFile(o, source, nErr, parseText, watched) {
+  if (nErr && !o.force) {
+    console.error(`weasel: ${nErr} erro(s); nada foi simplificado (corrija antes, ou use --force).`);
+    return { code: 1, watched };
+  }
+  const out = o.out || (o.input && o.input !== '-' ? path.join(path.dirname(o.input), source.base + '_simples.weasel') : null);
+  if (out && !/\.weasel$/i.test(out)) usage('--simplify grava código: use -o arquivo.weasel');
+  if (out && o.input && o.input !== '-' && path.resolve(out) === path.resolve(o.input) && !o.force) usage('--simplify não grava em cima do arquivo de entrada: use outro nome no -o (ou --force)');
+  const lines = source.src.split('\n'), log = (s) => { if (!o.quiet) console.error(s); };
+  let n = 0, before = 0, after = 0;
+  lines.forEach((t, i) => {
+    const cr = t.endsWith('\r'), text = cr ? t.slice(0, -1) : t;
+    const w = W.lang.splitLine(text).words;
+    if (!w[0] || !['shape', 'stroke', 'line'].includes(w[0].text)) return;
+    const what = `linha ${i + 1} ${w[0].text}${w[1] && !w[1].text.includes('=') ? ' ' + w[1].text : ''}`;
+    const r = W.simplify.line(text, o.simplify);
+    if (r.why) { if (!r.minor) log(paint('33', `${what}: ${r.why}`)); return; }
+    if (r.after >= r.before) return;
+    const name = w[1] ? w[1].text : '', uses = name ? W.simplify.uses(source.src, name) : [];
+    if (uses.length && !o.force) { log(paint('33', `${what}: ficou como está, porque a troca de forma usa ela (linha ${uses.map((u) => u + 1).join(', ')}); --force simplifica mesmo assim`)); return; }
+    lines[i] = r.text + (cr ? '\r' : '');
+    n++;
+    before += r.before;
+    after += r.after;
+    log(`${what}: ${r.before} → ${r.after} pontos${r.corners.length ? ` (${r.corners.length} canto${r.corners.length > 1 ? 's' : ''} com !)` : ''}`);
+  });
+  const text = lines.join('\n');
+  // confere: o código novo não pode ter erros que o de antes não tinha
+  const e2 = parseText(text).errors.filter((e) => e.level === 'error').length;
+  if (e2 > nErr) throw new Fail('o código simplificado ficou com erros; nada foi gravado (isto é um defeito do Weasel: avise)', 3);
+  log(n ? `${n} forma${n > 1 ? 's' : ''}: ${before} → ${after} pontos (tolerância ${o.simplify} px)` : `nada para tirar com a tolerância ${o.simplify} px`);
+  if (out) save(out, Buffer.from(text, 'utf8'), 'código simplificado', o.quiet);
+  else process.stdout.write(text);
   return { code: 0, watched };
 }
 

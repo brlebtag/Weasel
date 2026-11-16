@@ -482,6 +482,81 @@ async function exprCase() {
   await check('_contas', 'contas.txt', 'text', lines.join('\n') + '\n');
 }
 
+// o Simplificar (js/simplify.js; o menu Objeto › Caminho › Simplificar, o Lápis, o Pincel e o --simplify): a conta
+// de cada trecho é a mesma do geom.smoothSegs; formas com muitos pontos ficam com poucos e dentro da tolerância
+// (medida aqui, nos dois sentidos); os cantos ganham !; os pontos que ficam não mudam (com o @osso); à mão livre; e as
+// linhas que a troca de forma usa
+async function simplifyCase() {
+  console.log(paint('1', '_simplificar'));
+  const G = W.geom, Sm = W.simplify, L = W.lang;
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  let bad = 0;
+  for (let t = 0; t < 200; t++) {
+    const n = 2 + Math.floor(rnd() * 7), closed = rnd() < 0.5, smooth = rnd() < 0.2 ? 0 : 0.5 + rnd();
+    const P = Array.from({ length: n }, () => {
+      const o = { x: rnd() * 200, y: rnd() * 200, corner: rnd() < 0.2 };
+      if (rnd() < 0.25) { o.tan = [rnd() * 40 - 20, rnd() * 40 - 20]; o.corner = false; if (rnd() < 0.5) o.tin = [rnd() * 40 - 20, rnd() * 40 - 20]; }
+      return o;
+    });
+    G.smoothSegs(P, closed, smooth).forEach((s, j) => { if (Sm.span(P, closed, 0.36 * smooth, j).some((v, i) => Math.abs(v - s[i]) > 1e-9)) bad++; });
+  }
+  record(!bad, '_simplificar/trecho', `${bad} trecho(s) diferentes do geom.smoothSegs`);
+  // a curva de uma linha, em pontos densos, e o maior afastamento entre duas
+  const dense = (text) => {
+    const sp = L.splitLine(text), pts = sp.points.map(L.parsePoint), cmd = sp.words[0].text, sw = sp.words.find((w) => w.text.startsWith('smooth=')), smooth = sw ? Number(sw.text.slice(7)) : 1;
+    const segs = cmd === 'line' || smooth <= 0 ? G.polySegs(pts, cmd === 'shape') : G.smoothSegs(pts, cmd === 'shape', smooth), out = [];
+    for (const s of segs) for (let i = 0; i <= 40; i++) { const t = i / 40, u = 1 - t; out.push([u * u * u * s[0] + 3 * u * u * t * s[2] + 3 * u * t * t * s[4] + t * t * t * s[6], u * u * u * s[1] + 3 * u * u * t * s[3] + 3 * u * t * t * s[5] + t * t * t * s[7]]); }
+    return out;
+  };
+  const d2 = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy; let t = l ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(a[0] + t * dx - p[0], a[1] + t * dy - p[1]); };
+  const far = (A, B) => { let m = 0; for (const p of A) { let d = Infinity; for (let i = 0; i + 1 < B.length; i++) d = Math.min(d, d2(p, B[i], B[i + 1])); m = Math.max(m, d); } return m; };
+  const f1 = (v) => Math.round(v * 10) / 10;
+  const circ = (cx, cy, r, n) => Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2; return `${f1(cx + r * Math.cos(a))},${f1(cy + r * Math.sin(a))}`; }).join(' ');
+  const star = [];
+  for (let i = 0; i < 10; i++) {
+    const a0 = (i / 10) * Math.PI * 2 - Math.PI / 2, a1 = ((i + 1) / 10) * Math.PI * 2 - Math.PI / 2, r0 = i % 2 ? 50 : 120, r1 = i % 2 ? 120 : 50;
+    const p0 = [200 + r0 * Math.cos(a0), 200 + r0 * Math.sin(a0)], p1 = [200 + r1 * Math.cos(a1), 200 + r1 * Math.sin(a1)];
+    for (let j = 0; j < 30; j++) star.push(`${f1(p0[0] + ((p1[0] - p0[0]) * j) / 30)},${f1(p0[1] + ((p1[1] - p0[1]) * j) / 30)}`);
+  }
+  const bean = Array.from({ length: 600 }, (_, i) => { const a = (i / 600) * Math.PI * 2, r = 150 + 40 * Math.sin(2 * a) + 15 * Math.cos(5 * a); return `${f1(200 + r * Math.cos(a))},${f1(200 + r * Math.sin(a) * 0.7)}`; }).join(' ');
+  const wave = Array.from({ length: 150 }, (_, i) => `${f1(20 + i * 2.4)},${f1(230 + 20 * Math.sin(i / 12))}`).join(' ');
+  const zig = Array.from({ length: 60 }, (_, i) => `${i * 5},${f1(100 + (i % 10 < 5 ? i % 10 : 10 - (i % 10)) * 10)}`).join(' ');
+  const LINES = [
+    ['círculo de 120', 'shape c c=red : ' + circ(200, 200, 80, 120), 1.5],
+    ['círculo de 120, tolerância 0.3', 'shape c c=red : ' + circ(200, 200, 80, 120), 0.3],
+    ['estrela de 300 (pontas lisas)', 'shape s c=red : ' + star.join(' '), 1.5],
+    ['feijão de 600', 'shape f c=red : ' + bean, 1.5],
+    ['onda (stroke)', 'stroke o w=4 : ' + wave, 1],
+    ['onda com smooth=0.5', 'stroke o w=4 smooth=0.5 : ' + wave, 1],
+    ['zigue-zague (line)', 'line z w=2 : ' + zig, 0.5],
+    ['quadrado de cantos com pontos no meio (smooth=0)', 'shape q c=red smooth=0 : 0,0 50,0 100,0 100,50 100,100 50,100 0,100 0,50', 0.5],
+    ['preso a ossos', 'stroke r w=4 : 220,180 230,165 240,150 250,140~0,-30~30,0@b 260,150@b 270,160@b 280,165@b 290,170@b # rabo', 1.5],
+    ['com alças', 'shape a c=red : 0,0~20,0 50,-5 100,0~20,0 100,100 50,105 0,100', 2],
+    ['poucos pontos', 'shape t c=red : 0,0 10,0 10,10', 1],
+    ['contas', 'shape t c=red : 0,0 {a},0 10,10 5,5', 1],
+    ['membro', 'stroke perna limb=8,6 hip=0,0 foot=10,40', 1],
+    ['retângulo', 'rect r 0,0 10,10', 1],
+  ];
+  const lines = [];
+  for (const [what, text, tol] of LINES) {
+    const r = Sm.line(text, tol);
+    if (r.why) { lines.push(`${what}: ${r.why}${r.minor ? ' (minor)' : ''}`); continue; }
+    const e = Math.max(far(dense(text), dense(r.text)), far(dense(r.text), dense(text)));
+    record(e <= tol * 1.02, `_simplificar/${what}`, `afastou ${e.toFixed(3)} com tolerância ${tol}`);
+    lines.push(`${what}: ${r.before} → ${r.after} pontos (tolerância ${tol}; cantos novos: ${r.corners.length})`, `  ${r.text}`);
+  }
+  // à mão livre: uma espiral e um quadrado tremidos
+  const spiral = [], sq = [];
+  for (let i = 0; i < 600; i++) { const a = i / 40, r = 10 + i * 0.2; spiral.push([Math.round(200 + r * Math.cos(a) + (rnd() - 0.5)), Math.round(200 + r * Math.sin(a) + (rnd() - 0.5))]); }
+  for (const [a, b] of [[[50, 50], [250, 50]], [[250, 50], [250, 250]], [[250, 250], [50, 250]], [[50, 250], [50, 52]]]) for (let i = 0; i < 80; i++) sq.push([Math.round(a[0] + ((b[0] - a[0]) * i) / 80 + (rnd() - 0.5)), Math.round(a[1] + ((b[1] - a[1]) * i) / 80 + (rnd() - 0.5))]);
+  const fmt = (pts) => pts.map((p) => `${f1(p.x)},${f1(p.y)}${p.corner ? '!' : ''}`).join(' ');
+  lines.push('', `espiral à mão (600 pontos do mouse, tolerância 2): ${fmt(Sm.freehand(spiral, false, 2))}`);
+  lines.push(`quadrado à mão (fechado, tolerância 2): ${fmt(Sm.freehand(sq, true, 2))}`);
+  lines.push('', `usos de gota: ${Sm.uses('shape gota c=#123\nkey 0 b=0 gota.shape=gota2\n# gota.shape=x\nmouth boca A=gota B=gota22\nat 1s x.y.shape=gota\nshape gotas c=#1 : 0,0', 'gota').map((i) => i + 1).join(', ')}`);
+  await check('_simplificar', 'simplificar.txt', 'text', lines.join('\n') + '\n');
+}
+
 // a janela de exportar (folha, Godot e GIF): o mesmo trabalho que o worker do navegador faz (exportJob, js/worker.js),
 // com os nomes dos arquivos e o resumo; a folha sai igual à da função de sempre
 async function jobCase() {
@@ -903,6 +978,7 @@ async function main() {
   if (!only.length || only.some((o) => '_giro'.includes(o))) await spinCase();
   if (!only.length || only.some((o) => '_velocidade'.includes(o))) await speedCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
+  if (!only.length || only.some((o) => '_simplificar'.includes(o))) await simplifyCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

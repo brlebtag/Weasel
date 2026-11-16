@@ -192,6 +192,14 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .grad-panel .rp-head { gap: 6px; }
 /* prévia do def: as variáveis, embaixo à direita */
 .def-panel { top: auto; bottom: 8px; width: 300px; }
+/* o Simplificar (js/ui-pencil.js): embaixo, no meio */
+.simp-panel { top: auto; bottom: 8px; right: auto; left: 50%; transform: translateX(-50%); width: 420px; padding: 8px 12px 9px; }
+.simp-panel .sp-n { margin-left: auto; color: var(--dim); font: 12px var(--mono); }
+.simp-panel .sp-tol { display: flex; align-items: center; gap: 8px; padding: 2px 0 8px; }
+.simp-panel .sp-tol input[type=range] { flex: 1; min-width: 0; }
+.simp-panel .sp-num { width: 52px; font: 12px var(--mono); text-align: right; }
+.simp-panel .sp-note { color: var(--warn); line-height: 1.45; padding: 0 0 8px; }
+.simp-panel .rp-foot small { flex: 1; text-align: right; line-height: 1.3; }
 .stage.ruled .def-panel { top: auto; }
 .pv-tog { color: #ff7cc4; }
 .dp-name { border: none; background: none; padding: 0 2px; font: 600 12px var(--mono); color: var(--kw); }
@@ -216,6 +224,7 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .stage.lp-open .grad-panel { left: 266px; max-width: calc(100% - 274px); }
 /* com as réguas ligadas, os painéis abrem depois delas */
 .stage.ruled .ref-panel { top: 28px; max-height: calc(100% - 36px); }
+.stage.ruled .simp-panel { top: auto; }
 .stage.ruled .layer-panel, .stage.ruled .grad-panel { left: 28px; }
 .stage.ruled.lp-open .grad-panel { left: 286px; max-width: calc(100% - 294px); }
 .lp-count { color: var(--dim); }

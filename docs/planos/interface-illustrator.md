@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 e a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0 e a 4c (Lápis, Pincel e Simplificar) na 1.57.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -711,7 +711,46 @@ Dividi a etapa em três **(R)**, para cada uma sair testada e publicada sozinha:
   - girar e espelhar uma alça quebrada.
 - O guia (capítulo 2, "Alça quebrada", e a referência), o README e a referência (F1) contam o que mudou.
 
-**A 4c** (o Lápis, o Pincel e o Simplificar) vem em seguida.
+**A 4c.** O Lápis, o Pincel e o Simplificar (o pedido 4 do Lucas, seção 5.5). As escolhas marcadas com **(R)** esperam a sua confirmação:
+- **O Simplificar** (`js/simplify.js`: o mesmo código no menu, no Lápis, no Pincel e na linha de comando):
+  - o jeito é o que o Lucas sugeriu. O Ramer–Douglas–Peucker acha os pontos que importam; a curva lisa do próprio Weasel é conferida contra a de antes, trecho a trecho e nos dois sentidos, e ganha pontos só onde o erro passa da tolerância; por fim, sai cada ponto que dá para tirar sem passar dela;
+  - tirar um ponto de cada vez empaca quando os pontos estão espaçados por igual (o círculo de 16 pontos não vira o de 8). Por isso o ajuste começa de quatro RDP, do mais fino ao mais grosso, e fica o que acaba com menos pontos **(R)**;
+  - numa forma que já existe, os pontos que ficam são os dela, sem mudar nada (as coordenadas, o `@osso`, as alças): o Simplificar só **tira** pontos, não inventa outros **(R)**. Assim, o "herda o osso do ponto mais perto" do pedido sai sozinho. Onde o osso muda de um ponto para o vizinho, os dois ficam **(R)**;
+  - os cantos vivos ganham `!`: os pontos onde a curva desenhada vira mais de 60 graus num pedacinho de 3 tolerâncias **(R)**. Uma ponta que já era redonda continua redonda;
+  - o Simplificar não escreve `~`. Os pontos são lisos (a curva automática) ou cantos; ajustar alças para economizar mais pontos ficou para depois **(R)**;
+  - a `line` e o `smooth=0` (sem curvas) passam só pelo RDP;
+  - ficam como estão: os pontos com `{contas}`, os membros (`limb=`) e as formas pequenas (3 pontos num `shape`, 2 num `stroke` ou numa `line`);
+  - **a troca de forma:** com outro número de pontos, o `x.shape=` e o `mouth` deixam de ir ponto a ponto (viram a mistura de contornos). O editor avisa e deixa aplicar; a linha de comando pula essas formas, a não ser com `--force` **(R)**.
+- **Objeto › Caminho › Simplificar…**, também no menu do botão direito **(R)**:
+  - abre um painelzinho embaixo, no meio do desenho **(R)**. Nele ficam a tolerância (de 0,1 a 20 pixels do desenho, num controle que anda mais devagar perto do zero; começa em 1,5 e guarda a última) **(R)**, o "312 → 24 pontos" e os avisos;
+  - a prévia mostra a forma de antes cinza (fantasma) e a nova por cima, em azul, com os pontos (quadradinho no canto, bolinha no liso);
+  - **Enter** (ou o botão) aplica todas as escolhidas de uma vez, com um Ctrl+Z só; **Esc** desiste. Sem escolha, vale a linha do cursor;
+  - mexer no código com o painel aberto fecha o painel sem mudar nada **(R)**.
+- **Lápis (N):**
+  - o arraste vira um `stroke` com a cor e a grossura das caixinhas, simplificado com 2 pixels **da tela** de tolerância. A fidelidade não tem controle por enquanto; o Simplificar tira mais depois **(R)**;
+  - terminando a menos de 12 pixels do começo, fecha um `shape`, com o preenchimento e o contorno, como a Caneta fechando **(R)**;
+  - um clique sem arrastar não escreve nada. Enquanto arrasta, o traço segue o mouse com a cor e a grossura de verdade;
+  - continuar um traço que já existe e o Alt (que no Illustrator vira a Suavizar) ficaram de fora **(R)**.
+- **Pincel (B):** o mesmo arraste, sempre um `stroke` (não fecha), com a grossura da caixinha e `taper=0.15,0.3`: afina 15% no começo e 30% no fim, como uma pincelada **(R)**. Um anel no mouse mostra a grossura. A pressão da caneta (mesa digitalizadora) ainda não muda nada **(R)**.
+- **[ e ]**, no Pincel e no Lápis, mudam a grossura da caixinha (de 1 em 1 até 10, de 2 em 2 até 30, de 5 em 5 depois), sem mexer nas formas escolhidas **(R)**.
+- **Duas casas novas** na barra, depois da Linha: o Pincel e o Lápis, como no Illustrator **(R)**. Na etapa 5, o Pincel de bolha entra na casa do Pincel, e a Suavizar, a Borracha de caminho e a Junção, na do Lápis.
+- **Na linha de comando:** `--simplify 1.5`, em inglês como as outras opções (o pedido falava em `--simplificar`) **(R)**.
+  - Grava `arquivo_simples.weasel` ao lado do arquivo, ou o `-o`, que precisa ser `.weasel`. Com `-e` ou a entrada padrão, escreve na saída padrão.
+  - Diz, forma a forma, quantos pontos havia e quantos ficaram.
+  - Nunca grava em cima do arquivo de entrada (a não ser com `--force`) e confere que o código novo não ganhou erros **(R)**.
+  - Mexe só nas linhas do próprio arquivo, não nas de um `include`.
+
+**Como ficou (16/11/2026):** a 4c saiu na 1.57.0, e com ela a etapa 4 inteira.
+- O Simplificar está no `js/simplify.js`, no navegador e na linha de comando. O Lápis, o Pincel e o painel estão no `js/ui-pencil.js`; o `--simplify`, no `cli/weasel.js`.
+- Um teste novo (`_simplificar`) confere que a conta de cada trecho é a mesma do desenho, mede o afastamento de cada forma simplificada (sempre dentro da tolerância) e guarda os resultados. O círculo de 120 pontos fica com 8; a estrela de 300 pontos, com 10 cantos; o feijão de 600, com 19.
+- Conferido no navegador:
+  - o painel (a prévia, o Enter aplicando três formas com um Ctrl+Z só, o Esc, o código mudando por fora, o aviso da troca de forma);
+  - o menu Objeto › Caminho e o do botão direito;
+  - o Lápis (um S aberto e uma volta fechada, que virou um `shape` de 4 cantos);
+  - o Pincel (o `taper=`, o `[` e o `]`, o anel no mouse).
+- O guia (capítulo 2, "Menos pontos: Simplificar", e a referência), o README e a referência (F1) contam o que mudou.
+
+**A etapa 5** (os caminhos: Tesoura, Junção, Faca, Borracha, Pincel de bolha, Pathfinder, Construtor de formas e Suavizar) vem em seguida.
 
 ### Como ficaria por dentro
 

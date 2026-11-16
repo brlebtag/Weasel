@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.56.0">
+<link rel="stylesheet" href="css/style.css?v=1.57.0">
 </head>
 <body>
 <header class="top">
@@ -267,6 +267,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
           <li><b>Varinha mágica</b> (<kbd>Y</kbd>): clique numa forma e entram todas com a mesma cor de preenchimento (um nome da <code>palette</code> vale pela cor dele). <b>Laço</b> (<kbd>Q</kbd>): arraste em volta das formas. Nas duas, <kbd>Shift</kbd> soma e <kbd>Alt</kbd> tira.</li>
           <li><b>Caneta</b> (<kbd>P</kbd>): o clique põe um canto, e apertar e arrastar puxa as alças (com <kbd>Alt</kbd>, no meio do arraste, só a de saída). <b>Curvatura</b> (<kbd>Shift</kbd>+<kbd>~</kbd>): cada clique põe um ponto liso; duplo clique ou <kbd>Alt</kbd>+clique, um canto. Nas duas, clicar no primeiro ponto fecha um <code>shape</code>; <kbd>Enter</kbd> ou <kbd>Esc</kbd> termina um <code>stroke</code>; <kbd>Backspace</kbd> tira o último ponto. <b>Ponto de ancoragem</b> (<kbd>Shift</kbd>+<kbd>C</kbd>): clique num ponto troca canto e liso; arrastar um ponto puxa as alças; arrastar um lado da alça mexe só nele.</li>
           <li><b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>), <b>Polígono</b>, <b>Estrela</b> e <b>Linha</b> (<kbd>\</kbd>): arraste para desenhar. <kbd>Shift</kbd>: quadrado, círculo, de 45 em 45 graus, polígono e estrela em pé; <kbd>Alt</kbd>: a partir do meio; <kbd>↑</kbd> e <kbd>↓</kbd> (sem soltar) mudam os lados e as pontas; <kbd>Esc</kbd> desiste. Um clique põe uma de tamanho padrão. A forma entra na frente de tudo na camada da linha do cursor (num grupo isolado, dentro dele), com nome em inglês (<code>rect1</code>, <code>polygon1</code>…), e uma camada travada não aceita.</li>
+          <li><b>Pincel</b> (<kbd>B</kbd>) e <b>Lápis</b> (<kbd>N</kbd>): à mão livre. O arraste vira um <code>stroke</code> com poucos pontos (o Simplificar), com os cantos em <code>!</code>; o do Pincel sai com as pontas afinando (<code>taper=0.15,0.3</code>), e o Lápis que termina perto do começo fecha um <code>shape</code>. A cor e a grossura vêm das caixinhas; <kbd>[</kbd> e <kbd>]</kbd> mudam a grossura.</li>
           <li><b>Texto</b> (<kbd>T</kbd>): um clique põe o texto e já abre a caixinha para escrever; clicar num texto que existe muda as letras.</li>
           <li><b>Conta-gotas</b> (<kbd>I</kbd>): clique numa forma e a pintura dela (<code>c=</code>, <code>ink=</code>, <code>inkc=</code>, <code>opacity=</code>) vai para as escolhidas; sem escolha, para as caixinhas. <kbd>Alt</kbd>+clique pinta a forma clicada com as caixinhas.</li>
           <li><b>Degradê</b> (<kbd>G</kbd>): arraste sobre a forma (a escolhida, ou a de baixo do mouse) e o arraste vira o começo e o fim do <code>gradient</code> dela. Sem gradiente, nasce um (<code>gradient1</code>, da cor dela clara até ela); se outras formas usam o mesmo, nasce uma cópia. <kbd>Alt</kbd> troca linear e radial; <kbd>Shift</kbd>, de 45 em 45 graus; um clique faz um deitado, de lado a lado.</li>
@@ -404,33 +405,35 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.56.0"></script>
-<script src="js/lang.js?v=1.56.0"></script>
-<script src="js/art.js?v=1.56.0"></script>
-<script src="js/scene.js?v=1.56.0"></script>
-<script src="js/film.js?v=1.56.0"></script>
-<script src="js/audio.js?v=1.56.0"></script>
-<script src="js/nle.js?v=1.56.0"></script>
-<script src="js/webm.js?v=1.56.0"></script>
-<script src="js/svg.js?v=1.56.0"></script>
-<script src="js/gif.js?v=1.56.0"></script>
-<script src="js/webp.js?v=1.56.0"></script>
-<script src="js/mp4.js?v=1.56.0"></script>
-<script src="js/zip.js?v=1.56.0"></script>
-<script src="js/normal.js?v=1.56.0"></script>
-<script src="js/export.js?v=1.56.0"></script>
-<script src="js/godot.js?v=1.56.0"></script>
-<script src="js/rig.js?v=1.56.0"></script>
-<script src="js/editor.js?v=1.56.0"></script>
-<script src="js/examples.js?v=1.56.0"></script>
-<script src="js/timeline.js?v=1.56.0"></script>
-<script src="js/app.js?v=1.56.0"></script>
-<script src="js/ui-menu.js?v=1.56.0"></script>
-<script src="js/ui-shell.js?v=1.56.0"></script>
-<script src="js/ui-3d.js?v=1.56.0"></script>
-<script src="js/ui-props.js?v=1.56.0"></script>
-<script src="js/ui-select.js?v=1.56.0"></script>
-<script src="js/ui-draw.js?v=1.56.0"></script>
-<script src="js/ui-pen.js?v=1.56.0"></script>
+<script src="js/geom.js?v=1.57.0"></script>
+<script src="js/lang.js?v=1.57.0"></script>
+<script src="js/simplify.js?v=1.57.0"></script>
+<script src="js/art.js?v=1.57.0"></script>
+<script src="js/scene.js?v=1.57.0"></script>
+<script src="js/film.js?v=1.57.0"></script>
+<script src="js/audio.js?v=1.57.0"></script>
+<script src="js/nle.js?v=1.57.0"></script>
+<script src="js/webm.js?v=1.57.0"></script>
+<script src="js/svg.js?v=1.57.0"></script>
+<script src="js/gif.js?v=1.57.0"></script>
+<script src="js/webp.js?v=1.57.0"></script>
+<script src="js/mp4.js?v=1.57.0"></script>
+<script src="js/zip.js?v=1.57.0"></script>
+<script src="js/normal.js?v=1.57.0"></script>
+<script src="js/export.js?v=1.57.0"></script>
+<script src="js/godot.js?v=1.57.0"></script>
+<script src="js/rig.js?v=1.57.0"></script>
+<script src="js/editor.js?v=1.57.0"></script>
+<script src="js/examples.js?v=1.57.0"></script>
+<script src="js/timeline.js?v=1.57.0"></script>
+<script src="js/app.js?v=1.57.0"></script>
+<script src="js/ui-menu.js?v=1.57.0"></script>
+<script src="js/ui-shell.js?v=1.57.0"></script>
+<script src="js/ui-3d.js?v=1.57.0"></script>
+<script src="js/ui-props.js?v=1.57.0"></script>
+<script src="js/ui-select.js?v=1.57.0"></script>
+<script src="js/ui-draw.js?v=1.57.0"></script>
+<script src="js/ui-pen.js?v=1.57.0"></script>
+<script src="js/ui-pencil.js?v=1.57.0"></script>
 </body>
 </html>

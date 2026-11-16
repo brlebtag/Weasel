@@ -21,6 +21,7 @@ O Weasel tem sete tipos de forma:
 > - **Retângulo** (M), **Elipse** (L), **Polígono**, **Estrela** e **Linha** (`\`): aperte e arraste. Com **Shift**, sai um quadrado, um círculo, uma linha de 45 em 45 graus, ou o polígono e a estrela em pé; com **Alt**, a forma cresce a partir do meio. No Polígono e na Estrela, as setas **↑** e **↓** (sem soltar o mouse) mudam o número de lados ou de pontas. **Esc** desiste.
 > - Um clique sem arrastar põe ali uma forma de tamanho padrão. O **Texto** (T) já abre uma caixinha para você escrever as letras.
 > - **Caneta** (P) e **Curvatura** (Shift+~): ponto a ponto. Na Caneta, o clique põe um canto, e apertar e arrastar puxa as alças da curva; na Curvatura, cada clique põe um ponto liso (o duplo clique, um canto). Clicar no primeiro ponto fecha um `shape`; **Enter** ou **Esc** termina um `stroke`, e **Backspace** tira o último ponto. As alças estão [mais abaixo](#alça-da-curva-xydxdy).
+> - **Lápis** (N) e **Pincel** (B): à mão livre. O traço do mouse vira um `stroke` com poucos pontos (quem faz isso é o [Simplificar](#menos-pontos-simplificar)), e onde o traço vira de repente sai um canto (`!`). O Lápis que termina perto do começo fecha um `shape`. O Pincel sai com as pontas afinando (`taper=`). Nos dois, `[` e `]` mudam a grossura.
 > - O Retângulo, a Elipse, o Polígono e a Estrela dividem a mesma casa da barra: segure o botão (ou clique nele com o botão direito) para escolher outra. O triangulinho no canto marca as casas com mais de uma ferramenta.
 > - A forma entra **na frente** de tudo na camada da linha do cursor, com um nome novo em inglês (`rect1`, `ellipse1`, `polygon1`…), e já vem escolhida, com as alças: é só mover, girar e mudar o tamanho. Num grupo isolado (duplo clique nele), ela entra no grupo. Uma camada travada não aceita formas novas.
 > - A cor vem das **caixinhas de preenchimento e contorno**, no pé da barra de ferramentas (veja o [capítulo 3](03-cores.md#a-palette-cores-com-nome)).
@@ -307,6 +308,27 @@ Repare:
 > - **Duplo clique** num losango de uma alça quebrada junta os dois lados de novo (fica o lado do clique). Numa alça inteira, o duplo clique (no losango ou no ponto) tira a alça, e a curva volta a ser automática. Soltar um losango em cima do próprio ponto também tira (na quebrada, só aquele lado, que fica `0,0`).
 > - A ferramenta **Ponto de ancoragem** (**Shift+C**, na casa da Caneta): o clique num ponto troca canto e liso; arrastar um ponto puxa uma alça nova; arrastar um losango mexe só naquele lado.
 > - **Alt** e arrastar um ponto, na Seleção direta, leva uma **cópia** da forma inteira, como no Illustrator.
+
+### Menos pontos: Simplificar
+
+Desenhos que vêm de outro programa (um vetorizador, um SVG convertido) costumam ter pontos demais: cada pedacinho de curva vira um ponto. Como o Weasel faz as curvas lisas sozinho, quase sempre dá para ter o mesmo desenho com bem menos pontos.
+
+<!-- gerar: img/02_simplificar.png -->
+```weasel
+canvas 440 220 bg=#f4efe6
+shape antes c=#6aa84f ink=3 : 30,130 41,114 53,100 64,86 76,75 87,67 99,62 110,60 121,62 133,67 144,75 156,86 167,100 179,114 190,130 179,139 167,147 156,155 144,161 133,166 121,169 110,170 99,169 87,166 76,161 64,155 53,147 41,139
+shape depois c=#6aa84f ink=3 : 250,130 261,114 296,75 330,60 364,75 387,100 410,130 399,139 353,166 330,170 296,161 261,139
+```
+
+![Duas folhas verdes iguais, lado a lado: a da esquerda com 28 pontos, a da direita com 12](img/02_simplificar.png)
+
+As duas folhas são iguais. A da esquerda tem 28 pontos; a da direita, 12. Foi o Simplificar que escolheu quais ficavam.
+
+- **No editor:** escolha a forma (ou várias) e use o menu **Objeto › Caminho › Simplificar**. A **tolerância** diz quanto cada forma pode se afastar da de antes, em pixels do desenho. Enquanto você mexe, a forma de antes aparece cinza, a nova aparece azul por cima, com os pontos, e o painel mostra quantos pontos havia e quantos ficam. **Enter** aplica (um Ctrl+Z desfaz); **Esc** desiste.
+- **Na linha de comando:** `node cli/weasel.js vetorizado.weasel --simplify 1.5` grava o `vetorizado_simples.weasel`, com todos os `shape`, `stroke` e `line` simplificados.
+- Os pontos que ficam são os da forma, sem mudar nada, com o `@osso` e as alças. Onde a curva vira de repente (uma ponta fina), o ponto ganha `!`.
+- Ficam como estão: os pontos com `{contas}` e os membros (`limb=`).
+- Uma forma usada na troca de forma (`x.shape=`, `mouth`) com outro número de pontos deixa de trocar ponto a ponto. O editor avisa; a linha de comando nem mexe nela (a não ser com `--force`).
 
 ## Traço aberto: `stroke`
 

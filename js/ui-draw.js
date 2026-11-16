@@ -563,6 +563,8 @@
     paint: () => Object.assign({}, sw),
     // para a Caneta e a Curvatura (js/ui-pen.js)
     behind: () => sw.behind,
+    // o [ e o ] do Pincel e do Lápis (js/ui-pencil.js): a grossura da caixinha, sem pintar a escolha
+    setW: (v) => { sw.w = v; paintSw(); },
     closedPaint,
     openPaint,
     tag,

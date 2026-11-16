@@ -30,6 +30,8 @@
     { id: 'polygon', key: '', grp: 'shape', label: 'Polígono', tip: 'arraste do meio para fora; arrastando, ↑ e ↓ põem e tiram lados; Shift: em pé', icon: svg('<path d="M8 2.2l5.3 3.1v5.9L8 14.2l-5.3-3V5.3z"/>') },
     { id: 'star', key: '', grp: 'shape', label: 'Estrela', tip: 'arraste do meio para fora; arrastando, ↑ e ↓ põem e tiram pontas; Shift: em pé', icon: svg('<path d="M8 1.8l1.9 4 4.3.5-3.2 3 .8 4.3L8 11.5l-3.8 2.1.8-4.3-3.2-3 4.3-.5z"/>') },
     { id: 'line', key: '\\', label: 'Linha', tip: 'arraste de uma ponta à outra (Shift: de 45 em 45 graus; Alt: a partir do meio)', icon: svg('<path d="M3 13 13 3"/><circle class="f" cx="3" cy="13" r="1.3"/><circle class="f" cx="13" cy="3" r="1.3"/>') },
+    { id: 'brush', key: 'b', grp: 'brush', label: 'Pincel', tip: 'arraste para pintar: um stroke com a grossura do contorno e as pontas afinando (taper=). [ e ] mudam a grossura', icon: svg('<path d="M14.2 1.8 8.4 7.6"/><path d="M8.4 7.6 6.8 6.2c-1.5.2-2.4 1.2-2.6 2.6-.2 1.6-1 2.8-2.6 3.6 2.4 1.2 5.6.6 6.6-1.4.6-1.1.6-2.2.2-3z"/>') },
+    { id: 'pencil', key: 'n', grp: 'pencil', label: 'Lápis', tip: 'arraste para desenhar à mão livre: o traço vira poucos pontos (um stroke); terminando perto do começo, fecha um shape. [ e ] mudam a grossura', icon: svg('<path d="M11 2.4l2.6 2.6-8 8-3.5.9.9-3.5z"/><path d="M9.4 4l2.6 2.6"/>') },
     '-',
     { id: 'gradient', key: 'g', label: 'Degradê', tip: 'arraste sobre uma forma: o degradê vai de onde apertou até onde soltou (Alt: redondo; Shift: de 45 em 45 graus); escreve um gradient e põe o nome no c=', icon: svg('<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path class="f" d="M2.5 3.5a1 1 0 0 1 1-1h2v11h-2a1 1 0 0 1-1-1z"/><path class="f" d="M5.5 2.5h2.2v11H5.5z" opacity=".6"/><path class="f" d="M7.7 2.5h2v11h-2z" opacity=".3"/>') },
     { id: 'eyedrop', key: 'i', grp: 'eye', label: 'Conta-gotas', tip: 'clique numa forma: as escolhidas pegam a cor, o contorno e a opacidade dela (sem escolha, as caixinhas de cor pegam); Alt+clique pinta a clicada com as caixinhas', icon: svg('<path d="M2.3 13.7l.8-2.9 6.2-6.2 2.1 2.1-6.2 6.2z"/><path class="f" d="M9.6 3.4l1.6-1.6a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1l-1.6 1.6z"/>') },
@@ -190,6 +192,10 @@
       { label: 'Travar a escolha', key: 'Ctrl+2', enabled: hasSel, run: () => X().lock() },
       { label: 'Destravar tudo', key: 'Ctrl+Alt+2', enabled: drawing, run: () => X().unlockAll() },
       '-',
+      { label: 'Caminho', enabled: hasSel, sub: () => [
+        { label: 'Simplificar…', run: () => (W.pencil || NOP).simplify() },
+      ] },
+      '-',
       { label: 'Inserir', enabled: drawing, sub: () => A.shapes().map((s, i) => ({ label: `${s.label} (${s.cmd})`, run: () => A.insert(i) })) },
       '-',
       { label: 'Esconder / mostrar (hidden)', key: 'Ctrl+3', enabled: drawing, run: A.hide },
@@ -268,7 +274,7 @@
     return [
       ...pickItems('Editar', ['Desfazer', 'Refazer', '-', 'Recortar', 'Copiar', 'Colar', 'Apagar']).map((it) => (it === '-' || it.label.startsWith('Desfazer') || it.label.startsWith('Refazer') || it.label === 'Colar' ? it : onlyOn(it))),
       '-',
-      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', '-', 'Travar a escolha', 'Destravar tudo', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
+      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
       '-',
       { label: 'Selecionar', sub: () => MENUS.find((m) => m.label === 'Selecionar').items },
       { label: 'Inserir forma', sub: () => A.shapes().map((x, i) => ({ label: `${x.label} (${x.cmd})`, run: () => A.insertAt(i, at) })) },
