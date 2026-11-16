@@ -1947,6 +1947,7 @@
   }
   // Mapa de luz (ambiente + luzes) e mapa só das luzes, no tamanho e na transformação da tela de destino.
   // ox, oy: onde a tela fica no mapa (no filme, uma tela de rascunho menor que o quadro lê o pedaço dela).
+  // No filme, aqui só se escolhe o mapa (e); quem vai ler pinta o pedaço que precisa (lightPiece).
   function lightMaps(R, ctx) {
     const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx);
     const P = FILM ? placeOf(ctx.canvas) : null;
@@ -1954,21 +1955,20 @@
     if (R.maps && R.maps.key === key && (!R.maps.e || R.maps.e.slot.owner === R.maps.e)) return R.maps;
     if (P) {
       // filme: os mapas do quadro inteiro ficam guardados pela luz em pixels do quadro, e os atores e as camadas com a
-      // mesma luz (cada um tem a matriz dele e a tela dele) usam o mesmo mapa
+      // mesma luz (cada um tem a matriz dele e a tela dele) usam o mesmo mapa, com a luz e a matriz de quem o criou
       const mf = shiftMat(m, -P.x, -P.y);
       const lk = lightKey(R.lighting, P.W, P.H, mf);
       let e = FILM.lights.get(lk);
       if (!e || e.slot.owner !== e) {
-        // cada mapa com as telas dele (reaproveitar uma tela cheia já usada no quadro custaria uma cópia inteira dela);
-        // passando de LIGHT_SLOTS mapas num quadro, o mais antigo dá lugar
+        // passando de LIGHT_SLOTS mapas num quadro, o mais antigo dá lugar (e as telas dele voltam para pieceFree)
         const i = FILM.n++ % LIGHT_SLOTS;
-        const slot = lightPool[i] || (lightPool[i] = { lm: document.createElement('canvas'), add: document.createElement('canvas'), owner: null });
-        e = { slot };
+        const slot = lightPool[i] || (lightPool[i] = { owner: null });
+        if (slot.owner) dropPieces(slot.owner);
+        e = { slot, lighting: R.lighting, mf, W: P.W, H: P.H, pieces: [] };
         slot.owner = e;
-        paintMaps(R.lighting, cleanCanvas(slot.lm, P.W, P.H), cleanCanvas(slot.add, P.W, P.H), P.W, P.H, mf);
         FILM.lights.set(lk, e);
       }
-      R.maps = { key, lm: e.slot.lm, add: e.slot.add, ox: P.x, oy: P.y, e };
+      R.maps = { key, ox: P.x, oy: P.y, e, piece: null };
       return R.maps;
     }
     const a = scratch('lm', W, H), b = scratch('lmadd', W, H);
@@ -1976,16 +1976,68 @@
     R.maps = { key, lm: a.canvas, add: b.canvas, ox: 0, oy: 0 };
     return R.maps;
   }
-  function paintMaps(lighting, lm, add, W, H, m) {
-    lm.fillStyle = rgbStr(lighting.amb.rgb, lighting.amb.power);
-    lm.fillRect(0, 0, W, H);
-    // mapa do brilho: cinza 50% (neutro no overlay) + metade da luz
-    add.fillStyle = 'rgb(128,128,128)';
-    add.fillRect(0, 0, W, H);
+  // Filme: o pedaço do mapa e que cobre [x0, x1)×[y0, y1) (pixels do quadro), pintado uma vez, antes de ser lido.
+  // No canvas da linha de comando (o @napi-rs/canvas, que tem toBuffer), o pedaço é só a caixa box de quem pede (o que
+  // as camadas com luz do ator pintam, ver film.js), ou o quadro inteiro quando ela não cobre o pedido; dentro dele,
+  // os pixels são os mesmos do mapa inteiro. E as telas são recriadas (width =), não limpas: lá, pintar numa tela que
+  // já foi origem de drawImage (como os mapas do quadro anterior) custa uma cópia inteira dela, mesmo com clearRect.
+  // No navegador, o mapa vai inteiro, como antes: a placa de vídeo pinta o degradê recortado com até 2 níveis de
+  // diferença em alguns pixels, e lá pintar o quadro inteiro não pesa.
+  function lightPiece(e, box, x0, y0, x1, y1) {
+    const has = (r) => x0 >= r.x0 && y0 >= r.y0 && x1 <= r.x1 && y1 <= r.y1;
+    for (const p of e.pieces) if (has(p.reg)) return p;
+    const p = { lm: pieceFree.pop() || document.createElement('canvas'), add: pieceFree.pop() || document.createElement('canvas'), reg: null };
+    const cli = !!p.lm.toBuffer;
+    if (cli && box) {
+      const r = { x0: Math.max(0, Math.floor(box.x) - 2), y0: Math.max(0, Math.floor(box.y) - 2), x1: Math.min(e.W, Math.ceil(box.x + box.w) + 2), y1: Math.min(e.H, Math.ceil(box.y + box.h) + 2) };
+      if (has(r) && (r.x1 - r.x0) * (r.y1 - r.y0) < 0.9 * e.W * e.H) p.reg = r; // quase o quadro inteiro: vai inteiro
+    }
+    const prep = cli ? freshCanvas : cleanCanvas;
+    paintMaps(e.lighting, prep(p.lm, e.W, e.H), prep(p.add, e.W, e.H), e.W, e.H, e.mf, p.reg);
+    if (!p.reg) p.reg = { x0: 0, y0: 0, x1: e.W, y1: e.H };
+    e.pieces.push(p);
+    return p;
+  }
+  const pieceFree = [];
+  function dropPieces(e) {
+    for (const p of e.pieces) pieceFree.push(p.lm, p.add);
+    e.pieces = [];
+  }
+  // a tela no tamanho w×h, recriada: limpa e com o contexto no padrão
+  function freshCanvas(c, w, h) {
+    c.width = w;
+    if (c.height !== h) c.height = h;
+    return c.getContext('2d');
+  }
+  // reg: pintar só esse pedaço ({ x0, y0, x1, y1 }, em pixels da tela; null = a tela inteira). A luz spot vai inteira:
+  // ela já tem o recorte dela (o arco), e os dois recortes juntos mudam a borda do arco.
+  function paintMaps(lighting, lm, add, W, H, m, reg) {
+    // o recorte do pedaço (devolve true quando recortou: falta o restore)
+    const cut = (x) => {
+      if (!reg) return false;
+      x.save();
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.beginPath();
+      x.rect(reg.x0, reg.y0, reg.x1 - reg.x0, reg.y1 - reg.y0);
+      x.clip();
+      return true;
+    };
+    // o ambiente; no mapa do brilho, cinza 50% (neutro no overlay)
+    for (const [x, c] of [[lm, rgbStr(lighting.amb.rgb, lighting.amb.power)], [add, 'rgb(128,128,128)']]) {
+      const r = cut(x);
+      x.fillStyle = c;
+      x.fillRect(0, 0, W, H);
+      if (r) x.restore();
+    }
+    // as luzes somadas; no mapa do brilho, com metade da força
     for (const [x, k] of [[lm, 1], [add, 0.5]]) {
-      setMat(x, m);
-      x.globalCompositeOperation = 'lighter';
-      for (const L of lighting.lights) paintLight(x, k === 1 ? L : Object.assign({}, L, { power: L.power * k }));
+      for (const L of lighting.lights) {
+        const r = L.type !== 'spot' && cut(x);
+        setMat(x, m);
+        x.globalCompositeOperation = 'lighter';
+        paintLight(x, k === 1 ? L : Object.assign({}, L, { power: L.power * k }));
+        if (r) x.restore();
+      }
     }
   }
   const LIGHT_SLOTS = 8, lightPool = [];
@@ -2024,15 +2076,21 @@
     const x0 = Math.max(0, Math.floor(Math.min(...pts.map((p) => p[0]))) - 2), x1 = Math.min(W, Math.ceil(Math.max(...pts.map((p) => p[0]))) + 2);
     const y0 = Math.max(0, Math.floor(Math.min(...pts.map((p) => p[1]))) - 2), y1 = Math.min(H, Math.ceil(Math.max(...pts.map((p) => p[1]))) + 2);
     if (x1 <= x0 || y1 <= y0) return;
+    let src = maps;
+    if (maps.e) {
+      // filme: o pedaço do mapa que cobre a caixa da forma (pintado na primeira vez)
+      const X0 = x0 + maps.ox, Y0 = y0 + maps.oy, X1 = x1 + maps.ox, Y1 = y1 + maps.oy, p = maps.piece;
+      src = p && X0 >= p.reg.x0 && Y0 >= p.reg.y0 && X1 <= p.reg.x1 && Y1 <= p.reg.y1 ? p : (maps.piece = lightPiece(maps.e, R.lightBox, X0, Y0, X1, Y1));
+    }
     ctx.save();
     ctx.clip(path);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(maps.lm, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.drawImage(src.lm, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
     ctx.globalCompositeOperation = 'overlay';
     ctx.globalAlpha = alpha * ADD;
-    ctx.drawImage(maps.add, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    ctx.drawImage(src.add, x0 + maps.ox, y0 + maps.oy, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
     ctx.restore();
   }
   // Lado da forma virado para a luz mais claro, lado oposto mais escuro.
@@ -2481,7 +2539,8 @@
   // opts.film (filmFrame(), um por quadro do filme): o quadro é grande e tem muitos atores e camadas, então os mapas
   // de luz são divididos entre eles e as telas de rascunho ficam do tamanho do desenho (ver scratchBox); um drawScene
   // de dentro herda. O desenho fica igual a menos de um ou dois níveis de cor; sem opts.film (as imagens do jogo),
-  // nada muda.
+  // nada muda. opts.lightBox (filme): a caixa, em pixels do quadro, do que as camadas com luz pintam; os mapas de luz
+  // são pintados só nela (lightPiece).
   let PASS = null, FILM = null;
   function drawScene(ctx, model, pose, opts) {
     if (!opts || (opts.pass === undefined && opts.film === undefined)) return drawScene0(ctx, model, pose, opts);
@@ -2495,7 +2554,7 @@
     const tex = !!(PASS && PASS.tex);
     if (opts.background !== false && !tex) fillBg(ctx, model, pose, { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h });
     const lighting = PASS && (PASS.unlit || tex) ? null : opts.lighting !== undefined ? opts.lighting : sceneLights(model, pose);
-    const R = { model, pose, opts, lighting, maps: null };
+    const R = { model, pose, opts, lighting, maps: null, lightBox: (FILM && opts.lightBox) || null };
     // peça de virada (anim … turn): as partes de uma vista viram as da outra
     if (pose.turn && !opts.items && !opts.filter) {
       drawTurn(ctx, model, pose, opts, R);

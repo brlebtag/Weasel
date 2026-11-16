@@ -798,7 +798,9 @@
       }
       setMat(x, faded ? [m[0], m[1], m[2], m[3], m[4] - area.x, m[5] - area.y] : m);
       if (g.bg && !tex) S.fillBg(x, w.model, w.pose, { x: 0, y: 0, w: w.model.canvas.w, h: w.model.canvas.h });
-      if (!g.morph && (g.layers.size || g.glows)) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass, film: opts.film });
+      // os mapas de luz pintados só na caixa do que as camadas com luz pintam (S.plateBox; null = o quadro inteiro)
+      const lightBox = lighting && opts.film && !opts.artPass && !g.morph ? S.plateBox(w.model, w.pose, [...g.layers].filter((L) => !L.unlit && !L.guide), m, null) : null;
+      if (!g.morph && (g.layers.size || g.glows)) S.drawScene(x, w.model, w.pose, { background: false, layers: g.layers, lighting, glows: g.glows, guides: !!(w.stage && opts.guides), pass: opts.artPass, film: opts.film, lightBox });
       if (faded) {
         if (fog > 0.002) {
           // a névoa pinta por cima só onde já tem desenho

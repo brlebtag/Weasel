@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3 e o item 7a na 1.48.4 (16/11/2026). O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4 e o item 8 na 1.48.5 (16/11/2026). O resto está aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -22,19 +22,22 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 7c | GIF: cor mais próxima pela cor do pixel, não pelo centro da caixa | `gif.js` | menos faixas | ⬜ muda os bytes |
 | 7d | PNG: modo rápido, como opção | encoder do canvas | 3× mais rápido, arquivo 25–40% maior | ⬜ |
 | 7e | Normal map do Godot | `normal.js` | 2,3 s em 60 quadros; 20–30% a menos | ⬜ |
-| 8 | Filme com várias threads: por que 8 threads rendem só 3× | `cli/video.js` (a fila e o envio dos quadros) | 1.48.1: `-j 1` 21,3 s, `-j 8` 7,1 s | ⬜ investigar |
+| 8 | Filme com várias threads: o limite é a memória; os mapas de luz pintados só onde são lidos | `scene.js` `lightMaps` e `lightPiece`, `film.js` | MP4 de 10 s: `-j 1` 16,7 → 14,0 s, `-j 8` 5,3 → 4,7 s | ✅ 1.48.5 |
+| 8b | Filme: telas de rascunho recriadas em vez de limpas, na linha de comando | `scene.js` `scratch` e `cleanCanvas` | — | ⬜ investigar |
 
 ## Como medir
 
 - O canvas da linha de comando (@napi-rs/canvas) **não desenha na hora**. Ele guarda os comandos e só executa quando alguém lê a tela (pôr a tela em outra, `getImageData`, salvar). Por isso o `node --cpu-prof` culpa `drawImage` e `getImageData` por trabalho feito em outro lugar.
 - Para achar a origem real, cronometre cada chamada do canvas e anote quem a fez, ou compare duas versões do motor (A/B) com os mesmos quadros.
 - **Regras que apareceram:**
-  - `drawImage` de uma tela custa pelo tamanho da tela de **origem**, mesmo copiando um pedaço pequeno (1920×1080: 1,5–3 ms; uma tela do tamanho do desenho: 0,02 ms).
+  - Pintar de novo uma tela que já foi **origem** de `drawImage` custa uma cópia inteira dela (1920×1080: 1,3–1,7 ms), mesmo pintando um pedaço pequeno e mesmo com `clearRect` antes. Recriar a tela (`canvas.width = w`, 0,02 ms) evita a cópia. Já pôr em outra tela um pedaço de uma tela que não mudou custa só o pedaço (0,05 ms).
+  - Antes se achava que `drawImage` custava pelo tamanho da tela de origem (1920×1080: 1,5–3 ms); era essa cópia, nas telas de rascunho reaproveitadas.
   - Ler `canvas.width` é uma chamada ao código nativo (~100 ns). Nunca dentro de um laço de pixels.
   - O serrilhado do canvas muda com 1/10000 de pixel de deslocamento: bordas soltas com até ~27 níveis de diferença são ruído, não erro.
   - O canvas só devolve a memória das telas e dos pixels lidos (`getImageData`) quando o laço de eventos do Node dá uma volta (`setImmediate`). Num laço que só faz `await` de promessas prontas, nada volta, nem com o GC forçado: ~24 MB por quadro 1080p.
 - **Para medir a memória:** um gancho com `node -r` também roda dentro de cada thread. Meça só na thread principal (`isMainThread`), por uma thread à parte, porque a principal pode ficar presa no GIF.
 - A máquina varia de carga durante uma sessão: compare só números do mesmo teste.
+- **Para ver as threads:** cronometre dentro de cada thread (receber o quadro, render, pixels, cópia) e na principal (espera, ffmpeg). Para separar a máquina do código, rode as mesmas contas com N threads e com N processos.
 
 ## Os itens
 
@@ -55,6 +58,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 - Ainda sobram ~2,6 mapas diferentes por quadro (~47 ms).
 - Pintar os mapas em meia resolução e ampliar daria uns 35 ms a menos por quadro, mas a luz muda um pouco.
+- Depois do item 8, na linha de comando os mapas já são pintados só onde são lidos, então ali o ganho fica menor. Medir de novo antes de decidir.
 - **A decidir:** se vale só no filme, e se a diferença aparece.
 
 ### ✅ 3. Bloom do filme (1.48.1)
@@ -154,11 +158,39 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **7d. PNG rápido:** o encoder do canvas equivale ao zlib nível 6 (93 ms por quadro 1080p; 0,7–1 s por folha grande). Um modo rápido seria 3× mais rápido, com arquivos 25–40% maiores. Só como opção.
 - **7e. Normal map do Godot:** 2,3 s em 60 quadros; dá para ganhar uns 20–30%.
 
-### ⬜ 8. Escala das threads no filme
+### ✅ 8. Escala das threads no filme (1.48.5)
 
-- Na 1.48.1, 8 threads fazem o filme só 3× mais rápido que 1 (antes, 3,6×). O ffmpeg sozinho faz 170 quadros/s, então não é ele.
-- **A investigar:** a fila de quadros prontos (`eachFrame`), a cópia dos pixels entre as threads e o tempo de cada thread abrindo o filme.
-- **Achado no 7a:** a thread principal só manda o próximo quadro para uma thread quando lê a resposta dela. Enquanto a principal trabalha, as threads que terminaram ficam paradas. Mandar 2 quadros por thread deve ajudar.
+- **Problema:** com 8 threads, o filme saía só 3× mais rápido que com 1.
+- **Achado:**
+  - As threads ficam ocupadas 97% do tempo. A fila, a abertura do filme em cada thread (~0,1 s), a cópia dos pixels (2,6 ms de ~137 ms por quadro) e a thread principal (4 ms por quadro para o ffmpeg) quase não pesam. Mandar 2 quadros por thread não ajuda no MP4.
+  - O limite é a memória da máquina. O mesmo render em N threads ou em N processos escala igual (4,25× com 8). Contas puras escalam ~14× com 16 threads; cópias de memória, só ~1,7×. Um quadro demora mais quanto mais threads rodam: 63 ms com 1, 87 ms com 4, 116 ms com 8.
+  - A luz é metade do quadro. O `filme.weasel` pintava 4 pares de mapas de luz por quadro (8 telas 1080p inteiras), mas só lia ~1,22 tela deles.
+  - O ffmpeg divide a máquina com as threads: sem ele, 66 quadros/s; com ele, 54.
+- **Feito, com os quadros idênticos (só na linha de comando):**
+  - `film.js`: cada grupo de camadas calcula a caixa do que as camadas com luz pintam (`S.plateBox`) e a passa para `drawScene` como `lightBox`.
+  - `scene.js` `lightMaps`: no filme, não pinta mais na hora. Só guarda a luz e a matriz de quem pediu o mapa primeiro. Quem divide o mapa (a mesma `lightKey`) recebe a pintura com essa mesma matriz; com a matriz de quem pediu depois, a luz mudava 1 nível.
+  - `scene.js` `lightPiece`: pinta os dois mapas só na caixa pedida, com 2 pixels de folga e um recorte retangular, e guarda o pedaço. Um pedido fora dos pedaços já pintados ganha um pedaço novo. Se a caixa é quase o quadro inteiro, pinta inteiro.
+  - As telas dos pedaços são recriadas (`canvas.width = w`) em vez de limpas, para não pagar a cópia do canvas (ver "Como medir").
+  - A luz `spot` é pintada inteira: o recorte em arco dela, junto com o retangular, muda os pixels da borda.
+  - No navegador, os mapas continuam inteiros, como antes: lá o recorte retangular muda o degradê em até 2 níveis.
+- **Resultado:**
+  - Só o render, 240 quadros 1080p: 8 threads 65 → 78 quadros/s (+19%), 4 threads 42 → 51 (+22%); 1 thread ~76 → 54 ms por quadro.
+  - MP4 de 10 s do `filme.weasel` (o menor tempo de 3, alternando o motor antigo e o novo): `-j 1` 16,7 → 14,0 s, `-j 4` 6,3 → 5,5 s, `-j 8` 5,3 → 4,7 s.
+  - O filme fica mais rápido com qualquer número de threads, mas a razão entre 1 e 8 threads continua perto de 3×: com 1 thread também ganhou, e o resto do quadro e o ffmpeg ainda disputam a memória.
+- **Conferido:**
+  - todos os quadros do `filme.weasel` (492), de um filme de teste com luzes `point`, `spot` e `dir`, atores transparentes, névoa e profundidade (e uma versão com cada luz sozinha), e de todos os filmes de `test/casos`, com o motor antigo e o novo: 0 diferenças;
+  - no navegador (Chrome), o `filme.weasel` e o filme de luzes saem iguais com o motor antigo e o novo;
+  - o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
+- **Tentado e deixado de lado:** juntar o recorte de todas as luzes numa passada só (muda 491 quadros, sem ganho).
+- **Ficou de fora:**
+  - Pôr a luz por cima de cada camada (`lightRaster`) ainda custa ~14 ms por quadro com 1 thread e ~38 ms com 8.
+  - O item 8b, abaixo.
+
+### ⬜ 8b. Telas de rascunho recriadas na linha de comando
+
+- As telas de rascunho reaproveitadas (`scratch`, `cleanCanvas`) devem pagar a mesma cópia do canvas a cada quadro, porque já foram origem de `drawImage`.
+- Recriar (`width =`) evitaria a cópia, mas zera o estado da tela (matriz, recorte, modo de mistura). Precisa conferir cada uso.
+- Não deve mudar a imagem. Medir antes, como no item 8.
 
 ## Conferências pendentes
 
@@ -172,7 +204,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Ordem sugerida para o que falta
 
-1. 8, a escala das threads.
+1. 8b, as telas de rascunho recriadas (não muda a imagem).
 2. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
 3. 7d e 7e.
 4. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
