@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), e a etapa 1 (a casca) começou.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), e a etapa 1 (a casca) saiu na 1.50.0, no mesmo dia. A próxima é a 1b (camadas em 3D).
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
