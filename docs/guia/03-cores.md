@@ -125,7 +125,14 @@ Repare:
 - Um nome da `palette` pode valer outro nome: `palette sombra=cabelo` copia a cor de `cabelo` (com um exemplo [mais abaixo](#um-nome-que-copia-outro-sombracabelo)). Aqui a ordem importa: `cabelo` precisa vir antes.
 - O fundo também aceita nome: `bg=ceu`. Repare que o `canvas` está **acima** da `palette` que cria `ceu`, e funciona. A seção [Antes ou depois](#antes-ou-depois-onde-um-nome-da-palette-vale) explica por que usar pode vir antes e copiar não.
 
-> **Dica do editor:** as cores e os números da `palette` aparecem no painel **Amostras**, na coluna da direita do desenho (**Janela › Amostras**). Escolha uma forma e clique numa cor: ela vira o `c=` da forma. Com **Contorno** marcado em cima (ou com **Alt** + clique), vira o `inkc=`; no `stroke` e na `line`, a cor do traço. Os números (as espessuras) vão para o `ink=`, ou para o `w=` do traço. Os gradientes e os padrões também estão lá, e as variantes trocam com um clique. **+ nova** guarda na `palette` a cor da forma escolhida, com um nome livre (`cor1`, `cor2`…), e a forma passa a usar o nome. Duplo clique numa amostra leva à linha dela no código.
+> **Dica do editor:** as cores e os números da `palette` aparecem no painel **Amostras**, na coluna da direita do desenho (**Janela › Amostras**). Escolha uma forma e clique numa cor: ela vira o `c=` da forma (sem forma escolhida, a cor vai para as caixinhas da barra de ferramentas, logo abaixo). Com **Contorno** marcado em cima (ou com **Alt** + clique), vira o `inkc=`; no `stroke` e na `line`, a cor do traço. Os números (as espessuras) vão para o `ink=`, ou para o `w=` do traço. Os gradientes e os padrões também estão lá, e as variantes trocam com um clique. **+ nova** guarda na `palette` a cor da forma escolhida, com um nome livre (`cor1`, `cor2`…), e a forma passa a usar o nome. Duplo clique numa amostra leva à linha dela no código.
+
+> **Dica do editor:** no pé da barra de ferramentas ficam duas caixinhas: o **preenchimento** (o quadrado cheio, que vira o `c=`) e o **contorno** (o quadrado vazado, que vira o `inkc=`; a grossura, no campo de baixo, vira o `ink=`). As formas que você desenha saem com elas, e na `line` e no `stroke` o contorno é a cor do traço.
+>
+> - Com uma forma escolhida, as caixinhas mostram a pintura dela, e mudar uma caixinha pinta a forma.
+> - Clique numa caixinha para trazê-la para a frente; clique de novo (ou duplo clique) para escolher a cor.
+> - As teclas, com o foco no desenho: **X** troca qual fica na frente, **Shift+X** troca as duas cores, **/** tira a cor da caixinha da frente, **D** volta ao padrão (azul, com o contorno da cor do `ink` e grossura 4) e **Shift+D** faz as formas novas nascerem atrás de tudo na camada (de novo, na frente).
+> - O **Conta-gotas** (I) copia a pintura de uma forma clicada para as escolhidas (sem escolha, para as caixinhas). Com **Alt**+clique, faz o contrário: pinta a forma clicada com as caixinhas.
 
 ### Nomes que já existem
 
@@ -587,6 +594,17 @@ No editor, você não precisa escrever as posições e as cores à mão. Com o c
 - No desenho, a linha do gradiente aparece tracejada, com uma bolinha de cada cor. No linear, as alças são o começo e o fim (com **Shift**, a direção anda de 45 em 45 graus); no radial, o centro, o raio e o foco. Com `box`, um retângulo tracejado mostra a forma onde o 0 e o 1 caem.
 
 Arrastar uma marca ou uma alça é um **Ctrl+Z** só. Quando você mexe nas posições, todas passam a ficar escritas na linha (menos o `@0` da primeira e o `@1` da última, que já são o padrão). Assim nenhuma cor muda de lugar sozinha.
+
+### A ferramenta Degradê
+
+Para criar um gradiente sem escrever nada, escolha a forma e use o **Degradê** (tecla **G**, na barra de ferramentas): aperte num ponto e arraste até outro. O começo e o fim do arraste viram o começo e o fim do gradiente.
+
+- Se a forma ainda não tem gradiente, nasce um novo (`gradient1`), logo depois da `palette`, que vai da cor dela bem clara até a própria cor, e o `c=` da forma passa a ser ele.
+- Se ela já tem um, e só as formas escolhidas usam, ele muda. Se outras formas também usam, nasce uma cópia com as mesmas cores, e as outras ficam como estavam.
+- Com **Alt**, troca o linear pelo redondo (`radial`, do centro até a ponta do arraste) e vice-versa; com **Shift**, a direção anda de 45 em 45 graus.
+- Sem escolha, o arraste vale para a forma onde você apertou. Um clique sem arrastar faz um gradiente deitado, de um lado ao outro da forma.
+
+Depois, as cores se acertam no painel do gradiente, logo acima.
 
 ## Hachura e pontos: `pattern`
 

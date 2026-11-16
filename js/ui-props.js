@@ -444,10 +444,15 @@
     const list = stops.map((s, i) => { const c = typeof s === 'string' ? s : s.c || s.color; const at = typeof s === 'object' && s.at !== undefined ? s.at : i / Math.max(1, stops.length - 1); return `${hexOf(c, m) || '#888'} ${Math.round(at * 100)}%`; });
     return `background:linear-gradient(90deg,${list.join(',')})`;
   }
-  // a cor vai para o que está escolhido; sem escolha, avisa
+  // a cor vai para o que está escolhido; sem escolha, para as caixinhas de preenchimento e contorno da barra de
+  // ferramentas (js/ui-draw.js): as próximas formas desenhadas saem com ela
   function applySwatch(name, kind, alt) {
     const info = gather();
-    if (!info || info.kind !== 'shapes') { A.hint('Escolha uma forma (clique nela com a Seleção, V) para pintar com a amostra.', 2600); return; }
+    if (!info || info.kind !== 'shapes') {
+      if (W.draw && !A.isFilm()) { W.draw.setPaint(kind === 'width' ? 'w' : cfg.ink !== !!alt ? 'stroke' : 'fill', name); return; }
+      A.hint('Escolha uma forma (clique nela com a Seleção, V) para pintar com a amostra.', 2600);
+      return;
+    }
     const ink = cfg.ink !== !!alt, key = keyNow('sw');
     const by = new Map();
     const put = (k, line) => { if (!by.has(k)) by.set(k, []); by.get(k).push(line); };
@@ -491,15 +496,16 @@
     if (pl >= 0) {
       const t = lines[pl], sp = L.splitLine(t), ws = sp.words, end = ws[ws.length - 1].to;
       A.setLines(new Map([[pl, t.slice(0, end) + ` ${name}=${hex}` + t.slice(end)]]), key);
-    } else {
-      const cl = lines.findIndex((l) => /^\s*canvas\b/.test(l));
-      A.insertLine(cl + 1, `palette ${name}=${hex}`, key);
     }
     // a forma escolhida passa a usar o nome
-    if (info && info.kind === 'shapes') {
-      const ls = info.recs.filter((r) => { const a = r.st.attrs.get('c'); return a && hexOf(a.text, m) === hex; }).map((r) => r.st.line);
-      if (ls.length) A.setAttrs(ls, { c: name }, null, key);
+    let ls = info && info.kind === 'shapes' ? info.recs.filter((r) => { const a = r.st.attrs.get('c'); return a && hexOf(a.text, m) === hex; }).map((r) => r.st.line) : [];
+    if (pl < 0) {
+      const cl = lines.findIndex((l) => /^\s*canvas\b/.test(l));
+      A.insertLine(cl + 1, `palette ${name}=${hex}`, key);
+      // a linha nova empurra as de baixo uma para baixo
+      ls = ls.map((l) => (l >= cl + 1 ? l + 1 : l));
     }
+    if (ls.length) A.setAttrs(ls, { c: name }, null, key);
     A.hint(`Cor guardada na palette como ${name} (renomeie no código, se quiser).`, 2800);
   }
 
@@ -535,6 +541,10 @@
       A.setAttrs([i.layer.line], off, null, keyNow('fx'));
     },
     FX,
+    // as cores para as caixinhas da barra de ferramentas (js/ui-draw.js)
+    hexOf: (v, m) => hexOf(v, m || A.model()),
+    colorText: (hex, m) => colorText(hex, m || A.model()),
+    gradStyle: (m, k) => gradStyle(m, k),
   };
 
   A.on('draw', () => refresh(false));

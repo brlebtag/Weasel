@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.54.0">
+<link rel="stylesheet" href="css/style.css?v=1.55.0">
 </head>
 <body>
 <header class="top">
@@ -58,7 +58,6 @@
       <canvas id="view"></canvas>
       <div id="mediaList" class="media-list" hidden></div>
       <div id="hint" class="hint" hidden></div>
-      <div id="shapeMenu" class="ed-pop shape-menu" tabindex="-1" hidden></div>
       <div id="pinMenu" class="ed-pop shape-menu pin-menu" tabindex="-1" hidden></div>
       <input id="textEdit" class="text-edit" type="text" spellcheck="false" autocomplete="off" aria-label="Texto" hidden>
       <div id="refPanel" class="ref-panel" hidden></div>
@@ -261,18 +260,21 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>A coluna da direita tem <b>Propriedades</b> e <b>Amostras</b> (no menu Janela, cada uma abre e fecha). Propriedades mostra o que está escolhido (sem escolha, a forma da linha do cursor; sem forma, o documento: o tamanho do <code>canvas</code> e o fundo). <b>Transformar</b>: X, Y, largura e altura da caixa (sem a grossura do contorno; o elo estica sem perder a proporção) e o ângulo (o <code>rot=</code> de uma <code>ellipse</code>, <code>rect</code>, <code>text</code> ou <code>use</code>; nas outras, um giro a partir de 0). <b>Aparência</b>: preenchimento, contorno, grossura, largura do traço, cantos, afinar, pontas, tracejado e opacidade. <b>Texto</b>: as letras, o tamanho, a fonte, negrito, itálico e alinhamento. <b>Camada</b>: opacidade, mistura e os efeitos (desfoque, brilho, sombra, tingir, claridade, saturação, contraste, matiz). Enter grava; ↑ e ↓ mudam de 1 em 1 (<kbd>Shift</kbd>: 10); arrastar o nome de um campo de número muda o valor; ↺ tira o atributo do código. Cada mudança é um <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Amostras: clique numa cor pinta o preenchimento (ou o contorno, com <b>Contorno</b> marcado ou com <kbd>Alt</kbd>); as espessuras vão para o <code>ink=</code> (ou o <code>w=</code>); as variantes trocam com um clique; <b>+ nova</b> guarda a cor da forma na <code>palette</code>.</li>
       <li>A barra de baixo mostra os erros, o caminho da escolha (<code>arquivo › camada › forma</code>; clicar na camada escolhe ela inteira), a linha do código, as coordenadas do mouse, a variante de cores e o zoom (clicar no número volta a 100%).</li>
       <li><b>Exibir › Camadas em 3D</b> (ou o botão de camadas na ponta direita da barra de baixo) afasta as camadas no espaço, para ver o que fica na frente de quê: cada linha do painel Camadas vira uma peça. Arraste para girar; <kbd>Espaço</kbd>, a Mão ou o botão do meio movem; a roda e o Zoom aproximam; <kbd>Ctrl</kbd>+<kbd>0</kbd> volta de frente. Clique numa peça escolhe a linha dela (<kbd>Shift</kbd> soma ou tira), e as setas, <kbd>Ctrl</kbd>+<kbd>3</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd> e <kbd>Ctrl</kbd>+<kbd>Z</kbd> valem como no desenho. Na barrinha: <b>Explodir</b>, <b>De frente</b>, <b>De lado</b>, <b>Juntar</b>, quanto as camadas (e as formas de cada camada) se afastam e as molduras com os nomes; o olho de cada nome esconde a camada só ali. O mouse numa linha do painel Camadas apaga as outras peças. Acompanha o player (pulando quadros num desenho pesado), sem estilo de arte e sem os halos das luzes. Não aparece em filmes.</li>
-      <li>A barra de ferramentas fica à esquerda do desenho. A letra troca de ferramenta com o foco no desenho:
+      <li>A barra de ferramentas fica à esquerda do desenho. A letra troca de ferramenta com o foco no desenho; as casas com um triangulinho guardam mais de uma (segure o botão, ou o botão direito nele, para escolher):
         <ul>
           <li><b>Seleção</b> (<kbd>V</kbd>): clique numa forma e ela vira a escolha, com a caixa para mover, girar e esticar; aperte numa forma e arraste para movê-la (com <kbd>Alt</kbd>, leva uma cópia). Arraste no vazio para a caixa de seleção: entram as formas que ela toca (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira; as camadas guia ficam de fora). Clique no vazio tira a escolha. Os pontos não aparecem. Numa forma de um <code>group</code>, o clique pega o grupo inteiro; o duplo clique entra no grupo (o resto fica apagado e parado) e o <kbd>Esc</kbd> sai.</li>
           <li><b>Seleção direta</b> (<kbd>A</kbd>): os pontos e as alças da forma escolhida (arrastar, criar, apagar, curvas: veja abaixo). Arrastar no vazio também faz a caixa de seleção.</li>
           <li><b>Varinha mágica</b> (<kbd>Y</kbd>): clique numa forma e entram todas com a mesma cor de preenchimento (um nome da <code>palette</code> vale pela cor dele). <b>Laço</b> (<kbd>Q</kbd>): arraste em volta das formas. Nas duas, <kbd>Shift</kbd> soma e <kbd>Alt</kbd> tira.</li>
-          <li><b>Texto</b> (<kbd>T</kbd>), <b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>) e <b>Linha</b> (<kbd>\</kbd>): um clique põe a forma pronta ali, com nome em inglês (<code>rect1</code>, <code>ellipse1</code>…). O Texto já abre a caixinha para escrever, e clicar num texto que existe muda as letras.</li>
+          <li><b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>), <b>Polígono</b>, <b>Estrela</b> e <b>Linha</b> (<kbd>\</kbd>): arraste para desenhar. <kbd>Shift</kbd>: quadrado, círculo, de 45 em 45 graus, polígono e estrela em pé; <kbd>Alt</kbd>: a partir do meio; <kbd>↑</kbd> e <kbd>↓</kbd> (sem soltar) mudam os lados e as pontas; <kbd>Esc</kbd> desiste. Um clique põe uma de tamanho padrão. A forma entra na frente de tudo na camada da linha do cursor (num grupo isolado, dentro dele), com nome em inglês (<code>rect1</code>, <code>polygon1</code>…), e uma camada travada não aceita.</li>
+          <li><b>Texto</b> (<kbd>T</kbd>): um clique põe o texto e já abre a caixinha para escrever; clicar num texto que existe muda as letras.</li>
+          <li><b>Conta-gotas</b> (<kbd>I</kbd>): clique numa forma e a pintura dela (<code>c=</code>, <code>ink=</code>, <code>inkc=</code>, <code>opacity=</code>) vai para as escolhidas; sem escolha, para as caixinhas. <kbd>Alt</kbd>+clique pinta a forma clicada com as caixinhas.</li>
+          <li><b>Degradê</b> (<kbd>G</kbd>): arraste sobre a forma (a escolhida, ou a de baixo do mouse) e o arraste vira o começo e o fim do <code>gradient</code> dela. Sem gradiente, nasce um (<code>gradient1</code>, da cor dela clara até ela); se outras formas usam o mesmo, nasce uma cópia. <kbd>Alt</kbd> troca linear e radial; <kbd>Shift</kbd>, de 45 em 45 graus; um clique faz um deitado, de lado a lado.</li>
           <li><b>Medir</b> e <b>Prender</b> (<kbd>Shift</kbd>+<kbd>P</kbd>): veja abaixo.</li>
           <li><b>Mão</b> (<kbd>H</kbd>): arraste para mover a vista. Em qualquer ferramenta, segure o <kbd>Espaço</kbd> e arraste.</li>
           <li><b>Zoom</b> (<kbd>Z</kbd>): clique aproxima; <kbd>Alt</kbd>+clique afasta.</li>
         </ul>
         No filme, só as duas seleções, a Mão e o Zoom.</li>
-      <li>Com o foco no desenho: <kbd>Espaço</kbd> (tocado, sem arrastar) ou <kbd>Enter</kbd> toca e pausa; <kbd>,</kbd> e <kbd>.</kbd> trocam de quadro; as setas empurram a forma escolhida 1 px (<kbd>Shift</kbd>: 10); <kbd>Ctrl</kbd>+<kbd>0</kbd> ajusta à tela, <kbd>Ctrl</kbd>+<kbd>1</kbd> é 100%, <kbd>Ctrl</kbd>+<kbd>=</kbd> e <kbd>Ctrl</kbd>+<kbd>-</kbd> aproximam e afastam; <kbd>Ctrl</kbd>+<kbd>3</kbd> esconde; <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz sem soltar a escolha. <kbd>Ctrl</kbd>+<kbd>R</kbd> liga as réguas em qualquer lugar; <kbd>Ctrl</kbd>+<kbd>O</kbd> abre um arquivo, <kbd>Ctrl</kbd>+<kbd>S</kbd> salva e <kbd>Ctrl</kbd>+<kbd>E</kbd> exporta.</li>
+      <li>Com o foco no desenho: <kbd>Espaço</kbd> (tocado, sem arrastar) ou <kbd>Enter</kbd> toca e pausa; <kbd>,</kbd> e <kbd>.</kbd> trocam de quadro; as setas empurram a forma escolhida 1 px (<kbd>Shift</kbd>: 10); <kbd>Ctrl</kbd>+<kbd>0</kbd> ajusta à tela, <kbd>Ctrl</kbd>+<kbd>1</kbd> é 100%, <kbd>Ctrl</kbd>+<kbd>=</kbd> e <kbd>Ctrl</kbd>+<kbd>-</kbd> aproximam e afastam; <kbd>Ctrl</kbd>+<kbd>3</kbd> esconde; <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz sem soltar a escolha. No pé da barra de ferramentas ficam as caixinhas de <b>preenchimento</b> (<code>c=</code>) e <b>contorno</b> (<code>inkc=</code>, com a grossura do <code>ink=</code> embaixo): as formas novas saem com elas, e com uma forma escolhida elas mostram e mudam a pintura dela. <kbd>X</kbd> troca a da frente, <kbd>Shift</kbd>+<kbd>X</kbd> troca as duas cores, <kbd>/</kbd> tira a cor da da frente, <kbd>D</kbd> volta ao padrão e <kbd>Shift</kbd>+<kbd>D</kbd> faz as formas novas nascerem atrás de tudo. <kbd>Ctrl</kbd>+<kbd>R</kbd> liga as réguas em qualquer lugar; <kbd>Ctrl</kbd>+<kbd>O</kbd> abre um arquivo, <kbd>Ctrl</kbd>+<kbd>S</kbd> salva e <kbd>Ctrl</kbd>+<kbd>E</kbd> exporta.</li>
       <li>Com formas escolhidas: <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd> e <kbd>Ctrl</kbd>+<kbd>V</kbd> copiam, recortam e colam (o texto das linhas; o <kbd>Ctrl</kbd>+<kbd>V</kbd> põe no fim da camada, no meio da vista); <kbd>Ctrl</kbd>+<kbd>F</kbd> cola logo na frente da escolha, no mesmo lugar, e <kbd>Ctrl</kbd>+<kbd>B</kbd> logo atrás. Um nome que já existe ganha número (<code>asa_1</code>). <kbd>Delete</kbd> apaga as formas (na Seleção direta, o ponto). <kbd>Ctrl</kbd>+<kbd>]</kbd> e <kbd>Ctrl</kbd>+<kbd>[</kbd> sobem e descem na camada (com <kbd>Shift</kbd>, para a frente e para trás de tudo): a linha muda de lugar no código, com os comentários de cima dela. <kbd>Ctrl</kbd>+<kbd>D</kbd> repete a última transformação (mover, girar, esticar); depois de um <kbd>Alt</kbd>+arrastar, faz outra cópia com o mesmo passo. <kbd>Ctrl</kbd>+<kbd>A</kbd> escolhe tudo; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> ou <kbd>Esc</kbd>, nada.</li>
       <li>Grupos e travas: <kbd>Ctrl</kbd>+<kbd>G</kbd> agrupa as escolhidas (escreve <code>group group1</code> … <code>end</code> em volta delas) e <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> desfaz o grupo. <kbd>Ctrl</kbd>+<kbd>2</kbd> trava a escolha (<code>lock</code>: o desenho não deixa escolher nem arrastar, e o clique passa para o que está embaixo) e <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>2</kbd> destrava tudo, menos as camadas. <b>Objeto › Alinhar</b> (e o grupo Alinhar de Propriedades) alinha as escolhidas pela caixa de todas, ou na prancheta quando é uma só, e distribui três ou mais.</li>
       <li>Escolher no desenho não leva o foco para o código: no Dividido, o código vai até a linha e marca, e as teclas continuam no desenho. Para escrever, clique no código.</li>
@@ -282,7 +284,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <ul>
       <li>Com a Seleção direta (<kbd>A</kbd>), os pontos da forma escolhida (ou da linha do cursor) aparecem no desenho; o ponto sob o cursor do código fica laranja.</li>
       <li>Clique numa forma do desenho (sem arrastar) e o código vai até a linha dela; clique de novo no mesmo lugar para pegar a de baixo.</li>
-      <li>O botão direito no desenho (ou <b>Objeto › Inserir</b>) abre o menu de formas: a escolhida entra na linha de baixo, pronta para arrastar (com o botão direito, onde você clicou).</li>
+      <li>O botão direito no desenho escolhe a forma de baixo do mouse e abre o menu do objeto: os itens de Editar e Objeto que valem ali, <b>Selecionar</b> e <b>Inserir forma</b> (uma forma pronta onde você clicou; <b>Objeto › Inserir</b> põe no meio da tela).</li>
       <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code> (ou tira a alça). Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
       <li>Clique num ponto para escolhê-lo (ele fica laranja) e aperte <kbd>Delete</kbd> para apagá-lo, com a alça de curva dele. Vale para <code>shape</code>, <code>stroke</code> e <code>line</code>; a forma não fica com menos pontos do que precisa (3 no <code>shape</code>, 2 nos outros).</li>
       <li><kbd>Alt</kbd>+arrastar um ponto puxa uma alça de curva (<code>~dx,dy</code>); o losango azul arrasta a alça, e soltá-lo em cima do ponto a tira.</li>
@@ -294,7 +296,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>A bolinha verde em cima da forma gira: muda o <code>rot=</code> da <code>ellipse</code>, do <code>rect</code> e do <code>text</code> (duplo clique volta a 0) e gira os pontos do <code>shape</code>, do <code>stroke</code> e da <code>line</code>. Com <kbd>Shift</kbd>, de 15 em 15 graus.</li>
       <li>Na linha do <code>canvas</code> ou de uma <code>light … dir</code>, uma seta amarela sai do centro e aponta para a luz: arraste o sol da ponta para girar a direção (com <kbd>Shift</kbd>, de 15 em 15 graus). Sem <code>light=</code> no <code>canvas</code>, arrastar escreve um.</li>
       <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor do código (não no Design).</li>
-      <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus.</li>
+      <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus. Para criar um, use a ferramenta Degradê (<kbd>G</kbd>).</li>
       <li>Com o cursor entre <code>def</code> e <code>end</code>, a <b>prévia</b> mostra o componente sozinho, com uma cruz rosa no <code>0,0</code> (o ponto que vai para o x,y do <code>use</code>): na hora, se o <code>def</code> não tem <code>use</code>; com a chave <b>Prévia do def</b>, se tem. No painel <b>Prévia</b>, mude os parâmetros (arraste o nome de um número para os lados) sem mudar o código; <b>Copiar como use</b> copia uma linha <code>use</code> com o que mudou. As alças mudam as linhas do <code>def</code>.</li>
       <li><b>Janela › Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
       <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. O cadeado, ao lado, põe e tira o <code>lock</code> (amarelo: travada; apagado: travada pela camada ou pelo grupo). <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). Não aparece em filmes.</li>
@@ -401,31 +403,32 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.54.0"></script>
-<script src="js/lang.js?v=1.54.0"></script>
-<script src="js/art.js?v=1.54.0"></script>
-<script src="js/scene.js?v=1.54.0"></script>
-<script src="js/film.js?v=1.54.0"></script>
-<script src="js/audio.js?v=1.54.0"></script>
-<script src="js/nle.js?v=1.54.0"></script>
-<script src="js/webm.js?v=1.54.0"></script>
-<script src="js/svg.js?v=1.54.0"></script>
-<script src="js/gif.js?v=1.54.0"></script>
-<script src="js/webp.js?v=1.54.0"></script>
-<script src="js/mp4.js?v=1.54.0"></script>
-<script src="js/zip.js?v=1.54.0"></script>
-<script src="js/normal.js?v=1.54.0"></script>
-<script src="js/export.js?v=1.54.0"></script>
-<script src="js/godot.js?v=1.54.0"></script>
-<script src="js/rig.js?v=1.54.0"></script>
-<script src="js/editor.js?v=1.54.0"></script>
-<script src="js/examples.js?v=1.54.0"></script>
-<script src="js/timeline.js?v=1.54.0"></script>
-<script src="js/app.js?v=1.54.0"></script>
-<script src="js/ui-menu.js?v=1.54.0"></script>
-<script src="js/ui-shell.js?v=1.54.0"></script>
-<script src="js/ui-3d.js?v=1.54.0"></script>
-<script src="js/ui-props.js?v=1.54.0"></script>
-<script src="js/ui-select.js?v=1.54.0"></script>
+<script src="js/geom.js?v=1.55.0"></script>
+<script src="js/lang.js?v=1.55.0"></script>
+<script src="js/art.js?v=1.55.0"></script>
+<script src="js/scene.js?v=1.55.0"></script>
+<script src="js/film.js?v=1.55.0"></script>
+<script src="js/audio.js?v=1.55.0"></script>
+<script src="js/nle.js?v=1.55.0"></script>
+<script src="js/webm.js?v=1.55.0"></script>
+<script src="js/svg.js?v=1.55.0"></script>
+<script src="js/gif.js?v=1.55.0"></script>
+<script src="js/webp.js?v=1.55.0"></script>
+<script src="js/mp4.js?v=1.55.0"></script>
+<script src="js/zip.js?v=1.55.0"></script>
+<script src="js/normal.js?v=1.55.0"></script>
+<script src="js/export.js?v=1.55.0"></script>
+<script src="js/godot.js?v=1.55.0"></script>
+<script src="js/rig.js?v=1.55.0"></script>
+<script src="js/editor.js?v=1.55.0"></script>
+<script src="js/examples.js?v=1.55.0"></script>
+<script src="js/timeline.js?v=1.55.0"></script>
+<script src="js/app.js?v=1.55.0"></script>
+<script src="js/ui-menu.js?v=1.55.0"></script>
+<script src="js/ui-shell.js?v=1.55.0"></script>
+<script src="js/ui-3d.js?v=1.55.0"></script>
+<script src="js/ui-props.js?v=1.55.0"></script>
+<script src="js/ui-select.js?v=1.55.0"></script>
+<script src="js/ui-draw.js?v=1.55.0"></script>
 </body>
 </html>

@@ -6,7 +6,8 @@
    - key: o atalho, só para mostrar;
    - on: marca ✓ (ou ●, com radio); enabled e visible: false apaga ou esconde;
    - sub: os itens de um submenu (uma lista, ou uma função que devolve a lista na hora).
-   on, enabled, visible e label também podem ser funções: são lidas toda vez que o menu abre. */
+   on, enabled, visible e label também podem ser funções: são lidas toda vez que o menu abre.
+   popup(itens, x, y) abre os mesmos itens soltos, no lugar do clique (o menu do botão direito). */
 (function (W) {
   'use strict';
 
@@ -14,6 +15,7 @@
 
   function menubar(root, menus) {
     let open = -1; // o menu aberto (índice), ou -1
+    let ctx = false; // o menu do botão direito (popup) está aberto
     const pops = []; // os menus abertos na tela: o de cima e os submenus, cada um { el, rows }
     const btns = menus.map((m, i) => {
       const b = document.createElement('button');
@@ -66,6 +68,7 @@
     // o menu i, embaixo do botão dele
     function show(i) {
       closePops(0);
+      ctx = false;
       open = i;
       btns.forEach((b, k) => { b.classList.toggle('open', k === i); b.setAttribute('aria-expanded', String(k === i)); });
       const r = btns[i].getBoundingClientRect();
@@ -89,6 +92,7 @@
     function close() {
       closePops(0);
       open = -1;
+      ctx = false;
       btns.forEach((b) => { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); });
     }
     // marca o item idx do menu level (o mouse em cima, ou as setas); num item com submenu, abre o submenu
@@ -108,9 +112,20 @@
       if (r.it.run) r.it.run();
     }
 
+    // o menu do botão direito: os itens em x, y (do outro lado do mouse, se não couber)
+    function popup(items, x, y) {
+      close();
+      ctx = true;
+      build(items, 0, (el) => {
+        const w = el.offsetWidth, h = el.offsetHeight;
+        el.style.left = (x + w + 4 < window.innerWidth ? x : Math.max(4, x - w)) + 'px';
+        el.style.top = (y + h + 4 < window.innerHeight ? y : Math.max(4, window.innerHeight - h - 4)) + 'px';
+      });
+    }
+
     // o teclado com um menu aberto: setas andam, Enter escolhe, Esc fecha (as outras teclas seguem para o resto)
     document.addEventListener('keydown', (e) => {
-      if (open < 0) return;
+      if (open < 0 && !ctx) return;
       const lv = pops.length - 1, p = pops[lv], n = p ? p.rows.length : 0;
       const stop = () => { e.preventDefault(); e.stopImmediatePropagation(); };
       // Esc num submenu fecha só ele (o item dele continua marcado, sem abrir de novo)
@@ -125,18 +140,18 @@
         closePops(lv + 1);
         return;
       }
-      if (e.key === 'ArrowRight') { stop(); if (p.sel >= 0 && p.rows[p.sel].it.sub) { openSub(lv, p.sel); hot(lv + 1, 0); } else show((open + 1) % menus.length); return; }
-      if (e.key === 'ArrowLeft') { stop(); if (lv > 0) { closePops(lv); } else show((open - 1 + menus.length) % menus.length); return; }
+      if (e.key === 'ArrowRight') { stop(); if (p.sel >= 0 && p.rows[p.sel].it.sub) { openSub(lv, p.sel); hot(lv + 1, 0); } else if (!ctx) show((open + 1) % menus.length); return; }
+      if (e.key === 'ArrowLeft') { stop(); if (lv > 0) { closePops(lv); } else if (!ctx) show((open - 1 + menus.length) % menus.length); return; }
       if (e.key === 'Enter' || e.key === ' ') { stop(); if (p.sel >= 0) { pick(lv, p.sel); if (pops[lv + 1]) hot(lv + 1, 0); } }
     }, true);
     // clicar fora, trocar de janela ou mudar o tamanho fecha
     document.addEventListener('mousedown', (e) => {
-      if (open < 0 || root.contains(e.target) || pops.some((p) => p.el.contains(e.target))) return;
+      if ((open < 0 && !ctx) || (!ctx && root.contains(e.target)) || pops.some((p) => p.el.contains(e.target))) return;
       close();
     }, true);
     window.addEventListener('blur', close);
     window.addEventListener('resize', close);
-    return { close, isOpen: () => open >= 0 };
+    return { close, popup, isOpen: () => open >= 0 || ctx };
   }
 
   W.ui = W.ui || {};

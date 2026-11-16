@@ -16,13 +16,14 @@ O Weasel tem sete tipos de forma:
 
 **Fechada** quer dizer que tem lado de dentro: pode ser preenchida (`c=`), ter contorno (`ink=`) e servir de molde para recortes. Traço e linha só têm a cor da própria linha.
 
-> **Dica do editor:** para começar uma forma sem digitar, clique com o **botão direito** no desenho (ou use o menu **Objeto › Inserir**).
+> **Dica do editor:** para começar uma forma sem digitar, use as ferramentas da barra à esquerda do desenho.
 >
-> - Um menu mostra as seis formas (o `emitter` fica de fora). Escolha uma com o mouse, com as setas e **Enter**, ou pelo número dela.
-> - A forma entra na linha de baixo da do cursor, com um nome novo em inglês (`ellipse1`, `rect1`…), uma cor e um tamanho que cabem no que está na tela.
-> - Com o botão direito, ela nasce onde você clicou; pelo menu, no meio da tela.
-> - Ela já vem escolhida, com as alças: é só mover, girar e mudar o tamanho.
-> - As ferramentas **Retângulo** (M), **Elipse** (L), **Linha** (`\`) e **Texto** (T), na barra à esquerda do desenho, fazem o mesmo com um clique onde você quer a forma. O Texto já abre uma caixinha para você escrever as letras.
+> - **Retângulo** (M), **Elipse** (L), **Polígono**, **Estrela** e **Linha** (`\`): aperte e arraste. Com **Shift**, sai um quadrado, um círculo, uma linha de 45 em 45 graus, ou o polígono e a estrela em pé; com **Alt**, a forma cresce a partir do meio. No Polígono e na Estrela, as setas **↑** e **↓** (sem soltar o mouse) mudam o número de lados ou de pontas. **Esc** desiste.
+> - Um clique sem arrastar põe ali uma forma de tamanho padrão. O **Texto** (T) já abre uma caixinha para você escrever as letras.
+> - O Retângulo, a Elipse, o Polígono e a Estrela dividem a mesma casa da barra: segure o botão (ou clique nele com o botão direito) para escolher outra. O triangulinho no canto marca as casas com mais de uma ferramenta.
+> - A forma entra **na frente** de tudo na camada da linha do cursor, com um nome novo em inglês (`rect1`, `ellipse1`, `polygon1`…), e já vem escolhida, com as alças: é só mover, girar e mudar o tamanho. Num grupo isolado (duplo clique nele), ela entra no grupo. Uma camada travada não aceita formas novas.
+> - A cor vem das **caixinhas de preenchimento e contorno**, no pé da barra de ferramentas (veja o [capítulo 3](03-cores.md#a-palette-cores-com-nome)).
+> - O **botão direito** no desenho abre o menu do objeto (copiar, organizar, agrupar…). **Inserir forma** põe uma forma pronta onde você clicou, e o menu **Objeto › Inserir**, no meio da tela; é por ali que saem também o `shape`, o `stroke` e o `text` prontos.
 >
 > Para achar a linha de uma forma que já existe, **clique nela** no desenho. O cursor vai para a linha dela.
 >

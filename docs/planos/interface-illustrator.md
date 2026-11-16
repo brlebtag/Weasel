@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0 e a 3b (travar, alinhar e grupos) na 1.54.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 e a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -603,7 +603,69 @@ Dividi a etapa em duas **(R)**, para cada uma sair testada: a **3a** só mexe no
 
 **Como ficou (16/11/2026):** a 3b saiu na 1.54.0, e com ela a etapa 3 inteira. A linguagem (`group` e `lock`) está no `js/lang.js`; os grupos, as travas, o isolamento e o cadeado ficam no `app.js`; agrupar, travar e alinhar estão no `js/ui-select.js`, e o grupo Alinhar, no `js/ui-props.js`. Conferido no navegador com um boneco de teste (cabeça com os olhos num grupo de dentro, um braço travado): o clique e o Shift+clique no grupo, a Seleção direta, a caixa com V e com A, o Laço; o isolamento em dois níveis e o Esc; o clique passando pela forma travada e pela camada travada; Ctrl+G com formas que não estavam juntas, Ctrl+Shift+G e o Ctrl+Z dos dois; Ctrl+2 num grupo e Ctrl+Alt+2 (com o ²); o cadeado do painel; alinhar à esquerda, embaixo (com o grupo andando inteiro), na prancheta e distribuir; organizar o grupo na camada e uma forma dentro do grupo; copiar e colar o grupo (com os nomes novos), colar dentro do isolamento, apagar o grupo e o Alt+arrastar com o Ctrl+D. O guia (capítulo 4, "Grupos e travas", e a referência), o README e a referência (F1) contam o que mudou.
 
-**A etapa 4** (desenhar arrastando, Caneta e Curvatura, Lápis, Conta-gotas, Degradê e o menu do botão direito) vem em seguida.
+**A etapa 4** (desenhar arrastando, Caneta e Curvatura, Lápis, Conta-gotas, Degradê e o menu do botão direito) está na seção 11.5.
+
+### 11.5 A etapa 4 em detalhe (16/11/2026)
+
+Dividi a etapa em três **(R)**, para cada uma sair testada e publicada sozinha:
+- **4a:** as formas arrastando (retângulo, elipse, polígono, estrela e linha), as caixinhas de preenchimento e contorno, o Conta-gotas, o Degradê e o menu do botão direito. Só mexe no editor.
+- **4b:** o Bézier completo na linguagem (as alças quebradas), a Caneta, a Curvatura e o Ponto de ancoragem.
+- **4c:** o Lápis e o Pincel, com o Simplificar (no menu Objeto › Caminho e no `--simplificar` da linha de comando).
+
+**A 4a.** As escolhas marcadas com **(R)** esperam a sua confirmação:
+- **Onde a forma nova entra:** na frente de tudo na camada da linha do cursor, isto é, no fim da camada (depois do grupo ou do `repeat` que a fecha) **(R)**. Sem uma forma na linha do cursor, na última camada que não é guia.
+  - **Shift+D** (o "desenhar atrás" do Illustrator) põe atrás de tudo, logo depois da linha `layer`; o botão no pé da barra mostra o modo.
+  - No isolamento de um grupo, a forma entra no fim do grupo (antes do `end`), com o recuo dele.
+  - Uma camada ou um grupo travado não aceita formas novas, e o aviso diz por quê **(R)**.
+  - Com a prévia de um `def` ligada, a forma entra na linha de baixo do cursor, nas coordenadas do `def`.
+  - O "desenhar dentro" do Illustrator (a máscara) ficou de fora **(R)**.
+- **Arrastar:**
+  - o que cada uma escreve: o retângulo, `rect nome x,y w,h`; a elipse, `ellipse nome cx,cy r` (ou `rx,ry`); o polígono e a estrela, um `shape` com os cantos já calculados (`x,y!`); a linha, `line nome : a b`;
+  - **Shift**: quadrado, círculo, de 45 em 45 graus, e o polígono e a estrela em pé, com uma ponta para cima **(R)**;
+  - **Alt**: a partir do meio. O polígono e a estrela crescem sempre do meio, como no Illustrator, com o primeiro canto apontando para o mouse;
+  - **↑** e **↓**, sem soltar, mudam os lados ou as pontas (de 3 a 64). O polígono começa com 6 lados e a estrela com 5 pontas, com o raio de dentro na metade do de fora **(R)**;
+  - **Esc**, sem soltar, desiste;
+  - um clique sem arrastar põe ali uma forma de um tamanho que cabe na vista, em vez da caixinha de números do Illustrator **(R)**.
+- **As alças da forma escolhida continuam valendo** com as ferramentas de forma: apertar num quadradinho estica a forma em vez de desenhar uma nova por cima **(R)**.
+- **As casas da barra:** Retângulo, Elipse, Polígono e Estrela dividem uma casa; Conta-gotas e Medir, outra, como no Illustrator **(R)**. Segurar o botão (ou o botão direito nele) abre as outras ao lado, e a casa mostra a última usada. O Degradê (G) ganhou casa própria, logo depois da Linha.
+- **As caixinhas de preenchimento e contorno** ficam no pé da barra de ferramentas, como no Illustrator:
+  - o preenchimento é o `c=`; o contorno, o `inkc=`; a grossura (o campo embaixo), o `ink=`;
+  - na `line` e no `stroke`, o contorno é a cor do traço e a grossura é o `w=`. Se o contorno estiver vazio, a linha usa a cor do preenchimento **(R)**;
+  - o contorno padrão é a cor do `ink` (a da `palette`), e aí não se escreve `inkc=` **(R)**;
+  - **D** volta ao padrão: o azul `#4a90d9`, o contorno do `ink` e a grossura 4 **(R)**;
+  - **elas seguem a escolha**, como no Illustrator: escolher uma forma traz a pintura dela, e mudar uma caixinha com formas escolhidas pinta as formas, num Ctrl+Z só **(R)**;
+  - **X** traz a outra caixinha para a frente, **Shift+X** troca as duas cores e **/** tira a cor da da frente (sem preenchimento, sem contorno, ou `c=none` se ficarem as duas vazias) **(R)**;
+  - clicar numa amostra do painel Amostras sem nada escolhido muda a caixinha **(R)**.
+- **Conta-gotas (I):**
+  - um clique numa forma copia o `c=`, o `ink=`, o `inkc=` e o `opacity=` dela para as escolhidas (as do painel, ou a da linha do cursor) **(R)**;
+  - sem escolha, só as caixinhas pegam a pintura;
+  - entre uma forma fechada e uma `line` ou um `stroke`, a cor e a grossura passam pelo papel (preenchimento ou contorno), não pelo nome do atributo **(R)**;
+  - **Alt+clique** faz o contrário: pinta a forma clicada com as caixinhas **(R)**.
+- **Degradê (G):** arrastar sobre a forma escolhida (ou a de baixo do mouse) escreve o começo e o fim do gradiente.
+  - Se só as escolhidas usam o gradiente dela, ele muda. Se outras formas também usam, ou se ela não tem um, nasce um novo (`gradient1`), logo depois da última `palette`, `gradient` ou `pattern` **(R)**.
+  - O novo vai da cor dela clareada (65% do caminho até o branco) até a própria cor **(R)**; a cópia de um gradiente dividido leva as mesmas cores.
+  - **Alt** troca linear e radial (no radial, o centro fica no começo do arraste e o raio vai até o fim); **Shift** anda de 45 em 45 graus.
+  - Um clique sem arrastar faz um gradiente deitado, de um lado ao outro da caixa da forma **(R)**.
+  - **Esc** para o arraste e deixa o que já foi escrito **(R)**.
+  - As coordenadas são as da forma (com `box`, de 0 a 1 na caixa dela).
+- **O botão direito no desenho** escolhe a forma de baixo do mouse (se ela ainda não estava escolhida) e abre o menu do objeto. Ele tem os itens de Editar e Objeto que valem ali (os apagados nem aparecem) **(R)**, mais **Selecionar** e **Inserir forma**. O menu de formas antigo saiu (decisão 8): **Inserir forma** põe uma forma pronta no lugar do clique, e **Objeto › Inserir**, no meio da tela **(R)**.
+- **O modo de tela F** do Illustrator ficou de fora **(R)**: a vista Design já faz esse papel.
+- **Achado no caminho:** no painel Amostras, o **+ nova**, quando escrevia a primeira linha da `palette`, trocava o `c=` da linha de cima da forma, e não o da forma. Está corrigido.
+
+**Como ficou (16/11/2026):** a 4a saiu na 1.55.0.
+- As ferramentas novas e as caixinhas estão no `js/ui-draw.js`.
+- O `app.js` ganhou o jeito de uma ferramenta tomar o mouse (`addTool`), o lugar das formas novas (`drawPlace`) e o menu do botão direito, que a casca (`js/ui-shell.js`) monta.
+- Conferido no navegador com o cavaleiro:
+  - as cinco formas arrastando, com Shift, Alt, ↑ e ↓, Esc e o clique sem arrastar;
+  - desenhar atrás, a camada travada, o isolamento e o Ctrl+Z de cada uma;
+  - as caixinhas (D, X, Shift+X, /, a cor e a grossura), com e sem escolha, e as amostras sem escolha;
+  - o Conta-gotas nos dois sentidos;
+  - o Degradê criando um gradiente, trocando para radial, copiando um gradiente dividido e avisando na camada travada;
+  - o menu do botão direito, o Inserir forma no lugar do clique e as casas da barra.
+- A prévia do `def` não foi conferida.
+- O guia (capítulos 1, 2 e 3), o README e a referência (F1) contam o que mudou.
+
+**A 4b** (o Bézier completo, a Caneta, a Curvatura e o Ponto de ancoragem) vem em seguida.
 
 ### Como ficaria por dentro
 
