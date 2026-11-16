@@ -180,7 +180,7 @@ Para aprender: [capítulo 3](03-cores.md) (palette, gradientes, hachuras e varia
 
 ## Camadas
 
-`layer nome [guide] [hidden] [lit] [unlit] [screen] [front] [zsort] [floor]`
+`layer nome [guide] [hidden] [lock] [lit] [unlit] [screen] [front] [zsort] [floor]`
 
 | Atributo | Padrão | O que faz |
 |---|---|---|
@@ -207,7 +207,7 @@ Para aprender: [capítulo 3](03-cores.md) (palette, gradientes, hachuras e varia
 | `horizon=` | 30% da altura | com `floor`: a altura do horizonte na tela |
 | `iso=x,y` | em cima, no meio | mapa isométrico; `x,y` é onde fica o canto (0,0) |
 
-`[zsort]` pinta de longe para perto a cada quadro · `[floor]` deita a camada como chão (sem `persp=`, 45°).
+`[zsort]` pinta de longe para perto a cada quadro · `[floor]` deita a camada como chão (sem `persp=`, 45°) · `[lock]` só no editor: as formas da camada não se escolhem pelo desenho.
 
 > `[lit]` é aceito, mas não muda nada: com qualquer luz na cena, toda camada já recebe luz. O que existe de verdade é o contrário, `[unlit]`.
 
@@ -259,7 +259,7 @@ Para aprender: [capítulo 4](04-camadas.md) (camadas, recortes, `blend=`) e [cap
 
 ## Formas
 
-Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` (buracos: vale toda forma com esse nome, e buracos que se cruzam viram um só) `mirror=forma@x` (ou `@y300`) `emit=cor,força` e a opção `[hidden]`.
+Todas aceitam: `c=` `opacity=` `bone=` `bones=a,b,…` (dobra com vários ossos; não em `text` e `emitter`) `cloth=` `cut=forma,…` (buracos: vale toda forma com esse nome, e buracos que se cruzam viram um só) `mirror=forma@x` (ou `@y300`) `emit=cor,força` e as opções `[hidden]` e `[lock]` (só o editor lê: o desenho não deixa escolher nem arrastar).
 
 **2.5D** (todas, menos `emitter`, que só aceita `z=`): `z=` profundidade, positivo = perto (0) · `yaw=` `pitch=` giro 3D em volta do meio (0) · `persp=` (o dobro do lado maior) · `[billboard]` sempre de frente. Só nas fechadas (`shape`, `ellipse`, `rect`): `thick=` espessura (0) · `thickc=` cor dos lados (a da forma, mais escura) · `back=forma` o verso.
 
@@ -312,7 +312,8 @@ Para aprender: [capítulo 2](02-formas.md).
 | Instrução | Atributos |
 |---|---|
 | `def nome param=padrão …` … `end` | só formas, `use` e `repeat` dentro; desenho em volta de `0,0`; parâmetro numérico vira variável e espessura, os outros viram cor |
-| `use nome x,y` | `scale=s` ou `sx,sy` · `rot=` · `flip=x\|y\|xy` · `bone=` · `cloth=` · `opacity=` · `z=` · `param=valor` · `[billboard]` (o componente fica de frente, de pé no ponto do `use`) |
+| `use nome x,y` | `scale=s` ou `sx,sy` · `rot=` · `flip=x\|y\|xy` · `bone=` · `cloth=` · `opacity=` · `z=` · `param=valor` · `[billboard]` (o componente fica de frente, de pé no ponto do `use`) · `[lock]` |
+| `group nome [lock]` … `end` | só o editor lê (a imagem não muda): junta as linhas para escolher e mover juntas; fica dentro de uma camada (ou de um `def`) e pode ter outro `group` dentro |
 
 ### Exemplo: os componentes
 

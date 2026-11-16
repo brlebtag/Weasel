@@ -539,13 +539,14 @@ Repare:
 ## Outras opções de camada
 
 ```
-layer nome [guide] [hidden] [unlit] opacity= blend= only= clip= cut= …
+layer nome [guide] [hidden] [lock] [unlit] opacity= blend= only= clip= cut= …
 ```
 
 | Opção | O que faz |
 |---|---|
 | `guide` | Camada de **construção**: aparece no editor com **Exibir › Guias** ligado e na linha de comando com `--guides`, mas não sai na exportação. Use para linhas de referência, eixos, o chão ([exemplo](#camada-de-construção-guide)). |
 | `hidden` | A camada não é pintada. As formas dela continuam valendo como molde de `clip` e `cut` ([exemplo](#camada-escondida-hidden)). |
+| `lock` | Só no editor: as formas da camada não se escolhem nem se arrastam pelo desenho ([exemplo](#grupos-e-travas-group-e-lock)). |
 | `opacity=0.5` | Transparência da camada inteira, de 0 (invisível) a 1 (normal, o padrão) ([exemplo](#transparência-da-camada-opacity)). |
 | `blend=multiply` | Como a camada se mistura com o que está embaixo: `multiply` escurece (bom para sombras), `screen` clareia (brilhos), `overlay`, `soft-light`, `color-dodge`… (os modos de mistura do Photoshop e do CSS) ([exemplo](#misturar-com-o-que-está-embaixo-blend)). |
 | `only=anim1,anim2` | A camada só aparece nessas animações. O nome `pose` vale para a pose parada ([exemplo](#só-em-certas-animações-only)). |
@@ -791,6 +792,46 @@ node cli/weasel.js teste.weasel -a pula --frame 6 -o pulo.png
 ```
 
 O [capítulo 7](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-only) mostra o `only=` num personagem de jogo.
+
+## Grupos e travas: `group` e `lock`
+
+Duas coisas que **só o editor lê**: a imagem não muda com elas, nem no jogo, nem no filme. Servem para mexer no desenho com o mouse sem estragar o que já está pronto.
+
+<!-- conferir -->
+```weasel
+canvas 400 300 bg=#f4efe6
+palette ink=#2b2a33 line=3
+
+layer fundo lock
+rect chao 0,240 400,60 c=#8a7a5a
+
+layer boneco
+group cabeca
+  ellipse rosto 200,100 40 c=#f0c8a0 ink=line
+  group olhos
+    ellipse olhoA 186,95 5,6 c=ink
+    ellipse olhoB 214,95 5,6 c=ink
+  end
+end
+rect corpo 175,140 50,80 c=#3a6ea5 ink=line
+rect bracoA 140,140 20,60 c=#3a6ea5 ink=line lock
+rect bracoB 240,140 20,60 c=#3a6ea5 ink=line
+```
+
+Repare:
+
+- `group nome` … `end` junta as linhas de dentro. No desenho, um clique com a **Seleção** (V) numa forma do grupo escolhe o grupo inteiro: o rosto e os dois olhos andam, giram e esticam juntos. A **Seleção direta** (A) pega uma forma só.
+- Um grupo pode ter outro dentro (`olhos` está dentro de `cabeca`). O recuo de dois espaços é só para ler melhor.
+- O grupo fica **dentro de uma camada**: uma linha `layer` no meio dele dá erro. Ele também pode ficar dentro de um `def`; o contrário (um `def` dentro do grupo) não.
+- `lock` **trava**: o desenho não deixa escolher nem arrastar, e o clique passa para o que está embaixo. No código, a linha continua igual de mexer. Vale numa forma, num `use`, num `group` (trava tudo de dentro) e numa `layer` (trava a camada inteira, como o chão aqui).
+
+**No editor:**
+
+- **Ctrl+G** agrupa as formas escolhidas: o editor escreve o `group group1` e o `end` em volta delas (no lugar da de cima, se não estavam juntas no código). **Ctrl+Shift+G** desfaz o grupo (um nível por vez). Os dois também estão em **Objeto**.
+- **Duplo clique** numa forma de um grupo **entra nele** (isolamento): o resto do desenho fica apagado e parado, e o clique escolhe só as formas de dentro. **Esc** (ou um duplo clique fora) sai.
+- **Ctrl+2** trava a escolha (num grupo inteiro, o `lock` vai na linha do `group`); **Ctrl+Alt+2** destrava tudo, menos as camadas. No painel **Camadas**, o cadeado de cada linha (e de cada camada) põe e tira o `lock`.
+- Copiar, colar, apagar, organizar (Ctrl+] e Ctrl+[) e o Alt+arrastar levam o grupo inteiro, do `group` ao `end`. Dentro do isolamento, organizar muda a ordem dentro do grupo.
+- **Objeto › Alinhar** (e o grupo **Alinhar** do painel Propriedades) alinha as escolhidas à esquerda, ao centro, à direita, em cima, no meio ou embaixo, e distribui três ou mais com a mesma distância entre os meios. Um grupo anda inteiro. Com uma forma (ou um grupo) só, ela se alinha na prancheta, o `canvas`.
 
 ## Acabamento: `finish`
 

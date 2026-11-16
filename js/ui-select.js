@@ -1,7 +1,8 @@
 /* Weasel — a seleção completa (etapa 3 do plano docs/planos/interface-illustrator.md, seção 11.4). O desenho
-   escolhe no app.js (clique, caixa no vazio, Laço); aqui ficam a Varinha, o menu Selecionar e o que a escolha faz
-   no código: copiar, recortar e colar (no meio da vista, na frente ou atrás), apagar e organizar (trazer para a
-   frente, enviar para trás). Cada gesto é uma edição só do código (um Ctrl+Z desfaz). */
+   escolhe no app.js (clique, caixa no vazio, Laço, grupos e isolamento); aqui ficam a Varinha, o menu Selecionar e o
+   que a escolha faz no código: copiar, recortar e colar (no meio da vista, na frente ou atrás), apagar, organizar
+   (trazer para a frente, enviar para trás), agrupar (group … end), travar (lock) e alinhar. Cada gesto é uma edição
+   só do código (um Ctrl+Z desfaz). */
 (function (W) {
   'use strict';
   const A = W.app, L = W.lang;
@@ -99,8 +100,9 @@
   }
 
   // ---------- os blocos do código ----------
-  // repeat … end e def … end andam inteiros: uma forma de dentro de um repeat é o repeat todo
-  const OPEN = new Set(['repeat', 'def']);
+  // repeat … end, def … end e group … end andam inteiros: uma forma de dentro de um repeat é o repeat todo (na
+  // camada, um grupo é uma peça só; dentro dele, cada forma é uma peça)
+  const OPEN = new Set(['repeat', 'def', 'group']);
   function blocks(src) {
     const out = [], stack = [];
     src.forEach((t, i) => {
@@ -142,6 +144,36 @@
     return out;
   }
 
+  // as peças da escolha para mudar de lugar: um grupo inteiro é uma peça (do group ao end) e uma linha de dentro de
+  // um repeat leva o repeat inteiro (o de mais fora, dentro do grupo da peça). [{ a, b, g, parent }]
+  function unitsOf(lines, src) {
+    const bl = blocks(src), out = [];
+    for (const u of A.units(lines)) {
+      let a = u.a, b = u.b;
+      if (!u.g) for (const k of bl) if (k.kind === 'repeat' && k.a <= u.a && u.a <= k.b && (!u.parent || (k.a > u.parent.line && k.b < u.parent.end))) { a = Math.min(a, k.a); b = Math.max(b, k.b); }
+      out.push({ a, b, g: u.g, parent: u.parent });
+    }
+    return out.filter((u, i) => !out.some((o, j) => j !== i && o.a <= u.a && u.b <= o.b && (o.a < u.a || o.b > u.b || j < i))).sort((x, y) => x.a - y.a);
+  }
+  // as peças de dentro de um grupo, na ordem do código: { a, b, top } (top: com os comentários de cima)
+  function childUnits(src, bl, P) {
+    const out = [], seen = new Set();
+    for (const l of [...A.sigs().keys()].sort((x, y) => x - y)) {
+      if (l <= P.line || l >= P.end) continue;
+      let a = l, b = l;
+      for (const k of bl) if (k.kind !== 'def' && k.a <= l && l <= k.b && k.a > P.line && k.b < P.end) { a = Math.min(a, k.a); b = Math.max(b, k.b); }
+      if (seen.has(a)) continue;
+      seen.add(a);
+      out.push({ a, b });
+    }
+    out.forEach((u, i) => { u.top = noteTop(src, u.a, i ? out[i - 1].b : P.line); });
+    return out;
+  }
+  const indentOf = (t) => /^[ \t]*/.exec(t || '')[0];
+  // troca o recuo de base de uma linha (from) por outro (to); as linhas vazias ficam
+  const reindent = (t, from, to) => (!t.trim() ? t : to + (t.startsWith(from) ? t.slice(from.length) : t.replace(/^[ \t]*/, '')));
+  const depth = (g) => { let n = 0; for (let x = g; x; x = x.parent) n++; return n; };
+
   // ---------- escrever: só o trecho que mudou, numa edição só ----------
   function rewrite(next, key) {
     const ed = A.editor, v = ed.value, cur = v.split('\n');
@@ -173,10 +205,11 @@
     const m = model();
     lines = lines || sel();
     if (!lines.length) { if (!quiet) A.hint('Escolha uma forma para apagar.', 2000); return 0; }
-    const ok = lines.filter((l) => !(m.byLine.get(l) || {}).repeated), left = lines.length - ok.length;
+    const us = A.units(lines), ok = us.filter((u) => u.g || !(m.byLine.get(u.a) || {}).repeated), left = us.length - ok.length;
     if (!ok.length) { A.hint('Esta forma vem de um repeat: apague no código (a linha de dentro do repeat vale para todas as cópias).', 3600); return 0; }
-    const src = A.editor.value.split('\n'), drop = new Set(ok);
-    const names = ok.map((l) => { const r = m.byLine.get(l); return r && r.el && r.el.name; }).filter((n) => n && L.IDENT.test(n));
+    const src = A.editor.value.split('\n'), drop = new Set();
+    for (const u of ok) for (let l = u.a; l <= u.b && l < src.length; l++) drop.add(l);
+    const names = [...drop].map((l) => { const r = m.byLine.get(l); return r && r.el && r.el.name; }).filter((n) => n && L.IDENT.test(n));
     const next = src.filter((t, i) => !drop.has(i));
     rewrite(next, key || 'del' + Date.now());
     A.deselect();
@@ -187,7 +220,8 @@
       const at = next.findIndex((t) => { const sp = L.splitLine(t); return re.test(sp.comment !== null ? t.slice(0, sp.commentAt) : t); });
       if (at >= 0) still.push(`${n} (linha ${at + 1})`);
     }
-    if (!quiet) A.hint(`${many(ok.length, 'forma apagada', 'formas apagadas')} (Ctrl+Z desfaz)${left ? ` · ${left} de repeat ${left > 1 ? 'ficaram' : 'ficou'}` : ''}${still.length ? `. O nome ainda aparece: ${still.slice(0, 2).join(', ')}${still.length > 2 ? '…' : ''}` : ''}.`, still.length ? 4200 : 2400);
+    const gone = ok.filter((u) => u.g).length;
+    if (!quiet) A.hint(`${gone ? many(gone, 'grupo apagado', 'grupos apagados') + (ok.length > gone ? ` e ${many(ok.length - gone, 'forma', 'formas')}` : '') : many(ok.length, 'forma apagada', 'formas apagadas')} (Ctrl+Z desfaz)${left ? ` · ${left} de repeat ${left > 1 ? 'ficaram' : 'ficou'}` : ''}${still.length ? `. O nome ainda aparece: ${still.slice(0, 2).join(', ')}${still.length > 2 ? '…' : ''}` : ''}.`, still.length ? 4200 : 2400);
     return ok.length;
   }
 
@@ -198,12 +232,15 @@
     const m = model(), lines = sel();
     if (!lines.length) { if (!quiet) A.hint('Escolha uma forma para copiar.', 2000); return null; }
     if (A.defPreview()) { A.hint('Para copiar, tire o cursor de dentro do def.', 2600); return null; }
-    const ok = lines.filter((l) => !(m.byLine.get(l) || {}).repeated);
+    const ok = A.units(lines).filter((u) => u.g || !(m.byLine.get(u.a) || {}).repeated);
     if (!ok.length) { A.hint('Esta forma vem de um repeat: copie no código (a linha de dentro do repeat usa a conta dele).', 3400); return null; }
-    const text = ok.map((l) => A.lineText(l)).join('\n');
+    const src = A.editor.value.split('\n'), out = [];
+    for (const u of ok) { const base = indentOf(src[u.a]); for (let l = u.a; l <= u.b && l < src.length; l++) out.push(reindent(src[l], base, '')); }
+    const text = out.join('\n');
     st.clip = { text, n: ok.length };
-    if (cut) del(ok, 'cut' + Date.now(), true);
-    A.hint(`${many(ok.length, 'forma', 'formas')} ${cut ? (ok.length > 1 ? 'recortadas' : 'recortada') : ok.length > 1 ? 'copiadas' : 'copiada'}. Ctrl+V cola no meio da vista; Ctrl+F na frente; Ctrl+B atrás.`, 2600);
+    if (cut) del(lines, 'cut' + Date.now(), true);
+    const ng = ok.filter((u) => u.g).length, what = ng === ok.length ? many(ng, 'grupo', 'grupos') : many(ok.length, 'forma', 'formas');
+    A.hint(`${what} ${cut ? 'recortad' : 'copiad'}${ng === ok.length ? 'o' : 'a'}${ok.length > 1 ? 's' : ''}. Ctrl+V cola no meio da vista; Ctrl+F na frente; Ctrl+B atrás.`, 2600);
     return text;
   }
   // pelo menu (sem o evento do teclado), a área de transferência do sistema também recebe o texto
@@ -212,7 +249,7 @@
     if (text && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
   }
   // só formas: o desenho cola o que ele sabe pôr numa camada
-  const PASTE_OK = new Set([...L.DRAWABLE, 'use', 'include', 'repeat', 'end']);
+  const PASTE_OK = new Set([...L.DRAWABLE, 'use', 'include', 'repeat', 'group', 'end']);
   function shapesOnly(text) {
     const ws = text.split('\n').map((t) => L.splitLine(t).words[0]);
     return ws.some(Boolean) && ws.every((w) => !w || PASTE_OK.has(w.text));
@@ -243,16 +280,25 @@
     if (text === undefined || text === null) text = st.clip ? st.clip.text : '';
     text = String(text).replace(/\r/g, '').replace(/\n+$/, '');
     if (!text.trim()) { A.hint('Nada copiado ainda: escolha formas e aperte Ctrl+C.', 2400); return; }
-    if (!shapesOnly(text)) { A.hint('O desenho só cola formas (shape, stroke, line, ellipse, rect, text, emitter, use, include, repeat). Para colar outras linhas, cole no código.', 4200); return; }
-    const m = model(), src = A.editor.value.split('\n'), bl = blocks(src), cur = sel(), key = 'paste' + Date.now();
-    let at;
-    if (where !== 'view' && cur.length) at = where === 'front' ? unitOf(bl, cur[cur.length - 1])[1] + 1 : noteTop(src, unitOf(bl, cur[0])[0], -1);
-    else { const t = targetLayer(m, cur); at = where === 'back' ? layerStart(t, bl, src) : layerEnd(t, bl, src); }
+    if (!shapesOnly(text)) { A.hint('O desenho só cola formas (shape, stroke, line, ellipse, rect, text, emitter, use, include, repeat, group). Para colar outras linhas, cole no código.', 4200); return; }
+    const m = model(), src = A.editor.value.split('\n'), bl = blocks(src), cur = sel(), key = 'paste' + Date.now(), iso = A.iso();
+    const us = cur.length ? unitsOf(cur, src) : [];
+    // onde entra e com que recuo (dentro de um grupo, o recuo dele)
+    let at, ind = '';
+    if (where !== 'view' && us.length) {
+      const u = where === 'front' ? us[us.length - 1] : us[0];
+      at = where === 'front' ? u.b + 1 : noteTop(src, u.a, u.parent ? u.parent.line : -1);
+      ind = indentOf(src[u.a]);
+    } else if (iso) {
+      at = where === 'back' ? iso.line + 1 : Math.min(iso.end, src.length);
+      ind = indentOf(src[iso.line]) + '  ';
+    } else { const t = targetLayer(m, cur); at = where === 'back' ? layerStart(t, bl, src) : layerEnd(t, bl, src); }
     // os nomes só mudam se uma forma com o mesmo nome já existe (depois de um Ctrl+X, colar devolve os nomes, e as
     // keys que usavam esses nomes voltam a valer)
     const live = new Set(A.layerTree(m).flatMap((t) => t.kids.map((k) => k.name)).filter(Boolean));
+    for (const g of A.blocks().groups) if (g.name) live.add(g.name);
     const clash = text.split('\n').some((t) => { const n = L.splitLine(t).words.slice(1).find((x) => L.topIndex(x.text, '=') < 0 && x.text[0] !== '"' && !L.DRAW_FLAGS.has(x.text)); return !!n && live.has(n.text); });
-    const ren = clash ? A.renameCopy(text) : null, add = (ren ? ren.text : text).split('\n');
+    const ren = clash ? A.renameCopy(text) : null, add = (ren ? ren.text : text).split('\n').map((t) => (ind && t.trim() ? ind + t : t));
     rewrite(src.slice(0, at).concat(add, src.slice(at)), key);
     const sigs = A.sigs(), fresh = add.map((_, i) => at + i).filter((l) => sigs.has(l));
     if (where === 'view' && fresh.length) {
@@ -267,17 +313,29 @@
   // ---------- organizar ----------
   // Dentro de cada camada, quem vem depois no código fica na frente. how: 'front' (Ctrl+Shift+]), 'fwd' (Ctrl+]),
   // 'bwd' (Ctrl+[), 'back' (Ctrl+Shift+[). As peças trocam de lugar entre si; o que não é forma fica onde estava.
-  const ARRANGE = { front: 'na frente de tudo da camada', fwd: 'um passo para a frente', bwd: 'um passo para trás', back: 'atrás de tudo da camada' };
+  const ARRANGE = { front: 'na frente de tudo', fwd: 'um passo para a frente', bwd: 'um passo para trás', back: 'atrás de tudo' };
   function arrange(how) {
     if (!ready('organizar')) return;
     const m = model(), lines = sel();
     if (!lines.length) { A.hint('Escolha uma forma para mudar de lugar na pilha (Ctrl+] e Ctrl+[).', 2600); return; }
     const src = A.editor.value.split('\n'), bl = blocks(src), want = new Set(lines);
-    const slotAt = new Map();
-    let moved = false;
-    for (const { us } of layerUnits(m, src, bl)) {
-      const on = us.map((u) => lines.some((l) => l >= u.a && l <= u.b));
+    // as peças escolhidas, separadas pelo lugar onde estão: solta na camada, ou dentro de um grupo
+    const ctxs = new Map();
+    for (const u of unitsOf(lines, src)) {
+      const k = u.parent ? u.parent.line : -1;
+      if (!ctxs.has(k)) ctxs.set(k, { P: u.parent, su: [] });
+      ctxs.get(k).su.push(u);
+    }
+    // os de dentro primeiro: o lugar de um grupo (do group ao end) não muda quando as peças de dentro trocam
+    const fams = [];
+    for (const { P, su } of [...ctxs.values()].sort((x, y) => depth(y.P) - depth(x.P))) {
+      const lists = P ? [childUnits(src, bl, P)] : layerUnits(m, src, bl).map((x) => x.us);
+      for (const us of lists) fams.push({ us, on: us.map((u) => su.some((x) => x.a >= u.a && x.b <= u.b)) });
+    }
+    let arr = src.map((t, i) => i), moved = false;
+    for (const { us, on } of fams) {
       if (!on.some(Boolean)) continue;
+      const slotAt = new Map();
       const order = us.map((u, i) => i);
       const swap = (i, j) => { [order[i], order[j]] = [order[j], order[i]]; [on[i], on[j]] = [on[j], on[i]]; };
       if (how === 'front' || how === 'back') {
@@ -286,20 +344,126 @@
         next.forEach((v, k) => { order[k] = v; });
       } else if (how === 'fwd') { for (let i = us.length - 2; i >= 0; i--) if (on[i] && !on[i + 1]) swap(i, i + 1); } else for (let i = 1; i < us.length; i++) if (on[i] && !on[i - 1]) swap(i - 1, i);
       order.forEach((v, k) => { if (v !== k) moved = true; slotAt.set(us[k].top, { slot: us[k], unit: us[v] }); });
+      // cada lugar recebe a peça que foi para ele; o resto fica igual (arr: de que linha veio cada linha nova)
+      const next = [];
+      for (let i = 0; i < arr.length;) {
+        const s = slotAt.get(i);
+        if (!s) { next.push(arr[i]); i++; continue; }
+        for (let j = s.unit.top; j <= s.unit.b; j++) next.push(arr[j]);
+        i = s.slot.b + 1;
+      }
+      arr = next;
     }
-    if (!moved) { A.hint(how === 'front' || how === 'fwd' ? 'Já está na frente de tudo da camada.' : 'Já está atrás de tudo da camada.', 2200); return; }
-    // o código novo: cada lugar recebe a peça que foi para ele; o resto fica igual
-    const next = [], pos = new Map();
-    for (let i = 0; i < src.length;) {
-      const s = slotAt.get(i);
-      if (!s) { pos.set(i, next.length); next.push(src[i]); i++; continue; }
-      for (let j = s.unit.top; j <= s.unit.b; j++) { pos.set(j, next.length); next.push(src[j]); }
-      i = s.slot.b + 1;
-    }
-    rewrite(next, 'arrange' + Date.now());
+    const where = ctxs.has(-1) ? 'da camada' : 'do grupo';
+    if (!moved) { A.hint(how === 'front' || how === 'fwd' ? `Já está na frente de tudo ${where}.` : `Já está atrás de tudo ${where}.`, 2200); return; }
+    const pos = new Map(arr.map((from, i) => [from, i]));
+    rewrite(arr.map((i) => src[i]), 'arrange' + Date.now());
     const fresh = [...want].map((l) => pos.get(l)).filter((l) => l !== undefined);
     A.setSel(fresh);
     A.hint(`${many(fresh.length, 'forma', 'formas')} ${ARRANGE[how]}.`, 1800);
+  }
+
+  // ---------- agrupar: group nome … end ----------
+  // As peças escolhidas entram num group novo (group1, group2…), no lugar da de cima (a última no código), na ordem
+  // em que estavam; os comentários de cima de cada uma vão junto, e as linhas de dentro ganham dois espaços.
+  function group() {
+    if (!ready('agrupar')) return;
+    const lines = sel();
+    if (!lines.length) { A.hint('Escolha as formas para agrupar (Ctrl+G).', 2400); return; }
+    const src = A.editor.value.split('\n'), us = unitsOf(lines, src);
+    if (us.some((u) => u.b >= src.length)) { A.hint('Um group está sem end: feche o bloco no código antes de agrupar.', 3000); return; }
+    const last = us[us.length - 1], ind = indentOf(src[last.a]), take = new Set(), body = [];
+    const tops = us.map((u, i) => noteTop(src, u.a, i ? us[i - 1].b : u.parent ? u.parent.line : -1));
+    us.forEach((u, i) => {
+      const base = indentOf(src[u.a]);
+      for (let j = tops[i]; j <= u.b; j++) { take.add(j); body.push(reindent(src[j], base, ind + '  ')); }
+    });
+    const rest = [];
+    let at = -1;
+    src.forEach((t, i) => { if (i === tops[tops.length - 1]) at = rest.length; if (!take.has(i)) rest.push(t); });
+    const name = A.freeName('group');
+    rewrite(rest.slice(0, at).concat([`${ind}group ${name}`], body, [`${ind}end`], rest.slice(at)), 'group' + Date.now());
+    const sigs = A.sigs(), fresh = body.map((t, i) => at + 1 + i).filter((l) => sigs.has(l));
+    A.setSel(fresh);
+    A.hint(`Grupo ${name}: ${many(fresh.length, 'forma', 'formas')}. Um clique (V) escolhe o grupo inteiro; duplo clique entra nele; Ctrl+Shift+G desfaz o grupo.`, 3600);
+  }
+  // desagrupar: o group e o end saem (um nível por vez); as formas ficam escolhidas
+  function ungroup() {
+    if (!ready('desagrupar')) return;
+    const lines = sel(), src = A.editor.value.split('\n'), us = A.units(lines).filter((u) => u.g && u.g.end < src.length);
+    if (!us.length) { A.hint('A escolha não é um grupo inteiro: escolha o grupo com a Seleção (V) e aperte Ctrl+Shift+G.', 3000); return; }
+    const drop = new Set(), fix = new Map();
+    for (const u of us) {
+      drop.add(u.g.line);
+      drop.add(u.g.end);
+      const outer = indentOf(src[u.g.line]);
+      for (let j = u.g.line + 1; j < u.g.end; j++) {
+        const t = src[j];
+        if (t.startsWith(outer + '  ')) fix.set(j, outer + t.slice(outer.length + 2));
+        else if (t.startsWith(outer + '\t')) fix.set(j, outer + t.slice(outer.length + 1));
+      }
+    }
+    const next = [], pos = new Map();
+    src.forEach((t, i) => { if (drop.has(i)) return; pos.set(i, next.length); next.push(fix.has(i) ? fix.get(i) : t); });
+    rewrite(next, 'ungroup' + Date.now());
+    A.setSel(lines.map((l) => pos.get(l)).filter((l) => l !== undefined));
+    A.hint(`${many(us.length, 'grupo desfeito', 'grupos desfeitos')} (${us.map((u) => u.g.name || 'sem nome').join(', ')}). Ctrl+Z desfaz.`, 2600);
+  }
+  const isGroup = () => !!model() && A.units(sel()).some((u) => u.g);
+
+  // ---------- travar: lock ----------
+  // Ctrl+2 trava a escolha (um grupo inteiro: o lock vai na linha do group); Ctrl+Alt+2 destrava tudo (as formas,
+  // os use e os grupos; as camadas travadas ficam, elas se destravam pelo cadeado do painel Camadas)
+  function lock() {
+    if (!ready('travar')) return;
+    const lines = sel();
+    if (!lines.length) { A.hint('Escolha as formas para travar (Ctrl+2).', 2400); return; }
+    const targets = A.units(lines).map((u) => (u.g ? u.g.line : u.a)).filter((l) => A.lockTok(l));
+    if (!targets.length) { A.hint('Estas linhas não aceitam lock (um include se trava no outro arquivo, ou pela camada).', 3000); return; }
+    A.setLock(targets, true, 'lock' + Date.now());
+    A.deselect();
+    A.hint(`${many(targets.length, 'peça travada', 'peças travadas')} (lock): o desenho não deixa escolher nem arrastar. Ctrl+Alt+2 destrava tudo; o cadeado do painel Camadas, uma.`, 3600);
+  }
+  function unlockAll() {
+    if (!ready('destravar')) return;
+    const n = A.editor.value.split('\n').length, before = new Set(A.blocks().locked), targets = [];
+    for (let i = 0; i < n; i++) { const h = A.lockTok(i); if (h && h.on && h.cmd !== 'layer') targets.push(i); }
+    if (!targets.length) { A.hint(before.size ? 'Só há camadas travadas: destrave pelo cadeado do painel Camadas.' : 'Nada travado.', 2600); return; }
+    A.setLock(targets, false, 'unlock' + Date.now());
+    const after = A.blocks().locked, sigs = A.sigs(), freed = [...before].filter((l) => !after.has(l) && sigs.has(l));
+    if (freed.length) A.setSel(freed);
+    A.hint(`${many(targets.length, 'peça destravada', 'peças destravadas')}${freed.length ? ` (${many(freed.length, 'forma escolhida', 'formas escolhidas')})` : ''}.`, 2600);
+  }
+
+  // ---------- alinhar e distribuir ----------
+  // Pela caixa de cada peça (um grupo inteiro anda junto). Com duas peças ou mais, na caixa de todas; com uma só, na
+  // prancheta (o canvas). Distribuir espalha os meios por igual, e as duas das pontas ficam.
+  const ALIGN = { left: 'à esquerda', hcenter: 'no centro, na horizontal', right: 'à direita', top: 'em cima', vcenter: 'no centro, na vertical', bottom: 'embaixo', hdist: 'distribuídas na horizontal', vdist: 'distribuídas na vertical' };
+  function align(how) {
+    if (!ready('alinhar')) return;
+    const lines = sel();
+    if (!lines.length) { A.hint('Escolha as formas para alinhar.', 2200); return; }
+    const us = A.units(lines).map((u) => { const ls = lines.filter((l) => l >= u.a && l <= u.b); return { ls, b: A.boxOf(ls) }; }).filter((u) => u.b);
+    if (!us.length) return;
+    const dist = how === 'hdist' || how === 'vdist', one = us.length === 1;
+    if (dist && us.length < 3) { A.hint('Distribuir pede três peças ou mais: as das pontas ficam, as do meio se espalham.', 2800); return; }
+    const c = model().canvas;
+    const T = one ? { x0: 0, y0: 0, x1: c.w, y1: c.h } : { x0: Math.min(...us.map((u) => u.b.x0)), y0: Math.min(...us.map((u) => u.b.y0)), x1: Math.max(...us.map((u) => u.b.x1)), y1: Math.max(...us.map((u) => u.b.y1)) };
+    for (const u of us) {
+      const b = u.b;
+      u.d = how === 'left' ? [T.x0 - b.x0, 0] : how === 'hcenter' ? [(T.x0 + T.x1) / 2 - b.cx, 0] : how === 'right' ? [T.x1 - b.x1, 0]
+        : how === 'top' ? [0, T.y0 - b.y0] : how === 'vcenter' ? [0, (T.y0 + T.y1) / 2 - b.cy] : how === 'bottom' ? [0, T.y1 - b.y1] : [0, 0];
+    }
+    if (dist) {
+      const k = how === 'hdist' ? 'cx' : 'cy', o = us.slice().sort((p, q) => p.b[k] - q.b[k]), a = o[0].b[k], step = (o[o.length - 1].b[k] - a) / (o.length - 1);
+      o.forEach((u, i) => { const d = a + step * i - u.b[k]; u.d = how === 'hdist' ? [d, 0] : [0, d]; });
+    }
+    const key = 'align' + Date.now(), keep = st.lastXf;
+    let n = 0;
+    for (const u of us) if ((Math.abs(u.d[0]) > 0.01 || Math.abs(u.d[1]) > 0.01) && A.transformLines(u.ls, 'move', { dx: u.d[0], dy: u.d[1] }, key)) n++;
+    st.lastXf = keep;
+    A.setSel(lines);
+    A.hint(n ? `${one ? 'Alinhada na prancheta' : `${many(us.length, 'peça', 'peças')}`} ${ALIGN[how]}.` : 'Já estava assim.', 2200);
   }
 
   // ---------- teclado e área de transferência (com o foco no desenho) ----------
@@ -307,7 +471,12 @@
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented) return;
     const mod = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k;
-    if (!mod || e.altKey || !here(e.target)) return;
+    if (!mod || !here(e.target)) return;
+    // Ctrl+2 trava, Ctrl+Alt+2 destrava tudo (pela tecla: no teclado brasileiro, Ctrl+Alt+2 escreve ²)
+    if (e.code === 'Digit2' && !e.shiftKey) { e.preventDefault(); if (e.altKey) unlockAll(); else lock(); return; }
+    if (e.altKey) return;
+    // Ctrl+G agrupa, Ctrl+Shift+G desagrupa
+    if (e.code === 'KeyG') { e.preventDefault(); if (e.shiftKey) ungroup(); else group(); return; }
     if (low === 'a') { e.preventDefault(); if (e.shiftKey) A.deselect(); else all(); return; }
     if ((low === 'f' || low === 'b') && !e.shiftKey) { e.preventDefault(); paste(low === 'f' ? 'front' : 'back'); return; }
     if (k === ']' || k === '}' || k === '[' || k === '{') {
@@ -337,7 +506,7 @@
   W.sel = {
     wand, same, all, invert, none: () => A.deselect(),
     copy: () => copyMenu(false), cut: () => copyMenu(true), paste, del: () => del(),
-    arrange,
+    arrange, group, ungroup, isGroup, lock, unlockAll, align,
     has: () => !!model() && sel().length > 0,
     hasClip: () => !!st.clip,
   };

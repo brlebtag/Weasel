@@ -197,6 +197,17 @@
       + row('Mistura', selIn('Lblend', BLENDS), 'Lblend')
       + `<div class="pp-sub">Efeitos</div>${fx}`, 'pp-layer');
   }
+  const ALIGN_BTNS = [
+    ['left', 'Alinhar à esquerda (uma peça só: na prancheta)', '<path d="M2.5 2v12"/><rect x="4.5" y="4" width="8.5" height="3"/><rect x="4.5" y="9" width="5.5" height="3"/>'],
+    ['hcenter', 'Alinhar no centro, na horizontal', '<path d="M8 2v12"/><rect x="3" y="4" width="10" height="3"/><rect x="5" y="9" width="6" height="3"/>'],
+    ['right', 'Alinhar à direita', '<path d="M13.5 2v12"/><rect x="3" y="4" width="8.5" height="3"/><rect x="6" y="9" width="5.5" height="3"/>'],
+    ['top', 'Alinhar em cima', '<path d="M2 2.5h12"/><rect x="4" y="4.5" width="3" height="8.5"/><rect x="9" y="4.5" width="3" height="5.5"/>'],
+    ['vcenter', 'Alinhar no centro, na vertical', '<path d="M2 8h12"/><rect x="4" y="3" width="3" height="10"/><rect x="9" y="5" width="3" height="6"/>'],
+    ['bottom', 'Alinhar embaixo', '<path d="M2 13.5h12"/><rect x="4" y="3" width="3" height="8.5"/><rect x="9" y="6" width="3" height="5.5"/>'],
+    null,
+    ['hdist', 'Distribuir na horizontal (três peças ou mais: os meios ficam à mesma distância)', '<rect x="1.5" y="5" width="3" height="6"/><rect x="6.5" y="3" width="3" height="10"/><rect x="11.5" y="5.5" width="3" height="5"/>'],
+    ['vdist', 'Distribuir na vertical', '<rect x="5" y="1.5" width="6" height="3"/><rect x="3" y="6.5" width="10" height="3"/><rect x="5.5" y="11.5" width="5" height="3"/>'],
+  ];
   function shapesHtml(info) {
     let h = '';
     if (info.cmds.some((c) => DRAWN.has(c))) {
@@ -205,6 +216,8 @@
         ${row('L', numIn('tw'), 'tw')}${row('A', numIn('th'), 'th')}
         <button type="button" class="pp-lock${cfg.lock ? ' on' : ''}" title="Esticar sem perder a proporção" aria-pressed="${cfg.lock}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5 9.5 6.5M7 4.5l1.6-1.6a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.6 1.6a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/></svg></button>
         ${row('∠', numIn('rot'), 'rot')}</div>`);
+      // Alinhar (js/ui-select.js): com duas peças ou mais, na caixa de todas; com uma só, na prancheta
+      if (W.sel) h += grp('Alinhar', `<div class="pp-al">${ALIGN_BTNS.map((b) => (b ? `<button type="button" data-align="${b[0]}" title="${b[1]}"><svg viewBox="0 0 16 16" aria-hidden="true">${b[2]}</svg></button>` : '<i></i>')).join('')}</div>`);
     }
     const strokeish = info.cmds.every((c) => c === 'stroke' || c === 'line');
     let ap = '';
@@ -365,6 +378,8 @@
     const go = e.target.closest('[data-go]');
     if (go) { A.gotoCode(+go.dataset.go, 0); return; }
     if (e.target.closest('.pp-lock')) { cfg.lock = !cfg.lock; saveCfg(); refresh(true); }
+    const al = e.target.closest('[data-align]');
+    if (al && W.sel) W.sel.align(al.dataset.align);
   });
   // arrastar o nome de um campo de número muda o valor (cada passo parte do texto do começo do arraste)
   bodyP.addEventListener('pointerdown', (e) => {

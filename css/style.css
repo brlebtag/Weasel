@@ -242,6 +242,15 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .lp-eye:hover { opacity: 1 !important; background: var(--panel2); color: var(--text); }
 .lp-eye.off { opacity: 1; color: var(--accent); }
 .lp-eye.na { visibility: hidden; }
+/* o cadeado do lock: só aparece com o mouse em cima, a não ser travada */
+.lp-lock { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; color: var(--dim); opacity: 0; cursor: pointer; }
+.lp-lock svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.lp-el:hover .lp-lock, .lp-layer:hover .lp-lock { opacity: .6; }
+.lp-lock:hover { opacity: 1 !important; background: var(--panel2); color: var(--text); }
+.lp-lock.on { opacity: 1; color: #e8c14e; }
+.lp-lock.under { opacity: .55; color: #e8c14e; }
+.lp-lock.na { visibility: hidden; }
+.lp-el.locked .nm { opacity: .6; }
 .lp-el.off .ty, .lp-el.off .nm { opacity: .45; font-style: italic; }
 .lp-el.under .nm { opacity: .55; }
 .lp-layer.off .ln { opacity: .5; font-style: italic; }
@@ -452,6 +461,10 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .pp-lock { position: absolute; right: 0; top: 30px; width: 20px; height: 22px; padding: 0; display: grid; place-items: center; border: none; background: none; color: var(--dim); }
 .pp-lock.on { color: var(--accent); }
 .pp-lock svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.pp-al { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 0; }
+.pp-al button { width: 23px; height: 23px; padding: 0; display: grid; place-items: center; }
+.pp-al svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+.pp-al i { width: 6px; }
 .pp-fx { display: flex; align-items: center; gap: 4px; min-height: 26px; }
 .pp-fx .pp-chk { width: 86px; flex: none; margin: 0; color: var(--dim); }
 .pp-fx.on .pp-chk { color: var(--text); }

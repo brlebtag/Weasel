@@ -6,7 +6,7 @@
   const KEYWORDS = {
     canvas: 'setup', finish: 'setup', art: 'setup', unity: 'setup', palette: 'setup', gradient: 'setup', pattern: 'setup', let: 'setup', variant: 'setup', include: 'setup', ref: 'setup',
     layer: 'draw', shape: 'draw', stroke: 'draw', line: 'draw', ellipse: 'draw', rect: 'draw', text: 'draw', emitter: 'draw',
-    def: 'comp', end: 'comp', use: 'comp', repeat: 'comp',
+    def: 'comp', end: 'comp', use: 'comp', repeat: 'comp', group: 'comp',
     bone: 'rig', cloth: 'rig', ik: 'rig', anim: 'rig', key: 'rig', event: 'rig', expr: 'rig',
     light: 'fx', ambient: 'fx',
     film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mark: 'film', mouth: 'rig',
@@ -59,9 +59,10 @@
     tile: ['collision'],
   };
   const FLAGS = {
-    layer: ['guide', 'hidden', 'lit', 'unlit', 'screen', 'front', 'floor', 'zsort', 'iso'], anim: ['once', 'loop', 'turn'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
-    shape: ['hidden', 'billboard'], stroke: ['hidden', 'billboard'], line: ['hidden', 'billboard'], ellipse: ['hidden', 'billboard'], rect: ['hidden', 'billboard'], text: ['hidden', 'bold', 'italic', 'billboard'], emitter: ['hidden'],
-    use: ['billboard'],
+    layer: ['guide', 'hidden', 'lock', 'lit', 'unlit', 'screen', 'front', 'floor', 'zsort', 'iso'], anim: ['once', 'loop', 'turn'], gradient: ['linear', 'radial', 'box'], light: ['point', 'spot', 'dir'], pattern: ['hatch', 'dots', 'cross'],
+    shape: ['hidden', 'lock', 'billboard'], stroke: ['hidden', 'lock', 'billboard'], line: ['hidden', 'lock', 'billboard'], ellipse: ['hidden', 'lock', 'billboard'], rect: ['hidden', 'lock', 'billboard'], text: ['hidden', 'lock', 'bold', 'italic', 'billboard'], emitter: ['hidden', 'lock'],
+    use: ['lock', 'billboard'],
+    group: ['lock'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
     audio: ['loop'],
     box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
@@ -70,7 +71,8 @@
     ref: ['lock', 'hidden', 'front'],
     art: ['outline', 'small', 'color', 'old', 'bw', 'frame'],
   };
-  const DRAW_FLAGS = new Set(['hidden', 'bold', 'italic', 'billboard']);
+  // lock: só o editor lê (o desenho não deixa escolher nem arrastar a linha); a imagem não muda
+  const DRAW_FLAGS = new Set(['hidden', 'lock', 'bold', 'italic', 'billboard']);
   const PARTICLE_SHAPES = ['dot', 'soft', 'square', 'streak', 'star'];
   // order = above=/below= (pinta logo depois/antes de outra forma ou camada); draw = quanto já foi desenhado (0 a 1)
   const PROPS = { opacity: 'num', show: 'step', c: 'color', inkc: 'color', w: 'width', ink: 'width', shape: 'shape', draw: 'num', above: 'order', below: 'order', yaw: 'free', pitch: 'free', z: 'free' };
@@ -509,7 +511,7 @@
     lines.forEach((ln, i) => {
       const w = splitLine(ln.text).words[0];
       if (!w) return;
-      if (w.text === 'repeat' || w.text === 'def') stack.push({ kind: w.text, i });
+      if (w.text === 'repeat' || w.text === 'def' || w.text === 'group') stack.push({ kind: w.text, i });
       else if (w.text === 'end' && stack.length) { const b = stack.pop(); if (b.kind === 'repeat') pairs.set(b.i, i); }
       if (w.text === 'repeat' && stack.some((b) => b.kind === 'def')) inDef.add(i);
     });
@@ -682,6 +684,7 @@
 
     scope = globals;
     const stmts = [];
+    const opened = [];
     L.forEach((ln, i) => {
       if (ln.incErr) { const sp = splitLine(ln.text); const t = sp.words[1] || sp.words[0]; err(i, ln.incErr, t.from, t.to); }
       // dentro de um repeat, a variável dele vale nas {contas} daquela cópia
@@ -693,9 +696,11 @@
       if (s) stmts.push(s);
       // dentro de def … end, os parâmetros numéricos do def também valem nas {contas}
       if (s && s.cmd === 'def') {
+        opened.push('def');
         scope = new Map(globals);
         for (const a of s.attrs.values()) { const n = num(a.text); if (!isNaN(n)) scope.set(a.key, n); }
-      } else if (s && s.cmd === 'end') scope = globals;
+      } else if (s && s.cmd === 'group') opened.push('group');
+      else if (s && s.cmd === 'end' && opened.pop() !== 'group') scope = globals;
     });
     scope = globals;
     // num filme, o quadro padrão é Full HD
@@ -828,11 +833,28 @@
       return undefined;
     }
 
-    // ---- def ... end ----
+    // ---- def ... end e group ... end ----
+    // O group só junta linhas para o editor escolher e mover juntas (group nome [lock] … end): a imagem não muda.
+    // Fica dentro de uma camada (ou de um def); pode ter outro group dentro.
     const defs = m.defs;
     let open = null;
+    const groups = [];
     for (const st of stmts) {
+      if (st.cmd === 'group') {
+        st.pos.forEach((t, i) => {
+          if (t.text === 'lock') return;
+          if (i === 0 && IDENT.test(t.text)) return;
+          err(st.line, i === 0 ? `nome inválido "${t.text}"` : `valor solto "${t.text}" (use: group nome, e lock para travar)`, t.from, t.to, 'warn');
+        });
+        for (const a of st.attrs.values()) err(st.line, `${a.key}= não vale no group (ele só junta as linhas)`, a.from, a.to, 'warn');
+        groups.push({ st, def: open });
+        info(st, {});
+        continue;
+      }
+      if (st.cmd === 'layer' && groups.length && !open) err(st.line, `layer dentro de group: feche o group "${(groups[groups.length - 1].st.pos[0] || {}).text || ''}" com end antes da camada nova`, st.cmdTok.from, st.cmdTok.to);
+      if (st.cmd === 'end' && groups.length && groups[groups.length - 1].def === open) { groups.pop(); st.groupEnd = true; info(st, {}); continue; }
       if (st.cmd === 'def') {
+        if (groups.length) err(st.line, 'def dentro de group: o def fica fora (o use dele pode ficar no group)', st.cmdTok.from, st.cmdTok.to);
         if (open) { err(st.line, `def dentro de def (falta o end de "${open.name}")`, st.cmdTok.from, st.cmdTok.to); continue; }
         const name = ident(st, st.pos[0], 'do componente');
         open = { name: name || '?', line: st.line, st, body: [], uses: 0 };
@@ -855,7 +877,8 @@
       }
     }
     if (open) err(open.line, `def "${open.name}" sem end`, open.st.cmdTok.from, open.st.cmdTok.to);
-    const top = stmts.filter((s) => !s.inDef && s.cmd !== 'def' && s.cmd !== 'end');
+    for (const g of groups) err(g.st.line, `group "${(g.st.pos[0] || {}).text || ''}" sem end`, g.st.cmdTok.from, g.st.cmdTok.to);
+    const top = stmts.filter((s) => !s.inDef && s.cmd !== 'def' && s.cmd !== 'end' && s.cmd !== 'group');
 
     // ---- art: o estilo de arte (pixel, ascii…); a imagem pronta é pintada de outro jeito ----
     // art pixel size=8 palette=gameboy dither=bayer outline small · art ascii size=6,12 chars=" .:#@" color · art none
@@ -1749,7 +1772,7 @@
       if (!dry) def.uses++;
       const at = st.pos[1] ? posPair(st, st.pos[1], 'a posição', [0, 0]) : [0, 0];
       let board = false;
-      for (const f of st.pos.slice(2)) { if (f.text === 'billboard') board = true; else err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn'); }
+      for (const f of st.pos.slice(2)) { if (f.text === 'billboard') board = true; else if (f.text !== 'lock') err(st.line, `valor solto "${f.text}"`, f.from, f.to, 'warn'); }
       const A = st.attrs;
       let sx = 1, sy = 1, fx = 1, fy = 1;
       if (A.has('scale')) { const v = list(st, A.get('scale'), 1, 2, [1]); sx = v[0]; sy = v.length > 1 ? v[1] : v[0]; }

@@ -61,6 +61,7 @@
     marq: null, // a caixa de seleção (ou o laço) sendo arrastada no vazio
     none: -1, // a escolha foi tirada de propósito (clique no vazio, Esc) com o cursor nesta linha: a forma dela não vale
     lastXf: null, // a última transformação da escolha (o Ctrl+D repete): { mode, dx, dy | deg | sx, sy, fx, fy, copy }
+    iso: null, // o grupo do isolamento (duplo clique num grupo): { line, name }; o resto do desenho fica parado
     clip: null, // o que o Ctrl+C copiou ({ text, n }), para o Ctrl+F e o Ctrl+B (js/ui-select.js)
     view3d: false, // a vista Camadas em 3D (js/ui-3d.js) no lugar do desenho
   };
@@ -107,7 +108,7 @@
   // Ctrl+D: na cópia, o nome que a linha cria ganha um número (olho → olho_1; de novo → olho_2): ref, camada, osso,
   // animação, forma… Copiando várias linhas juntas, as que usam esses nomes passam a usar os novos (um osso copiado
   // com as formas presas nele: as cópias das formas ficam no osso novo). Linhas sem nome (use, key…) não mudam.
-  const NAMES_NEW = new Set([...L.DRAWABLE, 'def', 'variant', 'layer', 'bone', 'cloth', 'gradient', 'pattern', 'light', 'anim', 'expr', 'box', 'point', 'ref', 'tile', 'actor', 'shot', 'mark', 'audio']);
+  const NAMES_NEW = new Set([...L.DRAWABLE, 'def', 'group', 'variant', 'layer', 'bone', 'cloth', 'gradient', 'pattern', 'light', 'anim', 'expr', 'box', 'point', 'ref', 'tile', 'actor', 'shot', 'mark', 'audio']);
   // que tipo de nome cada atributo usa: só esses trocam (c=cloak é a cor da palette, mesmo com uma forma cloak)
   const DRAWN = [...L.DRAWABLE];
   const NAME_REFS = { bone: ['bone'], bones: ['bone'], parent: ['bone'], cloth: ['cloth'], clip: DRAWN, cut: DRAWN, mirror: DRAWN, cast: DRAWN, above: DRAWN, below: DRAWN, only: ['anim'], lips: ['actor'] };
@@ -121,7 +122,7 @@
       // def … end copiado inteiro: só o componente ganha nome novo; as formas de dentro são dele e continuam com os
       // nomes de antes (as keys que mexem nelas, como a do piscar, valem também para a cópia)
       if (cmd === 'end') open.pop();
-      else if (cmd === 'def' || cmd === 'repeat') open.push(cmd);
+      else if (cmd === 'def' || cmd === 'repeat' || cmd === 'group') open.push(cmd);
       if (!NAMES_NEW.has(cmd) || (L.DRAWABLE.has(cmd) && open.includes('def'))) continue;
       // o nome é a primeira palavra solta (sem =) depois da instrução; nas formas, pulando hidden, bold…
       const pos = sp.words.slice(1).filter((w) => (w.text[0] === '"' || L.topIndex(w.text, '=') < 0) && !(L.DRAWABLE.has(cmd) && L.DRAW_FLAGS.has(w.text)));
@@ -472,7 +473,8 @@
     return out;
   }
   function setSel(lines, caretLine) {
-    const sigs = nodeSigs();
+    const sigs = nodeSigs(), B = blockInfo();
+    lines = lines.filter((l) => !B.locked.has(l));
     st.none = -1;
     // o cursor vai antes: o goto avisa primeiro a linha antiga (ao focar o código), e isso soltaria a escolha nova
     st.sel = new Map();
@@ -502,11 +504,12 @@
   // depois de editar o código: fica na escolha só a linha que ainda é a mesma forma
   function checkSel() {
     if (!st.sel.size) return;
-    const sigs = nodeSigs();
-    for (const [l, sig] of st.sel) if (sigs.get(l) !== sig) st.sel.delete(l);
+    const sigs = nodeSigs(), B = blockInfo();
+    for (const [l, sig] of st.sel) if (sigs.get(l) !== sig || B.locked.has(l)) st.sel.delete(l);
   }
   // clique na árvore: escolhe só esta; Ctrl soma ou tira; Shift pega o trecho desde o último clique
   function pickRow(line, e) {
+    if (blockInfo().locked.has(line)) { hint('Esta forma está travada (lock): clique no cadeado para destravar, ou Ctrl+Alt+2 destrava tudo.', 3000); return; }
     const rows = [...$('layerPanel').querySelectorAll('.lp-el')].map((r) => +r.dataset.line);
     if (e.shiftKey && st.selAnchor >= 0 && rows.includes(st.selAnchor)) {
       const a = rows.indexOf(st.selAnchor), b = rows.indexOf(line);
@@ -584,6 +587,40 @@
     const left = lines.length - ok.length;
     hint(`${what}: ${hide ? (ok.length > 1 ? 'escondidas' : 'escondida') + ' (hidden)' : ok.length > 1 ? 'aparecem de novo' : 'aparece de novo'}${left && st.sel.size ? ` · ${left} não ${left > 1 ? 'aceitam' : 'aceita'} hidden` : ''}.${byKey ? ` ${byKey} de novo desfaz.` : ''}`, 2600);
   }
+  // ---------- travar: o lock escrito na linha ----------
+  // O cadeado do painel e o Ctrl+2 (js/ui-select.js) põem e tiram o lock das formas, do emitter, do use, do group e
+  // da layer. Como o hidden, o lock entra depois da última palavra antes do ":" (ou do comentário).
+  function lockTok(line) {
+    if (line < 0) return null;
+    const w = L.splitLine(lineOf(line)).words, cmd = w[0] && w[0].text;
+    if (!cmd || cmd === 'ref' || !(L.FLAGS[cmd] || []).includes('lock')) return null;
+    const tok = w.slice(1).find((t) => t.text === 'lock') || null;
+    return { cmd, on: !!tok, tok, end: w[w.length - 1].to };
+  }
+  // on: true trava, false destrava; as linhas que mudam, numa edição só
+  function setLock(lines, on, key) {
+    const out = new Map();
+    for (const l of lines) {
+      const h = lockTok(l);
+      if (!h || h.on === on) continue;
+      const text = lineOf(l);
+      if (on) { out.set(l, text.slice(0, h.end) + ' lock' + text.slice(h.end)); continue; }
+      let a = h.tok.from;
+      while (a > 0 && /[ \t]/.test(text[a - 1])) a--;
+      out.set(l, text.slice(0, a) + text.slice(h.tok.to));
+    }
+    writeLines(out, key || 'lock' + Date.now());
+    return out.size;
+  }
+  // o cadeado do painel: liga e desliga o lock de uma linha
+  function toggleLock(line) {
+    const h = lockTok(line);
+    if (!h) return;
+    setLock([line], !h.on);
+    hint(h.on ? `${h.cmd}: destravada.` : `${h.cmd}: travada (lock). O desenho não deixa escolher nem arrastar; o código continua igual de mexer.`, 2600);
+  }
+  const LOCK_ON = '<svg viewBox="0 0 16 16"><rect x="3.5" y="7.2" width="9" height="6.3" rx="1.2"/><path d="M5.6 7.2V5.4a2.4 2.4 0 0 1 4.8 0v1.8"/></svg>';
+  const LOCK_OFF = '<svg viewBox="0 0 16 16"><rect x="3.5" y="7.2" width="9" height="6.3" rx="1.2"/><path d="M5.6 7.2V5.4a2.4 2.4 0 0 1 4.6-.9"/></svg>';
   const EYE_ON = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
   const EYE_OFF = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><path d="M2.5 13.5 13.5 2.5"/></svg>';
 
@@ -600,7 +637,7 @@
     if (sig !== layerSig) {
       layerSig = sig;
       p.innerHTML = '<div class="rp-head"><b>Camadas</b><small class="lp-count"></small><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div><div class="lp-tree"></div>' +
-        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover, a bolinha verde para girar e as setas para empurrar. O olho (ou <kbd>Ctrl</kbd>+<kbd>3</kbd> nas escolhidas) liga e desliga o <code>hidden</code>. <kbd>Esc</kbd> solta.</small></div>';
+        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover, a bolinha verde para girar e as setas para empurrar. O olho (ou <kbd>Ctrl</kbd>+<kbd>3</kbd> nas escolhidas) liga e desliga o <code>hidden</code>; o cadeado (ou <kbd>Ctrl</kbd>+<kbd>2</kbd>), o <code>lock</code>. <kbd>Esc</kbd> solta.</small></div>';
       const box = p.querySelector('.lp-tree');
       if (!tree.length) box.innerHTML = '<div class="rp-empty">Nada desenhado ainda.</div>';
       tree.forEach((t, i) => {
@@ -610,7 +647,7 @@
         row.className = 'lp-layer';
         row.dataset.li = i;
         row.dataset.name = t.layer.name;
-        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>${t.line >= 0 ? `<span class="lp-eye" role="button" data-line="${t.line}"></span>` : '<span class="lp-eye na"></span>'}`;
+        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>${t.line >= 0 ? `<span class="lp-lock" role="button" data-line="${t.line}"></span><span class="lp-eye" role="button" data-line="${t.line}"></span>` : '<span class="lp-lock na"></span><span class="lp-eye na"></span>'}`;
         row.querySelector('.ln').textContent = name;
         box.appendChild(row);
         if (shut) return;
@@ -619,7 +656,7 @@
           el.type = 'button';
           el.className = 'lp-el';
           el.dataset.line = k.line;
-          el.innerHTML = `<span class="ty">${esc(k.type)}</span><span class="nm"></span>${k.els.length > 1 ? `<span class="cnt">${k.els.length} formas</span>` : ''}<span class="lno">${k.line + 1}</span><span class="lp-eye" role="button" data-line="${k.line}"></span>`;
+          el.innerHTML = `<span class="ty">${esc(k.type)}</span><span class="nm"></span>${k.els.length > 1 ? `<span class="cnt">${k.els.length} formas</span>` : ''}<span class="lno">${k.line + 1}</span><span class="lp-lock" role="button" data-line="${k.line}"></span><span class="lp-eye" role="button" data-line="${k.line}"></span>`;
           el.querySelector('.nm').textContent = k.name;
           box.appendChild(el);
         }
@@ -659,6 +696,18 @@
       eye.innerHTML = state === 'off' ? EYE_OFF : state === 'on' ? EYE_ON : '';
       eye.title = state === 'off' ? 'Escondida (hidden): clique para mostrar' : state === 'on' ? 'Esconder (hidden). Com várias escolhidas: Ctrl+3' : '';
     });
+    // o cadeado: fechado (lock na linha), apagado (travada pela camada ou por um grupo), aberto ou nenhum
+    const B = blockInfo();
+    p.querySelectorAll('.lp-lock[data-line]').forEach((lk) => {
+      const line = +lk.dataset.line, h = lockTok(line), state = !h ? 'na' : h.on ? 'on' : B.locked.has(line) ? 'under' : 'off';
+      const row = lk.closest('.lp-el');
+      if (row) row.classList.toggle('locked', state === 'on' || state === 'under');
+      if (lk.dataset.state === state) return;
+      lk.dataset.state = state;
+      for (const c of ['na', 'on', 'under']) lk.classList.toggle(c, state === c);
+      lk.innerHTML = state === 'na' ? '' : state === 'off' ? LOCK_OFF : LOCK_ON;
+      lk.title = state === 'on' ? 'Travada (lock): clique para destravar' : state === 'under' ? 'Travada pela camada ou pelo grupo (clique para travar esta também)' : state === 'off' ? 'Travar (lock): o desenho não deixa escolher nem arrastar. Nas escolhidas: Ctrl+2' : '';
+    });
     const c = p.querySelector('.lp-count');
     if (c) c.textContent = st.sel.size ? `${st.sel.size} escolhida${st.sel.size > 1 ? 's' : ''}` : '';
   }
@@ -668,6 +717,8 @@
     if (e.target.closest('.x')) { p.hidden = true; fillLayerPanel(); return; }
     const eye = e.target.closest('.lp-eye[data-line]');
     if (eye) { if (!eye.classList.contains('na')) toggleHidden([+eye.dataset.line]); return; }
+    const lk = e.target.closest('.lp-lock[data-line]');
+    if (lk) { if (!lk.classList.contains('na')) toggleLock(+lk.dataset.line); return; }
     const tw = e.target.closest('.tw');
     if (tw) {
       const name = tw.closest('.lp-layer').dataset.name;
@@ -774,7 +825,7 @@
   function selSet() {
     if (st.sel.size || !SELECTY.has(st.tool) || !st.model) return st.sel;
     const line = st.caret.line;
-    if (st.none === line) return st.sel;
+    if (st.none === line || !selectable(line)) return st.sel;
     if (!selMemo || selMemo.m !== st.model || selMemo.line !== line) {
       const sig = nodeSigs().get(line);
       selMemo = { m: st.model, line, set: sig ? new Map([[line, sig]]) : new Map() };
@@ -854,8 +905,8 @@
     if (dm < r && (!k || dm < kd)) return 'move';
     if (k) return { k };
     // em cima de uma das formas escolhidas: arrastar move todas
-    const el = hitsAt(e)[0], m = st.model;
-    if (el && !e.shiftKey) { const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i; if (selSet().has(line)) return 'move'; }
+    const line = linesAt(e)[0];
+    if (line !== undefined && !e.shiftKey && selSet().has(line)) return 'move';
     return null;
   }
   function startGroup(mode, e, k, key) {
@@ -1536,7 +1587,7 @@
   const KDESC = {
     canvas: 'tamanho e fundo', finish: 'acabamento', art: 'estilo de arte (pixel, ascii)', unity: 'escala da Unity', palette: 'cores e espessuras', gradient: 'gradiente', let: 'variáveis',
     variant: 'variação de cores', include: 'usar outro arquivo', layer: 'camada', shape: 'forma fechada', stroke: 'traço ou membro', line: 'linha reta',
-    ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def', use: 'usar componente', bone: 'osso',
+    ellipse: 'elipse/círculo', rect: 'retângulo', text: 'texto', def: 'componente', end: 'fim do def, do repeat ou do group', use: 'usar componente', group: 'grupo: junta linhas até o end (só o editor usa)', bone: 'osso',
     cloth: 'tecido', ik: 'perna ou braço de ossos com IK', anim: 'animação', key: 'pose num quadro', event: 'evento num quadro',
     light: 'luz (lâmpada, spot, sol)', ambient: 'luz geral da cena', emitter: 'partículas', pattern: 'hachura ou pontos',
     film: 'este arquivo é um filme', shot: 'plano do filme', actor: 'outro arquivo em cena', camera: 'câmera do plano',
@@ -1974,7 +2025,7 @@
     const ls = editor.value.split('\n'), line = st.caret.line, stack = [];
     for (let i = 0; i <= line && i < ls.length; i++) {
       const w = (/^\s*([A-Za-z_]\w*)/.exec(ls[i]) || [])[1];
-      if (w === 'def' || w === 'repeat') stack.push({ w, i }); else if (w === 'end' && i < line) stack.pop();
+      if (w === 'def' || w === 'repeat' || w === 'group') stack.push({ w, i }); else if (w === 'end' && i < line) stack.pop();
     }
     const d = stack.find((b) => b.w === 'def'), name = d && (/^\s*def\s+([A-Za-z_]\w*)/.exec(ls[d.i]) || [])[1];
     return name && st.model.defs.has(name) ? { name, line: d.i } : null;
@@ -2232,6 +2283,8 @@
       S.drawScene(ctx, m, pose, { background: false, guides: st.show.guides, filter: bf && bf.filter });
       if (refs) S.drawRefs(ctx, m, pose, refs, true);
     }
+    const iso = P || st.build ? null : isoGroup();
+    if (iso) dimOutside(ctx, m, pose, iso, R);
     ctx.restore();
 
     T();
@@ -2256,6 +2309,16 @@
     if (ro) drawRulers(ctx, dpr);
     if (gait) drawGaitNote(ctx, dpr, gait);
     else if (pinning && spinOn() && st.pin.spin.size) drawSpinNote(ctx, dpr);
+    else if (iso) drawNote(ctx, dpr, [`grupo ${iso.name || '(sem nome)'}${iso.lock ? ' (travado)' : ''}`, 'Esc ou duplo clique fora: sai']);
+  }
+  // no isolamento, o resto do desenho fica apagado: um véu claro por cima, e as formas do grupo pintadas de novo
+  function dimOutside(ctx, m, pose, g, R) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.62)';
+    ctx.fillRect(R.x, R.y, R.w, R.h);
+    ctx.restore();
+    const map = (i) => (m.lineMap ? m.lineMap[i] : i);
+    S.drawScene(ctx, m, pose, { background: false, guides: st.show.guides, filter: (el) => { const l = map(el.use !== undefined ? el.use : el.line); return l > g.line && l < g.end; } });
   }
 
   // prévia do def: a cruz no 0,0, o ponto que vai parar no x,y do use
@@ -2836,6 +2899,7 @@
     if (groupOn()) return null;
     // a escolha tirada de propósito (clique no vazio, Esc): os pontos somem até o cursor andar (no filme, não)
     if (st.none === st.caret.line && !isFilm()) return null;
+    if (!isFilm() && !selectable(st.caret.line)) return null;
     const rec = m.byLine.get(st.caret.line);
     if (!rec || !rec.handles.length) return null;
     // onde uma alça (ou um ponto com o mesmo jeito de alça) aparece na tela
@@ -3910,6 +3974,10 @@
     let lines = [...selSet().keys()];
     if (!lines.length && nodeSigs().has(st.caret.line)) lines = [st.caret.line];
     if (!lines.length) return false;
+    // um grupo escolhido inteiro vai inteiro (do group ao end), e a cópia nasce logo depois do end
+    const base = lines;
+    lines = [];
+    for (const u of selUnits(base)) for (let l = u.a; l <= u.b; l++) lines.push(l);
     lines = [...new Set(lines)].sort((a, b) => a - b);
     const all = editor.value.split('\n'), sel = new Set(lines), first = lines[0], last = lines.at(-1);
     const copy = renameCopy(lines.map((l) => all[l]).join('\n'));
@@ -4098,7 +4166,7 @@
     }
     // na Seleção, apertar numa forma e arrastar: ela vira a escolha e anda junto (sem arrastar, é um clique)
     // (com Alt, arrastar faz uma cópia e leva a cópia)
-    if (e.button === 0 && st.tool === 'select' && !e.shiftKey && !isFilm() && hitsAt(e).length) { st.vpress = { x: e.clientX, y: e.clientY, pick: true, alt: e.altKey }; return; }
+    if (e.button === 0 && st.tool === 'select' && !e.shiftKey && !isFilm() && linesAt(e).length) { st.vpress = { x: e.clientX, y: e.clientY, pick: true, alt: e.altKey }; return; }
     // nas duas seleções, arrastar no vazio faz a caixa de seleção (Shift soma, Alt tira); soltar sem ter arrastado
     // é um clique (escolhe a forma sob o mouse, ou tira a escolha)
     if (e.button === 0 && (st.tool === 'select' || st.tool === 'direct') && !isFilm() && !st.build) { const p = toCanvas(e); st.marq = { a: p, b: p, x: e.clientX, y: e.clientY, add: e.shiftKey, sub: e.altKey, moved: false }; return; }
@@ -4308,7 +4376,8 @@
       inside = (x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
       cross = (ax, ay, bx, by) => segInRect(ax, ay, bx, by, r);
     }
-    const sigs = nodeSigs(), got = linesInArea(inside, cross).filter((l) => sigs.has(l) && selectable(l));
+    const sigs = nodeSigs(), hit = linesInArea(inside, cross).filter((l) => sigs.has(l) && selectable(l));
+    const got = q.lasso ? hit : [...new Set(hit.flatMap(pickUnit))];
     const cur = [...st.sel.keys()];
     if (!cur.length && (q.add || q.sub)) cur.push(...selSet().keys());
     const next = q.sub ? cur.filter((l) => !got.includes(l)) : q.add ? [...new Set([...cur, ...got])] : got;
@@ -4317,8 +4386,109 @@
     setSel(next, next.includes(st.caret.line) ? st.caret.line : next[0]);
     if (next.length > 1) hint(`${next.length} formas escolhidas.`, 1600);
   }
-  // pode ser escolhida pelo desenho? (a 3b soma as travadas)
-  const selectable = (line) => line >= 0;
+  // pode ser escolhida pelo desenho? Não as travadas (lock) nem, no isolamento, as de fora do grupo
+  const selectable = (line) => line >= 0 && !blockInfo().locked.has(line) && (!st.iso || groupIn(line, isoGroup()) !== undefined);
+
+  // ---------- grupos e travas (etapa 3b): group nome … end e lock, lidos do código ----------
+  // Só o editor usa os dois: o grupo junta linhas para escolher e mover juntas, e o lock não deixa escolher nem
+  // arrastar pelo desenho (a imagem não muda). inner[i]: o grupo mais de dentro que tem a linha i (entre o group e
+  // o end); locked: as linhas travadas (lock na própria linha, na camada ou num grupo de fora).
+  let blockMemo = null;
+  function blockInfo() {
+    const v = editor.value;
+    if (blockMemo && blockMemo.v === v) return blockMemo;
+    const ls = v.split('\n'), groups = [], inner = [], locked = new Set(), stack = [];
+    let layerLock = false;
+    const top = () => { for (let k = stack.length - 1; k >= 0; k--) if (stack[k].g) return stack[k].g; return null; };
+    ls.forEach((t, i) => {
+      inner[i] = top();
+      const w = L.splitLine(t).words, cmd = w[0] && w[0].text;
+      if (!cmd) return;
+      const flag = (f) => w.slice(1).some((x) => x.text === f), inDef = stack.some((b) => b.kind === 'def');
+      if (cmd === 'group') {
+        const name = w[1] && w[1].text !== 'lock' && L.IDENT.test(w[1].text) ? w[1].text : '';
+        const g = { line: i, end: -1, name, lock: flag('lock'), parent: inner[i], inDef };
+        groups.push(g);
+        stack.push({ kind: cmd, g });
+        return;
+      }
+      if (cmd === 'def' || cmd === 'repeat') { stack.push({ kind: cmd }); return; }
+      if (cmd === 'end') { const b = stack.pop(); if (b && b.g) b.g.end = i; return; }
+      if (inDef) return;
+      if (cmd === 'layer') { layerLock = flag('lock'); return; }
+      if (layerLock || stack.some((b) => b.g && b.g.lock) || (cmd !== 'ref' && flag('lock'))) locked.add(i);
+    });
+    // um group sem end (o código avisa) vai até o fim
+    for (const g of groups) if (g.end < 0) g.end = ls.length;
+    blockMemo = { v, groups, inner, locked };
+    return blockMemo;
+  }
+  // o grupo do isolamento, achado de novo depois de editar o código (pela linha e pelo nome); se sumiu, sai
+  function isoGroup() {
+    if (!st.iso) return null;
+    const gs = blockInfo().groups;
+    const g = gs.find((x) => x.line === st.iso.line && x.name === st.iso.name) || (st.iso.name && gs.find((x) => x.name === st.iso.name));
+    if (!g) { st.iso = null; return null; }
+    st.iso.line = g.line;
+    return g;
+  }
+  // visto de dentro de ctx (um grupo, ou null: a camada), o grupo mais de fora que tem a linha. null: a linha está
+  // solta ali; undefined: a linha está fora de ctx
+  function groupIn(line, ctx) {
+    let g = blockInfo().inner[line] || null, top = null;
+    while (g && g !== ctx) { top = g; g = g.parent; }
+    return g === ctx ? top : undefined;
+  }
+  // as formas de um grupo que dá para escolher (sem as travadas)
+  function groupNodes(g, sigs) {
+    const B = blockInfo(), out = [];
+    for (const l of (sigs || nodeSigs()).keys()) if (l > g.line && l < g.end && !B.locked.has(l)) out.push(l);
+    return out.sort((a, b) => a - b);
+  }
+  // na Seleção (V), uma forma de um grupo leva o grupo inteiro (no isolamento, o grupo de dentro dele)
+  function pickUnit(line) {
+    if (st.tool !== 'select' || line < 0) return [line];
+    const g = groupIn(line, isoGroup());
+    if (!g) return [line];
+    const ns = groupNodes(g);
+    return ns.length ? ns : [line];
+  }
+  // As peças da escolha: um grupo com todas as formas escolhidas vira uma peça só, do group ao end (o mais de fora,
+  // a partir do isolamento); as outras linhas são peças sozinhas. [{ a, b, g, parent }], na ordem do código
+  function selUnits(lines) {
+    const B = blockInfo(), set = new Set(lines), ctx = isoGroup(), sigs = nodeSigs(), full = new Map(), out = [], seen = new Set();
+    const whole = (g) => {
+      if (!full.has(g)) { const ns = groupNodes(g, sigs); full.set(g, ns.length > 0 && ns.every((n) => set.has(n))); }
+      return full.get(g);
+    };
+    for (const l of [...set].sort((x, y) => x - y)) {
+      const chain = [];
+      for (let g = B.inner[l]; g && g !== ctx; g = g.parent) chain.unshift(g);
+      const g = chain.find(whole) || null, a = g ? g.line : l;
+      if (seen.has(a)) continue;
+      seen.add(a);
+      out.push({ a, b: g ? g.end : l, g, parent: g ? g.parent : B.inner[l] || null });
+    }
+    // um grupo de dentro de outro que também entrou inteiro já vai com ele
+    return out.filter((u) => !out.some((o) => o !== u && o.g && o.a < u.a && u.b <= o.b)).sort((x, y) => x.a - y.a);
+  }
+  // duplo clique num grupo: entra nele; o resto do desenho fica apagado e parado
+  function enterIso(g, line) {
+    st.iso = { line: g.line, name: g.name };
+    const u = pickUnit(line);
+    setSel(u, line);
+    hint(`Dentro do grupo ${g.name || '(sem nome)'}: só as formas dele se escolhem. Esc ou duplo clique fora sai.`, 3200);
+  }
+  // sai um nível (de um grupo de dentro, para o de fora); o grupo de onde saiu fica escolhido
+  function exitIso() {
+    const g = isoGroup();
+    if (!g) return false;
+    st.iso = g.parent ? { line: g.parent.line, name: g.parent.name } : null;
+    const ns = groupNodes(g);
+    if (ns.length) setSel(pickUnit(ns[0]), ns[0]); else deselect();
+    hint(st.iso ? `De volta ao grupo ${st.iso.name || '(sem nome)'}.` : 'Fora do isolamento.', 1600);
+    return true;
+  }
   function drawMarq(ctx, z) {
     const q = st.marq;
     ctx.save();
@@ -4349,10 +4519,10 @@
     if (!lines.length) { st.pick = null; if (!e.shiftKey) deselect(); return; }
     // Shift+clique: soma a forma à escolha do painel das camadas (ou tira, se já estava)
     if (e.shiftKey) {
-      const line = lines[0], cur = [...st.sel.keys()];
-      if (!cur.length && nodeSigs().has(st.caret.line)) cur.push(st.caret.line);
-      const next = cur.includes(line) ? cur.filter((l) => l !== line) : [...cur, line];
-      setSel(next, next.length === 1 ? next[0] : st.caret.line);
+      const line = lines[0], cur = [...st.sel.keys()], unit = pickUnit(line);
+      if (!cur.length && nodeSigs().has(st.caret.line) && selectable(st.caret.line)) cur.push(...pickUnit(st.caret.line));
+      const next = unit.every((l) => cur.includes(l)) ? cur.filter((l) => !unit.includes(l)) : [...new Set([...cur, ...unit])];
+      setSel(next, next.length === 1 ? next[0] : next.includes(line) ? line : st.caret.line);
       if (next.length > 1) hint(`${next.length} formas escolhidas: arraste uma delas para mover todas, a bolinha verde para girar.`, 2600);
       return;
     }
@@ -4362,10 +4532,13 @@
     // o código mostra o começo da linha (o foco continua no desenho)
     const line = lines[k];
     editor.reveal(line, 0);
-    // a forma clicada vira a escolha do painel (só ela)
-    setSel(nodeSigs().has(line) ? [line] : [], line);
+    // a forma clicada vira a escolha do painel (só ela; na Seleção, o grupo dela inteiro)
+    const unit = nodeSigs().has(line) ? pickUnit(line) : [];
+    setSel(unit, line);
     st.selAnchor = line;
-    if (lines.length > 1) hint(`${k + 1} de ${lines.length} figuras aqui: clique de novo no mesmo lugar para pegar a de baixo.`, 2600);
+    const g = unit.length > 1 ? groupIn(line, isoGroup()) : null;
+    if (g && lines.length < 2) hint(`Grupo ${g.name || '(sem nome)'}: ${unit.length} formas. Duplo clique entra nele; a Seleção direta (A) pega uma forma só.`, 2600);
+    else if (lines.length > 1) hint(`${k + 1} de ${lines.length} figuras aqui: clique de novo no mesmo lugar para pegar a de baixo.`, 2600);
   }
   // escolher uma linha de fora do desenho (a vista Camadas em 3D): como o clique; add (Shift) soma ou tira
   function pickLine(line, add) {
@@ -4377,7 +4550,7 @@
       return;
     }
     editor.reveal(line, 0);
-    setSel(nodeSigs().has(line) ? [line] : [], line);
+    setSel(nodeSigs().has(line) ? pickUnit(line) : [], line);
     st.selAnchor = line;
   }
   view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
@@ -4527,12 +4700,18 @@
     if (ru === 'corner') { clearGuides(); return; }
     const hgk = hitGroup(e);
     if (ru || (st.measure && !isFilm()) || hitScale(e) || (hgk && hgk.k)) return;
+    // na Seleção: duplo clique numa forma de um grupo entra nele (isolamento); no vazio, sai
+    if (st.tool === 'select' && !isFilm() && !pvModel()) {
+      const l = linesAt(e)[0], g = l === undefined ? null : groupIn(l, isoGroup());
+      if (g) { enterIso(g, l); return; }
+      if (l === undefined && st.iso) { exitIso(); return; }
+    }
     const hi = hitHandle(e);
     const rec = st.model.byLine.get(st.caret.line);
     const h0 = hi >= 0 && rec ? rec.handles[hi] : null;
     // nas letras de um texto (fora das alças de ponto e de giro): editar o texto ali mesmo
     if (!h0 || !['rot', 'pt', 'tan'].includes(h0.kind)) {
-      const el = hitsAt(e)[0];
+      const el = hitsAt(e).find((x) => selectable(lineOfEl(x)));
       if (el && el.type === 'text') editText(el);
       return;
     }
@@ -5137,7 +5316,7 @@
     const ls = editor.value.split('\n'), word = (t) => (/^\s*([A-Za-z_]\w*)/.exec(t) || [])[1], stack = [];
     for (let i = 0; i <= line && i < ls.length; i++) {
       const w = word(ls[i]);
-      if (w === 'def' || w === 'repeat') stack.push({ w, i }); else if (w === 'end') stack.pop();
+      if (w === 'def' || w === 'repeat' || w === 'group') stack.push({ w, i }); else if (w === 'end') stack.pop();
     }
     const d = stack.find((b) => b.w === 'def');
     if (!d) return at;
@@ -5146,7 +5325,7 @@
     let depth = 0, xf = null;
     for (let i = d.i; i < ls.length && !xf; i++) {
       const w = word(ls[i]);
-      if (w === 'def' || w === 'repeat') depth++; else if (w === 'end' && --depth === 0) break;
+      if (w === 'def' || w === 'repeat' || w === 'group') depth++; else if (w === 'end' && --depth === 0) break;
       const rec = st.model.byLine.get(i);
       if (rec && rec.el && rec.xf) xf = rec.xf;
     }
@@ -5256,7 +5435,7 @@
     // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
     if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
-    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else deselect(); if (st.meas) { st.meas = null; draw(); } return; }
+    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else if (!exitIso()) deselect(); if (st.meas) { st.meas = null; draw(); } return; }
     if (inField(t)) return;
     // daqui em diante, o foco está no desenho (ou num botão)
     if (mod && !e.altKey && low === 'z') { e.preventDefault(); undoRedo(e.shiftKey); return; }
@@ -5366,5 +5545,14 @@
     editPlan: (line) => editPlan(line),
     groupOn: () => groupOn(),
     selectable: (line) => selectable(line),
+    // grupos e travas (etapa 3b)
+    blocks: () => blockInfo(),
+    iso: () => isoGroup(),
+    exitIso: () => exitIso(),
+    units: (lines) => selUnits(lines),
+    groupNodes: (g) => groupNodes(g),
+    freeName: (base) => freeName(base),
+    lockTok: (line) => lockTok(line),
+    setLock,
   };
 })(window.Weasel = window.Weasel || {});
