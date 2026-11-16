@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4 e o item 8 na 1.48.5 (16/11/2026). O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5 e o item 5a na 1.48.6 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b ficou de lado. O resto está aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -10,11 +10,11 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 |---|---|---|---|---|
 | 1 | Recorte (`--trim`) e Godot: o tamanho da imagem fora do laço dos pixels | `export.js` `contentRect`, `rig.js` `alphaBox` | `.tscn` do Cavaleiro: 8,3 → 4,5 s | ✅ 1.48.1 |
 | 2 | Filme: um mapa de luz por quadro, dividido entre atores e camadas | `scene.js` `lightMaps` | quadro: 165 → 140 ms | ✅ 1.48.1 |
-| 2b | Filme: mapas de luz em resolução menor | `scene.js` `paintMaps` | uns 35 ms a menos por quadro (estimado) | ⬜ |
+| 2b | Filme: mapas de luz em resolução menor | `scene.js` `paintMaps` | no máximo ~5 ms por quadro (medido na 1.48.5) | ➖ deixado de lado |
 | 3 | Filme: bloom desfocado numa cópia com 1/4 do tamanho | `scene.js` `baseFx` | quadro: 165 → 130 ms | ✅ 1.48.1 |
 | 4 | Filme: telas de rascunho do tamanho do desenho | `geom.js` `drawVar`, `scene.js` `drawFxLayer` e `drawCast`, `film.js` `alphaLayer` | 2 + 3 + 4 juntos: 154 → 81 ms por quadro | ✅ 1.48.1 |
 | 4b | Filme: a tela da transição (`transLayer`) | `film.js` | — | ➖ o desenho dela é o quadro inteiro |
-| 5a | Estilos de arte: ganhar com os itens 2 a 4 | `art.js` (passes do estilo) | gravura: 886 → 403 ms no protótipo | 🔶 ganham o cache de luz e o bloom; as telas do tamanho do desenho ficam desligadas nos passes |
+| 5a | Estilos de arte: ganhar com os itens 2 a 4 | `scene.js` `paintBox` (passes do estilo) | filme com efeitos e atores transparentes: `toon`, `comic`, `manga` −15 a −18% | ✅ 1.48.6 |
 | 5b | Estilos de arte: laços por pixel | `art.js` `field`, `noiseP`, `knitLeg`, `mix` do riso | riso −31%, gravura −22%, tricô −18%, retícula −16% | ✅ 1.48.3 |
 | 6 | Lip sync automático: mais rápido, menos memória, uma vez só | `audio.js` `lipCues`, `cli/media.js`, `cli/video.js`, `cli/film-worker.js` | 20 min a 48 kHz: 27,4 s e 2,5 GB → 2,2 s e 286 MB por thread | ✅ 1.48.2 |
 | 7a | GIF de filme: não guardar todos os quadros na memória; e a memória do canvas com 1 thread | `gif.js`, `cli/gifframe.js`, `cli/video.js`, `cli/film-worker.js` | 20 s em 1080p: 5,3 → 1,5 GB; 5 s com 1 thread: 3,1 → 0,33 GB | ✅ 1.48.4 |
@@ -23,7 +23,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 7d | PNG: modo rápido, como opção | encoder do canvas | 3× mais rápido, arquivo 25–40% maior | ⬜ |
 | 7e | Normal map do Godot | `normal.js` | 2,3 s em 60 quadros; 20–30% a menos | ⬜ |
 | 8 | Filme com várias threads: o limite é a memória; os mapas de luz pintados só onde são lidos | `scene.js` `lightMaps` e `lightPiece`, `film.js` | MP4 de 10 s: `-j 1` 16,7 → 14,0 s, `-j 8` 5,3 → 4,7 s | ✅ 1.48.5 |
-| 8b | Filme: telas de rascunho recriadas em vez de limpas, na linha de comando | `scene.js` `scratch` e `cleanCanvas` | — | ⬜ investigar |
+| 8b | Filme: telas de rascunho recriadas em vez de limpas, na linha de comando | `scene.js` `cleanCanvas`, `geom.js` `drawVar`, `film.js` `alphaLayer` e `transLayer`, `art.js` `work` | nenhum (dentro do ruído) | ➖ não ajuda |
 
 ## Como medir
 
@@ -37,6 +37,8 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
   - O canvas só devolve a memória das telas e dos pixels lidos (`getImageData`) quando o laço de eventos do Node dá uma volta (`setImmediate`). Num laço que só faz `await` de promessas prontas, nada volta, nem com o GC forçado: ~24 MB por quadro 1080p.
 - **Para medir a memória:** um gancho com `node -r` também roda dentro de cada thread. Meça só na thread principal (`isMainThread`), por uma thread à parte, porque a principal pode ficar presa no GIF.
 - A máquina varia de carga durante uma sessão: compare só números do mesmo teste.
+- **Confira muitos quadros:** uma amostra de 3 quadros pode sair idêntica e outros quadros mudarem (aconteceu no 5a). Use pelo menos 1 a cada 4 quadros de um filme com o que a mudança toca.
+- **No navegador, os estilos de arte não se repetem:** o mesmo motor, rodado duas vezes seguidas no Chrome, dá quadros um pouco diferentes com estilo. Não dá para conferir uma mudança nos estilos por lá; só sem estilo.
 - **Para ver as threads:** cronometre dentro de cada thread (receber o quadro, render, pixels, cópia) e na principal (espera, ffmpeg). Para separar a máquina do código, rode as mesmas contas com N threads e com N processos.
 
 ## Os itens
@@ -54,12 +56,13 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **Feito:** no filme, os mapas ficam guardados durante o quadro, pela posição das luzes em pixels do quadro. Uma tela menor lê só o pedaço dela.
 - **Diferença:** no máximo 2 níveis de cor. **Jogo:** nada muda (só liga no filme).
 
-### ⬜ 2b. Mapas de luz em resolução menor
+### ➖ 2b. Mapas de luz em resolução menor
 
 - Ainda sobram ~2,6 mapas diferentes por quadro (~47 ms).
 - Pintar os mapas em meia resolução e ampliar daria uns 35 ms a menos por quadro, mas a luz muda um pouco.
-- Depois do item 8, na linha de comando os mapas já são pintados só onde são lidos, então ali o ganho fica menor. Medir de novo antes de decidir.
-- **A decidir:** se vale só no filme, e se a diferença aparece.
+- Depois do item 8, na linha de comando os mapas já são pintados só onde são lidos, então ali o ganho fica menor.
+- **Medido de novo na 1.48.5** (`filme.weasel` 1080p, o menor de 3): pular toda a pintura dos mapas, com a luz errada, deixa o quadro só 7,4 ms mais rápido com 1 thread (51,6 → 44,2 ms) e 8% com 8 threads (93,3 → 100,9 quadros/s). Esse é o teto; meia resolução daria uns 5 ms, mudando a luz.
+- **Decisão (16/11/2026):** deixado de lado. O ganho é pequeno para mudar a luz.
 
 ### ✅ 3. Bloom do filme (1.48.1)
 
@@ -74,12 +77,19 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **Ficou de fora:** a tela da transição (`transLayer`), porque o desenho dela é o quadro inteiro.
 - **Resultado dos itens 2 + 3 + 4:** quadro do `filme.weasel` de 154 → 81 ms; 10 s de filme de 40,5 → 21,3 s (`-j 1`) e de 11,3 → 7,1 s (`-j 8`).
 
-### 🔶 5a. Estilos de arte ganhando com os itens 2 a 4
+### ✅ 5a. Estilos de arte ganhando com os itens 2 a 4 (1.48.6)
 
-- Os estilos pesados levavam 400–670 ms por quadro 1080p, contra 135 ms sem estilo. Cada estilo desenha a cena de 2 a 5 vezes.
-- **Já ganham:** o cache dos mapas de luz e o bloom rápido.
-- **Não ganham:** as telas do tamanho do desenho ficam desligadas nos passes dos estilos, porque um estilo pode pintar além da forma (traço tremido, hachura).
-- **Falta:** medir os estilos de novo na 1.48.1 e ver se dá para ligar as telas pequenas em alguns passes.
+- Os estilos pesados levavam 400–670 ms por quadro 1080p, contra 135 ms sem estilo. Cada estilo desenha a cena de 2 a 5 vezes (os passes).
+- **Já ganhavam:** o cache dos mapas de luz e o bloom rápido.
+- **Feito (16/11/2026), só na linha de comando:** `scene.js` `paintBox`: nos passes que pintam a mesma forma (sem luz, sem contorno, textura, faixas de tom), a tela do efeito de cada camada e a da sombra projetada ficam do tamanho do desenho, como no filme sem estilo (item 4). Os passes com traço próprio (`pass.stroke`), que podem pintar além da forma, continuam com o quadro inteiro.
+- **Só ajuda em filmes com camadas com efeito, sombra projetada ou atores transparentes.** No `filme.weasel` nada muda: ele não tem nada disso nos passes.
+- **Resultado** (filme de teste de luzes 1080p, com fantasma transparente, névoa com profundidade e efeitos; o menor de 5, alternando os motores): `toon` 333 → 277 ms (−17%), `comic` 478 → 406 (−15%), `manga` 550 → 449 (−18%), `silhouette` 80 → 69 (−14%), `woodcut` 508 → 451 (−11%), `engraving` 534 → 481 (−10%). Os outros estilos ficam como estavam.
+- **Diferença:** o mesmo ruído de serrilhado do item 4, menor. Em 11 quadros do filme de luzes, os estilos `toon`, `comic`, `manga`, `engraving` e `woodcut` mudam de 9 a 28 pixels no total, no máximo 4 níveis. Os outros 22 estilos, o `filme.weasel` com os 27 estilos e todos os filmes de `test/casos` saem idênticos. Imagens de comparação mostradas em 16/11/2026, junto com as do item 4.
+- **No navegador**, os passes continuam com o quadro inteiro, como antes: lá os estilos variam um pouco de uma vez para outra (ver "Como medir"), e não dá para conferir a mudança.
+- **Conferido:** o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual); no navegador, o `filme.weasel` e o filme de luzes sem estilo saem iguais à 1.48.5, e os estilos rodam sem erro.
+- **Testado e deixado de fora:**
+  - A tela da transparência de cada ator do tamanho dele nos passes: mais ~1,7% no total, mas no `manga` e no `woodcut` alguns pixels viram de preto para branco no limiar (até 148 níveis).
+  - Os mapas de luz pintados só onde são lidos, nos passes (como no item 8): a imagem sai idêntica, mas não ganha nada (−0,2%).
 
 ### ✅ 5b. Estilos de arte: laços por pixel (1.48.3)
 
@@ -186,11 +196,16 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
   - Pôr a luz por cima de cada camada (`lightRaster`) ainda custa ~14 ms por quadro com 1 thread e ~38 ms com 8.
   - O item 8b, abaixo.
 
-### ⬜ 8b. Telas de rascunho recriadas na linha de comando
+### ➖ 8b. Telas de rascunho recriadas na linha de comando
 
-- As telas de rascunho reaproveitadas (`scratch`, `cleanCanvas`) devem pagar a mesma cópia do canvas a cada quadro, porque já foram origem de `drawImage`.
-- Recriar (`width =`) evitaria a cópia, mas zera o estado da tela (matriz, recorte, modo de mistura). Precisa conferir cada uso.
-- Não deve mudar a imagem. Medir antes, como no item 8.
+- **Ideia:** as telas de rascunho reaproveitadas podiam pagar a mesma cópia do canvas do item 8, e recriá-las (`width =`) evitaria a cópia.
+- **Testado (16/11/2026):** um protótipo recriou, só na linha de comando, todas as telas reaproveitadas no caminho do filme: `scratch`/`cleanCanvas` (`scene.js`), as duas do `drawVar` (`geom.js`), `alphaLayer` e `transLayer` (`film.js`) e `work` (`art.js`). Os quadros saíram idênticos.
+- **Resultado:** nenhum ganho (o menor de 3, alternando o motor da 1.48.5 e o protótipo):
+  - `filme.weasel` 1080p: 53,5 → 54,0 ms por quadro com 1 thread; 85,9 → 85,1 quadros/s com 8.
+  - Os 27 estilos de arte no `filme.weasel` 1080p: 6933 → 6900 ms somados (−0,5%). Cada um ficou entre −10% e +10%, dentro do ruído.
+  - Os filmes de `test/casos` e o filme de teste de luzes: todos dentro de ±6%.
+- **Por quê, provavelmente:** a cópia só acontece quando a tela é pintada de novo enquanto o quadro ainda guarda um desenho dela por fazer. As telas reaproveitadas dentro do mesmo quadro já têm o tamanho do desenho (item 4), então a cópia é pequena. De um quadro para o outro, o quadro já foi lido, e não há o que copiar.
+- **Decisão:** o código fica como está.
 
 ## Conferências pendentes
 
@@ -204,7 +219,5 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Ordem sugerida para o que falta
 
-1. 8b, as telas de rascunho recriadas (não muda a imagem).
-2. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
-3. 7d e 7e.
-4. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
+1. 7d e 7e.
+2. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.

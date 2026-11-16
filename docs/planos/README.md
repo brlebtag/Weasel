@@ -16,7 +16,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
-| [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4 e item 8 na 1.48.5; o resto aberto |
+| [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5 e item 5a na 1.48.6; 8b não ajuda e 2b ficou de lado; o resto aberto |
 
 ## Já implementados
 

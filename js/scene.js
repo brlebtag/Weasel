@@ -2176,11 +2176,15 @@
   }
   // Filme (scratchBox): a caixa, em pixels da tela (m = a matriz até ela), que cobre tudo o que os itens pintam: a
   // curva (pelos pontos de controle, que a cercam), o contorno com o weight, o traço, o membro e o brilho do emit=,
-  // com folga. null quando não dá para saber (texto, partículas, 3D, passe de estilo de arte): aí vale a tela
-  // inteira. Sem nada visível, a caixa é vazia (w = h = 0).
+  // com folga. null quando não dá para saber (texto, partículas, 3D, passe de estilo de arte com traço próprio, que
+  // pode pintar além da forma): aí vale a tela inteira. Os outros passes dos estilos (sem luz, sem contorno, textura,
+  // faixas de tom) pintam a mesma forma e usam a caixa, mas só na linha de comando: no navegador, os estilos já variam
+  // um pouco de uma vez para outra, e não dá para conferir a mudança. Sem nada visível, a caixa é vazia (w = h = 0).
   const matK = (m) => Math.hypot(m[0], m[1]) + Math.hypot(m[2], m[3]); // mais que o maior esticão da matriz
+  let cliCanvas = null; // a tela da linha de comando (o @napi-rs/canvas, que tem toBuffer)
+  const isCli = () => (cliCanvas === null ? (cliCanvas = !!document.createElement('canvas').toBuffer) : cliCanvas);
   function paintBox(model, pose, items, m) {
-    if (PASS || model.has3d) return null;
+    if ((PASS && (PASS.stroke || !isCli())) || model.has3d) return null;
     const k = matK(m);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const it of items) {
