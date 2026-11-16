@@ -799,6 +799,7 @@
       const q = g(p.x, p.y);
       const o = { x: q[0], y: q[1], corner: p.corner };
       if (p.tan) { const t = g(p.x + p.tan[0], p.y + p.tan[1]); o.tan = [t[0] - q[0], t[1] - q[1]]; }
+      if (p.tin) { const t = g(p.x - p.tin[0], p.y - p.tin[1]); o.tin = [q[0] - t[0], q[1] - t[1]]; }
       return o;
     });
   }
@@ -836,7 +837,12 @@
       const keys = [null, ...new Set(el.pins.filter(Boolean).map((p) => p.bone))];
       const wv = el.pins.map((p) => keys.map((kk, j) => (p ? (j === 0 ? 1 - p.w : kk === p.bone ? p.w : 0) : j === 0 ? 1 : 0)));
       const n = el.pts.length, count = el.closed ? n : n - 1, line = el.type === 'line';
-      const pts = el.pts.map((p) => { const q = T(p); const o = { x: q[0], y: q[1], corner: p.corner }; if (p.tan) { const t = T({ x: p.x + p.tan[0], y: p.y + p.tan[1] }); o.tan = [t[0] - q[0], t[1] - q[1]]; } return o; });
+      const pts = el.pts.map((p) => {
+        const q = T(p), o = { x: q[0], y: q[1], corner: p.corner };
+        if (p.tan) { const t = T({ x: p.x + p.tan[0], y: p.y + p.tan[1] }); o.tan = [t[0] - q[0], t[1] - q[1]]; }
+        if (p.tin) { const t = T({ x: p.x - p.tin[0], y: p.y - p.tin[1] }); o.tin = [q[0] - t[0], q[1] - t[1]]; }
+        return o;
+      });
       const segs = line ? G.polySegs(pts, el.closed) : G.smoothSegs(pts, el.closed, el.smooth);
       const samples = [];
       for (let i = 0; i < count && i < segs.length; i++) {
@@ -870,6 +876,12 @@
       const o = { x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t), corner: base[i] ? base[i].corner : p.corner };
       if (p.tan && q.tan) o.tan = [lerp(p.tan[0], q.tan[0], t), lerp(p.tan[1], q.tan[1], t)];
       else if (p.tan || q.tan) o.tan = t < 0.5 ? p.tan : q.tan;
+      // a chegada: a quebrada de um lado, a inteira (tan) do outro
+      if (p.tin || q.tin) {
+        const a = p.tin || p.tan, b = q.tin || q.tan;
+        if (a && b) o.tin = [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+        else if (t < 0.5 ? p.tin : q.tin) o.tin = t < 0.5 ? p.tin : q.tin;
+      }
       return o;
     });
   }

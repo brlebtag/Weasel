@@ -20,6 +20,7 @@ O Weasel tem sete tipos de forma:
 >
 > - **Retângulo** (M), **Elipse** (L), **Polígono**, **Estrela** e **Linha** (`\`): aperte e arraste. Com **Shift**, sai um quadrado, um círculo, uma linha de 45 em 45 graus, ou o polígono e a estrela em pé; com **Alt**, a forma cresce a partir do meio. No Polígono e na Estrela, as setas **↑** e **↓** (sem soltar o mouse) mudam o número de lados ou de pontas. **Esc** desiste.
 > - Um clique sem arrastar põe ali uma forma de tamanho padrão. O **Texto** (T) já abre uma caixinha para você escrever as letras.
+> - **Caneta** (P) e **Curvatura** (Shift+~): ponto a ponto. Na Caneta, o clique põe um canto, e apertar e arrastar puxa as alças da curva; na Curvatura, cada clique põe um ponto liso (o duplo clique, um canto). Clicar no primeiro ponto fecha um `shape`; **Enter** ou **Esc** termina um `stroke`, e **Backspace** tira o último ponto. As alças estão [mais abaixo](#alça-da-curva-xydxdy).
 > - O Retângulo, a Elipse, o Polígono e a Estrela dividem a mesma casa da barra: segure o botão (ou clique nele com o botão direito) para escolher outra. O triangulinho no canto marca as casas com mais de uma ferramenta.
 > - A forma entra **na frente** de tudo na camada da linha do cursor, com um nome novo em inglês (`rect1`, `ellipse1`, `polygon1`…), e já vem escolhida, com as alças: é só mover, girar e mudar o tamanho. Num grupo isolado (duplo clique nele), ela entra no grupo. Uma camada travada não aceita formas novas.
 > - A cor vem das **caixinhas de preenchimento e contorno**, no pé da barra de ferramentas (veja o [capítulo 3](03-cores.md#a-palette-cores-com-nome)).
@@ -172,7 +173,7 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 > - **Arrastar** um ponto muda o número dele no código.
 > - **Duplo clique** num ponto liga e desliga o `!`.
 > - Para **apagar** um ponto, clique nele (ele fica laranja) e aperte **Delete**. Só esse ponto sai do código, junto com a alça de curva dele, se tiver. A forma não pode ficar com menos de 3 pontos, e um Ctrl+Z traz o ponto de volta.
-> - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
+> - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Num lado curvo, o desenho não muda: o ponto novo e os dois vizinhos ganham as [alças](#alça-quebrada-xyaxaybxby) de como a curva já estava. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
 > - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. Para copiar uma forma, use a **Seleção** (V): segure **Alt** e arraste a forma, e a cópia nasce no lugar e vai com o mouse (no código, o **Ctrl+D** duplica a linha). Depois, o **Ctrl+D** no desenho repete o passo: cópias em fila, com a mesma distância.
 > - Para **esticar** a forma, use os quadradinhos azuis da caixa tracejada em volta dela. O de um canto muda a largura e a altura; o do meio de um lado muda só uma delas. O lado de lá fica parado, e o Weasel reescreve os números de todos os pontos (as alças de curva esticam junto). Com **Shift**, a forma não perde a proporção; com **Alt**, estica a partir do meio; e passar para o outro lado espelha a forma, como num programa de desenho. A grossura da borda (`ink=`) não muda. Um Ctrl+Z desfaz o arraste inteiro.
 > - A cópia ganha um nome novo (com o **Ctrl+D** do código, o **Alt+arrastar** ou o **Ctrl+C** e **Ctrl+V** do desenho): `asa` vira `asa_1`, e copiar de novo dá `asa_2`. Vale para tudo o que tem nome: formas, `ref`, `layer`, `bone`, `anim`, `def`… Duplicando várias linhas de uma vez (selecione todas), o que usa esses nomes muda junto: a forma copiada com `bone=braco` fica presa no `braco_1` copiado, e as `key` da animação copiada mexem nas cópias. As cores (`c=asa` da `palette`) não mudam. Num `def … end` copiado inteiro, só o componente ganha nome novo; as formas de dentro continuam iguais.
@@ -263,11 +264,49 @@ Repare:
 
 **Experimente:** troque `~50,0` por `~50,30`. A alça fica inclinada (30 pixels para baixo), e a curva passa pelo topo já descendo para a direita: o morro fica torto.
 
-> **Dica do editor:** a alça também se puxa com o mouse.
+### Alça quebrada: `x,y~ax,ay~bx,by`
+
+A alça `~dx,dy` vale para os dois lados: a curva chega e sai do ponto na mesma direção, com o mesmo tamanho. Para cada lado ter o seu, escreva **duas** alças:
+
+- `x,y~ax,ay~bx,by`: a curva **chega** ao ponto andando na direção `ax,ay` e **sai** na direção `bx,by`;
+- as duas contam no sentido em que a curva anda, então `~40,0~40,0` é o mesmo que `~40,0`;
+- na mesma direção, com tamanhos diferentes, o ponto continua liso, mas a volta fica mais longa de um lado;
+- em direções diferentes, o ponto vira uma **ponta curva**, como a de cima do coração;
+- `~0,0~bx,by` recolhe a alça de chegada: a curva chega reta e só sai curva.
+
+<!-- gerar: img/02_alca_quebrada.png --guides -->
+```weasel
+canvas 440 200 bg=#f4efe6
+palette ink=#2b2a33
+stroke liso w=6 : 30,170 120,50~30,0~90,0 210,170
+shape coracao c=#e05050 ink=3 : 320,170! 270,95~0,-40 320,80~15,40~15,-40 370,95~0,40
+
+layer alcas guide
+line l1 c=#c44536 w=2 : 90,50 210,50
+line l2 c=#c44536 w=2 : 305,40 320,80 335,40
+ellipse m1 120,50 4 c=#2b2a33
+ellipse m2 320,80 4 c=#2b2a33
+text t1 120,194 "120,50~30,0~90,0" size=14 align=center c=#c44536
+text t2 320,194 "320,80~15,40~15,-40" size=14 align=center c=#c44536
+```
+
+![À esquerda, um morro com o topo liso, mas com a alça de saída três vezes mais longa que a de chegada; à direita, um coração cuja ponta de cima tem as duas alças em direções diferentes](img/02_alca_quebrada.png)
+
+Repare:
+
+- À esquerda, o topo continua liso (as duas alças estão na mesma reta), mas a de saída é três vezes mais longa: a curva sobe depressa e desce devagar.
+- À direita, a ponta de cima do coração: a curva chega descendo (`15,40`) e sai subindo (`15,-40`).
+- As linhas vermelhas mostram as alças: a de chegada fica **atrás** do ponto (em `x-ax`, `y-ay`), e a de saída, na frente (em `x+bx`, `y+by`).
+
+**Experimente:** no morro, troque `~30,0~90,0` por `~90,0~30,0`. A volta longa passa para o outro lado.
+
+> **Dica do editor:** as alças também se puxam com o mouse.
 >
-> - Segure **Alt** e arraste um ponto: uma alça sai dele e segue o mouse, e o `~dx,dy` é escrito no código. Num ponto com `!`, o `!` sai, porque um ponto não pode ser canto e ter alça ao mesmo tempo.
-> - Uma alça que já existe aparece como um **losango azul** na ponta de uma linha. Arraste o losango para mudar a direção e o tamanho.
-> - Para tirar a alça, solte o losango em cima do próprio ponto, ou dê **duplo clique** no ponto. A curva volta a ser automática.
+> - Com a **Seleção direta** (A), clique num ponto: ele fica laranja, e, se for liso, aparecem clarinhas as **alças automáticas** (as que o Weasel calcula). Arraste uma delas: as duas vão para o código do jeito que a curva já está (`~ax,ay~bx,by`), sem pular, e o lado de lá gira junto, para o ponto continuar liso.
+> - Uma alça escrita aparece como dois **losangos azuis**, um de cada lado do ponto. Na alça inteira (`~dx,dy`), arrastar um losango muda os dois lados. Com **Alt**, só aquele lado anda, e a alça quebra.
+> - **Duplo clique** num losango de uma alça quebrada junta os dois lados de novo (fica o lado do clique). Numa alça inteira, o duplo clique (no losango ou no ponto) tira a alça, e a curva volta a ser automática. Soltar um losango em cima do próprio ponto também tira (na quebrada, só aquele lado, que fica `0,0`).
+> - A ferramenta **Ponto de ancoragem** (**Shift+C**, na casa da Caneta): o clique num ponto troca canto e liso; arrastar um ponto puxa uma alça nova; arrastar um losango mexe só naquele lado.
+> - **Alt** e arrastar um ponto, na Seleção direta, leva uma **cópia** da forma inteira, como no Illustrator.
 
 ## Traço aberto: `stroke`
 
@@ -392,7 +431,7 @@ Repare:
 
 **Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
 
-> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, a bolinha **verde** de cima para girá-lo e os quadradinhos azuis da caixa em volta para esticá-lo (o `w=` fica igual). Use **Alt** + um ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali, e **Delete** apaga o ponto escolhido (o laranja); o traço precisa de pelo menos 2 pontos. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela. Numa `line` em pé ou deitada, a caixa de esticar só tem os dois quadradinhos das pontas.
+> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, a bolinha **verde** de cima para girá-lo e os quadradinhos azuis da caixa em volta para esticá-lo (o `w=` fica igual). Use o **Ponto de ancoragem** (Shift+C) num ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali, e **Delete** apaga o ponto escolhido (o laranja); o traço precisa de pelo menos 2 pontos. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela. Numa `line` em pé ou deitada, a caixa de esticar só tem os dois quadradinhos das pontas.
 
 ## Linha reta: `line`
 

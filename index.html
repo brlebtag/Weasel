@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.55.0">
+<link rel="stylesheet" href="css/style.css?v=1.56.0">
 </head>
 <body>
 <header class="top">
@@ -111,7 +111,7 @@
     <pre class="ex"><b>comando</b> nome atributo=valor … <i>:</i> <u>x,y x,y x,y!</u></pre>
     <ul>
       <li><code>#</code> começa um comentário (no começo da linha ou depois de um espaço).</li>
-      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo; <code>x,y~dx,dy</code> fixa a alça da curva naquele ponto. Qualquer um pode terminar em <code>@osso</code> (ou <code>@osso:0.5</code>): o ponto segue o osso e a forma estica.</li>
+      <li>Depois de <code>:</code> vêm os pontos. Pontos comuns formam curvas suaves; <code>x,y!</code> é um canto vivo; <code>x,y~dx,dy</code> fixa a alça da curva naquele ponto; <code>x,y~ax,ay~bx,by</code> é a alça quebrada (a curva chega na direção <code>ax,ay</code> e sai na <code>bx,by</code>). Qualquer um pode terminar em <code>@osso</code> (ou <code>@osso:0.5</code>): o ponto segue o osso e a forma estica.</li>
       <li>Cores: <code>#rgb</code>, <code>#rrggbb</code>, <code>#rrggbbaa</code>, um nome da <code>palette</code>, um <code>gradient</code> ou <code>none</code>.</li>
       <li>Espessuras: um número ou um nome numérico da <code>palette</code> (ex.: <code>ink=line</code>).</li>
       <li>Qualquer número pode ser uma conta: <code>{cx+20}</code>, <code>{r*1.6}</code>, <code>{sin(30)*r}</code>.</li>
@@ -265,6 +265,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
           <li><b>Seleção</b> (<kbd>V</kbd>): clique numa forma e ela vira a escolha, com a caixa para mover, girar e esticar; aperte numa forma e arraste para movê-la (com <kbd>Alt</kbd>, leva uma cópia). Arraste no vazio para a caixa de seleção: entram as formas que ela toca (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira; as camadas guia ficam de fora). Clique no vazio tira a escolha. Os pontos não aparecem. Numa forma de um <code>group</code>, o clique pega o grupo inteiro; o duplo clique entra no grupo (o resto fica apagado e parado) e o <kbd>Esc</kbd> sai.</li>
           <li><b>Seleção direta</b> (<kbd>A</kbd>): os pontos e as alças da forma escolhida (arrastar, criar, apagar, curvas: veja abaixo). Arrastar no vazio também faz a caixa de seleção.</li>
           <li><b>Varinha mágica</b> (<kbd>Y</kbd>): clique numa forma e entram todas com a mesma cor de preenchimento (um nome da <code>palette</code> vale pela cor dele). <b>Laço</b> (<kbd>Q</kbd>): arraste em volta das formas. Nas duas, <kbd>Shift</kbd> soma e <kbd>Alt</kbd> tira.</li>
+          <li><b>Caneta</b> (<kbd>P</kbd>): o clique põe um canto, e apertar e arrastar puxa as alças (com <kbd>Alt</kbd>, no meio do arraste, só a de saída). <b>Curvatura</b> (<kbd>Shift</kbd>+<kbd>~</kbd>): cada clique põe um ponto liso; duplo clique ou <kbd>Alt</kbd>+clique, um canto. Nas duas, clicar no primeiro ponto fecha um <code>shape</code>; <kbd>Enter</kbd> ou <kbd>Esc</kbd> termina um <code>stroke</code>; <kbd>Backspace</kbd> tira o último ponto. <b>Ponto de ancoragem</b> (<kbd>Shift</kbd>+<kbd>C</kbd>): clique num ponto troca canto e liso; arrastar um ponto puxa as alças; arrastar um lado da alça mexe só nele.</li>
           <li><b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>), <b>Polígono</b>, <b>Estrela</b> e <b>Linha</b> (<kbd>\</kbd>): arraste para desenhar. <kbd>Shift</kbd>: quadrado, círculo, de 45 em 45 graus, polígono e estrela em pé; <kbd>Alt</kbd>: a partir do meio; <kbd>↑</kbd> e <kbd>↓</kbd> (sem soltar) mudam os lados e as pontas; <kbd>Esc</kbd> desiste. Um clique põe uma de tamanho padrão. A forma entra na frente de tudo na camada da linha do cursor (num grupo isolado, dentro dele), com nome em inglês (<code>rect1</code>, <code>polygon1</code>…), e uma camada travada não aceita.</li>
           <li><b>Texto</b> (<kbd>T</kbd>): um clique põe o texto e já abre a caixinha para escrever; clicar num texto que existe muda as letras.</li>
           <li><b>Conta-gotas</b> (<kbd>I</kbd>): clique numa forma e a pintura dela (<code>c=</code>, <code>ink=</code>, <code>inkc=</code>, <code>opacity=</code>) vai para as escolhidas; sem escolha, para as caixinhas. <kbd>Alt</kbd>+clique pinta a forma clicada com as caixinhas.</li>
@@ -287,8 +288,8 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>O botão direito no desenho escolhe a forma de baixo do mouse e abre o menu do objeto: os itens de Editar e Objeto que valem ali, <b>Selecionar</b> e <b>Inserir forma</b> (uma forma pronta onde você clicou; <b>Objeto › Inserir</b> põe no meio da tela).</li>
       <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code> (ou tira a alça). Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
       <li>Clique num ponto para escolhê-lo (ele fica laranja) e aperte <kbd>Delete</kbd> para apagá-lo, com a alça de curva dele. Vale para <code>shape</code>, <code>stroke</code> e <code>line</code>; a forma não fica com menos pontos do que precisa (3 no <code>shape</code>, 2 nos outros).</li>
-      <li><kbd>Alt</kbd>+arrastar um ponto puxa uma alça de curva (<code>~dx,dy</code>); o losango azul arrasta a alça, e soltá-lo em cima do ponto a tira.</li>
-      <li>A bolinha clara no meio de cada lado de um <code>shape</code>, <code>stroke</code> ou <code>line</code> cria um ponto novo ali (arraste ou clique).</li>
+      <li>Cada alça de curva aparece como dois losangos azuis, um de cada lado do ponto. Na inteira (<code>~dx,dy</code>), os dois lados andam juntos; com <kbd>Alt</kbd>, só um, e a alça quebra (<code>~ax,ay~bx,by</code>). Num ponto liso escolhido (o laranja), as alças automáticas aparecem clarinhas: arrastar uma escreve as duas do jeito que a curva está. Duplo clique num losango junta a quebrada ou tira a inteira; soltá-lo em cima do ponto também tira. O Ponto de ancoragem (<kbd>Shift</kbd>+<kbd>C</kbd>) puxa uma alça nova; <kbd>Alt</kbd>+arrastar um ponto (Seleção direta) leva uma cópia da forma.</li>
+      <li>A bolinha clara no meio de cada lado de um <code>shape</code>, <code>stroke</code> ou <code>line</code> cria um ponto novo ali (arraste ou clique). Num lado curvo, o desenho não muda: o ponto novo e os vizinhos ganham as alças de como a curva estava.</li>
       <li>O <b>✥</b> no meio dos pontos (ou <kbd>Shift</kbd>+arrastar um ponto) move a forma inteira. Para copiar: <kbd>Alt</kbd>+arrastar com a Seleção (<kbd>V</kbd>), ou <kbd>Ctrl</kbd>+<kbd>C</kbd> e <kbd>Ctrl</kbd>+<kbd>F</kbd> (no código, o <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha).</li>
       <li>Os quadradinhos azuis da caixa tracejada em volta de um <code>shape</code>, <code>stroke</code> ou <code>line</code> esticam a forma: o de um canto muda a largura e a altura, o do meio de um lado só uma delas, e o lado de lá fica parado. Com <kbd>Shift</kbd>, mantém a proporção; com <kbd>Alt</kbd>, estica a partir do meio; passar para o outro lado espelha. Os pontos e as alças de curva mudam juntos; o <code>w=</code> e o <code>ink=</code>, não.</li>
       <li>Os quadradinhos mudam o raio da <code>ellipse</code> e a largura e a altura do <code>rect</code> (com <kbd>Shift</kbd>, mantém a proporção). O losango azul do <code>rect</code> muda o <code>r=</code>.</li>
@@ -403,32 +404,33 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.55.0"></script>
-<script src="js/lang.js?v=1.55.0"></script>
-<script src="js/art.js?v=1.55.0"></script>
-<script src="js/scene.js?v=1.55.0"></script>
-<script src="js/film.js?v=1.55.0"></script>
-<script src="js/audio.js?v=1.55.0"></script>
-<script src="js/nle.js?v=1.55.0"></script>
-<script src="js/webm.js?v=1.55.0"></script>
-<script src="js/svg.js?v=1.55.0"></script>
-<script src="js/gif.js?v=1.55.0"></script>
-<script src="js/webp.js?v=1.55.0"></script>
-<script src="js/mp4.js?v=1.55.0"></script>
-<script src="js/zip.js?v=1.55.0"></script>
-<script src="js/normal.js?v=1.55.0"></script>
-<script src="js/export.js?v=1.55.0"></script>
-<script src="js/godot.js?v=1.55.0"></script>
-<script src="js/rig.js?v=1.55.0"></script>
-<script src="js/editor.js?v=1.55.0"></script>
-<script src="js/examples.js?v=1.55.0"></script>
-<script src="js/timeline.js?v=1.55.0"></script>
-<script src="js/app.js?v=1.55.0"></script>
-<script src="js/ui-menu.js?v=1.55.0"></script>
-<script src="js/ui-shell.js?v=1.55.0"></script>
-<script src="js/ui-3d.js?v=1.55.0"></script>
-<script src="js/ui-props.js?v=1.55.0"></script>
-<script src="js/ui-select.js?v=1.55.0"></script>
-<script src="js/ui-draw.js?v=1.55.0"></script>
+<script src="js/geom.js?v=1.56.0"></script>
+<script src="js/lang.js?v=1.56.0"></script>
+<script src="js/art.js?v=1.56.0"></script>
+<script src="js/scene.js?v=1.56.0"></script>
+<script src="js/film.js?v=1.56.0"></script>
+<script src="js/audio.js?v=1.56.0"></script>
+<script src="js/nle.js?v=1.56.0"></script>
+<script src="js/webm.js?v=1.56.0"></script>
+<script src="js/svg.js?v=1.56.0"></script>
+<script src="js/gif.js?v=1.56.0"></script>
+<script src="js/webp.js?v=1.56.0"></script>
+<script src="js/mp4.js?v=1.56.0"></script>
+<script src="js/zip.js?v=1.56.0"></script>
+<script src="js/normal.js?v=1.56.0"></script>
+<script src="js/export.js?v=1.56.0"></script>
+<script src="js/godot.js?v=1.56.0"></script>
+<script src="js/rig.js?v=1.56.0"></script>
+<script src="js/editor.js?v=1.56.0"></script>
+<script src="js/examples.js?v=1.56.0"></script>
+<script src="js/timeline.js?v=1.56.0"></script>
+<script src="js/app.js?v=1.56.0"></script>
+<script src="js/ui-menu.js?v=1.56.0"></script>
+<script src="js/ui-shell.js?v=1.56.0"></script>
+<script src="js/ui-3d.js?v=1.56.0"></script>
+<script src="js/ui-props.js?v=1.56.0"></script>
+<script src="js/ui-select.js?v=1.56.0"></script>
+<script src="js/ui-draw.js?v=1.56.0"></script>
+<script src="js/ui-pen.js?v=1.56.0"></script>
 </body>
 </html>

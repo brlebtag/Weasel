@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 e a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 e a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -665,7 +665,53 @@ Dividi a etapa em três **(R)**, para cada uma sair testada e publicada sozinha:
 - A prévia do `def` não foi conferida.
 - O guia (capítulos 1, 2 e 3), o README e a referência (F1) contam o que mudou.
 
-**A 4b** (o Bézier completo, a Caneta, a Curvatura e o Ponto de ancoragem) vem em seguida.
+**A 4b.** O Bézier completo (o pedido 3 do seu irmão, seção 5.5), a Caneta, a Curvatura e o Ponto de ancoragem. As escolhas marcadas com **(R)** esperam a sua confirmação:
+- **A alça quebrada na linguagem: `x,y~ax,ay~bx,by`.** A primeira é a chegada e a segunda é a saída, na ordem que ele sugeriu. As duas são a **direção em que a curva anda** (a de chegada fica atrás do ponto, em `x-ax`; a de saída, na frente, em `x+bx`) **(R)**. Assim:
+  - `~d~d` é o mesmo que `~d`, e a alça de hoje não muda de sentido;
+  - na mesma direção e com tamanhos diferentes, o ponto continua liso, com a volta mais longa de um lado (o caso mais comum);
+  - em direções diferentes, é uma ponta curva;
+  - `~0,0~b` recolhe um lado.
+  - O `!` continua não indo junto com alça (uma ponta curva é `~a~b` com as duas em direções diferentes). A `line` continua sem curvas: as alças dela não aparecem.
+  - Por dentro, o `tan` de sempre é a saída e o `tin` novo é a chegada. Ele foi para a curva (`geom.smoothSegs`), para os pontos presos a ossos, para o SVG e para a troca de forma (`shape=`): entre uma alça inteira e uma quebrada, a inteira vale para os dois lados. Um caso novo nos testes (`test/casos/alca_quebrada.weasel`) confere tudo isso, e a imagem do jogo continua igual nos outros.
+- **As alças no desenho:**
+  - cada alça aparece como dois losangos, um de cada lado do ponto, também a inteira (antes, só o da frente arrastava). Nas pontas de um traço aberto, só o lado que tem curva **(R)**;
+  - arrastar um losango da alça inteira muda os dois lados (continua inteira). Na quebrada, o outro lado gira junto (sem mudar de tamanho) se os dois estavam na mesma reta, como um ponto liso do Illustrator; se não estavam, fica parado. Com **Alt**, só aquele lado anda, sempre **(R)**. **Shift** anda de 45 em 45 graus **(R)**;
+  - quando os dois lados acabam iguais, escreve `~d` em vez de `~d~d` **(R)**;
+  - soltar um losango em cima do ponto: na inteira, tira a alça (como antes); na quebrada, recolhe só aquele lado (`0,0`), e, se os dois ficarem recolhidos, o ponto vira canto (`!`) **(R)**;
+  - duplo clique num losango da quebrada junta os dois lados com o do clique; na inteira, tira a alça, como antes **(R)**.
+- **As alças automáticas (pedido 3, item 3):** num ponto liso sem `~`, as alças que o Weasel calcula aparecem clarinhas e tracejadas, só no ponto escolhido (o laranja), para não encher a tela **(R)**. Arrastar uma escreve as duas do jeito que a curva já está (`~a~b`, sem pular), e o outro lado gira junto.
+- **Alt+arrastar um ponto** (Seleção direta) agora leva uma cópia da forma inteira, como no Illustrator (decidido na seção 5.5). Puxar a alça de um ponto passou para o Ponto de ancoragem.
+- **Ponto de ancoragem (Shift+C):** arrastar um ponto puxa uma alça inteira nova; arrastar um losango mexe só naquele lado. O clique num ponto **troca** canto e liso **(R)**: no Illustrator ele só vira canto, mas no Weasel o liso automático é o normal, então a volta também precisa de um clique.
+- **Caneta (P):**
+  - o clique põe um canto (`x,y!`); apertar e arrastar puxa uma alça inteira (o arraste é a saída); o **Alt** no meio do arraste quebra a alça (daí em diante, só a de saída anda), como no Illustrator;
+  - **Shift**: o ponto e a alça de 45 em 45 graus;
+  - clicar no primeiro ponto (com 3 ou mais) fecha um `shape`; arrastar ali deixa o primeiro ponto liso (com Alt, só a alça de chegada muda);
+  - **Enter** ou **Esc** termina um `stroke` (o Esc guarda o caminho, como no Illustrator de hoje) **(R)**; **Backspace** tira o último ponto **(R)**; trocar de ferramenta também termina **(R)**;
+  - a linha só é escrita no fim, inteira, e um Ctrl+Z a tira **(R)**. Enquanto isso, o caminho aparece na tela, com o próximo trecho até o mouse;
+  - o primeiro ponto tira a escolha, para as alças da forma de antes não atrapalharem **(R)**;
+  - nas pontas de um traço aberto, o `!` e o lado de fora da alça não mudam nada, e não são escritos **(R)**;
+  - a cor vem das caixinhas (o `shape` com o preenchimento e o contorno; o `stroke` com o contorno e a grossura), e os nomes são `shape1`, `stroke1`… (decisão 5);
+  - ficaram de fora: continuar um traço aberto que já existe e o + e o − da Caneta em cima de um caminho (a bolinha do meio e o Delete fazem isso) **(R)**.
+- **Curvatura (Shift+~):** cada clique põe um ponto liso, e a curva automática já passa pelo mouse enquanto você anda. O duplo clique ou o Alt+clique põe um canto. Apertar e arrastar leva o ponto novo. O fim é como na Caneta. No teclado brasileiro, o ~ é uma tecla morta: a tecla do ~ (com ou sem Shift) escolhe a Curvatura **(R)**. Mexer nos pontos de antes sem trocar de ferramenta (como no Illustrator) ficou de fora **(R)**.
+- **Uma casa só** para Caneta, Curvatura e Ponto de ancoragem, logo depois do Laço **(R)** (no Illustrator, a Curvatura tem casa própria).
+- **Ponto novo sem mudar o desenho (pedido 3, item 6):** a bolinha do meio de um lado curvo divide a curva exatamente no meio (De Casteljau). O ponto novo e os dois vizinhos ganham as alças de como a curva estava, com uma casa decimal **(R)**. O erro fica abaixo de 0,1 pixel, só do arredondamento. Num lado reto (entre dois cantos) e na `line`, entra solto, como antes.
+- **Dobrar o lado direto** (pedido 3, item 5, opcional) ficou para depois **(R)**.
+- Girar, esticar, espelhar e o painel Propriedades levam as duas alças juntas.
+
+**Como ficou (16/11/2026):** a 4b saiu na 1.56.0.
+- A linguagem está em `js/lang.js` (`parsePoint`), `js/geom.js` e `js/scene.js`; as alças no desenho, o Ponto de ancoragem e o ponto novo, no `app.js`.
+- A Caneta e a Curvatura estão no `js/ui-pen.js`.
+- Conferido no navegador:
+  - arrastar uma alça automática (com e sem Alt), um lado da quebrada (o outro girando junto) e a inteira, e o duplo clique juntando e tirando;
+  - o Alt+arrastar copiando a forma, com um Ctrl+Z só;
+  - o ponto novo em nove lados, de traço, de forma fechada e no lado que fecha a volta, medindo a curva antes e depois;
+  - o Ponto de ancoragem (clique, puxar, quebrar);
+  - a Caneta (canto, alça, Alt, fechar, terminar com Enter) e a Curvatura (liso, duplo clique, Alt+clique, Backspace, Esc, fechar);
+  - as teclas P, Shift+C, Shift+~ e a tecla morta;
+  - girar e espelhar uma alça quebrada.
+- O guia (capítulo 2, "Alça quebrada", e a referência), o README e a referência (F1) contam o que mudou.
+
+**A 4c** (o Lápis, o Pincel e o Simplificar) vem em seguida.
 
 ### Como ficaria por dentro
 

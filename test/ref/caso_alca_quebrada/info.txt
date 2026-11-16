@@ -1,0 +1,7 @@
+canvas   300 × 200, fundo #f4efe6
+camadas  1
+  fundo            6 item(ns)
+formas   6 (1 ocultas)
+ossos    b
+animações 1
+  mexe           4 quadros, 8 fps, anima gota.shape

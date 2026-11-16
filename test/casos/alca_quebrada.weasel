@@ -1,0 +1,20 @@
+# teste: alças quebradas x,y~ax,ay~bx,by (a chegada e a saída). ~d~d é igual a ~d (os dois traços de cima são
+# iguais), um canto curvo (a ponta de cima do coração), um lado recolhido (0,0), um ponto preso a um osso com a alça
+# quebrada (as duas alças giram com o osso) e a troca de forma (shape=) entre alças inteiras e quebradas
+canvas 300 200 bg=#f4efe6
+palette ink=#2b2a33 line=3
+
+bone b pivot=250,150
+
+layer fundo
+stroke inteira w=5 : 20,90 70,30~40,0 120,90
+stroke quebrada w=5 : 150,90 200,30~40,0~40,0 250,90
+shape coracao c=#e05050 ink=line : 150,190! 110,130~0,-30 150,120~10,30~10,-30 190,130~0,30
+shape gota c=#4a90d9 ink=line : 60,190~0,0~-30,-20 30,150 90,150
+shape gota2 c=#4a90d9 hidden : 60,190~20,0 30,150~0,-40~40,0 90,150
+stroke rabo w=4 : 220,180 250,140~0,-30~30,0@b 290,170
+
+anim mexe frames=4 fps=8
+key 0 b=0,0,0 gota.shape=gota
+key 2 b=0,0,30 gota.shape=gota2
+key 4 b=0,0,0 gota.shape=gota

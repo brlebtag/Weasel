@@ -406,11 +406,14 @@
     if (depth > 0) err(li, 'falta fechar "}"', tok.from, tok.to);
   }
 
-  // Ponto: x,y  |  x,y!  (canto vivo)  |  x,y~dx,dy  (alça da curva, relativa ao ponto)
+  // Ponto: x,y  |  x,y!  (canto vivo)  |  x,y~dx,dy  (alça da curva, relativa ao ponto)  |
+  // x,y~ax,ay~bx,by  (alça quebrada: a curva chega andando na direção a e sai na direção b; ~d é o mesmo que ~d~d)
   // Qualquer um deles pode terminar em @osso ou @osso:peso: o ponto segue esse osso (o peso, de 0 a 1, é quanto).
   // to = onde termina o ponto sem o @osso (o editor reescreve só até ali); tokTo = o fim da palavra inteira.
+  // tan = a saída (a alça de c1); tin = a chegada, só na alça quebrada (sem ela, a chegada é o próprio tan).
+  // tanFrom = onde começa o texto depois do primeiro ~; tan2From, depois do segundo (ou -1).
   function parsePoint(p) {
-    let t = p.text, corner = false, tan = null, pin = null, pinW = 1, pinFrom = -1;
+    let t = p.text, corner = false, tan = null, tin = null, tan2From = -1, pin = null, pinW = 1, pinFrom = -1;
     const ai = topIndex(t, '@');
     if (ai >= 0) {
       const s = t.slice(ai + 1), ci = topIndex(s, ':');
@@ -423,20 +426,27 @@
     const end = p.from + t.length;
     const ti = topIndex(t, '~');
     if (ti >= 0) {
-      tan = nums(t.slice(ti + 1));
+      const rest = t.slice(ti + 1), tj = topIndex(rest, '~');
+      if (tj >= 0) {
+        tin = nums(rest.slice(0, tj));
+        if (tin.length !== 2 || tin.some(isNaN)) return null;
+        tan = nums(rest.slice(tj + 1));
+        tan2From = p.from + ti + tj + 2;
+      } else tan = nums(rest);
       if (tan.length !== 2 || tan.some(isNaN)) return null;
       t = t.slice(0, ti);
     } else if (t.endsWith('!')) { corner = true; t = t.slice(0, -1); }
     const v = nums(t);
     if (v.length !== 2 || v.some(isNaN)) return null;
     const o = { x: v[0], y: v[1], corner, tan, from: p.from, to: end, tokTo: p.to, xyTo: p.from + t.length + (corner ? 1 : 0), tanFrom: ti >= 0 ? p.from + ti + 1 : -1, fixed: p.text.includes('{') };
+    if (tin) Object.assign(o, { tin, tan2From });
     if (pin) Object.assign(o, { pin, pinW, pinFrom });
     return o;
   }
 
   const badPoint = (t) => (t.includes('@')
     ? `ponto inválido "${t}" (o osso vem depois do @: x,y@osso ou x,y@osso:0.5)`
-    : `ponto inválido "${t}" (use x,y  x,y!  x,y~dx,dy  ou  x,y@osso)`);
+    : `ponto inválido "${t}" (use x,y  x,y!  x,y~dx,dy  x,y~ax,ay~bx,by  ou  x,y@osso)`);
 
   function readStatement(text, li, err) {
     const sp = splitLine(text);
@@ -494,6 +504,7 @@
         const q = parsePoint(p);
         if (q) {
           if (q.tan) Object.freeze(q.tan);
+          if (q.tin) Object.freeze(q.tin);
           r.pts.push(Object.freeze(q));
         } else r.bad.push(p);
       }
@@ -1688,11 +1699,32 @@
         lazyHandles(rec, (out) => {
           pts.forEach((p, i) => {
             // com @osso: arrastar reescreve só o x,y (to/end param antes do @); apagar leva a palavra inteira (tokEnd)
-            const h = { kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, tokEnd: p.tokTo || p.to, fixed: p.fixed };
+            const h = { kind: 'pt', idx: i, x: p.x, y: p.y, corner: p.corner, tan: p.tan, tin: p.tin || null, from: p.from, to: p.tan ? p.tanFrom - 1 : p.to, end: p.to, tokEnd: p.tokTo || p.to, fixed: p.fixed };
             if (p.pin) Object.assign(h, { pin: p.pin, pinW: p.pinW, label: `ponto ${i + 1} (${p.x}, ${p.y}) preso ao osso ${p.pin}${p.pinW !== 1 ? ` com peso ${p.pinW}` : ''}` });
             out.push(h);
-            if (p.tan) out.push({ kind: 'tan', idx: i, x: p.x + p.tan[0], y: p.y + p.tan[1], px: p.x, py: p.y, from: p.tanFrom, to: p.to, fixed: p.fixed });
+            // as alças de curva: a de saída (out, em x+b) e a de chegada (in, em x-a). Na alça inteira (~d, sym) as
+            // duas reescrevem o mesmo ~d; na quebrada (~a~b), cada uma o seu pedaço. Nas pontas de um traço aberto,
+            // só o lado que tem curva.
+            const inOk = closed || i > 0, outOk = closed || i < pts.length - 1;
+            if (p.tan && !isLine) {
+              const tin = p.tin || p.tan, base = { kind: 'tan', idx: i, px: p.x, py: p.y, fixed: p.fixed, sym: !p.tin };
+              if (inOk) out.push(Object.assign({ side: 'in', x: p.x - tin[0], y: p.y - tin[1], from: p.tanFrom, to: p.tin ? p.tan2From - 1 : p.to }, base));
+              if (outOk) out.push(Object.assign({ side: 'out', x: p.x + p.tan[0], y: p.y + p.tan[1], from: p.tin ? p.tan2From : p.tanFrom, to: p.to }, base));
+            }
           });
+          // as alças automáticas (de um ponto liso sem ~): clarinhas, só no ponto escolhido (o editor filtra).
+          // Arrastar uma escreve as duas no código, do jeito que a curva já está, e daí em diante ela é uma alça.
+          if (pts.length >= 2 && !isLine && !limb && smooth > 0) {
+            const n = pts.length, segs = W.geom.smoothSegs(pts, closed, smooth);
+            pts.forEach((p, i) => {
+              if (p.tan || p.corner || p.fixed) return;
+              const sIn = closed || i > 0 ? segs[(i - 1 + n) % n] : null, sOut = closed || i < n - 1 ? segs[i] : null;
+              const a = sIn ? [p.x - sIn[4], p.y - sIn[5]] : null, b = sOut ? [sOut[2] - p.x, sOut[3] - p.y] : null;
+              const base = { kind: 'tan', auto: true, idx: i, px: p.x, py: p.y, from: -1, to: -1, at: p.to, fixed: false, ain: a, aout: b };
+              if (a) out.push(Object.assign({ side: 'in', x: p.x - a[0], y: p.y - a[1] }, base));
+              if (b) out.push(Object.assign({ side: 'out', x: p.x + b[0], y: p.y + b[1] }, base));
+            });
+          }
           // mover a forma inteira: uma alça no meio dos pontos (nunca é a "do cursor": from/to -1)
           if (pts.length >= 2) {
             const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);

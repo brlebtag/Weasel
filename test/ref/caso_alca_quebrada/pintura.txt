@@ -1,0 +1,6 @@
+stroke inteira @0.000 +0.591
+stroke quebrada @0.591 +0.591
+shape coracao @1.183 +0.764
+shape gota @1.947 +0.609
+stroke rabo @2.555 +0.469
+total 3.024

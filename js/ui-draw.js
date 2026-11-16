@@ -561,6 +561,11 @@
   W.draw = {
     setPaint: (role, v) => { setRole(role, v); A.hint(`A caixinha ${role === 'fill' ? 'do preenchimento' : role === 'stroke' ? 'do contorno' : 'da grossura'} pegou ${v}: as próximas formas saem assim.`, 2400); },
     paint: () => Object.assign({}, sw),
+    // para a Caneta e a Curvatura (js/ui-pen.js)
+    behind: () => sw.behind,
+    closedPaint,
+    openPaint,
+    tag,
   };
   syncWrap();
   paintSw();

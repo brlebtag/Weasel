@@ -21,6 +21,9 @@
     { id: 'wand', key: 'y', label: 'Varinha mágica', tip: 'clique numa forma: escolhe todas com a mesma cor (Shift soma, Alt tira)', icon: svg('<path d="M2.5 13.5l7-7"/><path class="f" d="M11.6 1.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/><path d="M13.6 7.4v1.6M12.8 8.2h1.6M7.4 1.6v1.6M6.6 2.4h1.6"/>') },
     { id: 'lasso', key: 'q', label: 'Laço', tip: 'arraste em volta: escolhe as formas que o contorno pega (Shift soma, Alt tira)', icon: svg('<path d="M8 2.5c3.3 0 5.8 1.6 5.8 3.7S11.3 9.9 8 9.9 2.2 8.3 2.2 6.2 4.7 2.5 8 2.5z"/><path d="M4.3 9.2c-.9.9-.6 2.3.6 2.6 1 .3 1.4 1.1.9 2.2"/>') },
     '-',
+    { id: 'pen', key: 'p', grp: 'pen', label: 'Caneta', tip: 'clique põe um canto; apertar e arrastar puxa as alças (Alt, no meio: só a de saída). Clique no primeiro ponto fecha um shape; Enter ou Esc termina um stroke; Backspace tira o último ponto', icon: svg('<path d="M8 1.8l4.4 6.6L8 14.2 3.6 8.4z"/><path d="M8 1.8v5.6"/><circle class="f" cx="8" cy="8.6" r="1.1"/>') },
+    { id: 'curve', key: '~', shift: true, grp: 'pen', label: 'Curvatura', tip: 'cada clique põe um ponto liso, e a curva passa por ele; duplo clique ou Alt+clique põe um canto. Clique no primeiro ponto fecha um shape; Enter ou Esc termina um stroke', icon: svg('<path d="M2.4 12.6C3.6 6 8.4 3.4 13.6 5.4"/><circle class="f" cx="2.6" cy="12.4" r="1.3"/><circle class="f" cx="7.6" cy="5" r="1.3"/><circle class="f" cx="13.4" cy="5.4" r="1.3"/>') },
+    { id: 'anchor', key: 'c', shift: true, grp: 'pen', label: 'Ponto de ancoragem', tip: 'clique num ponto troca canto e liso; arraste um ponto para puxar as alças; arraste um lado da alça para mexer só nele (alça quebrada)', icon: svg('<path d="M2.6 13.4 8 3.6l5.4 9.8"/><rect class="f" x="6.7" y="2.3" width="2.6" height="2.6"/>') },
     { id: 'text', key: 't', label: 'Texto', tip: 'clique para escrever um texto ali; clique num texto para mudar as letras', icon: svg('<path d="M3 3.5h10M8 3.5v10M6 13.5h4"/>') },
     { id: 'rect', key: 'm', grp: 'shape', label: 'Retângulo', tip: 'arraste para desenhar (Shift: quadrado; Alt: a partir do meio); um clique põe um pronto ali', icon: svg('<rect x="2.5" y="3.5" width="11" height="9" rx=".6"/>') },
     { id: 'ellipse', key: 'l', grp: 'shape', label: 'Elipse', tip: 'arraste para desenhar (Shift: círculo; Alt: a partir do meio); um clique põe um círculo ali', icon: svg('<ellipse cx="8" cy="8" rx="5.8" ry="5"/>') },
@@ -275,12 +278,14 @@
 
   // ---------- as letras das ferramentas (com o foco no desenho) ----------
   // As teclas que mudaram de lugar na etapa 1 avisam onde foram parar, enquanto as ferramentas delas não chegam.
-  const MOVED = { f: 'Ajustar à tela agora é Ctrl+0 (e Ctrl+1 é 100%).', r: 'As réguas agora são Ctrl+R (o R vai ser a ferramenta Girar).', p: 'O Prender agora é Shift+P (o P vai ser a Caneta).' };
+  const MOVED = { f: 'Ajustar à tela agora é Ctrl+0 (e Ctrl+1 é 100%).', r: 'As réguas agora são Ctrl+R (o R vai ser a ferramenta Girar).' };
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented || menus.isOpen()) return;
     const t = e.target, mod = e.ctrlKey || e.metaKey;
     if (t && t.closest && t.closest('textarea, input, select, dialog')) return;
     if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'o') { e.preventDefault(); A.openDialog(); return; }
+    // a Curvatura é Shift+~: no teclado brasileiro, o ~ é uma tecla morta (Dead, na posição da aspa do americano)
+    if (!mod && !e.altKey && e.key === 'Dead' && e.code === 'Quote' && !A.isFilm() && !st.view3d) { e.preventDefault(); A.setTool('curve'); return; }
     if (mod || e.altKey || e.key.length !== 1) return;
     const k = e.key.toLowerCase();
     const tool = TOOLS.find((x) => x !== '-' && x.key === k && !!x.shift === e.shiftKey);

@@ -1,0 +1,145 @@
+{
+  "frames": {
+    "mexe_00": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 85,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 52
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "mexe_01": {
+      "frame": {
+        "x": 89,
+        "y": 2,
+        "w": 85,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 52
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "mexe_02": {
+      "frame": {
+        "x": 176,
+        "y": 2,
+        "w": 85,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 52
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    },
+    "mexe_03": {
+      "frame": {
+        "x": 263,
+        "y": 2,
+        "w": 85,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 52
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 125
+    }
+  },
+  "animations": {
+    "mexe": [
+      "mexe_00",
+      "mexe_01",
+      "mexe_02",
+      "mexe_03"
+    ]
+  },
+  "meta": {
+    "app": "Weasel",
+    "version": "1.1",
+    "image": "caso_alca_quebrada.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 350,
+      "h": 56
+    },
+    "scale": "0.3",
+    "frameSize": {
+      "w": 85,
+      "h": 52
+    },
+    "padding": 2,
+    "frameTags": [
+      {
+        "name": "mexe",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "fps": 8,
+        "loop": true
+      }
+    ],
+    "events": [],
+    "sourceRect": {
+      "x": 13,
+      "y": 23,
+      "w": 283,
+      "h": 173
+    }
+  }
+}

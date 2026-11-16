@@ -767,7 +767,7 @@
     if (s.cmd === 'shape' || s.cmd === 'stroke' || s.cmd === 'line') {
       if (!s.pts.length) return { why: 'sem pontos' };
       if (s.pts.some((p) => p.fixed)) return { why: 'tem ponto com {conta}' };
-      plan.pts = s.pts.map((p) => ({ x: p.x, y: p.y, corner: p.corner, tan: p.tan, from: p.from, xyTo: p.tan ? p.tanFrom - 1 : p.to, to: p.to }));
+      plan.pts = s.pts.map((p) => ({ x: p.x, y: p.y, corner: p.corner, tan: p.tan, tin: p.tin || null, from: p.from, xyTo: p.tan ? p.tanFrom - 1 : p.to, to: p.to }));
       plan.ref = { kind: 'pt', x: s.pts[0].x, y: s.pts[0].y };
       return plan;
     }
@@ -794,7 +794,7 @@
     const xy = (p) => `${fmtN(p[0], dec)},${fmtN(p[1], dec)}`, ed = [];
     for (const p of plan.pts) {
       let t = xy(place(p.x, p.y)) + (p.corner ? '!' : ''), end = p.xyTo;
-      if (deg && p.tan) { t += '~' + xy(turn(0, 0, deg, p.tan[0], p.tan[1])); end = p.to; }
+      if (deg && p.tan) { t += '~' + (p.tin ? xy(turn(0, 0, deg, p.tin[0], p.tin[1])) + '~' : '') + xy(turn(0, 0, deg, p.tan[0], p.tan[1])); end = p.to; }
       ed.push([p.from, end, t]);
     }
     if (plan.pos) ed.push([plan.pos.from, plan.pos.to, xy(place(plan.pos.x, plan.pos.y))]);
@@ -1045,7 +1045,7 @@
     };
     for (const q of p.pts) {
       let t = xy(at(q.x, q.y)) + (q.corner ? '!' : ''), end = q.xyTo;
-      if (q.tan) { t += '~' + xy(vec(q.tan[0], q.tan[1])); end = q.to; }
+      if (q.tan) { t += '~' + (q.tin ? xy(vec(q.tin[0], q.tin[1])) + '~' : '') + xy(vec(q.tan[0], q.tan[1])); end = q.to; }
       ed.push([q.from, end, t]);
     }
     if (sc.kind === 'pos') ed.push([p.pos.from, p.pos.to, xy(at(p.pos.x, p.pos.y))]);
@@ -2924,6 +2924,10 @@
       const a = pts[ptAt.get(h.idx)], b = pts[ptAt.get((h.idx + 1) % ptAt.size)];
       if (h.fixed || !a || !b || Math.hypot(a[0] - b[0], a[1] - b[1]) < 26 / z) pts[i] = null;
     });
+    // as alças automáticas (clarinhas) só aparecem no ponto escolhido (o laranja) ou no que está sendo arrastado
+    const dg = st.drag && st.drag.line === st.caret.line ? st.drag : null, ah = dg ? null : rec.handles[activeHandle(rec)];
+    const actIdx = dg ? (dg.mode === 'tan' || dg.mode === 'pull' || dg.mode === null ? dg.idx : -1) : ah && (ah.kind === 'pt' || ah.kind === 'tan') ? ah.idx : -1;
+    rec.handles.forEach((h, i) => { if (h.auto && h.idx !== actIdx) pts[i] = null; });
     // numa linha de dois pontos o ✥ cairia em cima da bolinha do meio: desce um pouco
     const mi = rec.handles.findIndex((h) => h.kind === 'move');
     if (mi >= 0 && pts[mi] && rec.handles.some((h, i) => h.kind === 'mid' && pts[i] && Math.hypot(pts[i][0] - pts[mi][0], pts[i][1] - pts[mi][1]) < 14 / z)) {
@@ -2936,7 +2940,7 @@
     const hl = handleList(m, pose);
     if (!hl) return;
     const { rec, pts, scr } = hl;
-    const active = st.drag ? st.drag.hi : activeHandle(rec);
+    const active = st.drag ? (st.drag.mode === 'tan' || st.drag.mode === 'pull' ? rec.handles.findIndex((h) => h.kind === 'tan' && !h.auto && h.idx === st.drag.idx && h.side === (st.drag.side || 'out')) : st.drag.hi) : activeHandle(rec);
     ctx.save();
     const ptIdx = rec.handles.map((h, i) => (h.kind === 'pt' && pts[i] ? i : -1)).filter((i) => i >= 0);
     if (ptIdx.length > 1) {
@@ -2973,19 +2977,21 @@
         ctx.stroke();
       }
     }
-    // alças de curva: linha do ponto até a alça e o reflexo do outro lado
+    // alças de curva: uma linha do ponto até cada alça (a de chegada e a de saída; as automáticas, tracejadas)
     rec.handles.forEach((h, i) => {
       if (h.kind !== 'tan' || !pts[i]) return;
       const p = pts[rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === h.idx)];
       if (!p) return;
       const t = pts[i];
-      ctx.strokeStyle = 'rgba(92,198,212,.9)';
+      ctx.strokeStyle = h.auto ? 'rgba(92,198,212,.6)' : 'rgba(92,198,212,.9)';
       ctx.lineWidth = 1.2 / z;
+      ctx.setLineDash(h.auto ? [3 / z, 3 / z] : []);
       ctx.beginPath();
-      ctx.moveTo(2 * p[0] - t[0], 2 * p[1] - t[1]);
+      ctx.moveTo(p[0], p[1]);
       ctx.lineTo(t[0], t[1]);
       ctx.stroke();
     });
+    ctx.setLineDash([]);
     // direção da luz: traço do centro até a alça, ponta de seta e raios de sol em volta da alça
     rec.handles.forEach((h, i) => {
       if (h.kind !== 'dir' || !pts[i]) return;
@@ -3130,7 +3136,7 @@
       // tamanho: quadrado com um risco na diagonal
       if (h.kind === 'tan' || h.kind === 'round') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); } else if (h.corner || h.kind === 'size' || h.kind === 'fsize') ctx.rect(x - r, y - r, r * 2, r * 2);
       else ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = h.fixed ? '#9aa6b2' : h.kind === 'tan' || h.kind === 'round' ? '#5cc6d4' : '#ffffff';
+      ctx.fillStyle = h.fixed ? '#9aa6b2' : h.auto ? '#d4eff3' : h.kind === 'tan' || h.kind === 'round' ? '#5cc6d4' : '#ffffff';
       ctx.fill();
       ctx.lineWidth = 1.6 / z;
       ctx.strokeStyle = '#14141c';
@@ -3891,7 +3897,7 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   // o Texto põe o texto pronto com um clique; as formas, o Conta-gotas e o Degradê moram em js/ui-draw.js
   const INSERT_TOOLS = { text: 'text' };
@@ -4147,9 +4153,11 @@
       if (h.kind === 'mid') { addPoint(h); return; }
       // clicar num ponto o escolhe (fica laranja): o cursor do código vai para ele, e Delete o apaga
       if (h.kind === 'pt') editor.place(st.caret.line, h.to);
-      // a alça ✥ ou Shift+arrastar um ponto: a forma inteira anda; Alt+arrastar um ponto (ou a alça azul): a curva
-      // a alça verde: girar
-      const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' || (e.altKey && h.kind === 'pt') ? 'tan' : null;
+      // a alça ✥ ou Shift+arrastar um ponto: a forma inteira anda; a alça azul (ou a clarinha, automática): a curva;
+      // Alt+arrastar um ponto: leva uma cópia da forma (como no Illustrator); a alça verde: girar.
+      // Com o Ponto de ancoragem (Shift+C): arrastar um ponto puxa as alças (pull), e o clique troca canto e liso.
+      const anchorT = st.tool === 'anchor';
+      const mode = h.kind === 'rot' ? 'spin' : h.kind === 'move' || (e.shiftKey && h.kind === 'pt') ? 'move' : h.kind === 'tan' ? 'tan' : anchorT && h.kind === 'pt' ? 'pull' : e.altKey && h.kind === 'pt' && !isFilm() ? 'copy' : null;
       const pts = rec.handles.filter((q) => q.kind === 'pt');
       if (mode === 'move' ? pts.some((q) => q.fixed) : h.fixed) { hint(mode === 'move' || h.pts ? 'Algum ponto desta forma vem de uma {expressão}: mude no código.' : mode === 'spin' ? 'O rot= desta forma vem de uma {expressão}: mude no código.' : h.kind === 'fsize' ? 'O size= deste texto vem de uma {expressão}: mude no código.' : 'Este ponto vem de uma {expressão}: mude o valor no código.', 2800); return; }
       // a direção não muda com a pose: dá para girar com uma animação escolhida, só não tocando
@@ -4157,7 +4165,8 @@
       if (h.kind === 'dir') hint('Gire a seta: ela aponta para onde a luz está. Com Shift, gira de 15 em 15 graus.', 3200);
       else if (h.grad) hint({ g1: 'O começo do gradiente (a primeira cor). Com Shift, a direção anda de 45 em 45 graus.', g2: 'O fim do gradiente (a última cor). Com Shift, a direção anda de 45 em 45 graus.', gc: 'O centro do gradiente. Com Shift, anda em passos.', gr: 'O raio: até onde vai a última cor. Com Shift, em passos.', gf: 'O foco: de onde sai a primeira cor. Com Shift, anda em passos.' }[h.kind], 3000);
       else if (mode === 'move') hint('Movendo a forma inteira: todos os pontos andam juntos.', 2400);
-      else if (mode === 'tan' && h.kind === 'pt') hint('Puxe a alça da curva. Solte em cima do ponto para tirar a alça.', 3000);
+      else if (mode === 'pull') hint('Puxe as alças da curva (clique sem arrastar: canto ou liso). Solte em cima do ponto para tirar.', 3000);
+      else if (mode === 'tan') hint(h.auto ? 'Alça automática: arrastar escreve as alças no código, do jeito que a curva está. Alt mexe só neste lado.' : anchorT ? 'Mexendo só este lado da alça (alça quebrada, ~chegada~saída).' : h.sym ? 'Arraste a alça (os dois lados juntos). Alt quebra: mexe só este lado.' : 'Arraste este lado da alça. Alt solta da direção do outro lado; duplo clique junta os dois lados.', 3200);
       else if (h.kind === 'size') hint('Com Shift, o tamanho muda sem perder a proporção.', 2400);
       else if (h.kind === 'round') hint('Arraste para o lado: o canto fica mais redondo. De volta ao canto, r=0.', 2600);
       else if (h.kind === 'fsize') hint('Arraste o canto: as letras crescem ou diminuem (size=). Com Shift, de 4 em 4.', 2600);
@@ -4167,11 +4176,21 @@
       if (mode === 'move' || mode === 'spin') {
         // os pontos como estavam no começo: cada movimento parte deles (sem acumular arredondamento)
         st.drag.orig = [];
-        for (const q of pts) st.drag.orig[q.idx] = { x: q.x, y: q.y, tan: q.tan };
+        for (const q of pts) st.drag.orig[q.idx] = { x: q.x, y: q.y, tan: q.tan, tin: q.tin };
         const [px, py] = toCanvas(e), l = localOf(rec, h, px, py);
         if (mode === 'move') st.drag.l0 = l;
         else st.drag.spin = { cx: h.cx, cy: h.cy, reach: spinOf(rec, h).reach, rot0: h.rot, ang: h.rot, a0: l ? Math.atan2(l[1] - h.cy, l[0] - h.cx) : null };
-      } else if (mode === 'tan') st.drag.corner = !!(pts.find((q) => q.idx === h.idx) || {}).corner;
+      } else if (mode === 'pull') st.drag.corner = !!(pts.find((q) => q.idx === h.idx) || {}).corner;
+      else if (mode === 'tan') {
+        // como as alças estavam: a chegada (a0) e a saída (b0); se estavam na mesma direção (col), o outro lado
+        // acompanha a direção do arrastado, como num ponto liso do Illustrator
+        // (nas pontas de um traço aberto, o lado sem curva não conta)
+        const pt = pts.find((q) => q.idx === h.idx) || {}, cl = !!(rec.el && rec.el.closed);
+        const a0 = cl || h.idx > 0 ? (h.auto ? h.ain : pt.tin || pt.tan) : null, b0 = cl || h.idx < pts.length - 1 ? (h.auto ? h.aout : pt.tan) : null;
+        const la = a0 ? Math.hypot(a0[0], a0[1]) : 0, lb = b0 ? Math.hypot(b0[0], b0[1]) : 0;
+        const col = !!(a0 && b0 && la > 1e-6 && lb > 1e-6 && (a0[0] * b0[0] + a0[1] * b0[1]) / (la * lb) > 0.9994);
+        Object.assign(st.drag, { side: h.side, sym: !!h.sym, auto: !!h.auto, a0, b0, col, anchor: anchorT, alt: e.altKey });
+      } else if (mode === 'copy') Object.assign(st.drag, { cx: e.clientX, cy: e.clientY });
       else if (h.kind === 'size') st.drag.orig = { rx: h.rx, ry: h.ry, w: h.w, h: h.h };
       return;
     }
@@ -4221,6 +4240,8 @@
       return;
     }
     if (st.drag) {
+      if (st.drag.mode === 'copy' && !startCopy(st.drag, e)) return;
+      st.drag.alt = e.altKey;
       const [sx, sy] = snapMouse(st.drag.sn, x, y, e);
       if (st.drag.mode === 'scale') scaleShape(st.drag, sx, sy, e); else moveHandle(st.drag, sx, sy, e.shiftKey);
       return;
@@ -4274,6 +4295,7 @@
     if (st.measure && !isFilm()) { view.style.cursor = measureEnd(e) ? 'move' : 'crosshair'; return; }
     const tk = !isFilm() && toolHooks[st.tool];
     if (tk) {
+      if (tk.hover) tk.hover(e);
       const hi = tk.handles && pointsOn() ? hitHandle(e) : -1;
       view.style.cursor = hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : tk.cursor ? tk.cursor(e) : 'crosshair';
       return;
@@ -4286,7 +4308,7 @@
 
   const endPointer = () => { st.tdrag = null; st.vpress = null; st.marq = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag;
+    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag, dg = st.drag;
     if (st.guideDrag) endGuide(st.guideDrag);
     // a transformação que o Ctrl+D repete
     if (gd && gd.done) st.lastXf = Object.assign({ copy: gd.copy }, gd.done);
@@ -4294,6 +4316,7 @@
     const mm = st.meas;
     if (st.mdrag && mm && mm.a[0] === mm.b[0] && mm.a[1] === mm.b[1]) st.meas = null;
     endPointer();
+    if (dg && dg.mode === 'pull' && !dg.moved) toggleCorner(dg);
     if (td) td.up(e);
     if (pb) pinBoxEnd(pb, e);
     if (vp) pickShape(e);
@@ -4683,11 +4706,24 @@
   function addPoint(h) {
     if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para criar pontos.' : 'Para criar pontos, escolha "pose parada" no player.', 2600); return; }
     const line = st.caret.line, off = editor.lineStart(line), dec = st.view.z > 3 ? 1 : 0, key = 'drag' + Date.now();
-    const txt = ` ${fmtN(h.x, dec)},${fmtN(h.y, dec)}${h.corner ? '!' : ''}`, at = off + h.at;
-    editor.replaceRange(at, at, txt, { key, select: [at + txt.length, at + txt.length] });
+    // num trecho curvo, o ponto novo divide a curva sem mudar o desenho (as pontas ganham alças); num reto, entra solto
+    const r0 = st.model.byLine.get(line), ed = r0 ? splitEdits(r0, h, line) : null;
+    if (ed) {
+      const text = lineOf(line);
+      let out = text;
+      for (const [a, b, t] of ed.slice().sort((x, y) => y[0] - x[0] || y[1] - x[1])) out = out.slice(0, a) + t + out.slice(b);
+      // o cursor vai para o fim do x,y do ponto novo (ele fica laranja): onde ele entrou, mais o que mudou antes
+      const ins = ed[1];
+      let caret = ins[0] + ins[2].indexOf('~');
+      for (const x of [ed[0], ed[2]]) if (x[0] < ins[0]) caret += x[2].length - (x[1] - x[0]);
+      editor.replaceRange(off, off + text.length, out, { key, select: [off + caret, off + caret] });
+    } else {
+      const txt = ` ${fmtN(h.x, dec)},${fmtN(h.y, dec)}${h.corner ? '!' : ''}`, at = off + h.at;
+      editor.replaceRange(at, at, txt, { key, select: [at + txt.length, at + txt.length] });
+    }
     const rec = st.model.byLine.get(line), hi = rec ? rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === h.idx + 1) : -1;
     if (hi < 0) return;
-    hint('Ponto novo: arraste para onde quiser. Duplo clique nele liga o canto vivo (!).', 2600);
+    hint(ed ? 'Ponto novo, sem mudar a curva (as alças vieram de como ela estava): arraste para onde quiser.' : 'Ponto novo: arraste para onde quiser. Duplo clique nele liga o canto vivo (!).', 2600);
     st.drag = { line, hi, key, mode: null, idx: h.idx + 1 };
     view.style.cursor = 'move';
   }
@@ -4719,6 +4755,9 @@
     if (ru === 'corner') { clearGuides(); return; }
     const hgk = hitGroup(e);
     if (ru || (st.measure && !isFilm()) || hitScale(e) || (hgk && hgk.k)) return;
+    // a Caneta e a Curvatura usam o duplo clique para elas
+    const tkd = !isFilm() && toolHooks[st.tool];
+    if (tkd && tkd.dbl) { tkd.dbl(e); return; }
     // na Seleção: duplo clique numa forma de um grupo entra nele (isolamento); no vazio, sai
     if (st.tool === 'select' && !isFilm() && !pvModel()) {
       const l = linesAt(e)[0], g = l === undefined ? null : groupIn(l, isoGroup());
@@ -4737,9 +4776,17 @@
     if (st.anim && !isFilm()) return;
     // na alça de giro: volta a rot=0
     if (h0.kind === 'rot') { if (!h0.pts && !h0.fixed && !h0.insert) writeTok(st.caret.line, h0.from, h0.to, '0'); return; }
+    if (h0.auto) return;
     const h = h0.kind === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === h0.idx) : h0;
     if (!h || h.kind !== 'pt' || h.fixed) return;
     const off = editor.lineStart(st.caret.line);
+    // na alça quebrada (~a~b): os dois lados juntos de novo, com o lado do clique
+    if (h0.kind === 'tan' && h.tin) {
+      const v = h0.side === 'in' ? h.tin : h.tan, xy = lineOf(st.caret.line).slice(h.from, h.to), t = `${xy}~${fmtN(v[0], 1)},${fmtN(v[1], 1)}`;
+      editor.replaceRange(off + h.from, off + h.end, t, { select: [off + h.from + t.length, off + h.from + t.length] });
+      hint('As duas alças juntas de novo (~dx,dy). Duplo clique outra vez tira a alça.', 2400);
+      return;
+    }
     if (h.tan) { editor.replaceRange(off + h.to, off + h.end, '', { select: [off + h.to, off + h.to] }); return; }
     const txt = editor.value.slice(off + h.from, off + h.to).replace(/!$/, '') + (h.corner ? '' : '!');
     editor.replaceRange(off + h.from, off + h.to, txt, { select: [off + h.from + txt.length, off + h.from + txt.length] });
@@ -4810,16 +4857,108 @@
   });
   $('textEdit').addEventListener('focusout', () => closeTextEd(true, false));
 
+  // ---------- as alças de curva (etapa 4b): ~d inteira, ~a~b quebrada (a chegada e a saída) ----------
+  // o texto das alças de um ponto: só uma (a de uma ponta de traço aberto), as duas iguais (~d) ou quebradas (~a~b)
+  function handText(a, b, dec) {
+    const f = (v) => `${fmtN(v[0], dec)},${fmtN(v[1], dec)}`;
+    if (!a && !b) return '';
+    if (!a || !b) return `~${f(a || b)}`;
+    const fa = f(a), fb = f(b);
+    return fa === fb ? `~${fb}` : `~${fa}~${fb}`;
+  }
+  // Arrastar uma alça. side: 'in' (a de chegada, em x-a) ou 'out' (a de saída, em x+b). Na inteira, os dois lados
+  // andam juntos; Alt (ou o Ponto de ancoragem) quebra e mexe só um lado. Na quebrada e na automática, o lado
+  // arrastado anda, e o outro acompanha a direção se os dois estavam na mesma reta (ponto liso), sem mudar de
+  // tamanho; com Alt, fica onde estava. Com Shift, de 45 em 45 graus. Solto em cima do ponto: aquele lado some.
+  function moveTan(d, rec, x, y, snap) {
+    const p = rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx);
+    if (!p) { st.drag = null; return; }
+    const l = localOf(rec, p, x, y);
+    if (!l) return;
+    const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1, dec = k > 1.5 ? 1 : 0;
+    let v = d.side === 'in' ? [p.x - l[0], p.y - l[1]] : [l[0] - p.x, l[1] - p.y];
+    if (snap) { const len = Math.hypot(v[0], v[1]), t = Math.round(Math.atan2(v[1], v[0]) / (Math.PI / 4)) * (Math.PI / 4); v = [Math.cos(t) * len, Math.sin(t) * len]; }
+    const near = Math.hypot(v[0], v[1]) * k * st.view.z < 6, xy = lineOf(d.line).slice(p.from, p.to).replace(/!$/, '');
+    const brk = d.alt || d.anchor || !d.sym;
+    let txt;
+    if (!brk) txt = near ? xy : xy + handText(null, v, dec);
+    else {
+      if (near) v = [0, 0];
+      let o = d.side === 'in' ? d.b0 : d.a0;
+      if (o && d.col && !d.alt && !d.anchor && !near) {
+        const lo = Math.hypot(o[0], o[1]), lv = Math.hypot(v[0], v[1]);
+        if (lv > 1e-6) o = [(v[0] / lv) * lo, (v[1] / lv) * lo];
+      }
+      const a = d.side === 'in' ? v : o, b = d.side === 'in' ? o : v;
+      txt = near && (!o || Math.hypot(o[0], o[1]) < 1e-6) ? xy + (o ? '!' : '') : xy + handText(a, b, dec);
+    }
+    d.moved = true;
+    writeTok(d.line, p.from, p.end, txt, d.key);
+  }
+  // Alt+arrastar um ponto (Seleção direta): no primeiro movimento, a forma ganha uma cópia logo abaixo dela no
+  // código (na frente), e é a cópia que anda inteira (um Ctrl+Z desfaz as duas coisas)
+  function startCopy(d, e) {
+    if (Math.hypot(e.clientX - d.cx, e.clientY - d.cy) < 4) return false;
+    if (!duplicateSel(d.key)) { st.drag = null; return false; }
+    const rec = st.model.byLine.get(st.caret.line), hi = rec ? rec.handles.findIndex((q) => q.kind === 'pt' && q.idx === d.idx) : -1;
+    if (hi < 0) { st.drag = null; return false; }
+    const h = rec.handles[hi];
+    Object.assign(d, { line: st.caret.line, hi, mode: 'move', orig: [] });
+    for (const q of rec.handles) if (q.kind === 'pt') d.orig[q.idx] = { x: q.x, y: q.y, tan: q.tan, tin: q.tin };
+    const [px, py] = toCanvas({ clientX: d.cx, clientY: d.cy });
+    d.l0 = localOf(rec, h, px, py);
+    d.sn = snapPlan(rec, h, hi, 'move', { clientX: d.cx, clientY: d.cy });
+    hint('Levando uma cópia da forma (Alt+arrastar). Para puxar alças, use o Ponto de ancoragem (Shift+C).', 2600);
+    return true;
+  }
+  // o clique do Ponto de ancoragem num ponto: com alça ou liso vira canto (!); o canto vira liso
+  function toggleCorner(d) {
+    const rec = st.model && st.model.byLine.get(d.line), p = rec && rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx);
+    if (!p || p.fixed) return;
+    const xy = lineOf(d.line).slice(p.from, p.to).replace(/!$/, ''), corner = p.tan || !p.corner;
+    writeTok(d.line, p.from, p.end, xy + (corner ? '!' : ''), 'canto' + Date.now());
+    hint(corner ? 'Canto vivo (!). Clique de novo: liso; arraste o ponto para puxar alças.' : 'Ponto liso (a curva automática). Clique de novo: canto vivo.', 2400);
+  }
+  // Ponto novo sem mudar o desenho (De Casteljau): o trecho entre os pontos i e i+1 se divide no meio, e as duas
+  // pontas ganham as alças de como a curva já estava. Num trecho reto (entre dois cantos), na line, ou com
+  // {contas} nas pontas, devolve null (o ponto novo entra solto, como antes).
+  function splitEdits(rec, h, line) {
+    const el = rec.el;
+    if (!el || el.type === 'line' || el.limb) return null;
+    const hp = rec.handles.filter((q) => q.kind === 'pt').sort((a, b) => a.idx - b.idx), n = hp.length;
+    if (n < 2) return null;
+    const i = h.idx, j = (i + 1) % n, P = hp[i], Q = hp[j];
+    if (!P || !Q || P.fixed || Q.fixed) return null;
+    const segs = W.geom.smoothSegs(hp.map((q) => ({ x: q.x, y: q.y, corner: q.corner, tan: q.tan, tin: q.tin })), el.closed, el.smooth);
+    const s = segs[i];
+    if (!s) return null;
+    const near = (a, b) => Math.abs(a - b) < 1e-6;
+    if (near(s[2], s[0] + (s[6] - s[0]) / 3) && near(s[3], s[1] + (s[7] - s[1]) / 3) && near(s[4], s[6] - (s[6] - s[0]) / 3) && near(s[5], s[7] - (s[7] - s[1]) / 3)) return null;
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const P0 = [s[0], s[1]], P1 = [s[2], s[3]], P2 = [s[4], s[5]], P3 = [s[6], s[7]];
+    const p01 = mid(P0, P1), p12 = mid(P1, P2), p23 = mid(P2, P3), a = mid(p01, p12), b = mid(p12, p23), m = mid(a, b);
+    const sIn = el.closed || i > 0 ? segs[(i - 1 + n) % n] : null, sOut = el.closed || j < n - 1 ? segs[j] : null;
+    const pIn = sIn && sIn !== s ? [P0[0] - sIn[4], P0[1] - sIn[5]] : null, qOut = sOut && sOut !== s ? [sOut[2] - P3[0], sOut[3] - P3[1]] : null;
+    const text = lineOf(line);
+    const xyOf = (q) => text.slice(q.from, q.to).replace(/!$/, ''), D = 1;
+    return [
+      [P.from, P.end, xyOf(P) + handText(pIn, [p01[0] - P0[0], p01[1] - P0[1]], D)],
+      [P.tokEnd || P.end, P.tokEnd || P.end, ` ${fmtN(m[0], D)},${fmtN(m[1], D)}${handText([m[0] - a[0], m[1] - a[1]], [b[0] - m[0], b[1] - m[1]], D)}`],
+      [Q.from, Q.end, xyOf(Q) + handText([P3[0] - p23[0], P3[1] - p23[1]], qOut, D)],
+    ];
+  }
+
   // Arrastar: posição do mouse → coordenadas do código (dentro de um componente, as dele).
   function moveHandle(d, x, y, snap) {
     const rec = st.model.byLine.get(d.line);
+    if (rec && d.mode === 'tan') { moveTan(d, rec, x, y, snap); return; }
     const h = rec && rec.handles[d.hi];
     if (!h) { st.drag = null; return; }
     if (h.kind === 'dir') { moveDir(d, h, x, y, snap); return; }
     if (h.grad) { moveGrad(d, rec, h, x, y, snap); return; }
     if (h.kind === 'rot') { spinShape(d, rec, h, x, y, snap); return; }
     // a alça de curva é achada pelo número do ponto: aparece e some enquanto você arrasta
-    const p = d.mode === 'tan' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx) : h;
+    const p = d.mode === 'pull' ? rec.handles.find((q) => q.kind === 'pt' && q.idx === d.idx) : h;
     if (!p) { st.drag = null; return; }
     const l = localOf(rec, p, x, y);
     if (!l) return;
@@ -4827,9 +4966,10 @@
     const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1;
     const dec = k > 1.5 ? 1 : 0;
     if (d.mode === 'move') { if (d.l0) moveAll(d, rec, lx - d.l0[0], ly - d.l0[1], dec); return; }
-    if (d.mode === 'tan') {
+    if (d.mode === 'pull') {
       // perto do ponto (menos de 6 pixels na tela): sem alça, e o ponto volta a ser como era (canto vivo ou não)
       const tx = lx - p.x, ty = ly - p.y, xy = lineOf(d.line).slice(p.from, p.to).replace(/!$/, '');
+      if (Math.hypot(tx, ty) * k * st.view.z >= 6) d.moved = true;
       writeTok(d.line, p.from, p.end, Math.hypot(tx, ty) * k * st.view.z < 6 ? xy + (d.corner ? '!' : '') : `${xy}~${fmtN(tx, dec)},${fmtN(ty, dec)}`, d.key);
       return;
     }
@@ -4933,9 +5073,9 @@
     for (const q of pts) {
       const o = d.orig[q.idx];
       if (!o) continue;
-      const [x, y, tan] = place(o);
+      const [x, y, tan, tin] = place(o);
       let t = `${fmtN(x, dec)},${fmtN(y, dec)}${q.corner ? '!' : ''}`, end = q.to;
-      if (tan && q.tan) { t += `~${fmtN(tan[0], dec)},${fmtN(tan[1], dec)}`; end = q.end; }
+      if (tan && q.tan) { t += `~${tin && q.tin ? `${fmtN(tin[0], dec)},${fmtN(tin[1], dec)}~` : ''}${fmtN(tan[0], dec)},${fmtN(tan[1], dec)}`; end = q.end; }
       out = out.slice(0, q.from) + t + out.slice(end);
     }
     if (out === text) return;
@@ -4959,7 +5099,7 @@
       const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1, dec = k > 1.5 ? 1 : 0;
       rewritePts(d, rec, (o) => {
         const p = turn(s.cx, s.cy, deg, o.x, o.y);
-        return o.tan ? [p[0], p[1], turn(0, 0, deg, o.tan[0], o.tan[1])] : p;
+        return o.tan ? [p[0], p[1], turn(0, 0, deg, o.tan[0], o.tan[1]), o.tin && turn(0, 0, deg, o.tin[0], o.tin[1])] : p;
       }, dec);
       hint(`girando ${deg}°`, 1500);
     } else {
@@ -4978,7 +5118,7 @@
     const [px, py] = toCanvas(e), l = localOf(rec, rec.handles[sb.mi], px, py);
     if (!l) return;
     const b = sb.b, ex = b.x0 + k.bx * (b.x1 - b.x0), ey = b.y0 + k.by * (b.y1 - b.y0), orig = [];
-    for (const q of rec.handles) if (q.kind === 'pt') orig[q.idx] = { x: q.x, y: q.y, tan: q.tan };
+    for (const q of rec.handles) if (q.kind === 'pt') orig[q.idx] = { x: q.x, y: q.y, tan: q.tan, tin: q.tin };
     st.drag = { line: st.caret.line, hi: -1, mi: sb.mi, key: 'drag' + Date.now(), mode: 'scale', orig, sc: { bx: k.bx, by: k.by, b, ex, ey, grab: [l[0] - ex, l[1] - ey], said: '' } };
     // com as réguas, o canto (ou o lado) que anda gruda nas linhas guia, só no sentido em que ele anda
     if (!isFilm()) {
@@ -5007,7 +5147,7 @@
       }
     }
     const k = rec.xf ? Math.sqrt(Math.abs(M.det(rec.xf))) : 1, dec = k > 1.5 ? 1 : 0;
-    rewritePts(d, rec, (o) => [ax + (o.x - ax) * sx, ay + (o.y - ay) * sy, o.tan && [o.tan[0] * sx, o.tan[1] * sy]], dec);
+    rewritePts(d, rec, (o) => [ax + (o.x - ax) * sx, ay + (o.y - ay) * sy, o.tan && [o.tan[0] * sx, o.tan[1] * sy], o.tin && [o.tin[0] * sx, o.tin[1] * sy]], dec);
     const w = Math.abs((b.x1 - b.x0) * sx), h = Math.abs((b.y1 - b.y0) * sy);
     const say = `${fmtN(w, dec)} × ${fmtN(h, dec)} (${Math.round(Math.abs(sx) * 100)}% × ${Math.round(Math.abs(sy) * 100)}%)${sx < 0 || sy < 0 ? ', espelhada' : ''}`;
     if (say !== c.said) { c.said = say; hint(`esticando: ${say}`, 1500); }

@@ -82,7 +82,7 @@
   }
 
   // Curva suave que passa por todos os pontos. Pontos com corner=true viram cantos vivos e
-  // pontos com tan=[dx,dy] usam essa alça (a do outro lado é espelhada).
+  // pontos com tan=[dx,dy] usam essa alça (a do outro lado é espelhada), ou tin=[ax,ay] na chegada (alça quebrada).
   // Cada segmento é uma cúbica [x0,y0, c1x,c1y, c2x,c2y, x1,y1].
   function smoothSegs(pts, closed, smooth) {
     const n = pts.length;
@@ -103,7 +103,8 @@
       const len = Math.hypot(q.x - p.x, q.y - p.y);
       const dp = dir[i], dq = dir[(i + 1) % n];
       const c1 = p.tan ? [p.x + p.tan[0], p.y + p.tan[1]] : dp ? [p.x + dp[0] * len * k, p.y + dp[1] * len * k] : [p.x + (q.x - p.x) / 3, p.y + (q.y - p.y) / 3];
-      const c2 = q.tan ? [q.x - q.tan[0], q.y - q.tan[1]] : dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
+      const qi = q.tin || q.tan;
+      const c2 = qi ? [q.x - qi[0], q.y - qi[1]] : dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
       segs.push([p.x, p.y, c1[0], c1[1], c2[0], c2[1], q.x, q.y]);
     }
     return segs;

@@ -4,7 +4,7 @@ dur= sem morph=: warn linha 15: dur= é da metamorfose: só vale com um morph= n
 pairs= e born= sem morph=: warn linha 15: pairs= é da metamorfose: só vale com um morph= na mesma linha (ex.: at 5s aranha.morph=jacare dur=1.5s)
 ator que não existe: error linha 15: ator "sapo" não existe aqui
 o mesmo ator: error linha 15: aranha.morph= precisa de outro ator (ex.: at 5s aranha.morph=jacare)
-pairs= com dois pontos: error linha 15: pairs= leva pares parte->parte separados por vírgula (ex.: pairs=pata1->rabo) | error linha 15: ponto inválido "corpo" (use x,y  x,y!  x,y~dx,dy  ou  x,y@osso)
+pairs= com dois pontos: error linha 15: pairs= leva pares parte->parte separados por vírgula (ex.: pairs=pata1->rabo) | error linha 15: ponto inválido "corpo" (use x,y  x,y!  x,y~dx,dy  x,y~ax,ay~bx,by  ou  x,y@osso)
 pairs= ao contrário: error linha 15: a parte "corpo" não existe em metamorfose/aranha.weasel (pairs=corpo->abdomen: primeiro a parte de aranha, depois a de jacare) | error linha 15: a parte "abdomen" não existe em metamorfose/jacare.weasel (pairs=corpo->abdomen: primeiro a parte de aranha, depois a de jacare)
 born= de uma parte que não existe: error linha 15: a parte "nariz" não existe em metamorfose/aranha.weasel nem em metamorfose/jacare.weasel
 born= com a outra parte no mesmo ator: error linha 15: a parte "rabo" não existe em metamorfose/aranha.weasel (born=focinho->rabo: rabo é uma parte do outro ator)
