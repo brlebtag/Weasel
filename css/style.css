@@ -388,6 +388,9 @@ body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: no
 .ico.play .i-pause { display: none; }
 .ico.play.on .i-play { display: none; }
 .ico.play.on .i-pause { display: inline; }
+/* repetir (on) ou tocar uma vez: troca o ícone */
+.ico.loop svg { fill: none; stroke-linecap: round; }
+.ico.loop.on .i-once, .ico.loop:not(.on) .i-rep { display: none; }
 /* botões e chaves só com ícone: o nome fica no title (a dica do mouse) e no aria-label */
 button.ic, label.ic { width: 30px; height: 28px; padding: 0; display: inline-grid; place-items: center; flex: none; }
 .ic svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }

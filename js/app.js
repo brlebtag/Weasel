@@ -18,6 +18,7 @@
     camView: true, // filme: o que a câmera filma (ou o mundo inteiro como foi desenhado)
     frame: 0,
     playing: false,
+    loopPick: null, // o botão repetir / uma vez clicado: { key, loop, on } (veja repeating())
     speed: 1,
     lastT: 0,
     acc: 0,
@@ -1722,6 +1723,7 @@
     lbl.textContent = filmText();
     lbl.classList.remove('event');
     $('bPlay').classList.toggle('on', st.playing);
+    showLoop();
   }
   function fillAnimSelect() {
     if (isFilm()) { fillFilmSelect(); return; }
@@ -1748,6 +1750,7 @@
     lbl.textContent = frameText(anim, st.frame);
     lbl.classList.toggle('event', !!anim && anim.events.some((e) => e.frame === st.frame));
     $('bPlay').classList.toggle('on', st.playing);
+    showLoop();
   }
   const currentAnim = () => (st.anim ? st.model.animMap.get(st.anim) : null);
 
@@ -1761,6 +1764,31 @@
       for (const v of want) { const o = document.createElement('option'); o.value = v; o.textContent = v ? `variante: ${v}` : 'variante: padrão'; sel.appendChild(o); }
     }
     sel.value = st.variant;
+  }
+
+  // Repetir ou tocar uma vez. Sem clique, segue a animação: a `once` toca uma vez e para no último quadro (como no
+  // Godot), a de loop repete; o filme repete o trecho. O clique vale para a animação (ou o filme) em que foi feito, até
+  // o `once`/`loop` dela mudar no código. Só muda o que o player mostra: não escreve no código nem fica guardado.
+  const loopKey = () => `${st.current}\t${isFilm() ? '' : '\t' + st.anim}`;
+  function ownLoop() {
+    if (isFilm()) return true;
+    const a = currentAnim();
+    return !a || a.loop !== false;
+  }
+  function repeating() {
+    const p = st.loopPick;
+    return p && p.key === loopKey() && p.loop === ownLoop() ? p.on : ownLoop();
+  }
+  function showLoop() {
+    const b = $('bLoop'), on = repeating();
+    b.classList.toggle('on', on);
+    b.disabled = !isFilm() && !currentAnim();
+    b.setAttribute('aria-pressed', String(on));
+    b.title = on ? 'Repetir: no fim, volta ao começo (clique para tocar uma vez)' : 'Tocar uma vez: para no último quadro (clique para repetir)';
+  }
+  function toggleLoop() {
+    st.loopPick = { key: loopKey(), loop: ownLoop(), on: !repeating() };
+    showLoop();
   }
 
   function play(on) {
@@ -1779,6 +1807,8 @@
       st.anim = st.model.anims[0].name;
       st.frame = 0;
     }
+    // tocando uma vez, parado no último quadro: começa de novo
+    if (on && !repeating() && st.frame >= currentAnim().frames - 1) st.frame = 0;
     st.playing = on;
     if (on) { stopBuild(); st.lastT = performance.now(); st.acc = 0; }
     fillAnimSelect();
@@ -1834,23 +1864,39 @@
       if (st.acc >= 1) {
         const n = Math.floor(st.acc);
         st.acc -= n;
-        const before = st.frame;
-        st.frame = lo + ((st.frame - lo + n) % (hi - lo));
-        if (st.frame < before) startSound(); // deu a volta: o som recomeça junto
-        $('frameSl').value = st.frame;
-        $('frameLbl').textContent = filmText();
+        if (st.frame + n >= hi && !repeating()) {
+          // tocando uma vez: o trecho acabou, para no último quadro
+          st.frame = hi - 1;
+          st.playing = false;
+          stopSound();
+          fillAnimSelect();
+        } else {
+          const before = st.frame;
+          st.frame = lo + ((st.frame - lo + n) % (hi - lo));
+          if (st.frame < before) startSound(); // deu a volta: o som recomeça junto
+          $('frameSl').value = st.frame;
+          $('frameLbl').textContent = filmText();
+        }
       }
       again = true;
     } else if (st.playing && a) {
       st.acc += ((t - st.lastT) / 1000) * a.fps * st.speed;
       st.lastT = t;
       if (st.acc >= 1) {
-        st.frame = (st.frame + Math.floor(st.acc)) % a.frames;
-        st.acc -= Math.floor(st.acc);
-        $('frameSl').value = st.frame;
-        const lbl = $('frameLbl');
-        lbl.textContent = frameText(a, st.frame);
-        lbl.classList.toggle('event', a.events.some((e) => e.frame === st.frame));
+        const n = Math.floor(st.acc);
+        st.acc -= n;
+        if (st.frame + n >= a.frames && !repeating()) {
+          // tocando uma vez: para no último quadro
+          st.frame = a.frames - 1;
+          st.playing = false;
+          fillAnimSelect();
+        } else {
+          st.frame = (st.frame + n) % a.frames;
+          $('frameSl').value = st.frame;
+          const lbl = $('frameLbl');
+          lbl.textContent = frameText(a, st.frame);
+          lbl.classList.toggle('event', a.events.some((e) => e.frame === st.frame));
+        }
       }
       again = true;
     }
@@ -4351,6 +4397,7 @@
   });
   $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
+  $('bLoop').addEventListener('click', toggleLoop);
   $('bPrev').addEventListener('click', () => step(-1));
   $('bNext').addEventListener('click', () => step(1));
   $('frameSl').addEventListener('input', (e) => { st.playing = false; stopSound(); st.frame = +e.target.value; fillAnimSelect(); draw(); });

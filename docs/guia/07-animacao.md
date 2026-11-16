@@ -201,7 +201,8 @@ Repare:
 - As duas animações têm 24 quadros, mas só duas `key`: a bola sai do começo (quadro 0) e chega ao fim do trilho no quadro 12. Do 12 ao 23 não há `key` nenhuma.
 - **Loop** (esquerda): depois do quadro 23 vem o 0 de novo. Então, do quadro 12 em diante, a bola já vai voltando para a `key 0`, e o loop fecha sem pulo.
 - **`once`** (direita): depois da última `key`, a bola **fica** onde está, parada no fim.
-- O GIF e o player do editor sempre recomeçam do quadro 0 quando chegam ao fim. Por isso a bola da direita "pula" para o começo a cada volta. Num jogo, a animação `once` toca uma vez e para (no Godot, ela sai sem repetição).
+- O GIF sempre recomeça do quadro 0 quando chega ao fim. Por isso a bola da direita "pula" para o começo a cada volta. Num jogo, a animação `once` toca uma vez e para (no Godot, ela sai sem repetição).
+- O player do editor segue a animação: a `once` toca uma vez e para no último quadro, e a de loop repete. O botão ao lado de ▶ troca entre **repetir** e **tocar uma vez**, só no player: o código não muda.
 - A palavra contrária, `loop`, também existe. Ela só é necessária nas [animações combinadas](#animações-combinadas-mix), que copiam o `once` da outra animação.
 
 **Experimente:** na `vai`, acrescente `key 24 b=0`. Nada muda no loop (ele já voltava). Agora acrescente a mesma linha na `vaiUmaVez`: a bola volta também, porque agora a última `key` é a do quadro 24.
