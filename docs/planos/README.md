@@ -18,9 +18,10 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
 | [Editor visual](editor-visual.md) | menos código digitado: botão de repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo) e alças (luzes, emissores, caixas), linha do tempo da animação | proposta de 16/11/2026; item 1 na 1.49.0; itens 2, 4, 6, 10, 11 e 12 fora por enquanto |
+| [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | estudo de 16/11/2026, para discutir; se for aceito, substitui a ordem sugerida abaixo |
 | [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | proposta recebida em 16/11/2026; nada feito; o pincel de bolha ficou fora por enquanto |
 
-### Ordem sugerida para o editor (os dois planos acima)
+### Ordem sugerida para o editor (editor visual e ferramentas de desenho)
 
 | # | O quê | Plano | Situação |
 |---|---|---|---|
@@ -36,7 +37,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | 10 | Filme: `at` na linha do tempo, zoom e escala com alça, transições | editor visual, item 8 | ⬜ |
 | 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ⬜ |
 | 12 | ~~Emissores, caixas do jogo e exportar pelo editor~~ | editor visual, itens 10 a 12 | ➖ fora (16/11/2026) |
-| 13 | Vista 3D das camadas | ferramentas, item 5 | ⬜ |
+| 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ⬜ |
 
 Por que essa ordem:
 - **1:** pequeno e já pedido.
