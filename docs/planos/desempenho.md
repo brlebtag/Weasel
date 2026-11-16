@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026) e o item 6 na 1.48.2 (16/11/2026). O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2 e o item 5b na 1.48.3 (16/11/2026). O resto está aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -15,7 +15,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 4 | Filme: telas de rascunho do tamanho do desenho | `geom.js` `drawVar`, `scene.js` `drawFxLayer` e `drawCast`, `film.js` `alphaLayer` | 2 + 3 + 4 juntos: 154 → 81 ms por quadro | ✅ 1.48.1 |
 | 4b | Filme: a tela da transição (`transLayer`) | `film.js` | — | ➖ o desenho dela é o quadro inteiro |
 | 5a | Estilos de arte: ganhar com os itens 2 a 4 | `art.js` (passes do estilo) | gravura: 886 → 403 ms no protótipo | 🔶 ganham o cache de luz e o bloom; as telas do tamanho do desenho ficam desligadas nos passes |
-| 5b | Estilos de arte: laços por pixel | `art.js` `field`, `noiseP`, `knitLeg`, `mix` do riso | — | ⬜ |
+| 5b | Estilos de arte: laços por pixel | `art.js` `field`, `noiseP`, `knitLeg`, `mix` do riso | riso −31%, gravura −22%, tricô −18%, retícula −16% | ✅ 1.48.3 |
 | 6 | Lip sync automático: mais rápido, menos memória, uma vez só | `audio.js` `lipCues`, `cli/media.js`, `cli/video.js`, `cli/film-worker.js` | 20 min a 48 kHz: 27,4 s e 2,5 GB → 2,2 s e 286 MB por thread | ✅ 1.48.2 |
 | 7a | GIF de filme: não guardar todos os quadros na memória | `cli/video.js` | 20 s em 1080p: ~4 GB hoje | ⬜ |
 | 7b | GIF: gravar só a área que mudou | `gif.js` | arquivos bem menores | ⬜ muda os bytes |
@@ -75,14 +75,28 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **Não ganham:** as telas do tamanho do desenho ficam desligadas nos passes dos estilos, porque um estilo pode pintar além da forma (traço tremido, hachura).
 - **Falta:** medir os estilos de novo na 1.48.1 e ver se dá para ligar as telas pequenas em alguns passes.
 
-### ⬜ 5b. Estilos de arte: laços por pixel
+### ✅ 5b. Estilos de arte: laços por pixel (1.48.3)
 
-Dá para acelerar com resultado idêntico:
-
-- `field()`: `Math.atan2` duas vezes por pixel pode virar uma tabela de 256×256.
-- `noiseP()`: refaz o hash e o módulo a cada chamada; a grade periódica pode ser calculada antes.
-- `knitLeg()`: é 40% do tricô e recalcula o mesmo "V" em cada casa; dá para tabelar.
-- `mix` do riso: o memo usa um `Map` com chaves de 24 bits; um array tipado é mais rápido.
+- **Feito, com a imagem idêntica:**
+  - `field()`: o ângulo de cada par cosseno e seno da textura (bytes de 0 a 255) sai de uma tabela de 256×256, feita uma vez, no lugar de dois `Math.atan2` por ponto.
+  - `noiseP()`: com `per` e as células inteiros (o caso de sempre), o resto da divisão é feito em inteiros, sem os oito `%` de ponto flutuante por chamada. Fica 2× mais rápido. Os outros casos seguem a conta antiga.
+  - Riso: a mistura das tintas é procurada uma vez por ponto (antes, uma vez por tinta). Os níveis dos canais vêm de uma tabela por alfa, e pontos seguidos da mesma cor não consultam o memo. O `grainLevel` entrou no laço.
+  - `knitLeg()`: longe da perna (mais que a meia largura e meio ponto, com folga), sai antes da raiz e do seno. O `% 1` virou `Math.trunc`, com o mesmo resultado.
+  - `knitPost()`: a casa de cada coluna é calculada uma vez, e as pontas do V de baixo só são calculadas nas linhas que elas alcançam.
+- **Resultado** (quadro 1080p do `filme.weasel`; o menor tempo de 3, alternando o motor antigo e o novo):
+  - riso: 815 → 559 ms (−31%);
+  - gravura: 654 → 509 ms (−22%);
+  - tricô: 931 → 763 ms (−18%);
+  - retícula: 307 → 259 ms (−16%);
+  - os outros estilos que usam o `noiseP` (xilogravura, giz de cera) ganham pouco, uns 3%.
+- **Conferido:**
+  - os 27 estilos saem com os mesmos pixels nos 3 quadros do filme;
+  - no navegador (Chrome), riso, tricô e gravura saem iguais ao `art.js` antigo;
+  - o `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
+- **Ficou de fora:**
+  - A ideia de tabelar o "V" do tricô: a posição de cada ponto dentro da casa muda um pouquinho de casa para casa, então a tabela mudaria a imagem.
+  - Trocar o `Math.hypot` do tricô por uma conta em JS seria 2,6× mais rápido e igual no Node e no Chrome, mas outros navegadores calculam o hypot de outro jeito.
+  - O seno e a raiz do tricô são o que sobra do custo dele.
 
 ### ✅ 6. Lip sync automático (1.48.2)
 
@@ -129,9 +143,8 @@ Dá para acelerar com resultado idêntico:
 
 ## Ordem sugerida para o que falta
 
-1. 5b, os laços dos estilos (resultado idêntico).
-2. 7a, a memória do GIF de filme.
-3. 8, a escala das threads.
-4. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
-5. 7d e 7e.
-6. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
+1. 7a, a memória do GIF de filme.
+2. 8, a escala das threads.
+3. 2b e 5a, que mudam um pouco a imagem e pedem decisão.
+4. 7d e 7e.
+5. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.

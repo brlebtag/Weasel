@@ -391,12 +391,24 @@
       tu = pass('art_tu', 'u');
       tv = pass('art_tv', 'v');
     }
-    const r = [0, 0];
-    const ang = (c, sn) => { const a = Math.atan2(sn - 127.5, c - 127.5) / TAU; return (a < 0 ? a + 1 : a) * TP; };
+    const r = [0, 0], A = angTable();
     return (o, x, y) => {
-      if (tu && tu[o + 3] >= 128) { r[0] = ang(tu[o], tu[o + 1]); r[1] = ang(tv[o], tv[o + 1]); } else { r[0] = x + off[0]; r[1] = y + off[1]; }
+      if (tu && tu[o + 3] >= 128) { r[0] = A[(tu[o] << 8) | tu[o + 1]]; r[1] = A[(tv[o] << 8) | tv[o + 1]]; } else { r[0] = x + off[0]; r[1] = y + off[1]; }
       return r;
     };
+  }
+  // o ângulo (de 0 a TP) de cada par cosseno, seno da textura, de 0 a 255 cada: uma tabela no lugar do atan2 por ponto
+  let ANG = null;
+  function angTable() {
+    if (ANG) return ANG;
+    ANG = new Float64Array(65536);
+    for (let c = 0; c < 256; c++) {
+      for (let sn = 0; sn < 256; sn++) {
+        const a = Math.atan2(sn - 127.5, c - 127.5) / TAU;
+        ANG[(c << 8) | sn] = (a < 0 ? a + 1 : a) * TP;
+      }
+    }
+    return ANG;
   }
   // a distância (de 0 a 0,5 volta) até o inteiro mais perto
   const tri = (p) => Math.abs(p - Math.round(p));
@@ -404,12 +416,25 @@
   const cover = (d, w) => (w <= 0 ? 0 : w >= 1 ? cl(w / 2 + 0.5 - d) : w * cl(1 - d));
   // ruído suave (um valor sorteado por célula, misturado entre as vizinhas) que se repete a cada per células;
   // salt: um ruído diferente para cada uso
+  const NMAX = 1073741824;
   function noiseP(u, v, per, salt) {
     const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
     const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
-    const w = (a) => ((a % per) + per) % per;
-    const i0 = w(i) + salt * 4099, i1 = w(i + 1) + salt * 4099, j0 = w(j), j1 = w(j + 1);
-    const a = rnd(i0, j0), b = rnd(i1, j0), c = rnd(i0, j1), d = rnd(i1, j1);
+    let i0, i1, j0, j1;
+    if (per === (per | 0) && per > 0 && i > -NMAX && i < NMAX && j > -NMAX && j < NMAX) {
+      // per e as células inteiros (o caso de sempre): o mesmo resto, em inteiros, sem o % de ponto flutuante
+      const n = per | 0;
+      i0 = (i | 0) % n;
+      if (i0 < 0) i0 += n;
+      j0 = (j | 0) % n;
+      if (j0 < 0) j0 += n;
+      i1 = i0 + 1 === n ? 0 : i0 + 1;
+      j1 = j0 + 1 === n ? 0 : j0 + 1;
+    } else {
+      const w = (a) => ((a % per) + per) % per;
+      i0 = w(i); i1 = w(i + 1); j0 = w(j); j1 = w(j + 1);
+    }
+    const s = salt * 4099, a = rnd(i0 + s, j0), b = rnd(i1 + s, j0), c = rnd(i0 + s, j1), d = rnd(i1 + s, j1);
     return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
   }
   // o contorno: o quanto o desenho com ink (c) se aproxima da cor da ink (ik), saindo do desenho sem ink (n); as
@@ -864,13 +889,14 @@
     const uv = field(g, src, m, art, info);
     const pp = rgbOf(art.paper || PAPER), inks = art.inks.map(rgbOf), ni = inks.length, L = art.levels;
     // a mistura: em cada canal, o papel vezes (1 − x·(1 − tinta)) de cada tinta, com x de 0 a 1 o mais perto da cor
-    // (uma tinta por vez: com as outras paradas, o canal é uma reta em x, e a conta é exata)
-    const memo = new Map();
+    // (uma tinta por vez: com as outras paradas, o canal é uma reta em x, e a conta é exata). Devolve a casa da
+    // mistura em XL, de 1 em diante (o x da tinta i em XL[casa − 1][i]).
+    const memo = new Map(), XL = [];
     const mix = (r, gg, b) => {
       const key = (r << 16) | (gg << 8) | b;
-      let x = memo.get(key);
-      if (x) return x;
-      x = new Float32Array(ni);
+      const n = memo.get(key);
+      if (n) return n;
+      const x = new Float32Array(ni);
       const want = [r, gg, b];
       for (let it = 0; it < 12; it++) {
         for (let i = 0; i < ni; i++) {
@@ -885,13 +911,35 @@
           x[i] = den > 1e-6 ? cl(num / den) : 0;
         }
       }
-      memo.set(key, x);
-      return x;
+      memo.set(key, XL.push(x));
+      return XL.length;
     };
     const ncell = Math.max(1, Math.round(TP / art.size)), cs = TP / ncell, fw = Math.min(0.5, 0.3 / (cs * k));
     const a0 = regDir(art), off = inks.map((_, i) => regOff(art, k, a0 + (i * TAU) / ni));
     const lv = (v, a, p) => Math.round(levels((v * a + p * (1 - a)) / 255, L) * 255);
     const { Wd, Hd } = g;
+    // a mistura de cada ponto, uma vez por ponto (cada tinta lê o seu, deslocado): XL[XI[p] − 1] (0: ponto vazio).
+    // Os níveis (lv) dos três canais vêm de uma tabela por alfa; pontos seguidos da mesma cor não consultam o memo.
+    const XI = new Int32Array(Wd * Hd), LVT = new Float64Array(256 * 768), LVok = new Uint8Array(256);
+    let lastKey = -1, lastX = 0;
+    for (let p = 0, so = 0, n = Wd * Hd; p < n; p++, so += 4) {
+      const ab = s0[so + 3];
+      if (!ab) continue;
+      const T = ab * 768;
+      if (!LVok[ab]) {
+        const as = ab / 255;
+        for (let ch = 0; ch < 3; ch++) for (let v = 0; v < 256; v++) LVT[T + ch * 256 + v] = lv(v, as, pp[ch]);
+        LVok[ab] = 1;
+      }
+      const r = LVT[T + s0[so]], gg = LVT[T + 256 + s0[so + 1]], b = LVT[T + 512 + s0[so + 2]], key = (r << 16) | (gg << 8) | b;
+      if (key !== lastKey) {
+        lastX = mix(r, gg, b);
+        lastKey = key;
+      }
+      XI[p] = lastX;
+    }
+    grainLevel(0.5);
+    const GC = grainCdf, GN = GC.length;
     for (let py = 0, o = 0; py < Hd; py++) {
       const y = (g.gy0 + py + 0.5) * g.ch;
       for (let px = 0; px < Wd; px++, o += 4) {
@@ -900,14 +948,16 @@
         for (let i = 0; i < ni; i++) {
           const sx = px - off[i][0], sy = py - off[i][1];
           if (sx < 0 || sy < 0 || sx >= Wd || sy >= Hd) continue;
-          const so = (sy * Wd + sx) * 4, as = s0[so + 3] / 255;
+          const sp = sy * Wd + sx, so = sp * 4, as = s0[so + 3] / 255;
           if (!as) continue;
           if (as > A) A = as;
           // o quase papel fica papel (como na impressão)
-          const xa = (mix(lv(s0[so], as, pp[0]), lv(s0[so + 1], as, pp[1]), lv(s0[so + 2], as, pp[2]))[i] - 0.08) / 0.92;
+          const xa = (XL[XI[sp] - 1][i] - 0.08) / 0.92;
           if (xa <= 0.002) continue;
           const q = uv(so, x - off[i][0] * g.cw, y - off[i][1] * g.ch);
-          const t = cl((grainLevel(xa) - noiseP(q[0] / cs, q[1] / cs, ncell, 11 + i)) / fw + 0.5);
+          // grainLevel(xa), sem a chamada
+          const gl = xa <= 0 ? -1 : xa >= 1 ? 2 : GC[Math.min(GN - 1, Math.floor(xa * GN))];
+          const t = cl((gl - noiseP(q[0] / cs, q[1] / cs, ncell, 11 + i)) / fw + 0.5);
           if (!t) continue;
           const ink = inks[i];
           R *= 1 - t * (1 - ink[0] / 255); G2 *= 1 - t * (1 - ink[1] / 255); B *= 1 - t * (1 - ink[2] / 255);
@@ -3706,11 +3756,15 @@
   const KN = [0, 0, 0, 0];
   function knitLeg(x, y, leg, sw, shh, hw0, r, g, b, side, fz) {
     const ax = leg[0] * sw, ay = leg[1] * shh, vx = leg[2] * sw - ax, vy = leg[3] * shh - ay, L2 = vx * vx + vy * vy;
-    const t = cl(((x - ax) * vx + (y - ay) * vy) / L2), dx = x - ax - vx * t, dy = y - ay - vy * t, d = Math.hypot(dx, dy);
-    const hw = hw0 * (0.72 + 0.28 * Math.sin(Math.PI * t)), a = cl(hw - d + 0.5);
+    const t = cl(((x - ax) * vx + (y - ay) * vy) / L2), dx = x - ax - vx * t, dy = y - ay - vy * t;
+    // longe da perna (mais que a meia largura máxima e meio ponto, com folga): sem lã, sem a raiz e o seno
+    const far = hw0 * 1.001 + 0.501;
+    if (dx * dx + dy * dy > far * far) { KN[0] = 0; return KN; }
+    const d = Math.hypot(dx, dy), hw = hw0 * (0.72 + 0.28 * Math.sin(Math.PI * t)), a = cl(hw - d + 0.5);
     KN[0] = a;
     if (a <= 0) return KN;
-    const p = Math.min(1, d / hw), sd = dx * vy - dy * vx > 0 ? side : -side, st = (((t * 4 + p * sd * 0.45) % 1) + 1) % 1;
+    // st: ((z % 1) + 1) % 1, com o mesmo resultado, sem as duas chamadas do % de ponto flutuante
+    const p = Math.min(1, d / hw), sd = dx * vy - dy * vx > 0 ? side : -side, z = t * 4 + p * sd * 0.45, z1 = z - Math.trunc(z) + 1, st = z1 - Math.trunc(z1);
     const ply = Math.sin(Math.PI * st), shade = (0.42 + 0.38 * Math.sqrt(1 - p * p) + 0.2 * ply) * fz, hl = 0.07 * (1 - p * p) * ply;
     KN[1] = r * shade + (255 - r * shade) * hl; KN[2] = g * shade + (255 - g * shade) * hl; KN[3] = b * shade + (255 - b * shade) * hl;
     return KN;
@@ -3730,10 +3784,19 @@
       return out;
     };
     const A = [0, 0, 0], Bc = [0, 0, 0], hw0 = 0.25 * sw, P0 = src.bg ? [pp[0], pp[1], pp[2], 255] : [0, 0, 0, 0];
+    // a casa (cx) e a posição nela (u) de cada coluna, uma vez só
+    const CX = new Float64Array(Wd), CU = new Float64Array(Wd);
+    for (let px = 0; px < Wd; px++) {
+      const X = (o0[0] + px + 0.5) / sw;
+      CX[px] = Math.floor(X);
+      CU[px] = X - CX[px];
+    }
+    // as pontas do V de baixo só sobem até o alto das pernas (com a meia largura e folga): acima disso, nem chama
+    const topB = Math.min(KLEG[0][1], KLEG[1][1]) * shh - (hw0 * 1.001 + 0.501) - 0.01;
     for (let py = 0, o = 0; py < Hd; py++) {
-      const Y = (o0[1] + py + 0.5) / shh, cy = Math.floor(Y), v = Y - cy;
+      const Y = (o0[1] + py + 0.5) / shh, cy = Math.floor(Y), v = Y - cy, tipB = v * shh - shh >= topB;
       for (let px = 0; px < Wd; px++, o += 4) {
-        const X = (o0[0] + px + 0.5) / sw, cx = Math.floor(X), u = X - cx;
+        const cx = CX[px], u = CU[px];
         const ci = (cy - C.cy0) * C.cw + (cx - C.cx0), cb = ci + C.cw, here = !!on[ci], below = cy + 1 - C.cy0 < C.chn && !!on[cb];
         // fora do tricô (sem fundo): o papel, ou nada (na imagem sem fundo)
         if (!here && !below) { c[o] = P0[0]; c[o + 1] = P0[1]; c[o + 2] = P0[2]; c[o + 3] = P0[3]; continue; }
@@ -3742,7 +3805,7 @@
         if (here) { colAt(ci, A); r = A[0] * 0.3; gg = A[1] * 0.3; b = A[2] * 0.3; a = 255; }
         // as pontas do V de baixo (por trás), depois a perna direita e a esquerda deste
         const x = u * sw, y = v * shh;
-        if (below) {
+        if (below && tipB) {
           colAt(cb, Bc);
           for (let s = 1; s >= 0; s--) {
             const q = knitLeg(x, y - shh, KLEG[s], sw, shh, hw0, Bc[0], Bc[1], Bc[2], s ? -1 : 1, fz);
