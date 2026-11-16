@@ -57,28 +57,38 @@
     }
     return out;
   }
-  // desfoque de caixa (duas passadas, por linha e por coluna), para tirar o vinco do meio das formas
+  // desfoque de caixa (duas passadas, por linha e por coluna), para tirar o vinco do meio das formas.
+  // A passada por coluna anda linha a linha com uma soma por coluna (acc), na mesma ordem de contas de uma coluna
+  // por vez, mas lendo a memória em sequência.
   function boxBlur(a, w, h, r) {
     if (r < 1) return;
-    const tmp = new Float32Array(Math.max(w, h));
+    const k = 2 * r + 1, W1 = w - 1, H1 = h - 1;
+    const tmp = new Float32Array(w);
     for (let y = 0; y < h; y++) {
+      const o = y * w;
       let acc = 0;
-      for (let x = -r; x <= r; x++) acc += a[y * w + Math.min(w - 1, Math.max(0, x))];
+      for (let x = -r; x <= r; x++) acc += a[o + (x < 0 ? 0 : x > W1 ? W1 : x)];
       for (let x = 0; x < w; x++) {
-        tmp[x] = acc / (2 * r + 1);
-        acc += a[y * w + Math.min(w - 1, x + r + 1)] - a[y * w + Math.max(0, x - r)];
+        tmp[x] = acc / k;
+        const xa = x + r + 1, xs = x - r;
+        acc += a[o + (xa > W1 ? W1 : xa)] - a[o + (xs < 0 ? 0 : xs)];
       }
-      for (let x = 0; x < w; x++) a[y * w + x] = tmp[x];
+      for (let x = 0; x < w; x++) a[o + x] = tmp[x];
     }
-    for (let x = 0; x < w; x++) {
-      let acc = 0;
-      for (let y = -r; y <= r; y++) acc += a[Math.min(h - 1, Math.max(0, y)) * w + x];
-      for (let y = 0; y < h; y++) {
-        tmp[y] = acc / (2 * r + 1);
-        acc += a[Math.min(h - 1, y + r + 1) * w + x] - a[Math.max(0, y - r) * w + x];
+    const acc = new Float64Array(w), out = new Float32Array(w * h);
+    for (let y = -r; y <= r; y++) {
+      const o = (y < 0 ? 0 : y > H1 ? H1 : y) * w;
+      for (let x = 0; x < w; x++) acc[x] += a[o + x];
+    }
+    for (let y = 0; y < h; y++) {
+      const o = y * w, ya = y + r + 1, ys = y - r;
+      const oa = (ya > H1 ? H1 : ya) * w, os = (ys < 0 ? 0 : ys) * w;
+      for (let x = 0; x < w; x++) {
+        out[o + x] = acc[x] / k;
+        acc[x] += a[oa + x] - a[os + x];
       }
-      for (let y = 0; y < h; y++) a[y * w + x] = tmp[y];
     }
+    a.set(out);
   }
 
   // Preenche os pontos sem valor (peso 0) com valores suaves vindos dos que têm (push-pull: média em
@@ -229,13 +239,18 @@
     out.height = Hd;
     const oc = out.getContext('2d');
     const im = oc.createImageData(Wd, Hd), D = im.data, A = o.alpha;
-    const at = (x, y) => H[Math.min(Hd - 1, Math.max(0, y)) * Wd + Math.min(Wd - 1, Math.max(0, x))];
+    // inclinação pelo filtro de Sobel, com os vizinhos presos à borda da imagem (linhas r0, r1, r2; colunas xl, x, xr).
+    // Onde o quadro colorido é transparente, o ponto fica 0,0,0,0: a tela guarda a cor multiplicada pela
+    // transparência, então a cor desse ponto se perderia de qualquer jeito.
+    const W1 = Wd - 1, H1 = Hd - 1;
     for (let y = 0; y < Hd; y++) {
+      const r0 = (y > 0 ? y - 1 : 0) * Wd, r1 = y * Wd, r2 = (y < H1 ? y + 1 : H1) * Wd;
       for (let x = 0; x < Wd; x++) {
-        const i = y * Wd + x;
-        // inclinação pelo filtro de Sobel
-        const gx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1)) / 8;
-        const gy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1)) / 8;
+        const i = r1 + x;
+        if (A && A[i * 4 + 3] === 0) continue;
+        const xl = x > 0 ? x - 1 : 0, xr = x < W1 ? x + 1 : W1;
+        const gx = (H[r0 + xr] + 2 * H[r1 + xr] + H[r2 + xr] - H[r0 + xl] - 2 * H[r1 + xl] - H[r2 + xl]) / 8;
+        const gy = (H[r2 + xl] + 2 * H[r2 + x] + H[r2 + xr] - H[r0 + xl] - 2 * H[r0 + x] - H[r0 + xr]) / 8;
         const l = Math.sqrt(gx * gx + gy * gy + 1);
         D[i * 4] = Math.round(((-gx / l) * 0.5 + 0.5) * 255);
         D[i * 4 + 1] = Math.round(((gy / l) * 0.5 + 0.5) * 255); // Y para cima: o lado de cima da forma fica verde

@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5 e o item 5a na 1.48.6 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b ficou de lado. O resto está aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5 o item 5a na 1.48.6 e os itens 7d e 7e na 1.48.7 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b ficou de lado. O resto está aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -20,8 +20,8 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 7a | GIF de filme: não guardar todos os quadros na memória; e a memória do canvas com 1 thread | `gif.js`, `cli/gifframe.js`, `cli/video.js`, `cli/film-worker.js` | 20 s em 1080p: 5,3 → 1,5 GB; 5 s com 1 thread: 3,1 → 0,33 GB | ✅ 1.48.4 |
 | 7b | GIF: gravar só a área que mudou | `gif.js` | arquivos bem menores | ⬜ muda os bytes |
 | 7c | GIF: cor mais próxima pela cor do pixel, não pelo centro da caixa | `gif.js` | menos faixas | ⬜ muda os bytes |
-| 7d | PNG: modo rápido, como opção | encoder do canvas | 3× mais rápido, arquivo 25–40% maior | ⬜ |
-| 7e | Normal map do Godot | `normal.js` | 2,3 s em 60 quadros; 20–30% a menos | ⬜ |
+| 7d | PNG: comprimir nas threads do libuv (`encode`), com os mesmos bytes, em vez de um modo rápido; e o JPG dos quadros de filme com a qualidade certa | `cli/weasel.js`, `cli/video.js` | `.tscn` do Cavaleiro 5,4 → 3,0 s (com o 7e); quadros de filme com 1 thread −68% | ✅ 1.48.7 |
+| 7e | Normal map do Godot: desfoque e Sobel lendo a memória em sequência | `normal.js` `boxBlur`, `frame` | folha do Cavaleiro: 3,4 → 2,0 s (−40%) | ✅ 1.48.7 |
 | 8 | Filme com várias threads: o limite é a memória; os mapas de luz pintados só onde são lidos | `scene.js` `lightMaps` e `lightPiece`, `film.js` | MP4 de 10 s: `-j 1` 16,7 → 14,0 s, `-j 8` 5,3 → 4,7 s | ✅ 1.48.5 |
 | 8b | Filme: telas de rascunho recriadas em vez de limpas, na linha de comando | `scene.js` `cleanCanvas`, `geom.js` `drawVar`, `film.js` `alphaLayer` e `transLayer`, `art.js` `work` | nenhum (dentro do ruído) | ➖ não ajuda |
 
@@ -165,8 +165,69 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 - **7b. GIF só com a área que mudou:** os GIFs ficam bem menores, mas os bytes mudam, e as referências `_gif` dos testes precisam ser refeitas.
 - **7c. Cor mais próxima no GIF:** hoje usa o centro da caixa de 5 bits, não a cor real do pixel, o que cria faixas. Também muda os bytes.
-- **7d. PNG rápido:** o encoder do canvas equivale ao zlib nível 6 (93 ms por quadro 1080p; 0,7–1 s por folha grande). Um modo rápido seria 3× mais rápido, com arquivos 25–40% maiores. Só como opção.
-- **7e. Normal map do Godot:** 2,3 s em 60 quadros; dá para ganhar uns 20–30%.
+- 7d e 7e: nas seções abaixo.
+
+### ✅ 7d. PNG comprimido nas threads do libuv (1.48.7)
+
+- **Ideia antiga:** um modo rápido (zlib nível 1), como opção, com arquivos maiores.
+- **Medido (16/11/2026):** um PNG próprio (filtro Up e zlib nível 1) sai 2 a 3× mais rápido que o encoder do canvas, mas com arquivos 27–60% maiores; a imagem do cenário dobra (45 → 91 KB). Escolher o filtro de cada linha, como o canvas faz, fica mais lento em JS que o próprio canvas.
+- **Achado:** o @napi-rs/canvas tem `canvas.encode('png')`, que comprime numa thread do libuv e dá **os mesmos bytes** do `toBuffer`. Várias imagens comprimem juntas, e o próximo quadro é desenhado enquanto o anterior comprime. Com isso, a opção não faz falta.
+- **Feito, com os mesmos bytes (só na linha de comando):**
+  - `cli/weasel.js`:
+    - os pacotes do Godot (`.tscn` e `.tres`, com esqueleto ou não) comprimem as imagens juntas (`encodeAll`);
+    - a folha com `--normal` comprime as duas imagens juntas, depois do normal map, que lê a folha;
+    - `--frames` de desenho desenha os próximos quadros enquanto os anteriores comprimem.
+  - `cli/video.js`: os quadros de filme em PNG e JPG com 1 thread (`--jobs 1`, ou filme com menos de 48 quadros) fazem o mesmo.
+  - Nos dois, até `ENCODES` (4, o tamanho do grupo de threads do libuv) por vez, salvos na ordem.
+  - Com várias threads, nada muda: cada thread já comprime o seu quadro. Passar a compressão para o grupo do libuv, que tem 4 threads para o processo todo, disputaria com o render.
+- **Resultado** (o menor de 5, alternando o motor da 1.48.6 e o novo):
+  - `.tscn` do Cavaleiro: 5,4 → 3,0 s (−44%, junto com o 7e);
+  - folha da coruja com `--normal`: 3,4 → 2,4 s (−27%, junto com o 7e);
+  - 4 s do `filme.weasel` em PNG 1080p com `--jobs 1`: 27,0 → 8,7 s (−68%). Com 8 threads, continua 2,4 s;
+  - `--frames` do furão (`walk_down`, `-s 4`): 290 → 214 ms (−26%).
+- **Conferido:**
+  - 348 arquivos exportados com o motor da 1.48.6 e com o novo, todos iguais byte a byte:
+    - pacotes do Godot com e sem esqueleto, tileset;
+    - folhas com normal map, zip;
+    - quadros de desenho em PNG e JPG;
+    - quadros de filme com 1 e com várias threads, com estilos.
+  - No zip, só a hora gravada muda; os arquivos de dentro são iguais.
+  - Quadros de 7 filmes comprimidos enquanto o próximo era desenhado: 0 diferenças.
+  - O `npm test` e o `--strict` passaram (1007 conferidos, tudo igual).
+- **Achado no caminho e corrigido (bug, não desempenho):**
+  - Os quadros de filme em JPG (`--frames` com `.jpg`) saíam com qualidade 0,92 numa escala de 1 a 100, ou seja, ~1. O `cli/video.js` dividia o `--quality` por 100 (desde a 1.3), e o canvas espera de 1 a 100.
+  - Um quadro 1080p saía com 13 KB e blocos grandes, em vez de 55 KB. O quadro único de filme e os desenhos já usavam 92.
+  - Agora a sequência usa o `--quality` como ele é. O quadro 150 da sequência sai igual, byte a byte, ao mesmo quadro exportado sozinho (`--frame 150`), com e sem threads, e com `-q 50` também.
+  - Os bytes desses JPGs mudam; nenhum teste guarda JPG de filme.
+
+### ✅ 7e. Normal map do Godot (1.48.7)
+
+- **Problema:** 2,3 s para os 60 quadros do Cavaleiro.
+- **Medido, por partes (folha do Cavaleiro):**
+  - O desfoque (`boxBlur`) andava a coluna inteira para cada ponto na passada vertical, lendo a memória aos saltos.
+  - O Sobel pegava os vizinhos com uma função e `Math.min`/`Math.max` a cada ponto.
+- **Feito, com os mesmos bytes:**
+  - `boxBlur`: a passada vertical anda linha a linha, com uma soma por coluna, lendo a memória em sequência. A ordem das contas é a de antes, por isso o resultado não muda.
+  - `frame` (Sobel):
+    - as linhas e colunas vizinhas (presas à borda) são calculadas uma vez por linha e por ponto;
+    - onde o quadro colorido é transparente, o ponto fica 0,0,0,0 sem fazer a conta. A tela guarda a cor multiplicada pela transparência, então essa cor sumiria de qualquer jeito.
+- **Resultado** (`W.normal.sheet`, o menor de 5, alternando o motor antigo e o novo):
+  - Cavaleiro (60 quadros, 6418×5138): 3353 → 2003 ms (−40%);
+  - coruja (48 quadros, 3376×3376): 1690 → 1369 ms (−19%);
+  - fantasma (32 quadros, 2894×2414): 668 → 475 ms (−29%).
+- **Conferido:**
+  - 37 arquivos de 11 pacotes do Godot, iguais byte a byte com o motor da 1.48.5. São 11 normal maps:
+    - folhas do `.tscn` e do `-f godot --normal`;
+    - tilesets e pixel art;
+    - esqueletos com dobra, passada, pinos e virada;
+    - escala 0,5.
+  - No navegador (Chrome), o normal map do cavaleiro, da coruja, do fantasma e do chefe sai com os mesmos pixels do antigo.
+  - O `npm test` e o `--strict` passaram.
+- **Ficou de fora:** o resto do tempo é a altura de cada parte do Cavaleiro:
+  - pintar a máscara (~310 ms);
+  - a distância (~210 ms);
+  - o desfoque (~220 ms);
+  - preencher os buracos (~130 ms).
 
 ### ✅ 8. Escala das threads no filme (1.48.5)
 
@@ -219,5 +280,4 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Ordem sugerida para o que falta
 
-1. 7d e 7e.
-2. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.
+1. 7b e 7c, que mudam os bytes dos GIFs e as referências dos testes.

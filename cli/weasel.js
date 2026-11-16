@@ -353,6 +353,9 @@ function formatFromOut(out) {
   return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.webp': 'webp', '.svg': 'svg', '.txt': 'txt', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
 }
 
+// os arquivos de um pacote (imagens com canvas, textos com text): as imagens comprimem juntas, cada uma numa thread
+// do libuv (encode, os mesmos bytes do toBuffer)
+const encodeAll = (files) => Promise.all(files.map((f) => (f.canvas ? f.canvas.encode('png') : Buffer.from(f.text))));
 function save(file, buf, what, quiet) {
   fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   fs.writeFileSync(file, buf);
@@ -483,18 +486,28 @@ async function exportModel(model, o, format, base, sfx) {
       if (format === 'svg') { const s = X.svgText(model, anim, f, opts); return { buf: Buffer.from(s), what: 'SVG' }; }
       if (format === 'txt') { const t = X.imageCanvas(model, anim, f, opts).artText; const ls = t.split('\n').length - 1; return { buf: Buffer.from(t), what: `${ls} linhas de letras` }; }
       const cv = X.imageCanvas(model, anim, f, opts);
-      return { buf: format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), what: `${cv.width}×${cv.height}` };
+      // a compressão roda numa thread do libuv (encode, os mesmos bytes do toBuffer): buf é uma promessa
+      const buf = format === 'jpg' ? cv.encode('jpeg', o.quality) : cv.encode('png');
+      buf.catch(() => {}); // um erro aparece no await, na vez dele
+      return { buf, what: `${cv.width}×${cv.height}` };
     };
     if (o.frames) {
       opts.rect = o.trim ? X.contentRect(model, [anim], o.margin) : undefined;
       const pattern = named(o.out || `${base}_${anim}.${format}`);
-      for (let f = 0; f < a.frames; f++) { const r = one(f); save(withSuffix(pattern, '_' + String(f).padStart(3, '0')), r.buf, r.what, o.quiet); }
+      // os próximos quadros são desenhados enquanto os anteriores comprimem (até V.ENCODES por vez), salvos na ordem
+      const busy = [];
+      const next = async () => { const [file, r] = busy.shift(); save(file, await r.buf, r.what, o.quiet); };
+      for (let f = 0; f < a.frames; f++) {
+        busy.push([withSuffix(pattern, '_' + String(f).padStart(3, '0')), one(f)]);
+        if (busy.length >= V.ENCODES) await next();
+      }
+      while (busy.length) await next();
       return;
     }
     if (a && o.frame >= a.frames) usage(`--frame ${o.frame} não existe em "${anim}" (quadros 0 a ${a.frames - 1})`);
     if (!a && o.frame) usage('--frame precisa de --anim');
     const r = one(o.frame);
-    save(named(o.out || (anim ? `${base}_${anim}_${o.frame}.${format}` : `${base}.${format}`)), r.buf, r.what, o.quiet);
+    save(named(o.out || (anim ? `${base}_${anim}_${o.frame}.${format}` : `${base}.${format}`)), await r.buf, r.what, o.quiet);
     return;
   }
 
@@ -543,7 +556,8 @@ async function exportModel(model, o, format, base, sfx) {
         if (f.name.endsWith('.tscn')) return `cena do Godot 4 com esqueleto (${pr.bones} osso${pr.bones === 1 ? '' : 's'}, ${pr.rigid} peça${pr.rigid === 1 ? '' : 's'} presas aos ossos${pr.skinned ? `, ${pr.skinned} que dobra${pr.skinned === 1 ? '' : 'm'}` : ''}${pr.framed ? `, ${pr.framed} quadro a quadro` : ''}${pr.boxes ? `, ${pr.boxes} caixa${pr.boxes === 1 ? '' : 's'}` : ''}${pr.points ? `, ${pr.points} ponto${pr.points === 1 ? '' : 's'}` : ''}${pr.mirrored.length ? `, espelhadas: ${pr.mirrored.join(', ')}` : ''})`;
         return 'ajudante do AnimationPlayer';
       };
-      for (const f of pr.files) save(path.join(dir, f.name), f.canvas ? f.canvas.toBuffer('image/png') : Buffer.from(f.text), say(f), o.quiet);
+      const bufs = await encodeAll(pr.files);
+      pr.files.forEach((f, i) => save(path.join(dir, f.name), bufs[i], say(f), o.quiet));
       if (!o.quiet) for (const n of pr.notes) console.log(paint('33', `aviso: ${n}`));
       return;
     }
@@ -557,7 +571,8 @@ async function exportModel(model, o, format, base, sfx) {
       if (f.name.endsWith('.gd')) return 'ajudante do AnimationPlayer';
       return pkg.kind === 'tileset' ? `TileSet do Godot 4 (${pkg.tiles} blocos)` : 'SpriteFrames do Godot 4';
     };
-    for (const f of pkg.files) save(path.join(dir, f.name), f.canvas ? f.canvas.toBuffer('image/png') : Buffer.from(f.text), what(f), o.quiet);
+    const bufs = await encodeAll(pkg.files);
+    pkg.files.forEach((f, i) => save(path.join(dir, f.name), bufs[i], what(f), o.quiet));
     return;
   }
 
@@ -571,10 +586,12 @@ async function exportModel(model, o, format, base, sfx) {
   const pngFile = out.replace(/\.(zip|json|png|tres)$/i, '') + '.png';
   opts.imageName = path.basename(pngFile);
   const r = X.sheetCanvas(model, names, opts);
-  const png = r.canvas.toBuffer('image/png');
   const what = `${r.canvas.width}×${r.canvas.height}, ${r.frames} quadros de ${r.fw}×${r.fh}`;
-  // normal map junto (--normal): mesma arrumação da folha; no Godot, o .tres usa os dois
-  const normal = o.normal ? { name: opts.imageName.replace(/\.png$/i, '_normal.png'), data: W.normal.sheet(model, r, { strength: model.godot ? model.godot.normal : 1 }).toBuffer('image/png') } : null;
+  // normal map junto (--normal): mesma arrumação da folha; no Godot, o .tres usa os dois. Ele lê a folha, então as
+  // duas imagens comprimem depois, juntas
+  const nm = o.normal ? W.normal.sheet(model, r, { strength: model.godot ? model.godot.normal : 1 }) : null;
+  const [png, nmBuf] = await Promise.all([r.canvas.encode('png'), nm && nm.encode('png')]);
+  const normal = nm ? { name: opts.imageName.replace(/\.png$/i, '_normal.png'), data: nmBuf } : null;
   const extra = format === 'godot'
     ? { name: opts.imageName.replace(/\.png$/i, '.tres'), data: Buffer.from(X.godotText(model, r, opts.imageName, normal ? normal.name : undefined)), what: 'SpriteFrames do Godot 4' }
     : { name: opts.imageName.replace(/\.png$/i, '.json'), data: Buffer.from(r.json), what: 'JSON (TexturePacker/Phaser)' };

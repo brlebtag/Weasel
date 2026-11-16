@@ -10,6 +10,8 @@ const { W } = require('./runtime');
 const { packFrame, unpackKeys } = require('./gifframe');
 
 const VIDEO = ['mp4', 'mov', 'webm', 'mkv'];
+// quantas imagens comprimem ao mesmo tempo com canvas.encode: o tamanho do grupo de threads do libuv (4, se ninguém mudou)
+const ENCODES = Math.max(1, +process.env.UV_THREADPOOL_SIZE || 4);
 
 // tempo dado na linha de comando: 2s, 2, 1.5s, 500ms, 48f, 1m30s ou código de tempo 00:01:12 (min:seg:quadro)
 function parseTime(s, fps) {
@@ -143,6 +145,10 @@ class Pool {
 // Renderiza os quadros pedidos e entrega na ordem, com no máximo `win` quadros prontos esperando.
 async function eachFrame(frames, ctx, kind, onFrame) {
   if (!ctx.pool) {
+    // PNG e JPG: a compressão roda nas threads do libuv (encode, os mesmos bytes do toBuffer) enquanto os próximos
+    // quadros são desenhados; até ENCODES por vez, entregues na ordem
+    const busy = [];
+    const next = async () => { const [f, p] = busy.shift(); await onFrame(f, await p); };
     for (const f of frames) {
       const cv = W.film.renderFrame(ctx.model, f, { scale: ctx.scale, transparent: ctx.transparent, subs: ctx.subs, lang: ctx.lang });
       if (kind === 'gif') {
@@ -151,16 +157,21 @@ async function eachFrame(frames, ctx, kind, onFrame) {
         const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
         await onFrame(f, { w: cv.width, h: cv.height, buf: Buffer.from(d.buffer, d.byteOffset, d.byteLength) });
       } else {
-        const out = ctx.nameOf(f);
-        const bytes = kind === 'jpg' ? cv.toBuffer('image/jpeg', ctx.quality) : cv.toBuffer('image/png');
-        fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
-        fs.writeFileSync(out, bytes);
-        await onFrame(f, { w: cv.width, h: cv.height, bytes: bytes.length });
+        const out = ctx.nameOf(f), w = cv.width, h = cv.height;
+        const p = (kind === 'jpg' ? cv.encode('jpeg', ctx.quality) : cv.encode('png')).then((bytes) => {
+          fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+          fs.writeFileSync(out, bytes);
+          return { w, h, bytes: bytes.length };
+        });
+        p.catch(() => {}); // um erro aparece no await, na vez dele
+        busy.push([f, p]);
+        if (busy.length >= ENCODES) await next();
       }
       // uma volta no laço de eventos: o canvas só devolve a memória das telas e dos pixels lidos aí (sem isso,
       // ~24 MB por quadro 1080p ficam presos até o fim)
       await new Promise((res) => setImmediate(res));
     }
+    while (busy.length) await next();
     return;
   }
   const win = ctx.jobs * 3, inflight = new Map();
@@ -345,7 +356,7 @@ async function exportFilm(model, o, format, source, h) {
 
   let jobs = o.jobs === null ? (total >= 48 ? Math.max(1, Math.min(8, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1)) : 1) : o.jobs;
   jobs = Math.max(1, Math.min(jobs, total));
-  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality / 100, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang, dither: o.dither };
+  const ctx = { model, scale: o.scale, transparent: o.transparent && format !== 'jpg' && format !== 'mp4' && format !== 'mkv', quality: o.quality, jobs, pool: null, nameOf: null, subs: burn, lang: o.lang, dither: o.dither };
   if (o.transparent && (format === 'mp4' || format === 'mkv') && !o.quiet) console.error(h.paint('33', 'aviso') + `: ${format} não guarda transparência; use .mov (ProRes 4444), .webm ou --frames (PNG)`);
   if (jobs > 1) ctx.pool = new Pool(jobs, { src: source.src, name: path.basename(source.name), dir: source.dir, scale: ctx.scale, transparent: ctx.transparent, subs: burn, lang: o.lang, cues: autoCues(model) });
   const summary = (secs, n) => { n = n || total; return `${n} quadros em ${secs.toFixed(1)}s (${(n / Math.max(0.001, secs)).toFixed(1)} q/s${jobs > 1 ? `, ${jobs} threads` : ''})`; };
@@ -532,4 +543,4 @@ function filmInfo(m) {
   return out.join('\n');
 }
 
-module.exports = { exportFilm, filmInfo, parseTime, findFfmpeg, ffmpegArgs, VIDEO };
+module.exports = { exportFilm, filmInfo, parseTime, findFfmpeg, ffmpegArgs, VIDEO, ENCODES };
