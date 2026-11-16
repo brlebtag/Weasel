@@ -1,0 +1,12 @@
+filme    480 × 450, 12 fps, 3s (36 quadros, 00:03:00), fundo #cfe3f0
+atores   a (fase_boneco.weasel, anim anda_right), b (fase_boneco.weasel, anim anda_right), c (fase_boneco.weasel, anim anda_right), d (fase_boneco.weasel, anim anda_right), e (fase_boneco.weasel, anim anda_right), f (fase_boneco.weasel, anim voa_right), g (fase_boneco.weasel, anim anda_right)
+camadas  base (depth undefined)
+planos   1
+  velocidade       00:00:00      3s     36 quadros  câmera 240,225 · 9 mudança(s) com at
+    speed=auto a: anda_right (passada 120 px/s): 1.25×
+    speed=auto b: anda_right (passada 120 px/s): de 0.06× a 2.29×
+    speed=auto c: anda_right (passada 120 px/s): -0.93×
+    speed=auto d: anda_right (passada 120 px/s): de 1.3× a 1.33×
+    speed=auto e: anda_right (passada 120 px/s): de 1.67× a 16.67×
+    speed=auto f: voa_right sem passada (toca em 1)
+    speed=auto g: anda_right (passada 120 px/s): 1.25×

@@ -200,19 +200,125 @@
     }
     return prev.v;
   }
-  // tempo da animação de a até b, com a velocidade (speed) que muda por at
-  function integrate(tr, base, a, b) {
+  // Quantos segundos da animação "name" tocam de a até b, com a velocidade (speed) que muda por at: um número (1
+  // normal, 0.5 metade) ou auto (a animação acompanha o quanto o ator anda; pode dar negativo, de ré)
+  function animSecs(shot, ac, model, name, a, b) {
     if (!(b > a)) return 0;
-    if (!tr || !tr.keys.length) return (b - a) * base;
-    let total = 0, cur = base, from = a;
+    const tr = trackOf(shot, 'actor', ac.name, 'speed');
+    const seg = (x, y, v) => (v === 'auto' ? autoSecs(shot, ac, model, name, x, y) : (y - x) * v);
+    if (!tr || !tr.keys.length) return seg(a, b, ac.speed);
+    let total = 0, cur = ac.speed, from = a;
     for (const k of tr.keys) {
       if (k.t <= a) { cur = k.v; continue; }
       if (k.t >= b) break;
-      total += (k.t - from) * cur;
+      total += seg(from, k.t, cur);
       from = k.t;
       cur = k.v;
     }
-    return total + (b - from) * cur;
+    return total + seg(from, b, cur);
+  }
+
+  // ---------- speed=auto: a animação acompanha o quanto o ator anda ----------
+  // A passada (anim feet=) diz quanto o personagem anda por segundo, em px do desenho, sem os pés escorregarem. Com
+  // speed=auto, a animação toca no ritmo do ator: a distância que ele anda no palco, na direção em que o desenho olha
+  // (com o rot= e o giro do path=), dividida pela passada vezes o scale=. Parado, ela para no quadro; de ré, toca ao
+  // contrário; nunca passa de 3× (acima disso os pés escorregam, e a leitura avisa). Sem passada (sem feet=, ou sem
+  // medida), toca em 1. O ator é medido em amostras de 1/120 s, uma vez por plano.
+  const AUTO_MAX = 3, AUTO_DT = 1 / 120;
+  // a passada da animação (px do desenho por segundo, com o sinal da direção) ou null sem medida
+  function strideOf(model, name) {
+    const a = name ? model.animMap.get(name) : null, g = a ? S.gait(model, a) : null;
+    return g && g.speed !== null && Math.abs(g.speed) >= 0.05 ? g.speed : null;
+  }
+  // em cada amostra: along = quanto o ator anda no palco por segundo na direção do x do desenho dele; vel = o mesmo
+  // em px do desenho (dividido pelo scale= e pelo flip=)
+  function autoBox(shot, ac) {
+    const all = shot._auto || (shot._auto = new Map());
+    let box = all.get(ac.name);
+    if (box) return box;
+    const n = Math.max(1, Math.ceil((shot.dur || 0) / AUTO_DT)), vel = new Float64Array(n), along = new Float64Array(n);
+    const v = (prop, base, t) => valueAt(trackOf(shot, 'actor', ac.name, prop), t, base);
+    let p0 = actorPos(shot, ac, 0);
+    for (let i = 0; i < n; i++) {
+      const tm = (i + 0.5) * AUTO_DT, p1 = actorPos(shot, ac, (i + 1) * AUTO_DT);
+      const r = ((v('rot', ac.rot, tm) + (ac.path ? actorPos(shot, ac, tm)[2] : 0)) * Math.PI) / 180;
+      const sc = v('sx', ac.sx, tm) * v('flip', ac.flip, tm)[0];
+      const d = ((p1[0] - p0[0]) * Math.cos(r) + (p1[1] - p0[1]) * Math.sin(r)) / AUTO_DT;
+      along[i] = d;
+      vel[i] = Math.abs(sc) < 1e-9 ? 0 : d / sc;
+      p0 = p1;
+    }
+    box = { n, vel, along, cum: new Map() };
+    all.set(ac.name, box);
+    return box;
+  }
+  // os segundos de animação acumulados desde o começo do plano, amostra a amostra, como se fosse auto o tempo todo
+  function autoTable(shot, ac, model, name) {
+    const gs = strideOf(model, name);
+    if (gs === null) return null;
+    const box = autoBox(shot, ac);
+    let byModel = box.cum.get(model);
+    if (!byModel) box.cum.set(model, (byModel = new Map()));
+    let C = byModel.get(name);
+    if (!C) {
+      C = new Float64Array(box.n + 1);
+      for (let i = 0; i < box.n; i++) C[i + 1] = C[i] + Math.max(-AUTO_MAX, Math.min(AUTO_MAX, box.vel[i] / gs)) * AUTO_DT;
+      byModel.set(name, C);
+    }
+    return C;
+  }
+  function autoSecs(shot, ac, model, name, a, b) {
+    const C = autoTable(shot, ac, model, name);
+    if (!C) return b - a;
+    const at = (t) => {
+      const x = Math.max(0, t / AUTO_DT), i = Math.min(C.length - 2, Math.floor(x));
+      return C[i] + (C[i + 1] - C[i]) * Math.min(1, x - i);
+    };
+    return at(b) - at(a);
+  }
+  // O que a leitura avisa e o --info mostra de um ator com speed=auto num plano (null se ele não usa auto):
+  // notes = os trechos em que ele anda mais rápido que 3× a passada, ou anda com uma animação sem passada, com a linha
+  // do speed=auto que vale ali; anims = cada animação tocada com auto: a passada e o ritmo (em × a velocidade normal)
+  // enquanto ele anda (negativo: de ré).
+  function autoReport(shot, ac) {
+    const tr = trackOf(shot, 'actor', ac.name, 'speed');
+    const srcs = [{ t: 0, v: ac.speed, line: ac.line, tok: ac.speedTok }, ...(tr ? tr.keys : [])];
+    if (!ac.model || !srcs.some((x) => x.v === 'auto')) return null;
+    const box = autoBox(shot, ac), animTr = trackOf(shot, 'actor', ac.name, 'anim'), varTr = trackOf(shot, 'actor', ac.name, 'variant');
+    const out = { notes: [], anims: new Map() }, r2 = (x) => Math.round(x * 100) / 100;
+    let run = null;
+    const flush = () => { if (run) out.notes.push(run); run = null; };
+    for (let i = 0; i < box.n; i++) {
+      const tm = (i + 0.5) * AUTO_DT;
+      if (tm > shot.dur + 1e-9) break;
+      let src = srcs[0];
+      for (const x of srcs) { if (x.t <= tm + 1e-9) src = x; else break; }
+      const name = src.v === 'auto' ? valueAt(animTr, tm, ac.anim) : null;
+      const model = ac.models.get(valueAt(varTr, tm, ac.variant)) || ac.model, a = name ? model.animMap.get(name) : null;
+      if (!a) { if (run && tm - run.t1 >= 0.1) flush(); continue; }
+      const gs = strideOf(model, name), moving = Math.abs(box.along[i]) > 1;
+      let kind = null;
+      if (gs === null) { if (moving) kind = a.feet && a.feet.length ? 'unmeasured' : 'nofeet'; } else {
+        const rate = box.vel[i] / gs;
+        if (!out.anims.has(name)) out.anims.set(name, { stride: Math.abs(gs), lo: null, hi: null });
+        const st = out.anims.get(name);
+        if (moving) { st.lo = st.lo === null ? rate : Math.min(st.lo, rate); st.hi = st.hi === null ? rate : Math.max(st.hi, rate); }
+        if (Math.abs(rate) > AUTO_MAX + 1e-6) kind = 'fast';
+      }
+      if (gs === null && !out.anims.has(name)) out.anims.set(name, { stride: null, lo: null, hi: null });
+      if (kind && run && run.kind === kind && run.anim === name && run.src === src && tm - run.t1 < 0.1) run.t1 = tm;
+      else if (kind) { flush(); run = { kind, anim: name, src, t0: tm, t1: tm }; } else if (run && tm - run.t1 >= 0.1) flush();
+    }
+    flush();
+    out.notes = out.notes.map((n) => {
+      const t0 = r2(Math.max(0, n.t0 - AUTO_DT / 2)), t1 = r2(n.t1 + AUTO_DT / 2), when = t1 - t0 < 0.05 ? `em ${t0}s` : `de ${t0}s a ${t1}s`;
+      const msg = n.kind === 'fast' ? `speed=auto: o ator "${ac.name}" anda mais rápido que ${AUTO_MAX}× a passada de "${n.anim}" ${when}; ali os pés escorregam (use uma animação de correr)`
+        : n.kind === 'nofeet' ? `speed=auto: o ator "${ac.name}" anda com "${n.anim}", que não tem feet=, ${when}; ela toca em 1`
+          : `speed=auto: a passada de "${n.anim}" não dá para medir (veja o --info do arquivo dele); o ator "${ac.name}" anda com ela ${when}, e ela toca em 1`;
+      return { kind: n.kind, anim: n.anim, t0, t1, msg, line: n.src.line, from: n.src.tok ? n.src.tok[0] : 0, to: n.src.tok ? n.src.tok[1] : 0 };
+    });
+    for (const st of out.anims.values()) { if (st.lo !== null) { st.lo = r2(st.lo); st.hi = r2(st.hi); } }
+    return out;
   }
 
   // com path= e at … ator.along=, o ator anda pelo caminho (o x e o y do at deixam de valer)
@@ -238,7 +344,6 @@
     if (!model) return s;
     // phase: cada troca marcada começa onde a animação de antes estava na passada (em quadros, pode ser fracionário);
     // sem nenhum phase, nada disso roda (as outras trocas começam do quadro 0, como sempre)
-    const speedTr = trackOf(shot, 'actor', ac.name, 'speed');
     let offs = null;
     if (at && at.keys.some((k) => k.phase)) {
       offs = [];
@@ -246,7 +351,7 @@
       for (let i = 0; i <= cur; i++) {
         const k = at.keys[i], B = k.v ? model.animMap.get(k.v) : null;
         let o = 0;
-        if (k.phase && A && B && A.loop && B.loop) o = S.phaseFrame(model, A, aOff + integrate(speedTr, ac.speed, aFrom, k.t) * A.fps, B);
+        if (k.phase && A && B && A.loop && B.loop) o = S.phaseFrame(model, A, aOff + animSecs(shot, ac, model, A.name, aFrom, k.t) * A.fps, B);
         offs.push(o);
         A = B; aFrom = k.t; aOff = o;
       }
@@ -256,9 +361,10 @@
     const plain = (name, from, off) => {
       const a = name ? model.animMap.get(name) : null;
       if (!a) return { anim: null, frame: 0, pose: S.timePose(model, t) };
-      const local = integrate(speedTr, ac.speed, from, t);
+      const local = animSecs(shot, ac, model, a.name, from, t);
       let f = Math.floor(local * a.fps + (off || 0) + 1e-6);
-      f = a.loop ? ((f % a.frames) + a.frames) % a.frames : Math.min(a.frames - 1, f);
+      // (com speed=auto de ré, uma animação que toca uma vez fica no primeiro quadro)
+      f = a.loop ? ((f % a.frames) + a.frames) % a.frames : Math.max(0, Math.min(a.frames - 1, f));
       return { anim: a.name, frame: f, pose: S.makePose(model, a.name, f) };
     };
     // blend=: durante a mistura, a animação de antes continua tocando e vai virando a nova (a de antes pode
@@ -811,5 +917,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, morphPlan, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
+  W.film = { timeline, locate, timecode, frameState, morphPlan, autoReport, AUTO_MAX, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

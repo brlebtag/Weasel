@@ -1528,6 +1528,8 @@
     const colorList = () => [...names(colors, 'cor'), ...names([...m.gradients.keys()], 'gradiente'), ...names([...m.patterns.keys()], 'padrão'), { label: 'none' }];
     const eq = L.topIndex(cur, '=');
     const actorOf = (name) => filmActors().find((a) => a.name === name);
+    // speed= de um ator: auto (a animação acompanha o quanto ele anda) ou quantas vezes a velocidade normal
+    const speedList = () => [...names(['auto'], 'a animação acompanha o quanto o ator anda (passada do feet=)'), ...names(['1', '0.5', '2', '0'], 'vezes a velocidade normal (0 congela)')];
     const fileList = () => names([...st.files.keys()].filter((f) => f !== st.current).map((f) => `"${f}"`), 'arquivo');
     if (eq > 0) {
       const key = cur.slice(0, eq);
@@ -1541,6 +1543,7 @@
         if (prop === 'follow') return [...names(filmActors().map((a) => a.name), 'ator'), { label: 'none' }];
         if (prop === 'morph') return names(filmActors().map((a) => a.name).filter((n) => n !== target), 'ator em que este vira');
         if (prop === 'flip') return names(['x', 'y', 'xy', 'none']);
+        if (prop === 'speed' && ac) return speedList();
         if (prop === 'show') return names(['1', '0']);
         if (prop === 'draw') return names(['0', '1'], '0 = nada, 1 = inteira');
         if (prop === 'c' || prop === 'fadec') return names(colors, 'cor');
@@ -1553,6 +1556,7 @@
         if (key === 'variant') return ac && ac.model ? names(ac.model.variants, 'variante') : [];
         if (key === 'hide') return ac && ac.model ? names([...ac.model.layerMap.keys()], 'camada') : [];
         if (key === 'flip') return names(['x', 'y', 'xy', 'none']);
+        if (key === 'speed') return speedList();
       }
       if (cmd === 'camera' && key === 'follow') return names(filmActors().map((a) => a.name), 'ator');
       if (cmd === 'camera' && key === 'fadec') return names(colors, 'cor');

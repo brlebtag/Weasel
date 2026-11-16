@@ -595,6 +595,12 @@ erro: o osso "b" não tem caminho: use bone b … path=nome_de_uma_linha
 
 O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou o botão **Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas. A folha de conferência (`--contact`) mostra em vermelho os quadros em que o pé escorrega ([capítulo 9](09-jogo-godot.md#a-folha-de-conferência)).
 
+### Os pés escorregam no filme
+
+**O que você vê:** o ator anda pelo palco, mas as pernas vão num ritmo e o corpo em outro: ele desliza, ou anda no lugar depois de parar.
+
+**Como resolver:** ponha `feet=` na animação de andar e `speed=auto` no ator (`actor heroi "heroi.weasel" 80,400 anim=anda speed=auto`). A animação passa a acompanhar o quanto ele anda, e para quando ele para ([capítulo 10](10-filme.md#andar-sem-escorregar-speedauto)). Um aviso de "mais rápido que 3× a passada" quer dizer que ele anda depressa demais para essa animação: troque para uma de correr naquele trecho.
+
 ### As pernas pulam quando o personagem troca de jeito de andar
 
 **O que você vê:** de `anda` para `trote` (ou de `run` para `run4`), as pernas mudam de lugar de uma vez no quadro da troca.

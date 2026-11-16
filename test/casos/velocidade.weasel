@@ -1,0 +1,33 @@
+# teste: speed=auto no ator — a animação acompanha o quanto ele anda (a passada do feet=: 120 px/s no desenho do
+# boneco, 36 px/s no palco com scale=0.3), e o pé no chão fica parado no palco.
+# a anda reto a 45 px/s (1.25×); b acelera e para (ease smooth: a animação acelera junto e, parado, fica no quadro);
+# c anda de ré (a animação toca ao contrário); d sobe o morro pelo path= (com turn, mede na direção do desenho);
+# e dispara (passa do teto de 3×: aviso); f voa sem feet= (toca em 1: aviso); g começa em speed=1 e liga o auto no at.
+film fps=12 dur=3s
+canvas 480 450 bg=#cfe3f0
+palette chao=#8a7f6e
+
+line l1 c=chao w=2 : 0,60 480,60
+line l2 c=chao w=2 : 0,120 480,120
+line l3 c=chao w=2 : 0,180 480,180
+line morro c=chao w=2 : 20,270 90,250 160,262
+line l5 c=chao w=2 : 0,300 480,300
+line l7 c=chao w=2 : 0,420 480,420
+
+actor a "fase_boneco.weasel" 40,60 origin=100,180 scale=0.3 anim=anda_right speed=auto
+actor b "fase_boneco.weasel" 40,120 origin=100,180 scale=0.3 anim=anda_right speed=auto
+actor c "fase_boneco.weasel" 320,180 origin=100,180 scale=0.3 anim=anda_right speed=auto
+actor d "fase_boneco.weasel" 20,270 origin=100,180 scale=0.3 anim=anda_right speed=auto path=morro
+actor e "fase_boneco.weasel" 40,300 origin=100,180 scale=0.3 anim=anda_right speed=auto
+actor f "fase_boneco.weasel" 40,360 origin=100,180 scale=0.3 anim=voa_right speed=auto
+actor g "fase_boneco.weasel" 40,420 origin=100,180 scale=0.3 anim=anda_right
+
+at 3s a.x=175 ease=linear
+at 2s b.x=150
+at 3s c.x=220 ease=linear
+at 3s d.along=1 ease=linear
+at 1s e.x=100 ease=linear
+at 1.5s e.x=400 ease=linear
+at 3s f.x=200 ease=linear
+at 1s g.speed=auto
+at 3s g.x=175 ease=linear

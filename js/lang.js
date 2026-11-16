@@ -754,6 +754,11 @@
       }
       return n;
     }
+    // speed= de um ator (além de auto): um número; uma palavra ganha a lista do que vale
+    function speedNum(st, a) {
+      if (isNaN(num(a.text))) { bad(st, a, `speed= aceita um número (1 = normal, 0.5 = metade, 0 congela) ou auto`); return 1; }
+      return number(st, a, 1, 0, 100);
+    }
     function list(st, a, min, max, def) {
       const v = nums(a.text);
       if (v.length < min || v.length > max || v.some(isNaN)) {
@@ -2658,7 +2663,8 @@
       if (A.has('rot')) ac.rot = number(st, A.get('rot'), 0);
       if (A.has('flip')) { const f = flipOf(st, A.get('flip')); if (f) ac.flip = f; }
       if (A.has('depth')) ac.depth = number(st, A.get('depth'), 1, 0.05, 1000);
-      if (A.has('speed')) ac.speed = number(st, A.get('speed'), 1, 0, 100);
+      // speed=auto: a animação acompanha o quanto o ator anda (a passada do feet=); conferido no fim do shot
+      if (A.has('speed')) { const a = A.get('speed'); if (a.text === 'auto') { ac.speed = 'auto'; ac.speedTok = [a.from, a.to]; } else ac.speed = speedNum(st, a); }
       if (A.has('opacity')) ac.opacity = number(st, A.get('opacity'), 1, 0, 1);
       if (A.has('origin')) ac.origin = pair(st, A.get('origin'), ac.origin);
       if (A.has('variant')) { const v = variantOf(st, A.get('variant'), ac); if (v !== null) ac.variant = v; }
@@ -2938,6 +2944,13 @@
           if (msg) err(u.k.line, msg, u.tok.from, u.tok.to, 'warn');
         }
         delete s.phaseUse;
+        // speed=auto: os trechos em que o ator anda mais rápido que 3× a passada, ou anda com uma animação sem passada
+        if (W.film && W.film.autoReport) {
+          for (const ac of actors.values()) {
+            const r = W.film.autoReport(s, ac);
+            if (r) for (const n of r.notes) err(n.line, n.msg + (F.shots.length > 1 ? ` (no shot "${s.name}")` : ''), n.from, n.to, 'warn');
+          }
+        }
         // câmera seguindo um ator que não existe
         if (s.cam.follow && !actors.has(s.cam.follow) && s.cam.followAt) bad(s.cam.followAt.st, s.cam.followAt.a, `ator "${s.cam.follow}" não existe aqui`);
         for (const a of s.audios) checkLips(a, actors);
@@ -3080,6 +3093,7 @@
         if (!shot.tracks.has(id)) shot.tracks.set(id, { kind, name, prop, interp, keys: [] });
         const tr = shot.tracks.get(id);
         const k = { t: when === undefined ? t : when, v, ease, line: st.line };
+        if (v === 'auto' && a) k.tok = [a.from, a.to];
         if (blend && prop === 'anim') k.blend = blend;
         if (phase && prop === 'anim') { k.phase = true; (shot.phaseUse || (shot.phaseUse = [])).push({ k, tok: phase, actor: name }); }
         const same = tr.keys.findIndex((x) => Math.abs(x.t - k.t) < 1e-9);
@@ -3125,7 +3139,7 @@
           case 'free': key(kind, name, prop, 'lerp', number(st, a, 0)); break;
           case 'num': key(kind, name, prop, 'lerp', number(st, a, 1, 0, 1)); break;
           case 'pos': key(kind, name, prop, 'lerp', number(st, a, 1, 0.01, 1000)); break;
-          case 'stepnum': key(kind, name, prop, 'step', number(st, a, 1, 0, 100)); break;
+          case 'stepnum': key(kind, name, prop, 'step', kind !== 'actor' || prop !== 'speed' ? number(st, a, 1, 0, 100) : a.text === 'auto' ? 'auto' : speedNum(st, a), a); break;
           case 'px': key(kind, name, prop, 'lerp', number(st, a, 0, 0, 1000)); break;
           case 'step': {
             const s = a.text.toLowerCase();

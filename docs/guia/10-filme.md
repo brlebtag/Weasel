@@ -224,7 +224,7 @@ actor c "coruja.weasel" 625,235 origin=240,404 scale=0.5 hide=ceu,galho variant=
 
 ### Animação e velocidade: `anim=` e `speed=`
 
-`anim=` diz qual animação do arquivo o ator toca. `speed=` muda a velocidade dela: 1 é normal, 0.5 é metade, 2 é o dobro e 0 congela.
+`anim=` diz qual animação do arquivo o ator toca. `speed=` muda a velocidade dela: 1 é normal, 0.5 é metade, 2 é o dobro e 0 congela. Para um ator que anda pelo palco, `speed=auto` faz a animação acompanhar o passo dele ([Andar sem escorregar](#andar-sem-escorregar-speedauto)).
 
 <!-- gerar: img/10_ator_speed.gif -s 0.4 -->
 ```weasel
@@ -716,6 +716,80 @@ at 3s capivara.anim=trote phase
 - Junto com `blend=`, a mistura começa com as duas já na mesma fase: `at 3s capivara.anim=trote phase blend=0.4s`.
 - `phase` vale só para o `anim=` da mesma linha. As outras trocas recomeçam do quadro 0, como sempre.
 - No Godot, a mesma troca é `tocar("trote", velocity, true)` ([capítulo 9](09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo)).
+
+### Andar sem escorregar: `speed=auto`
+
+Um ator que anda pelo palco (com `at … x,y` ou `path=`) tocando uma animação de andar escorrega os pés quando a velocidade da animação não bate com a dele. Com `speed=auto`, a animação **acompanha o ator**: anda mais depressa quando ele anda mais depressa, e para quando ele para.
+
+O personagem precisa de `feet=` na animação. Aqui ele é o Andador do [capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet), que anda 120 px por segundo:
+
+<details>
+<summary>O <code>andador.weasel</code></summary>
+
+<!-- arquivo: andador.weasel -->
+```weasel
+canvas 200 200 bg=#e8eef5
+palette ink=#2a2433 line=4 pele=#7cc4e8
+
+bone corpo pivot=100,110
+bone perna_e pivot=106,130 parent=corpo
+bone perna_d pivot=94,128 parent=corpo
+
+layer perna_atras
+stroke coxa_d w=8 c=ink bone=perna_d : 94,128 94,172
+ellipse sapato_d 98,173 9,4 c=ink bone=perna_d
+layer corpo
+ellipse tronco 100,105 28,30 c=pele ink=line bone=corpo
+ellipse olho 112,96 3,4 c=ink bone=corpo
+layer perna_frente
+stroke coxa_e w=8 c=ink bone=perna_e : 106,130 106,176
+ellipse sapato_e 110,177 9,4 c=ink bone=perna_e
+
+point pe_e 106,180 bone=perna_e
+point pe_d 94,176 bone=perna_d
+
+anim anda_right frames=8 fps=12 feet=pe_e,pe_d
+key 0 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+key 2 perna_d=0,-12,0 ease=linear
+key 4 perna_e=-20,0,0 perna_d=20,0,0 ease=linear
+key 6 perna_e=0,-12,0 ease=linear
+key 8 perna_e=20,0,0 perna_d=-20,0,0 ease=linear
+```
+
+</details>
+
+Os dois andam juntos: saem devagar, aceleram e param em 3 s.
+
+<!-- gerar: img/10_speed_auto.gif -s 0.5 -->
+```weasel
+film fps=12 dur=4s
+canvas 900 400 bg=#e8eef5
+
+layer chao
+rect piso1 0,170 900,30 c=#c9d3dd
+rect piso2 0,360 900,40 c=#c9d3dd
+text t1 450,194 "speed=1: os pés escorregam" size=24 align=center c=#1c1f2b
+text t2 450,388 "speed=auto: os pés ficam no chão" size=24 align=center c=#1c1f2b
+
+actor a "andador.weasel" 80,170 origin=100,180 anim=anda_right
+actor b "andador.weasel" 80,360 origin=100,180 anim=anda_right speed=auto
+
+at 3s a.x=640 b.x=640
+```
+
+![Dois bonecos azuis andam para a direita, acelerando e parando. O de cima mexe as pernas sempre no mesmo ritmo e desliza; o de baixo apressa as pernas na aceleração, pisa firme e para no meio do passo](img/10_speed_auto.gif)
+
+- O de cima toca a animação no ritmo dela o tempo todo. Ele desliza na aceleração e, parado, continua andando no lugar.
+- O de baixo, com `speed=auto`, mexe as pernas no ritmo em que anda e para no quadro em que estava. Para ele ficar de pé, troque para a parada: `at 3s b.anim=parado blend=0.3s`.
+- **Como ele mede:** o quanto o ator anda no palco, dividido pela passada do `feet=` vezes o `scale=` do ator. Conta só o andar na direção em que o desenho olha (com o `rot=` e o giro do `path=`). Subir ou descer não muda o passo, e a câmera andando também não.
+- **De ré** (andando para o lado contrário ao que o desenho olha), a animação toca ao contrário, com os pés presos no chão. Para virar o personagem, use `flip=x`.
+- **No máximo 3×** a velocidade normal. Mais rápido que isso, os pés escorregam, e um aviso na linha do `speed=auto` diz em que trecho: troque para uma animação de correr.
+- Uma animação **sem `feet=`** (uma parada, um voo) toca em 1. Se o ator anda com ela, um aviso diz.
+- `at 2s b.speed=auto` liga no meio do plano, e `at 4s b.speed=1` volta ao número. Com `blend=`, cada animação da mistura anda na própria passada; com `phase`, a troca continua no mesmo ponto da passada.
+- O `--info` do filme mostra, embaixo de cada plano, a passada de cada animação e o ritmo dela enquanto o ator anda (negativo é de ré): `speed=auto b: anda_right (passada 120 px/s): de 0.01× a 2.33×`.
+- A animação continua em quadros. Num filme de 24 fps com uma animação de 12, o pé no chão anda um pouquinho entre dois quadros dela e volta.
+
+**Experimente:** troque `at 3s` por `at 1.5s`. Os dois andam o dobro mais depressa, e o Weasel avisa que o de baixo passa de 3× a passada no meio do caminho.
 
 ### Aparecer: `show` ou `opacity`
 

@@ -831,6 +831,48 @@ async function spinCase() {
   await check('_giro', 'giro.txt', 'text', lines.join('\n') + '\n');
 }
 
+// speed=auto (test/casos/velocidade.weasel): os avisos (mais rápido que 3× a passada, andar com uma animação sem feet=)
+// e os erros, o quadro da animação de cada ator ao longo do plano (reto, acelerando e parando, de ré, no morro, no
+// teto, sem passada e ligado no meio) e o pé no chão: com o ator a 2× a passada, ele fica parado no palco com
+// speed=auto e escorrega com speed=1.
+async function speedCase() {
+  console.log(paint('1', '_velocidade'));
+  const src = fs.readFileSync(path.join(CASES, 'velocidade.weasel'), 'utf8');
+  const parse = (t) => W.lang.parse(t, { file: 'velocidade.weasel', resolve: resolver(CASES) });
+  const msgs = (t) => parse(t).errors.map((e) => `${e.level} linha ${e.line + 1}: ${e.msg}`);
+  const lines = [`o arquivo: ${msgs(src).join(' | ') || 'nenhum aviso'}`];
+  for (const [what, a, b] of [
+    ['f parado (sem feet=, sem andar: sem aviso)', 'at 3s f.x=200 ease=linear', 'at 3s f.opacity=1'],
+    ['e sem o disparo', 'at 1.5s e.x=400 ease=linear', 'at 1.5s e.x=130 ease=linear'],
+    ['speed= errado', 'scale=0.3 anim=anda_right speed=auto\nactor b', 'scale=0.3 anim=anda_right speed=rapido\nactor b'],
+    ['lag=auto na câmera', 'at 1s g.speed=auto', 'at 1s camera.lag=auto'],
+    ['o disparo depois de ligar o auto no at', 'at 3s g.x=175 ease=linear', 'at 2s g.x=175 ease=linear\nat 2.5s g.x=470 ease=linear'],
+    ['dois shots (o aviso diz qual)', 'film fps=12 dur=3s', 'film fps=12\nshot dois dur=1s\nshot um dur=3s'],
+  ]) lines.push(`${what}: ${msgs(src.replace(a, b)).join(' | ') || 'nenhum aviso'}`);
+
+  const m = parse(src), sh = m.film.shots[0], r2 = (v) => Math.round(v * 100) / 100;
+  for (const n of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) {
+    const ac = sh.actorMap.get(n);
+    lines.push(`${n}: ${[0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3].map((t) => { const q = W.film.actorState(sh, ac, t); return `${t}s #${q.animFrame}`; }).join(' · ')}`);
+  }
+  // o pé no chão: com a a 72 px/s (2× a passada de 36 px/s no palco), quanto o pé que está no chão nos dois quadros
+  // seguidos anda no palco, no máximo
+  const slip = (txt) => {
+    const mm = parse(txt), tl = W.film.timeline(mm);
+    let max = 0, pairs = 0, prev = null;
+    for (let fr = 0; fr < tl.frames; fr++) {
+      const w = W.film.frameState(mm, fr).who.find((x) => x.ac && x.ac.name === 'a'), g = W.scene.gait(w.model, w.model.animMap.get(w.anim));
+      const feet = g.feet.map((ft) => { const p = W.scene.pointState(w.model, w.pose, w.model.points.get(ft.name)); return { on: ft.on[w.animFrame], x: W.geom.M.apply(w.mat, p.x, p.y)[0] }; });
+      if (prev) feet.forEach((ft, k) => { if (ft.on && prev[k].on) { pairs++; max = Math.max(max, Math.abs(ft.x - prev[k].x)); } });
+      prev = feet;
+    }
+    return `${r2(max)} px (${pairs} pares de quadros com o pé no chão)`;
+  };
+  const fast = src.replace('at 3s a.x=175 ease=linear', 'at 3s a.x=256 ease=linear');
+  lines.push(`pé no chão, a a 2× a passada: com speed=auto anda ${slip(fast)}; com speed=1, ${slip(fast.replace('scale=0.3 anim=anda_right speed=auto\nactor b', 'scale=0.3 anim=anda_right\nactor b'))}`);
+  await check('_velocidade', 'velocidade.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -859,6 +901,7 @@ async function main() {
   if (!only.length || only.some((o) => '_virada'.includes(o))) await turnCase();
   if (!only.length || only.some((o) => '_metamorfose'.includes(o))) await morphCase();
   if (!only.length || only.some((o) => '_giro'.includes(o))) await spinCase();
+  if (!only.length || only.some((o) => '_velocidade'.includes(o))) await speedCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');

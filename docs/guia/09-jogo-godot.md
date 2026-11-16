@@ -354,6 +354,7 @@ event 4 passo
 - `feet=pe_e,pe_d` no `anim`: os nomes dos pontos, separados por vírgula. Ponha nas animações em que o personagem anda (passo, trote, corrida). Na parada, a medida dá zero.
 - **Como ele mede:** para cada pé, o chão é a altura mais baixa a que aquele pé chega na animação, e o pé está no chão nos quadros perto dela. Entre dois quadros seguidos no chão, o Weasel vê quanto o pé andou para trás e fica com o valor do meio (um quadro torto não estraga a conta). Aqui, 10 px por quadro a 12 fps: o personagem anda 120 px por segundo.
 - Vale para personagens vistos **de lado**, andando para a direita ou para a esquerda.
+- No filme, `speed=auto` no ator usa essa medida: a animação acompanha o quanto ele anda no palco ([capítulo 10](10-filme.md#andar-sem-escorregar-speedauto)).
 
 O `--info` mostra a medida em cada animação com `feet=` (com `-s`, já na escala da exportação):
 

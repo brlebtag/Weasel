@@ -1,0 +1,7 @@
+quadros 36 fps 12
+   0 00:00:00 velocidade cam=240,225 z1 | a=40,60 anda_right#0 | b=40,120 anda_right#0 | c=320,180 anda_right#0 | d=20,270 anda_right#0 | e=40,300 anda_right#0 | f=40,360 voa_right#0 | g=40,420 anda_right#0
+   6 00:00:06 velocidade cam=240,225 z1 | a=62.5,60 anda_right#7 | b=57.19,120 anda_right#5 | c=303.33,180 anda_right#2 | d=43.05,263.41 anda_right#7 | e=70,300 anda_right#2 | f=66.67,360 voa_right#6 | g=62.5,420 anda_right#6
+  12 00:01:00 velocidade cam=240,225 z1 | a=85,60 anda_right#7 | b=95,120 anda_right#2 | c=286.67,180 anda_right#4 | d=66.1,256.83 anda_right#7 | e=100,300 anda_right#4 | f=93.33,360 voa_right#0 | g=85,420 anda_right#4
+  18 00:01:06 velocidade cam=240,225 z1 | a=107.5,60 anda_right#6 | b=132.81,120 anda_right#6 | c=270,180 anda_right#7 | d=89.14,250.24 anda_right#7 | e=400,300 anda_right#6 | f=120,360 voa_right#6 | g=107.5,420 anda_right#3
+  24 00:02:00 velocidade cam=240,225 z1 | a=130,60 anda_right#6 | b=150,120 anda_right#4 | c=253.33,180 anda_right#1 | d=112.75,253.9 anda_right#7 | e=400,300 anda_right#6 | f=146.67,360 voa_right#0 | g=130,420 anda_right#3
+  30 00:02:06 velocidade cam=240,225 z1 | a=152.5,60 anda_right#5 | b=150,120 anda_right#4 | c=236.67,180 anda_right#4 | d=136.37,257.95 anda_right#7 | e=400,300 anda_right#6 | f=173.33,360 voa_right#6 | g=152.5,420 anda_right#2

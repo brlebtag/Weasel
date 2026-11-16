@@ -461,6 +461,13 @@ function filmInfo(m) {
     if (!s.art && sceneArt) notes.push(`art da cena ${artText(sceneArt.film.art)}`);
     for (const ow of scenes) if (ow.film.artActors.size) notes.push(...artActors(ow.film.artActors).map((t) => `art de ${t} (da cena)`));
     out.push(`  ${e.name.padEnd(16)} ${W.film.timecode(e.start, F.fps)}  ${secs(e.frames / F.fps).padStart(6)}  ${String(e.frames).padStart(5)} quadros  ${notes.join(' · ')}`);
+    // speed=auto: a passada de cada animação e o ritmo dela enquanto o ator anda (negativo: de ré)
+    for (const ac of s.actorMap.values()) {
+      const r = W.film.autoReport(s, ac);
+      if (!r || !r.anims.size) continue;
+      const each = [...r.anims].map(([n, a]) => (a.stride === null ? `${n} sem passada (toca em 1)` : `${n} (passada ${Math.round(a.stride * 10) / 10} px/s): ${a.lo === null ? 'parado' : a.lo === a.hi ? `${a.lo}×` : `de ${a.lo}× a ${a.hi}×`}`));
+      out.push(`    speed=auto ${ac.name}: ${each.join(' · ')}`);
+    }
     // metamorfoses (morph=): quem vira quem, quem nasce e quem some, na escrita do pairs= e do born=
     for (const mo of s.morphs || []) {
       if (mo.skip) continue;
