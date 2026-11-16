@@ -70,7 +70,7 @@ teste.weasel:15:7: erro: camada "ceu" já existe
 
 Para pôr mais uma forma numa camada, escreva a linha dentro dela, lá em cima.
 
-Então para que servem as camadas? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: cada linha `layer` funciona como um título de seção no código. No editor, com o cursor numa forma, a barra de baixo diz em que camada ela está (`ellipse iris na camada olhos`), e os nomes das camadas aparecem nas sugestões de `clip=`, `cut=`, `inkon=` e `hide=`. O botão **Camadas**, em cima do desenho, abre a mesma lista do `--info` em forma de árvore: cada camada, na ordem do código, com as linhas que desenham nela.
+Então para que servem as camadas? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: cada linha `layer` funciona como um título de seção no código. No editor, com o cursor numa forma, a barra de baixo diz em que camada ela está (`ellipse iris na camada olhos`), e os nomes das camadas aparecem nas sugestões de `clip=`, `cut=`, `inkon=` e `hide=`. O menu **Janela › Camadas** abre a mesma lista do `--info` em forma de árvore: cada camada, na ordem do código, com as linhas que desenham nela.
 
 > **Dica do editor:** no painel **Camadas**, clique numa linha para escolhê-la. **Ctrl** + clique soma ou tira uma linha, e **Shift** + clique pega um trecho. Clicar no nome de uma camada escolhe todas as linhas dela. No desenho, **Shift** + clique numa forma também soma ou tira.
 >
@@ -87,7 +87,7 @@ Então para que servem as camadas? Para dar a um grupo de formas algo que vale p
 >   Uma forma girada (`rot=`) esticada de lado não entorta: ganha um giro e um tamanho novos que chegam perto. O `w=`, o `ink=` e o `r=` dos cantos não mudam. Com as réguas, o lado que anda gruda nas linhas guia.
 > - Um arraste inteiro se desfaz com um Ctrl+Z só. **Esc**, um clique fora das formas ou o cursor numa linha de fora soltam a escolha.
 > - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK. Ao esticar, também ficam paradas as linhas com `{conta}` no tamanho (o raio, a largura e a altura, o `size=`, o `scale=`) ou no `rot=`.
-> - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+H** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor, até com o foco no código): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
+> - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+3** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor; com o foco no código, também o **Ctrl+H**): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
 
 ## A ordem de pintura
 
@@ -540,7 +540,7 @@ layer nome [guide] [hidden] [unlit] opacity= blend= only= clip= cut= …
 
 | Opção | O que faz |
 |---|---|
-| `guide` | Camada de **construção**: aparece no editor com o botão **Guias** ligado e na linha de comando com `--guides`, mas não sai na exportação. Use para linhas de referência, eixos, o chão ([exemplo](#camada-de-construção-guide)). |
+| `guide` | Camada de **construção**: aparece no editor com **Exibir › Guias** ligado e na linha de comando com `--guides`, mas não sai na exportação. Use para linhas de referência, eixos, o chão ([exemplo](#camada-de-construção-guide)). |
 | `hidden` | A camada não é pintada. As formas dela continuam valendo como molde de `clip` e `cut` ([exemplo](#camada-escondida-hidden)). |
 | `opacity=0.5` | Transparência da camada inteira, de 0 (invisível) a 1 (normal, o padrão) ([exemplo](#transparência-da-camada-opacity)). |
 | `blend=multiply` | Como a camada se mistura com o que está embaixo: `multiply` escurece (bom para sombras), `screen` clareia (brilhos), `overlay`, `soft-light`, `color-dodge`… (os modos de mistura do Photoshop e do CSS) ([exemplo](#misturar-com-o-que-está-embaixo-blend)). |
@@ -579,7 +579,7 @@ text nota 156,206 "meio: x=150" size=13 c=#c44536
 Repare:
 
 - A camada `construcao` tem a opção `guide`. As duas linhas tracejadas e a anotação ficam nela.
-- Na exportação normal (à esquerda), a camada some. Com `--guides` na linha de comando (à direita), ela aparece. No editor, quem decide é o botão **Guias**.
+- Na exportação normal (à esquerda), a camada some. Com `--guides` na linha de comando (à direita), ela aparece. No editor, quem decide é **Exibir › Guias**.
 - `dash=6,4` é o tracejado: 6 pixels de traço, 4 de vão.
 - Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada.
 

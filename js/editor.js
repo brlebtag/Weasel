@@ -302,8 +302,13 @@
     }
 
     goto(line, col) {
-      const off = this.lineStart(line) + (col || 0);
       this.ta.focus();
+      this.reveal(line, col);
+    }
+
+    // como o goto, mas sem levar o foco para o código: escolher no desenho mostra a linha, e as teclas continuam lá
+    reveal(line, col) {
+      const off = this.lineStart(line) + (col || 0);
       this.ta.setSelectionRange(off, off);
       const cs = getComputedStyle(this.ta);
       const lh = parseFloat(cs.lineHeight) || 20;

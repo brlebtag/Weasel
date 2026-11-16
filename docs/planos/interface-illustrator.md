@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026, para discutir. Nada decidido, nada feito.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), e a etapa 1 (a casca) começou.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -250,6 +250,7 @@ Fora do editor, a vista fica limitada:
 - **É uma vista,** como a de contorno (Ctrl+Y) do Illustrator: **Exibir › Camadas em 3D**, e um botão perto do zoom. O desenho dá lugar à vista 3D; a barra de ferramentas, os painéis e o player continuam.
 - **A seleção é a mesma.** Clicar numa forma em 3D escolhe a forma; o painel Propriedades mostra a forma e, no Dividido, a linha fica marcada. Mudar a cor ou apagar aparece na hora em 3D.
 - **O painel Camadas faz o papel da lista do protótipo.** Passar o mouse numa camada (ou numa linha) apaga as outras em 3D. Ctrl+] e Ctrl+[ (Organizar) mudam a ordem, e a peça anda para a frente ou para trás.
+- **O olho dentro da vista 3D esconde só na vista** (decisão 9): serve para ver o que está atrás, sem mexer no arquivo. O olho do painel Camadas (Ctrl+3) continua escrevendo `hidden`, como hoje.
 - **Navegar:**
   - arrastar gira;
   - Espaço+arrastar, a Mão ou o botão do meio movem;
@@ -308,7 +309,7 @@ Fora do editor, a vista fica limitada:
 | Arco, Espiral | ➖ | dá para fazer depois, como `stroke` |
 | Grades, Clarão, Shaper | ➖ | |
 | Pincel (B) | 🆕 | o arraste vira um `stroke` (com `w=` e `taper=` do contorno atual), simplificado |
-| Pincel de bolha (Shift+B) | ➖ | riscado em 16/11/2026; com essa interface, vale decidir de novo |
+| Pincel de bolha (Shift+B) | 🆕 | o arraste pinta uma área cheia, que se junta às formas da mesma cor que toca. Volta na etapa 5 (decisão 6), porque usa as mesmas operações entre formas da Borracha e do Pathfinder |
 | Suavizar | 🆕 | o Simplificar aplicado só onde se passa o mouse |
 | Borracha de caminho, Junção | 🆕 | corta um `stroke` em dois ou junta dois em um |
 | Símbolos, Gráficos, Grade de perspectiva | ➖ | (os símbolos do Weasel são o `def`/`use`: seção 6) |
@@ -346,7 +347,7 @@ As cinco ferramentas da [proposta do seu irmão](proposta-melhorias-weasel-lucas
 
 | Pedido | No Illustrator | Onde entra |
 |---|---|---|
-| 1. Pincel de bolha (Shift+B) | Pincel de bolha (*Blob Brush*), o mesmo atalho | seção 5.2: fora desde 16/11/2026, a reconsiderar (decisão 6) |
+| 1. Pincel de bolha (Shift+B) | Pincel de bolha (*Blob Brush*), o mesmo atalho | seção 5.2, etapa 5 (estava fora; voltou na decisão 6) |
 | 2. Borracha (Shift+E) | Borracha (*Eraser*), o mesmo atalho | seção 5.4, etapa 5 |
 | 3. Bézier completo | Caneta e Ponto de ancoragem | etapa 4, junto com a Caneta. É a única mudança de linguagem do pedido (seção 9) |
 | 4. Simplificar pontos | Objeto › Caminho › Simplificar | etapa 4 (o Lápis e o Pincel precisam dele) e o menu Objeto › Caminho |
@@ -357,7 +358,7 @@ O que muda em relação ao que ele escreveu:
 - **Alt+arrastar uma alça** (pedido 3, item 4) continua quebrando a simetria, como ele pediu. Não há conflito: a cópia vale para o ponto e para a forma, não para a alça.
 - **Quais formas a borracha apaga** (pedido 2): fica como ele propôs. Apaga as escolhidas e, sem escolha, as da camada atual. É mais seguro que o Illustrator, que apaga tudo o que a borracha toca. A diferença é que "escolhidas" passa a ser a seleção do desenho, não só o painel Camadas.
 - **O `--simplificar` na linha de comando** (pedido 4): não faz parte da interface, mas sai junto com o Simplificar, porque usa o mesmo código.
-- **O olho na vista 3D** (pedido 5): a pergunta dele, se grava `hidden` ou vale só na vista, é a decisão 9.
+- **O olho na vista 3D** (pedido 5): ele perguntou se grava `hidden` ou vale só na vista. Ficou só na vista (decisão 9).
 
 ---
 
@@ -365,7 +366,7 @@ O que muda em relação ao que ele escreveu:
 
 | Painel | | No Weasel |
 |---|---|---|
-| **Propriedades** | 🆕 | o que está escolhido, em campos: posição, tamanho e ângulo; preenchimento (`c=`), contorno (`ink=`, `inkc=`, `w=`, `cap=`, `dash=`, `taper=`), opacidade; no texto, `size=`, `font=`, `bold`, `italic` e `align=`; na camada, os efeitos. **É o item 2 da ordem do editor, que foi riscado:** sem ele, o modo só desenho não funciona (não há como mudar uma cor sem digitar) |
+| **Propriedades** | 🆕 | o que está escolhido, em campos: posição, tamanho e ângulo; preenchimento (`c=`), contorno (`ink=`, `inkc=`, `w=`, `cap=`, `dash=`, `taper=`), opacidade; no texto, `size=`, `font=`, `bold`, `italic` e `align=`; na camada, os efeitos. **É o item 2 da ordem do editor, que tinha sido riscado e volta na etapa 2 (decisão 2):** sem ele, o modo só desenho não funciona (não há como mudar uma cor sem digitar) |
 | Camadas | 🔶 | já tem a árvore, a escolha e o olho (`hidden`). Faltam: travar, arrastar para mudar a ordem (item 6 da ordem), criar, renomear e apagar camada, levar uma forma para outra camada |
 | Amostras | 🆕 | a `palette`: as cores com nome, para clicar e aplicar (item 6 da ordem). As variantes aparecem aqui também |
 | Cor | 🔶 | o seletor de cor que já abre com Alt+clique num `#hex` |
@@ -423,7 +424,7 @@ Os atalhos do Illustrator valem quando o foco está no desenho. No código, o ed
 
 O código feito pela tela tem de ser bom de ler, porque você vai abrir o arquivo depois.
 
-- **Nomes:** automáticos, em português, pelo tipo: `retangulo1`, `elipse2`, `forma3`, `traco1`, `linha1`, `texto1`. Renomear pelo painel Camadas (ou por Propriedades) troca o nome em todas as linhas que o usam.
+- **Nomes:** automáticos, em inglês, pela palavra da linha (decisão 5): `rect1`, `ellipse2`, `shape3`, `stroke1`, `line1`, `text1`, `group1`. O número é o primeiro livre no arquivo. Renomear pelo painel Camadas (ou por Propriedades) troca o nome em todas as linhas que o usam.
 - **Onde a linha entra:** na camada escolhida, no fim dela (a forma nova fica na frente). Os modos de desenho do Illustrator viram:
   - **normal:** no fim da camada (na frente);
   - **atrás:** no começo da camada;
@@ -448,7 +449,7 @@ Pouco, e nada que mude um arquivo que já existe:
 | O quê | Para quê | Jogo e filme |
 |---|---|---|
 | `lock` em qualquer linha | Ctrl+2: o desenho não deixa escolher nem arrastar | não muda nada (só o editor lê) |
-| Grupos (a decidir) | Ctrl+G, Seleção de grupo, isolamento. Opção A: um bloco `group nome` … `end` que só junta linhas para escolher e mover juntas. Opção B: sem grupo, usando as camadas | a opção A não muda a imagem |
+| Grupos: um bloco `group nome` … `end` dentro da camada (decisão 4) | Ctrl+G, Seleção de grupo, isolamento. O bloco só junta linhas para escolher e mover juntas | não muda a imagem |
 | Alças quebradas `x,y~ax,ay~bx,by` (item 3 da ordem) | a Caneta com Alt e o Bézier completo | só muda onde for usado |
 
 Ficam de fora: vários preenchimentos e contornos na mesma forma (a Aparência do Illustrator), a largura ponto a ponto, o texto no caminho e as várias pranchetas.
@@ -487,11 +488,41 @@ Cada etapa já dá para usar sozinha.
    - Curvatura e Caneta, com o Bézier completo (item 3 da ordem): alças quebradas, ver as automáticas e dividir sem mudar a forma. A Caneta precisa dele para quebrar a alça com Alt, então os dois vêm juntos.
    - Lápis e Pincel, com o Simplificar (item 4).
    - Conta-gotas.
-5. **Caminhos.** Tesoura, Junção, Faca, Borracha (item 7), Pathfinder e Construtor de formas (operações entre formas) e Suavizar.
+5. **Caminhos.** Tesoura, Junção, Faca, Borracha (item 7), Pincel de bolha (item 8, que volta), Pathfinder e Construtor de formas (operações entre formas) e Suavizar.
 6. **Símbolos e Camadas completas.** `def`/`use` como símbolos com isolamento; camadas arrastando, criar, renomear e levar formas de uma para outra.
 7. **Depois:** a linha do tempo da animação (item 9 da ordem, no jeito do Adobe Animate), o filme (item 10) e o acabamento e o estilo (item 11). A vista 3D (item 13) sobe para a etapa 1b.
 
-Esta lista substituiria a "Ordem sugerida para o editor" do README: os itens 3, 4, 6, 7 e 9 a 13 entram nas etapas; o 2 volta (etapa 2); parte do 5 volta (efeitos, na etapa 2; luzes com alças, não); o 8 e o 12 continuam fora.
+Esta lista substitui a "Ordem sugerida para o editor" do README (decisão 7): os itens 3, 4, 6, 7 e 9 a 13 entram nas etapas; o 2 volta (etapa 2); parte do 5 volta (efeitos, na etapa 2; luzes com alças, não); o 8 volta (etapa 5); o 12 continua fora.
+
+### 11.1 A etapa 1 em detalhe (16/11/2026)
+
+O que entra, e as escolhas pequenas feitas na hora (marcadas com *):
+- **Vistas:** o seletor Código · Dividido · Design no alto, à direita, e no menu Exibir. A vista fica guardada neste navegador. No Design, o código fica escondido de vez; um erro aparece na barra de status, e clicar nele abre o Dividido na linha.
+- **Barra de menus:** Arquivo, Editar, Objeto, Exibir, Janela e Ajuda, só com o que já funciona. Texto, Selecionar e Efeito entram quando tiverem o que fazer (etapas 2 e 3)*. Os botões de cima (Novo, Abrir, Salvar, exemplos, Referência) vão para os menus; Exportar fica à vista.
+- **Barra de ferramentas:** na beirada esquerda do desenho, e não do lado do código*: no Dividido fica perto do desenho, e na vista Código some junto com ele. Tem:
+  - Seleção (V): escolhe formas e mostra a caixa (mover, girar, esticar) também com uma forma só. Os pontos não aparecem;
+  - Seleção direta (A): os pontos e as alças de hoje;
+  - Texto (T), Retângulo (M), Elipse (L) e Linha (\\): um clique põe a forma pronta ali, como o menu de formas (arrastar para desenhar é a etapa 4). O Texto já abre a caixinha para escrever, e clicar num texto que existe edita ele;
+  - Medir (sem letra), Prender (Shift+P*), Mão (H) e Zoom (Z: clique aproxima, Alt+clique afasta).
+  - O Degradê (G) fica para a etapa 4*, quando arrastar sobre uma forma criar o `gradient`. Até lá, o painel do gradiente continua abrindo sozinho.
+- **Escolher no desenho não leva mais o foco para o código.** No Dividido, o código vai até a linha e marca, mas as teclas continuam no desenho. Os nomes de quem vai para o código (o nome no painel do gradiente, na prévia do def, nas referências e o erro) abrem o código de propósito.
+- **Atalhos da tabela 7.2:**
+  - Espaço tocado toca, segurado com arraste move a vista; Enter toca;
+  - `,` e `.` trocam de quadro;
+  - as setas empurram a escolha 1 px (Shift: 10);
+  - Ctrl+R réguas (também no código, para o navegador não recarregar a página), Ctrl+0 ajustar, Ctrl+1 100%, Ctrl+= e Ctrl+- zoom;
+  - Ctrl+3 esconde; o Ctrl+H fica só no código;
+  - Ctrl+D no desenho duplica a escolha, como no código, até a etapa 3 (lá vira repetir a última transformação, e copiar passa a ser Alt+arrastar ou Ctrl+C e Ctrl+F). Decidido no mesmo dia, para não perder o "escolher, Ctrl+D e arrastar a cópia" de hoje. Também está em Editar › Duplicar. O Ctrl+I sai.
+  - Enquanto as ferramentas novas não chegam, as teclas que mudaram dão um aviso*: F lembra o Ctrl+0, R o Ctrl+R, P o Shift+P, e as setas sem nada escolhido lembram o `,` e o `.`.
+- **O botão direito** continua abrindo o menu de formas até a etapa 4*, porque a forma livre e o traço ainda não têm ferramenta. Ele também fica no menu Objeto › Inserir.
+- **Nomes em inglês** (decisão 5) já valem para o que o menu e as ferramentas põem: `rect1`, `ellipse1`, `text1`…
+- **Barra de status,** embaixo de tudo: os erros, o caminho `arquivo › camada › forma › ponto` (clicar na camada escolhe ela inteira), a linha do código, as coordenadas, a variante de cores, a prévia do def e o zoom.
+- **As chaves de cima do desenho** vão para o menu Exibir, e a barra delas some. Medir e Prender vão para a barra de ferramentas; Camadas, Referências e Sons, para o menu Janela.
+- **Painéis:** continuam flutuando sobre o desenho. A coluna da direita (o dock) vem na etapa 2*, junto com Propriedades, para o layout ser pensado uma vez só.
+- **Filme:** só as duas seleções, a Mão e o Zoom. Nas duas, as alças do filme aparecem como hoje (o filme não tem formas para escolher). Na prévia do def, a Seleção também mostra as alças, como a Seleção direta.
+- **O guia e a referência do editor (F1)** mudam junto, nos trechos dos atalhos e dos botões.
+
+**Como ficou (16/11/2026):** feita e conferida no navegador, nas três vistas, no filme e numa tela estreita. Os menus e a barra de ferramentas estão em `js/ui-menu.js` e `js/ui-shell.js`; o `app.js` expõe o que eles chamam em `W.app`. O guia, o README e a referência (F1) contam os menus, as ferramentas e os atalhos novos. A pergunta que sobrou (o Ctrl+D no desenho até a etapa 3) foi respondida no mesmo dia: ele duplica a escolha. As cópias de linhas seguidas ficam juntas, logo abaixo, e os nomes que uma usa da outra mudam junto; um Ctrl+Z desfaz tudo.
 
 ### Como ficaria por dentro
 
@@ -502,14 +533,14 @@ Esta lista substituiria a "Ordem sugerida para o editor" do README: os itens 3, 
 
 ---
 
-## 12. Para decidir
+## 12. Decisões (16/11/2026)
 
-1. **Vistas:** Código, Dividido e Design, com o Design escondendo o código de vez?
-2. **Propriedades (item 2):** volta? Sem ele, o modo só desenho fica muito limitado.
-3. **Atalhos:** adotar os do Illustrator no desenho, com as trocas da tabela 7.2?
-4. **Grupos:** bloco `group` … `end` (opção A) ou só camadas (opção B)?
-5. **Nomes automáticos** em português (`retangulo1`), ou perguntar o nome ao desenhar?
-6. **Pincel de bolha:** continua fora?
-7. **Ordem das etapas:** a da seção 11?
-8. **Camadas em 3D:** dentro do editor, pintada pelo próprio Weasel e montada com CSS 3D (sem three.js), logo depois da etapa 1?
-9. **O olho na vista 3D:** escreve `hidden` no código, como hoje, ou esconde só na vista (a pergunta que a proposta do seu irmão deixou)?
+1. **Vistas:** as três, Código, Dividido e Design. O Design esconde o código de vez.
+2. **Propriedades (item 2):** volta, na etapa 2, junto com Amostras.
+3. **Atalhos:** os do Illustrator no desenho, com as trocas da tabela 7.2.
+4. **Grupos:** o bloco `group nome` … `end` (opção A). Só o editor usa; a imagem não muda.
+5. **Nomes automáticos:** em inglês, pela palavra da linha (`rect1`, `ellipse2`, `shape3`), sem perguntar.
+6. **Pincel de bolha:** volta, na etapa 5, com a Borracha e as operações entre formas.
+7. **Ordem das etapas:** a da seção 11 (1, 1b, 2, 3, 4, 5, 6).
+8. **Camadas em 3D:** dentro do editor, pintada pelo próprio Weasel e montada com CSS 3D (sem three.js), logo depois da etapa 1.
+9. **O olho na vista 3D:** esconde só na vista. O olho do painel Camadas continua escrevendo `hidden`.

@@ -1475,7 +1475,7 @@ O `.srt` é o formato de legenda que os players de vídeo e o YouTube aceitam.
 
 ## Exportando o filme
 
-No editor, o player escolhe o filme inteiro ou um plano e repete o trecho; o botão ao lado de ▶ troca para **tocar uma vez**, que para no fim. A **linha do tempo** embaixo do desenho mostra os planos, os sons (com a forma de onda) e as legendas; arrastar um bloco muda o tempo no código. A chave **Câmera** alterna entre o que a câmera filma e o mundo inteiro, com a moldura da câmera.
+No editor, o player escolhe o filme inteiro ou um plano e repete o trecho; o botão ao lado de ▶ troca para **tocar uma vez**, que para no fim. A **linha do tempo** embaixo do desenho mostra os planos, os sons (com a forma de onda) e as legendas; arrastar um bloco muda o tempo no código. **Exibir › Câmera** alterna entre o que a câmera filma e o mundo inteiro, com a moldura da câmera.
 
 Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 

@@ -16,12 +16,13 @@ O Weasel tem sete tipos de forma:
 
 **Fechada** quer dizer que tem lado de dentro: pode ser preenchida (`c=`), ter contorno (`ink=`) e servir de molde para recortes. Traço e linha só têm a cor da própria linha.
 
-> **Dica do editor:** para começar uma forma sem digitar, aperte **Ctrl+I** (de *inserir*) ou clique com o **botão direito** no desenho.
+> **Dica do editor:** para começar uma forma sem digitar, clique com o **botão direito** no desenho (ou use o menu **Objeto › Inserir**).
 >
 > - Um menu mostra as seis formas (o `emitter` fica de fora). Escolha uma com o mouse, com as setas e **Enter**, ou pelo número dela.
-> - A forma entra na linha de baixo da do cursor, com um nome novo (`bola1`, `caixa1`…), uma cor e um tamanho que cabem no que está na tela.
-> - Com o botão direito, ela nasce onde você clicou; com Ctrl+I, no meio da tela.
-> - O cursor já fica na linha nova, então as alças aparecem: é só mover, girar e mudar o tamanho. No `text`, a palavra `Texto` vem selecionada para você digitar o seu.
+> - A forma entra na linha de baixo da do cursor, com um nome novo em inglês (`ellipse1`, `rect1`…), uma cor e um tamanho que cabem no que está na tela.
+> - Com o botão direito, ela nasce onde você clicou; pelo menu, no meio da tela.
+> - Ela já vem escolhida, com as alças: é só mover, girar e mudar o tamanho.
+> - As ferramentas **Retângulo** (M), **Elipse** (L), **Linha** (`\`) e **Texto** (T), na barra à esquerda do desenho, fazem o mesmo com um clique onde você quer a forma. O Texto já abre uma caixinha para você escrever as letras.
 >
 > Para achar a linha de uma forma que já existe, **clique nela** no desenho. O cursor vai para a linha dela.
 >
@@ -29,7 +30,7 @@ O Weasel tem sete tipos de forma:
 > - Com formas uma em cima da outra, clique de novo no mesmo lugar para pegar a de baixo.
 > - Numa cópia de um componente, o clique leva à linha do `use`.
 
-> Nos exemplos deste capítulo, os pontinhos vermelhos e as anotações ficam numa camada `guide`. Uma camada `guide` aparece no editor (com o botão **Guias** ligado) e não sai na exportação; ela está aí só para mostrar onde ficam os pontos. As camadas são explicadas no [capítulo 4](04-camadas.md).
+> Nos exemplos deste capítulo, os pontinhos vermelhos e as anotações ficam numa camada `guide`. Uma camada `guide` aparece no editor (com **Exibir › Guias** ligado) e não sai na exportação; ela está aí só para mostrar onde ficam os pontos. As camadas são explicadas no [capítulo 4](04-camadas.md).
 
 ## Elipse e círculo
 
@@ -171,7 +172,7 @@ A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só
 > - **Duplo clique** num ponto liga e desliga o `!`.
 > - Para **apagar** um ponto, clique nele (ele fica laranja) e aperte **Delete**. Só esse ponto sai do código, junto com a alça de curva dele, se tiver. A forma não pode ficar com menos de 3 pontos, e um Ctrl+Z traz o ponto de volta.
 > - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
-> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**) e arraste a cópia para outro lugar.
+> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. É o jeito fácil de copiar uma forma: duplique a linha (**Ctrl+D**, no código ou com a forma escolhida no desenho) e arraste a cópia para outro lugar.
 > - Para **esticar** a forma, use os quadradinhos azuis da caixa tracejada em volta dela. O de um canto muda a largura e a altura; o do meio de um lado muda só uma delas. O lado de lá fica parado, e o Weasel reescreve os números de todos os pontos (as alças de curva esticam junto). Com **Shift**, a forma não perde a proporção; com **Alt**, estica a partir do meio; e passar para o outro lado espelha a forma, como num programa de desenho. A grossura da borda (`ink=`) não muda. Um Ctrl+Z desfaz o arraste inteiro.
 > - **Ctrl+D** dá um nome novo à cópia: `asa` vira `asa_1`, e duplicar de novo dá `asa_2`. Vale para tudo o que tem nome: formas, `ref`, `layer`, `bone`, `anim`, `def`… Duplicando várias linhas de uma vez (selecione todas), o que usa esses nomes muda junto: a forma copiada com `bone=braco` fica presa no `braco_1` copiado, e as `key` da animação copiada mexem nas cópias. As cores (`c=asa` da `palette`) não mudam. Num `def … end` copiado inteiro, só o componente ganha nome novo; as formas de dentro continuam iguais.
 > - Para **girar a forma inteira**, arraste a bolinha **verde** que fica numa haste em cima dos pontos. O `shape` não tem `rot=`, então o Weasel gira os próprios pontos em volta do meio da forma e reescreve os números (as alças de curva giram junto). Com **Shift**, o giro vai de 15 em 15 graus. Um Ctrl+Z desfaz o giro inteiro.
@@ -711,7 +712,7 @@ ref nome "imagem.png" x,y scale= rot= opacity= [lock] [hidden] [front]
 | `hidden` | Escondida, sem tirar a linha do arquivo. |
 | `front` | Por cima das formas, em vez de por baixo (para conferir o traço). |
 
-**No editor**, o botão **Referências**, acima do desenho, abre o painel das imagens guia:
+**No editor**, o menu **Janela › Referências** abre o painel das imagens guia:
 
 - **Adicionar imagem…** escolhe um arquivo do computador e escreve a linha `ref`, com a imagem cabendo no desenho. A imagem fica guardada **neste navegador** (como os sons dos filmes); o código só tem o nome dela.
 - **Arrastar e soltar** faz o mesmo sem abrir o painel: traga a imagem do computador e solte na janela do Weasel. A linha `ref` entra abaixo do `canvas` (depois das outras imagens guia). Solta no **desenho**, o meio da imagem fica no ponto onde ela caiu; solta no **código**, fica no meio do desenho. Várias de uma vez viram uma linha cada, uma um pouco abaixo da outra.
@@ -752,13 +753,13 @@ Repare:
 
 Para alinhar formas (os olhos na mesma altura, o pé em cima do chão, duas portas com o mesmo topo), o editor tem réguas e linhas guia, como num programa de desenho. Nada disso entra no código nem na exportação: são só ajudas na tela.
 
-- **Réguas:** ligue a caixa **Réguas**, acima do desenho (ou aperte **R** com o foco fora do código). Aparecem duas réguas, em cima e à esquerda, que contam os pixels do desenho: o `0` é o canto de cima à esquerda do `canvas`, e a parte do papel fica mais clara. Os números acompanham o zoom.
+- **Réguas:** ligue **Exibir › Réguas** (ou aperte **Ctrl+R**). Aparecem duas réguas, em cima e à esquerda, que contam os pixels do desenho: o `0` é o canto de cima à esquerda do `canvas`, e a parte do papel fica mais clara. Os números acompanham o zoom.
 - **Linha guia:** arraste de uma régua para dentro do desenho. Da régua de cima sai uma linha **deitada** (marca um `y`); da régua da esquerda, uma linha **em pé** (marca um `x`). Enquanto você arrasta, a linha gruda nas bordas e no meio do papel e nos pontos da forma do cursor, e um aviso embaixo do desenho mostra onde ela está (`linha guia em pé: x = 400`).
 - **Mudar e apagar:** arraste uma linha para mudá-la de lugar. Para apagar, solte-a em cima de uma régua. Duplo clique no quadradinho do canto das réguas apaga todas as linhas do arquivo.
 - **Grudar:** com as réguas ligadas, o que você arrasta gruda nas linhas guia quando passa a menos de 6 pixels (da tela) delas, e a linha fica branca enquanto segura. Um ponto gruda nele mesmo; a forma inteira (o **✥**, ou o centro de uma `ellipse`, o canto de um `rect`) gruda pelas bordas e pelo meio; ao esticar, gruda o lado (ou o canto) que anda; a escolha do painel **Camadas** gruda pela caixa dela (ao esticar, pelo lado que anda). Segure **Ctrl** durante o arraste para não grudar.
-- **Medir:** o botão **Medir** (ou a tecla **M**) liga a régua de medir. Arraste no desenho de um ponto a outro: ela mostra a distância, o ângulo e quanto anda em x e em y (`100 px · -53,1° · dx 60 · dy -80`). O ângulo é como no `rot=`: em graus, positivo gira no sentido do relógio, e `0°` aponta para a direita. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com **Shift**, a régua anda de 45 em 45 graus. Arraste uma ponta para ajustar; um clique (sem arrastar) ou **Esc** tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos: desligue para voltar a editar.
+- **Medir:** a ferramenta **Medir** (na barra à esquerda do desenho) liga a régua de medir. Arraste no desenho de um ponto a outro: ela mostra a distância, o ângulo e quanto anda em x e em y (`100 px · -53,1° · dx 60 · dy -80`). O ângulo é como no `rot=`: em graus, positivo gira no sentido do relógio, e `0°` aponta para a direita. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com **Shift**, a régua anda de 45 em 45 graus. Arraste uma ponta para ajustar; um clique (sem arrastar) ou **Esc** tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos: volte para a Seleção (**V**) ou a Seleção direta (**A**) para editar.
 
-As linhas guia ficam guardadas **neste navegador**, uma lista para cada arquivo (ao renomear o arquivo, vão junto). A caixa **Réguas** desliga tudo de uma vez: réguas, linhas e o grude. Não confunda com a caixa **Guias**, que mostra as camadas `guide` do seu código (linhas de construção que você desenha de propósito, como no [capítulo 4](04-camadas.md#camada-de-construção-guide)). Em filmes, não há réguas nem Medir.
+As linhas guia ficam guardadas **neste navegador**, uma lista para cada arquivo (ao renomear o arquivo, vão junto). **Exibir › Réguas** desliga tudo de uma vez: réguas, linhas e o grude. Não confunda com **Exibir › Guias**, que mostra as camadas `guide` do seu código (linhas de construção que você desenha de propósito, como no [capítulo 4](04-camadas.md#camada-de-construção-guide)). Em filmes, não há réguas nem Medir.
 
 ## Opções que toda forma aceita
 
@@ -838,6 +839,6 @@ Repare:
 
 **Experimente:** apague o `c=#4a90d9` de `furo1` e escreva `hidden` no lugar. As duas roscas ficam iguais.
 
-> **Dica do editor:** com o cursor na linha de uma forma, **Ctrl+H** escreve o `hidden` (ou apaga, se já tem). No painel **Camadas**, o olho no fim de cada linha faz o mesmo, e é por ali que uma forma escondida volta a aparecer, já que ela não se clica no desenho.
+> **Dica do editor:** com uma forma escolhida (ou o cursor na linha dela), **Ctrl+3** escreve o `hidden` (ou apaga, se já tem); no código, o **Ctrl+H** também. No painel **Camadas**, o olho no fim de cada linha faz o mesmo, e é por ali que uma forma escondida volta a aparecer, já que ela não se clica no desenho.
 
 [← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e estilos →](03-cores.md)

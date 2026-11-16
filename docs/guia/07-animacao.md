@@ -606,7 +606,7 @@ key 0 braco=0,0,0
 Passo a passo:
 
 1. Cole o código num arquivo novo do editor.
-2. Ligue a chave **Ossos** (ao lado de **Guias**). Cada osso ganha uma **bolinha** no pivô e uma **alça**: um traço verde-água que sai da bolinha, com uma ponta redonda.
+2. Ligue **Exibir › Ossos**. Cada osso ganha uma **bolinha** no pivô e uma **alça**: um traço verde-água que sai da bolinha, com uma ponta redonda.
 3. No player, escolha a animação `acena` e deixe-a **pausada**. Com o player tocando, os ossos não arrastam.
 4. Vá para o quadro 12: arraste a barra do player, ou clique fora do código e aperte `→` doze vezes.
 5. Arraste a **ponta da alça** do `braco` para cima. O braço gira em volta do ombro. Solte quando gostar.
@@ -618,7 +618,7 @@ Mais detalhes:
 - Arrastar a **bolinha** (em vez da alça) **move** o osso: o Weasel escreve o `dx,dy`. Num osso filho, o deslocamento é medido na direção do pai, como em qualquer `key`.
 - Se o quadro já tem uma linha `key`, o Weasel troca só o valor daquele osso nela (ou acrescenta o osso no fim da linha). Se não tem, ele cria a linha, na ordem dos quadros.
 - Os números saem com uma casa decimal. A escala (`sx,sy`) fica como estava: arrastar não estica.
-- **Ctrl+Z** desfaz. Com o **Papel vegetal** ligado, dá para ver os quadros vizinhos enquanto você posa.
+- **Ctrl+Z** desfaz. Com **Exibir › Papel vegetal** ligado, dá para ver os quadros vizinhos enquanto você posa.
 
 ## Eventos: `event`
 
@@ -764,7 +764,7 @@ ref pulo "rascunhos/pulo.png" 0,0 only=jump opacity=0.3
 
 ## Vendo e exportando
 
-- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (setas `←` `→` com o foco fora do código). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. O botão **Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador. O botão **Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros; com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)).
+- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e `,` e `.` trocam de quadro). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador. **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros; com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)).
 - **Na linha de comando:**
 
 ```bash

@@ -6,23 +6,21 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.49.0">
+<link rel="stylesheet" href="css/style.css?v=1.50.0">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><img src="docs/logo.svg" width="26" height="26" alt="">Weasel<small>desenho por código</small><span id="ver" class="ver" title="Versão do Weasel"></span></div>
-  <div class="tb">
-    <select id="exampleSel" title="Abrir um exemplo"></select>
-    <button id="btnNew" class="ic" title="Novo: começar um desenho novo" aria-label="Novo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 1.5H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><path d="M9.5 1.5V5H13M8 7.5V12M5.75 9.75h4.5"/></svg></button>
-    <button id="btnOpen" class="ic" title="Abrir: arquivos .weasel (dá para escolher vários)" aria-label="Abrir"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5v-9a1 1 0 0 1 1-1h3L7 4h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 12.5l1.8-5.3a1 1 0 0 1 .9-.7h10.3l-2 6z"/></svg></button>
-    <button id="btnSave" class="ic" title="Salvar: baixa o arquivo atual (Ctrl+S)" aria-label="Salvar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5 2.5v3h5v-3M4.5 13.5V9h7v4.5"/></svg></button>
-    <input type="file" id="fileIn" accept=".weasel,.txt,.json,.tsv,.wav,.mp3,.ogg,.opus,.m4a,.flac,audio/*,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" multiple hidden>
-    <input type="file" id="refIn" accept="image/*,.svg" hidden>
+  <div class="brand"><img src="docs/logo.svg" width="22" height="22" alt="">Weasel<span id="ver" class="ver" title="Versão do Weasel"></span></div>
+  <nav id="menubar" class="menubar" aria-label="Menus"></nav>
+  <span class="grow"></span>
+  <div id="layoutSw" class="seg layout-sw" role="group" aria-label="Vista">
+    <button type="button" data-layout="code" title="Código: só o código">Código</button>
+    <button type="button" data-layout="split" title="Dividido: o código e o desenho lado a lado">Dividido</button>
+    <button type="button" data-layout="design" title="Design: só o desenho (o código continua lá, escondido; cada gesto escreve nele)">Design</button>
   </div>
-  <div class="tb right">
-    <button id="btnHelp" class="ic" title="Referência da linguagem (F1)" aria-label="Referência"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 4.2C6.6 3.1 4.6 2.6 1.8 2.6v10c2.8 0 4.8.5 6.2 1.6 1.4-1.1 3.4-1.6 6.2-1.6v-10c-2.8 0-4.8.5-6.2 1.6zM8 4.2v10"/></svg></button>
-    <button id="btnExport" class="ic primary" title="Exportar: PNG, JPG, GIF, sprite sheet, Godot ou vídeo (Ctrl+E)" aria-label="Exportar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10.5V2M4.8 5.2 8 2l3.2 3.2M2.5 9v4.5h11V9"/></svg></button>
-  </div>
+  <button id="btnExport" class="primary exp-btn" type="button" title="Exportar: PNG, JPG, GIF, sprite sheet, Godot ou vídeo (Ctrl+E)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10.5V2M4.8 5.2 8 2l3.2 3.2M2.5 9v4.5h11V9"/></svg>Exportar</button>
+  <input type="file" id="fileIn" accept=".weasel,.txt,.json,.tsv,.wav,.mp3,.ogg,.opus,.m4a,.flac,audio/*,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" multiple hidden>
+  <input type="file" id="refIn" accept="image/*,.svg" hidden>
 </header>
 
 <main id="main">
@@ -35,43 +33,30 @@
       <button id="fileZip" class="ic" title="Baixar todos os arquivos num .zip" aria-label="Baixar todos" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 3h12.4v3H1.8zM2.8 6v7.5h10.4V6M8 7.5v4M6 9.8l2 2 2-2"/></svg></button>
       <button id="mediaBtn" title="Sons guardados neste navegador (para o audio dos filmes)" hidden>♪</button>
     </div>
-    <div id="mediaList" class="media-list" hidden></div>
     <div id="editor"></div>
-    <div class="status">
-      <button id="errBtn" class="errs ok" type="button">sem erros</button>
-      <span id="caretInfo" class="caret-info"></span>
-    </div>
-    <div id="errList" class="errlist" hidden></div>
   </section>
   <div id="divider" class="divider" role="separator" aria-orientation="vertical" title="Arraste para redimensionar"></div>
   <section class="viewp">
-    <div class="viewbar">
+    <!-- as chaves e os botões de antes: o menu Exibir, o menu Janela e a barra de ferramentas mexem neles -->
+    <div class="viewbar" hidden>
       <label class="tog ic" title="Guias: as camadas guide, os pontos de encaixe (point), as luzes e a grade do tileset"><input type="checkbox" id="tGuides" checked aria-label="Guias"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5v11h11z"/><path d="M5 8.5V11h2.5z"/></svg></label>
       <label class="tog ic" id="tBoxesWrap" title="Hitboxes: as caixas de colisão do jogo (box), corpo em verde, golpe em vermelho, dano em amarelo. Desligado, só aparece a caixa da linha do cursor"><input type="checkbox" id="tBoxes" checked aria-label="Hitboxes"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="8" height="8.5" rx=".5"/><rect x="6" y="2.5" width="8" height="7.5" rx=".5" stroke-dasharray="2 1.6"/></svg></label>
-      <label class="tog ic" title="Pontos: as alças da linha do cursor (arraste para mudar o código)"><input type="checkbox" id="tPoints" checked aria-label="Pontos"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5C4.5 5 11.5 11 13 3.5"/><path class="f" d="M1.5 11h3v3h-3zM11.5 2h3v3h-3z"/></svg></label>
       <label class="tog ic" title="Ossos: o esqueleto (com uma animação escolhida e o player parado, arrastar um osso escreve a key do quadro)"><input type="checkbox" id="tBones" aria-label="Ossos"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="12.5" r="1.6"/><circle cx="8.5" cy="7.5" r="1.6"/><circle cx="12.5" cy="3.5" r="1.6"/><path d="M4.6 11.4l2.8-2.8M9.6 6.4l1.8-1.8"/></svg></label>
       <label class="tog ic" title="Papel vegetal: mostra o quadro anterior e o seguinte por trás"><input type="checkbox" id="tOnion" aria-label="Papel vegetal"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="8" r="4.3" opacity=".45"/><circle cx="10" cy="8" r="4.3"/></svg></label>
       <label class="tog ic" id="tArtWrap" title="Estilo: mostra o desenho no estilo do art (pixel art, ASCII). Desligado, mostra as formas como são, sem o estilo" hidden><input type="checkbox" id="tArt" checked aria-label="Estilo"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="f" d="M2 2h4v4H2zM10 2h4v4h-4zM6 6h4v4H6zM2 10h4v4H2zM10 10h4v4h-4z"/></svg></label>
       <label class="tog ic" title="Trajetória: o caminho dos pés (anim feet=) ou dos pontos (point) em todos os quadros da animação, numerado; com feet=, quanto o personagem anda por segundo para os pés no chão não escorregarem"><input type="checkbox" id="tTraj" aria-label="Trajetória"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5C3 8 7.5 4.5 12.5 4" stroke-dasharray="0 2.7" stroke-width="2"/><path d="M10.6 1.9 13 4l-2 2.3"/></svg></label>
-      <label class="tog ic pv-tog" id="tPreviewWrap" title="Prévia do def" hidden><input type="checkbox" id="tPreview" aria-label="Prévia do def"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l2.3 2.3L8 6.1 5.7 3.8zM8 9.9l2.3 2.3L8 14.5l-2.3-2.3zM3.8 5.7 6.1 8l-2.3 2.3L1.5 8zM12.2 5.7 14.5 8l-2.3 2.3L9.9 8z"/></svg></label>
-      <label class="tog ic" id="tRulersWrap" title="Réguas (tecla R): réguas em pixels em cima e à esquerda. Arraste de uma régua para pôr uma linha guia: o que você arrasta gruda nela (segurando Ctrl, não gruda)"><input type="checkbox" id="tRulers" aria-label="Réguas"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2 11.2 1.6l3.2 3.2-9.6 9.6z"/><path d="M4 8.8l1.4 1.4M6 6.8l1 1M8 4.8l1.4 1.4M10 2.8l1 1"/></svg></label>
-      <button id="measureBtn" class="refbtn ic" type="button" title="Medir (tecla M): arraste no desenho de um ponto a outro para ver a distância, o ângulo e quanto anda em x e em y" aria-label="Medir"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M2 5v6M14 5v6M4.5 6l-2 2 2 2M11.5 6l2 2-2 2"/></svg></button>
-      <button id="pinBtn" class="refbtn ic" type="button" title="Prender (tecla P): escolha pontos de shape, stroke e line (clique, Shift, caixa) e prenda a um osso pelo botão direito; escreve @osso no código" aria-label="Prender"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 1.6l5.2 5.2M10.4 2.8 7.6 6.1l-2.7.6 4.4 4.4.6-2.7 3.3-2.8M7.1 8.9 1.8 14.2"/></svg></button>
+      <label class="tog ic" id="tRulersWrap" title="Réguas (Ctrl+R): réguas em pixels em cima e à esquerda. Arraste de uma régua para pôr uma linha guia: o que você arrasta gruda nela (segurando Ctrl, não gruda)"><input type="checkbox" id="tRulers" aria-label="Réguas"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.6 11.2 11.2 1.6l3.2 3.2-9.6 9.6z"/><path d="M4 8.8l1.4 1.4M6 6.8l1 1M8 4.8l1.4 1.4M10 2.8l1 1"/></svg></label>
+      <button id="measureBtn" class="refbtn ic" type="button" title="Medir: arraste no desenho de um ponto a outro para ver a distância, o ângulo e quanto anda em x e em y" aria-label="Medir"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M2 5v6M14 5v6M4.5 6l-2 2 2 2M11.5 6l2 2-2 2"/></svg></button>
+      <button id="pinBtn" class="refbtn ic" type="button" title="Prender (Shift+P): escolha pontos de shape, stroke e line (clique, Shift, caixa) e prenda a um osso pelo botão direito; escreve @osso no código" aria-label="Prender"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 1.6l5.2 5.2M10.4 2.8 7.6 6.1l-2.7.6 4.4 4.4.6-2.7 3.3-2.8M7.1 8.9 1.8 14.2"/></svg></button>
       <button id="layerBtn" class="refbtn ic" type="button" title="Camadas: as camadas e o que desenha em cada uma; escolha formas (ou uma camada inteira) para mover e girar juntas" aria-label="Camadas"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3M2 11l6 3 6-3"/></svg></button>
       <button id="refBtn" class="refbtn ic" type="button" title="Referências: imagens guia por baixo para desenhar por cima (não saem na exportação)" aria-label="Referências"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="1"/><circle cx="10.5" cy="6" r="1.2"/><path d="M1.8 11.2 5.5 7.5l3.2 3.2 1.8-1.8 3.7 3.5"/></svg></button>
       <label class="tog ic" id="tTimelineWrap" title="Linha do tempo: planos, sons e legendas no tempo; arraste para mudar os tempos no código" hidden><input type="checkbox" id="tTimeline" checked aria-label="Linha do tempo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h6M4 8h7M2 11.5h5M12 2v12"/></svg></label>
       <label class="tog ic" id="tCameraWrap" title="Câmera: ligado, o que a câmera filma; desligado, o mundo inteiro como foi desenhado, com a moldura da câmera" hidden><input type="checkbox" id="tCamera" checked aria-label="Câmera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="9" height="7" rx="1"/><path d="M10.5 7.2 14.5 5v6l-4-2.2z"/></svg></label>
-      <select id="variantSel" title="Variante de cores" hidden></select>
-      <span class="grow"></span>
-      <span id="coords" class="coords"></span>
-      <div class="zoom">
-        <button id="zOut" class="ic" title="Afastar" aria-label="Afastar"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.3 10.3 14 14M5 7h4"/></svg></button>
-        <button id="zFit" class="ic" title="Ajustar à tela (F)" aria-label="Ajustar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.5V2h3.5M10.5 2H14v3.5M14 10.5V14h-3.5M5.5 14H2v-3.5"/></svg></button>
-        <button id="zIn" class="ic" title="Aproximar" aria-label="Aproximar"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.3 10.3 14 14M5 7h4M7 5v4"/></svg></button>
-      </div>
     </div>
+    <nav id="tools" class="tools" aria-label="Ferramentas"></nav>
     <div id="stage" class="stage">
       <canvas id="view"></canvas>
+      <div id="mediaList" class="media-list" hidden></div>
       <div id="hint" class="hint" hidden></div>
       <div id="shapeMenu" class="ed-pop shape-menu" tabindex="-1" hidden></div>
       <div id="pinMenu" class="ed-pop shape-menu pin-menu" tabindex="-1" hidden></div>
@@ -86,9 +71,9 @@
       <button id="btnBuild" class="build ic" title="Pintar: pinta o desenho de novo, traço a traço" aria-label="Pintar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2c-.8-.8-5.6 3.6-7.4 5.6l1.8 1.8C10.4 7.6 14.8 2.8 14 2z"/><path d="M6.2 8.2c-1.7-.3-3.2.8-3.3 2.6-.1 1.3-.5 2-1.4 2.6 2.8.8 5.5-.1 6.2-3.1z"/></svg></button>
       <span class="sep"></span>
       <select id="animSel" title="Animação"></select>
-      <button id="bPrev" class="ico" title="Quadro anterior (←)"><svg viewBox="0 0 16 16"><path d="M3 3v10M13 3 5 8l8 5z"/></svg></button>
-      <button id="bPlay" class="ico play" title="Tocar / pausar (espaço)"><svg viewBox="0 0 16 16"><path class="i-play" d="M4 2.5v11L13.5 8z"/><path class="i-pause" d="M4 3h3v10H4zM9 3h3v10H9z"/></svg></button>
-      <button id="bNext" class="ico" title="Próximo quadro (→)"><svg viewBox="0 0 16 16"><path d="M13 3v10M3 3l8 5-8 5z"/></svg></button>
+      <button id="bPrev" class="ico" title="Quadro anterior (,)"><svg viewBox="0 0 16 16"><path d="M3 3v10M13 3 5 8l8 5z"/></svg></button>
+      <button id="bPlay" class="ico play" title="Tocar / pausar (Espaço ou Enter)"><svg viewBox="0 0 16 16"><path class="i-play" d="M4 2.5v11L13.5 8z"/><path class="i-pause" d="M4 3h3v10H4zM9 3h3v10H9z"/></svg></button>
+      <button id="bNext" class="ico" title="Próximo quadro (.)"><svg viewBox="0 0 16 16"><path d="M13 3v10M3 3l8 5-8 5z"/></svg></button>
       <button id="bLoop" class="ico loop on" title="Repetir" aria-label="Repetir ou tocar uma vez" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-rep" d="M2.5 8V6.5A2.5 2.5 0 0 1 5 4h7.5M10.5 2l2 2-2 2M13.5 8v1.5A2.5 2.5 0 0 1 11 12H3.5M5.5 10l-2 2 2 2"/><path class="i-once" d="M2 8h8.5M8 5l3 3-3 3M13.5 3.5v9"/></svg></button>
       <input type="range" id="frameSl" min="0" max="0" value="0" aria-label="Quadro">
       <span id="frameLbl" class="flbl">—</span>
@@ -100,6 +85,23 @@
     </div>
   </section>
 </main>
+
+<footer class="statusbar">
+  <button id="errBtn" class="errs ok" type="button">sem erros</button>
+  <span id="crumbs" class="crumbs"></span>
+  <span id="caretInfo" class="caret-info"></span>
+  <span class="grow"></span>
+  <label class="tog ic pv-tog" id="tPreviewWrap" title="Prévia do def" hidden><input type="checkbox" id="tPreview" aria-label="Prévia do def"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l2.3 2.3L8 6.1 5.7 3.8zM8 9.9l2.3 2.3L8 14.5l-2.3-2.3zM3.8 5.7 6.1 8l-2.3 2.3L1.5 8zM12.2 5.7 14.5 8l-2.3 2.3L9.9 8z"/></svg></label>
+  <select id="variantSel" title="Variante de cores" hidden></select>
+  <span id="coords" class="coords"></span>
+  <div class="zoom">
+    <button id="zOut" class="ic" type="button" title="Afastar (Ctrl+-)" aria-label="Afastar"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.3 10.3 14 14M5 7h4"/></svg></button>
+    <button id="zoomPct" class="zpct" type="button" title="Tamanho real, 100% (Ctrl+1)">100%</button>
+    <button id="zIn" class="ic" type="button" title="Aproximar (Ctrl+=)" aria-label="Aproximar"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.3 10.3 14 14M5 7h4M7 5v4"/></svg></button>
+    <button id="zFit" class="ic" type="button" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.5V2h3.5M10.5 2H14v3.5M14 10.5V14h-3.5M5.5 14H2v-3.5"/></svg></button>
+  </div>
+  <div id="errList" class="errlist" hidden></div>
+</footer>
 
 <aside id="help" class="help" hidden>
   <div class="help-head"><h2>Referência da linguagem <span id="helpVer" class="ver"></span></h2><button id="helpClose" class="x" title="Fechar">✕</button></div>
@@ -240,7 +242,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <tr><td><code>at tempo alvo.prop=valor … ease= blend= phase</code></td><td>Muda algo naquele momento do plano. <code>blend=0.6s</code> mistura a troca de <code>anim</code> da linha, em vez do corte seco; <code>phase</code> faz a nova animação continuar no mesmo ponto da passada. Ator: <code>pos</code> <code>x</code> <code>y</code> <code>scale</code> <code>rot</code> <code>opacity</code> <code>depth</code> <code>flip</code> <code>show</code> <code>anim</code> <code>speed</code> <code>variant</code>. Câmera: <code>pos</code> <code>zoom</code> <code>rot</code> <code>shake</code> <code>follow</code> <code>offset</code> <code>lag</code> <code>fade</code> <code>fadec</code>. Luzes e camadas do filme também, e as formas do arquivo do filme: <code>draw</code>, <code>opacity</code> e <code>show</code>. Ator: também <code>expr</code> e <code>along</code> (com <code>actor … path=linha</code>).</td></tr>
       <tr><td><code>scene "arquivo"</code></td><td>Acrescenta os planos de outro arquivo de filme (um arquivo por cena).</td></tr>
       <tr><td><code>mark nome tempo</code></td><td>Um momento com nome: <code>at trovao</code>, <code>at trovao+0.3s</code>. Na linha do tempo, arrastar o marcador muda o tempo, e tudo o que depende dele vai junto.</td></tr>
-      <tr><td><code>audio nome "arquivo" at= from= dur= vol= lips=ator cues= text= [loop]</code></td><td>Som de referência (fala, música). Num <code>shot</code>, <code>at=</code> conta do começo dele; fora, do começo do filme. <code>lips=</code> faz a boca do ator seguir a fala (pelo .wav, ou pelas bocas do Rhubarb em <code>cues=</code>); <code>text=</code> vira legenda. Abra os sons com <b>Abrir…</b>.</td></tr>
+      <tr><td><code>audio nome "arquivo" at= from= dur= vol= lips=ator cues= text= [loop]</code></td><td>Som de referência (fala, música). Num <code>shot</code>, <code>at=</code> conta do começo dele; fora, do começo do filme. <code>lips=</code> faz a boca do ator seguir a fala (pelo .wav, ou pelas bocas do Rhubarb em <code>cues=</code>); <code>text=</code> vira legenda. Abra os sons com <b>Arquivo › Abrir…</b>.</td></tr>
       <tr><td><code>sub tempo "texto" dur= lang=</code></td><td>Legenda (<code>+0.3s</code> = depois da anterior). Sai em .srt/.vtt; <code>film subs=burn</code> desenha no vídeo.</td></tr>
       <tr><td><code>mouth boca A=forma C=forma@0.6 …</code></td><td>No arquivo do personagem: as bocas do lip sync por morph (A fechada, B pouco aberta, C aberta, D bem aberta, E arredondada, F biquinho, G F/V, H L, X descanso).</td></tr>
       <tr><td><code>layer … depth= [screen] [front]</code></td><td>Profundidade: 2 = duas vezes mais longe (anda menos quando a câmera anda), 0.5 = perto. <code>screen</code> fica preso na tela; <code>front</code> fica na frente dos atores da mesma profundidade. No filme, <code>only=</code> aceita nomes de plano.</td></tr>
@@ -249,34 +251,52 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <p>As luzes do filme iluminam o cenário e os atores. Na câmera parada (centro, zoom 1) tudo fica como foi desenhado; a profundidade só aparece quando a câmera anda. A chave <b>Câmera</b> alterna entre o que a câmera filma e o mundo inteiro com a moldura da câmera; no player, <b>♪</b> toca o som, <b>CC</b> mostra as legendas e o botão ao lado de ▶ troca entre repetir o trecho e tocar uma vez. Para vídeo longo, MP4 ou ProRes: <code>weasel filme.weasel -o filme.mp4</code>.</p>
     <p>A <b>linha do tempo</b> embaixo do desenho mostra os planos, os sons (com a forma de onda e as bocas do lip sync) e as legendas. Clique na régua para ir a um momento e num bloco para ir à linha dele. Arraste um som ou uma legenda para mudar quando começa (<code>at=</code>, o tempo do <code>sub</code>); a borda direita muda o <code>dur=</code>. Alt arrasta sem grudar; Ctrl+roda dá zoom; duplo clique no vazio mostra tudo.</p>
 
+    <h3>A tela</h3>
+    <ul>
+      <li>No alto, à direita, três vistas: <b>Código</b> (só o código), <b>Dividido</b> (o código e o desenho) e <b>Design</b> (só o desenho). Também no menu <b>Exibir</b>. No Design, um erro aparece na barra de baixo; clicar nele abre o Dividido na linha.</li>
+      <li>Os menus: <b>Arquivo</b> (novo, abrir, exemplos, os arquivos do projeto, salvar, exportar), <b>Editar</b>, <b>Objeto</b> (inserir uma forma, esconder), <b>Exibir</b> (vistas, zoom, réguas, guias, hitboxes, ossos, papel vegetal, trajetória, estilo de arte; no filme, câmera e linha do tempo), <b>Janela</b> (Camadas, Referências, Sons) e <b>Ajuda</b>.</li>
+      <li>A barra de baixo mostra os erros, o caminho da escolha (<code>arquivo › camada › forma</code>; clicar na camada escolhe ela inteira), a linha do código, as coordenadas do mouse, a variante de cores e o zoom (clicar no número volta a 100%).</li>
+      <li>A barra de ferramentas fica à esquerda do desenho. A letra troca de ferramenta com o foco no desenho:
+        <ul>
+          <li><b>Seleção</b> (<kbd>V</kbd>): clique numa forma e ela vira a escolha, com a caixa para mover, girar e esticar; aperte numa forma e arraste para movê-la. Os pontos não aparecem.</li>
+          <li><b>Seleção direta</b> (<kbd>A</kbd>): os pontos e as alças da forma escolhida (arrastar, criar, apagar, curvas: veja abaixo).</li>
+          <li><b>Texto</b> (<kbd>T</kbd>), <b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>) e <b>Linha</b> (<kbd>\</kbd>): um clique põe a forma pronta ali, com nome em inglês (<code>rect1</code>, <code>ellipse1</code>…). O Texto já abre a caixinha para escrever, e clicar num texto que existe muda as letras.</li>
+          <li><b>Medir</b> e <b>Prender</b> (<kbd>Shift</kbd>+<kbd>P</kbd>): veja abaixo.</li>
+          <li><b>Mão</b> (<kbd>H</kbd>): arraste para mover a vista. Em qualquer ferramenta, segure o <kbd>Espaço</kbd> e arraste.</li>
+          <li><b>Zoom</b> (<kbd>Z</kbd>): clique aproxima; <kbd>Alt</kbd>+clique afasta.</li>
+        </ul>
+        No filme, só as duas seleções, a Mão e o Zoom.</li>
+      <li>Com o foco no desenho: <kbd>Espaço</kbd> (tocado, sem arrastar) ou <kbd>Enter</kbd> toca e pausa; <kbd>,</kbd> e <kbd>.</kbd> trocam de quadro; as setas empurram a forma escolhida 1 px (<kbd>Shift</kbd>: 10); <kbd>Ctrl</kbd>+<kbd>0</kbd> ajusta à tela, <kbd>Ctrl</kbd>+<kbd>1</kbd> é 100%, <kbd>Ctrl</kbd>+<kbd>=</kbd> e <kbd>Ctrl</kbd>+<kbd>-</kbd> aproximam e afastam; <kbd>Ctrl</kbd>+<kbd>3</kbd> esconde; <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a escolha (a cópia, com nome novo, vira a escolha: é só arrastar); <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz sem soltar a escolha. <kbd>Ctrl</kbd>+<kbd>R</kbd> liga as réguas em qualquer lugar; <kbd>Ctrl</kbd>+<kbd>O</kbd> abre um arquivo, <kbd>Ctrl</kbd>+<kbd>S</kbd> salva e <kbd>Ctrl</kbd>+<kbd>E</kbd> exporta.</li>
+      <li>Escolher no desenho não leva o foco para o código: no Dividido, o código vai até a linha e marca, e as teclas continuam no desenho. Para escrever, clique no código.</li>
+    </ul>
+
     <h3>No editor</h3>
     <ul>
-      <li>Com o cursor numa linha, os pontos dela aparecem no desenho; o ponto sob o cursor fica laranja.</li>
-      <li>Clique numa forma do desenho (sem arrastar) e o cursor vai para a linha dela; clique de novo no mesmo lugar para pegar a de baixo.</li>
-      <li><kbd>Ctrl</kbd>+<kbd>I</kbd> ou o botão direito no desenho abre o menu de formas: a escolhida entra na linha de baixo, pronta para arrastar (com o botão direito, onde você clicou).</li>
+      <li>Com a Seleção direta (<kbd>A</kbd>), os pontos da forma escolhida (ou da linha do cursor) aparecem no desenho; o ponto sob o cursor do código fica laranja.</li>
+      <li>Clique numa forma do desenho (sem arrastar) e o código vai até a linha dela; clique de novo no mesmo lugar para pegar a de baixo.</li>
+      <li>O botão direito no desenho (ou <b>Objeto › Inserir</b>) abre o menu de formas: a escolhida entra na linha de baixo, pronta para arrastar (com o botão direito, onde você clicou).</li>
       <li>Arraste um ponto para movê-lo (na pose parada). Duplo clique liga/desliga o <code>!</code> (ou tira a alça). Pontos cinza vêm de <code>{contas}</code> e não arrastam.</li>
       <li>Clique num ponto para escolhê-lo (ele fica laranja) e aperte <kbd>Delete</kbd> para apagá-lo, com a alça de curva dele. Vale para <code>shape</code>, <code>stroke</code> e <code>line</code>; a forma não fica com menos pontos do que precisa (3 no <code>shape</code>, 2 nos outros).</li>
       <li><kbd>Alt</kbd>+arrastar um ponto puxa uma alça de curva (<code>~dx,dy</code>); o losango azul arrasta a alça, e soltá-lo em cima do ponto a tira.</li>
       <li>A bolinha clara no meio de cada lado de um <code>shape</code>, <code>stroke</code> ou <code>line</code> cria um ponto novo ali (arraste ou clique).</li>
-      <li>O <b>✥</b> no meio dos pontos (ou <kbd>Shift</kbd>+arrastar um ponto) move a forma inteira. Para copiar: <kbd>Ctrl</kbd>+<kbd>D</kbd> e arraste a cópia.</li>
+      <li>O <b>✥</b> no meio dos pontos (ou <kbd>Shift</kbd>+arrastar um ponto) move a forma inteira. Para copiar: <kbd>Ctrl</kbd>+<kbd>D</kbd> (no código, ou no desenho com a forma escolhida) e arraste a cópia.</li>
       <li>Os quadradinhos azuis da caixa tracejada em volta de um <code>shape</code>, <code>stroke</code> ou <code>line</code> esticam a forma: o de um canto muda a largura e a altura, o do meio de um lado só uma delas, e o lado de lá fica parado. Com <kbd>Shift</kbd>, mantém a proporção; com <kbd>Alt</kbd>, estica a partir do meio; passar para o outro lado espelha. Os pontos e as alças de curva mudam juntos; o <code>w=</code> e o <code>ink=</code>, não.</li>
       <li>Os quadradinhos mudam o raio da <code>ellipse</code> e a largura e a altura do <code>rect</code> (com <kbd>Shift</kbd>, mantém a proporção). O losango azul do <code>rect</code> muda o <code>r=</code>.</li>
-      <li>No <code>text</code>, o quadradinho no canto de cima das letras muda o <code>size=</code> (com <kbd>Shift</kbd>, de 4 em 4), e um duplo clique nas letras troca o texto ali mesmo (<kbd>Enter</kbd> grava, <kbd>Esc</kbd> desiste).</li>
+      <li>No <code>text</code>, o quadradinho no canto de cima das letras muda o <code>size=</code> (com <kbd>Shift</kbd>, de 4 em 4), e um duplo clique nas letras (ou um clique, com a ferramenta Texto) troca o texto ali mesmo (<kbd>Enter</kbd> grava, <kbd>Esc</kbd> desiste).</li>
       <li>A bolinha verde em cima da forma gira: muda o <code>rot=</code> da <code>ellipse</code>, do <code>rect</code> e do <code>text</code> (duplo clique volta a 0) e gira os pontos do <code>shape</code>, do <code>stroke</code> e da <code>line</code>. Com <kbd>Shift</kbd>, de 15 em 15 graus.</li>
       <li>Na linha do <code>canvas</code> ou de uma <code>light … dir</code>, uma seta amarela sai do centro e aponta para a luz: arraste o sol da ponta para girar a direção (com <kbd>Shift</kbd>, de 15 em 15 graus). Sem <code>light=</code> no <code>canvas</code>, arrastar escreve um.</li>
-      <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor.</li>
+      <li><kbd>Ctrl</kbd>+clique no desenho escreve a coordenada no cursor do código (não no Design).</li>
       <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus.</li>
       <li>Com o cursor entre <code>def</code> e <code>end</code>, a <b>prévia</b> mostra o componente sozinho, com uma cruz rosa no <code>0,0</code> (o ponto que vai para o x,y do <code>use</code>): na hora, se o <code>def</code> não tem <code>use</code>; com a chave <b>Prévia do def</b>, se tem. No painel <b>Prévia</b>, mude os parâmetros (arraste o nome de um número para os lados) sem mudar o código; <b>Copiar como use</b> copia uma linha <code>use</code> com o que mudou. As alças mudam as linhas do <code>def</code>.</li>
-      <li><b>Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
-      <li><b>Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. <kbd>Ctrl</kbd>+<kbd>H</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (também no código). Não aparece em filmes.</li>
-      <li><b>Réguas</b> (tecla <kbd>R</kbd>, fora do código) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (o botão <b>Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
-      <li><b>Medir</b> (tecla <kbd>M</kbd>): arraste no desenho de um ponto a outro para ver a distância, o ângulo (como no <code>rot=</code>) e quanto anda em x e em y. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com <kbd>Shift</kbd>, de 45 em 45 graus. Arraste uma ponta para ajustar; um clique ou <kbd>Esc</kbd> tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos.</li>
-      <li><b>Prender</b> (tecla <kbd>P</kbd>): mostra os pontos de todos os <code>shape</code>, <code>stroke</code> e <code>line</code>; os presos a um osso (<code>@osso</code>) ficam com a cor dele, e os soltos, cinza. Clique num ponto para escolhê-lo (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira) ou arraste uma caixa em volta de vários. Pontos no mesmo lugar (formas coladas) vêm juntos; clique de novo no mesmo lugar para pegar só o de uma forma. O botão direito abre o menu: um osso (o mais perto primeiro) escreve <code>@osso</code> depois de cada ponto escolhido, com o peso do campo (<code>@osso:0.5</code>); <b>Cada um no osso mais perto</b> e <b>Soltar</b> (tira o <code>@</code>). Um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz tudo. Com o painel Camadas aberto e formas escolhidas nele, só aparecem os pontos delas. Ficam de fora as cópias de <code>use</code>, as linhas de <code>repeat</code> e de <code>include</code> e as formas com <code>bones=</code>. Com uma animação escolhida, arraste a bolinha de um osso para ver os pontos irem junto. Não aparece em filmes.</li>
-      <li>Arraste uma imagem do computador para a janela: ela vira uma linha <code>ref</code> abaixo do <code>canvas</code>. Solta no desenho, fica no ponto onde caiu. Um <code>.weasel</code> ou um som solto abre como no <b>Abrir…</b>.</li>
+      <li><b>Janela › Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
+      <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). Não aparece em filmes.</li>
+      <li><b>Réguas</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>, ou <b>Exibir › Réguas</b>) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (<b>Exibir › Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
+      <li><b>Medir</b> (na barra de ferramentas): arraste no desenho de um ponto a outro para ver a distância, o ângulo (como no <code>rot=</code>) e quanto anda em x e em y. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com <kbd>Shift</kbd>, de 45 em 45 graus. Arraste uma ponta para ajustar; um clique ou <kbd>Esc</kbd> tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos.</li>
+      <li><b>Prender</b> (<kbd>Shift</kbd>+<kbd>P</kbd>): mostra os pontos de todos os <code>shape</code>, <code>stroke</code> e <code>line</code>; os presos a um osso (<code>@osso</code>) ficam com a cor dele, e os soltos, cinza. Clique num ponto para escolhê-lo (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira) ou arraste uma caixa em volta de vários. Pontos no mesmo lugar (formas coladas) vêm juntos; clique de novo no mesmo lugar para pegar só o de uma forma. O botão direito abre o menu: um osso (o mais perto primeiro) escreve <code>@osso</code> depois de cada ponto escolhido, com o peso do campo (<code>@osso:0.5</code>); <b>Cada um no osso mais perto</b> e <b>Soltar</b> (tira o <code>@</code>). Um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz tudo. Com o painel Camadas aberto e formas escolhidas nele, só aparecem os pontos delas. Ficam de fora as cópias de <code>use</code>, as linhas de <code>repeat</code> e de <code>include</code> e as formas com <code>bones=</code>. Com uma animação escolhida, arraste a bolinha de um osso para ver os pontos irem junto. Não aparece em filmes.</li>
+      <li>Arraste uma imagem do computador para a janela: ela vira uma linha <code>ref</code> abaixo do <code>canvas</code>. Solta no desenho, fica no ponto onde caiu. Um <code>.weasel</code> ou um som solto abre como no <b>Arquivo › Abrir…</b>.</li>
       <li><kbd>Alt</kbd>+arrastar sobre um número muda o valor (com <kbd>Shift</kbd>, 10× mais rápido). <kbd>Alt</kbd>+clique numa cor <code>#hex</code> abre o seletor de cor.</li>
       <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
-      <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha (a cópia ganha nome novo: <code>asa</code> → <code>asa_1</code>; com várias linhas, as referências mudam junto), <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz (também com o foco no desenho).</li>
-      <li><kbd>Espaço</kbd> toca/pausa, <kbd>←</kbd> <kbd>→</kbd> trocam de quadro (fora do editor).</li>
+      <li><kbd>Ctrl</kbd>+<kbd>/</kbd> comenta, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica a linha (a cópia ganha nome novo: <code>asa</code> → <code>asa_1</code>; com várias linhas, as referências mudam junto), <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
       <li>Num filme, o cursor numa linha <code>at</code> ou <code>shot</code> leva o player para aquele momento, e a posição dos atores arrasta também na vista da câmera.</li>
     </ul>
 
@@ -373,26 +393,28 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.49.0"></script>
-<script src="js/lang.js?v=1.49.0"></script>
-<script src="js/art.js?v=1.49.0"></script>
-<script src="js/scene.js?v=1.49.0"></script>
-<script src="js/film.js?v=1.49.0"></script>
-<script src="js/audio.js?v=1.49.0"></script>
-<script src="js/nle.js?v=1.49.0"></script>
-<script src="js/webm.js?v=1.49.0"></script>
-<script src="js/svg.js?v=1.49.0"></script>
-<script src="js/gif.js?v=1.49.0"></script>
-<script src="js/webp.js?v=1.49.0"></script>
-<script src="js/mp4.js?v=1.49.0"></script>
-<script src="js/zip.js?v=1.49.0"></script>
-<script src="js/normal.js?v=1.49.0"></script>
-<script src="js/export.js?v=1.49.0"></script>
-<script src="js/godot.js?v=1.49.0"></script>
-<script src="js/rig.js?v=1.49.0"></script>
-<script src="js/editor.js?v=1.49.0"></script>
-<script src="js/examples.js?v=1.49.0"></script>
-<script src="js/timeline.js?v=1.49.0"></script>
-<script src="js/app.js?v=1.49.0"></script>
+<script src="js/geom.js?v=1.50.0"></script>
+<script src="js/lang.js?v=1.50.0"></script>
+<script src="js/art.js?v=1.50.0"></script>
+<script src="js/scene.js?v=1.50.0"></script>
+<script src="js/film.js?v=1.50.0"></script>
+<script src="js/audio.js?v=1.50.0"></script>
+<script src="js/nle.js?v=1.50.0"></script>
+<script src="js/webm.js?v=1.50.0"></script>
+<script src="js/svg.js?v=1.50.0"></script>
+<script src="js/gif.js?v=1.50.0"></script>
+<script src="js/webp.js?v=1.50.0"></script>
+<script src="js/mp4.js?v=1.50.0"></script>
+<script src="js/zip.js?v=1.50.0"></script>
+<script src="js/normal.js?v=1.50.0"></script>
+<script src="js/export.js?v=1.50.0"></script>
+<script src="js/godot.js?v=1.50.0"></script>
+<script src="js/rig.js?v=1.50.0"></script>
+<script src="js/editor.js?v=1.50.0"></script>
+<script src="js/examples.js?v=1.50.0"></script>
+<script src="js/timeline.js?v=1.50.0"></script>
+<script src="js/app.js?v=1.50.0"></script>
+<script src="js/ui-menu.js?v=1.50.0"></script>
+<script src="js/ui-shell.js?v=1.50.0"></script>
 </body>
 </html>

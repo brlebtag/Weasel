@@ -60,7 +60,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 
 Nesta versão existem vinte e seis estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`), os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`), os quatro [estilos de peças](#os-estilos-de-peças) (`cutout`, `clay`, `glass` e `embroidery`) e os três de casinhas, [ponto-cruz, mosaico e tricô](#ponto-cruz-mosaico-e-tricô) (`stitch`, `mosaic` e `knit`).
 
-**No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece a chave **Estilo** (o ícone de quadradinhos, ao lado do papel vegetal) na barra de cima do desenho: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
+**No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece **Exibir › Estilo de arte**: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
 
 ## Pixel art: `art pixel`
 

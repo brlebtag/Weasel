@@ -881,13 +881,13 @@ Repare:
 
 ### Muitos pontos de uma vez: a ferramenta Prender
 
-Escrever `@osso` ponto por ponto cansa numa forma grande. No editor, a ferramenta **Prender** (o botão da tachinha na barra do desenho, ou a tecla **P**) escreve para você:
+Escrever `@osso` ponto por ponto cansa numa forma grande. No editor, a ferramenta **Prender** (o botão da tachinha na barra de ferramentas, à esquerda do desenho, ou **Shift+P**) escreve para você:
 
 1. Com ela ligada, aparecem os pontos de todos os `shape`, `stroke` e `line`, não só os da linha do cursor. Cada osso ganha uma cor (um anel em volta da bolinha dele), e um ponto preso fica com a cor do osso dele; um solto fica cinza. Com peso menor que 1, a cor fica mais apagada.
 2. Escolha os pontos. Um clique escolhe um ponto; **Shift**+clique soma; **Alt**+clique tira. Arrastar no fundo faz uma caixa e escolhe os pontos de dentro (com **Shift**, soma; com **Alt**, tira). Os escolhidos ganham um anel laranja, e os que já estão presos, um fio tracejado até o osso.
 3. Clique com o botão direito. O menu mostra os ossos, o mais perto dos pontos primeiro, e quantos pontos já estão em cada um. Escolher um osso escreve `@osso` depois de cada ponto escolhido (com o **Peso** do campo: `0.5` escreve `@osso:0.5`); um ponto que já tinha outro osso troca. **Cada um no osso mais perto** dá um osso para cada ponto, e **Soltar** tira o `@`. Um **Ctrl+Z** desfaz tudo.
 
-Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso. Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como na chave **Ossos**).
+Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso. Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como com **Exibir › Ossos**).
 
 **Testar giro, sem escrever nada:** na pose parada (sem animação no player), cada osso tem a alça verde de girar. Arraste a ponta dela, e o osso gira **só na tela**: os pontos presos vão junto, e dá para ver onde a forma abre ou sobra antes de escrever a animação.
 

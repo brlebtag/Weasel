@@ -17,34 +17,36 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
-| [Editor visual](editor-visual.md) | menos código digitado: botão de repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo) e alças (luzes, emissores, caixas), linha do tempo da animação | proposta de 16/11/2026; item 1 na 1.49.0; itens 2, 4, 6, 10, 11 e 12 fora por enquanto |
-| [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | estudo de 16/11/2026, para discutir; se for aceito, substitui a ordem sugerida abaixo |
-| [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | proposta recebida em 16/11/2026; nada feito; o pincel de bolha ficou fora por enquanto |
+| [Editor visual](editor-visual.md) | menos código digitado: botão de repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo) e alças (luzes, emissores, caixas), linha do tempo da animação | proposta de 16/11/2026; item 1 na 1.49.0; itens 6, 10, 11 e 12 fora por enquanto; o 2 e os efeitos do 4 voltam na etapa 2 da interface |
+| [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | estudo de 16/11/2026, decidido no mesmo dia (9 decisões); as etapas dele substituem a ordem sugerida abaixo; etapa 1 (a casca) em andamento |
+| [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | proposta recebida em 16/11/2026; nada feito; os cinco pedidos entram nas etapas da interface (o pincel de bolha voltou, na etapa 5) |
 
 ### Ordem sugerida para o editor (editor visual e ferramentas de desenho)
+
+**Substituída em 16/11/2026** pelas etapas da [interface no jeito do Illustrator](interface-illustrator.md) (seção 11). A tabela fica como registro; a coluna "Situação" diz onde cada item entrou.
 
 | # | O quê | Plano | Situação |
 |---|---|---|---|
 | 1 | Player: um botão que alterna entre repetir e tocar uma vez; ao escolher a animação, ele segue o `once`/`loop` dela. Só para ver: não escreve no código | editor visual, item 1 | ✅ 1.49.0 |
-| 2 | ~~Painel de propriedades da linha (a base dos outros painéis)~~ | editor visual, item 2 | ➖ fora (16/11/2026) |
-| 3 | Bézier completo (alças quebradas, ver as automáticas, dividir sem mudar a forma) | ferramentas, item 3 | ⬜ |
-| 4 | Simplificar pontos | ferramentas, item 4 | ⬜ |
-| 5 | ~~Luzes com alças e efeitos da camada~~ | editor visual, itens 6 e 4 | ➖ fora (16/11/2026) |
-| 6 | Ordem das camadas arrastando, e paleta | editor visual, itens 5 e 3 | ⬜ |
-| 7 | Borracha (Shift+E) | ferramentas, item 2 | ⬜ |
-| 8 | ~~Pincel de bolha (Shift+B)~~ | ferramentas, item 1 | ➖ fora (16/11/2026) |
-| 9 | Linha do tempo da animação (as `key` e o `ease`) | editor visual, item 7 | ⬜ |
-| 10 | Filme: `at` na linha do tempo, zoom e escala com alça, transições | editor visual, item 8 | ⬜ |
-| 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ⬜ |
+| 2 | Painel de propriedades da linha (a base dos outros painéis) | editor visual, item 2 | ⬜ riscado e depois de volta: etapa 2 da interface |
+| 3 | Bézier completo (alças quebradas, ver as automáticas, dividir sem mudar a forma) | ferramentas, item 3 | ⬜ etapa 4 (com a Caneta) |
+| 4 | Simplificar pontos | ferramentas, item 4 | ⬜ etapa 4 (com o Lápis e o Pincel) |
+| 5 | ~~Luzes com alças e efeitos da camada~~ | editor visual, itens 6 e 4 | ➖ as luzes com alças continuam fora; os efeitos voltam na etapa 2 |
+| 6 | Ordem das camadas arrastando, e paleta | editor visual, itens 5 e 3 | ⬜ paleta na etapa 2 (Amostras); camadas arrastando na etapa 6 |
+| 7 | Borracha (Shift+E) | ferramentas, item 2 | ⬜ etapa 5 |
+| 8 | Pincel de bolha (Shift+B) | ferramentas, item 1 | ⬜ riscado e depois de volta: etapa 5 da interface |
+| 9 | Linha do tempo da animação (as `key` e o `ease`) | editor visual, item 7 | ⬜ etapa 7 |
+| 10 | Filme: `at` na linha do tempo, zoom e escala com alça, transições | editor visual, item 8 | ⬜ etapa 7 |
+| 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ⬜ etapa 7 |
 | 12 | ~~Emissores, caixas do jogo e exportar pelo editor~~ | editor visual, itens 10 a 12 | ➖ fora (16/11/2026) |
-| 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ⬜ |
+| 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ⬜ etapa 1b |
 
 Por que essa ordem:
 - **1:** pequeno e já pedido.
 - **3 e 4:** o Bézier e o simplificar mexem nos pontos que a borracha vai criar. Fazendo antes, ela já sai com curvas boas e poucos pontos.
 - **13:** a vista 3D é a maior e a que menos muda o resultado, por isso fica no fim.
 
-Riscados em 16/11/2026 (2, 5, 8 e 12): ficam fora por enquanto. Sem o painel de propriedades (2), a paleta (6) e o acabamento e o estilo (11) precisam dos próprios campos, se forem feitos.
+Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o 2 voltou (etapa 2), os efeitos do 5 também (as luzes com alças, não) e o 8 voltou (etapa 5); o 12 continua fora.
 
 ## Já implementados
 

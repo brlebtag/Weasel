@@ -12,7 +12,7 @@ Cada seção termina com um **exemplo que usa quase tudo da tabela de uma vez**,
 |---|---|
 | Linha | `comando nome valores atributo=valor [opções] : pontos` |
 | Comentário | `#` no começo da linha ou depois de um espaço (uma cor `#hex` não é comentário) |
-| Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça · qualquer um com `@osso` no fim (`x,y@osso`, `x,y!@osso:0.5`): o ponto segue o osso, com o peso de 0 a 1 (1); só em `shape`, `stroke` e `line`. No editor, a ferramenta **Prender** (tecla P) escreve o `@osso` em vários pontos de uma vez |
+| Ponto | `x,y` liso · `x,y!` canto vivo · `x,y~dx,dy` com alça · qualquer um com `@osso` no fim (`x,y@osso`, `x,y!@osso:0.5`): o ponto segue o osso, com o peso de 0 a 1 (1); só em `shape`, `stroke` e `line`. No editor, a ferramenta **Prender** (Shift+P) escreve o `@osso` em vários pontos de uma vez |
 | Cor | `#rgb` `#rgba` `#rrggbb` `#rrggbbaa` · nome da `palette` · `gradient` · `pattern` · nome do CSS · `none` ou `transparent` |
 | Espessura | número · nome numérico da `palette` (`line`, `inner`…) · `none` (0) |
 | Conta | `{expressão}` em qualquer número: `+ - * / % ^ ( )`, as comparações `< <= > >= == !=` (dão 1 ou 0), `c ? a : b`, variáveis do `let`, de `def` e de `repeat`, `pi`, `sin cos tan atan2` (graus), `sqrt abs min max round floor ceil pow lerp clamp`, `mod(x,n)` (o resto que não fica negativo), `smoothstep(a,b,x)`, `dist(x1,y1,x2,y2)`, `rand(x)` e `rand(x,a,b)` |
@@ -473,7 +473,7 @@ ellipse vcano 180,100 4 c=#8a4bd0
 
 Repare:
 
-- `box` e `point` **não aparecem** na imagem: no jogo eles viram colisões e marcadores. No editor, você vê as caixas com **Hitboxes** ligado e os pontos com **Guias** ligado.
+- `box` e `point` **não aparecem** na imagem: no jogo eles viram colisões e marcadores. No editor, você vê as caixas com **Exibir › Hitboxes** e os pontos com **Exibir › Guias**.
 - Para mostrar as caixas aqui, copiei cada uma numa camada `guide`. Essa camada só sai na exportação com `--guides`; esta imagem foi feita assim.
 - Verde é o corpo que colide com o chão (`body`), amarelo é onde o boneco leva dano (`hurt`) e vermelho é o golpe (`hit`). O golpe e o `point` têm `bone=braco`: andam com o braço.
 - `root=100,190` fica entre os pés do boneco: esse ponto vira a **origem** (0,0) da cena no Godot.

@@ -752,7 +752,7 @@ aviso: parâmetro desconhecido "bordda": o componente "botao" tem cor, borda (e 
 No editor, com o cursor em qualquer linha entre `def` e `end`, dá para ver o componente sozinho e experimentar valores para os parâmetros:
 
 - Um `def` **sem nenhum `use`** aparece na hora: o desenho dá lugar ao componente, num papel do tamanho dele. Saindo do `def`, o desenho volta como estava.
-- Num `def` **já usado**, o desenho continua; ligue a chave **Prévia do def**, que aparece na barra só com o cursor num `def`. A mesma chave desliga a prévia de um `def` sem `use`.
+- Num `def` **já usado**, o desenho continua; ligue a chave **Prévia do def**, que aparece na barra de baixo só com o cursor num `def`. A mesma chave desliga a prévia de um `def` sem `use`.
 - A **cruz rosa** marca o `0,0`: o ponto que vai parar no `x,y` do `use`.
 - O painel **Prévia**, embaixo à direita, tem uma linha para cada parâmetro, começando no valor padrão:
   - **número**: escreva no campo ou arraste o nome para os lados (com Shift, anda 10× mais);
@@ -1037,7 +1037,7 @@ canvas 800 640 bg=#cfe3f0
 ![O Cavaleiro na grama, num dia de sol com nuvens](img/05_include.png)
 
 - O caminho é **relativo ao arquivo que inclui**. Na linha de comando, `include "personagens/heroi.weasel"` procura na pasta `personagens` ao lado do seu arquivo.
-- No **editor web**, o arquivo incluído precisa estar na lista de arquivos (abra-o com **Abrir…**); ele é achado pelo nome.
+- No **editor web**, o arquivo incluído precisa estar na lista de arquivos (abra-o com **Arquivo › Abrir…**); ele é achado pelo nome.
 - Como o arquivo entra naquela linha, a ordem importa: o que vem antes fica atrás, o que vem depois fica na frente. E o que é "único" (como o `canvas`) vale o último escrito.
 - Um erro dentro do arquivo incluído aparece na linha do `include`, com o nome do arquivo e a linha de lá.
 - O exemplo [`noite.weasel`](../../exemplos/noite.weasel) faz isso em grande: a rua, a chuva e a lanterna em volta do mesmo Cavaleiro.

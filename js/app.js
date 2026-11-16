@@ -23,7 +23,7 @@
     lastT: 0,
     acc: 0,
     view: { z: 1, x: 0, y: 0, auto: true },
-    show: { guides: true, boxes: true, points: true, bones: false, onion: false, traj: false, refs: true, art: true, rulers: store.get('weasel.rulers') === '1' },
+    show: { guides: true, boxes: true, bones: false, onion: false, traj: false, refs: true, art: true, rulers: store.get('weasel.rulers') === '1' },
     caret: { line: 0, col: 0 },
     drag: null,
     pan: null,
@@ -52,11 +52,21 @@
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
+    // a ferramenta da barra da esquerda (veja setTool), a vista (código, dividido ou design) e o Espaço segurado
+    // (move a vista arrastando; solto sem ter arrastado, toca)
+    tool: 'select',
+    layout: 'split',
+    space: null,
+    vpress: null, // Seleção: apertou numa forma e ainda não arrastou ({ x, y, pick })
   };
   // prévia do def: ligada/desligada por def (sem entrada, ligada só sem use), os valores do painel por def,
   // o def mostrado agora e a vista de antes da prévia (volta quando ela some)
   const pv = { mode: new Map(), params: new Map(), shown: null, view: null, sig: '' };
   let raf = 0, saveTimer = 0;
+  // avisos para a casca (js/ui-shell.js): 'tool' (trocou a ferramenta), 'layout' (trocou a vista), 'model' (o
+  // código mudou), 'film' (abriu ou fechou um filme)
+  const listeners = {};
+  const emit = (k) => { for (const f of listeners[k] || []) f(); };
   const baseName = () => st.current.replace(/\.[^.]+$/, '') || 'desenho';
   // ---------- filme ----------
   const isFilm = () => !!(st.model && st.model.film);
@@ -389,7 +399,7 @@
       row.querySelector('.rn').textContent = r.name + (r.only ? ` · ${r.only.join(',')}` : '');
       // o painel só é refeito quando muda a lista: cada clique lê o ref de agora (o r daqui fica velho depois de editar)
       const cur = () => st.model.refs.find((x) => x.name === r.name) || r;
-      row.querySelector('.rn').addEventListener('click', () => editor.goto(cur().line, 0));
+      row.querySelector('.rn').addEventListener('click', () => gotoCode(cur().line, 0));
       row.querySelector('.vis').addEventListener('change', (e) => editRef(cur(), { flags: { hidden: !e.target.checked } }));
       row.querySelector('.lk').addEventListener('click', () => { const c = cur(); editRef(c, { flags: { lock: !c.lock } }); });
       const op = row.querySelector('.op');
@@ -460,7 +470,7 @@
     // o cursor vai antes: o goto avisa primeiro a linha antiga (ao focar o código), e isso soltaria a escolha nova
     st.sel = new Map();
     st.selCaret = caretLine;
-    if (caretLine >= 0 && caretLine !== st.caret.line) editor.goto(caretLine, 0);
+    if (caretLine >= 0 && caretLine !== st.caret.line) editor.reveal(caretLine, 0);
     st.sel = new Map(lines.map((l) => [l, sigs.get(l)]));
     markLayerPanel();
     draw();
@@ -511,7 +521,7 @@
   }
 
   // ---------- esconder: o hidden escrito na linha ----------
-  // O olho do painel e o Ctrl+H ligam e desligam o hidden das formas (shape, stroke, line, ellipse, rect, text),
+  // O olho do painel e o Ctrl+3 (no código, também o Ctrl+H) ligam e desligam o hidden das formas (shape, stroke, line, ellipse, rect, text),
   // do emitter, da layer, do ref e do actor. O hidden entra depois da última palavra antes do ":" (ou do comentário).
   function hiddenTok(line) {
     if (line < 0) return null;
@@ -520,7 +530,7 @@
     const tok = w.slice(1).find((t) => t.text === 'hidden') || null;
     return { cmd, name: w[1] && w[1].text !== 'hidden' ? w[1].text : '', on: !!tok, tok, end: w[w.length - 1].to };
   }
-  // as linhas do Ctrl+H: as escolhidas no painel; sem escolha, as do cursor (ou do trecho marcado no código)
+  // as linhas do Ctrl+3: as escolhidas no painel; sem escolha, as do cursor (ou do trecho marcado no código)
   function hiddenTargets() {
     if (st.sel.size) return [...st.sel.keys()].sort((a, b) => a - b);
     const ta = editor.ta, v = editor.value, lineAt = (o) => v.slice(0, o).split('\n').length - 1;
@@ -536,7 +546,7 @@
     const ok = lines.map((l) => [l, hiddenTok(l)]).filter(([, h]) => h);
     if (!ok.length) {
       const w = lines.length === 1 ? L.splitLine(lineOf(lines[0])).words : [], cmd = w[0] && w[0].text;
-      hint(!cmd ? 'Ponha o cursor numa forma (ou escolha linhas no painel Camadas) e aperte Ctrl+H.'
+      hint(!cmd ? 'Escolha uma forma (ou linhas no painel Camadas) e aperte Ctrl+3.'
         : cmd === 'use' ? 'O use não aceita hidden: esconda as formas de dentro do def (ou a camada delas).'
         : cmd === 'include' ? 'O include não aceita hidden: esconda as formas no outro arquivo.'
         : `${lines.length > 1 ? 'Estas linhas não aceitam' : `"${cmd}" não aceita`} hidden: só as formas (shape, stroke, line, ellipse, rect, text), emitter, layer, ref e actor.`, 3600);
@@ -555,7 +565,7 @@
     writeLines(out, 'hidden' + Date.now());
     const what = ok.length === 1 ? `${ok[0][1].cmd}${ok[0][1].name ? ' ' + ok[0][1].name : ''}` : `${ok.length} linhas`;
     const left = lines.length - ok.length;
-    hint(`${what}: ${hide ? (ok.length > 1 ? 'escondidas' : 'escondida') + ' (hidden)' : ok.length > 1 ? 'aparecem de novo' : 'aparece de novo'}${left && st.sel.size ? ` · ${left} não ${left > 1 ? 'aceitam' : 'aceita'} hidden` : ''}.${byKey ? ' Ctrl+H de novo desfaz.' : ''}`, 2600);
+    hint(`${what}: ${hide ? (ok.length > 1 ? 'escondidas' : 'escondida') + ' (hidden)' : ok.length > 1 ? 'aparecem de novo' : 'aparece de novo'}${left && st.sel.size ? ` · ${left} não ${left > 1 ? 'aceitam' : 'aceita'} hidden` : ''}.${byKey ? ` ${byKey} de novo desfaz.` : ''}`, 2600);
   }
   const EYE_ON = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
   const EYE_OFF = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><path d="M2.5 13.5 13.5 2.5"/></svg>';
@@ -573,7 +583,7 @@
     if (sig !== layerSig) {
       layerSig = sig;
       p.innerHTML = '<div class="rp-head"><b>Camadas</b><small class="lp-count"></small><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div><div class="lp-tree"></div>' +
-        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover e a bolinha verde para girar. O olho (ou <kbd>Ctrl</kbd>+<kbd>H</kbd> nas escolhidas) liga e desliga o <code>hidden</code>. <kbd>Esc</kbd> solta.</small></div>';
+        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover, a bolinha verde para girar e as setas para empurrar. O olho (ou <kbd>Ctrl</kbd>+<kbd>3</kbd> nas escolhidas) liga e desliga o <code>hidden</code>. <kbd>Esc</kbd> solta.</small></div>';
       const box = p.querySelector('.lp-tree');
       if (!tree.length) box.innerHTML = '<div class="rp-empty">Nada desenhado ainda.</div>';
       tree.forEach((t, i) => {
@@ -630,7 +640,7 @@
       eye.classList.toggle('na', state === 'na');
       eye.classList.toggle('off', state === 'off');
       eye.innerHTML = state === 'off' ? EYE_OFF : state === 'on' ? EYE_ON : '';
-      eye.title = state === 'off' ? 'Escondida (hidden): clique para mostrar' : state === 'on' ? 'Esconder (hidden). Com várias escolhidas: Ctrl+H' : '';
+      eye.title = state === 'off' ? 'Escondida (hidden): clique para mostrar' : state === 'on' ? 'Esconder (hidden). Com várias escolhidas: Ctrl+3' : '';
     });
     const c = p.querySelector('.lp-count');
     if (c) c.textContent = st.sel.size ? `${st.sel.size} escolhida${st.sel.size > 1 ? 's' : ''}` : '';
@@ -736,10 +746,26 @@
     for (const [a, b, t] of ed) out = out.slice(0, a) + t + out.slice(b);
     return out;
   }
-  // a escolha vira uma caixa no desenho quando tem mais de uma linha (com uma só, valem as alças de sempre)
-  const groupOn = () => st.sel.size > 1 && !!st.model && !isFilm() && !st.build && st.show.points && !pvModel();
+  // as alças da linha do cursor (pontos, tamanho, giro…): na Seleção direta e nas outras ferramentas; na Seleção (V),
+  // só a caixa da escolha. No filme e na prévia do def não há formas para escolher: a Seleção mostra as alças também.
+  const pointsOn = () => st.tool !== 'select' || isFilm() || !!pvModel();
+  // o que está escolhido: as linhas do painel Camadas (ou dos cliques no desenho); na Seleção, sem escolha, a forma
+  // da linha do cursor (o cursor andando no código escolhe a forma da linha, como no Dreamweaver)
+  let selMemo = null;
+  function selSet() {
+    if (st.sel.size || st.tool !== 'select' || !st.model) return st.sel;
+    const line = st.caret.line;
+    if (!selMemo || selMemo.m !== st.model || selMemo.line !== line) {
+      const sig = nodeSigs().get(line);
+      selMemo = { m: st.model, line, set: sig ? new Map([[line, sig]]) : new Map() };
+    }
+    return selMemo.set;
+  }
+  // a escolha vira uma caixa no desenho: na Seleção, já com uma forma; nas outras, com mais de uma (com uma só,
+  // valem as alças de sempre)
+  const groupOn = () => !!st.model && !isFilm() && !st.build && !pvModel() && (st.tool === 'select' ? selSet().size > 0 : st.sel.size > 1);
   function groupBox(m, pose) {
-    const lines = st.sel, geo = [];
+    const lines = selSet(), geo = [];
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
     for (const t of layerTree(m)) for (const k of t.kids) {
@@ -808,13 +834,13 @@
     if (k) return { k };
     // em cima de uma das formas escolhidas: arrastar move todas
     const el = hitsAt(e)[0], m = st.model;
-    if (el && !e.shiftKey) { const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i; if (st.sel.has(line)) return 'move'; }
+    if (el && !e.shiftKey) { const i = el.use !== undefined ? el.use : el.line, line = m.lineMap ? m.lineMap[i] : i; if (selSet().has(line)) return 'move'; }
     return null;
   }
   function startGroup(mode, e, k) {
     const verb = mode === 'spin' ? 'girar' : mode === 'scale' ? 'esticar' : 'mover';
     if (st.playing || st.anim) { hint(`Para ${verb} a escolha, escolha "pose parada" no player.`, 2600); return; }
-    const plans = [...st.sel.keys()].map(editPlan);
+    const plans = [...selSet().keys()].map(editPlan);
     if (mode === 'scale') for (const p of plans) if (!p.why) p.noScale = scaleInfo(p);
     const stop = (p) => p.why || (mode === 'spin' && p.noSpin) || (mode === 'scale' && p.noScale) || '';
     const ok = plans.filter((p) => !stop(p)), left = plans.length - ok.length;
@@ -1158,7 +1184,7 @@
       p.classList.toggle('lock-geom', lockGeom);
       const cur = () => { const c = gradTarget(); return c && c.g.name === t.g.name ? c : null; };
       p.querySelector('.x').addEventListener('click', () => { gp.closed = where; fillGradPanel(); });
-      p.querySelector('.gp-name').addEventListener('click', () => { const c = cur(); if (c) editor.goto(c.line, 0); });
+      p.querySelector('.gp-name').addEventListener('click', () => { const c = cur(); if (c) gotoCode(c.line, 0); });
       p.querySelectorAll('.gp-seg button').forEach((b) => b.addEventListener('click', () => {
         const c = cur();
         if (!c || lockGeom || c.g.type === b.dataset.type) return;
@@ -1317,7 +1343,7 @@
     range: () => filmRange(),
     editable: (owner) => owner === st.model,
     lineOf: srcLine,
-    gotoLine: (line) => editor.goto(line, 0),
+    gotoLine: (line) => editor.reveal(line, 0),
     edit: timeEdit,
     open: (file) => { if (file && st.files.has(file)) openFile(file); else hint(file ? `Abra "${file}" com Abrir… para editar.` : 'Este bloco é deste arquivo.', 2600); },
     hint: (msg) => hint(msg, 2400),
@@ -1381,7 +1407,10 @@
     fillLayerPanel();
     syncRulers();
     updateErrors();
+    if (isFilm() && !FILM_TOOLS.includes(st.tool)) { st.tool = 'select'; stage.dataset.tool = 'select'; emit('tool'); }
+    selMemo = null;
     updateCaretInfo();
+    emit('model');
     draw();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveWorkspace, 400);
@@ -1405,7 +1434,7 @@
       row.className = e.level;
       row.innerHTML = `<span class="ln">linha ${e.line + 1}</span><span class="msg"></span>`;
       row.querySelector('.msg').textContent = e.msg;
-      row.addEventListener('click', () => { list.hidden = true; editor.goto(e.line, e.from); });
+      row.addEventListener('click', () => { list.hidden = true; gotoCode(e.line, e.from); });
       list.appendChild(row);
     }
     if (!errs.length) list.hidden = true;
@@ -1451,6 +1480,7 @@
     const err = st.model && st.model.errors.find((e) => e.line === st.caret.line);
     if (err) s += ` · <span style="color:${err.level === 'error' ? 'var(--err)' : 'var(--warn)'}">${esc(err.msg)}</span>`;
     $('caretInfo').innerHTML = s;
+    showCrumbs();
     // Cursor num at ou shot do filme: vai para aquele momento
     if (rec && (rec.audio || rec.sub) && isFilm() && !st.playing) {
       const tl = tline();
@@ -1999,7 +2029,7 @@
         <div class="dp-errs"></div>
         <div class="rp-foot"><button type="button" class="dp-reset">Voltar ao padrão</button><button type="button" class="dp-copy" title="Copia uma linha use com os valores que você mudou">Copiar como use</button></div>
         <small class="dp-tip">A cruz é o 0,0: o ponto que vai para o x,y do use. Os valores daqui não mudam o código; as alças mudam as linhas do def.</small>`;
-      p.querySelector('.dp-name').addEventListener('click', () => { const P2 = st.model.preview; if (P2) editor.goto(P2.line, 0); });
+      p.querySelector('.dp-name').addEventListener('click', () => { const P2 = st.model.preview; if (P2) gotoCode(P2.line, 0); });
       p.querySelector('.dp-reset').addEventListener('click', () => { const P2 = st.model.preview; if (P2) { pv.params.delete(pvKey(P2.def)); reparse(); } });
       p.querySelector('.dp-copy').addEventListener('click', () => {
         const P2 = st.model.preview;
@@ -2112,6 +2142,7 @@
     const cw = Math.max(1, Math.round(cv.clientWidth * dpr)), ch = Math.max(1, Math.round(cv.clientHeight * dpr));
     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
     if (st.view.auto) fit();
+    showZoom();
     // na prévia de um def, o desenho é o do def sozinho, num papel do tamanho dele (R)
     const P = isFilm() ? null : pvModel(), m = P || st.model, c = m.canvas, z = st.view.z, R = viewRect();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -2187,7 +2218,7 @@
     const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (pinning) drawPins(ctx, m, pose, z);
-    else if (st.show.points) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); }
+    else if (pointsOn()) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); } else if (groupOn()) drawGroup(ctx, m, pose, z);
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
     if (st.meas) drawMeasure(ctx, dpr);
@@ -2303,7 +2334,7 @@
       drawLights(ctx, m, W.film.frameState(m, st.frame).who[0].pose, z * Math.sqrt(Math.abs(W.geom.M.det(v))));
       ctx.restore();
     }
-    if (st.show.points) drawHandles(ctx, m, currentPose(), z);
+    if (pointsOn()) drawHandles(ctx, m, currentPose(), z);
   }
 
   // imagens guia soltas: moldura tracejada, o nome e o canto que muda o tamanho
@@ -2739,7 +2770,7 @@
   }
   // a alça de esticar sob o mouse (uma alça de verdade mais perto ganha dela)
   function hitScale(e) {
-    if (!st.model || !st.show.points || st.build) return null;
+    if (!st.model || !pointsOn() || st.build) return null;
     const hl = handleList(st.model, currentPose()), sb = hl && scaleKnobs(hl);
     if (!sb) return null;
     const [x, y] = toCanvas(e);
@@ -3118,7 +3149,7 @@
   const numBR = (v) => String(Number(v.toFixed(1))).replace('.', ',');
   // os pontos da forma do cursor, na tela do desenho (para grudar a régua de medir e as linhas guia neles)
   function shapeSpots() {
-    if (!st.show.points || st.build) return [];
+    if (!pointsOn() || st.build) return [];
     const hl = handleList(st.model, currentPose());
     if (!hl) return [];
     return hl.pts.filter((p, i) => p && ['pt', 'center', 'corner', 'pos', 'size', 'pivot'].includes(hl.rec.handles[i].kind));
@@ -3209,7 +3240,7 @@
     const hl = handleList(st.model, currentPose()), at = hl && hl.pts[hi];
     return { self: true, ref: at || toCanvas(e), box: ['center', 'corner', 'pos'].includes(h.kind) && rec.el ? elBox(rec) : null };
   }
-  // ---- prender pontos a um osso (ferramenta Prender, tecla P) ----
+  // ---- prender pontos a um osso (ferramenta Prender, Shift+P) ----
   // Mostra os pontos de todas as formas com pontos escritos (shape, stroke, line), não só os da linha do cursor.
   // Um clique escolhe todos os pontos que estão naquele lugar (formas coladas dividem o ponto e precisam ir
   // juntas); clicar de novo no mesmo lugar pega só o de uma forma, a de cima primeiro. Shift soma, Alt tira e
@@ -3416,6 +3447,8 @@
   }
   function setPin(on) {
     st.pin.on = on;
+    // a ferramenta acompanha: ligar escolhe o Prender, desligar (por qualquer caminho) volta para a Seleção
+    if (on !== (st.tool === 'pin')) { st.tool = on ? 'pin' : 'select'; selMemo = null; stage.dataset.tool = st.tool; emit('tool'); }
     st.pin.box = null;
     st.pin.pick = null;
     if (!on) { st.pin.sel.clear(); st.pin.spin.clear(); closePinMenu(false); }
@@ -3521,6 +3554,7 @@
   // ---- medir ----
   function setMeasure(on) {
     st.measure = on;
+    if (on !== (st.tool === 'measure')) { st.tool = on ? 'measure' : 'select'; selMemo = null; stage.dataset.tool = st.tool; emit('tool'); }
     if (!on) { st.meas = null; st.mdrag = null; }
     if (on && st.pin.on) setPin(false);
     $('measureBtn').classList.toggle('on', on);
@@ -3711,7 +3745,7 @@
   }
 
   function hitHandle(e) {
-    if (!st.show.points || st.build) return -1;
+    if (!pointsOn() || st.build) return -1;
     const hl = handleList(st.model, currentPose());
     if (!hl) return -1;
     const [x, y] = toCanvas(e);
@@ -3755,6 +3789,137 @@
     editRef(r, { pos: `${fmtN(d.tl[0] - hw - c[0], dec)},${fmtN(d.tl[1] - hh - c[1], dec)}`, attrs: { scale: s === 1 ? null : String(s) }, caret: true }, d.key);
   }
 
+  // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
+  // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
+  // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
+  const TOOLS = ['select', 'direct', 'text', 'rect', 'ellipse', 'line', 'measure', 'pin', 'hand', 'zoom'];
+  const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
+  const INSERT_TOOLS = { text: 'text', rect: 'rect', ellipse: 'ellipse', line: 'line' };
+  function setTool(id) {
+    if (!TOOLS.includes(id) || (isFilm() && !FILM_TOOLS.includes(id))) return;
+    if (id === 'pin' && pvModel()) { hint('O Prender não funciona dentro da prévia do def: tire o cursor de dentro do def.', 3200); return; }
+    st.tool = id;
+    if (id !== 'measure' && st.measure) setMeasure(false);
+    if (id !== 'pin' && st.pin.on) setPin(false);
+    if (id === 'measure' && !st.measure) setMeasure(true);
+    if (id === 'pin' && !st.pin.on) setPin(true);
+    selMemo = null;
+    stage.dataset.tool = st.tool;
+    updateCaretInfo();
+    emit('tool');
+    draw();
+  }
+  // a vista: só o código, os dois lado a lado ou só o desenho (o código continua lá, escondido)
+  function setLayout(v, keep) {
+    if (!['code', 'split', 'design'].includes(v)) v = 'split';
+    st.layout = v;
+    document.body.dataset.layout = v;
+    if (keep !== false) store.set('weasel.vista', v);
+    if (v === 'design' && document.activeElement === editor.ta) editor.ta.blur();
+    updateCaretInfo();
+    emit('layout');
+    draw();
+  }
+  // desfazer e refazer pelo desenho (ou pelo menu): a escolha continua a mesma. O desfazer do código põe o cursor
+  // onde ele estava na edição de antes, e isso soltaria a escolha (com o número de linhas mudando, ela se perde).
+  function undoRedo(redo) {
+    const lines = () => editor.value.split('\n').length;
+    const sel = [...st.sel.keys()], line = st.caret.line, n = lines();
+    if (redo) editor.redo(); else editor.undo();
+    if (lines() !== n) return;
+    const sigs = nodeSigs(), ok = sel.filter((l) => sigs.has(l));
+    if (ok.length) setSel(ok, ok.includes(line) ? line : ok[0]);
+    else if (st.caret.line !== line) editor.reveal(line, 0);
+  }
+  // ir para uma linha no código de propósito (o nome num painel, um erro): no Design, abre o Dividido
+  function gotoCode(line, col) {
+    if (st.layout === 'design') setLayout('split');
+    editor.goto(line, col);
+  }
+  // as setas: empurram a escolha (1 px; com Shift, 10). false: nada escolhido
+  function nudge(dx, dy) {
+    if (!groupOn()) return false;
+    if (st.playing || st.anim) { hint('Para empurrar a escolha, escolha "pose parada" no player.', 2600); return true; }
+    const b = groupBox(st.model, currentPose());
+    if (!b) return false;
+    const out = new Map(), dec = st.view.z > 3 ? 1 : 0, stuck = [];
+    for (const line of selSet().keys()) {
+      const p = editPlan(line);
+      const a = p.why ? null : localOf(p.rec, p.ref, b.cx, b.cy), c = a && localOf(p.rec, p.ref, b.cx + dx, b.cy + dy);
+      if (!c) { stuck.push(`linha ${line + 1}: ${p.why || 'não anda pelo desenho'}`); continue; }
+      out.set(line, planText(p, (px, py) => [px + c[0] - a[0], py + c[1] - a[1]], 0, dec));
+    }
+    if (out.size) writeLines(out, 'nudge' + Date.now());
+    if (stuck.length) hint(`${stuck.length > 1 ? `${stuck.length} linhas ficam paradas` : 'Fica parada'} (${stuck.slice(0, 2).join('; ')}${stuck.length > 2 ? '…' : ''}).`, 3600);
+    return true;
+  }
+  // Ctrl+D no desenho, até a etapa 3 (quando vira "repetir a última transformação"): duplica as formas escolhidas
+  // (ou a da linha do cursor) como o Ctrl+D do código. A cópia ganha nome novo e entra logo abaixo da original, no
+  // mesmo lugar do desenho, e vira a escolha: é só arrastar. Linhas seguidas ficam juntas; os nomes que uma cópia usa
+  // de outra mudam junto (renameCopy recebe todas as linhas de uma vez). Um Ctrl+Z desfaz tudo.
+  function duplicateSel() {
+    if (!st.model || isFilm() || st.build) return false;
+    let lines = [...selSet().keys()];
+    if (!lines.length && nodeSigs().has(st.caret.line)) lines = [st.caret.line];
+    if (!lines.length) return false;
+    lines = [...new Set(lines)].sort((a, b) => a - b);
+    const all = editor.value.split('\n'), sel = new Set(lines), first = lines[0], last = lines.at(-1);
+    const copy = renameCopy(lines.map((l) => all[l]).join('\n'));
+    const twin = new Map((copy ? copy.text : lines.map((l) => all[l]).join('\n')).split('\n').map((t, i) => [lines[i], t]));
+    // da primeira escolhida à última: no fim de cada trecho de linhas seguidas, as cópias dele. seg[i] é a linha
+    // first + i do código novo; fresh guarda onde cada cópia ficou (na ordem das escolhidas)
+    const seg = [], fresh = [];
+    for (let l = first; l <= last; l++) {
+      seg.push(all[l]);
+      if (!sel.has(l) || sel.has(l + 1)) continue;
+      let a = l;
+      while (sel.has(a - 1)) a--;
+      for (let m = a; m <= l; m++) { fresh.push(first + seg.length); seg.push(twin.get(m)); }
+    }
+    const from = editor.lineStart(first), to = editor.lineStart(last) + all[last].length;
+    const caret = sel.has(st.caret.line) ? fresh[lines.indexOf(st.caret.line)] : fresh[0];
+    let off = from;
+    for (let i = 0; i < caret - first; i++) off += seg[i].length + 1;
+    editor.replaceRange(from, to, seg.join('\n'), { select: [off, off] });
+    const sigs = nodeSigs(), ok = fresh.filter((l) => sigs.has(l));
+    setSel(ok, ok.includes(caret) ? caret : ok[0] !== undefined ? ok[0] : caret);
+    if (!copy) hint(`${fresh.length > 1 ? `${fresh.length} cópias` : 'Cópia'} na linha ${fresh[0] + 1}: arraste para o lugar (Ctrl+Z desfaz).`, 2600);
+    return true;
+  }
+  // o caminho da barra de status no Design: arquivo › camada › forma › ponto
+  function crumbs() {
+    const m = st.model, line = st.caret.line, out = [{ t: st.current }];
+    if (!m || isFilm()) return out;
+    if (st.sel.size > 1) { out.push({ t: `${st.sel.size} formas escolhidas` }); return out; }
+    const tree = layerTree(m), li = tree.findIndex((t) => t.line === line || t.kids.some((k) => k.line === line));
+    if (li >= 0) out.push({ t: tree[li].layer.name, li });
+    const rec = m.byLine.get(line);
+    if (!rec || (li >= 0 && tree[li].line === line)) return out;
+    const k = li >= 0 ? tree[li].kids.find((q) => q.line === line) : null;
+    out.push({ t: k ? `${k.type} ${k.name}`.trim() : `${rec.el ? rec.el.type : rec.st.cmd}${rec.el && rec.el.name ? ' ' + rec.el.name : ''}` });
+    const hi = activeHandle(rec), h = hi >= 0 ? rec.handles[hi] : null;
+    if (h && h.kind === 'pt') out.push({ t: `ponto ${h.idx + 1}` });
+    return out;
+  }
+  function showCrumbs() {
+    const box = $('crumbs');
+    if (!box || st.layout !== 'design') return;
+    const list = crumbs(), sig = list.map((c) => c.t + (c.li !== undefined ? '@' + c.li : '')).join('›');
+    if (box.dataset.sig === sig) return;
+    box.dataset.sig = sig;
+    box.innerHTML = list.map((c, i) => (c.li !== undefined ? `<button type="button" data-li="${c.li}" title="Escolher tudo o que desenha na camada ${esc(c.t)}">${esc(c.t)}</button>` : `<span${i === list.length - 1 ? ' class="last"' : ''}>${esc(c.t)}</span>`)).join('<i>›</i>');
+  }
+  // o zoom na barra de status
+  function showZoom() {
+    const z = $('zoomPct'), t = Math.round(st.view.z * 100) + '%';
+    if (z && z.textContent !== t) z.textContent = t;
+  }
+  // 100%: um pixel do desenho, um pixel da tela, com o meio da vista parado
+  function zoomActual() {
+    const f = 1 / st.view.z;
+    if (Math.abs(f - 1) > 1e-9) zoomAt(view.clientWidth / 2, view.clientHeight / 2, f);
+  }
+
   function hint(msg, ms) {
     const h = $('hint');
     h.textContent = msg;
@@ -3767,6 +3932,18 @@
     // clicar no desenho com a caixinha do texto aberta: grava o que foi escrito (como clicar fora)
     if (textEd) closeTextEd(true, false);
     view.setPointerCapture(e.pointerId);
+    // a Mão, o Espaço segurado e o botão do meio movem a vista, em cima do que for
+    if (st.space || e.button === 1 || (e.button === 0 && st.tool === 'hand')) {
+      if (st.space) st.space.panned = true;
+      st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: false, moved: false };
+      return;
+    }
+    // o Zoom: clique aproxima, Alt+clique afasta (no lugar do clique)
+    if (e.button === 0 && st.tool === 'zoom') {
+      const r = view.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, e.altKey ? 0.8 : 1.25);
+      return;
+    }
     // numa régua: puxar uma linha guia nova (no quadradinho do canto, só o duplo clique faz algo: apaga todas)
     const ru = e.button === 0 ? rulerAt(e) : null;
     if (ru) { if (ru !== 'corner') startGuide(ru === 'top' ? 'h' : 'v', -1, e); return; }
@@ -3779,7 +3956,8 @@
       st.pin.box = { a: p, b: p.slice(), add: e.shiftKey, sub: e.altKey, x: e.clientX, y: e.clientY, moved: false };
       return;
     }
-    if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
+    // Ctrl+clique escreve a coordenada no cursor do código (no Design o código não aparece: não escreve)
+    if (e.button === 0 && (e.ctrlKey || e.metaKey) && st.layout !== 'design') {
       const [x, y] = toWorld(e);
       const ta = editor.ta, s = ta.selectionStart;
       const before = ta.value[s - 1];
@@ -3796,9 +3974,16 @@
       draw();
       return;
     }
+    // no Texto, apertar num texto é para mudar as letras: as alças dele (mover, tamanho) não pegam o clique
+    if (e.button === 0 && st.tool === 'text' && !isFilm() && (hitsAt(e)[0] || {}).type === 'text') {
+      st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: true, moved: false };
+      return;
+    }
     const hb = e.button === 0 ? hitBone(e) : null;
     if (hb) { startPose(hb, e); return; }
     const hg = e.button === 0 ? hitGroup(e) : null;
+    // na Seleção, mover espera o mouse andar: um clique sem arrastar só escolhe (e pega a forma de baixo)
+    if (hg === 'move' && st.tool === 'select') { st.vpress = { x: e.clientX, y: e.clientY, pick: false }; return; }
     if (hg) { if (hg.k) startGroup('scale', e, hg.k); else startGroup(hg, e); return; }
     const hs = e.button === 0 ? hitScale(e) : null;
     if (hs) { startScale(hs, e); return; }
@@ -3847,9 +4032,22 @@
       else if (h.kind === 'size') st.drag.orig = { rx: h.rx, ry: h.ry, w: h.w, h: h.h };
       return;
     }
-    // arrastar move a vista; soltar sem ter arrastado (clique simples) escolhe a figura sob o mouse
-    if (e.button === 0 || e.button === 1) st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: e.button === 0, moved: false };
+    // na Seleção, apertar numa forma e arrastar: ela vira a escolha e anda junto (sem arrastar, é um clique)
+    if (e.button === 0 && st.tool === 'select' && !e.shiftKey && !isFilm() && hitsAt(e).length) { st.vpress = { x: e.clientX, y: e.clientY, pick: true }; return; }
+    // arrastar move a vista; soltar sem ter arrastado (clique simples) escolhe a figura sob o mouse (ou, nas
+    // ferramentas de forma, põe uma ali)
+    if (e.button === 0) st.pan = { x: e.clientX, y: e.clientY, vx: st.view.x, vy: st.view.y, click: true, moved: false };
   });
+  // o clique sem arrastar: escolher, pôr uma forma pronta ou, no Texto, escrever
+  function clickAt(e) {
+    const ins = INSERT_TOOLS[st.tool];
+    if (!ins || isFilm()) { pickShape(e); return; }
+    if (ins === 'text') {
+      const el = hitsAt(e)[0];
+      if (el && el.type === 'text') { editText(el); return; }
+    }
+    insertShapeAt(NEW_SHAPES.findIndex((s) => s.cmd === ins), toWorld(e), { edit: ins === 'text' });
+  }
 
   view.addEventListener('pointermove', (e) => {
     const [x, y] = toCanvas(e);
@@ -3878,6 +4076,17 @@
       return;
     }
     if (st.refDrag) { moveRef(st.refDrag, x, y); return; }
+    // Seleção: o mouse andou depois de apertar numa forma, então é arraste (escolhe a forma, se ainda não era)
+    if (st.vpress) {
+      const v = st.vpress;
+      if (Math.hypot(e.clientX - v.x, e.clientY - v.y) < 4) return;
+      st.vpress = null;
+      const at = { clientX: v.x, clientY: v.y, shiftKey: false };
+      if (v.pick) pickShape(at);
+      if (groupOn()) startGroup('move', at);
+      if (st.gdrag) { const [sx, sy] = snapMouse(st.gdrag.sn, x, y, e); moveGroup(st.gdrag, sx, sy, e.shiftKey); }
+      return;
+    }
     if (st.pan) {
       // uns pixels de tremida não são arraste: o clique continua sendo clique
       if (!st.pan.moved && Math.hypot(e.clientX - st.pan.x, e.clientY - st.pan.y) < 4) return;
@@ -3889,6 +4098,8 @@
       draw();
       return;
     }
+    if (st.space || st.tool === 'hand') { view.style.cursor = 'grab'; return; }
+    if (st.tool === 'zoom') { view.style.cursor = e.altKey ? 'zoom-out' : 'zoom-in'; return; }
     const ru = rulerAt(e);
     if (ru) { view.style.cursor = ru === 'top' ? 'ns-resize' : ru === 'left' ? 'ew-resize' : 'default'; return; }
     if (pinOn()) {
@@ -3902,19 +4113,20 @@
     const hb = hitBone(e), hg = hb ? null : hitGroup(e), hs = hb || hg ? null : hitScale(e), hi = hb || hg || hs ? -1 : hitHandle(e);
     const hgd = hb || hg || hs || hi >= 0 ? null : hitGuide(e);
     const hr = hb || hg || hs || hi >= 0 || hgd ? null : hitRef(e);
-    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : e.ctrlKey || e.metaKey ? 'crosshair' : 'grab';
+    view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : (e.ctrlKey || e.metaKey) && st.layout !== 'design' ? 'crosshair' : st.tool === 'text' ? 'text' : INSERT_TOOLS[st.tool] ? 'crosshair' : 'default';
   });
 
-  const endPointer = () => { st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.vpress = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan, pb = st.pin.box;
+    const p = st.pan, pb = st.pin.box, vp = st.vpress;
     if (st.guideDrag) endGuide(st.guideDrag);
     // no Medir, um clique sem arrastar tira a medida
     const mm = st.meas;
     if (st.mdrag && mm && mm.a[0] === mm.b[0] && mm.a[1] === mm.b[1]) st.meas = null;
     endPointer();
     if (pb) pinBoxEnd(pb, e);
-    if (p && p.click && !p.moved) pickShape(e);
+    if (vp) pickShape(e);
+    if (p && p.click && !p.moved) clickAt(e);
   });
   view.addEventListener('pointercancel', endPointer);
 
@@ -3975,9 +4187,9 @@
     const p = st.pick, same = p && Math.hypot(p.x - e.clientX, p.y - e.clientY) < 6 && p.lines.join() === lines.join();
     const k = same ? (p.k + 1) % lines.length : 0;
     st.pick = { x: e.clientX, y: e.clientY, lines, k };
-    // o cursor fica no fim do código da linha (antes do comentário)
-    const line = lines[k], text = lineOf(line), sp = L.splitLine(text);
-    editor.goto(line, (sp.comment !== null ? text.slice(0, sp.commentAt) : text).trimEnd().length);
+    // o código mostra o começo da linha (o foco continua no desenho)
+    const line = lines[k];
+    editor.reveal(line, 0);
     // a forma clicada vira a escolha do painel (só ela)
     setSel(nodeSigs().has(line) ? [line] : [], line);
     st.selAnchor = line;
@@ -4005,7 +4217,7 @@
   // antes dele. Depois, nenhum ponto fica escolhido: outro Delete não apaga o vizinho.
   function deletePoint() {
     const m = st.model;
-    if (!m || !st.show.points || st.build || groupOn()) return false;
+    if (!m || !pointsOn() || st.build || groupOn()) return false;
     const line = st.caret.line, rec = m.byLine.get(line), hi = activeHandle(rec), h = hi >= 0 ? rec.handles[hi] : null;
     if (!h || h.kind !== 'pt') return false;
     if (st.playing || (!isFilm() && st.anim)) { hint(isFilm() ? 'Pause o player para apagar pontos.' : 'Para apagar pontos, escolha "pose parada" no player.', 2600); return true; }
@@ -4063,7 +4275,7 @@
     const m = st.model, line = m.lineMap ? m.lineMap[el.line] : el.line;
     const tok = line !== undefined && line >= 0 ? textToken(line) : null;
     if (!tok || tok.text.slice(1, -1) !== el.str) { hint('Este texto vem de outra linha (mirror=) ou de outro arquivo: mude as letras lá no código.', 3000); return; }
-    editor.goto(line, tok.to);
+    editor.reveal(line, tok.to);
     // onde as letras estão na tela: a caixa do texto (com giro, osso e componente) e o tamanho da letra na tela
     const g = S.geometry(m, currentPose(), el), z = st.view.z;
     const xs = g.segs.flatMap((sg) => [sg[0], sg[6]]), ys = g.segs.flatMap((sg) => [sg[1], sg[7]]);
@@ -4102,7 +4314,8 @@
       editor.replaceRange(off + tok.from, off + tok.to, `"${v}"`, { select: [end, end] });
       hint(v ? `Texto novo: "${v}" (Ctrl+Z desfaz).` : 'Texto vazio: escreva entre as aspas no código.', 2400);
     }
-    if (refocus) editor.ta.focus();
+    // o foco volta para o desenho (a caixinha some e o foco fica no corpo da página), não para o código
+    if (refocus && document.activeElement === inp) inp.blur();
   }
   $('textEdit').addEventListener('input', fitTextEd);
   $('textEdit').addEventListener('keydown', (e) => {
@@ -4371,7 +4584,6 @@
     if (e.target.checked === !st.model.defs.get(d.name).uses) pv.mode.delete(pvKey(d.name)); else pv.mode.set(pvKey(d.name), e.target.checked);
     reparse();
   });
-  $('tPoints').addEventListener('change', (e) => { st.show.points = e.target.checked; draw(); });
   $('tBones').addEventListener('change', (e) => { st.show.bones = e.target.checked; draw(); });
   $('tOnion').addEventListener('change', (e) => { st.show.onion = e.target.checked; draw(); });
   $('tArt').addEventListener('change', (e) => { st.show.art = e.target.checked; draw(); });
@@ -4384,9 +4596,11 @@
     if (st.show.rulers && !st.guides.v.length && !st.guides.h.length) hint('Arraste de uma régua para dentro do desenho: sai uma linha guia. O que você arrasta gruda nela (segurando Ctrl, não gruda).', 4200);
     draw();
   });
+  const toggleRulers = () => $('tRulers').click();
   $('measureBtn').addEventListener('click', () => setMeasure(!st.measure));
   $('pinBtn').addEventListener('click', () => setPin(!st.pin.on));
   $('zFit').addEventListener('click', () => { st.view.auto = true; draw(); });
+  $('zoomPct').addEventListener('click', () => zoomActual());
   $('zIn').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25));
   $('zOut').addEventListener('click', () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8));
   $('variantSel').addEventListener('change', (e) => { st.variant = e.target.value; reparse(); });
@@ -4482,11 +4696,9 @@
     W.exporter.download(W.zip([...st.files].map(([n, s]) => ({ name: n, data: enc.encode(s) }))), 'weasel_arquivos.zip');
   });
 
-  const exSel = $('exampleSel');
-  exSel.innerHTML = '<option value="">Exemplos…</option>' + W.examples.map((x) => `<option value="${x.id}">${esc(x.title)}</option>`).join('');
-  exSel.addEventListener('change', () => {
-    const x = W.examples.find((e) => e.id === exSel.value);
-    exSel.value = '';
+  // Arquivo › Exemplos
+  function openExample(id) {
+    const x = W.examples.find((e) => e.id === id);
     if (!x) return;
     const name = x.file + '.weasel';
     // exemplos que usam include trazem junto os arquivos de que precisam (sem apagar versões editadas)
@@ -4499,9 +4711,9 @@
     if (st.files.has(name) && st.files.get(name) !== x.src && !confirm(`Substituir "${name}" pelo exemplo original?`)) { openFile(name); return; }
     openFile(name, x.src);
     hint(`Exemplo "${x.title}" aberto em ${name}.`, 3000);
-  });
-  $('btnNew').addEventListener('click', () => { openFile(uniqueName('desenho.weasel'), W.blankProgram); hint('Arquivo novo criado.', 2000); });
-  $('btnOpen').addEventListener('click', () => $('fileIn').click());
+  }
+  function newFile() { openFile(uniqueName('desenho.weasel'), W.blankProgram); hint('Arquivo novo criado.', 2000); }
+  const openDialog = () => $('fileIn').click();
   $('fileIn').addEventListener('change', (e) => {
     const list = [...e.target.files];
     e.target.value = '';
@@ -4567,7 +4779,6 @@
     }
     openFiles(list, { at });
   });
-  $('btnSave').addEventListener('click', saveFile);
   function saveFile() {
     W.exporter.download(new Blob([editor.value], { type: 'text/plain;charset=utf-8' }), st.current);
   }
@@ -4583,19 +4794,18 @@
   // referência
   const help = $('help');
   const toggleHelp = (on) => { help.hidden = on === undefined ? !help.hidden : !on; };
-  $('btnHelp').addEventListener('click', () => toggleHelp());
   $('helpClose').addEventListener('click', () => toggleHelp(false));
 
-  // ---------- menu de formas (Ctrl+I, ou botão direito no desenho) ----------
+  // ---------- menu de formas (botão direito no desenho, ou Objeto › Inserir) ----------
   // A forma nasce na linha de baixo da do cursor (numa linha vazia, nela mesma), no meio da tela ou onde o
   // botão direito foi clicado, com um tamanho que cabe no que está à vista. O cursor fica nela: as alças aparecem.
   const NEW_SHAPES = [
-    { cmd: 'ellipse', name: 'bola', label: 'círculo', make: (f, x, y, s) => `${f(x)},${f(y)} ${f(s)} c=#4a90d9 ink=4` },
-    { cmd: 'rect', name: 'caixa', label: 'retângulo', make: (f, x, y, s) => `${f(x - s)},${f(y - s * 0.7)} ${f(s * 2)},${f(s * 1.4)} c=#ffb000 ink=4` },
-    { cmd: 'shape', name: 'forma', label: 'forma livre', make: (f, x, y, s) => `c=#6cbb3c ink=4 : ${f(x)},${f(y - s)}! ${f(x + s)},${f(y + s * 0.8)}! ${f(x - s)},${f(y + s * 0.8)}!` },
-    { cmd: 'stroke', name: 'traco', label: 'traço', make: (f, x, y, s) => `c=#ff6b4a w=6 : ${f(x - s)},${f(y + s * 0.4)} ${f(x)},${f(y - s * 0.4)} ${f(x + s)},${f(y + s * 0.4)}` },
-    { cmd: 'line', name: 'linha', label: 'linha reta', make: (f, x, y, s) => `c=#c44536 w=3 : ${f(x - s)},${f(y)} ${f(x + s)},${f(y)}` },
-    { cmd: 'text', name: 'texto', label: 'texto', make: (f, x, y, s) => `${f(x)},${f(y)} "Texto" size=${f(Math.max(8, s * 0.5))} align=center` },
+    { cmd: 'ellipse', name: 'ellipse', label: 'círculo', make: (f, x, y, s) => `${f(x)},${f(y)} ${f(s)} c=#4a90d9 ink=4` },
+    { cmd: 'rect', name: 'rect', label: 'retângulo', make: (f, x, y, s) => `${f(x - s)},${f(y - s * 0.7)} ${f(s * 2)},${f(s * 1.4)} c=#ffb000 ink=4` },
+    { cmd: 'shape', name: 'shape', label: 'forma livre', make: (f, x, y, s) => `c=#6cbb3c ink=4 : ${f(x)},${f(y - s)}! ${f(x + s)},${f(y + s * 0.8)}! ${f(x - s)},${f(y + s * 0.8)}!` },
+    { cmd: 'stroke', name: 'stroke', label: 'traço', make: (f, x, y, s) => `c=#ff6b4a w=6 : ${f(x - s)},${f(y + s * 0.4)} ${f(x)},${f(y - s * 0.4)} ${f(x + s)},${f(y + s * 0.4)}` },
+    { cmd: 'line', name: 'line', label: 'linha reta', make: (f, x, y, s) => `c=#c44536 w=3 : ${f(x - s)},${f(y)} ${f(x + s)},${f(y)}` },
+    { cmd: 'text', name: 'text', label: 'texto', make: (f, x, y, s) => `${f(x)},${f(y)} "Texto" size=${f(Math.max(8, s * 0.5))} align=center` },
   ];
   const shapeMenu = $('shapeMenu');
   let menu = null;
@@ -4606,8 +4816,7 @@
     if (!at) {
       cx = r.left + r.width / 2;
       cy = r.top + r.height / 2;
-      const p = toWorld({ clientX: cx, clientY: cy }), R = viewRect();
-      at = [Math.min(R.x + R.w, Math.max(R.x, p[0])), Math.min(R.y + R.h, Math.max(R.y, p[1]))];
+      at = viewCenter();
     }
     menu = { at, sel: 0, back: document.activeElement === editor.ta };
     shapeMenu.innerHTML = `<header>Forma nova ${lineOf(st.caret.line).trim() ? 'abaixo da' : 'na'} linha ${st.caret.line + 1}</header>` + NEW_SHAPES.map((s, i) => `<div data-i="${i}"><span>${s.cmd}</span><small>${s.label} · ${i + 1}</small></div>`).join('');
@@ -4618,6 +4827,10 @@
     markMenu();
     shapeMenu.focus();
   }
+  function viewCenter() {
+    const r = view.getBoundingClientRect(), p = toWorld({ clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }), R = viewRect();
+    return [Math.min(R.x + R.w, Math.max(R.x, p[0])), Math.min(R.y + R.h, Math.max(R.y, p[1]))];
+  }
   function markMenu() { [...shapeMenu.querySelectorAll('[data-i]')].forEach((d, i) => d.classList.toggle('on', i === menu.sel)); }
   function closeShapeMenu(refocus) {
     if (!menu) return;
@@ -4626,7 +4839,7 @@
     shapeMenu.hidden = true;
     if (refocus && back) editor.ta.focus();
   }
-  // um nome que ainda não existe no arquivo: bola1, bola2…
+  // um nome que ainda não existe no arquivo: rect1, rect2… (em inglês, pela palavra da linha)
   function freeName(base) {
     const v = editor.value;
     for (let k = 1; ; k++) if (!new RegExp(`(^|[\\s=,])${base}${k}(?![\\w.])`).test(v)) return base + k;
@@ -4653,8 +4866,14 @@
     return xf ? M.apply(M.invert(xf), at[0], at[1]) : [0, 0];
   }
   function insertShape(i) {
-    const item = NEW_SHAPES[i], line = st.caret.line, at = menu && defLocal(line, menu.at);
+    const at = menu && menu.at;
     closeShapeMenu(false);
+    insertShapeAt(i, at);
+  }
+  // a forma pronta i em at (no desenho), na linha de baixo da do cursor. Ela vira a escolha; o foco fica no desenho.
+  // edit: o texto já abre a caixinha para escrever
+  function insertShapeAt(i, at0, opts) {
+    const item = NEW_SHAPES[i], line = st.caret.line, at = at0 && defLocal(line, at0);
     if (!item || !at) return;
     const z = st.view.z, dec = z > 3 ? 1 : 0, f = (v) => fmtN(v, dec), c = st.model.canvas;
     const s = Math.max(4, Number((Math.min(view.clientWidth / z, view.clientHeight / z, c.w, c.h) * 0.12).toFixed(dec)));
@@ -4667,8 +4886,11 @@
     // o cursor logo depois do nome; no texto, o "Texto" fica selecionado para você já digitar o seu
     const q = body.indexOf('"Texto"'), sel = item.cmd === 'text' && q >= 0 ? [ls + q + 1, ls + q + 6] : [ls + indent.length + item.cmd.length + 1 + name.length, ls + indent.length + item.cmd.length + 1 + name.length];
     editor.replaceRange(start, start + (blank ? text.length : 0), txt, { select: sel });
-    editor.ta.focus();
-    hint(`${item.cmd} ${name} na linha ${line + (blank ? 1 : 2)}: arraste as alças para mudar.`, 2600);
+    const nl = line + (blank ? 0 : 1);
+    if (nodeSigs().has(nl)) setSel([nl], nl);
+    const rec = opts && opts.edit && st.model.byLine.get(nl);
+    if (rec && rec.el && rec.el.type === 'text') { editText(rec.el); return; }
+    hint(`${item.cmd} ${name} na linha ${nl + 1}: ${pointsOn() ? 'arraste as alças para mudar' : 'arraste para mover; os quadradinhos esticam'}.`, 2600);
   }
   shapeMenu.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -4711,7 +4933,8 @@
     source: () => ({ text: editor.value, file: st.current, files: [...st.files].map(([k, v]) => [k, k === st.current ? editor.value : v]) }),
     baseName,
   });
-  $('btnExport').addEventListener('click', () => { st.playing = false; fillAnimSelect(); exportUI.open(); });
+  function openExport() { st.playing = false; fillAnimSelect(); exportUI.open(); }
+  $('btnExport').addEventListener('click', openExport);
 
   // divisória
   const divider = $('divider');
@@ -4730,29 +4953,59 @@
     divider.addEventListener('pointerup', up);
   });
 
-  // teclado
+  // teclado. Com o foco no desenho, valem os atalhos do Illustrator (docs/planos/interface-illustrator.md, 7.2);
+  // no código, os do editor de código. As letras das ferramentas ficam na casca (js/ui-shell.js).
+  const inField = (t) => !!(t && t.closest && t.closest('textarea, input, select, dialog'));
+  const inDialog = (t) => !!(t && t.closest && t.closest('dialog'));
   document.addEventListener('keydown', (e) => {
-    const mod = e.ctrlKey || e.metaKey;
-    if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveFile(); return; }
-    if (mod && (e.key === 'e' || e.key === 'E')) { e.preventDefault(); $('btnExport').click(); return; }
-    // Ctrl+I (inserir): o menu de formas; Ctrl+Shift+I continua sendo do navegador
-    if (mod && !e.shiftKey && !e.altKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); if (!e.target.closest || !e.target.closest('dialog')) openShapeMenu(null); return; }
-    if (e.key === 'F1') { e.preventDefault(); toggleHelp(); return; }
-    // Ctrl+H: liga e desliga o hidden das linhas escolhidas no painel Camadas (ou da linha do cursor)
-    if (mod && !e.shiftKey && !e.altKey && (e.key === 'h' || e.key === 'H') && (e.target === editor.ta || !(e.target.closest && e.target.closest('textarea, input, select, dialog')))) { e.preventDefault(); toggleHidden(hiddenTargets(), true); return; }
+    const mod = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k, t = e.target;
+    if (mod && low === 's') { e.preventDefault(); saveFile(); return; }
+    if (mod && low === 'e') { e.preventDefault(); openExport(); return; }
+    if (k === 'F1') { e.preventDefault(); toggleHelp(); return; }
+    // Ctrl+R: as réguas, em qualquer lugar (no navegador, recarregaria a página)
+    if (mod && !e.shiftKey && !e.altKey && low === 'r' && !inDialog(t)) { e.preventDefault(); if (!isFilm()) toggleRulers(); return; }
+    // Ctrl+3: liga e desliga o hidden das linhas escolhidas (ou da linha do cursor); no código, o Ctrl+H também
+    if (mod && !e.shiftKey && !e.altKey && (k === '3' || (low === 'h' && t === editor.ta)) && (t === editor.ta || !inField(t))) { e.preventDefault(); toggleHidden(hiddenTargets(), low === 'h' ? 'Ctrl+H' : 'Ctrl+3'); return; }
     // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
-    if (e.key === 'Escape' && st.pin.spin.size && spinOn() && !(e.target.closest && e.target.closest('dialog'))) { st.pin.spin.clear(); st.pose = null; draw(); return; }
-    if (e.key === 'Escape' && pinOn() && st.pin.sel.size && !(e.target.closest && e.target.closest('dialog'))) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
-    if (e.key === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
-    const t = e.target;
-    if (t.closest && t.closest('textarea, input, select, dialog')) return;
-    // com o foco no desenho: Ctrl+Z e Ctrl+Y desfazem e refazem no código, e Delete apaga o ponto escolhido
-    if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); if (e.shiftKey) editor.redo(); else editor.undo(); return; }
-    if (mod && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); editor.redo(); return; }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
-    if (e.key === ' ') { e.preventDefault(); play(!st.playing); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'f' || e.key === 'F') { st.view.auto = true; draw(); } else if (!mod && !e.altKey && !isFilm() && (e.key === 'r' || e.key === 'R')) $('tRulers').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'm' || e.key === 'M')) $('measureBtn').click(); else if (!mod && !e.altKey && !isFilm() && (e.key === 'p' || e.key === 'P')) $('pinBtn').click();
+    if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
+    if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
+    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; clearSel(); if (st.meas) { st.meas = null; draw(); } return; }
+    if (inField(t)) return;
+    // daqui em diante, o foco está no desenho (ou num botão)
+    if (mod && !e.altKey && low === 'z') { e.preventDefault(); undoRedo(e.shiftKey); return; }
+    if (mod && low === 'y') { e.preventDefault(); undoRedo(true); return; }
+    // Ctrl+D no desenho: duplica a escolha, como no código, até a etapa 3 (lá vira repetir a última transformação);
+    // sem escolha, só não deixa o navegador abrir o favorito
+    if (mod && low === 'd') { e.preventDefault(); if (!duplicateSel()) hint('Escolha uma forma (clique nela com a Seleção, V) para duplicar com Ctrl+D.', 2800); return; }
+    // zoom: Ctrl+0 ajusta à tela, Ctrl+1 é 100%, Ctrl+= e Ctrl+- aproximam e afastam
+    if (mod && !e.altKey && (k === '0' || k === '1' || k === '=' || k === '+' || k === '-')) {
+      e.preventDefault();
+      if (k === '0') { st.view.auto = true; draw(); } else if (k === '1') zoomActual(); else zoomAt(view.clientWidth / 2, view.clientHeight / 2, k === '-' ? 0.8 : 1.25);
+      return;
+    }
+    if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
+    if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) e.preventDefault(); return; }
+    // Espaço: tocado (sem arrastar), toca e pausa; segurado, arrastar no desenho move a vista
+    if (k === ' ') { e.preventDefault(); if (!st.space && !e.repeat) { st.space = { panned: false }; stage.classList.add('space'); } return; }
+    // Enter também toca e pausa (num botão, o Enter é do botão)
+    if (k === 'Enter' && !mod && !e.altKey && !(t.closest && t.closest('button, a'))) { e.preventDefault(); play(!st.playing); return; }
+    // , e . trocam de quadro
+    if (!mod && !e.altKey && (k === ',' || k === '.' || k === '<' || k === '>')) { e.preventDefault(); step(k === ',' || k === '<' ? -1 : 1); return; }
+    // as setas empurram a escolha (Shift: 10 px)
+    if (!mod && !e.altKey && k.startsWith('Arrow')) {
+      e.preventDefault();
+      const d = e.shiftKey ? 10 : 1, v = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[k];
+      if (v && !nudge(v[0], v[1])) hint('As setas empurram a forma escolhida (clique numa com a Seleção, V). Para trocar de quadro: , e .', 3200);
+    }
   });
+  document.addEventListener('keyup', (e) => {
+    if (e.key !== ' ' || !st.space) return;
+    const sp = st.space;
+    st.space = null;
+    stage.classList.remove('space');
+    if (!sp.panned && !inField(e.target)) play(!st.playing);
+  });
+  window.addEventListener('blur', () => { st.space = null; stage.classList.remove('space'); });
 
   // ---------- início ----------
   let files = null;
@@ -4772,5 +5025,28 @@
     if (list.length) { fillMediaList(); reparse(); }
   });
 
-  W.app = { st, editor, draw, reparse, parseFor };
+  // o caminho da barra de status: clicar na camada escolhe tudo o que desenha nela
+  $('crumbs').addEventListener('click', (e) => { const b = e.target.closest('[data-li]'); if (b) pickLayer(+b.dataset.li, e); });
+
+  stage.dataset.tool = st.tool;
+  setLayout(store.get('weasel.vista') || 'split', false);
+
+  // o que a casca (js/ui-shell.js: menus, barra de ferramentas, vistas) usa daqui
+  W.app = {
+    st, editor, draw, reparse, parseFor, hint,
+    on: (k, f) => { (listeners[k] = listeners[k] || []).push(f); },
+    isFilm, defPreview: () => !!pvModel(),
+    setTool, setLayout, toggleRulers, toggleHelp,
+    newFile, openDialog, saveFile, openExport, openExample, openFile: (n) => openFile(n), files: () => [...st.files.keys()].sort(),
+    undo: () => undoRedo(false), redo: () => undoRedo(true),
+    hide: () => toggleHidden(hiddenTargets(), 'Ctrl+3'),
+    duplicate: () => { if (!duplicateSel()) hint('Escolha uma forma (clique nela com a Seleção, V) para duplicar.', 2800); },
+    shapes: () => NEW_SHAPES.map((x) => ({ cmd: x.cmd, label: x.label })),
+    insert: (i) => { if (st.model && !isFilm()) insertShapeAt(i, viewCenter()); },
+    fit: () => { st.view.auto = true; draw(); },
+    zoomIn: () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 1.25),
+    zoomOut: () => zoomAt(view.clientWidth / 2, view.clientHeight / 2, 0.8),
+    zoomActual,
+    selectNone: () => { clearSel(); },
+  };
 })(window.Weasel = window.Weasel || {});

@@ -67,7 +67,7 @@ box nome body|hit|hurt capsule cx,cy largura,altura
 - `bone=osso` faz a caixa seguir a **posição e a rotação** do osso (não a escala).
 - `only=attack_right` liga a caixa só nessas animações (`pose` vale para a pose parada).
 - `off` faz ela começar **desligada**. `key 2 golpe_right.show=1` liga num quadro e `key 4 golpe_right.show=0` desliga. Assim o golpe só existe nos quadros em que a espada (ou a gosma) está esticada.
-- No editor, com **Hitboxes** ligado (o padrão), as caixas aparecem por cima do desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas. Desligue **Hitboxes** para ver o desenho limpo: continua aparecendo só a caixa da linha onde está o cursor.
+- No editor, com **Exibir › Hitboxes** ligado (o padrão), as caixas aparecem por cima do desenho: corpo em verde, golpe em vermelho, dano em amarelo; desligadas ficam tracejadas. Desligue **Hitboxes** para ver o desenho limpo: continua aparecendo só a caixa da linha onde está o cursor.
 
 As caixas são **invisíveis** no desenho e nas imagens exportadas: elas só vão para o jogo. A linha de comando também não as desenha (o `--guides` dela só mostra as camadas `guide`). Por isso, nas imagens deste capítulo, uma camada `guide` repete cada caixa com um `rect` ou uma `ellipse` nas cores do editor. No seu arquivo, essa camada não é necessária: no editor, com **Hitboxes**, as caixas aparecem sozinhas.
 
@@ -374,7 +374,7 @@ O `--info` mostra a medida em cada animação com `feet=` (com `-s`, já na esca
 node cli/weasel.js andador.weasel -a anda_right --trajectory -o pes.png
 ```
 
-No editor, o botão **Trajetória** mostra o mesmo por cima do desenho, com um anel no quadro atual e a medida no canto. Numa animação sem `feet=`, ele mostra o caminho de todos os pontos.
+No editor, **Exibir › Trajetória** mostra o mesmo por cima do desenho, com um anel no quadro atual e a medida no canto. Numa animação sem `feet=`, ele mostra o caminho de todos os pontos.
 
 Quando um pé, no chão, anda diferente dos outros, o `--info`, o `--trajectory` e o editor avisam:
 
