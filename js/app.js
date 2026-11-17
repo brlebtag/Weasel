@@ -5576,7 +5576,12 @@
 
   // referência
   const help = $('help');
-  const toggleHelp = (on) => { help.hidden = on === undefined ? !help.hidden : !on; };
+  // a referência (F1) e a folha de atalhos (Shift+F1, js/ui-keys.js) ficam no mesmo lugar: abrir uma fecha a outra
+  const toggleHelp = (on) => {
+    help.hidden = on === undefined ? !help.hidden : !on;
+    if (!help.hidden && W.keysPanel) W.keysPanel.toggle(false);
+  };
+  const toggleKeys = (on) => { if (W.keysPanel) W.keysPanel.toggle(on); };
   $('helpClose').addEventListener('click', () => toggleHelp(false));
 
   // ---------- formas prontas (Objeto › Inserir e o botão direito › Inserir forma) ----------
@@ -5784,11 +5789,24 @@
     const mod = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k, t = e.target;
     if (mod && low === 's') { e.preventDefault(); saveFile(); return; }
     if (mod && low === 'e') { e.preventDefault(); openExport(); return; }
-    if (k === 'F1') { e.preventDefault(); toggleHelp(); return; }
+    if (k === 'F1' && !e.shiftKey) { e.preventDefault(); toggleHelp(); return; }
+    // a folha de atalhos: Shift+F1 ou Ctrl+? (Ctrl+Shift+/; no teclado brasileiro, a tecla /? ao lado do Shift direito)
+    if ((k === 'F1' && e.shiftKey) || (mod && !e.altKey && (k === '?' || (e.shiftKey && e.code === 'IntlRo')))) { e.preventDefault(); toggleKeys(); return; }
+    // Ctrl+O: abrir, em qualquer lugar (também no código, onde o navegador abriria o "Abrir arquivo" dele)
+    if (mod && !e.shiftKey && !e.altKey && low === 'o' && !inDialog(t)) { e.preventDefault(); openDialog(); return; }
+    // zoom: Ctrl+0 ajusta à tela, Ctrl+1 é 100%, Ctrl+= e Ctrl+- aproximam e afastam; no desenho e também no código
+    // (lá, o navegador daria zoom na página inteira, e o Ctrl+1 trocaria de aba)
+    if (mod && !e.altKey && (k === '0' || k === '1' || k === '=' || k === '+' || k === '-') && (t === editor.ta || !inField(t))) {
+      e.preventDefault();
+      if (k === '0') fitView(); else if (k === '1') zoomActual(); else zoomBy(k === '-' ? 0.8 : 1.25);
+      return;
+    }
     // Ctrl+R: as réguas, em qualquer lugar (no navegador, recarregaria a página)
     if (mod && !e.shiftKey && !e.altKey && low === 'r' && !inDialog(t)) { e.preventDefault(); if (!isFilm()) toggleRulers(); return; }
     // Ctrl+3: liga e desliga o hidden das linhas escolhidas (ou da linha do cursor); no código, o Ctrl+H também
     if (mod && !e.shiftKey && !e.altKey && (k === '3' || (low === 'h' && t === editor.ta)) && (t === editor.ta || !inField(t))) { e.preventDefault(); toggleHidden(hiddenTargets(), low === 'h' ? 'Ctrl+H' : 'Ctrl+3'); return; }
+    // Esc com a folha de atalhos aberta só fecha a folha (não solta a escolha do desenho)
+    if (k === 'Escape' && W.keysPanel && W.keysPanel.isOpen() && !inDialog(t)) { toggleKeys(false); return; }
     // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
     if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
@@ -5799,12 +5817,6 @@
     if (mod && low === 'y') { e.preventDefault(); undoRedo(true); return; }
     // Ctrl+D no desenho: repete a última transformação (no código, continua duplicando a linha)
     if (mod && low === 'd') { e.preventDefault(); transformAgain(); return; }
-    // zoom: Ctrl+0 ajusta à tela, Ctrl+1 é 100%, Ctrl+= e Ctrl+- aproximam e afastam
-    if (mod && !e.altKey && (k === '0' || k === '1' || k === '=' || k === '+' || k === '-')) {
-      e.preventDefault();
-      if (k === '0') fitView(); else if (k === '1') zoomActual(); else zoomBy(k === '-' ? 0.8 : 1.25);
-      return;
-    }
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
     // Delete: na Seleção direta, o ponto escolhido; com formas escolhidas (a caixa), as formas (js/ui-select.js)
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) { e.preventDefault(); return; } if (groupOn() && W.sel) { e.preventDefault(); W.sel.del(); } return; }
@@ -5859,7 +5871,7 @@
     st, editor, draw, reparse, parseFor, hint,
     on: (k, f) => { (listeners[k] = listeners[k] || []).push(f); },
     isFilm, defPreview: () => !!pvModel(),
-    setTool, setLayout, toggleRulers, toggleHelp,
+    setTool, setLayout, toggleRulers, toggleHelp, toggleKeys,
     newFile, openDialog, saveFile, openExport, openExample, openFile: (n) => openFile(n), files: () => [...st.files.keys()].sort(),
     undo: () => undoRedo(false), redo: () => undoRedo(true),
     hide: () => toggleHidden(hiddenTargets(), 'Ctrl+3'),

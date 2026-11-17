@@ -27,6 +27,56 @@ const args = process.argv.slice(2);
 const CHECK = args.includes('--check');
 const only = args.filter((a) => !a.startsWith('--'));
 
+// ---------- a página dos atalhos (23-atalhos.md), escrita a partir de js/keys.js ----------
+// A mesma lista mostra a folha do editor (Ajuda › Atalhos do teclado). Com --check, a página precisa estar igual à
+// que sairia agora; sem, ela é escrita de novo. Nos dois casos, toda tecla dos menus, das ações das linhas do tempo e
+// toda letra de ferramenta precisam estar na lista.
+require(path.join(ROOT, 'js', 'keys.js'));
+const KEYS_MD = '23-atalhos.md';
+function keysPage() {
+  const K = W.keys, out = [];
+  const keyText = (it) => K.list(it.k).map((k) => '`' + k + '`').join(' ou ') + (it.mac ? ` (no Mac, ${K.list(it.mac).map((k) => '`' + k + '`').join(' ou ')})` : '');
+  out.push('# 23. Atalhos do teclado', '', '[← Índice](README.md)', '');
+  out.push('<!-- Esta página é escrita pelo npm run docs a partir de js/keys.js. Para mudar um atalho, mude a lista. -->', '');
+  out.push('Esta é a lista de todos os atalhos do editor. No editor, a mesma lista fica em **Ajuda › Atalhos do teclado** (**Shift+F1** ou **Ctrl+?**), com uma busca em cima.', '');
+  out.push(K.intro, '', K.macNote, '');
+  for (const g of K.groups) {
+    out.push(`## ${g.title}`, '');
+    if (g.note) out.push(g.note, '');
+    out.push('| Tecla | O que faz | Onde vale |', '|---|---|---|');
+    for (const it of g.items) out.push(`| ${keyText(it)} | ${it.d} | ${it.w || g.where || 'no desenho'} |`);
+    out.push('');
+  }
+  out.push('[← Índice](README.md)', '');
+  return out.join('\n');
+}
+function keysProblems() {
+  const K = W.keys, all = new Set(), tools = new Map(), probs = [];
+  for (const g of K.groups) for (const it of g.items) { for (const k of K.list(it.k)) all.add(k); if (it.tool) tools.set(it.tool, it); }
+  const src = (f) => fs.readFileSync(path.join(ROOT, 'js', f), 'utf8');
+  const shell = src('ui-shell.js');
+  for (const m of shell.matchAll(/\{ id: '(\w+)', key: '((?:\\\\|[^'])*)'(, shift: true)?/g)) {
+    if (!m[2]) continue;
+    const label = (m[3] ? 'Shift+' : '') + m[2].replace(/\\\\/g, '\\').toUpperCase(), it = tools.get(m[1]);
+    if (!it) probs.push(`a ferramenta "${m[1]}" (${label}) não está em js/keys.js`);
+    else if (it.k !== label) probs.push(`a ferramenta "${m[1]}" é ${label}, e js/keys.js diz ${it.k}`);
+  }
+  for (const f of ['ui-shell.js', 'ui-symbols.js']) {
+    for (const m of src(f).matchAll(/label: '([^']*)', key: '([^']+)'/g)) if (!all.has(m[2])) probs.push(`a tecla ${m[2]} do menu "${m[1]}" (${f}) não está em js/keys.js`);
+  }
+  for (const f of ['ui-anim.js', 'ui-film.js']) {
+    for (const m of src(f).matchAll(/<kbd>([^<]+)<\/kbd>/g)) if (m[1] !== 'clique' && !all.has(m[1])) probs.push(`a tecla ${m[1]} (${f}) não está em js/keys.js`);
+  }
+  return probs;
+}
+let keysBad = 0;
+for (const p of keysProblems()) { keysBad++; console.log(`atalhos: ${p}`); }
+if (!only.length || only.some((o) => KEYS_MD.includes(o))) {
+  const file = path.join(GUIA, KEYS_MD), page = keysPage();
+  const now = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : null;
+  if (CHECK) { if (now !== page) { keysBad++; console.log(`${KEYS_MD}: a página está velha (rode npm run docs)`); } } else if (now !== page) fs.writeFileSync(file, page);
+}
+
 // Os blocos de cada capítulo, com as ordens que vêm antes deles.
 function blocks(file) {
   const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
@@ -56,7 +106,7 @@ function resolver(dir) {
 }
 
 const files = fs.readdirSync(GUIA).filter((f) => /\.md$/.test(f)).sort().filter((f) => !only.length || only.some((o) => f.includes(o)));
-let bad = 0, made = 0, checked = 0;
+let bad = keysBad, made = 0, checked = 0;
 const used = new Set();
 // arquivos dos blocos <!-- arquivo: … -->: a linha de comando roda numa cópia de exemplos/ com eles dentro
 let tmp = null;

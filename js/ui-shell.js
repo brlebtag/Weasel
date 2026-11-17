@@ -283,6 +283,7 @@
     ] },
     { label: 'Ajuda', items: [
       { label: 'Referência da linguagem', key: 'F1', run: () => A.toggleHelp() },
+      { label: 'Atalhos do teclado', key: 'Shift+F1', run: () => A.toggleKeys() },
     ] },
   ];
   const menus = W.ui.menubar($('menubar'), MENUS);
@@ -315,7 +316,6 @@
     if (e.defaultPrevented || menus.isOpen()) return;
     const t = e.target, mod = e.ctrlKey || e.metaKey;
     if (t && t.closest && t.closest('textarea, input, select, dialog')) return;
-    if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'o') { e.preventDefault(); A.openDialog(); return; }
     // a Curvatura é Shift+~: no teclado brasileiro, o ~ é uma tecla morta (Dead, na posição da aspa do americano)
     if (!mod && !e.altKey && e.key === 'Dead' && e.code === 'Quote' && !A.isFilm() && !st.view3d) { e.preventDefault(); A.setTool('curve'); return; }
     if (mod || e.altKey || e.key.length !== 1) return;

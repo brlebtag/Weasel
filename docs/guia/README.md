@@ -24,6 +24,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 12 | [Referência rápida](12-referencia.md) | todas as instruções e atributos, com os valores padrão |
 | 13 | [Problemas comuns](13-problemas.md) | o que costuma dar errado e como resolver |
 | 14 | [Estilos de arte](14-estilos.md) | a linha `art`: o mesmo desenho em pixel art (paletas, pontilhado, contorno, folha pequena para o Godot), em letras (ASCII, também em `.txt`), em cel shading, gravura, xilogravura, retícula, HQ (moderna, antiga e tira de jornal), mangá, risografia, estêncil e silhueta (com a textura presa à forma), em esboço, marcador, lápis de cor, giz de cera e giz no quadro (que fervem), em aquarela, só no contorno e em neon, em recorte de papel e em massinha (peças com sombra), em vitral e em bordado, em ponto-cruz, mosaico e tricô, o estilo no filme, na cena, no plano ou num ator, e o painel Acabamento e estilo do editor (uma miniatura de cada estilo) |
+| 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor (teclado e mouse), a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
 
 **Por onde começar:** leia os capítulos 1 a 4 em ordem; eles são a base de tudo. Depois, os capítulos 6 e 7 (ossos e animação) são os mais importantes para personagens. O resto pode ser lido conforme a necessidade.
 

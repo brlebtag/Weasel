@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.65.1">
+<link rel="stylesheet" href="css/style.css?v=1.66.0">
 </head>
 <body>
 <header class="top">
@@ -107,6 +107,7 @@
 <aside id="help" class="help" hidden>
   <div class="help-head"><h2>Referência da linguagem <span id="helpVer" class="ver"></span></h2><button id="helpClose" class="x" title="Fechar">✕</button></div>
   <div class="help-body">
+    <p class="keys-tip">Todos os atalhos do editor estão em <b>Ajuda › Atalhos do teclado</b> (<kbd>Shift+F1</kbd>).</p>
     <p>Uma instrução por linha. A forma geral é:</p>
     <pre class="ex"><b>comando</b> nome atributo=valor … <i>:</i> <u>x,y x,y x,y!</u></pre>
     <ul>
@@ -335,6 +336,12 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </aside>
 
+<aside id="keys" class="help keys" hidden>
+  <div class="help-head"><h2>Atalhos do teclado</h2><button id="keysClose" class="x" type="button" title="Fechar (Esc)">✕</button></div>
+  <div class="keys-find"><input id="keysFind" type="search" placeholder="Procurar: zoom, duplicar, Ctrl+D…" aria-label="Procurar um atalho" autocomplete="off" spellcheck="false"></div>
+  <div id="keysBody" class="help-body keys-body"></div>
+</aside>
+
 <dialog id="exportDlg" class="dlg">
   <div class="dlg-head"><h2>Exportar</h2><button class="x" type="button" onclick="this.closest('dialog').close()" title="Fechar">✕</button></div>
   <div class="seg" role="tablist">
@@ -412,43 +419,45 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.65.1"></script>
-<script src="js/lang.js?v=1.65.1"></script>
-<script src="js/simplify.js?v=1.65.1"></script>
-<script src="js/pathops.js?v=1.65.1"></script>
-<script src="js/art.js?v=1.65.1"></script>
-<script src="js/scene.js?v=1.65.1"></script>
-<script src="js/film.js?v=1.65.1"></script>
-<script src="js/audio.js?v=1.65.1"></script>
-<script src="js/nle.js?v=1.65.1"></script>
-<script src="js/webm.js?v=1.65.1"></script>
-<script src="js/svg.js?v=1.65.1"></script>
-<script src="js/gif.js?v=1.65.1"></script>
-<script src="js/webp.js?v=1.65.1"></script>
-<script src="js/mp4.js?v=1.65.1"></script>
-<script src="js/zip.js?v=1.65.1"></script>
-<script src="js/normal.js?v=1.65.1"></script>
-<script src="js/export.js?v=1.65.1"></script>
-<script src="js/godot.js?v=1.65.1"></script>
-<script src="js/rig.js?v=1.65.1"></script>
-<script src="js/editor.js?v=1.65.1"></script>
-<script src="js/examples.js?v=1.65.1"></script>
-<script src="js/timeline.js?v=1.65.1"></script>
-<script src="js/app.js?v=1.65.1"></script>
-<script src="js/ui-menu.js?v=1.65.1"></script>
-<script src="js/ui-shell.js?v=1.65.1"></script>
-<script src="js/ui-3d.js?v=1.65.1"></script>
-<script src="js/ui-props.js?v=1.65.1"></script>
-<script src="js/ui-select.js?v=1.65.1"></script>
-<script src="js/ui-draw.js?v=1.65.1"></script>
-<script src="js/ui-pen.js?v=1.65.1"></script>
-<script src="js/ui-pencil.js?v=1.65.1"></script>
-<script src="js/ui-paths.js?v=1.65.1"></script>
-<script src="js/ui-cut.js?v=1.65.1"></script>
-<script src="js/ui-layers.js?v=1.65.1"></script>
-<script src="js/ui-symbols.js?v=1.65.1"></script>
-<script src="js/ui-anim.js?v=1.65.1"></script>
-<script src="js/ui-film.js?v=1.65.1"></script>
-<script src="js/ui-style.js?v=1.65.1"></script>
+<script src="js/geom.js?v=1.66.0"></script>
+<script src="js/lang.js?v=1.66.0"></script>
+<script src="js/simplify.js?v=1.66.0"></script>
+<script src="js/pathops.js?v=1.66.0"></script>
+<script src="js/art.js?v=1.66.0"></script>
+<script src="js/scene.js?v=1.66.0"></script>
+<script src="js/film.js?v=1.66.0"></script>
+<script src="js/audio.js?v=1.66.0"></script>
+<script src="js/nle.js?v=1.66.0"></script>
+<script src="js/webm.js?v=1.66.0"></script>
+<script src="js/svg.js?v=1.66.0"></script>
+<script src="js/gif.js?v=1.66.0"></script>
+<script src="js/webp.js?v=1.66.0"></script>
+<script src="js/mp4.js?v=1.66.0"></script>
+<script src="js/zip.js?v=1.66.0"></script>
+<script src="js/normal.js?v=1.66.0"></script>
+<script src="js/export.js?v=1.66.0"></script>
+<script src="js/godot.js?v=1.66.0"></script>
+<script src="js/rig.js?v=1.66.0"></script>
+<script src="js/editor.js?v=1.66.0"></script>
+<script src="js/examples.js?v=1.66.0"></script>
+<script src="js/timeline.js?v=1.66.0"></script>
+<script src="js/keys.js?v=1.66.0"></script>
+<script src="js/app.js?v=1.66.0"></script>
+<script src="js/ui-menu.js?v=1.66.0"></script>
+<script src="js/ui-shell.js?v=1.66.0"></script>
+<script src="js/ui-3d.js?v=1.66.0"></script>
+<script src="js/ui-props.js?v=1.66.0"></script>
+<script src="js/ui-select.js?v=1.66.0"></script>
+<script src="js/ui-draw.js?v=1.66.0"></script>
+<script src="js/ui-pen.js?v=1.66.0"></script>
+<script src="js/ui-pencil.js?v=1.66.0"></script>
+<script src="js/ui-paths.js?v=1.66.0"></script>
+<script src="js/ui-cut.js?v=1.66.0"></script>
+<script src="js/ui-layers.js?v=1.66.0"></script>
+<script src="js/ui-symbols.js?v=1.66.0"></script>
+<script src="js/ui-anim.js?v=1.66.0"></script>
+<script src="js/ui-film.js?v=1.66.0"></script>
+<script src="js/ui-style.js?v=1.66.0"></script>
+<script src="js/ui-keys.js?v=1.66.0"></script>
 </body>
 </html>

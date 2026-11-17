@@ -579,7 +579,7 @@
     if (h.kind === 'end') { v.drag = { kind: 'end', x0: x, n: D.an.frames }; cv.setPointerCapture(e.pointerId); render(); return; }
     if (h.kind === 'ruler') { v.drag = { kind: 'scrub' }; cv.setPointerCapture(e.pointerId); goFrame(h.frame); return; }
     if (h.kind === 'name') {
-      if (h.row.kind === 'key') { v.row = h.row.key; if (!e.shiftKey && !e.ctrlKey) v.sel.clear(); for (const k of h.row.r.keys) v.sel.add(kid(h.row.key, k.frame)); }
+      if (h.row.kind === 'key') { v.row = h.row.key; if (!e.shiftKey && !e.ctrlKey && !e.metaKey) v.sel.clear(); for (const k of h.row.r.keys) v.sel.add(kid(h.row.key, k.frame)); }
       else if (h.row.kind === 'sum') { v.sel.clear(); for (const r of D.rows) for (const k of r.keys) v.sel.add(kid(r.key, k.frame)); }
       render();
       return;
@@ -607,7 +607,7 @@
     else {
       const id = kid(h.row.key, h.frame);
       v.row = h.row.key;
-      if (e.shiftKey || e.ctrlKey) { if (v.sel.has(id)) v.sel.delete(id); else v.sel.add(id); } else if (!v.sel.has(id)) v.sel = new Set([id]);
+      if (e.shiftKey || e.ctrlKey || e.metaKey) { if (v.sel.has(id)) v.sel.delete(id); else v.sel.add(id); } else if (!v.sel.has(id)) v.sel = new Set([id]);
       [...v.sel].forEach((s) => { if (s.startsWith('ev' + SEP)) v.sel.delete(s); });
     }
     v.drag = { kind: 'keys', x0: x, df: 0, copy: e.altKey, frame: h.frame, line: h.item ? h.item.line : -1 };
@@ -655,7 +655,7 @@
     const D = data();
     if (!D) return;
     e.preventDefault();
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       const [x] = at(e), f = (x - GUT) / v.cw + v.f0;
       v.auto = false;
       v.cw = Math.max(5, Math.min(40, v.cw * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));

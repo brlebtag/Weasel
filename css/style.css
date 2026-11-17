@@ -745,6 +745,15 @@ pre.ex { font: 13px var(--mono); background: #0b1117; border: 1px solid var(--li
 pre.ex b { color: var(--kw); font-weight: 400; }
 pre.ex i { color: var(--op); font-style: normal; }
 pre.ex u { color: var(--num); text-decoration: none; }
+/* a folha de atalhos (js/ui-keys.js): o mesmo painel da referência, com a busca em cima */
+.help.keys { grid-template-rows: auto auto minmax(0, 1fr); }
+.keys-find { padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.keys-find input { width: 100%; background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+.keys-intro, .keys-note, .keys-none { color: var(--dim) !important; font-size: 12px; margin: 10px 0 6px; }
+.keys-body td:first-child { width: 42%; }
+.keys-body kbd { display: inline-block; margin: 1px 0; white-space: nowrap; }
+.keys-body small { color: var(--dim); }
+.keys-tip { color: var(--dim) !important; font-size: 12px; }
 
 /* ---------- exportar ---------- */
 .dlg {
