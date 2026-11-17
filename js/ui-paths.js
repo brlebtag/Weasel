@@ -120,7 +120,7 @@
       holes.push(HR);
       holeInfo.push({ R: HR, name: h.name, line: A.ownLine(h), hidden: !!h.hidden });
     }
-    return { line, el, text, cmd, name, fr, rings: [R], holes, holeInfo, open: !closed, smooth: cmd === 'line' ? 0 : el.smooth === undefined ? 1 : el.smooth };
+    return { line, el, text, cmd, name, fr, segs, tags, rings: [R], holes, holeInfo, open: !closed, smooth: cmd === 'line' ? 0 : el.smooth === undefined ? 1 : el.smooth };
   }
 
   // ---------- escrever ----------
@@ -197,26 +197,55 @@
     }
     return { lines, drop };
   }
-  // os pedaços de um traço (stroke, line) como linhas
-  function runsText(src, it, runs, used) {
-    return runs.map((pts, k) => {
-      const nm = k === 0 ? it.name : freeAs(src, `${it.name}_`, used);
-      pinNew(pts, false);
-      return withPoints(k === 0 ? it.text : withName(it.text, nm), pts.map((p) => tokenOf(p, it.fr)));
-    });
+  // Um ponto de um caminho exato (de pathops.subPath, no desenho) como texto, do jeito que pathops.settle disse (md):
+  // o texto de antes, canto, liso ou com as alças escritas
+  const xyText = (q) => `${fnum(q[0])},${fnum(q[1])}`;
+  function nodeTok(p, md, fr) {
+    const t = p.tag, same = t && sameMat(t.mat, fr.mat), pin = same ? t.pin : p.pin || '';
+    if (md.keep && same) return t.tok;
+    const xy = same ? t.xy : xyText(M.apply(fr.inv, p.x, p.y));
+    if (md.keep) md = t.tan ? { free: true, tin: t.tin || t.tan, tan: t.tan } : t.corner ? { corner: true } : { auto: true };
+    if (md.corner) return xy + '!' + pin;
+    if (!md.free) return xy + pin;
+    const fa = xyText(lin(fr.inv, md.tin)), fb = xyText(lin(fr.inv, md.tan));
+    return xy + (fa === fb ? `~${fb}` : `~${fa}~${fb}`) + pin;
+  }
+  function exactToks(it, N, closed) {
+    pinNew(N, closed);
+    if (it.cmd === 'line') return N.map((p) => nodeTok(p, p.tag ? { keep: true } : { auto: true }, it.fr));
+    const md = PO.settle(N, closed, it.smooth);
+    return N.map((p, i) => nodeTok(p, md[i], it.fr));
+  }
+  // Os pedaços exatos (listas de pontos de pathops.subPath) como linhas: o primeiro fica com a linha de it; os
+  // outros entram logo abaixo como nome_1, nome_2…. closed: os pedaços são fechados (rect e ellipse viram shape).
+  function exactLines(src, it, Ns, used, closed) {
+    const base = closed && it.cmd !== 'shape' ? toShape(it.text) : it.text;
+    return Ns.map((N, k) => withPoints(k === 0 ? base : withName(base, freeAs(src, `${it.name}_`, used)), exactToks(it, N, closed)));
+  }
+  // os trechos de um traço fora de inside(x, y), já como pontos, do maior para o menor (os de menos de três casas
+  // somem); null quando nada muda
+  function openRuns(it, inside) {
+    const S = it.segs, n = S.length, runs = PO.outside(S, inside, cellNow());
+    if (runs.length === 1 && runs[0].a.i === 0 && runs[0].a.t === 0 && runs[0].b.i === n - 1 && runs[0].b.t === 1) return null;
+    return runs.map((r) => PO.subPath(S, false, it.tags, PO.normPos(S, false, r.a), PO.normPos(S, false, r.b)))
+      .filter((N) => N.length >= 2 && PO.nodesLen(N) > cellNow() * 3)
+      .sort((a, b) => PO.nodesLen(b) - PO.nodesLen(a));
   }
   // escreve tudo numa edição só (um Ctrl+Z): rep: linha → [linhas novas]; drop: linhas que saem; ins: antes da
   // linha → [linhas]. Devolve as linhas novas de rep e ins (para escolher).
   function writeAll(rep, drop, ins, key) {
-    const src = A.editor.value.split('\n'), out = [], pick = [];
+    const src = A.editor.value.split('\n'), out = [], pick = [], all = [];
+    const add = (r) => { for (let k = 0; k < r.length; k++) if (!/(^|\s)hidden(\s|$)/.test(split(r[k]).code)) all.push(out.length + k); };
     for (let i = 0; i <= src.length; i++) {
-      if (ins.has(i)) { pick.push(out.length); out.push(...ins.get(i)); }
+      if (ins.has(i)) { pick.push(out.length); add(ins.get(i)); out.push(...ins.get(i)); }
       if (i === src.length) break;
       if (drop.has(i)) continue;
-      if (rep.has(i)) { const r = rep.get(i); if (r.length) pick.push(out.length); out.push(...r); continue; }
+      if (rep.has(i)) { const r = rep.get(i); if (r.length) pick.push(out.length); add(r); out.push(...r); continue; }
       out.push(src[i]);
     }
     rewrite(out, key);
+    // pick.all: todas as linhas novas, fora as dos furos (hidden)
+    pick.all = all;
     return pick;
   }
   // só o trecho que mudou, numa edição só (como o js/ui-select.js)
@@ -398,15 +427,11 @@
       if (it.why) { if (!it.minor) skip.push(it.why); continue; }
       if (!PO.meets(PO.boxOf(it.rings), pb)) continue;
       if (it.open) {
-        const runs = PO.cutOpen(it.rings[0], inside, cellNow());
-        if (runs.length === 1 && runs[0].length === it.rings[0].length && !runs[0].some((p) => p.end)) continue;
-        if (!runs.length && !it.rings[0].some((p) => !inside(p.x, p.y))) { drop.add(l); gone.push(it); nGone++; continue; }
-        // pedaços pequenos demais (menos de uma casa) somem
-        const lenOf = (P) => { let s = 0; for (let i = 1; i < P.length; i++) s += Math.hypot(P[i].x - P[i - 1].x, P[i].y - P[i - 1].y); return s; };
-        const ok = runs.filter((P) => lenOf(P) > cellNow() * 3).sort((a, b) => lenOf(b) - lenOf(a));
+        // o traço é cortado no lugar exato (a curva que fica é a mesma)
+        const ok = openRuns(it, inside);
+        if (!ok) continue;
         if (!ok.length) { drop.add(l); gone.push(it); nGone++; continue; }
-        const fits = ok.map((P) => (it.cmd === 'line' ? P.filter((p) => p.tag || p.end).map((p) => ({ x: p.x, y: p.y, corner: false, tag: p.tag })) : PO.fitPath(P, { tol: tolNow(), smooth: it.smooth, cell: cellNow(), closed: false })));
-        rep.set(l, runsText(src, it, fits, used));
+        rep.set(l, exactLines(src, it, ok, used, false));
         nCut++;
         if (ok.length > 1) nSplit++;
         changed.push(it);
@@ -513,5 +538,9 @@
   }, true);
   A.on('tool', () => { if (free && st.tool !== free.tool) free = null; hover = null; });
 
-  W.paths = { pathfinder, ops: () => Object.keys(OPS).map((k) => ({ kind: k, label: OPS[k].label })), size: () => size };
+  W.paths = {
+    pathfinder, ops: () => Object.keys(OPS).map((k) => ({ kind: k, label: OPS[k].label })), size: () => size,
+    // o que as outras ferramentas de caminho (js/ui-cut.js) usam daqui
+    kit: { AREA, OPEN, cellNow, tolNow, stepNow, split, cmdOf, nameOf, attrOf, setAttr, toShape, withPoints, withName, refs, frameOf, lin, itemOf, tokenOf, nodeTok, exactToks, exactLines, openRuns, pinNew, rot0, freeAs, piecesText, writeAll, notes, ready, layerLines, xyText },
+  };
 })(window.Weasel = window.Weasel || {});

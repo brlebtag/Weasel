@@ -3898,7 +3898,7 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'brush', 'blob', 'eraser', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'smooth', 'patherase', 'join', 'brush', 'blob', 'eraser', 'scissors', 'knife', 'builder', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   // o Texto põe o texto pronto com um clique; as formas, o Conta-gotas e o Degradê moram em js/ui-draw.js
   const INSERT_TOOLS = { text: 'text' };

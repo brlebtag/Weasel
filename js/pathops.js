@@ -235,37 +235,41 @@
   // src (o anel de onde veio) }].
   function snapper(exact, d) {
     const segs = [];
+    // um anel pode ter a sua distância (R.snapD: a borda da Faca fica mais longe do contorno da grade)
+    const dOf = (R) => R.snapD || d;
+    let dMax = d;
     exact.forEach((R, r) => {
       const n = R.length, open = R.closed === false;
-      for (let k = 0; k < (open ? n - 1 : n); k++) segs.push({ r, k, a: R[k], b: R[(k + 1) % n] });
+      dMax = Math.max(dMax, dOf(R));
+      for (let k = 0; k < (open ? n - 1 : n); k++) segs.push({ r, k, a: R[k], b: R[(k + 1) % n], d: dOf(R) });
     });
-    const B = Math.max(d * 3, 1e-6), cells = new Map(), key = (i, j) => i * 73856093 + j * 19349663;
+    const B = Math.max(dMax * 3, 1e-6), cells = new Map(), key = (i, j) => i * 73856093 + j * 19349663;
     segs.forEach((s, id) => {
-      const i0 = Math.floor((Math.min(s.a.x, s.b.x) - d) / B), i1 = Math.floor((Math.max(s.a.x, s.b.x) + d) / B);
-      const j0 = Math.floor((Math.min(s.a.y, s.b.y) - d) / B), j1 = Math.floor((Math.max(s.a.y, s.b.y) + d) / B);
+      const i0 = Math.floor((Math.min(s.a.x, s.b.x) - s.d) / B), i1 = Math.floor((Math.max(s.a.x, s.b.x) + s.d) / B);
+      const j0 = Math.floor((Math.min(s.a.y, s.b.y) - s.d) / B), j1 = Math.floor((Math.max(s.a.y, s.b.y) + s.d) / B);
       if ((i1 - i0 + 1) * (j1 - j0 + 1) > 4096) return; // um trecho enorme numa grade fina: fica de fora (é raro)
       for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = key(i, j); const L = cells.get(k); if (L) L.push(id); else cells.set(k, [id]); }
     });
     function nearest(x, y) {
       const L = cells.get(key(Math.floor(x / B), Math.floor(y / B)));
       if (!L) return null;
-      let best = null, bd = d * d;
+      let best = null, bd = Infinity;
       for (const id of L) {
         const s = segs[id], dx = s.b.x - s.a.x, dy = s.b.y - s.a.y, l2 = dx * dx + dy * dy;
         let t = l2 > 1e-18 ? ((x - s.a.x) * dx + (y - s.a.y) * dy) / l2 : 0;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const px = s.a.x + t * dx, py = s.a.y + t * dy, e = (px - x) * (px - x) + (py - y) * (py - y);
-        if (e <= bd) { bd = e; best = { id, x: px, y: py, t }; }
+        if (e <= s.d * s.d && e <= bd) { bd = e; best = { id, x: px, y: py, t }; }
       }
       return best;
     }
     // o cruzamento das duas bordas: só quando elas se cruzam de verdade (com um ângulo) e dentro dos dois trechos
     function cross(s, u) {
       const ax = s.a.x, ay = s.a.y, bx = s.b.x - ax, by = s.b.y - ay, cx = u.a.x, cy = u.a.y, dx = u.b.x - cx, dy = u.b.y - cy;
-      const lb = Math.hypot(bx, by), ld = Math.hypot(dx, dy), den = bx * dy - by * dx;
+      const lb = Math.hypot(bx, by), ld = Math.hypot(dx, dy), den = bx * dy - by * dx, e = Math.max(s.d, u.d);
       if (lb < 1e-12 || ld < 1e-12 || Math.abs(den) < Math.sin((8 * Math.PI) / 180) * lb * ld) return null;
       const t = ((cx - ax) * dy - (cy - ay) * dx) / den, w = ((cx - ax) * by - (cy - ay) * bx) / den;
-      if (t * lb < -d || (t - 1) * lb > d || w * ld < -d || (w - 1) * ld > d) return null;
+      if (t * lb < -e || (t - 1) * lb > e || w * ld < -e || (w - 1) * ld > e) return null;
       return { x: ax + t * bx, y: ay + t * by };
     }
     return function snap(loop) {
@@ -288,9 +292,10 @@
             continue;
           }
         }
-        const c = cross(sa, sb);
+        // (sempre na mesma ordem: os dois lados de um corte saem com o mesmo ponto, até o último algarismo)
+        const c = p.s < q.s ? cross(sa, sb) : cross(sb, sa);
         const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
-        if (c && Math.hypot(c.x - mx, c.y - my) < d * 2.5) out.push({ x: c.x, y: c.y, tag: null, ex: true, cross: true, src: null });
+        if (c && Math.hypot(c.x - mx, c.y - my) < Math.max(sa.d, sb.d) * 2.5) out.push({ x: c.x, y: c.y, tag: null, ex: true, cross: true, src: null });
       }
       // pontos repetidos: fica o exato
       const res = [];
@@ -342,6 +347,7 @@
     for (let i = 0; i < N; i++) {
       const p = P[i];
       if (p.tag) { forced.add(i); if (p.tag.corner) corner.add(i); }
+      else if (p.keep) { forced.add(i); if (p.corner) corner.add(i); }
       else if (p.ex) { const t = turnAt(S, closed, i, rr); if (t > CORNER_EX) cand.push({ i, t }); }
     }
     const dist = (a, b) => {
@@ -356,6 +362,8 @@
     };
     for (const c of cand) {
       if (cand.some((e) => e !== c && (e.t > c.t + 1e-9 || (Math.abs(e.t - c.t) <= 1e-9 && e.i < c.i)) && dist(e.i, c.i) < rr)) continue;
+      // perto de um canto que já vem marcado (o ponto da forma, o cruzamento da Faca), vale ele
+      if ([...corner].some((f) => dist(f, c.i) < rr)) continue;
       forced.add(c.i);
       corner.add(c.i);
     }
@@ -505,39 +513,376 @@
     });
   }
 
-  // ---------- cortar um traço aberto ----------
-  // P: os pontos do traço (de ring(), aberto); inside(x, y): o ponto está na borracha. Devolve os pedaços de fora,
-  // [[{ x, y, tag, end }]] (end: a ponta nova, no corte), com o corte no lugar exato (por bisseção).
-  function cutOpen(P, inside, step) {
+  // ---------- caminhos exatos (Tesoura, Junção, Borracha de caminho) ----------
+  // Aqui a curva não passa pela grade: os pedaços saem das próprias cúbicas, divididas no lugar (De Casteljau), e o
+  // traço que fica é o mesmo de antes. Uma posição na curva é { i, t }: a cúbica i, no t (de 0 a 1).
+  function splitSeg(s, t) {
+    const l = (a, b) => a + (b - a) * t;
+    const x01 = l(s[0], s[2]), y01 = l(s[1], s[3]), x12 = l(s[2], s[4]), y12 = l(s[3], s[5]), x23 = l(s[4], s[6]), y23 = l(s[5], s[7]);
+    const xa = l(x01, x12), ya = l(y01, y12), xb = l(x12, x23), yb = l(y12, y23), xm = l(xa, xb), ym = l(ya, yb);
+    return [[s[0], s[1], x01, y01, xa, ya, xm, ym], [xm, ym, xb, yb, x23, y23, s[6], s[7]]];
+  }
+  function subSeg(s, t0, t1) {
+    let r = s;
+    if (t1 < 1) r = splitSeg(r, t1)[0];
+    if (t0 > 0) r = splitSeg(r, t1 > 0 ? t0 / t1 : 0)[1];
+    return r;
+  }
+  const posAt = (segs, q) => bez(segs[q.i], q.t);
+  // o ponto da curva mais perto de (x, y): { i, t, x, y, d }
+  function nearestOn(segs, x, y) {
+    const N = 48, f = (s, t) => { const p = bez(s, t); return Math.hypot(p[0] - x, p[1] - y); };
+    // a melhor amostra de cada cúbica; depois, o ajuste fino nas que podem ganhar (perto da ponta, a vizinha também)
+    const cand = [];
+    let dmin = Infinity;
+    segs.forEach((s, i) => {
+      let b = null;
+      for (let j = 0; j <= N; j++) { const d = f(s, j / N); if (!b || d < b.d) b = { i, t: j / N, d }; }
+      b.gap = (Math.hypot(s[2] - s[0], s[3] - s[1]) + Math.hypot(s[4] - s[2], s[5] - s[3]) + Math.hypot(s[6] - s[4], s[7] - s[5])) / N;
+      cand.push(b);
+      dmin = Math.min(dmin, b.d);
+    });
+    let best = null;
+    for (const c of cand) {
+      if (c.d > dmin + c.gap + 1e-9) continue;
+      const s = segs[c.i];
+      let lo = Math.max(0, c.t - 1 / N), hi = Math.min(1, c.t + 1 / N);
+      for (let k = 0; k < 50; k++) { const a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3; if (f(s, a) < f(s, b)) hi = b; else lo = a; }
+      const t = (lo + hi) / 2, d = f(s, t), r = d < c.d ? { i: c.i, t, d } : { i: c.i, t: c.t, d: c.d };
+      if (!best || r.d < best.d) best = r;
+    }
+    if (!best) return null;
+    const p = bez(segs[best.i], best.t);
+    best.x = p[0];
+    best.y = p[1];
+    return best;
+  }
+  // a posição perto de um ponto da forma vira o próprio ponto (sem um pedacinho de nada); no fim do aberto, fica
+  // { última, 1 }
+  function normPos(segs, closed, q, eps) {
+    const n = segs.length, e = eps === undefined ? 1e-6 : eps;
+    let { i, t } = q;
+    if (t >= 1 - e) { if (closed || i < n - 1) { i = (i + 1) % n; t = 0; } else t = 1; }
+    else if (t <= e) t = 0;
+    return { i, t };
+  }
+  // Os pontos de uma curva com as alças de verdade: [{ x, y, tin, tan, tag }]. tin é a chegada (o controle fica em
+  // x − tin) e tan, a saída (em x + tan), como no ~tin~tan do código.
+  function nodesOf(segs, closed, tags) {
+    const n = segs.length, out = [];
+    for (let i = 0; i < (closed ? n : n + 1); i++) {
+      const s = segs[Math.min(i, n - 1)], p = i < n ? [s[0], s[1]] : [s[6], s[7]];
+      const so = i < n ? segs[i] : null, si = closed ? segs[(i - 1 + n) % n] : i > 0 ? segs[i - 1] : null;
+      out.push({ x: p[0], y: p[1], tan: so ? [so[2] - so[0], so[3] - so[1]] : null, tin: si ? [si[6] - si[4], si[7] - si[5]] : null, tag: tags ? tags[i] || null : null });
+    }
+    return out;
+  }
+  // O trecho da curva de a até b, andando para frente (no fechado, pode dar a volta; a === b dá a volta inteira):
+  // os pontos, com as alças do pedaço. O ponto que cai num ponto da forma leva a marca dele.
+  function subPath(segs, closed, tags, a, b) {
+    const n = segs.length, out = [], E = 1e-9;
+    const tagOf = (i) => (tags ? tags[closed ? ((i % n) + n) % n : i] || null : null);
+    for (let k = 0; k <= n + 1; k++) {
+      const j = closed ? (a.i + k) % n : a.i + k;
+      if (!closed && j >= n) break;
+      const t0 = k === 0 ? a.t : 0, end = j === b.i && (k > 0 || b.t > a.t + E), t1 = end ? b.t : 1;
+      if (t1 > t0 + E) {
+        const s = subSeg(segs[j], t0, t1);
+        if (!out.length) out.push({ x: s[0], y: s[1], tin: null, tan: null, tag: t0 <= E ? tagOf(j) : null });
+        out[out.length - 1].tan = [s[2] - s[0], s[3] - s[1]];
+        out.push({ x: s[6], y: s[7], tin: [s[6] - s[4], s[7] - s[5]], tan: null, tag: t1 >= 1 - E ? tagOf(j + 1) : null });
+      }
+      if (end) break;
+    }
+    return out;
+  }
+  // o tamanho de um trecho (pelos pontos da curva)
+  function nodesLen(N) {
+    let l = 0;
+    for (let k = 1; k < N.length; k++) {
+      const p = N[k - 1], q = N[k], s = [p.x, p.y, p.x + (p.tan ? p.tan[0] : 0), p.y + (p.tan ? p.tan[1] : 0), q.x - (q.tin ? q.tin[0] : 0), q.y - (q.tin ? q.tin[1] : 0), q.x, q.y];
+      let a = [s[0], s[1]];
+      for (let j = 1; j <= 8; j++) { const b = bez(s, j / 8); l += Math.hypot(b[0] - a[0], b[1] - a[1]); a = b; }
+    }
+    return l;
+  }
+  // A área (com sinal) de uma volta fechada de pontos com alças
+  function nodesArea(N) {
+    const P = [];
+    N.forEach((p, k) => {
+      const q = N[(k + 1) % N.length], s = [p.x, p.y, p.x + p.tan[0], p.y + p.tan[1], q.x - q.tin[0], q.y - q.tin[1], q.x, q.y];
+      for (let j = 0; j < 8; j++) P.push(bez(s, j / 8));
+    });
+    return area(P);
+  }
+  // Põe pontos (sem mudar a curva: o maior trecho se divide no meio) até ter pelo menos `min` (o shape pede 3)
+  function growNodes(N, closed, min) {
+    const out = N.map((p) => Object.assign({}, p));
+    while (out.length < min) {
+      let best = -1, bl = -1;
+      const cnt = closed ? out.length : out.length - 1;
+      for (let j = 0; j < cnt; j++) { const l = nodesLen([out[j], out[(j + 1) % out.length]]); if (l > bl) { bl = l; best = j; } }
+      if (best < 0) break;
+      const p = out[best], q = out[(best + 1) % out.length];
+      const [s1, s2] = splitSeg([p.x, p.y, p.x + p.tan[0], p.y + p.tan[1], q.x - q.tin[0], q.y - q.tin[1], q.x, q.y], 0.5);
+      p.tan = [s1[2] - s1[0], s1[3] - s1[1]];
+      q.tin = [s2[6] - s2[4], s2[7] - s2[5]];
+      out.splice(best + 1, 0, { x: s1[6], y: s1[7], tin: [s1[6] - s1[4], s1[7] - s1[5]], tan: [s2[2] - s2[0], s2[3] - s2[1]], tag: null });
+    }
+    return out;
+  }
+  // Os pontos ao contrário (a chegada vira a saída)
+  function reverseNodes(N) {
+    return N.slice().reverse().map((p) => Object.assign({}, p, { tin: p.tan ? [-p.tan[0], -p.tan[1]] : null, tan: p.tin ? [-p.tin[0], -p.tin[1]] : null, rev: !p.rev }));
+  }
+  // Como escrever cada ponto para a curva sair igual (N: os pontos com as alças de verdade): o texto de antes
+  // (keep), canto (corner: x,y!), liso automático (auto: x,y) ou com as alças escritas (free: tin, tan). A alça
+  // automática de um ponto só depende da posição dos vizinhos, então cada ponto se resolve sozinho.
+  function settle(N, closed, smooth) {
+    const n = N.length, k = 0.36 * (smooth === undefined ? 1 : smooth);
+    const same = (u, v) => !!u && !!v && Math.abs(u[0] - v[0]) <= 1e-5 + 1e-7 * Math.abs(v[0]) && Math.abs(u[1] - v[1]) <= 1e-5 + 1e-7 * Math.abs(v[1]);
+    return N.map((p, i) => {
+      const prev = closed ? N[(i - 1 + n) % n] : N[i - 1], next = closed ? N[(i + 1) % n] : N[i + 1];
+      const hasIn = !!prev && prev !== p, hasOut = !!next && next !== p;
+      const cornerH = { out: hasOut ? [(next.x - p.x) / 3, (next.y - p.y) / 3] : null, in: hasIn ? [(p.x - prev.x) / 3, (p.y - prev.y) / 3] : null };
+      let autoH = cornerH;
+      if (k > 0 && hasIn && hasOut) {
+        const dx = next.x - prev.x, dy = next.y - prev.y, l = Math.hypot(dx, dy);
+        if (l > 1e-9) {
+          const ux = dx / l, uy = dy / l, lo = Math.hypot(next.x - p.x, next.y - p.y) * k, li = Math.hypot(p.x - prev.x, p.y - prev.y) * k;
+          autoH = { out: [ux * lo, uy * lo], in: [ux * li, uy * li] };
+        }
+      }
+      const fits = (h) => (!hasOut || same(h.out, p.tan)) && (!hasIn || same(h.in, p.tin));
+      const t = p.tag;
+      if (t && !(p.rev && t.tan)) {
+        const own = t.tan ? { out: t.tan, in: t.tin || t.tan } : t.corner ? cornerH : autoH;
+        if (fits(own)) return { keep: true };
+      }
+      if (fits(autoH)) return { auto: true };
+      if (fits(cornerH)) return { corner: true };
+      return { free: true, tin: hasIn ? p.tin : p.tan, tan: hasOut ? p.tan : p.tin };
+    });
+  }
+  // Os trechos de um traço aberto fora da borracha (inside(x, y)): [{ a, b }] (posições), com o corte no lugar
+  // exato (por bisseção). step: de quanto em quanto olhar.
+  function outside(segs, inside, step) {
     const runs = [];
     let cur = null;
-    const edge = (a, b, ina) => {
-      // a fronteira entre a e b (um dentro, outro fora)
-      let lo = 0, hi = 1;
-      for (let t = 0; t < 30; t++) { const mid = (lo + hi) / 2, x = a.x + (b.x - a.x) * mid, y = a.y + (b.y - a.y) * mid; if (inside(x, y) === ina) lo = mid; else hi = mid; }
-      const t = (lo + hi) / 2;
-      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, tag: null, end: true };
-    };
-    for (let k = 0; k < P.length; k++) {
-      const p = P[k], inP = inside(p.x, p.y);
-      if (k === 0) { if (!inP) cur = [p]; continue; }
-      const a = P[k - 1], l = Math.hypot(p.x - a.x, p.y - a.y), m = Math.max(1, Math.ceil(l / step));
-      let prev = a, inPrev = inside(a.x, a.y);
-      for (let t = 1; t <= m; t++) {
-        const q = t === m ? p : { x: a.x + ((p.x - a.x) * t) / m, y: a.y + ((p.y - a.y) * t) / m, tag: null };
-        const inQ = t === m ? inP : inside(q.x, q.y);
-        if (inQ !== inPrev) {
-          const e = edge(prev, q, inPrev);
-          if (inPrev) cur = [e]; else { cur.push(e); runs.push(cur); cur = null; }
+    segs.forEach((s, i) => {
+      const est = Math.hypot(s[2] - s[0], s[3] - s[1]) + Math.hypot(s[4] - s[2], s[5] - s[3]) + Math.hypot(s[6] - s[4], s[7] - s[5]);
+      const m = Math.max(2, Math.min(4000, Math.ceil(est / step)));
+      let tp = 0, inP = inside(s[0], s[1]);
+      if (i === 0 && !inP) cur = { a: { i: 0, t: 0 } };
+      for (let j = 1; j <= m; j++) {
+        const t = j / m, p = bez(s, t), inQ = inside(p[0], p[1]);
+        if (inQ !== inP) {
+          let lo = tp, hi = t;
+          for (let it = 0; it < 40; it++) { const mid = (lo + hi) / 2, q = bez(s, mid); if (inside(q[0], q[1]) === inP) lo = mid; else hi = mid; }
+          const tb = (lo + hi) / 2;
+          if (inP) cur = { a: { i, t: tb } }; else if (cur) { cur.b = { i, t: tb }; runs.push(cur); cur = null; }
         }
-        if (t === m && !inQ) cur.push(q);
-        prev = q;
-        inPrev = inQ;
+        tp = t;
+        inP = inQ;
       }
-    }
-    if (cur && cur.length > 1) runs.push(cur);
+    });
+    if (cur) { cur.b = { i: segs.length - 1, t: 1 }; runs.push(cur); }
     return runs;
   }
 
-  W.pathops = { touches, orient, ring, boxOf, meets, join, grid, mask, fill, stamp, near, any, count, trace, area, inPoly, pieces, snapper, fitPath, combine, outline, cutOpen, straight };
+  // ---------- a Faca ----------
+  // A faca é um caminho (os pontos lisos do Simplificar, no desenho) que corta as formas em pedaços. A conta é a da
+  // grade (a faca tira uma faixa fina, de menos de uma casa), e a borda nova sai dos próprios pontos da faca: os
+  // dois lados do corte ficam com a mesma curva, ponto por ponto.
+  function knifeRing(K, step) {
+    const ks = G.smoothSegs(K, false, 1), R = [];
+    ks.forEach((s, j) => {
+      const est = Math.hypot(s[2] - s[0], s[3] - s[1]) + Math.hypot(s[4] - s[2], s[5] - s[3]) + Math.hypot(s[6] - s[4], s[7] - s[5]);
+      const m = straight(s) ? 1 : Math.max(2, Math.min(400, Math.ceil(est / step)));
+      for (let q = 0; q < m; q++) { const p = bez(s, q / m); R.push({ x: p[0], y: p[1], tag: null }); }
+    });
+    if (ks.length) { const s = ks[ks.length - 1]; R.push({ x: s[6], y: s[7], tag: null }); }
+    R.closed = false;
+    R.segs = ks;
+    return R;
+  }
+  // Na volta P (de snapper), cada trecho que corre pela faca vira os pontos da faca entre as duas pontas dele (as
+  // pontas: os cruzamentos com a borda, que ficam como canto). Um trecho que vai e volta (a faca parou dentro da
+  // forma) sai inteiro.
+  // o cruzamento de dois trechos retos (a–b e c–d), ou null
+  function segX(a, b, c, d) {
+    const bx = b.x - a.x, by = b.y - a.y, dx = d.x - c.x, dy = d.y - c.y, den = bx * dy - by * dx;
+    if (Math.abs(den) < 1e-12) return null;
+    const t = ((c.x - a.x) * dy - (c.y - a.y) * dx) / den, w = ((c.x - a.x) * by - (c.y - a.y) * bx) / den;
+    if (t < -1e-9 || t > 1 + 1e-9 || w < -1e-9 || w > 1 + 1e-9) return null;
+    return { x: a.x + t * bx, y: a.y + t * by };
+  }
+  // o cruzamento da faca com a borda (rings) mais perto de p, até r: sempre pela mesma conta (o trecho da borda
+  // primeiro), então os dois lados de um corte acham o mesmo ponto
+  function crossNear(p, KR, rings, r) {
+    const near = (a, b) => Math.min(a.x, b.x) - r <= p.x && Math.max(a.x, b.x) + r >= p.x && Math.min(a.y, b.y) - r <= p.y && Math.max(a.y, b.y) + r >= p.y;
+    const ks = [];
+    for (let k = 0; k + 1 < KR.length; k++) if (near(KR[k], KR[k + 1])) ks.push(k);
+    let best = null;
+    for (const R of rings) {
+      const n = R.length;
+      for (let k = 0; k < n; k++) {
+        const a = R[k], b = R[(k + 1) % n];
+        if (!near(a, b)) continue;
+        for (const j of ks) {
+          const q = segX(a, b, KR[j], KR[j + 1]);
+          if (!q) continue;
+          const d = Math.hypot(q.x - p.x, q.y - p.y);
+          if (d <= r && (!best || d < best.d)) best = { x: q.x, y: q.y, d };
+        }
+      }
+    }
+    return best;
+  }
+  // Na volta P (de snapper), cada trecho que corre pela faca vira os pontos da faca entre as duas pontas dele (as
+  // pontas: os cruzamentos com a borda, que ficam como canto). Um trecho que vai e volta (a faca parou dentro da
+  // forma) sai inteiro.
+  function knifeRuns(P, KR, K, c, rings) {
+    const isK = (p) => p.src === KR && !p.cross;
+    const s0 = P.findIndex((p) => !isK(p));
+    if (s0 < 0 || !P.some(isK)) return P;
+    const Q = P.slice(s0).concat(P.slice(0, s0)), n = Q.length, out = [];
+    const uOf = (p) => { const q = nearestOn(KR.segs, p.x, p.y); return q ? q.i + q.t : 0; };
+    const lenK = (u0, u1) => {
+      // o tamanho da faca entre u0 e u1
+      const a = Math.min(u0, u1), b = Math.max(u0, u1);
+      let l = 0, prev = null;
+      for (let j = 0; j <= 24; j++) { const u = a + ((b - a) * j) / 24, i = Math.min(KR.segs.length - 1, Math.floor(u)), p = bez(KR.segs[i], u - i); if (prev) l += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+      return l;
+    };
+    // a ponta do trecho: o cruzamento de verdade perto do ponto p (sem ele, o ponto da faca mais perto)
+    const end = (p) => {
+      const q = crossNear(p, KR, rings, c * 4);
+      if (q) return { x: q.x, y: q.y, tag: null, keep: true, corner: true, ex: true, cross: true, src: null };
+      const k = nearestOn(KR.segs, p.x, p.y);
+      return { x: k.x, y: k.y, tag: null, keep: true, corner: true, src: KR };
+    };
+    for (let i = 0; i < n;) {
+      if (!isK(Q[i])) { out.push(Q[i]); i++; continue; }
+      let j = i;
+      while (j < n && isK(Q[j])) j++;
+      const A = out[out.length - 1], B = Q[j % n], ea = end(A), eb = end(B), ua = uOf(ea), ub = uOf(eb);
+      // ida e volta: a faca entrou e parou dentro
+      if (lenK(ua, ub) < c * 4) { i = j; continue; }
+      // o ponto do contorno na ponta dá lugar ao cruzamento (o ponto da forma, não: o cruzamento vem depois dele)
+      if (A.tag) out.push(ea); else out[out.length - 1] = ea;
+      const mids = [];
+      for (let k = 0; k < K.length; k++) if (k > Math.min(ua, ub) + 1e-6 && k < Math.max(ua, ub) - 1e-6) mids.push(k);
+      if (ua > ub) mids.reverse();
+      for (const k of mids) out.push({ x: K[k].x, y: K[k].y, tag: null, keep: true, corner: !!K[k].corner, src: KR });
+      if (B.tag) out.push(eb); else if (j < n) Q[j] = eb; else out[0] = eb;
+      i = j;
+    }
+    return out;
+  }
+  // items: as formas (como no combine); K: os pontos da faca no desenho ([{ x, y, corner }]); o: { cell, tol, smooth,
+  // max }. Devolve, por item, null (a faca não separou nada) ou os pedaços (como no combine).
+  function knife(items, K, o) {
+    const res = [];
+    for (const it of items) {
+      const box = boxOf(it.rings), g = grid(box, o.cell, o.max), minA = g.c * g.c * 4;
+      const KR = knifeRing(K, g.c);
+      KR.snapD = g.c * 1.6;
+      const kb = boxOf([KR], g.c * 2);
+      if (!meets(kb, box)) { res.push(null); continue; }
+      const m = fill(g, it.rings, mask(g));
+      if (it.holes && it.holes.length) { const h = fill(g, it.holes, mask(g)); for (let i = 0; i < m.length; i++) if (h[i]) m[i] = 0; }
+      const before = pieces(trace(g, m), minA).length;
+      const cut = stamp(g, KR.map((p) => [p.x, p.y]), g.c * 0.75, mask(g));
+      let hit = false;
+      for (let i = 0; i < m.length; i++) if (cut[i] && m[i]) { m[i] = 0; hit = true; }
+      const pcs = hit ? pieces(trace(g, m), minA) : [];
+      if (pcs.length <= before) { res.push(null); continue; }
+      const exact = [...it.rings, ...(it.holes || []), KR], snap = snapper(exact, g.c * 1.05);
+      const fitLoop = (L) => {
+        const P = knifeRuns(orient(snap(L)), KR, K, g.c, [...it.rings, ...(it.holes || [])]);
+        const F = fitPath(P, { tol: o.tol, smooth: o.smooth, cell: g.c, closed: true });
+        const src = P.length && P[0].src && P[0].src !== KR && P.every((p) => p.src === P[0].src && !p.cross && !p.keep) ? P[0].src : null;
+        return F.length >= 3 ? { pts: F, src } : null;
+      };
+      const out = [];
+      for (const pc of pcs) {
+        const outer = fitLoop(pc.outer);
+        if (!outer) continue;
+        const hs = pc.holes.map(fitLoop).filter(Boolean);
+        out.push({ outer: outer.pts, outerSrc: outer.src, holes: hs.map((h) => h.pts), holeSrc: hs.map((h) => h.src), area: pc.area });
+      }
+      res.push(out.length > 1 ? out : null);
+    }
+    return res;
+  }
+
+  // ---------- o Construtor de formas ----------
+  // As regiões das formas escolhidas: as casas dentro do mesmo conjunto de formas (a assinatura: um bit por forma)
+  // e ligadas entre si são uma região. { g, sig, lab (a região de cada casa, ou −1), regs: [{ sig, n, box }] }
+  function regions(items, o) {
+    let box = null;
+    for (const it of items) { const b = boxOf(it.rings); box = box ? join(box, b) : b; }
+    const g = grid(box, o.cell, o.max || 2e6), N = g.nx * g.ny, sig = new Uint32Array(N);
+    items.forEach((it, k) => {
+      const m = fill(g, it.rings, mask(g));
+      if (it.holes && it.holes.length) { const h = fill(g, it.holes, mask(g)); for (let i = 0; i < N; i++) if (h[i]) m[i] = 0; }
+      const bit = 2 ** k;
+      for (let i = 0; i < N; i++) if (m[i]) sig[i] += bit;
+    });
+    const lab = new Int32Array(N).fill(-1), regs = [], stack = new Int32Array(N), nx = g.nx;
+    for (let i0 = 0; i0 < N; i0++) {
+      if (!sig[i0] || lab[i0] >= 0) continue;
+      const id = regs.length, s = sig[i0];
+      let sp = 0, n = 0, x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+      stack[sp++] = i0;
+      lab[i0] = id;
+      while (sp) {
+        const i = stack[--sp], x = i % nx, y = (i - x) / nx;
+        n++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (x > 0 && lab[i - 1] < 0 && sig[i - 1] === s) { lab[i - 1] = id; stack[sp++] = i - 1; }
+        if (x < nx - 1 && lab[i + 1] < 0 && sig[i + 1] === s) { lab[i + 1] = id; stack[sp++] = i + 1; }
+        if (y > 0 && lab[i - nx] < 0 && sig[i - nx] === s) { lab[i - nx] = id; stack[sp++] = i - nx; }
+        if (y < g.ny - 1 && lab[i + nx] < 0 && sig[i + nx] === s) { lab[i + nx] = id; stack[sp++] = i + nx; }
+      }
+      regs.push({ sig: s, n, x0, y0, x1, y1 });
+    }
+    return { g, sig, lab, regs, items };
+  }
+  // a região do ponto (x, y), ou −1; as pequenas demais (menos de 4 casas) não contam
+  function regionAt(R, x, y) {
+    const { g } = R, i = Math.floor((x - g.x0) / g.c), j = Math.floor((y - g.y0) / g.c);
+    if (i < 0 || j < 0 || i >= g.nx || j >= g.ny) return -1;
+    const id = R.lab[j * g.nx + i];
+    return id >= 0 && R.regs[id].n >= 4 ? id : -1;
+  }
+  // o contorno de algumas regiões, para desenhar: [[x, y]] por volta
+  function regionLoops(R, ids) {
+    const { g } = R, on = new Set(ids);
+    let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+    for (const id of on) { const r = R.regs[id]; x0 = Math.min(x0, r.x0); y0 = Math.min(y0, r.y0); x1 = Math.max(x1, r.x1); y1 = Math.max(y1, r.y1); }
+    if (x1 < 0) return [];
+    const sub = { x0: g.x0 + x0 * g.c, y0: g.y0 + y0 * g.c, c: g.c, nx: x1 - x0 + 1, ny: y1 - y0 + 1 }, m = new Uint8Array(sub.nx * sub.ny);
+    for (let j = 0; j < sub.ny; j++) for (let i = 0; i < sub.nx; i++) if (on.has(R.lab[(j + y0) * g.nx + i + x0])) m[j * sub.nx + i] = 1;
+    return trace(sub, m).map((l) => l.pts);
+  }
+  // As regiões ids juntas (merge: viram uma forma) ou apagadas: { merged: pedaços ou null, items: por forma, null
+  // (não foi tocada) ou os pedaços do que sobrou ([] se sumiu) }
+  function regionsApply(R, ids, merge, o) {
+    const { g, sig, lab, items } = R, N = g.nx * g.ny, on = new Uint8Array(R.regs.length);
+    for (const id of ids) on[id] = 1;
+    const mm = mask(g);
+    for (let i = 0; i < N; i++) if (lab[i] >= 0 && on[lab[i]]) mm[i] = 1;
+    const res = { merged: merge ? outline(g, mm, items, o) : null, items: [] };
+    items.forEach((it, k) => {
+      const bit = 2 ** k, m = mask(g);
+      let touched = false;
+      for (let i = 0; i < N; i++) if (Math.floor(sig[i] / bit) % 2) { if (mm[i]) touched = true; else m[i] = 1; }
+      res.items.push(touched ? outline(g, m, items, o) : null);
+    });
+    return res;
+  }
+
+  W.pathops = { touches, orient, ring, boxOf, meets, join, grid, mask, fill, stamp, near, any, count, trace, area, inPoly, pieces, snapper, fitPath, combine, outline, straight, splitSeg, subSeg, nearestOn, normPos, nodesOf, subPath, nodesLen, nodesArea, growNodes, reverseNodes, settle, outside, posAt, knife, knifeRing, regions, regionAt, regionLoops, regionsApply };
 })(window.Weasel = window.Weasel || {});

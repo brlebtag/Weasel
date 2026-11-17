@@ -23,6 +23,7 @@ O Weasel tem sete tipos de forma:
 > - **Caneta** (P) e **Curvatura** (Shift+~): ponto a ponto. Na Caneta, o clique põe um canto, e apertar e arrastar puxa as alças da curva; na Curvatura, cada clique põe um ponto liso (o duplo clique, um canto). Clicar no primeiro ponto fecha um `shape`; **Enter** ou **Esc** termina um `stroke`, e **Backspace** tira o último ponto. As alças estão [mais abaixo](#alça-da-curva-xydxdy).
 > - **Lápis** (N) e **Pincel** (B): à mão livre. O traço do mouse vira um `stroke` com poucos pontos (quem faz isso é o [Simplificar](#menos-pontos-simplificar)), e onde o traço vira de repente sai um canto (`!`). O Lápis que termina perto do começo fecha um `shape`. O Pincel sai com as pontas afinando (`taper=`). Nos dois, `[` e `]` mudam a grossura.
 > - **Pincel de bolha** (Shift+B) e **Borracha** (Shift+E): pintam e apagam **área**, juntando e cortando as formas que já existem. Veja [Juntar e apagar áreas](#juntar-e-apagar-áreas-pathfinder-pincel-de-bolha-e-borracha).
+> - **Tesoura** (C), **Faca**, **Junção**, **Borracha de caminho**, **Suavizar** e **Construtor de formas** (Shift+M): cortam, juntam e alisam caminhos. Veja [Cortar, juntar e alisar](#cortar-juntar-e-alisar-tesoura-faca-junção-suavizar-e-construtor-de-formas).
 > - O Retângulo, a Elipse, o Polígono e a Estrela dividem a mesma casa da barra: segure o botão (ou clique nele com o botão direito) para escolher outra. O triangulinho no canto marca as casas com mais de uma ferramenta.
 > - A forma entra **na frente** de tudo na camada da linha do cursor, com um nome novo em inglês (`rect1`, `ellipse1`, `polygon1`…), e já vem escolhida, com as alças: é só mover, girar e mudar o tamanho. Num grupo isolado (duplo clique nele), ela entra no grupo. Uma camada travada não aceita formas novas.
 > - A cor vem das **caixinhas de preenchimento e contorno**, no pé da barra de ferramentas (veja o [capítulo 3](03-cores.md#a-palette-cores-com-nome)).
@@ -368,6 +369,43 @@ Os dois primeiros desenhos têm as mesmas formas: o do meio é o resultado do **
 - O `rect` e a `ellipse` que a conta muda viram `shape` (o editor avisa).
 - As retas continuam retas, e os cantos onde duas bordas se cruzam ficam no lugar exato (como o `264.3,55!` acima). Os pontos que a conta não tocou ficam como estavam; os da beira da mudança ganham as alças (`~`), para o resto da forma não mexer. A curva nova passa pelo [Simplificar](#menos-pontos-simplificar).
 - Um Ctrl+Z desfaz o gesto inteiro.
+
+### Cortar, juntar e alisar: Tesoura, Faca, Junção, Suavizar e Construtor de formas
+
+Mais seis ferramentas do editor mexem nos caminhos e escrevem o resultado no código.
+
+<!-- gerar: img/02_cortar.png -->
+```weasel
+canvas 470 200 bg=#f4efe6
+palette ink=#2b2a33
+
+# Faca: um círculo cortado por um arraste ondulado (o pedaço de baixo foi puxado um pouco para baixo)
+shape a c=#ff6b4a ink=3 : 72.2,30.1 93,33.3 110.7,45 122,62.8 124.9,77.2 124.8,84.1! 96.9,75.1 43,92.7 26,89.9! 25.1,83.8 26.2,68.9 35.3,49.6 51.3,36
+shape a_1 c=#ff6b4a ink=3 : 124.8,98.1! 123.3,106.9 120.2,115.3 110,129.7 95.5,139.6 77.8,143.9 60.4,141.8 44.6,133.7 32.8,120.8 28.7,112.8 26,103.9! 43,106.7 96.9,89.1
+
+# Construtor de formas: dois círculos; um clique na região do meio a separou (e ela ganhou outra cor)
+shape b1 c=#4a90d9 ink=3 : 216.8,46.2 231.6,50.3 238,54.3! 233,58.6 225.3,69.4 221,88 225.3,106.6 233,117.4 238,121.7! 231.6,125.7 216.8,129.8 194.4,125.7 177.5,110.5 171,88 177.5,65.5 194.4,50.3
+shape b2 c=#ffb000 ink=3 : 238,54.3! 247,63.3 251.1,70.2 255,88 251.1,105.8 247,112.7 238,121.7! 229,112.7 224.9,105.8 221,88 224.9,70.2 229,63.3
+shape b2_1 c=#4a90d9 ink=3 : 281.6,50.3 298.5,65.5 305,88 298.5,110.5 281.6,125.7 259.2,129.8 244.4,125.7 238,121.7! 243,117.4 250.7,106.6 255,88 250.7,69.4 243,58.6 238,54.3! 244.4,50.3 259.2,46.2
+
+# Tesoura: um stroke cortado num clique (o pedaço da direita ganhou outra cor)
+stroke s w=8 c=#6cbb3c : 330,120 365,50~28.2,0~16.2,0 383.3,92.1~2.3,19.5
+stroke s_1 w=8 c=#8e5bd1 : 383.3,92.1~1.7,14.4 400,120~11.9,0.8~27.4,1.8 440,55
+
+text t1 75,185 "Faca" size=15 align=center
+text t2 238,185 "Construtor de formas" size=15 align=center
+text t3 385,185 "Tesoura" size=15 align=center
+```
+
+![Três desenhos lado a lado: um círculo laranja cortado em dois por uma linha ondulada, com o pedaço de baixo um pouco afastado; dois círculos azuis que se cruzam, com a região do meio separada e pintada de amarelo; e um traço em zigue-zague cortado em dois, metade verde e metade roxa](img/02_cortar.png)
+
+- **Tesoura** (C), na casa da Borracha: um clique num `stroke` ou numa `line` corta o traço ali, e os dois pedaços continuam com a mesma curva de antes (o ponto do corte ganha as alças, como o `383.3,92.1~2.3,19.5` acima). Numa forma fechada, são **dois cliques na borda**: ela se divide em duas numa reta entre eles (Esc desiste depois do primeiro).
+- **Faca**, na casa da Borracha: o arraste corta as formas fechadas que ele atravessa de um lado ao outro (as escolhidas; sem escolha, as da camada). O corte segue o arraste, e os dois lados ficam com os mesmos pontos, como o `124.8,84.1!` e o `96.9,75.1` acima, antes de o pedaço de baixo ser puxado.
+- **Junção**, na casa do Lápis: aperte na ponta de um `stroke` e solte na ponta de outro, e eles viram um traço só. **Objeto › Caminho › Juntar** (Ctrl+J) faz o mesmo com os dois traços escolhidos, pelas pontas mais perto. Pontas que se encostam viram um ponto; senão, uma reta liga as duas. Fica a linha de cima, com a cor e a grossura dela (juntando `s` e `s_1`, volta o nome `s`).
+- **Borracha de caminho**, na casa do Lápis: apaga o pedaço do traço (`stroke` ou `line`) por onde passa, sem mexer no resto. Para tirar área de uma forma fechada, use a Borracha (Shift+E).
+- **Suavizar**, na casa do Lápis: com uma forma (`shape`) ou um traço (`stroke`) escolhido, passe o arraste por cima de um trecho tremido: ali a curva fica mais lisa e com menos pontos, e o resto não muda. Cada passada alisa mais.
+- **Construtor de formas** (Shift+M): escolha duas formas fechadas ou mais que se cruzam. O mouse acende a **região** debaixo dele (cada pedaço que as bordas separam). Arraste por cima de várias regiões e elas viram uma forma só, com a cor da forma onde o arraste começou; um clique numa região só a separa das outras (como a do meio, acima). Com **Alt**, o arraste apaga as regiões.
+- Como na Borracha: um pedaço que se solta vira `nome_1`, o `rect` e a `ellipse` cortados viram `shape` (o editor avisa), e um Ctrl+Z desfaz o gesto inteiro.
 
 ## Traço aberto: `stroke`
 

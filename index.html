@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.58.0">
+<link rel="stylesheet" href="css/style.css?v=1.59.0">
 </head>
 <body>
 <header class="top">
@@ -269,6 +269,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
           <li><b>Retângulo</b> (<kbd>M</kbd>), <b>Elipse</b> (<kbd>L</kbd>), <b>Polígono</b>, <b>Estrela</b> e <b>Linha</b> (<kbd>\</kbd>): arraste para desenhar. <kbd>Shift</kbd>: quadrado, círculo, de 45 em 45 graus, polígono e estrela em pé; <kbd>Alt</kbd>: a partir do meio; <kbd>↑</kbd> e <kbd>↓</kbd> (sem soltar) mudam os lados e as pontas; <kbd>Esc</kbd> desiste. Um clique põe uma de tamanho padrão. A forma entra na frente de tudo na camada da linha do cursor (num grupo isolado, dentro dele), com nome em inglês (<code>rect1</code>, <code>polygon1</code>…), e uma camada travada não aceita.</li>
           <li><b>Pincel</b> (<kbd>B</kbd>) e <b>Lápis</b> (<kbd>N</kbd>): à mão livre. O arraste vira um <code>stroke</code> com poucos pontos (o Simplificar), com os cantos em <code>!</code>; o do Pincel sai com as pontas afinando (<code>taper=0.15,0.3</code>), e o Lápis que termina perto do começo fecha um <code>shape</code>. A cor e a grossura vêm das caixinhas; <kbd>[</kbd> e <kbd>]</kbd> mudam a grossura.</li>
           <li><b>Pincel de bolha</b> (<kbd>Shift</kbd>+<kbd>B</kbd>) e <b>Borracha</b> (<kbd>Shift</kbd>+<kbd>E</kbd>): pintam e apagam área. O Pincel de bolha usa a cor do preenchimento e se junta às formas da mesma cor que toca, na mesma camada; a Borracha tira das escolhidas (sem escolha, das da camada) e corta os traços. Um pedaço solto vira <code>nome_1</code>; um buraco, <code>cut=</code>. <kbd>[</kbd> e <kbd>]</kbd> mudam o tamanho. O menu <b>Objeto › Caminho</b> tem a mesma conta para as escolhidas: <b>Unir</b>, <b>Subtrair</b>, <b>Interseção</b> e <b>Excluir</b>.</li>
+          <li><b>Tesoura</b> (<kbd>C</kbd>): um clique corta o traço ali (a curva fica igual); numa forma fechada, dois cliques na borda a dividem numa reta. <b>Faca</b>: o arraste corta as formas que atravessa. <b>Junção</b>: da ponta de um traço até a de outro, vira um traço só (ou <b>Objeto › Caminho › Juntar</b>, <kbd>Ctrl</kbd>+<kbd>J</kbd>, com dois escolhidos). <b>Borracha de caminho</b>: apaga o pedaço do traço por onde passa. <b>Suavizar</b>: alisa a forma escolhida onde o arraste passa. <b>Construtor de formas</b> (<kbd>Shift</kbd>+<kbd>M</kbd>): com duas formas ou mais escolhidas, o arraste junta as regiões por onde passa numa forma só (com <kbd>Alt</kbd>, apaga).</li>
           <li><b>Texto</b> (<kbd>T</kbd>): um clique põe o texto e já abre a caixinha para escrever; clicar num texto que existe muda as letras.</li>
           <li><b>Conta-gotas</b> (<kbd>I</kbd>): clique numa forma e a pintura dela (<code>c=</code>, <code>ink=</code>, <code>inkc=</code>, <code>opacity=</code>) vai para as escolhidas; sem escolha, para as caixinhas. <kbd>Alt</kbd>+clique pinta a forma clicada com as caixinhas.</li>
           <li><b>Degradê</b> (<kbd>G</kbd>): arraste sobre a forma (a escolhida, ou a de baixo do mouse) e o arraste vira o começo e o fim do <code>gradient</code> dela. Sem gradiente, nasce um (<code>gradient1</code>, da cor dela clara até ela); se outras formas usam o mesmo, nasce uma cópia. <kbd>Alt</kbd> troca linear e radial; <kbd>Shift</kbd>, de 45 em 45 graus; um clique faz um deitado, de lado a lado.</li>
@@ -406,37 +407,38 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.58.0"></script>
-<script src="js/lang.js?v=1.58.0"></script>
-<script src="js/simplify.js?v=1.58.0"></script>
-<script src="js/pathops.js?v=1.58.0"></script>
-<script src="js/art.js?v=1.58.0"></script>
-<script src="js/scene.js?v=1.58.0"></script>
-<script src="js/film.js?v=1.58.0"></script>
-<script src="js/audio.js?v=1.58.0"></script>
-<script src="js/nle.js?v=1.58.0"></script>
-<script src="js/webm.js?v=1.58.0"></script>
-<script src="js/svg.js?v=1.58.0"></script>
-<script src="js/gif.js?v=1.58.0"></script>
-<script src="js/webp.js?v=1.58.0"></script>
-<script src="js/mp4.js?v=1.58.0"></script>
-<script src="js/zip.js?v=1.58.0"></script>
-<script src="js/normal.js?v=1.58.0"></script>
-<script src="js/export.js?v=1.58.0"></script>
-<script src="js/godot.js?v=1.58.0"></script>
-<script src="js/rig.js?v=1.58.0"></script>
-<script src="js/editor.js?v=1.58.0"></script>
-<script src="js/examples.js?v=1.58.0"></script>
-<script src="js/timeline.js?v=1.58.0"></script>
-<script src="js/app.js?v=1.58.0"></script>
-<script src="js/ui-menu.js?v=1.58.0"></script>
-<script src="js/ui-shell.js?v=1.58.0"></script>
-<script src="js/ui-3d.js?v=1.58.0"></script>
-<script src="js/ui-props.js?v=1.58.0"></script>
-<script src="js/ui-select.js?v=1.58.0"></script>
-<script src="js/ui-draw.js?v=1.58.0"></script>
-<script src="js/ui-pen.js?v=1.58.0"></script>
-<script src="js/ui-pencil.js?v=1.58.0"></script>
-<script src="js/ui-paths.js?v=1.58.0"></script>
+<script src="js/geom.js?v=1.59.0"></script>
+<script src="js/lang.js?v=1.59.0"></script>
+<script src="js/simplify.js?v=1.59.0"></script>
+<script src="js/pathops.js?v=1.59.0"></script>
+<script src="js/art.js?v=1.59.0"></script>
+<script src="js/scene.js?v=1.59.0"></script>
+<script src="js/film.js?v=1.59.0"></script>
+<script src="js/audio.js?v=1.59.0"></script>
+<script src="js/nle.js?v=1.59.0"></script>
+<script src="js/webm.js?v=1.59.0"></script>
+<script src="js/svg.js?v=1.59.0"></script>
+<script src="js/gif.js?v=1.59.0"></script>
+<script src="js/webp.js?v=1.59.0"></script>
+<script src="js/mp4.js?v=1.59.0"></script>
+<script src="js/zip.js?v=1.59.0"></script>
+<script src="js/normal.js?v=1.59.0"></script>
+<script src="js/export.js?v=1.59.0"></script>
+<script src="js/godot.js?v=1.59.0"></script>
+<script src="js/rig.js?v=1.59.0"></script>
+<script src="js/editor.js?v=1.59.0"></script>
+<script src="js/examples.js?v=1.59.0"></script>
+<script src="js/timeline.js?v=1.59.0"></script>
+<script src="js/app.js?v=1.59.0"></script>
+<script src="js/ui-menu.js?v=1.59.0"></script>
+<script src="js/ui-shell.js?v=1.59.0"></script>
+<script src="js/ui-3d.js?v=1.59.0"></script>
+<script src="js/ui-props.js?v=1.59.0"></script>
+<script src="js/ui-select.js?v=1.59.0"></script>
+<script src="js/ui-draw.js?v=1.59.0"></script>
+<script src="js/ui-pen.js?v=1.59.0"></script>
+<script src="js/ui-pencil.js?v=1.59.0"></script>
+<script src="js/ui-paths.js?v=1.59.0"></script>
+<script src="js/ui-cut.js?v=1.59.0"></script>
 </body>
 </html>

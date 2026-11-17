@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0 e a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0 e a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -798,7 +798,65 @@ A etapa 5 ficou grande, então quebrei em duas **(R)**:
   - `[`, `]`, Esc e os atalhos Shift+B e Shift+E.
 - O guia (capítulo 2, "Juntar e apagar áreas"), o README e a referência (F1) contam o que mudou.
 
-**A etapa 5b** (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) vem em seguida.
+**A 5b (16/11/2026).** As seis ferramentas que faltavam. Três delas cortam e juntam traços **no lugar exato**, sem a grade: os pedaços saem das próprias cúbicas, divididas no ponto (De Casteljau). Assim a curva que fica é a mesma de antes, e só os pontos da beira do corte ganham as alças escritas **(R)**. Cada ponto é escrito do jeito mais simples que dá a mesma curva: o texto de antes, um canto (`!`), um ponto liso ou, só se precisar, as alças (`~`).
+
+**Tesoura (C),** na casa da Borracha:
+- num `stroke` ou numa `line`, um clique corta ali. O pedaço maior fica com o nome, e o outro entra logo abaixo como `nome_1` **(R: a mesma regra da Borracha)**. Perto de um ponto (3 pixels), o corte cai no próprio ponto;
+- numa forma fechada, o Illustrator abre o caminho (vira um traço com preenchimento). No Weasel, um `shape` não fica aberto, então são **dois cliques na borda**, e a forma se divide em duas numa reta entre eles **(R)**. Depois do primeiro clique, uma linha tracejada mostra o corte, e Esc desiste. Os furos (`cut=`) ficam com o pedaço que passa por eles **(R)**;
+- vale para as escolhidas e as formas da camada onde se desenha **(R)**.
+
+**Faca,** na casa da Borracha, sem letra (como no Illustrator):
+- o arraste corta as formas fechadas que ele atravessa de um lado ao outro: as escolhidas; sem escolha, as da camada **(R: como a Borracha)**. Um arraste que entra e para no meio da forma não corta nada;
+- o arraste passa pelo Simplificar com 2 pixels de tolerância (mais liso que o Lápis) **(R)**, e o corte segue os pontos dele;
+- a conta é a da grade (a faca tira uma faixa mais fina que uma casa). A borda nova sai dos próprios pontos da faca, e os dois lados do corte acham o mesmo cruzamento com a borda, pela mesma conta: os dois pedaços ficam com os mesmos pontos ali **(R)**.
+
+**Junção,** na casa do Lápis, e **Objeto › Caminho › Juntar (Ctrl+J)**:
+- a ferramenta: aperte na ponta de um `stroke` (ou `line`) e solte na ponta de outro. O menu e o Ctrl+J juntam os dois traços escolhidos, pelas pontas mais perto **(R: só dois de cada vez)**;
+- pontas a até 2 pixels uma da outra viram um ponto; mais longe, uma reta liga as duas, como no Illustrator;
+- fica a linha de cima, com a cor e a grossura dela, como no Pathfinder **(R)**; um `stroke` ganha de uma `line` (a curva não cabe numa `line`) **(R)**; e juntando um pedaço com o nome de origem (`s` e `s_1`), volta o nome `s` **(R)**. A linha que fica não muda de sentido, então o `taper=` continua certo;
+- um `stroke` não fecha nele mesmo: juntar as duas pontas do mesmo traço só avisa **(R)**. Para uma forma fechada, existe o `shape`;
+- os dois traços precisam estar na mesma camada **(R)**.
+
+**Borracha de caminho,** na casa do Lápis:
+- apaga o pedaço do traço por onde passa, com um raio fixo de 5 pixels da tela **(R)**, sem mexer no resto;
+- só em `stroke` e `line` (as escolhidas; sem escolha, as da camada). Numa forma fechada, avisa para usar a Borracha (Shift+E) **(R)**. No Illustrator ela abre o caminho fechado, o que no Weasel não existe.
+
+Junto com ela, **a Borracha (Shift+E) passou a cortar os traços do mesmo jeito, no lugar exato** **(R)**. Na 5a, o pedaço que ficava era refeito pelo Simplificar, quase igual.
+
+**Suavizar,** na casa do Lápis:
+- precisa de uma forma escolhida, como no Illustrator. Vale para `shape` e `stroke` **(R)**: o `rect` e a `ellipse` já são lisos, e a `line` é reta;
+- os pontos da curva a até 12 pixels do arraste **(R)** passam por uma média ao longo da curva (três passadas de uma janela do tamanho do círculo), que entra aos poucos na beira para não fazer degrau. Depois a curva é refeita pelo Simplificar com pouco mais de 1 pixel de tolerância **(R)**;
+- cada passada alisa mais e tira pontos (num zigue-zague de 9 pontos: 9, 6 e 5 em três passadas). Os pontos de fora ficam iguais, e os da beira ganham as alças, como na Borracha;
+- as pontas de um traço não andam.
+
+**Construtor de formas (Shift+M),** numa casa nova, antes do Degradê:
+- precisa de duas formas fechadas ou mais escolhidas, na mesma camada (até 31) **(R)**. As **regiões** são os pedaços que as bordas separam: as casas da grade dentro das mesmas formas e ligadas entre si. O mouse acende a região debaixo dele;
+- o arraste junta as regiões por onde passa numa forma só. Ela fica com a linha (o nome e a cor) da forma de cima na região onde o arraste começou, como no Illustrator **(R)**;
+- **as outras formas só perdem as regiões juntadas** **(R)**. No Illustrator, todas as regiões viram formas separadas, mas assim o código fica com menos linhas, e o desenho é o mesmo;
+- um clique numa região só a separa das outras. Com Alt, o arraste apaga as regiões;
+- o que sobra de cada forma segue a regra da Borracha (`nome_1`, `cut=`, a forma que some sai).
+
+**Na barra:** a Tesoura e a Faca entram na casa da Borracha. A Suavizar, a Borracha de caminho e a Junção entram na do Lápis, como já estava previsto. O Construtor de formas ganha uma casa, logo antes do Degradê **(R)**. Esc desiste no meio de qualquer uma delas.
+
+**Como ficou (16/11/2026):** a 5b saiu na 1.59.0, e a etapa 5 está completa.
+- O núcleo ganhou os caminhos exatos, a Faca e as regiões (`js/pathops.js`); as ferramentas estão no `js/ui-cut.js`.
+- O teste `_caminhos` agora também confere:
+  - que a Tesoura e o Juntar devolvem a curva de antes (a diferença é zero);
+  - o corte exato da Borracha num traço;
+  - as duas metades da Tesoura num retângulo;
+  - os cantos em comum dos dois lados da Faca;
+  - as áreas do Construtor de formas.
+- Conferido no navegador:
+  - a Tesoura num `stroke`, numa `line` e num `shape` (dois cliques);
+  - o Ctrl+J e a Junção (o nome `s` volta);
+  - a Faca num quadrado e num círculo;
+  - a Borracha de caminho;
+  - três passadas do Suavizar;
+  - o Construtor separando, juntando e apagando (com Alt);
+  - os atalhos C e Shift+M, as casas da barra e o Esc.
+- O guia (capítulo 2, "Cortar, juntar e alisar"), o README e a referência (F1) contam o que mudou.
+
+**A etapa 6** (Símbolos e Camadas completas) vem em seguida.
 
 ### Como ficaria por dentro
 

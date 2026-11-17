@@ -606,12 +606,89 @@ async function pathsCase() {
     lines.push(`${what}: ${r.pieces.length} pedaço(s)`);
     for (const pc of r.pieces) lines.push(`  ${show(pc.outer)}`);
   }
-  // um stroke cortado pela borracha
+  // ---- a etapa 5b: os caminhos exatos (a curva que fica é a mesma de antes) ----
+  // como o código escreve cada ponto (pathops.settle): = o texto de antes, ! canto, ~ as alças
+  const showN = (N, md) => N.map((p, i) => `${f2(p.x)},${f2(p.y)}${md[i].keep ? '=' : md[i].corner ? '!' : md[i].auto ? '' : `~${md[i].tin.map(f2)}~${md[i].tan.map(f2)}`}${p.tag ? '#' + p.tag.i : ''}`).join(' ');
+  // a curva que o código dá com esses pontos (o que o desenho faz com eles)
+  const rebuild = (N, md, closed) => G.smoothSegs(N.map((p, i) => {
+    const m = md[i], t = p.tag;
+    if (m.keep) return { x: p.x, y: p.y, corner: !!(t && t.corner), tan: t && t.tan, tin: t && t.tin };
+    if (m.corner) return { x: p.x, y: p.y, corner: true };
+    if (m.auto) return { x: p.x, y: p.y };
+    return { x: p.x, y: p.y, tan: m.tan, tin: m.tin };
+  }), closed, 1);
+  // o quanto a curva a sai de fora da curva b (amostras de a, o ponto de b mais perto)
+  const off = (a, b) => { let w = 0; for (const s of a) for (let j = 0; j <= 20; j++) { const t = j / 20, u = 1 - t; w = Math.max(w, P.nearestOn(b, u * u * u * s[0] + 3 * u * u * t * s[2] + 3 * u * t * t * s[4] + t * t * t * s[6], u * u * u * s[1] + 3 * u * u * t * s[3] + 3 * u * t * t * s[5] + t * t * t * s[7]).d); } return w; };
   const sp = [[0, 0], [50, 30], [100, 0], [150, 30]].map(([x, y]) => ({ x, y }));
-  const runs = P.cutOpen(P.ring(G.smoothSegs(sp, false, 1), 1, sp.map((p, i) => ({ i })), false), P.near([[50, 0], [50, 60]], 10), 0.5);
-  record(runs.length === 2 && Math.abs(runs[0][runs[0].length - 1].x - 40) < 0.6 && Math.abs(runs[1][0].x - 60) < 0.6, '_caminhos/stroke cortado', `${runs.length} pedaços`);
-  lines.push(`stroke cortado: ${runs.length} pedaços`);
-  for (const run of runs) lines.push(`  ${show(P.fitPath(run, { tol: 0.5, closed: false, cell: 0.4 }))}`);
+  const ss = G.smoothSegs(sp, false, 1), stags = sp.map((p, i) => ({ i }));
+  // a Tesoura num stroke: os dois pedaços juntos são o traço de antes
+  {
+    const q = P.normPos(ss, false, P.nearestOn(ss, 75, 10)), n = ss.length;
+    const Ns = [P.subPath(ss, false, stags, { i: 0, t: 0 }, q), P.subPath(ss, false, stags, q, { i: n - 1, t: 1 })];
+    const md = Ns.map((N) => P.settle(N, false, 1)), back = Ns.flatMap((N, k) => rebuild(N, md[k], false));
+    const e = Math.max(off(back, ss), off(ss, back));
+    record(e < 1e-6, '_caminhos/tesoura num stroke', `a curva mudou ${e.toFixed(4)}`);
+    lines.push('tesoura num stroke:');
+    Ns.forEach((N, k) => lines.push(`  ${showN(N, md[k])}`));
+    // e o Juntar dos dois pedaços (as pontas no mesmo lugar viram um ponto)
+    const [A0, B0] = Ns, J = A0.slice(0, -1).concat([Object.assign({}, A0[A0.length - 1], { tan: B0[0].tan })], B0.slice(1)), mj = P.settle(J, false, 1);
+    const ej = Math.max(off(rebuild(J, mj, false), ss), off(ss, rebuild(J, mj, false)));
+    record(ej < 1e-6, '_caminhos/juntar de volta', `a curva mudou ${ej.toFixed(4)}`);
+    lines.push(`juntar de volta: ${showN(J, mj)}`);
+  }
+  // a Borracha num stroke: o corte no lugar exato, e o resto da curva igual
+  {
+    const runs = P.outside(ss, P.near([[50, 0], [50, 60]], 10), 0.5);
+    const Ns = runs.map((r) => P.subPath(ss, false, stags, P.normPos(ss, false, r.a), P.normPos(ss, false, r.b)));
+    const md = Ns.map((N) => P.settle(N, false, 1)), back = Ns.flatMap((N, k) => rebuild(N, md[k], false));
+    const ends = Ns.length === 2 ? [Ns[0][Ns[0].length - 1].x, Ns[1][0].x] : [];
+    record(Ns.length === 2 && Math.abs(ends[0] - 40) < 0.6 && Math.abs(ends[1] - 60) < 0.6 && off(back, ss) < 1e-6, '_caminhos/stroke cortado', `${Ns.length} pedaços, pontas em ${ends.map(f2).join(' e ')}`);
+    lines.push(`stroke cortado: ${Ns.length} pedaços`);
+    Ns.forEach((N, k) => lines.push(`  ${showN(N, md[k])}`));
+  }
+  // a Tesoura numa forma: dois cliques na borda de um retângulo; a reta entre eles divide a área ao meio
+  {
+    const rs = G.rectSegs(0, 0, 100, 60, 0, 0), rt = [0, 1, 2, 3].map((i) => ({ i, corner: true }));
+    const a = P.normPos(rs, true, P.nearestOn(rs, 30, -1)), b = P.normPos(rs, true, P.nearestOn(rs, 70, 61));
+    const Ns = [[a, b], [b, a]].map(([x, y]) => { const N = P.subPath(rs, true, rt, x, y), f = N[0], l = N[N.length - 1], v = [(f.x - l.x) / 3, (f.y - l.y) / 3]; f.tin = v; l.tan = v.slice(); return P.growNodes(N, true, 3); });
+    const ar = Ns.map((N) => Math.abs(P.nodesArea(N)));
+    record(Math.abs(ar[0] - 3000) < 1 && Math.abs(ar[1] - 3000) < 1, '_caminhos/tesoura numa forma', `áreas ${ar.map((x) => x.toFixed(1)).join(' e ')}`);
+    lines.push('tesoura num retângulo:');
+    Ns.forEach((N) => lines.push(`  ${showN(N, P.settle(N, true, 1))}`));
+  }
+  // a Faca atravessando um círculo e um retângulo: dois pedaços cada, e os dois lados do corte com os mesmos pontos
+  {
+    const raw = [];
+    for (let x = 20; x <= 205; x += 5) raw.push([x, 95 + 10 * Math.sin(x / 30)]);
+    const kp = W.simplify.freehand(raw, false, 2);
+    const sq = [[40, 40], [160, 40], [160, 140], [40, 140]].map(([x, y]) => ({ x, y, corner: true }));
+    for (const [what, it, want] of [
+      ['faca num retângulo', { rings: [P.ring(G.smoothSegs(sq, true, 1), 1, sq.map((p, i) => ({ i, corner: true })), true)] }, 12000],
+      ['faca num círculo', { rings: [circRing(140, 110, 50)] }, pi * 2500],
+    ]) {
+      const pcs = P.knife([it], kp, { cell: 0.4, tol: 0.5, smooth: 1 })[0] || [];
+      const cut = pcs.map((pc) => new Set(pc.outer.filter((p) => p.corner && !p.tag).map((p) => `${f2(p.x)},${f2(p.y)}`)));
+      const shared = cut.length === 2 ? [...cut[0]].filter((k) => cut[1].has(k)).length : 0;
+      const a = pcs.reduce((s, pc) => s + areaOf(pc.outer), 0);
+      record(pcs.length === 2 && shared >= 2 && Math.abs(a - want) <= want * 0.01, `_caminhos/${what}`, `${pcs.length} pedaços, ${shared} cantos em comum, área ${a.toFixed(0)} (a conta: ${want.toFixed(0)})`);
+      lines.push(`${what}: ${pcs.length} pedaços, área ${a.toFixed(0)}`);
+      for (const pc of pcs) lines.push(`  ${show(pc.outer)}`);
+    }
+  }
+  // o Construtor de formas: dois círculos, três regiões; juntar a lente com a da esquerda e apagar a lente
+  {
+    const R = P.regions([{ rings: [circRing(0, 0, 30)] }, { rings: [circRing(40, 0, 30)] }], { cell: 0.4 });
+    const big = R.regs.filter((r) => r.n >= 4).map((r) => r.sig).sort().join(',');
+    const lensId = P.regionAt(R, 20, 0), leftId = P.regionAt(R, -10, 0);
+    const lz = lens(30, 40), all = 2 * pi * 900 - lz;
+    const m = P.regionsApply(R, [lensId, leftId], true, { tol: 0.5, smooth: 1 });
+    const am = m.merged.reduce((s, pc) => s + areaOf(pc.outer), 0), ar = m.items[1] ? m.items[1].reduce((s, pc) => s + areaOf(pc.outer), 0) : 0;
+    const e = P.regionsApply(R, [lensId], false, { tol: 0.5, smooth: 1 });
+    const ae = e.items.map((x) => (x ? x.reduce((s, pc) => s + areaOf(pc.outer), 0) : 0));
+    const ok = big === '1,2,3' && Math.abs(am - pi * 900) < pi * 9 && m.items[0] && !m.items[0].length && Math.abs(ar - (pi * 900 - lz)) < pi * 9 && ae.every((x) => Math.abs(x - (pi * 900 - lz)) < pi * 9);
+    record(ok, '_caminhos/construtor de formas', `regiões ${big}, juntou ${am.toFixed(0)}, sobrou ${ar.toFixed(0)}, apagando a lente ${ae.map((x) => x.toFixed(0)).join(' e ')} (a conta: ${(pi * 900).toFixed(0)}, ${(pi * 900 - lz).toFixed(0)}; tudo ${all.toFixed(0)})`);
+    lines.push(`construtor de formas: regiões ${big}; juntar a lente e a esquerda: ${m.merged.length} forma, área ${am.toFixed(0)}; a da direita fica com ${ar.toFixed(0)}; apagar a lente: ${ae.map((x) => x.toFixed(0)).join(' e ')}`);
+  }
   await check('_caminhos', 'caminhos.txt', 'text', lines.join('\n') + '\n');
 }
 
