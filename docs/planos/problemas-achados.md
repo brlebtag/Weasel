@@ -3,7 +3,8 @@
 Estes problemas foram achados de passagem em novembro de 2026:
 - pelo diagnóstico do guia (os relatórios de cada capítulo);
 - pelas sessões das tarefas A, B e J;
-- pelas etapas 1 e 2 do [guia novo](guia-e-atalhos.md).
+- pelas etapas 1 e 2 do [guia novo](guia-e-atalhos.md);
+- pela etapa 6 do guia novo (os itens 24 a 26, conferidos em 17/11/2026: a imagem sai igual, byte a byte, e o `--check` não avisa).
 
 Nada aqui foi corrigido ainda. As letras A a J são as da seção 2 do plano do guia. Os números novos começam em 1.
 
@@ -65,10 +66,13 @@ Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avi
 
 **Luz:**
 - 18. O `bone=` numa luz `dir` não faz nada.
+- 24. Na luz `dir`, o `radius=`, o `glow=`, o `aim=` e o `cone=` também não fazem nada (`light sol dir 0,1 radius=50 glow=30 aim=40 cone=20` sai igual a `light sol dir 0,1`).
 - 19. Dois `ambient`: vale o último. A opção `lit` da camada não faz nada.
+- 25. O `rim=cor,largura` da camada não faz nada quando a cena só tem `ambient`, sem nenhuma `light` (o `ambient` não tem direção).
 - D. Numa `key`, a luz aceita `power=30` e `cone=999`; a linha `light` corta em 0 a 20 e 1 a 180. O `zoom` vai até 100 na `camera` e até 1000 no `at`; o `lag`, até 10 e até 100.
 
 **Animação** (I): `key emissor.c=`; no `expr`, as propriedades de camada, luz e caixa.
+- 26. Numa `key`, os efeitos de camada não têm faixa: `key 0 l.brightness=-5 l.saturate=-3 l.contrast=-2` passa sem aviso. Na linha `layer`, os mesmos números avisam ("deve ficar entre 0 e 10"). É o mesmo caso do D, que hoje fala só das luzes.
 
 **Jogo:**
 - 20. O `size=` do `tileset` tem mínimo 2, sem aviso.
