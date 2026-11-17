@@ -152,9 +152,11 @@
     if (chosen && !m.defs.has(chosen)) chosen = null;
     grid.querySelectorAll('.sy-tile').forEach((t) => t.classList.toggle('sel', t.dataset.name === chosen));
     const d = chosen && m.defs.get(chosen);
-    what.textContent = d ? `${d.name} · ${d.uses ? many(d.uses, 'use', 'uses') : 'sem use'}` : '';
+    // só escreve o que mudou: o painel roda a cada pintura (docs/planos/desempenho.md, 9d)
+    const wt = d ? `${d.name} · ${d.uses ? many(d.uses, 'use', 'uses') : 'sem use'}` : '';
+    if (what.textContent !== wt) what.textContent = wt;
     const own = !!(d && A.defLines(d.name)), useSel = sel.some((l) => { const r = m.byLine.get(l); return r && r.use; });
-    const set = (act, ok) => { const b = sec.querySelector(`[data-act=${act}]`); if (b) b.disabled = !ok; };
+    const set = (act, ok) => { const b = sec.querySelector(`[data-act=${act}]`); if (b && b.disabled !== !ok) b.disabled = !ok; };
     set('place', !!d);
     set('edit', own);
     set('break', useSel);

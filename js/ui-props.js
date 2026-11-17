@@ -297,7 +297,9 @@
       const v = f.get();
       if (el.tagName === 'SELECT') { el.value = v || ''; return; }
       el.value = v === null ? '' : v;
-      el.placeholder = v === null ? 'vários' : el.getAttribute('placeholder') === 'vários' ? '' : el.placeholder;
+      // só escreve o que mudou: o painel roda a cada pintura (docs/planos/desempenho.md, 9d)
+      const ph = v === null ? 'vários' : el.getAttribute('placeholder') === 'vários' ? '' : el.placeholder;
+      if (el.placeholder !== ph) el.placeholder = ph;
     });
     bodyP.querySelectorAll('[data-col]').forEach((el) => {
       const f = F.get(el.dataset.col);
@@ -323,7 +325,7 @@
         if (el === act) return;
         const i = +el.dataset.fxp.split(':')[1], t = parts[i] !== undefined ? parts[i].trim() : '';
         if (el.type === 'color') el.value = hexOf(t, cur.m) || '#000000'; else el.value = t;
-        el.disabled = !on;
+        if (el.disabled !== !on) el.disabled = !on;
       });
     });
   }
@@ -436,7 +438,7 @@
   });
 
   // ---------- Amostras ----------
-  let sigS = '';
+  let sigS = '', colsHtml = '';
   function fillSwatches(force) {
     const m = st.model;
     if (!m) return;
@@ -445,7 +447,8 @@
     const grads = [...m.gradients.keys()], pats = [...m.patterns.keys()], vars = m.variants || [];
     const sig = JSON.stringify([cols.map(([k]) => [k, hexOf(k, m)]), widths, grads, pats, vars, st.variant, cfg.ink]);
     // a lista do campo de cor: os nomes que valem em c= e inkc=
-    $('ppColors').innerHTML = ['none', ...cols.map(([k]) => k), ...grads, ...pats].map((n) => `<option value="${esc(n)}">`).join('');
+    const ch = ['none', ...cols.map(([k]) => k), ...grads, ...pats].map((n) => `<option value="${esc(n)}">`).join('');
+    if (ch !== colsHtml) { colsHtml = ch; $('ppColors').innerHTML = ch; }
     if (!force && sig === sigS) return;
     sigS = sig;
     whatS.textContent = cols.length ? `${cols.length} ${cols.length > 1 ? 'cores' : 'cor'}` : '';

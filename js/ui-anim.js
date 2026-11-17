@@ -335,6 +335,9 @@
 
   // ---------- desenhar ----------
   let W0 = 0, H0 = 0;
+  // a largura da caixa vem do ResizeObserver (lá embaixo): ler box.clientWidth a cada pintura, logo depois de o player
+  // mudar o rótulo do quadro, obrigava a página a refazer o layout no meio do quadro (docs/planos/desempenho.md, 9c)
+  let boxW = 0;
   function rowsOf(D) {
     const out = [{ kind: 'sum', key: '', label: 'todas' }];
     if (D.events.length) out.push({ kind: 'ev', key: 'ev', label: 'eventos' });
@@ -344,7 +347,7 @@
   const xOf = (f) => GUT + (f - v.f0) * v.cw;
   const fOf = (x) => Math.floor((x - GUT) / v.cw + v.f0);
   function size() {
-    const D = data(), w = Math.max(200, box.clientWidth || 600);
+    const D = data(), w = Math.max(200, boxW || box.clientWidth || 600);
     const n = D ? rowsOf(D).length : 2, h = RULER + n * RH + 6;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (w !== W0 || h !== H0 || cv.width !== Math.round(w * dpr)) {
@@ -779,11 +782,11 @@
   }
   A.on('model', sync);
   A.on('draw', () => {
-    const sig = `${st.anim}|${st.frame}|${box.clientWidth}`;
+    const sig = `${st.anim}|${st.frame}`;
     if (show() || sig !== v.sig) { v.sig = sig; if (v.anim !== st.anim) { v.anim = st.anim; v.sel.clear(); v.row = ''; v.auto = true; v.data = null; } render(); }
   });
   $('tTimeline').addEventListener('change', () => { show(); render(); });
-  if (window.ResizeObserver) new ResizeObserver(() => render()).observe(box);
+  if (window.ResizeObserver) new ResizeObserver(() => { boxW = box.clientWidth; render(); }).observe(box);
   W.animTimeline = { insertKey, clearKey, shiftFrames, setEase, moveKeys, deleteKeys, setFrames, render, sel: () => chosen(), curveSvg, EASES };
   setTimeout(sync, 0);
 })(window.Weasel = window.Weasel || {});

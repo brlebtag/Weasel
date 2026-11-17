@@ -370,7 +370,9 @@
       const t = tree[+r.dataset.li], on = !!t && t.layer === Ly;
       r.classList.toggle('draw', on);
       const ln = r.querySelector('.ln');
-      if (ln) ln.title = on ? `${t.layer.name}: o que você desenhar entra nesta camada. Clique escolhe as linhas dela; duplo clique renomeia` : `Escolher as ${t ? t.kids.length : 0} linhas desta camada (e desenhar nela); duplo clique renomeia`;
+      // só escreve o que mudou: o painel roda a cada pintura (docs/planos/desempenho.md, 9d)
+      const tt = on ? `${t.layer.name}: o que você desenhar entra nesta camada. Clique escolhe as linhas dela; duplo clique renomeia` : `Escolher as ${t ? t.kids.length : 0} linhas desta camada (e desenhar nela); duplo clique renomeia`;
+      if (ln && ln.title !== tt) ln.title = tt;
     });
   }
   A.on('draw', markDraw);

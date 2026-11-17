@@ -515,8 +515,10 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .stage.space canvas { cursor: grab !important; }
 .stage.pan canvas { cursor: grabbing !important; }
-/* a coluna da direita: Propriedades e Amostras (js/ui-props.js) */
-.dock { grid-row: 1; grid-column: 3; width: 250px; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--panel); border-left: 1px solid var(--line); font-size: 12px; }
+/* a coluna da direita: Propriedades e Amostras (js/ui-props.js). O contain: size isola a coluna (a largura é fixa
+   e a altura vem da grade): mexer no resto da página (o rótulo do quadro, o código) não a refaz inteira, o que
+   custava uns 14 ms a cada recálculo da página (docs/planos/desempenho.md, item 9a) */
+.dock { grid-row: 1; grid-column: 3; width: 250px; min-height: 0; overflow-y: auto; overflow-x: hidden; contain: size; background: var(--panel); border-left: 1px solid var(--line); font-size: 12px; }
 .dock[hidden], .dk-sec[hidden] { display: none; }
 .dk-sec + .dk-sec { border-top: 1px solid var(--line); }
 .dk-head { display: flex; align-items: center; gap: 8px; padding: 6px 6px 4px 10px; position: sticky; top: 0; z-index: 1; background: var(--panel); }

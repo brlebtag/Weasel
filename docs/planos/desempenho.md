@@ -1,6 +1,6 @@
 # Desempenho: imagens, vídeos e sons mais rápidos
 
-**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5, o item 5a na 1.48.6, os itens 7d e 7e na 1.48.7 e o item 7b na 1.48.8 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b e o 7c ficaram de lado. Não sobra nenhum item aberto.
+**Situação:** análise de 15/11/2026. Os itens 1 a 4 saíram na 1.48.1 (15/11/2026), o item 6 na 1.48.2, o item 5b na 1.48.3, o item 7a na 1.48.4, o item 8 na 1.48.5, o item 5a na 1.48.6, os itens 7d e 7e na 1.48.7 e o item 7b na 1.48.8 (16/11/2026). O item 8b foi testado e não ajuda, e o 2b e o 7c ficaram de lado. Em 17/11/2026, uma segunda análise olhou as versões 1.49 a 1.65 (a interface nova): a linha de comando e o jogo ficaram iguais à 1.48.8, e o editor ganhou o item 9 (9a a 9e), que saiu na 1.65.1. Não sobra nenhum item aberto.
 
 Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · ➖ não precisa
 
@@ -24,6 +24,11 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 | 7e | Normal map do Godot: desfoque e Sobel lendo a memória em sequência | `normal.js` `boxBlur`, `frame` | folha do Cavaleiro: 3,4 → 2,0 s (−40%) | ✅ 1.48.7 |
 | 8 | Filme com várias threads: o limite é a memória; os mapas de luz pintados só onde são lidos | `scene.js` `lightMaps` e `lightPiece`, `film.js` | MP4 de 10 s: `-j 1` 16,7 → 14,0 s, `-j 8` 5,3 → 4,7 s | ✅ 1.48.5 |
 | 8b | Filme: telas de rascunho recriadas em vez de limpas, na linha de comando | `scene.js` `cleanCanvas`, `geom.js` `drawVar`, `film.js` `alphaLayer` e `transLayer`, `art.js` `work` | nenhum (dentro do ruído) | ➖ não ajuda |
+| 9a | Editor: a coluna da direita isolada (`contain: size`), para o resto da página não a refazer inteira | `css/style.css` `.dock` | recálculo da página (painel escondido): 17–27 → 2–4 ms | ✅ 1.65.1 |
+| 9b | Editor: o player só pinta quando o quadro avança | `app.js` `tick` | 2 s tocando o `dash` do cavaleiro: 120 → 31 pinturas | ✅ 1.65.1 |
+| 9c | Editor: as linhas do tempo sem ler a largura a cada pintura | `ui-anim.js`, `timeline.js` | sem o recálculo forçado no meio de cada quadro | ✅ 1.65.1 |
+| 9d | Editor: os painéis só escrevem o que mudou | `ui-props.js`, `ui-layers.js`, `ui-symbols.js`, `ui-style.js` | a troca de quadro parada não refaz mais o layout à toa | ✅ 1.65.1 |
+| 9e | Editor: uma pintura por tecla | `app.js` `onChange` e `reparse` | 2,25 → 1,1 pinturas por tecla | ✅ 1.65.1 |
 
 ## Como medir
 
@@ -40,6 +45,13 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **Confira muitos quadros:** uma amostra de 3 quadros pode sair idêntica e outros quadros mudarem (aconteceu no 5a). Use pelo menos 1 a cada 4 quadros de um filme com o que a mudança toca.
 - **No navegador, os estilos de arte não se repetem:** o mesmo motor, rodado duas vezes seguidas no Chrome, dá quadros um pouco diferentes com estilo. Não dá para conferir uma mudança nos estilos por lá; só sem estilo.
 - **Para ver as threads:** cronometre dentro de cada thread (receber o quadro, render, pixels, cópia) e na principal (espera, ffmpeg). Para separar a máquina do código, rode as mesmas contas com N threads e com N processos.
+- **No editor (navegador):**
+  - Meça com a página **à vista**. Com o painel do navegador escondido, a página roda em segundo plano: o `requestAnimationFrame` não roda, e os tempos saem de 3 a 10 vezes maiores e mudam muito de uma vez para outra.
+  - Compare o código antigo e o novo na mesma sessão, um depois do outro (`git stash`, recarregar), com o mesmo roteiro: a carga da máquina e o tamanho da janela mudam os números.
+  - **Recálculo forçado:** ler uma medida (`clientWidth`, `offsetWidth`, `getBoundingClientRect`) logo depois de mudar a página obriga o navegador a refazer o layout ali mesmo, e ele refaz de novo antes de mostrar. No caminho da pintura, guarde as medidas num `ResizeObserver`.
+  - **Quem suja o layout:** um `MutationObserver` durante uma pintura mostra cada escrita na página. Trocar um texto pelo mesmo texto também conta.
+  - **Quem pesa no layout:** esconda uma parte (`display: none`) e meça o recálculo de novo.
+  - O canvas do Chrome desenha na placa de vídeo depois do script: o tempo da pintura no script não conta tudo, mas serve para comparar.
 
 ## Os itens
 
@@ -296,6 +308,52 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 - **Por quê, provavelmente:** a cópia só acontece quando a tela é pintada de novo enquanto o quadro ainda guarda um desenho dela por fazer. As telas reaproveitadas dentro do mesmo quadro já têm o tamanho do desenho (item 4), então a cópia é pequena. De um quadro para o outro, o quadro já foi lido, e não há o que copiar.
 - **Decisão:** o código fica como está.
 
+### ✅ 9. O editor depois da interface nova (1.65.1)
+
+A segunda análise (17/11/2026) comparou a 1.48.8 com a 1.65.0. Na linha de comando, tudo ficou dentro do ruído (±10%): filme em WebM com 1 thread e com várias, GIF de um plano, folha e `.tscn` do cavaleiro, GIF da coruja. O motor quase não mudou nessas versões. O que pesava era o editor: a coluna da direita (Propriedades, Camadas, Amostras, Símbolos, Acabamento e estilo) e as linhas do tempo, que entraram com o plano da interface.
+
+- **9a. A coluna da direita isolada:**
+  - **Problema:** a cada recálculo da página, o navegador refazia a coluna inteira, mesmo quando o que mudou foi só o rótulo do quadro no player. Com o painel escondido, isso custava de 14 a 27 ms a cada vez; sem a coluna, ~2 ms.
+  - **Feito:** `contain: size` no `.dock`. A largura dela já é fixa (250 px) e a altura vem da grade, então o tamanho não depende do que tem dentro, e mexer fora dela não a refaz. O `contain: layout` sozinho não adianta; o `strict` também prenderia os menus de posição fixa dentro da coluna.
+  - **Resultado:** o recálculo cai para 2–4 ms com o painel escondido e de 2,1 para 0,4 ms com a página à vista.
+- **9b. O player só pinta quando o quadro avança:**
+  - **Problema:** o `tick` pintava em toda volta da tela. Numa animação de 12 fps numa tela de 60 Hz, 4 de cada 5 pinturas repetiam o quadro, e cada uma passava pelos 7 painéis. Vinha da 1.0; com os painéis, ficou caro.
+  - **Feito:** tocando, a tela pinta quando o quadro, a animação ou o tocar/parar mudam. A pintura passo a passo, que anda pelo tempo, continua pintando em toda volta. Quem muda outra coisa com o player andando (o código, a variante, a escolha) já pintava por conta própria.
+- **9c. As linhas do tempo sem ler a largura:**
+  - **Problema:** a da animação (`ui-anim.js`) e a do filme (`timeline.js`) liam a largura da caixa a cada pintura, logo depois de o player trocar o rótulo do quadro. Isso obrigava um recálculo no meio do quadro, e o navegador fazia outro antes de mostrar. A pintura da linha do tempo em si custa ~1,8 ms.
+  - **Feito:** a largura vem do `ResizeObserver` de cada uma. Antes da primeira medida (a caixa acabou de aparecer), ela lê como antes.
+- **9d. Os painéis só escrevem o que mudou:**
+  - **Problema:** a cada pintura, os painéis escreviam de novo os mesmos valores: 13 dicas nas Camadas, 4 botões dos Símbolos, os textos de exemplo de Propriedades e a lista de cores dos campos (refeita inteira). Na troca de quadro parada, o painel Acabamento e estilo trocava dois textos pelos mesmos, e isso refazia o layout da página.
+  - **Feito:** cada um compara antes de escrever.
+  - Achado junto: o código antigo criava `placeholder=""` vazio em 5 campos de Propriedades, ao escrever o texto de exemplo nele mesmo. Agora eles ficam sem o atributo; na tela, nada muda.
+- **9e. Uma pintura por tecla:**
+  - **Problema:** a cada tecla, o editor chama o `onChange` (que refazia o modelo e pintava) e logo depois o `onCaret` (que pintava de novo, com o cursor novo).
+  - **Feito:** o `onChange` refaz o modelo e os painéis sem pintar (`reparse(false)`), e a pintura fica com o `onCaret`, que o editor sempre chama em seguida (`Editor._emit`). As outras chamadas do `reparse` continuam pintando.
+- **Resultado** (Chrome, página à vista, tela de 120 Hz; o código da 1.65.0 e o novo na mesma sessão, com o mesmo roteiro):
+
+  | Medida | Cavaleiro (`dash`, cursor numa forma) | Filme (quadros 390 a 411, cursor num ator) |
+  |---|---|---|
+  | quadro que avança (rótulo e pintura) | 4,8 → 1,3 ms | 5,2 → 2,7 ms |
+  | tecla | 15,0 → 9,5 ms (2,25 → 1,1 pinturas) | 15,6 → 8,8 ms |
+  | 2 s tocando: voltas da tela | 120 → 233 | 105 → 215 |
+  | 2 s tocando: pinturas | 120 → 31 | 105 → 45 |
+  | 2 s tocando: tempo ocupado no laço | 468 → 73 ms | 431 → 125 ms |
+
+  Com o código antigo, o player caía para ~60 voltas por segundo numa tela de 120 Hz; agora acompanha a tela.
+- **Conferido:**
+  - o palco e as linhas do tempo saem com os mesmos pixels do código antigo: 12 quadros do `dash` e um com o cursor numa forma no cavaleiro (o palco e a linha do tempo da animação), e 5 quadros do `filme.weasel` (o palco e a linha do tempo do filme);
+  - a coluna fica do mesmo tamanho, com a mesma rolagem;
+  - depois de uma tecla, a tela é igual à de uma pintura nova, e o Ctrl+Z volta à imagem de antes;
+  - tocando, a primeira volta pinta o quadro sem as alças, e a volta que para pinta de novo com elas;
+  - a pintura passo a passo pinta em toda volta (61 de 61) e anda;
+  - as duas linhas do tempo acompanham a largura da janela e a troca entre desenho e filme;
+  - o `npm test` e o `--strict` passaram (1048 conferidos, tudo igual).
+- **Medido e deixado como está:**
+  - O texto colorido do código: são ~630 trechos coloridos nas linhas à vista, e refazer o layout deles custa 17–35 ms por tecla com o painel escondido. Com a página à vista, a tecla inteira custa ~9 ms, então não vale mexer.
+  - A vista 3D e o Palco já esperam o tempo que a última pintura levou antes de pintar de novo. Refazer as placas do cavaleiro custa ~5 ms.
+  - As miniaturas dos estilos já saem no worker, só com a galeria à vista e meio segundo depois de o código parar.
+  - O filme parado parecia mais caro que tocando numa medida da análise; isso não se repetiu (4–5 ms por quadro nos dois casos).
+
 ## Conferências pendentes
 
 Nenhuma. A prévia do filme no editor do navegador, que tinha ficado sem conferir depois da 1.48.1, foi usada e conferida nas etapas 7a, 7b e 7c do plano da interface (1.62.0 a 1.64.0, em 16/11/2026) e de novo na 1.65.0, com o `filme.weasel`.
@@ -305,6 +363,7 @@ Nenhuma. A prévia do filme no editor do navegador, que tinha ficado sem conferi
 - A geometria e o JS do motor por quadro.
 - A paleta e o LZW do GIF.
 - Os caches da câmera com `lag` e do `speed=auto`.
+- No editor: a vista 3D (que espera o tempo da última pintura) e as miniaturas dos estilos (no worker).
 
 ## Ordem sugerida para o que falta
 

@@ -264,17 +264,19 @@
   function setV(el, v) { if (el && el !== document.activeElement) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } }
   function fill(tg) {
     const m = st.model, fn = m.finish, fl = finLine();
-    what.textContent = `${fn.style}${styleOf(tg) !== 'none' ? ' · art ' + styleOf(tg) : ''}`;
+    // só escreve o que mudou: trocar o texto igual a cada quadro refazia o layout da página (docs/planos/desempenho.md, 9d)
+    const wt = `${fn.style}${styleOf(tg) !== 'none' ? ' · art ' + styleOf(tg) : ''}`;
+    if (what.textContent !== wt) what.textContent = wt;
     setV(body.querySelector('[data-fstyle]'), fn.style);
     for (const k of RANGE.keys()) {
       const raw = fn[k], pal = k === 'posterize' && raw === 'palette', v = pal ? 0 : typeof raw === 'number' ? raw : DEF[k];
       setV(body.querySelector(`[data-fin="${k}"]`), v);
       setV(body.querySelector(`[data-finv="${k}"]`), pal ? 'palette' : fmtN(v, 2));
       const r = body.querySelector(`[data-fin="${k}"]`);
-      if (r) r.disabled = pal;
+      if (r && r.disabled !== pal) r.disabled = pal;
     }
     setV(body.querySelector('[data-fpal]'), fn.posterize === 'palette');
-    const ln = (sel, l) => { const s = body.querySelector(`[data-line="${sel}"]`); if (s) s.innerHTML = l >= 0 ? `<button type="button" class="pp-go" data-go="${l}" title="Ir para a linha no código">linha ${l + 1}</button>` : ''; };
+    const ln = (sel, l) => { const s = body.querySelector(`[data-line="${sel}"]`); if (s && s.dataset.at !== String(l)) { s.dataset.at = String(l); s.innerHTML = l >= 0 ? `<button type="button" class="pp-go" data-go="${l}" title="Ir para a linha no código">linha ${l + 1}</button>` : ''; } };
     ln('fin', fl);
     ln('art', tg.line);
     if (gal) for (const b of gal.children) b.classList.toggle('on', b.dataset.style === styleOf(tg));

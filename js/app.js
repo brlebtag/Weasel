@@ -90,7 +90,9 @@
 
   // ---------- editor ----------
   const editor = new W.Editor($('editor'), {
-    onChange: () => { st.none = -1; reparse(); },
+    // o editor chama o onCaret logo depois do onChange (Editor._emit), e é ele quem pinta: uma pintura por tecla, já com
+    // o cursor novo (antes eram duas; docs/planos/desempenho.md, 9e)
+    onChange: () => { st.none = -1; reparse(false); },
     // o cursor indo para uma linha fora da escolha (no código) solta a escolha do painel das camadas
     onCaret: (c) => {
       st.caret = c;
@@ -1529,7 +1531,8 @@
     }
   }
 
-  function reparse() {
+  // paint = false: refaz o modelo e os painéis sem pintar (quem chama pinta logo depois)
+  function reparse(paint = true) {
     st.files.set(st.current, editor.value);
     const want = st.model ? pvWanted() : null;
     st.model = parseFor(st.variant, want);
@@ -1563,7 +1566,7 @@
     selMemo = null;
     updateCaretInfo();
     emit('model');
-    draw();
+    if (paint) draw();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveWorkspace, 400);
   }
@@ -2035,6 +2038,10 @@
 
   // ---------- laço de desenho ----------
   function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+  // Tocando, a tela só pinta quando o quadro avança: numa animação de 12 fps e numa tela de 60 Hz, 4 de cada 5 voltas
+  // pintavam o mesmo quadro, com todos os painéis. A pintura passo a passo, que anda pelo tempo, pinta em toda volta.
+  // Quem muda outra coisa com o player andando (o código, a variante, a escolha) pinta por conta própria.
+  let painted = null;
   function tick(t) {
     raf = 0;
     let again = false;
@@ -2086,7 +2093,11 @@
       if ((t - st.build.t0) / 1000 > st.build.plan.total + 0.8) stopBuild();
       else again = true;
     }
-    draw();
+    const same = st.playing && !st.build && painted && painted.frame === st.frame && painted.anim === st.anim && painted.playing;
+    if (!same) {
+      draw();
+      painted = { frame: st.frame, anim: st.anim, playing: st.playing };
+    }
     if (again) kick();
   }
 

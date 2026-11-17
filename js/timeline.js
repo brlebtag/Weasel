@@ -34,6 +34,10 @@
     const v = { t0: 0, pps: 0, auto: true, drag: null, layout: null, sel: new Set() };
     const ctx = canvas.getContext('2d');
     canvas.tabIndex = 0;
+    // a largura vem do ResizeObserver: ler canvas.clientWidth a cada pintura, logo depois de o player mudar o rótulo do
+    // quadro, obrigava a página a refazer o layout no meio do quadro (docs/planos/desempenho.md, 9c)
+    let wNow = 0;
+    if (window.ResizeObserver) new ResizeObserver(() => { wNow = canvas.clientWidth; if (wNow) draw(); }).observe(canvas);
     const atId = (name, line) => name + SEP + line;
     const chosen = () => [...v.sel].map((s) => { const i = s.lastIndexOf(SEP); return { name: s.slice(0, i), line: +s.slice(i + 1) }; });
 
@@ -121,7 +125,7 @@
       if (!model || !model.film) return;
       const L = (v.layout = layout(model));
       const dpr = window.devicePixelRatio || 1;
-      const w = canvas.clientWidth;
+      const w = wNow || canvas.clientWidth;
       if (canvas.style.height !== L.height + 'px') canvas.style.height = L.height + 'px';
       const cw = Math.max(1, Math.round(w * dpr)), ch = Math.max(1, Math.round(L.height * dpr));
       if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
