@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0 e a 4c (Lápis, Pincel e Simplificar) na 1.57.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0 e a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -750,7 +750,55 @@ Dividi a etapa em três **(R)**, para cada uma sair testada e publicada sozinha:
   - o Pincel (o `taper=`, o `[` e o `]`, o anel no mouse).
 - O guia (capítulo 2, "Menos pontos: Simplificar", e a referência), o README e a referência (F1) contam o que mudou.
 
-**A etapa 5** (os caminhos: Tesoura, Junção, Faca, Borracha, Pincel de bolha, Pathfinder, Construtor de formas e Suavizar) vem em seguida.
+### 11.6 A etapa 5 em detalhe (16/11/2026)
+
+A etapa 5 ficou grande, então quebrei em duas **(R)**:
+- **5a:** as operações entre formas (o núcleo), o Pathfinder, o Pincel de bolha e a Borracha;
+- **5b:** Tesoura, Faca, Junção, Borracha de caminho, Suavizar e o Construtor de formas, que usam o mesmo núcleo.
+
+**O núcleo (`js/pathops.js`).** O pedido do Lucas sugeria uma biblioteca pronta (`polygon-clipping` ou Clipper2). Fiz sem biblioteca **(R)**: o editor não baixa nada de fora, e a conta precisava de duas coisas que as bibliotecas não dão, manter os pontos que não mudaram e voltar para a curva lisa do Weasel. O jeito:
+- as formas viram áreas numa grade fina (a casa tem 0,35 pixel da tela, com no máximo 3 milhões de casas), e a conta é feita casa a casa. Assim nunca sai um contorno quebrado, por mais que as formas se cruzem;
+- o contorno da área que sobra é seguido e **encostado de volta nas bordas de verdade**: as retas ficam retas, e os cantos onde duas bordas se cruzam ficam no lugar exato (retângulo menos retângulo sai com os 6 cantos inteiros);
+- os pontos da forma que a conta não tocou ficam iguais, com o texto deles (o `!`, as alças, o `@osso`). Os da beira da mudança ganham alças escritas **(R)**: do lado que não mudou, a de antes; do outro, a mesma direção. A curva lisa do Weasel depende dos vizinhos, e sem isso a mudança puxava a forma toda, ponto a ponto;
+- a curva nova passa pelo Simplificar, com meio pixel da tela de tolerância **(R)**;
+- a borda que vem do rastro redondo do pincel e da borracha não é exata: fica a até um décimo de pixel **(R)**.
+
+**Pathfinder (Objeto › Caminho):**
+- Unir, Subtrair (a de trás menos as da frente, o *Menos frente* do Illustrator), Interseção e Excluir **(R: os nomes)**;
+- valem para `shape`, `rect` e `ellipse` escolhidos, na mesma camada **(R)**. O resultado fica na linha da forma de cima (no Subtrair, na de trás), como no Illustrator, e as outras saem;
+- pedaços soltos viram `nome_1`, `nome_2`…, e os buracos, `cut=` (como na Borracha, abaixo).
+
+**Pincel de bolha (Shift+B),** na casa do Pincel:
+- a cor é a da caixinha do preenchimento (sem preenchimento, a do contorno) **(R)**. Com uma forma escolhida, as caixinhas já trazem a cor dela: é o "a cor da forma da linha do cursor" do pedido;
+- junta com as formas que ele toca (ou encosta) **com o mesmo `c=` escrito, na camada onde se desenha** **(R)**. O resultado fica na de cima, e as outras saem;
+- sem forma para juntar, nasce um `shape` só com `c=` (sem contorno, como no Illustrator) **(R)**, no lugar onde as formas desenhadas nascem (na frente da camada), e não "logo abaixo da linha do cursor", como no pedido **(R)**, para ficar igual às outras ferramentas de desenho;
+- o `bone=` da forma do cursor não passa para a forma nova **(R)**: as outras ferramentas de desenho também não fazem isso, e numa pose animada os pontos sairiam no lugar errado.
+
+**Borracha (Shift+E),** numa casa nova, onde a Tesoura e a Faca entram na 5b:
+- apaga das escolhidas; sem escolha, das formas da camada do cursor, como o Lucas propôs (fora as escondidas e as travadas);
+- o pedaço maior fica com o nome, e os outros entram logo abaixo como `nome_1`, `nome_2`…; a forma que some inteira sai do código;
+- **um buraco no meio vira `cut=`** **(R)** (o pedido deixou a escolha comigo): um `shape nome_furo1 hidden` logo abaixo e o nome no `cut=`. Os furos que já existiam e não foram tocados continuam como estavam; os que a borracha juntou à borda saem, se ninguém mais usa o nome;
+- num `stroke` ou numa `line`, corta pela linha do meio do traço, não pela grossura **(R)**; cada pedaço fica com o `w=` e o `taper=`;
+- `rect` e `ellipse` tocados viram `shape`, com aviso, como o pedido sugeria.
+
+**Os dois:**
+- `[` e `]` mudam o tamanho (o diâmetro, no desenho, começando em 16) **(R)**. O tamanho só vale até fechar o editor: não fica guardado **(R)**;
+- **Esc** no meio do arraste desiste, e um Ctrl+Z desfaz o gesto inteiro;
+- ficam de fora, com aviso: formas de `repeat`, com `{contas}`, membros (`limb=`), camadas em 3D (`yaw=`, `pitch=`) e formas dobradas pelos ossos na pose de agora **(R)**. Na prévia de um componente (`def`), as três ferramentas pedem para sair dela **(R)**.
+
+**Um conserto de passagem:** colar (Ctrl+V) uma forma no fim do arquivo comia a última letra do código (desde a 1.53.0). O mesmo erro aparecia aqui; consertei nos dois lugares.
+
+**Como ficou (16/11/2026):** a 5a saiu na 1.58.0.
+- O núcleo está no `js/pathops.js` (também na linha de comando, para o teste); as ferramentas, no `js/ui-paths.js`.
+- Um teste novo (`_caminhos`) confere a área de cada conta contra a geometria (menos de 1% de diferença), os cantos exatos e que os pontos não tocados ficam.
+- Conferido no navegador:
+  - as quatro contas do Pathfinder, com Ctrl+Z;
+  - o Pincel de bolha juntando (a forma verde ganhou um rabo) e nascendo sozinho;
+  - a Borracha cortando um retângulo em dois, abrindo um furo, juntando dois furos, virando mordida e cortando um `stroke` e uma `ellipse`;
+  - `[`, `]`, Esc e os atalhos Shift+B e Shift+E.
+- O guia (capítulo 2, "Juntar e apagar áreas"), o README e a referência (F1) contam o que mudou.
+
+**A etapa 5b** (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) vem em seguida.
 
 ### Como ficaria por dentro
 

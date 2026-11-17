@@ -14,21 +14,22 @@
   const G = W.geom, L = W.lang;
 
   // ---------- a curva de um trecho: a mesma conta do geom.smoothSegs, só para o trecho j ----------
-  // P: [{ x, y, corner, tan, tin }]; o trecho j vai de P[j] a P[j+1] (no fechado, o último volta ao primeiro)
+  // P: [{ x, y, corner, tan, tin }]; o trecho j vai de P[j] a P[j+1] (no fechado, o último volta ao primeiro).
+  // (dout e din, só nas contas do js/pathops.js: a direção da alça fica, e o tamanho é o automático)
   function span(P, closed, k, j) {
     const n = P.length, p = P[j], q = P[(j + 1) % n];
     const dir = (i) => {
       const o = P[i];
-      if (o.corner || o.tan || k <= 0) return null;
+      if (o.corner || o.tan || o.dout || o.din || k <= 0) return null;
       const a = closed ? P[(i - 1 + n) % n] : P[i - 1], b = closed ? P[(i + 1) % n] : P[i + 1];
       if (!a || !b) return null;
       const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy);
       return l > 1e-9 ? [dx / l, dy / l] : null;
     };
     const len = Math.hypot(q.x - p.x, q.y - p.y), dp = dir(j), dq = dir((j + 1) % n);
-    const c1 = p.tan ? [p.x + p.tan[0], p.y + p.tan[1]] : dp ? [p.x + dp[0] * len * k, p.y + dp[1] * len * k] : [p.x + (q.x - p.x) / 3, p.y + (q.y - p.y) / 3];
-    const qi = q.tin || q.tan;
-    const c2 = qi ? [q.x - qi[0], q.y - qi[1]] : dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
+    const c1 = p.tan ? [p.x + p.tan[0], p.y + p.tan[1]] : p.dout ? [p.x + p.dout[0] * len * k, p.y + p.dout[1] * len * k] : dp ? [p.x + dp[0] * len * k, p.y + dp[1] * len * k] : [p.x + (q.x - p.x) / 3, p.y + (q.y - p.y) / 3];
+    const qi = q.tin || (q.din ? null : q.tan), qd = !q.tin && q.din;
+    const c2 = qi ? [q.x - qi[0], q.y - qi[1]] : qd ? [q.x - qd[0] * len * k, q.y - qd[1] * len * k] : dq ? [q.x - dq[0] * len * k, q.y - dq[1] * len * k] : [q.x - (q.x - p.x) / 3, q.y - (q.y - p.y) / 3];
     return [p.x, p.y, c1[0], c1[1], c2[0], c2[1], q.x, q.y];
   }
   const bez = (s, t) => {
@@ -77,7 +78,8 @@
 
   // ---------- o ajuste ----------
   // T: { S (amostras), closed, k (o 0.36 × smooth), tol, cand (as amostras que podem virar ponto, em ordem),
-  //      forced (Set: as que ficam sempre), props(i) → { corner, tan, tin } do ponto na amostra i }
+  //      forced (Set: as que ficam sempre), props(i) → { corner, tan, tin } do ponto na amostra i, starts (opcional:
+  //      as tolerâncias do RDP do começo, em vezes tol) }
   // Devolve as amostras que viram pontos, em ordem.
   function fit(T) {
     const { S, closed, k, tol } = T, N = S.length;
@@ -169,8 +171,9 @@
 
     // tirar um de cada vez empaca quando os pontos estão espaçados por igual (o círculo de 16 não vira o de 8): por
     // isso o ajuste começa de vários RDP, do mais fino ao mais grosso, e fica o que acabar com menos pontos
+    // (T.starts: outros começos; Infinity começa só dos pontos fixos, bom quando eles já bastam)
     let best = null;
-    for (const f of [2, 4, 8, 16]) {
+    for (const f of T.starts || [2, 4, 8, 16]) {
       const K = solve(init(tol * f));
       if (!best || K.length < best.length) best = K;
     }

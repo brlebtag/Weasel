@@ -557,6 +557,64 @@ async function simplifyCase() {
   await check('_simplificar', 'simplificar.txt', 'text', lines.join('\n') + '\n');
 }
 
+// as operações entre formas (js/pathops.js: o Pathfinder, o Pincel de bolha e a Borracha do editor): os cantos das
+// retas saem exatos, a área bate com a conta e os pontos que a borracha não tocou continuam os mesmos
+async function pathsCase() {
+  console.log(paint('1', '_caminhos'));
+  const G = W.geom, P = W.pathops;
+  const f2 = (v) => String(Number(v.toFixed(2)));
+  const show = (pts) => pts.map((p) => `${f2(p.x)},${f2(p.y)}${p.corner ? '!' : ''}${p.frozen ? `~${p.tin.map(f2)}~${p.tan.map(f2)}` : ''}${p.tag ? '#' + p.tag.i : ''}`).join(' ');
+  const rectRing = (x, y, w, h) => P.ring(G.rectSegs(x, y, w, h, 0, 0), 1, null, true);
+  const circRing = (cx, cy, r) => P.ring(G.ellipseSegs(cx, cy, r, r, 0), 1, null, true);
+  // a área da curva que sai (a curva lisa do Weasel pelos pontos), menos os furos
+  const areaOf = (pts) => { const segs = G.smoothSegs(pts, true, 1), f = G.flatten(segs, 0.2); let a = 0; for (let i = 0; i + 3 < f.length; i += 2) a += f[i] * f[i + 3] - f[i + 2] * f[i + 1]; return Math.abs(a / 2); };
+  const total = (r) => r.pieces.reduce((s, pc) => s + areaOf(pc.outer) - pc.holes.reduce((t, h) => t + areaOf(h), 0), 0);
+  const O = { cell: 0.4, tol: 0.5 };
+  const U = (b) => b.some((x) => x), MINUS = (b) => b[0] && !b.slice(1).some((x) => x), INTER = (b) => b.every((x) => x), XOR = (b) => b.filter((x) => x).length % 2 === 1;
+  const pi = Math.PI, lines = [];
+  // a área de dois círculos de raio r a d de distância (a lente do meio)
+  const lens = (r, d) => 2 * r * r * Math.acos(d / (2 * r)) - (d / 2) * Math.sqrt(4 * r * r - d * d);
+  const CASES = [
+    ['retângulo menos retângulo', [{ rings: [rectRing(0, 0, 100, 60)] }, { rings: [rectRing(70, 30, 60, 60)] }], null, MINUS, 6000 - 900],
+    ['retângulo mais retângulo', [{ rings: [rectRing(0, 0, 100, 60)] }, { rings: [rectRing(70, 30, 60, 60)] }], null, U, 6000 + 3600 - 900],
+    ['excluir (dois retângulos)', [{ rings: [rectRing(0, 0, 100, 60)] }, { rings: [rectRing(50, 30, 100, 60)] }], null, XOR, 12000 - 2 * 1500],
+    ['retângulo e círculo: interseção', [{ rings: [rectRing(0, 0, 100, 60)] }, { rings: [circRing(100, 60, 30)] }], null, INTER, (pi * 900) / 4],
+    ['furo no meio', [{ rings: [rectRing(0, 0, 100, 60)] }, { rings: [circRing(50, 30, 15)] }], null, MINUS, 6000 - pi * 225],
+    ['dois círculos unidos', [{ rings: [circRing(0, 0, 30)] }, { rings: [circRing(40, 0, 30)] }], null, U, 2 * pi * 900 - lens(30, 40)],
+    ['furo que já existia, com borracha longe dele', [{ rings: [rectRing(0, 0, 100, 60)], holes: [circRing(30, 30, 10)] }], { path: [[100, 30]], r: 10 }, MINUS, 6000 - pi * 100 - (pi * 100) / 2],
+  ];
+  for (const [what, items, brush, keep, want] of CASES) {
+    const r = P.combine(items, brush, keep, O), a = total(r);
+    record(Math.abs(a - want) <= want * 0.01, `_caminhos/${what}`, `área ${a.toFixed(1)}, a conta dá ${want.toFixed(1)}`);
+    lines.push(`${what}: ${r.pieces.length} pedaço(s), área ${a.toFixed(0)} (a conta: ${want.toFixed(0)})`);
+    for (const pc of r.pieces) { lines.push(`  ${show(pc.outer)}`); pc.holes.forEach((h, j) => lines.push(`  furo${pc.holeSrc[j] ? ' (é um anel de antes, inteiro)' : ''}: ${show(h)}`)); }
+  }
+  // um shape de 6 pontos: a borracha numa ponta e o pincel; os pontos longe ficam como estavam
+  const pts = [[0, 0], [60, -10], [120, 0], [130, 50], [60, 70], [-10, 50]].map(([x, y], i) => ({ x, y, corner: i === 0 }));
+  const shapeItem = () => ({ rings: [P.ring(G.smoothSegs(pts, true, 1), 1, pts.map((p, i) => ({ i, corner: p.corner })), true)] });
+  for (const [what, brush, keep, stay] of [
+    ['shape com borracha na ponta', { path: [[125, 20], [140, 40]], r: 12 }, (b) => b[0] && !b[1], [0, 1, 2, 3, 4, 5]],
+    ['shape com pincel de bolha', { path: [[125, 20], [160, 40]], r: 10 }, (b) => b[0] || b[1], [0, 1, 2, 3, 4, 5]],
+    ['shape cortado em dois', { path: [[60, -30], [60, 90]], r: 8 }, (b) => b[0] && !b[1], [0, 2, 3, 5]],
+    ['sem tocar', { path: [[300, 300]], r: 5 }, (b) => b[0], [0, 1, 2, 3, 4, 5]],
+  ]) {
+    const r = P.combine([shapeItem()], brush, keep, O);
+    const got = new Set(r.pieces.flatMap((pc) => pc.outer.filter((p) => p.tag && !p.frozen).map((p) => p.tag.i)));
+    const froz = new Set(r.pieces.flatMap((pc) => pc.outer.filter((p) => p.tag && p.frozen).map((p) => p.tag.i)));
+    const lost = stay.filter((i) => !got.has(i) && !froz.has(i));
+    record(!lost.length, `_caminhos/${what}`, `os pontos ${lost.join(', ')} sumiram`);
+    lines.push(`${what}: ${r.pieces.length} pedaço(s)`);
+    for (const pc of r.pieces) lines.push(`  ${show(pc.outer)}`);
+  }
+  // um stroke cortado pela borracha
+  const sp = [[0, 0], [50, 30], [100, 0], [150, 30]].map(([x, y]) => ({ x, y }));
+  const runs = P.cutOpen(P.ring(G.smoothSegs(sp, false, 1), 1, sp.map((p, i) => ({ i })), false), P.near([[50, 0], [50, 60]], 10), 0.5);
+  record(runs.length === 2 && Math.abs(runs[0][runs[0].length - 1].x - 40) < 0.6 && Math.abs(runs[1][0].x - 60) < 0.6, '_caminhos/stroke cortado', `${runs.length} pedaços`);
+  lines.push(`stroke cortado: ${runs.length} pedaços`);
+  for (const run of runs) lines.push(`  ${show(P.fitPath(run, { tol: 0.5, closed: false, cell: 0.4 }))}`);
+  await check('_caminhos', 'caminhos.txt', 'text', lines.join('\n') + '\n');
+}
+
 // a janela de exportar (folha, Godot e GIF): o mesmo trabalho que o worker do navegador faz (exportJob, js/worker.js),
 // com os nomes dos arquivos e o resumo; a folha sai igual à da função de sempre
 async function jobCase() {
@@ -979,6 +1037,7 @@ async function main() {
   if (!only.length || only.some((o) => '_velocidade'.includes(o))) await speedCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   if (!only.length || only.some((o) => '_simplificar'.includes(o))) await simplifyCase();
+  if (!only.length || only.some((o) => '_caminhos'.includes(o))) await pathsCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

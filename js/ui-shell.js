@@ -31,7 +31,9 @@
     { id: 'star', key: '', grp: 'shape', label: 'Estrela', tip: 'arraste do meio para fora; arrastando, ↑ e ↓ põem e tiram pontas; Shift: em pé', icon: svg('<path d="M8 1.8l1.9 4 4.3.5-3.2 3 .8 4.3L8 11.5l-3.8 2.1.8-4.3-3.2-3 4.3-.5z"/>') },
     { id: 'line', key: '\\', label: 'Linha', tip: 'arraste de uma ponta à outra (Shift: de 45 em 45 graus; Alt: a partir do meio)', icon: svg('<path d="M3 13 13 3"/><circle class="f" cx="3" cy="13" r="1.3"/><circle class="f" cx="13" cy="3" r="1.3"/>') },
     { id: 'brush', key: 'b', grp: 'brush', label: 'Pincel', tip: 'arraste para pintar: um stroke com a grossura do contorno e as pontas afinando (taper=). [ e ] mudam a grossura', icon: svg('<path d="M14.2 1.8 8.4 7.6"/><path d="M8.4 7.6 6.8 6.2c-1.5.2-2.4 1.2-2.6 2.6-.2 1.6-1 2.8-2.6 3.6 2.4 1.2 5.6.6 6.6-1.4.6-1.1.6-2.2.2-3z"/>') },
+    { id: 'blob', key: 'b', shift: true, grp: 'brush', label: 'Pincel de bolha', tip: 'arraste para pintar uma área cheia com a cor do preenchimento; encostando numa forma da mesma cor (na mesma camada), vira uma forma só com ela. [ e ] mudam o tamanho', icon: svg('<path class="f" d="M2.6 13.6c-.9-1.5.3-3.3 2.1-3.1 1.3.1 1.8 1.1 3.1 1 1.5-.2 2.3 1.2 1.4 2.3-1.2 1.4-5.6 1.4-6.6-.2z"/><path d="M14.2 1.8 9 7"/><path d="M9 7 7.6 5.8c-1.3.2-2.1 1-2.3 2.3"/>') },
     { id: 'pencil', key: 'n', grp: 'pencil', label: 'Lápis', tip: 'arraste para desenhar à mão livre: o traço vira poucos pontos (um stroke); terminando perto do começo, fecha um shape. [ e ] mudam a grossura', icon: svg('<path d="M11 2.4l2.6 2.6-8 8-3.5.9.9-3.5z"/><path d="M9.4 4l2.6 2.6"/>') },
+    { id: 'eraser', key: 'e', shift: true, grp: 'eraser', label: 'Borracha', tip: 'arraste para apagar: tira área das formas escolhidas (sem escolha, das da camada); um pedaço que se solta vira nome_1; num stroke, corta o traço. [ e ] mudam o tamanho', icon: svg('<path d="M6.4 13.5h7.2"/><path d="M2.4 10 8.7 3.7a1.3 1.3 0 0 1 1.9 0l2.6 2.6a1.3 1.3 0 0 1 0 1.9l-5.3 5.3H5.9z"/><path class="f" d="M2.4 10 5 7.4l3.6 3.6-2.5 2.5H5.9z"/>') },
     '-',
     { id: 'gradient', key: 'g', label: 'Degradê', tip: 'arraste sobre uma forma: o degradê vai de onde apertou até onde soltou (Alt: redondo; Shift: de 45 em 45 graus); escreve um gradient e põe o nome no c=', icon: svg('<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path class="f" d="M2.5 3.5a1 1 0 0 1 1-1h2v11h-2a1 1 0 0 1-1-1z"/><path class="f" d="M5.5 2.5h2.2v11H5.5z" opacity=".6"/><path class="f" d="M7.7 2.5h2v11h-2z" opacity=".3"/>') },
     { id: 'eyedrop', key: 'i', grp: 'eye', label: 'Conta-gotas', tip: 'clique numa forma: as escolhidas pegam a cor, o contorno e a opacidade dela (sem escolha, as caixinhas de cor pegam); Alt+clique pinta a clicada com as caixinhas', icon: svg('<path d="M2.3 13.7l.8-2.9 6.2-6.2 2.1 2.1-6.2 6.2z"/><path class="f" d="M9.6 3.4l1.6-1.6a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1l-1.6 1.6z"/>') },
@@ -194,6 +196,12 @@
       '-',
       { label: 'Caminho', enabled: hasSel, sub: () => [
         { label: 'Simplificar…', run: () => (W.pencil || NOP).simplify() },
+        '-',
+        // o Pathfinder (js/ui-paths.js): escrevem os pontos novos
+        { label: 'Unir', run: () => (W.paths || NOP).pathfinder('unite') },
+        { label: 'Subtrair (a de trás menos as da frente)', run: () => (W.paths || NOP).pathfinder('minus') },
+        { label: 'Interseção', run: () => (W.paths || NOP).pathfinder('inter') },
+        { label: 'Excluir sobreposição', run: () => (W.paths || NOP).pathfinder('xor') },
       ] },
       '-',
       { label: 'Inserir', enabled: drawing, sub: () => A.shapes().map((s, i) => ({ label: `${s.label} (${s.cmd})`, run: () => A.insert(i) })) },

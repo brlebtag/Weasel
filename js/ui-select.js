@@ -189,7 +189,8 @@
       text = next.slice(a, next.length - b).map((t) => t + '\n').join('');
     } else {
       const add = next.slice(a);
-      from = a > 0 ? ed.lineStart(a) - 1 : 0;
+      // (acrescentando no fim: depois da última letra; o lineStart da linha que não existe é o fim do texto)
+      from = a > 0 ? (a >= cur.length ? v.length : ed.lineStart(a) - 1) : 0;
       to = v.length;
       text = add.length ? (a > 0 ? '\n' : '') + add.join('\n') : '';
     }

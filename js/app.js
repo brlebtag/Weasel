@@ -3898,7 +3898,7 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'brush', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'brush', 'blob', 'eraser', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   // o Texto põe o texto pronto com um clique; as formas, o Conta-gotas e o Degradê moram em js/ui-draw.js
   const INSERT_TOOLS = { text: 'text' };
@@ -5773,6 +5773,9 @@
     linesAt: (e) => linesAt(e),
     ownLine: (el) => { const m = st.model; return m.lineMap ? m.lineMap[el.line] : el.line; },
     drawPlace: (behind) => drawPlace(behind),
+    // a camada onde se desenha (a do cursor) e a de uma linha, para o Pincel de bolha e a Borracha (js/ui-paths.js)
+    drawLayer: () => (st.model && !isFilm() ? drawLayer(st.model) : null),
+    layerOf: (line) => (st.model && !isFilm() ? layerAt(st.model, line) : null),
     addLine: (pl, cmd, base, rest, o) => addLine(pl, cmd, base, rest, o),
     insertAt: (i, at) => { if (st.model && !isFilm()) insertShapeAt(i, at); },
     pointsOn: () => pointsOn(),
