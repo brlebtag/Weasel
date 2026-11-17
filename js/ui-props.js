@@ -452,7 +452,7 @@
     const chip = (name, style, kind, title) => `<button type="button" class="sw-chip ${kind}" data-sw="${esc(name)}" data-kind="${kind}" title="${esc(title)}"><span class="sw-c" style="${style}"></span><span class="sw-n">${esc(name)}</span></button>`;
     let h = `<div class="sw-to" role="radiogroup" aria-label="Aplicar em"><span>Aplicar em</span><button type="button" data-to="fill" class="${cfg.ink ? '' : 'on'}" title="Clicar numa cor pinta o preenchimento (c=). Alt+clique pinta o outro">Preenchimento</button><button type="button" data-to="ink" class="${cfg.ink ? 'on' : ''}" title="Clicar numa cor pinta o contorno (inkc=; no stroke e na line, a cor). Alt+clique pinta o outro">Contorno</button></div>`;
     if (vars.length) h += `<div class="pp-sub">Variantes</div><div class="sw-vars"><button type="button" data-var="" class="${st.variant ? '' : 'on'}">padrão</button>${vars.map((v) => `<button type="button" data-var="${esc(v)}" class="${st.variant === v ? 'on' : ''}">${esc(v)}</button>`).join('')}</div>`;
-    h += `<div class="pp-sub">Cores <button type="button" class="sw-add" title="Põe na palette a cor do preenchimento da forma escolhida (com um nome novo, cor1, cor2…)">+ nova</button></div>`;
+    h += `<div class="pp-sub">Cores <button type="button" class="sw-add" title="Põe na palette a cor do preenchimento da forma escolhida (com um nome novo, color1, color2…)">+ nova</button></div>`;
     h += cols.length ? `<div class="sw-grid">${cols.map(([k, v]) => chip(k, `background:${hexOf(k, m)}`, 'color', `${k} = ${v}  (duplo clique: ir para a palette no código)`)).join('')}</div>`
       : '<div class="pp-note">Sem cores com nome. Uma linha <code>palette pele=#f2c79b</code> dá nome a uma cor, e ela aparece aqui.</div>';
     if (widths.length) h += `<div class="pp-sub">Larguras</div><div class="sw-grid">${widths.map(([k, v]) => chip(k, `height:${Math.max(1, Math.min(10, Number(v)))}px;align-self:center;background:currentColor`, 'width', `${k} = ${v} (vai para o ink=, ou para o w= do stroke e da line)`)).join('')}</div>`;
@@ -504,7 +504,7 @@
     if (line >= 0) A.gotoCode(line, 0);
   });
   bodyS.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
-  // + nova: a cor do preenchimento da primeira escolhida entra na palette com um nome livre (cor1, cor2…)
+  // + nova: a cor do preenchimento da primeira escolhida entra na palette com um nome livre (color1, color2…)
   function addColor() {
     const m = st.model, info = gather();
     let hex = null;
@@ -512,8 +512,8 @@
     if (!hex) { A.hint('Escolha uma forma pintada com uma cor (c=#hex) para guardar a cor dela na palette.', 2800); return; }
     for (const [k] of m.palette) if (hexOf(k, m) === hex) { A.hint(`Essa cor já está na palette: ${k}.`, 2400); return; }
     let i = 1;
-    while (m.palette.has('cor' + i)) i++;
-    const name = 'cor' + i, key = keyNow('pal'), lines = A.editor.value.split('\n');
+    while (m.palette.has('color' + i)) i++;
+    const name = 'color' + i, key = keyNow('pal'), lines = A.editor.value.split('\n');
     const pl = lines.findIndex((l) => /^\s*palette\b/.test(l));
     if (pl >= 0) {
       const t = lines[pl], sp = L.splitLine(t), ws = sp.words, end = ws[ws.length - 1].to;

@@ -327,7 +327,7 @@ shape depois c=#6aa84f ink=3 : 250,130 261,114 296,75 330,60 364,75 387,100 410,
 As duas folhas são iguais. A da esquerda tem 28 pontos; a da direita, 12. Foi o Simplificar que escolheu quais ficavam.
 
 - **No editor:** escolha a forma (ou várias) e use o menu **Objeto › Caminho › Simplificar**. A **tolerância** diz quanto cada forma pode se afastar da de antes, em pixels do desenho. Enquanto você mexe, a forma de antes aparece cinza, a nova aparece azul por cima, com os pontos, e o painel mostra quantos pontos havia e quantos ficam. **Enter** aplica (um Ctrl+Z desfaz); **Esc** desiste.
-- **Na linha de comando:** `node cli/weasel.js vetorizado.weasel --simplify 1.5` grava o `vetorizado_simples.weasel`, com todos os `shape`, `stroke` e `line` simplificados.
+- **Na linha de comando:** `node cli/weasel.js vetorizado.weasel --simplify 1.5` grava o `vetorizado_simple.weasel`, com todos os `shape`, `stroke` e `line` simplificados.
 - Os pontos que ficam são os da forma, sem mudar nada, com o `@osso` e as alças. Onde a curva vira de repente (uma ponta fina), o ponto ganha `!`.
 - Ficam como estão: os pontos com `{contas}` e os membros (`limb=`).
 - Uma forma usada na troca de forma (`x.shape=`, `mouth`) com outro número de pontos deixa de trocar ponto a ponto. O editor avisa; a linha de comando nem mexe nela (a não ser com `--force`).
@@ -349,8 +349,8 @@ ellipse b1 118,92 38 c=#ffb000 ink=3
 shape b2 c=#ffb000 ink=3 : 278.6,54.4 298.2,63.6 307.8,76.8 310.6,97.6 301.7,116.9 289.5,126.2 280.4,129.3 267.4,129.6 254.1,125! 175,125! 175,55! 264.3,55!
 
 # Borracha: um clique abriu um furo (cut=), e um arraste mordeu a borda
-shape c3 c=#6cbb3c ink=3 cut=c3_furo1 : 335,50! 450,50! 450,92.4! 440.4,87.9 435.1,85.4 426.4,86.8 420.6,94.7 420.9,100 424.6,106.5 450,119.3! 450,145! 335,145!
-shape c3_furo1 hidden : 363.9,83 359.9,93.3 365,101.9 373.8,104 381.6,99.3 383.8,90.2 378.7,81.9 371,80.2
+shape c3 c=#6cbb3c ink=3 cut=c3_hole1 : 335,50! 450,50! 450,92.4! 440.4,87.9 435.1,85.4 426.4,86.8 420.6,94.7 420.9,100 424.6,106.5 450,119.3! 450,145! 335,145!
+shape c3_hole1 hidden : 363.9,83 359.9,93.3 365,101.9 373.8,104 381.6,99.3 383.8,90.2 378.7,81.9 371,80.2
 
 text t1 80,185 "antes" size=15 align=center
 text t2 235,185 "Unir" size=15 align=center
@@ -365,7 +365,7 @@ Os dois primeiros desenhos têm as mesmas formas: o do meio é o resultado do **
 - **Pincel de bolha** (Shift+B): o arraste pinta uma área cheia, com a cor da caixinha do preenchimento. Se ele encosta numa forma da **mesma cor** (o mesmo `c=`) na mesma camada, as duas viram uma forma só; senão, nasce um `shape` novo.
 - **Borracha** (Shift+E): tira área das formas escolhidas; sem escolha, das formas da camada do cursor (assim ela não apaga sem querer o que está embaixo). Num `stroke` ou numa `line`, corta o traço em pedaços.
 - `[` e `]` mudam o tamanho do Pincel de bolha e da Borracha, e um círculo no mouse mostra o tamanho. **Esc**, no meio do arraste, desiste.
-- Um pedaço que se solta vira uma linha nova logo abaixo, com o mesmo resto e o nome numerado (`c3_1`, `c3_2`…); o maior fica com o nome. A forma que some inteira sai do código. Um buraco no meio vira um `shape` escondido (`hidden`) que entra no `cut=` da forma, como nos [buracos do capítulo 4](04-camadas.md#buraco-numa-forma-cut-na-forma).
+- Um pedaço que se solta vira uma linha nova logo abaixo, com o mesmo resto e o nome numerado (`c3_1`, `c3_2`…); o maior fica com o nome. A forma que some inteira sai do código. Um buraco no meio vira um `shape` escondido (`hidden`), com o nome terminado em `_hole1`, que entra no `cut=` da forma, como nos [buracos do capítulo 4](04-camadas.md#buraco-numa-forma-cut-na-forma).
 - O `rect` e a `ellipse` que a conta muda viram `shape` (o editor avisa).
 - As retas continuam retas, e os cantos onde duas bordas se cruzam ficam no lugar exato (como o `264.3,55!` acima). Os pontos que a conta não tocou ficam como estavam; os da beira da mudança ganham as alças (`~`), para o resto da forma não mexer. A curva nova passa pelo [Simplificar](#menos-pontos-simplificar).
 - Um Ctrl+Z desfaz o gesto inteiro.

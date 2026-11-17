@@ -53,7 +53,7 @@ Saída:
                           esses pontos
       --simplify <tol>    tira pontos dos shape, stroke e line e grava um .weasel novo (o Simplificar
                           do editor): cada forma se afasta no máximo <tol> pixels da original;
-                          cantos vivos ganham !. Grava arquivo_simples.weasel (ou o -o .weasel; com
+                          cantos vivos ganham !. Grava arquivo_simple.weasel (ou o -o .weasel; com
                           -e ou stdin, na saída padrão). Formas usadas na troca de forma (shape=, mouth)
                           ficam como estão, a não ser com --force
       --contact           png/jpg: folha de conferência, para achar um quadro: os quadros em grade,
@@ -133,7 +133,7 @@ Exemplos:
   weasel filme.weasel -o revisao.mp4 --burn-subs -s 0.5
   weasel filme.weasel -o para_mandar.mp4 --small --burn-subs
   weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
-  weasel vetorizado.weasel --simplify 1.5           -> vetorizado_simples.weasel
+  weasel vetorizado.weasel --simplify 1.5           -> vetorizado_simple.weasel
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -681,7 +681,7 @@ function simplifyFile(o, source, nErr, parseText, watched) {
     console.error(`weasel: ${nErr} erro(s); nada foi simplificado (corrija antes, ou use --force).`);
     return { code: 1, watched };
   }
-  const out = o.out || (o.input && o.input !== '-' ? path.join(path.dirname(o.input), source.base + '_simples.weasel') : null);
+  const out = o.out || (o.input && o.input !== '-' ? path.join(path.dirname(o.input), source.base + '_simple.weasel') : null);
   if (out && !/\.weasel$/i.test(out)) usage('--simplify grava código: use -o arquivo.weasel');
   if (out && o.input && o.input !== '-' && path.resolve(out) === path.resolve(o.input) && !o.force) usage('--simplify não grava em cima do arquivo de entrada: use outro nome no -o (ou --force)');
   const lines = source.src.split('\n'), log = (s) => { if (!o.quiet) console.error(s); };

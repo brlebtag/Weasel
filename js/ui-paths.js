@@ -181,7 +181,7 @@
       pc.holes.forEach((h, j) => {
         const old = pc.holeSrc && pc.holeSrc[j] ? oldHoles.get(pc.holeSrc[j]) : null;
         if (old && old.name) { if (!cuts.includes(old.name)) cuts.push(old.name); kept.add(old.name); return; }
-        const hn = freeAs(src, `${nm}_furo`, used);
+        const hn = freeAs(src, `${nm}_hole`, used);
         cuts.push(hn);
         extra.push(`${indentOf(it.text)}shape ${hn} hidden : ${h.map((p) => tokenOf(Object.assign({}, p, { tag: null, frozen: false, corner: p.corner }), it.fr)).join(' ')}`);
       });
@@ -399,7 +399,7 @@
         if (!first) first = nm;
         const cuts = [], extra = [];
         pc.holes.forEach((h) => {
-          const hn = freeAs(src, `${nm}_furo`, used);
+          const hn = freeAs(src, `${nm}_hole`, used);
           cuts.push(hn);
           extra.push(`${pl.indent}shape ${hn} hidden : ${h.map((p) => tokenOf(loc(p), fr)).join(' ')}`);
         });
