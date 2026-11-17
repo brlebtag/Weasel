@@ -1,6 +1,6 @@
 # 9. Jogo e Godot
 
-[← Luz, efeitos e partículas](08-luz-efeitos.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
+[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
 
 Um personagem de jogo no Weasel é um arquivo `.weasel` comum, com desenho, ossos e animações (`idle`, `walk`, `attack`…). Este capítulo mostra o que se acrescenta para ele sair **pronto para o jogo**: colisão, golpe e dano por quadro, pontos de encaixe, o ponto de origem, direções, e como exportar para o Godot (ou qualquer motor).
 
@@ -528,7 +528,7 @@ Sem `root=`, a origem é o **meio da base** do desenho: para a moeda de 48×48, 
 
 ### O relevo para a luz do Godot: `normal=`
 
-Um **normal map** é uma segunda imagem, em tons de azul e roxo, que diz para onde cada pedacinho do desenho está "virado". A luz 2D do Godot (`PointLight2D`) usa essa imagem para iluminar o personagem com **relevo**: o lado virado para a lâmpada fica claro, o outro fica escuro, como no [capítulo 8](08-luz-efeitos.md), mas calculado dentro do jogo.
+Um **normal map** é uma segunda imagem, em tons de azul e roxo, que diz para onde cada pedacinho do desenho está "virado". A luz 2D do Godot (`PointLight2D`) usa essa imagem para iluminar o personagem com **relevo**: o lado virado para a lâmpada fica claro, o outro fica escuro, como no [capítulo 10](10-luz.md), mas calculado dentro do jogo.
 
 - O `.tscn` já vem com o normal map (`moeda_normal.png` acima).
 - `normal=` é a força do relevo, de 0 a 10 (padrão 1). Com 0, o desenho fica chapado; com números maiores, mais "estufado".
@@ -1128,4 +1128,4 @@ Repare:
 
 **Pixel art:** com `art pixel … small` ([capítulo 14](14-estilos.md#pixel-art-no-jogo-small)), a folha e o pacote do Godot saem com 1 pixel por bloco, e a cena do Godot já vem sem suavizar a imagem (`texture_filter` em *nearest*).
 
-[← Luz, efeitos e partículas](08-luz-efeitos.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
+[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)

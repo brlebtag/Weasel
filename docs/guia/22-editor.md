@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 9. As dicas dos outros assuntos (luz, estilos, jogo, filme) ainda estão nos capítulos antigos.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 12. As dicas dos outros assuntos (estilos, jogo, filme) ainda estão nos capítulos antigos.
 
 ## Abrir e rodar
 
@@ -328,6 +328,14 @@ O `light=` do `canvas` (a direção da luz do `weight=`, do [capítulo 3](03-cor
 - Se a linha do `canvas` não tem `light=`, a seta mostra o padrão (`-0.6,-0.8`), e arrastar escreve o `light=`.
 - A barra de baixo diz, em palavras, de que lado a luz vem.
 
+## Luzes no desenho
+
+Com o cursor na linha de uma `light` ([capítulo 10](10-luz.md#luz-de-verdade)), a luz aparece no desenho para você ajustar com o mouse.
+
+- A `point` e a `spot` têm um **ponto** no lugar da lâmpada: arraste para mudar o `x,y`.
+- A `dir` não tem lugar, só direção. Por isso ela tem uma **seta** amarela que sai do centro do quadro e aponta para o sol. Arraste o sol da ponta para girar o `dx,dy`; com **Shift**, de 15 em 15 graus.
+- É a mesma seta do `light=` do `canvas` ([acima](#a-luz-do-contorno)).
+
 ## Painel Camadas
 
 O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amostras (**Janela › Camadas**). Ele mostra cada camada, na ordem do código, com as linhas que desenham nela. O título de cada parte da coluna dobra e desdobra; numa janela estreita, o painel aparece por cima do desenho.
@@ -362,6 +370,24 @@ O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amost
 - A vista mostra o mesmo quadro do player, sem o estilo de arte e sem o halo das luzes.
 - Agrupar, Travar, Organizar, Copiar e Colar ficam no menu, mas as teclas deles não valem nessa vista.
 - Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Ver as distâncias](10-filme.md#ver-as-distâncias-palco-em-3d)).
+
+## Efeitos da camada
+
+Os efeitos de camada ([capítulo 11](11-efeitos.md#efeitos-de-camada)) se ligam sem escrever:
+
+- Escolha uma forma da camada e use o menu **Efeito**: ele liga e desliga cada efeito, com um valor de partida.
+- A parte **Camada** do painel **Propriedades** mostra a opacidade, a mistura (`blend=`) e os efeitos ligados, com os números de cada um.
+- O que você muda lá é escrito na linha `layer`.
+- Uma camada sem linha `layer` (a automática) não tem efeitos: escreva `layer nome` antes das formas.
+
+## Acabamento e estilo
+
+**Janela › Acabamento e estilo** abre, na coluna da direita, o painel que escreve as linhas `finish` ([capítulo 12](12-acabamento.md#acabamento-finish)) e `art` por você, no desenho e no filme.
+
+- **Acabamento:** a escolha entre `game` e `flat` e um controle deslizante para cada número do `finish` (`bloom=`, `vignette=`, `grain=`, `posterize=`, `pixel=`, `inner=` e os efeitos de tela). A caixinha **só as cores da palette** escreve o `posterize=palette`.
+- Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste. A caixa ao lado aceita o número digitado.
+- Voltar ao padrão (0; no `pixel=` e no `inner=`, 1) tira a opção da linha. Sem a linha `finish`, ela nasce logo depois do `canvas`.
+- **Estilo de arte:** as miniaturas dos estilos e as opções de cada um estão explicadas [no capítulo dos estilos](14-estilos.md#pelo-editor-janela--acabamento-e-estilo).
 
 ## Guias
 

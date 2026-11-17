@@ -606,7 +606,7 @@ text nota 156,206 "meio: x=150" size=13 c=#c44536
   ```
 
 - No editor, quem decide é o menu **Exibir › Guias** ([capítulo 22](22-editor.md#guias)).
-- Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada (a luz é do [capítulo 10](08-luz-efeitos.md)).
+- Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada (a luz é do [capítulo 10](10-luz.md)).
 
 **Experimente:** troque `guide` por `hidden`. As linhas somem também com `--guides`: a camada `hidden` nunca é pintada.
 
@@ -639,8 +639,8 @@ Para juntar formas e mexer nelas de uma vez, existe o `group` ([capítulo 6](06-
 
 A camada tem outras opções, que aparecem mais adiante:
 - `only=`: a camada só aparece em certas animações ([capítulo 9](09-animacao.md#camadas-que-só-aparecem-em-certas-animações-only));
-- `unlit` e `shade=`: a luz na camada ([capítulo 10](08-luz-efeitos.md));
-- `blur=`, `glow=`, `shadow=`, `tint=`, `brightness=`, `saturate=`, `contrast=`, `hue=`, `trail=`, `cast=`, `rim=`: os efeitos ([capítulo 11](08-luz-efeitos.md#efeitos-de-camada));
+- `unlit` e `shade=`: a luz na camada ([capítulo 10](10-luz.md));
+- `blur=`, `glow=`, `shadow=`, `tint=`, `brightness=`, `saturate=`, `contrast=`, `hue=`, `trail=`, `cast=`, `rim=`: os efeitos ([capítulo 11](11-efeitos.md#efeitos-de-camada));
 - `yaw=`, `pitch=`, `persp=`, `pivot=`, `floor`, `horizon=`, `iso`, `zsort`: a profundidade 2.5D ([capítulo 14](11-profundidade.md));
 - `depth=`, `screen`, `front`: a distância num filme ([capítulo 17](10-filme.md#profundidade-e-paralaxe)).
 

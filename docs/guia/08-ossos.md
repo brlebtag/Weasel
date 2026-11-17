@@ -114,8 +114,8 @@ Repare:
 
 O `bone=` do `use` vale para todas as peças do componente. Uma peça lá dentro com o próprio `bone=` usa o dela. Também seguem um osso, com o mesmo `bone=`:
 
-- uma **luz** (`light … bone=`): a lanterna na mão, o lampião balançando ([capítulo 10](08-luz-efeitos.md#luz-que-anda-com-um-osso-bone));
-- um **emissor de partículas** (`emitter … bone=`): a fumaça do cachimbo ([capítulo 11](08-luz-efeitos.md#partículas-presas-a-um-osso-bone));
+- uma **luz** (`light … bone=`): a lanterna na mão, o lampião balançando ([capítulo 10](10-luz.md#luz-que-anda-com-um-osso-bone));
+- um **emissor de partículas** (`emitter … bone=`): a fumaça do cachimbo ([capítulo 11](11-efeitos.md#partículas-presas-a-um-osso-bone));
 - as **caixas de colisão** (`box … bone=`) e os **pontos de encaixe** (`point … bone=`) de um jogo ([capítulo 15](09-jogo-godot.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe)).
 
 ## Movimentos automáticos: `sway`, `bob` e `jitter`

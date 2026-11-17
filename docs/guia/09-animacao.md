@@ -1,6 +1,6 @@
 # 9. Animação
 
-[← Ossos](08-ossos.md) · [Índice](README.md) · [Próximo: Luz e sombra →](08-luz-efeitos.md)
+[← Ossos](08-ossos.md) · [Índice](README.md) · [Próximo: Luz e sombra →](10-luz.md)
 
 Nos capítulos 7 e 8, a `key` mexia ossos. Ela também muda as formas: a cor, a transparência, o contorno, quanto da forma já foi desenhado e até o formato. Neste capítulo você aprende a animar formas, a marcar momentos (`event`), a fazer um osso andar por um caminho (`path=`), a mostrar camadas só em algumas animações (`only=`), a trocar quem fica na frente, a juntar duas animações (`mix=`) e a exportar. Você precisa dos capítulos 1 a 8.
 
@@ -24,7 +24,7 @@ key quadro forma.propriedade=valor …
 | `shape` | o formato: a forma vira outra ([abaixo](#morph-uma-forma-vira-outra)) | aos poucos |
 | `above` e `below` | quem fica na frente ([abaixo](#trocar-quem-fica-na-frente-above-e-below)) | de uma vez |
 
-A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](08-luz-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](08-luz-efeitos.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](11-profundidade.md)). As tabelas completas estão na [referência da `key`](19-referencia.md#key-numa-forma).
+A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](11-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](10-luz.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](11-profundidade.md)). As tabelas completas estão na [referência da `key`](19-referencia.md#key-numa-forma).
 
 <!-- gerar: img/07_lampada.gif -a acende -->
 ```weasel
@@ -621,4 +621,4 @@ event 62 estrela
 - `only=` mostra uma camada só em algumas animações; `above=` e `below=` trocam quem fica na frente; `mix=base,ação bones=…` junta duas animações.
 - `-a` escolhe a animação na linha de comando: `-o x.gif`, `.webp`, `.mp4`, ou `--frame N` para um quadro.
 
-[← Ossos](08-ossos.md) · [Índice](README.md) · [Próximo: Luz e sombra →](08-luz-efeitos.md)
+[← Ossos](08-ossos.md) · [Índice](README.md) · [Próximo: Luz e sombra →](10-luz.md)

@@ -355,7 +355,7 @@ Repare:
 
 - Cada forma ganha uma **faixa de sombra** dura, do lado oposto à luz do `canvas` (o `light=`, o mesmo que engrossa o contorno com `weight=`). A faixa é a forma menos ela mesma empurrada para a luz: numa bola, ela vira uma lua crescente.
 - Formas quase do tamanho do canvas (o chão, o céu) e as camadas `unlit` ficam sem faixa.
-- Com luzes (`light` e `ambient`, do [capítulo 10](08-luz-efeitos.md)), a luz também vira **degraus**: o Weasel desenha a cena com luz e sem luz e arredonda a diferença. O halo do lampião vira um disco, e a luz espalhada no Cavaleiro vira faixas.
+- Com luzes (`light` e `ambient`, do [capítulo 10](10-luz.md)), a luz também vira **degraus**: o Weasel desenha a cena com luz e sem luz e arredonda a diferença. O halo do lampião vira um disco, e a luz espalhada no Cavaleiro vira faixas.
 - Sem luzes, só a faixa de sombra muda o desenho (o Cavaleiro de cima).
 
 | Opção | O que faz |

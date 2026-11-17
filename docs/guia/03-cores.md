@@ -236,7 +236,7 @@ text t2 360,160 "weight=1" size=14 align=center
 
 **Experimente:** no `canvas`, troque para `light=1,0` (a luz bem à direita). O lado grosso passa para a esquerda nos três círculos.
 
-O `light=` não muda as cores: a luz que ilumina o desenho é a do [capítulo 10](08-luz-efeitos.md). Alguns estilos de arte do [capítulo 13](14-estilos.md) também usam a direção do `light=`.
+O `light=` não muda as cores: a luz que ilumina o desenho é a do [capítulo 10](10-luz.md). Alguns estilos de arte do [capítulo 13](14-estilos.md) também usam a direção do `light=`.
 
 ### Opções do contorno
 

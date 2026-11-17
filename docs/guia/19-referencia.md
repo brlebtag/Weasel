@@ -1490,7 +1490,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 - O `trail=` só aparece com uma animação tocando: na pose parada, não há quadros anteriores.
 - Uma `key` no `tint` de uma camada sem `tint=cor` avisa: sem a cor, não há o que pintar.
 
-**Para aprender:** [Efeitos de camada](08-luz-efeitos.md#efeitos-de-camada) e [rastro](08-luz-efeitos.md#rastro-trail).
+**Para aprender:** [Efeitos de camada](11-efeitos.md#efeitos-de-camada) e [rastro](11-efeitos.md#rastro-trail).
 
 #### Luz e sombra
 
@@ -1508,7 +1508,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 - `from=` sem `cast=` avisa e não faz nada.
 - O chão do `cast=` precisa ser uma `line`; outra forma dá erro.
 
-**Para aprender:** [O que recebe luz](08-luz-efeitos.md#o-que-recebe-luz) e [sombra projetada no chão](08-luz-efeitos.md#sombra-projetada-no-chão).
+**Para aprender:** [O que recebe luz](10-luz.md#o-que-recebe-luz) e [sombra projetada no chão](10-luz.md#sombra-projetada-no-chão-cast).
 
 #### Profundidade e 2.5D
 
@@ -1598,7 +1598,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 - No `cut=`, a forma que recorta precisa ser fechada (`shape`, `ellipse` ou `rect`): um nome de camada dá erro. Todas as formas com aquele nome abrem buraco, e buracos que se cruzam viram um só.
 - No `mirror=`, a forma copiada precisa ter nome e ser do mesmo comando. A cópia leva as opções dela; as que você escrever na linha do `mirror=` trocam essas. Os pontos escritos na linha do `mirror=` são ignorados (aviso).
 
-**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](08-ossos.md#formas-que-dobram-bones), [`cloth=`](08-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
+**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](10-luz.md#coisas-que-brilham-emit), [`bones=`](08-ossos.md#formas-que-dobram-bones), [`cloth=`](08-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
 
 ### `shape`
 
@@ -1857,7 +1857,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - As partículas recebem luz, cada uma a do ponto onde está, a não ser com `emit=` ou numa camada `unlit`.
 - As outras opções de todas as formas (`cut=`, `mirror=`, `yaw=`, `thick=`…) não valem no `emitter`: elas avisam (atributo desconhecido).
 
-**Para aprender:** [Partículas](08-luz-efeitos.md#partículas), [o formato](08-luz-efeitos.md#o-formato-shape), [a direção](08-luz-efeitos.md#a-direção-angle-e-spread), [as forças](08-luz-efeitos.md#as-forças-gravity-wind-e-drag), [uma rajada só](08-luz-efeitos.md#uma-rajada-só-burst).
+**Para aprender:** [Partículas](11-efeitos.md#partículas), [o formato](11-efeitos.md#o-formato-shape), [a direção](11-efeitos.md#a-direção-angle-e-spread), [as forças](11-efeitos.md#as-forças-gravity-wind-e-drag), [uma rajada só](11-efeitos.md#uma-rajada-só-burst).
 
 ## Componentes e repetição
 
@@ -2392,7 +2392,7 @@ Escreva o nome da camada: `key 6 fundo.blur=4`.
 
 Na `key`, os efeitos da camada não têm as faixas da linha [`layer`](#layer) e não dão aviso. Não use números negativos em `brightness=`, `saturate=` e `contrast=`: a `key` aceita, mas o resultado não é garantido.
 
-**Para aprender:** [Efeitos de camada](08-luz-efeitos.md#efeitos-de-camada).
+**Para aprender:** [Efeitos de camada](11-efeitos.md#efeitos-de-camada).
 
 #### `key` numa luz
 
@@ -2409,7 +2409,7 @@ Escreva o nome da luz: `key 6 lampada.power=0`.
 
 A luz não tem `show`: para apagar, use `power=0`. O `ambient` não tem nome e não muda com a `key`.
 
-**Para aprender:** [Luz de verdade](08-luz-efeitos.md#luz-de-verdade).
+**Para aprender:** [Luz de verdade](10-luz.md#luz-de-verdade).
 
 #### `key` num osso
 
@@ -2554,7 +2554,7 @@ rect p 120,40 60,30 c=#ffd34d ink=2
 - A luz não tem `show`. Para apagar numa animação, use `key … nome.power=0`.
 - O `light=` do [`canvas`](#canvas) é outra coisa: a direção que engrossa os contornos.
 
-**Para aprender:** [Luz de verdade](08-luz-efeitos.md#luz-de-verdade), [Lâmpada](08-luz-efeitos.md#lâmpada-light-point), [Holofote](08-luz-efeitos.md#holofote), [Sol e lua](08-luz-efeitos.md#sol-e-lua-light-dir) e [O que recebe luz](08-luz-efeitos.md#o-que-recebe-luz).
+**Para aprender:** [Luz de verdade](10-luz.md#luz-de-verdade), [Lâmpada](10-luz.md#lâmpada-light-point), [Holofote](10-luz.md#holofote-light-spot), [Sol e lua](10-luz.md#sol-e-lua-light-dir) e [O que recebe luz](10-luz.md#o-que-recebe-luz).
 
 ### `ambient`
 
@@ -2585,7 +2585,7 @@ text t 110,70 "ABERTO" size=28 align=center c=#ff5050
 - O `ambient` não tem nome: não muda com a `key` nem com o `at`.
 - Uma cor que não é `#hex` dá aviso, e a luz geral fica branca.
 
-**Para aprender:** [A luz geral](08-luz-efeitos.md#a-luz-geral-ambient).
+**Para aprender:** [A luz geral](10-luz.md#a-luz-geral-ambient).
 
 ## Jogo
 

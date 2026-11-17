@@ -89,7 +89,7 @@ text t3 600,290 "shade=1.5" size=22 align=center c=ink
 
 - O escuro aumenta quanto mais a carta vira: de frente, nada; de lado (`yaw=90`), o máximo.
 - Só o giro da própria forma (ou do osso dela) escurece. O giro da **camada inteira** (veja [Girar a camada inteira](#girar-a-camada-inteira-yaw-pitch-e-pivot)) não escurece nada.
-- O mesmo `shade=` também controla o claro e escuro da luz da cena ([capítulo 8](08-luz-efeitos.md)).
+- O mesmo `shade=` também controla o claro e escuro da luz da cena ([capítulo 10](10-luz.md#claro-e-escuro-shade)).
 
 ## Uma carta que vira: `back=` e `thick=`
 

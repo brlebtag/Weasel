@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4. Próximo: a etapa 6.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4; etapa 6 (luz e aparência: capítulos 10 a 12) feita na 1.67.5. Próximo: a etapa 7.
 
 ## O pedido
 
@@ -473,3 +473,29 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
   - uma animação combinada (`mix=`) aceita `key` próprias.
 - **As imagens:** 5 novas (`07_primeira`, `07_sapo`, `08_esqueleto`, `08_bicho` e `09_abertura`). As outras 37 dos três capítulos são as mesmas de antes: os exemplos ficaram iguais, letra por letra, e os arquivos não foram gerados de novo (um GIF gerado de novo sai com outros bytes). Saíram 7 que nenhum exemplo gera mais: `06_alcance`, `06_chapeu`, `06_degrau`, `06_jitter`, `06_sem_pai`, `07_camadas` e `07_luzes`.
 - **Os links:** os **Para aprender** do 19, os capítulos 2, 3, 4, 6, 12, 13 e 21, os antigos de luz, jogo e filme, o índice e o plano da metamorfose levam aos arquivos novos. A navegação do capítulo de luz antigo volta para o 9.
+
+### Etapa 6 (1.67.5): luz e aparência
+
+- **O capítulo de luz e efeitos antigo (`08-luz-efeitos.md`, 1.340 linhas) virou dois**, no formato da seção 3.3: o 10, Luz e sombra (`10-luz.md`, 942 linhas), e o 11, Efeitos e partículas (`11-efeitos.md`, 691 linhas). O 12, Acabamento (`12-acabamento.md`, 476 linhas), foi reescrito no mesmo formato.
+- **O 10 passou das 700 linhas.** Ele tem quatro tipos de luz (`ambient`, `point`, `spot` e `dir`), a luz que muda com o tempo, o que recebe luz e a sombra no chão, cada um com o seu exemplo, e as lâmpadas aparecem lado a lado (três por imagem) para comparar. Para encurtar, os exemplos da força e do alcance passaram a incluir uma sala pronta (`include "sala.weasel"`, com `<!-- arquivo: -->`), e as imagens saíram iguais, byte a byte. Dividir em dois deixaria a sombra sozinha num capítulo pequeno.
+- **Os desenhos de vitrine:** o porão com a lanterna que procura, a vela que tremula e o luar na janela (10), o caldeirão da bruxa, com o vapor, as bolhas, o brilho e a placa com sombra (11), e uma fase de videogame antigo numa televisão de tubo (12: `pixel=4`, `posterize=palette` e `crt=0.6`).
+- **O que saiu dos capítulos e para onde foi:**
+  - os "Acabamentos de cinema" do 8 antigo saíram: o 12 já ensina o `bloom=`, o `vignette=` e o `grain=` com exemplo, e a fogueira do 11 usa os três; saíram junto a rua de cinema (`08_rua_cinema`) e a rua com a luz menor (`08_luz_menor`);
+  - "Camadas inteiras" do capítulo de animação antigo (b3c66e6) voltou, igual, como "Animar os efeitos com `key`" do 11, com a mesma imagem (`07_camadas.gif`, devolvida);
+  - as dicas do editor foram para o 22, em três títulos novos: Luzes no desenho, Efeitos da camada e Acabamento e estilo (o painel inteiro continua no capítulo dos estilos, até a etapa 7). O aviso do começo do 22 diz agora "capítulos 1 a 12".
+- **Escolhas minhas:**
+  - o 10 começa com a rua que já existia (a luz de verdade, com e sem luz) e só depois apresenta cada tipo de luz, um por título;
+  - no 12, o "game" e o "flat" ficam juntos com o `pixel=` e o `posterize=` numa tabela de quatro imagens, como antes; o `pixel=` do `finish` aponta para o `art pixel` quando a pessoa quer pixel art nítida;
+  - na vitrine do 12, a moeda sobe e desce (`bob=`) em vez de girar: girando, ela fica fina, e o `pixel=` faz a média das cores, que o `posterize=palette` troca por uma cor errada.
+- **Erros de fato corrigidos** (do diagnóstico e da conferência com o código):
+  - o `tint=` vai de 0 a 1, não é um multiplicador como o `brightness=`;
+  - as partículas ganharam as faixas e os padrões de todas as opções;
+  - o `ambient` não muda com a `key`, e dois `ambient` valem pelo de baixo; com uma `light` e sem `ambient`, vale branco com 0.6;
+  - na `dir`, `radius=`, `glow=`, `aim=`, `cone=` e `bone=` não fazem nada; o `flicker=` e o `rim=` valem;
+  - a luz não tem `show`; na `key`, os números das luzes e dos efeitos não são cortados;
+  - o `rim=` usa a direção da luz mais forte no centro da forma;
+  - no `finish`: só a primeira palavra vale (`finish game flat` fica `game`); várias linhas `finish` se somam; o `flat` também tira o contorno dos textos e deixa os traços, e uma forma só com `ink=` some; o `pixel=` vai de 1 a 32 e é medido na imagem exportada; o `posterize=palette` só usa as cores `#hex`;
+  - os efeitos de tela saem no PNG, no JPG, no GIF, no WebP, no vídeo e no filme, e não na folha de sprites, no Godot, no SVG nem no `--contact`/`--trajectory`; o SVG também deixa de fora o `pixel=` e o `posterize=`;
+  - o `inner=` do `finish` deixa os traços mais **transparentes** (não "mais claros") e não vale para os braços e as pernas com IK.
+- **As imagens:** 4 novas (`10_sala`, `10_porao`, `11_caldeirao` e `12_fita`), e o `07_camadas` voltou. As outras dos três capítulos são as mesmas de antes: os exemplos ficaram iguais, letra por letra (os de força e de alcance mudaram por dentro, com o `include`, e saíram iguais, byte a byte). Saíram 2 que nenhum exemplo gera mais: `08_luz_menor` e `08_rua_cinema`. Os GIFs das vitrines do 10 e do 11 saem com `-s 0.75`, para ficarem abaixo de 600 KB.
+- **Os links:** os **Para aprender** do 19, os capítulos 2, 3, 4, 8 e 9, os antigos de jogo, profundidade e estilos e o índice levam aos arquivos novos. A navegação do capítulo de jogo antigo volta para o de profundidade (o 14), que vem antes dele na ordem nova. O índice também corrige o 22 ("capítulos 1 a 12"; dizia "1 a 4").

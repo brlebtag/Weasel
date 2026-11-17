@@ -1,20 +1,21 @@
 # 12. Acabamento
 
-[← Efeitos e partículas (antigo)](08-luz-efeitos.md#efeitos-de-camada) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
+[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
 
-> **Este capítulo ainda é o texto antigo.** Ele saiu do capítulo 4 (Camadas) e será reescrito numa das próximas versões do guia. Os títulos e as imagens são os mesmos de antes.
+O acabamento é o último passo: depois de tudo pintado, a linha `finish` muda a imagem **inteira** de uma vez. Ela tira os contornos, pixela, reduz as cores, imita uma câmera de verdade (brilho, bordas escuras, granulado) ou imita uma tela antiga (filme, fita VHS, televisão de tubo, falha digital). Você precisa dos capítulos 1 a 11.
 
 ## Acabamento: `finish`
 
-`finish` muda o estilo do desenho **inteiro** de uma vez. A linha `finish` pode ficar em qualquer lugar do arquivo (o costume é logo depois do `canvas`):
-
 ```
-finish game|flat inner= pixel= posterize= bloom= vignette= grain= oldfilm= vhs= crt= glitch=
+finish [game ou flat] [inner=…] [pixel=…] [posterize=…] [bloom=…] [vignette=…] [grain=…]
+       [oldfilm=…] [vhs=…] [crt=…] [glitch=…]
 ```
 
-| | `game` (padrão) | `finish flat` | `pixel=4` | `posterize=4` |
-|---|---|---|---|---|
-| | ![Gosma verde com contorno](img/04_finish_game.png) | ![A mesma gosma sem contorno](img/04_finish_flat.png) | ![A gosma pixelada](img/04_finish_pixel.png) | ![A gosma com poucas cores](img/04_finish_posterize.png) |
+A linha `finish` pode ficar em qualquer lugar do arquivo. O costume é logo depois do `canvas`. Quatro vezes a mesma gosma, mudando só a linha `finish`:
+
+| `game` (o padrão) | `finish flat` | `pixel=4` | `posterize=4` |
+|---|---|---|---|
+| ![Gosma verde com contorno](img/04_finish_game.png) | ![A mesma gosma sem contorno](img/04_finish_flat.png) | ![A gosma pixelada](img/04_finish_pixel.png) | ![A gosma com poucas cores](img/04_finish_posterize.png) |
 
 <details>
 <summary>Código dos quatro</summary>
@@ -68,29 +69,25 @@ ellipse brilho 76,60 11,6 rot=-35 c=#e6fadf
 
 </details>
 
-Os quatro códigos são iguais, menos a linha `finish`. Repare:
+Repare:
 
 - `game` é o padrão: com ou sem a linha `finish game`, os contornos (`ink=`) são desenhados.
-- `flat` tira **todos** os contornos de uma vez, para um visual de recorte de papel. Os olhos continuam, porque são preenchimento (`c=ink`), não contorno.
-- `pixel=4` desenha a imagem 4 vezes menor e depois aumenta sem suavizar: cada "pixel" vira um bloco de 4×4.
-- `posterize=4` deixa só 4 níveis em cada canal de cor (vermelho, verde e azul). O degradê suave da gosma vira faixas.
-
-| Atributo | O que faz |
-|---|---|
-| `game` / `flat` | `game` desenha os contornos (`ink=`); `flat` tira todos, para um visual de recorte de papel. |
-| `inner=0.6` | Opacidade dos **traços** (`stroke`) dentro de camadas com `clip`, de 0 a 1 (padrão 1). Deixa penas, rugas e dobras mais suaves que o contorno de fora ([os dois `inner`](#os-dois-inner)). |
-| `pixel=4` | Desenha em blocos de 4×4 pixels (pixel art), de 1 a 32 (padrão 1, sem blocos). |
-| `posterize=4` | Reduz cada canal de cor a 4 níveis (de 2 a 64). `posterize=palette` reduz às cores da `palette` ([exemplo](#só-as-cores-da-palette-posterizepalette)). |
-| `bloom=` `vignette=` `grain=` | Brilho que vaza do claro, bordas escurecidas e granulado de filme (padrão 0 nos três). Cada um tem a sua faixa: `bloom` de 0 a 3, `vignette` de 0 a 1 e `grain` de 0 a 0.33 ([detalhes e exemplo](#acabamentos-de-cinema-bloom-vignette-e-grain)). |
-| `oldfilm=` `vhs=` `crt=` `glitch=` | Efeitos de tela: filme antigo, fita VHS, televisão de tubo e falha digital, de 0 a 1 (padrão 0). Só no filme, no vídeo, no GIF e no PNG; a sprite sheet e o Godot saem sem eles ([detalhes e exemplo](#efeitos-de-tela-oldfilm-vhs-crt-e-glitch)). |
+- `flat` tira o contorno de **todas** as formas e textos de uma vez, para um visual de recorte de papel. Os olhos continuam, porque são preenchimento (`c=ink`), não contorno. Os traços (`stroke` e `line`) também ficam: eles são o próprio traço.
+- `pixel=4` desenha a imagem 4 vezes menor e depois aumenta sem suavizar: cada "pixel" vira um bloco de 4 × 4. Vai de 1 (sem blocos, se não escrever) a 32.
+- `posterize=4` deixa só 4 tons em cada canal de cor (vermelho, verde e azul), de 2 a 64. O degradê suave da gosma vira faixas.
 
 **Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
 
-**No editor:** **Janela › Acabamento e estilo** tem um controle deslizante para cada número do `finish` (e a escolha entre `game` e `flat`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; sem a linha, ela nasce logo depois do `canvas`. Veja [o painel no capítulo 14](14-estilos.md#pelo-editor-janela--acabamento-e-estilo).
+**Cuidado:**
+- Só a primeira palavra vale: em `finish game flat`, o `flat` fica de fora, sem aviso.
+- Várias linhas `finish` se somam, e cada opção fica com o último valor escrito.
+- Com `flat`, uma forma com `ink=` e sem `c=` some inteira: ela não tem cor de dentro, só o contorno.
+- O bloco do `pixel=` é medido na imagem exportada: com `-s 2`, `pixel=4` dá blocos de 4 pixels da imagem, que são 2 do desenho.
+- O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítida, com as cores do desenho e o contorno de um bloco, use a linha `art pixel` do [capítulo 13](14-estilos.md#pixel-art-art-pixel). Num arquivo com `art`, o `pixel=` do `finish` fica de fora (aviso).
 
-O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítido, com as cores do desenho, paletas de console e contorno de 1 bloco, use a linha `art pixel` do [capítulo 14](14-estilos.md#pixel-art-art-pixel).
+No editor, **Janela › Acabamento e estilo** escreve a linha `finish` por você ([capítulo 22](22-editor.md#acabamento-e-estilo)).
 
-### Só as cores da palette: `posterize=palette`
+## Só as cores da palette: `posterize=palette`
 
 Com `posterize=palette`, cada ponto da imagem vira a cor **mais parecida** entre as cores da sua `palette`. Serve para garantir que o desenho inteiro use só as cores escolhidas, como numa pixel art de poucas cores.
 
@@ -118,7 +115,9 @@ Repare:
 
 **Experimente:** acrescente `meio=#6dbe6a` na linha `palette`. O degradê ganha uma terceira faixa, verde média.
 
-### Acabamentos de cinema: `bloom=`, `vignette=` e `grain=`
+**Cuidado:** só contam as cores escritas em `#hex`. Uma cor da `palette` com nome do CSS (`pele=wheat`) fica de fora, sem aviso. A transparência das cores da `palette` não conta, e o que é transparente na imagem continua transparente.
+
+## Acabamentos de cinema: `bloom=`, `vignette=` e `grain=`
 
 Estes três imitam o que acontece numa câmera de verdade. Eles valem para a **imagem pronta**, então ficam bem em cenas inteiras (cenários, filmes) e quase não aparecem num personagem sozinho num fundo claro.
 
@@ -182,23 +181,23 @@ rect porta 78,78 20,34 c=#2b2233 ink=line
 
 </details>
 
-| Atributo | O que faz | Valores |
+| Opção | O que faz | Valores |
 |---|---|---|
 | `bloom=` | o que é muito claro (a lua, a janela) "vaza" num brilho suave em volta | de 0 a 3; 1 já é bem visível, e cada número a mais soma mais uma camada de brilho |
-| `vignette=` | escurece as bordas e os cantos, e leva o olho para o meio | de 0 a 1: em 1, os cantos ficam pretos (acima de 1 não escurece mais) |
-| `grain=` | granulado de filme, um chuvisco fino por cima de tudo | de 0 a 0.33: `0.03` é sutil, `0.15` é forte (acima de 0.33 não aumenta mais) |
+| `vignette=` | escurece as bordas e os cantos, e leva o olho para o meio | de 0 a 1: em 1, os cantos ficam pretos |
+| `grain=` | granulado de filme, um chuvisco fino por cima de tudo | de 0 a 0.33: `0.03` é sutil, `0.15` é forte |
 
-Fora da faixa, o Weasel avisa. No `bloom`, acima de 3, vale 3. No `vignette` e no `grain`, o valor é aceito, mas acima de 1 e de 0.33 a imagem não muda mais.
+Os três começam em 0 (desligados). Fora da faixa, o Weasel avisa: no `bloom`, acima de 3, vale 3; no `vignette` e no `grain`, o número é aceito, mas acima de 1 e de 0.33 a imagem não muda mais.
 
-Os três podem ir juntos na mesma linha: `finish game bloom=0.5 vignette=0.6 grain=0.03`. O [capítulo 8](08-luz-efeitos.md#acabamentos-de-cinema) usa assim numa fogueira animada.
-
-> O granulado é ruído, e ruído não comprime: um GIF ou PNG com `grain=` fica bem maior.
+Os três podem ir juntos na mesma linha: `finish game bloom=0.5 vignette=0.6 grain=0.03`. A [fogueira do capítulo 11](11-efeitos.md#partículas) usa assim. Eles combinam muito bem com a luz do [capítulo 10](10-luz.md): o `bloom` faz as lâmpadas, os halos (`glow=`) e as janelas com `emit=` vazarem de verdade.
 
 **Experimente:** no código do `bloom`, mude a cor da lua para `c=#8a7a4a`, um amarelo apagado. O brilho em volta dela some: o `bloom` só pega o que é bem claro. A janela, que continua clara, continua brilhando.
 
-### Efeitos de tela: `oldfilm=`, `vhs=`, `crt=` e `glitch=`
+**Cuidado:** o granulado é ruído, e ruído não comprime: um GIF ou um PNG com `grain=` fica bem maior.
 
-Estes quatro imitam o caminho da imagem até quem assiste: o filme antigo no projetor, a fita de vídeo, a televisão de tubo e o arquivo digital quebrando. Cada um vai de 0 a 1 (1 é o mais forte) e muda a cada quadro, sempre do mesmo jeito: o vídeo sai igual toda vez.
+## Efeitos de tela: `oldfilm=`, `vhs=`, `crt=` e `glitch=`
+
+Estes quatro imitam o caminho da imagem até quem assiste: o filme antigo no projetor, a fita de vídeo, a televisão de tubo e o arquivo digital quebrando. Cada um vai de 0 a 1 (1 é o mais forte; se não escrever, 0) e muda a cada quadro, sempre do mesmo jeito: o vídeo sai igual toda vez.
 
 | `oldfilm=1` | `vhs=1` | `crt=1` | `glitch=1` |
 |---|---|---|---|
@@ -261,38 +260,40 @@ rect porta 78,78 20,34 c=#8a5a3c ink=line
 
 </details>
 
-| Atributo | O que faz |
+| Opção | O que faz |
 |---|---|
 | `oldfilm=` | filme antigo: sépia, a luz piscando, o quadro tremendo de leve, o grão, as bordas escuras, riscos que duram uns quadros, poeira e, às vezes, um fio de cabelo |
 | `vhs=` | fita VHS: as linhas tremendo de lado, a cor borrada e atrasada, o preto lavado, o chiado, a faixa do tracking descendo devagar e a faixa torta embaixo |
-| `crt=` | televisão de tubo: as linhas de varredura, a máscara de cor (vermelho, verde e azul lado a lado) e a imagem curva, com os cantos redondos e escuros; a curva cresce com o valor, e em 1 só uma faixa fina da borda some |
-| `glitch=` | falha digital: em alguns quadros, em rajadas, faixas da imagem pulam de lado (algumas com as cores trocadas), o vermelho e o azul se separam e uns blocos se repetem fora do lugar; quanto maior o valor, mais vezes e mais forte |
+| `crt=` | televisão de tubo: as linhas de varredura, a máscara de cor (vermelho, verde e azul lado a lado) e a imagem curva, com os cantos redondos e escuros. A curva cresce com o número; em 1, só uma faixa fina da borda some |
+| `glitch=` | falha digital: em alguns quadros, em rajadas, faixas da imagem pulam de lado (algumas com as cores trocadas), o vermelho e o azul se separam e uns blocos se repetem fora do lugar. Quanto maior o número, mais vezes e mais forte |
 
 Repare:
 
-- **São para o filme e o vídeo**, e valem também no GIF, no WebP e no PNG. A sprite sheet e o Godot saem **sem eles** (um personagem de jogo não deve levar a tela de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG também sai sem eles.
 - Eles entram por último: depois do estilo (`art`), do `bloom`, do `vignette`, do `grain` e do `posterize`. Com `pixel=`, entram depois dos blocos.
 - Podem ir juntos: `finish crt=0.6 vhs=0.4` é uma fita velha passando numa televisão de tubo.
 - Na imagem transparente, eles mexem só no desenho: o que é transparente continua transparente.
 
-> Como no granulado, o chiado, o grão e a poeira não comprimem: o vídeo e o GIF ficam maiores.
-
 **Experimente:** no código do `crt=1`, mude para `crt=0.3`. As linhas ficam leves, e a imagem quase não curva.
 
-### Os dois `inner`
+**Cuidado:**
+- Eles são para o filme e o vídeo, e saem no PNG, no JPG, no GIF, no WebP, no vídeo e no filme. A folha de sprites e o Godot saem **sem eles** (um personagem de jogo não deve levar a televisão de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG e as folhas de conferência (`--contact`, `--trajectory`) também saem sem eles.
+- No SVG, o `pixel=` e o `posterize=` também ficam de fora.
+- Como no granulado, o chiado, o grão e a poeira não comprimem: o vídeo e o GIF ficam maiores.
+
+## Os dois `inner`
 
 A palavra `inner` aparece em **dois lugares** do Weasel, com sentidos diferentes. Os dois cuidam da mesma coisa, os traços **de dentro** do personagem (penas, rugas, dobras de roupa), por isso têm o mesmo nome. Mas um diz a **espessura** desses traços, e o outro diz **o quanto eles aparecem**.
 
 | Nome | Onde se escreve | O que é | Exemplo |
 |---|---|---|---|
 | `inner` da `palette` | como valor de `w=` ou `ink=` (e, para mudar o número, numa linha `palette`) | um **número com nome**: uma espessura em pixels. Já vem pronto, valendo 5 | `stroke pena w=inner : …` |
-| `inner=` do `finish` | só na linha `finish` | uma **opacidade**, de 0 (invisível) a 1 (normal). Padrão 1. Vale só para os `stroke` de camadas com `clip=` | `finish game inner=0.4` |
+| `inner=` do `finish` | só na linha `finish` | uma **opacidade**, de 0 (invisível) a 1 (normal; se não escrever). Vale só para os `stroke` de camadas com `clip=` | `finish game inner=0.4` |
 
 **O `inner` da palette** foi apresentado no [capítulo 3](03-cores.md#a-cor-da-tinta-e-os-nomes-prontos): é um número pronto, como `line` e `edge`. Escrever `w=inner` é o mesmo que escrever `w=5`, com a vantagem de poder trocar o 5 de todos os traços numa linha só.
 
-**O `inner=` do finish** deixa mais claros os traços que ficam **dentro** de uma forma recortada, para que pareçam um detalhe e não briguem com o contorno de fora.
+**O `inner=` do finish** deixa mais transparentes os traços de uma camada com `clip=`, para que pareçam um detalhe e não briguem com o contorno de fora.
 
-Os dois exemplos abaixo desenham o mesmo passarinho. O primeiro gera duas imagens: a normal e a variante `fino`, que troca o `inner` da palette. O segundo só acrescenta a linha `finish game inner=0.4`.
+Os dois exemplos abaixo desenham o mesmo passarinho. O primeiro gera duas imagens: a normal e a variante `fino`, que troca o `inner` da palette ([variantes, capítulo 6](06-componentes.md#variantes-variant)). O segundo só acrescenta a linha `finish game inner=0.4`.
 
 <!-- gerar: img/04_inner_padrao.png -->
 <!-- gerar: img/04_inner_fino.png --variant fino -->
@@ -347,15 +348,15 @@ shape bico c=#e8743b ink=4 : 112,118! 132,118! 122,132!
 
 Repare:
 
-- **No meio**, a variante troca o **número** `inner` da palette de 5 para 2. Todos os traços com `w=inner` afinam juntos: a asa, as penas **e** o topete. Nenhum fica mais claro.
+- **No meio**, a variante troca o **número** `inner` da palette de 5 para 2. Todos os traços com `w=inner` afinam juntos: a asa, as penas **e** o topete. Nenhum fica mais transparente.
 - **À direita**, `finish game inner=0.4` não mexe na espessura: a asa e as penas continuam com 5 pixels, mas aparecem só 40%. O topete **não muda**, porque está na camada `rosto`, que não tem `clip=`.
 - O contorno da bola (`ink=line`) e o bico não mudam em nenhuma das três.
 
 O Cavaleiro de exemplo ([`cavaleiro.weasel`](../../exemplos/cavaleiro.weasel)) usa os dois juntos: `palette … inner=7` deixa os traços de dentro com 7 pixels, e `finish game inner=0.6` deixa as dobras da capa, que estão na camada `cloakshade clip=cloak`, com 60%.
 
-#### O que o `inner=` do finish deixa mais claro
+### Onde o `inner=` do finish vale
 
-Para não restar dúvida, este exemplo põe lado a lado as mesmas três coisas, com a mesma espessura (`inner`, da palette), numa camada **sem** recorte e numa camada **com** `clip=`:
+Este exemplo põe lado a lado as mesmas três coisas, com a mesma espessura (`inner`, da palette), numa camada **sem** recorte e numa camada **com** `clip=`:
 
 <!-- gerar: img/04_inner_juntos.png -->
 ```weasel
@@ -395,17 +396,81 @@ text c2 340,220 "contorno (ink=)" size=12 align=center
 Repare:
 
 - Os seis desenhos usam a mesma espessura: `w=inner` ou `ink=inner`, que nesta palette vale 8 pixels.
-- Só **um** ficou claro: o `stroke` da direita, que é um `stroke` **e** está numa camada com `clip=`.
+- Só **um** ficou transparente: o `stroke` da direita, que é um `stroke` **e** está numa camada com `clip=`.
 - A `line` da direita está na mesma camada recortada, mas não muda. O contorno da bolinha também não.
 
-Resumindo, `finish inner=` só vale para:
+O `inner=` do finish vale só para os `stroke` de uma camada com `clip=`. Uma camada só com `cut=` não conta. Ele não vale para a `line`, o texto, o preenchimento, o contorno (`ink=`) nem para os braços e as pernas com IK (o `stroke` com `limb=`, `hip=`, `foot=` ou `target=`, do [capítulo 8](08-ossos.md#pernas-e-braços-com-ik)).
 
-- `stroke` (traços). Não vale para `line`, `text`, preenchimentos, nem para o contorno das formas (`ink=`);
-- em camadas com `clip=`. Uma camada só com `cut=` não conta;
-- e não vale para braços e pernas com IK (`stroke … limb=`, do [capítulo 8](08-ossos.md#pernas-e-braços-com-ik)).
-
-A opacidade do `finish` se multiplica com a do próprio traço: um `stroke` com `opacity=0.5` numa camada com `clip=` e `finish inner=0.4` aparece só 20% (0,5 × 0,4).
+A transparência do `finish` se multiplica com a do próprio traço: um `stroke` com `opacity=0.5` numa camada com `clip=` e `finish inner=0.4` aparece só 20% (0,5 × 0,4).
 
 **Experimente:** mude `inner=0.3` para `inner=0` na linha `finish`. O traço da direita some de vez, e todo o resto fica igual.
 
-[← Efeitos e partículas (antigo)](08-luz-efeitos.md#efeitos-de-camada) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
+## Opções do `finish`
+
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| `game` ou `flat` | com ou sem os contornos (`ink=`) | uma das duas palavras | `game` |
+| `inner=` | o quanto aparecem os `stroke` de uma camada com `clip=` | de 0 a 1 | 1 |
+| `pixel=` | pixela em blocos quadrados | de 1 a 32, em pixels da imagem exportada | 1 (sem blocos) |
+| `posterize=` | reduz as cores: tons por canal, ou só as cores da `palette` | de 2 a 64, ou `palette` | desligado |
+| `bloom=` | o claro vaza num brilho | de 0 a 3 | 0 |
+| `vignette=` | escurece as bordas | de 0 a 1 | 0 |
+| `grain=` | granulado de filme | de 0 a 0.33 | 0 |
+| `oldfilm=` `vhs=` `crt=` `glitch=` | efeitos de tela, que mudam a cada quadro | de 0 a 1 | 0 |
+
+Nenhuma delas muda com a `key`. A ficha completa está na [referência do `finish`](19-referencia.md#finish).
+
+## Juntando tudo
+
+Uma fase de um videogame antigo, numa televisão de tubo: o herói pula, a moeda flutua em cima dos blocos. O desenho é feito com as formas de sempre. Quem faz o "jogo antigo" é só a linha `finish`.
+
+<!-- gerar: img/12_fita.gif -a joga -->
+```weasel
+canvas 360 240 bg=ceu
+finish pixel=4 posterize=palette crt=0.6
+palette ink=#1a1c2c line=4 ceu=#41a6f6 nuvem=#f4f4f4 grama=#38b764 terra=#a05b3c tijolo=#b13e53 ouro=#ffcd75 heroi=#ef7d57
+
+layer fundo
+ellipse nuvemA 74,52 32,13 c=nuvem
+ellipse nuvemB 104,42 24,13 c=nuvem
+ellipse nuvemC 272,68 30,12 c=nuvem
+rect morro 226,144 136,60 r=30 c=grama ink=line
+
+layer fase
+rect chao -8,186 376,62 c=terra ink=line
+rect grama -8,177 376,14 c=grama ink=line
+rect bloco1 144,108 30,30 c=tijolo ink=line
+rect bloco2 174,108 30,30 c=ouro ink=line
+rect bloco3 204,108 30,30 c=tijolo ink=line
+
+bone giro pivot=189,76 bob=5,1
+ellipse moeda 189,76 11,15 c=ouro ink=line bone=giro
+
+bone pulo pivot=90,177
+layer heroi
+shape corpo c=heroi ink=line bone=pulo : 90,132 114,153 117,177! 63,177! 66,153
+ellipse olho 99,150 4,6 c=ink bone=pulo
+
+anim joga frames=24 fps=12
+key 0 pulo=0,0
+key 8 pulo=0,-60 ease=out
+key 16 pulo=0,0 ease=in
+```
+
+![Uma fase de videogame em pixels grossos, com céu azul, nuvens, um morro verde, três blocos e uma moeda dourada que sobe e desce; um herói laranja pula; a imagem é curva, com os cantos escuros e as linhas de uma televisão de tubo](img/12_fita.gif)
+
+- **`pixel=4`** desenha tudo em blocos de 4 × 4. As bordas ficam com tons misturados (a média de cada bloco): repare na beira dos blocos de tijolo.
+- **`posterize=palette`** troca cada tom misturado pela cor mais parecida da `palette`. Por isso a imagem inteira só tem as 8 cores da linha `palette`, como num console antigo.
+- **`crt=0.6`** põe a imagem pronta numa televisão de tubo: as linhas, a curva e os cantos escuros. Ele entra depois dos blocos, então as linhas da tela são mais finas que os blocos.
+- A moeda sobe e desce sozinha (`bob=5,1`, [capítulo 8](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter)), duas vezes em cada pulo do herói.
+
+**Experimente:** troque a linha `finish` por `finish flat bloom=1 vignette=0.6 grain=0.05 oldfilm=0.5`. A mesma fase vira um filme antigo, sem contornos, com brilho e granulado.
+
+## Resumo
+
+- `finish` muda a imagem inteira, depois de tudo pintado. `flat` tira os contornos; `pixel=` pixela; `posterize=` reduz as cores (`posterize=palette`: só as cores da `palette`).
+- `bloom=`, `vignette=` e `grain=` imitam uma câmera: o claro vaza, as bordas escurecem, aparece o granulado.
+- `oldfilm=`, `vhs=`, `crt=` e `glitch=` imitam uma tela antiga e mudam a cada quadro. Eles saem nas imagens, nos GIFs, nos vídeos e nos filmes, mas não na folha de sprites nem no Godot.
+- O `inner` da `palette` é uma espessura; o `inner=` do `finish` é o quanto aparecem os traços de uma camada com `clip=`.
+
+[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
