@@ -1473,9 +1473,60 @@ Cuidado com o fantasma…
 
 O `.srt` é o formato de legenda que os players de vídeo e o YouTube aceitam.
 
+## O filme pela tela
+
+O editor também muda o filme sem escrever, no jeito do Adobe Animate: arrastando na linha do tempo, num painel e em alças no desenho. Tudo isso reescreve as linhas do código (`at`, `actor`, `camera`, `shot`), e cada gesto se desfaz com um **Ctrl+Z**.
+
+### As faixas dos `at`
+
+Embaixo dos planos, a linha do tempo ganha uma **faixa** para cada ator, uma para a **câmera** e uma para cada luz, camada ou forma que aparece nas linhas `at`. Cada `at` vira um **losango** na faixa de cada alvo dele. Uma linha clara liga os losangos do mesmo plano.
+
+| Gesto | O que muda no código |
+|---|---|
+| Clicar num losango | nada: o player vai até o momento, e o código, até a linha do `at` |
+| Arrastar um losango | o tempo do `at` (`at 1.5s` vira `at 2.5s`). Se a linha tem outros alvos, só o arrastado sai para uma linha nova |
+| **Alt**+arrastar | uma cópia, no tempo onde você soltar |
+| **Shift**+clique, ou clique no nome da faixa | escolhe mais de um (o nome escolhe todos os da faixa); **Ctrl+A** escolhe todos |
+| **←** e **→** | empurram os escolhidos um quadro (com **Shift**, cinco) |
+| **Delete** | apaga os escolhidos: só aquele alvo sai da linha, e a linha some quando fica vazia |
+| Botão direito num losango | o menu com os seis `ease` (no `at`, é como o valor **chega** nele), **Ir para a linha** e **Apagar** |
+| Botão direito num plano | a **transição** de entrada, com uma prévia de cada uma (abaixo) |
+
+Bom saber:
+
+- O losango arrastado cai num quadro e gruda no player e no começo dos planos. Um `at` não sai do plano dele.
+- Um `at +0.5s` conta do anterior. Quando o anterior anda, ele anda junto, e o código continua com `+`. Quando o anterior é apagado, ele ganha o tempo escrito, para ficar onde estava.
+- Um `at` com o tempo de um marcador (`at trovao+0.3s`) não arrasta: ele anda com o marcador (arraste o marcador na régua).
+- Se o `at` chega a um tempo onde outro `at` do plano já mudava o mesmo alvo, o que chegou fica, e o outro sai daquela linha.
+
+### O painel Filme
+
+Num filme, a coluna da direita mostra o painel **Filme** (**Janela › Filme** abre e fecha). Ele mostra o momento do player e tem três partes.
+
+- **Plano.** A **duração** (`dur=`) e a **entrada** (`in=`). São seis botões, **corte**, **dissolver** (`fade`), **cortina** (`wipe`), **empurrar** (`slide`), **zoom** e **íris**, cada um com uma prévia pequena: o fim do plano anterior virando este. Com o mouse em cima, a prévia anda. O campo ao lado de **Entrada** é a duração da transição.
+- **Câmera.** `zoom=`, o giro (`rot=`), o tremor (`shake=`) e o escurecer (`fade=`) no momento do player.
+- **Ator.** Escolha um ator na lista, ou clique nele no desenho. O painel mostra a **animação** dele numa lista (`anim=`), a velocidade, o tamanho (`scale=`), o giro, o espelho (`flip=`), a opacidade e se ele aparece.
+
+**Onde o painel escreve.** O topo do painel diz onde vai cada mudança:
+
+- Com o cursor do código numa linha `at` do plano, a mudança vai **nela**, como `alvo.prop=` (`at 2s heroi.anim=dash`). A lista ao lado escolhe o `ease=` dela.
+- Fora de um `at`, a mudança vai na linha que **declara** o ator (`actor heroi …`) ou a câmera do plano. Se o plano não tem uma linha `camera`, ela nasce logo depois do `shot`.
+- Se o valor muda num `at` antes do player, escrever na declaração não mudaria o que se vê. Aí o editor avisa, e não escreve.
+- **+ at aqui** cria uma linha `at` no momento do player e põe o cursor nela. O painel e as alças passam a escrever ali. Assim se anima pela tela: leve o player a um momento, aperte **+ at aqui** e mude o que quiser.
+
+### As alças no desenho
+
+Com a Seleção (**V**) e o painel Filme aberto:
+
+- O ator escolhido ganha uma **caixa tracejada**. Os **cantos** mudam o `scale=` a partir do ponto dele (com **Shift**, de 0.05 em 0.05). A **bolinha verde** em cima gira (`rot=`; com **Shift**, de 15 em 15 graus). O ponto do meio continua movendo o `x,y`, como antes.
+- Na vista do mundo (**Exibir › Câmera** desligado), os **cantos** da moldura laranja mudam o `zoom=` da câmera: para dentro aproxima, para fora afasta.
+- Clicar num ator escolhe ele. O cursor do código vai para a linha dele, menos quando está num `at`: aí fica no `at`, para o painel continuar escrevendo nele.
+
+As alças escrevem onde o painel escreve, com um **Ctrl+Z** por arraste. Enquanto o filme toca, elas somem.
+
 ## Exportando o filme
 
-No editor, o player escolhe o filme inteiro ou um plano e repete o trecho; o botão ao lado de ▶ troca para **tocar uma vez**, que para no fim. A **linha do tempo** embaixo do desenho mostra os planos, os sons (com a forma de onda) e as legendas; arrastar um bloco muda o tempo no código. **Exibir › Câmera** alterna entre o que a câmera filma e o mundo inteiro, com a moldura da câmera.
+No editor, o player escolhe o filme inteiro ou um plano e repete o trecho; o botão ao lado de ▶ troca para **tocar uma vez**, que para no fim. A **linha do tempo** embaixo do desenho mostra os planos, os sons (com a forma de onda) e as legendas; arrastar um bloco muda o tempo no código (e os `at`, o painel Filme e as alças também mudam o filme: veja [O filme pela tela](#o-filme-pela-tela)). **Exibir › Câmera** alterna entre o que a câmera filma e o mundo inteiro, com a moldura da câmera.
 
 Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 

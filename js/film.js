@@ -934,5 +934,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, morphPlan, autoReport, AUTO_MAX, transitionAt, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
+  W.film = { timeline, locate, timecode, frameState, morphPlan, autoReport, AUTO_MAX, transitionAt, composeTransition, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

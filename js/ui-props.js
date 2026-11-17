@@ -18,9 +18,9 @@
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sem armazenamento */ } },
   };
   // as seções abertas ficam guardadas neste navegador
-  const cfg = { props: true, sw: true, ink: false, lock: false, layers: true, sym: true, fold: [] };
+  const cfg = { props: true, sw: true, ink: false, lock: false, layers: true, sym: true, film: true, fold: [] };
   try { Object.assign(cfg, JSON.parse(store.get('weasel.dock') || '{}')); } catch (e) { /* padrão */ }
-  const saveCfg = () => store.set('weasel.dock', JSON.stringify({ props: cfg.props, sw: cfg.sw, lock: cfg.lock, layers: cfg.layers, sym: cfg.sym, fold: cfg.fold }));
+  const saveCfg = () => store.set('weasel.dock', JSON.stringify({ props: cfg.props, sw: cfg.sw, lock: cfg.lock, layers: cfg.layers, sym: cfg.sym, film: cfg.film, fold: cfg.fold }));
   if (!Array.isArray(cfg.fold)) cfg.fold = [];
   // os campos da caixa e do documento: números que valem como estão (sem ↺, sem apagar)
   const TF = ['tx', 'ty', 'tw', 'th', 'rot', 'cw', 'ch'];
@@ -61,10 +61,12 @@
     secS.hidden = !cfg.sw;
     // as partes de outros arquivos com chave aqui (Símbolos, js/ui-symbols.js)
     for (const sec of dock.querySelectorAll(':scope > .dk-sec[data-sec]')) if (sec !== secP && sec !== secS && sec.dataset.sec in cfg) sec.hidden = !cfg[sec.dataset.sec];
-    // no filme, a coluna some (as propriedades dos atores ficam para a etapa 7). As outras partes (Camadas, em
-    // js/ui-layers.js, e Símbolos) abrem e fecham sozinhas: a coluna aparece com qualquer uma aberta.
-    const any = [...dock.children].some((c) => (c.classList.contains('dk-sec') || c.id === 'layerPanel') && !c.hidden);
-    const h = !any || !st.model || A.isFilm();
+    // no filme, a coluna mostra só o painel Filme (js/ui-film.js); no desenho, ele some. As outras partes (Camadas,
+    // em js/ui-layers.js, e Símbolos) abrem e fecham sozinhas: a coluna aparece com qualquer uma aberta.
+    const film = !!st.model && A.isFilm();
+    dock.classList.toggle('film', film);
+    const any = [...dock.children].some((c) => (c.classList.contains('dk-sec') || c.id === 'layerPanel') && !c.hidden && (c.dataset.sec === 'film') === film);
+    const h = !any || !st.model;
     if (dock.hidden !== h) dock.hidden = h;
     applyFold();
   }

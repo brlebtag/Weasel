@@ -997,7 +997,70 @@ A etapa 7 junta três itens grandes que não dependem um do outro. Ela foi quebr
 - Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
 - O guia (capítulo 7), o README e a referência (F1) contam o que mudou.
 
-**A 7b** (o filme) vem em seguida.
+#### A 7b: o filme
+
+- **As faixas dos `at`** **(R)**:
+  - ficam na linha do tempo que o filme já tinha (`js/timeline.js`), entre os planos e os sons, uma por alvo: os atores na ordem em que aparecem no arquivo, depois a câmera, depois as luzes, camadas e formas;
+  - cada `at` vira um losango na faixa de cada alvo dele, com uma linha clara ligando os do mesmo plano; as cores seguem as de cada coisa (ator lilás, câmera amarela, luz laranja, camada e forma verde-água);
+  - só os `at` do próprio arquivo: os planos que vêm de `scene` ficam sem faixa.
+- **O mouse e o teclado nas faixas** **(R)**, os mesmos da linha do tempo da animação:
+  - clique vai ao momento e à linha;
+  - arrastar muda o tempo; **Alt** copia; **Shift** ou **Ctrl** somam; o nome da faixa escolhe todos os dela;
+  - **Ctrl+A**, **Delete**, **← →** (com **Shift**, 5) e **Esc**;
+  - o botão direito abre os seis `ease`, com o texto "como o valor chega nele" (no `at`, o `ease` é da chegada), mais Ir para a linha e Apagar.
+- **Como escreve no código** **(R)**:
+  - o losango arrastado cai num quadro (e gruda no player e no começo dos planos), e os outros escolhidos andam o mesmo tanto, sem arredondar: um `at 4.2s` empurrado um quadro pelas setas vira `4.242s`, mas arrastado cai em `4.25s`;
+  - um `at` não sai do plano dele;
+  - mover só um alvo de uma linha com outros tira ele para uma linha nova, com o mesmo `ease`. O `blend=` e o `phase` vão junto com o `anim=`, e o `dur=`, o `pairs=` e o `born=` com o `morph=`;
+  - um `at +0.5s` arrastado continua com `+` (com o valor novo); se ficaria negativo, vira um tempo escrito. Os `+` depois dele andam junto, e a mensagem conta quantos;
+  - apagar a linha de que um `+` conta escreve o tempo nele, para ele ficar onde estava;
+  - o `at` com o tempo de um marcador (`at trovao+0.3s`) recusa arrastar, com um aviso: ele anda com o marcador;
+  - o mesmo alvo chegando a um tempo onde outro `at` do plano já o mudava: o que chegou fica, e o outro sai daquela linha (como na 7a);
+  - uma linha nova entra antes do primeiro `at` de tempo escrito maior do mesmo plano (nunca entre um `at` e o `+` que conta dele); se já existe uma linha do mesmo tempo e do mesmo `ease`, sem `blend=` nem `dur=`, o alvo entra nela;
+  - o cursor vai para a linha movida (ou para a nova). Numa linha `at`, o player vai até ela, e é isso que se quer aqui: o player mostra o momento do `at`.
+- **A transição** **(R)**:
+  - o botão direito num plano da linha do tempo, e a parte **Plano** do painel, mostram seis botões: **corte**, **dissolver** (`fade`), **cortina** (`wipe`), **empurrar** (`slide`), **zoom** e **íris** (os nomes em português, com o do código na dica);
+  - cada um tem uma prévia pequena: o último quadro do plano anterior (ou preto, no primeiro) e o quadro deste no fim da transição, compostos pela mesma função do filme (`composeTransition`, que o `js/film.js` passou a exportar). Parada, ela mostra o meio da troca (a íris, abrindo; o corte, metade de cada lado); com o mouse em cima, ela anda;
+  - o clique escreve `in=tipo,duração` (ou tira o `in=`, no corte). O campo ao lado de **Entrada** muda a duração. Sem transição, a duração começa em 0.5s, a mesma do código.
+- **O painel Filme** **(R)**:
+  - fica na coluna da direita, que no filme mostra só ele (no desenho, ele some). **Janela › Filme** abre e fecha, e o ✕ fecha, como as outras partes;
+  - **Plano**: o nome (que leva à linha), a duração e a transição;
+  - **Câmera**: `zoom=`, giro, tremor e escurecer no momento do player. O `offset=`, o `follow=`, o `lag=`, a lente e a névoa ficaram no código;
+  - **Ator**: uma lista com os atores do plano; a **animação** numa lista (com "nenhuma"), velocidade (aceita `auto`), tamanho (`scale=`, um número ou `x,y`), giro, espelho, opacidade e aparece;
+  - durante o play, só o título acompanha (o resto lê o quadro inteiro e ficaria pesado).
+- **Onde o painel e as alças escrevem** **(R)**, a decisão mais importante desta parte:
+  - com o cursor numa linha `at` do plano do player: nela, como `alvo.prop=`. Assim se anima pela tela: **+ at aqui** cria um `at` no momento do player (com a posição de agora do ator escolhido, ou o zoom da câmera) e põe o cursor nele;
+  - fora de um `at`: na linha que declara o ator, ou na `camera` do plano. Se o plano não tem uma, ela nasce logo depois do `shot`;
+  - se a propriedade muda num `at` antes do player, escrever na declaração não mudaria o que se vê: recusa, com um aviso que diz a linha do `at` e lembra do **+ at aqui**;
+  - o topo do painel diz onde vai ("Escreve em `at 2s` linha 34"), e uma lista ao lado escolhe o `ease=` do `at`;
+  - o `show` na declaração vira a palavra `hidden`; no `at`, `show=0` e `show=1`.
+- **As alças no desenho** **(R)**:
+  - só com a Seleção ou a Seleção direta, o player parado e o painel Filme aberto;
+  - o ator escolhido ganha a caixa tracejada do que ele desenha naquele quadro (sem as camadas escondidas e as guias), com os quatro cantos para o `scale=` (a partir do ponto dele, o `origin`; **Shift** de 0.05 em 0.05) e a bolinha verde em cima para o `rot=` (**Shift** de 15 em 15 graus);
+  - na vista do mundo, os quatro cantos da moldura laranja da câmera mudam o `zoom=` (para dentro aproxima). Na vista da câmera, a moldura é a tela inteira, e o zoom fica no painel;
+  - clicar num ator escolhe ele (o da frente, pela profundidade). O cursor vai para a linha dele, menos quando está num `at` do plano: aí fica, para o painel continuar escrevendo no `at`;
+  - um Ctrl+Z por arraste. Para isso, o `js/app.js` ganhou o `addFilmHook`, um gancho que desenha por cima e pega o aperto antes dos outros, só no filme.
+- **Fora, por enquanto** **(R)**:
+  - escolher losangos arrastando uma caixa;
+  - arrastar um ator num momento e o `at` de posição nascer sozinho (o "auto-key" do Animate). Hoje é **+ at aqui** e depois o arraste;
+  - as faixas dos planos que vêm de `scene` (abra o arquivo deles);
+  - os `at` de `along=`, `expr=`, `variant=` e `morph=` no painel: eles aparecem nas faixas e arrastam, mas o painel não tem campo para eles.
+
+**Como ficou (16/11/2026):** a 7b saiu na 1.63.0.
+- O código novo está no `js/ui-film.js`. O `js/timeline.js` ganhou as faixas, e o `js/app.js` e o `js/ui-props.js` ganharam os ganchos.
+- Conferido no navegador com o `filme.weasel` dos exemplos:
+  - as faixas (herói, fantasma, câmera e o letreiro);
+  - arrastar a câmera de uma linha com o letreiro (sai para uma linha nova), o Alt+arrastar (que tira o mesmo alvo da linha onde chegou), o Delete e o Ctrl+Z de cada gesto;
+  - os `+` andando junto, e o apagar que escreve o tempo no seguinte;
+  - o `ease` pelo menu;
+  - a transição pelo menu e pelo painel (`in=fade,0.5s`, a duração, a íris e o corte);
+  - o painel na declaração e no `at`, a recusa com aviso e o **+ at aqui**;
+  - as alças do tamanho, do giro (com e sem Shift) e do zoom da câmera;
+  - o painel sumindo num desenho.
+- Não há teste automático novo (é tudo da página). O `npm test` e o `regress --strict` continuam iguais.
+- O guia (capítulo 10, "O filme pela tela"), o README e a referência (F1) contam o que mudou.
+
+**A 7c** (o acabamento e o estilo) vem em seguida.
 
 ### Como ficaria por dentro
 

@@ -557,6 +557,22 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .pp-fx .pp-chk { width: 86px; flex: none; margin: 0; color: var(--dim); }
 .pp-fx.on .pp-chk { color: var(--text); }
 .pp-fxv { display: flex; gap: 3px; flex: 1; min-width: 0; }
+/* o painel Filme (js/ui-film.js): no filme, a coluna mostra só ele; no desenho, ele some */
+.dock.film > :not([data-sec=film]), .dock:not(.film) > [data-sec=film] { display: none; }
+.fm-dest { font: 11px var(--mono); padding: 1px 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-dest code { color: var(--kw-setup); }
+.fm-no { color: var(--dim); }
+.fm-acts { display: flex; gap: 6px; align-items: center; }
+.fm-acts button { height: 24px; padding: 0 8px; font-size: 12px; white-space: nowrap; }
+.fm-acts select { height: 24px; flex: 1; min-width: 0; padding: 0 4px; font: 11px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; }
+.fm-acts select[hidden] { display: none; }
+.fm-u { color: var(--dim); font: 11px var(--mono); }
+.fm-sec .pp-sub input[type=text] { width: 52px; height: 22px; padding: 0 5px; font: 11px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; }
+.fm-trans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.fm-trans button { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 3px 3px 2px; font: 11px var(--mono); background: var(--panel2); min-width: 0; }
+.fm-trans button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.fm-trans canvas { width: 100%; height: auto; aspect-ratio: 84 / 47; display: block; border-radius: 3px; background: #000; }
+.fm-pop { width: 300px; }
 .pp-fxv input[type=text] { width: 38px; height: 22px; padding: 0 3px; font: 11px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; }
 .pp-fxv input:disabled { opacity: .35; }
 .pp-fxv .pp-col { width: 24px; height: 22px; }

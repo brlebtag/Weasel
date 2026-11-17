@@ -4,8 +4,11 @@
    no código (só do arquivo aberto). Roda do mouse rola, Ctrl+roda aproxima, duplo clique no vazio enquadra. */
 (function (W) {
   'use strict';
-  const H_RULER = 20, H_SHOT = 30, H_AUDIO = 38, H_SUB = 26, GUT = 70, EDGE = 6;
-  const COLORS = { shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f', mark: '#c77dff' };
+  const H_RULER = 20, H_SHOT = 30, H_LANE = 18, H_AUDIO = 38, H_SUB = 26, GUT = 70, EDGE = 6, DOT = 4.5;
+  const COLORS = { shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f', mark: '#c77dff', sel: '#ff9f43' };
+  // as faixas dos at (etapa 7b): a cor de cada tipo de alvo
+  const LANE_C = { actor: '#b9adf5', camera: '#ffd166', light: '#ffb860', layer: '#9fe0d8', shape: '#9fe0d8' };
+  const SEP = '\u0001';
 
   // picos da forma de onda: o maior valor a cada 5 ms (calculado uma vez por som)
   function peaks(media) {
@@ -24,10 +27,15 @@
     return media._peaks;
   }
 
-  // host: { model(), frame(), setFrame(f), range(), editable(owner), lineOf(src), gotoLine(line), edit(src, field, seconds), open(file), hint(msg) }
+  // host: { model(), frame(), setFrame(f), range(), editable(owner), lineOf(src), gotoLine(line), edit(src, field, seconds), open(file), hint(msg),
+  //         lanes(model) → [{ name, kind, keys: [{ t, line, entry, fixed, ease }] }], atMove(list, dt, copy), atDel(list), atMenu(x, y, list),
+  //         shotMenu(x, y, entry) }  (os at: list = [{ name, line }])
   function timelineView(canvas, host) {
-    const v = { t0: 0, pps: 0, auto: true, drag: null, layout: null };
+    const v = { t0: 0, pps: 0, auto: true, drag: null, layout: null, sel: new Set() };
     const ctx = canvas.getContext('2d');
+    canvas.tabIndex = 0;
+    const atId = (name, line) => name + SEP + line;
+    const chosen = () => [...v.sel].map((s) => { const i = s.lastIndexOf(SEP); return { name: s.slice(0, i), line: +s.slice(i + 1) }; });
 
     function layout(model) {
       const tl = W.film.timeline(model);
@@ -40,9 +48,15 @@
         lanes.set(c, k);
       }
       const nAudio = Math.max(1, ends.length);
-      const rows = { ruler: 0, shots: H_RULER, audio: H_RULER + H_SHOT, subs: H_RULER + H_SHOT + nAudio * H_AUDIO };
+      // as faixas dos at do arquivo aberto (uma por alvo); a escolha perde o que não existe mais
+      const atLanes = host.lanes ? host.lanes(model) || [] : [];
+      const live = new Set();
+      for (const ln of atLanes) for (const k of ln.keys) live.add(atId(ln.name, k.line));
+      for (const s of [...v.sel]) if (!live.has(s)) v.sel.delete(s);
+      const laneTop = H_RULER + H_SHOT, audioTop = laneTop + atLanes.length * H_LANE;
+      const rows = { ruler: 0, shots: H_RULER, lanes: laneTop, audio: audioTop, subs: audioTop + nAudio * H_AUDIO };
       const height = rows.subs + (tl.subs.length ? H_SUB : 0) + 4;
-      return { tl, lanes, nAudio, rows, height };
+      return { tl, lanes, nAudio, rows, height, atLanes };
     }
     const xOf = (t) => GUT + (t - v.t0) * v.pps;
     const tOf = (x) => v.t0 + (x - GUT) / v.pps;
@@ -62,7 +76,14 @@
         for (const mk of L.tl.marks || []) if (Math.abs(xOf(mk.start) - x) <= 5) return { kind: 'mark', item: mk, owner: mk.owner, src: mk.src };
         return null;
       }
-      if (y >= L.rows.shots && y < L.rows.audio) {
+      if (y >= L.rows.lanes && y < L.rows.audio) {
+        const ln = L.atLanes[Math.floor((y - L.rows.lanes) / H_LANE)];
+        if (!ln) return null;
+        let best = null, bd = DOT + 3;
+        for (const k of ln.keys) { const d = Math.abs(xOf(k.t) - x); if (d <= bd) { bd = d; best = k; } }
+        return best ? { kind: 'at', lane: ln, item: best, owner: host.model() } : { kind: 'lane', lane: ln, owner: host.model() };
+      }
+      if (y >= L.rows.shots && y < L.rows.lanes) {
         for (const e of L.tl.entries) {
           const a = e.start / L.tl.fps, b = (e.start + e.frames) / L.tl.fps;
           if (near(b)) return { kind: 'shot', item: e, edge: true, owner: e.owner, src: e.shot };
@@ -84,6 +105,15 @@
         }
       }
       return null;
+    }
+
+    function diamond(x, y, r, fill) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#0b0d12';
+      ctx.stroke();
     }
 
     function draw() {
@@ -154,6 +184,35 @@
         for (const tr of e.shot.tracks.values()) for (const k of tr.keys) keys.add(k.t);
         ctx.fillStyle = '#ffd16699';
         for (const k of keys) { const x = xOf(e.start / fps + k); if (x > x0 && x < x1) ctx.fillRect(x - 0.5, y + H_SHOT - 10, 1.5, 5); }
+      });
+
+      // as faixas dos at: um losango em cada at que muda o alvo; entre dois do mesmo plano, um traço (o valor vai
+      // de um ao outro); arrastando, os escolhidos aparecem no lugar novo
+      const dragAt = v.drag && v.drag.kind === 'at' && v.drag.moved ? v.drag : null;
+      L.atLanes.forEach((ln, i) => {
+        const y = L.rows.lanes + i * H_LANE, cy = y + H_LANE / 2, c = LANE_C[ln.kind] || '#c9d4ea';
+        ctx.fillStyle = i % 2 ? 'rgba(20,24,33,.55)' : 'rgba(26,31,42,.55)';
+        ctx.fillRect(GUT, y, w - GUT, H_LANE);
+        ctx.strokeStyle = c;
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let j = 1; j < ln.keys.length; j++) {
+          const a = ln.keys[j - 1], b = ln.keys[j];
+          if (a.entry !== b.entry) continue;
+          ctx.moveTo(xOf(a.t), cy);
+          ctx.lineTo(xOf(b.t), cy);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+        for (const k of ln.keys) {
+          const on = v.sel.has(atId(ln.name, k.line)), x = xOf(k.t);
+          if (x < GUT - DOT || x > w + DOT) continue;
+          const moved = dragAt && on;
+          diamond(x, cy, k.fixed ? DOT - 1 : DOT, moved && !dragAt.copy ? 'rgba(233,236,242,.25)' : on ? COLORS.sel : c);
+          if (moved) diamond(xOf(k.t + dragAt.dt), cy, DOT, COLORS.sel);
+        }
       });
 
       // sons: forma de onda (loop repete o arquivo) e as bocas do lip sync
@@ -269,6 +328,18 @@
       ctx.fillStyle = '#7d889b';
       ctx.fillText(W.film.timecode(host.frame(), fps), 4, 10);
       ctx.fillText('planos', 6, L.rows.shots + H_SHOT / 2);
+      L.atLanes.forEach((ln, i) => {
+        const y = L.rows.lanes + i * H_LANE;
+        ctx.fillStyle = LANE_C[ln.kind] || '#c9d4ea';
+        ctx.beginPath();
+        ctx.arc(9, y + H_LANE / 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#aab4c6';
+        let t = ln.name === 'camera' ? 'câmera' : ln.name;
+        while (t.length > 2 && ctx.measureText(t).width > GUT - 20) t = t.slice(0, -2) + '…';
+        ctx.fillText(t, 16, y + H_LANE / 2 + 0.5);
+      });
+      ctx.fillStyle = '#7d889b';
       for (let k = 0; k < L.nAudio; k++) ctx.fillText(`som ${k + 1}`, 6, L.rows.audio + k * H_AUDIO + H_AUDIO / 2);
       if (L.tl.subs.length) ctx.fillText('legendas', 6, L.rows.subs + H_SUB / 2);
     }
@@ -293,8 +364,24 @@
       if (!v.layout || e.button !== 0) return;
       try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ponteiro que o navegador não conhece */ }
       const [x, y] = pos(e);
-      if (x < GUT) return;
+      canvas.focus({ preventScroll: true });
+      const L0 = v.layout;
+      // o nome de uma faixa de at: escolhe todos os at dela (Shift soma)
+      if (x < GUT) {
+        const ln = y >= L0.rows.lanes && y < L0.rows.audio ? L0.atLanes[Math.floor((y - L0.rows.lanes) / H_LANE)] : null;
+        if (ln) { if (!e.shiftKey) v.sel.clear(); for (const k of ln.keys) v.sel.add(atId(ln.name, k.line)); draw(); }
+        return;
+      }
       const h = hit(x, y);
+      if (h && h.kind === 'lane') { if (!e.shiftKey) v.sel.clear(); v.drag = { kind: 'scrub' }; scrub(x); return; }
+      // um at: escolhe (Shift ou Ctrl somam e tiram) e arrasta (Alt: uma cópia); um clique leva o código até a linha
+      if (h && h.kind === 'at') {
+        const id = atId(h.lane.name, h.item.line);
+        if (e.shiftKey || e.ctrlKey || e.metaKey) { if (v.sel.has(id)) v.sel.delete(id); else v.sel.add(id); } else if (!v.sel.has(id)) v.sel = new Set([id]);
+        v.drag = { kind: 'at', x0: x, dt: 0, moved: false, copy: e.altKey, item: h.item, toggled: e.shiftKey || e.ctrlKey || e.metaKey };
+        draw();
+        return;
+      }
       if (!h) { v.drag = { kind: 'scrub' }; scrub(x); return; }
       if (!host.editable(h.owner)) { host.hint('Este bloco é de outro arquivo (scene): duplo clique abre o arquivo.'); scrub(x); return; }
       const line = host.lineOf(h.src);
@@ -312,10 +399,23 @@
       const d = v.drag;
       if (!d) {
         const h = x >= GUT ? hit(x, y) : null;
-        canvas.style.cursor = !h ? 'text' : !host.editable(h.owner) ? 'default' : h.edge ? 'ew-resize' : h.kind === 'shot' ? 'text' : 'grab';
+        canvas.style.cursor = !h ? 'text' : !host.editable(h.owner) ? 'default' : h.edge ? 'ew-resize' : h.kind === 'shot' || h.kind === 'lane' ? 'text' : 'grab';
+        const tip = h && h.kind === 'at' ? `${h.item.text || ''} (linha ${h.item.line + 1}). Arraste para mudar o tempo (Alt: copia); botão direito: ease; Delete apaga.` : h && h.kind === 'shot' && host.editable(h.owner) && host.shotMenu ? 'Botão direito: a transição de entrada (in=).' : '';
+        if (canvas.title !== tip) canvas.title = tip;
         return;
       }
       if (d.kind === 'scrub') { scrub(x); return; }
+      if (d.kind === 'at') {
+        if (Math.abs(x - d.x0) > 2) d.moved = true;
+        if (!d.moved) return;
+        // o at agarrado cai num quadro (e gruda na cabeça de leitura e no começo dos planos); os outros escolhidos
+        // andam o mesmo tanto
+        const t1 = snapT(d.item.t + (x - d.x0) / v.pps, false);
+        d.dt = t1 - d.item.t;
+        d.copy = e.altKey;
+        draw();
+        return;
+      }
       const dt = (x - d.x0) / v.pps;
       if (Math.abs(x - d.x0) > 2) d.moved = true;
       if (!d.moved) return;
@@ -331,10 +431,41 @@
         if (h.edge) host.edit(h.kind, h.item, 'dur', d.preview.end - d.preview.start);
         else host.edit(h.kind, h.item, 'start', d.preview.start);
       }
+      if (d && d.kind === 'at') {
+        if (d.moved && d.dt) { if (host.atMove) host.atMove(chosen(), d.dt, d.copy); } else if (!d.moved && !d.toggled) host.gotoLine(d.item.line);
+      }
       draw();
     };
     canvas.addEventListener('pointerup', end);
-    canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('pointercancel', () => { v.drag = null; draw(); });
+    // o botão direito num at: o ease (como o valor chega nele) e apagar; num plano: a transição de entrada
+    canvas.addEventListener('contextmenu', (e) => {
+      const [x, y] = pos(e);
+      const h = v.layout && x >= GUT ? hit(x, y) : null;
+      if (h && h.kind === 'at' && host.atMenu) {
+        e.preventDefault();
+        const id = atId(h.lane.name, h.item.line);
+        if (!v.sel.has(id)) v.sel = new Set([id]);
+        draw();
+        host.atMenu(e.clientX, e.clientY, chosen());
+      } else if (h && h.kind === 'shot' && host.editable(h.owner) && host.shotMenu) {
+        e.preventDefault();
+        host.shotMenu(e.clientX, e.clientY, h.item);
+      }
+    });
+    // com o foco na linha do tempo: Delete apaga os at escolhidos, as setas os empurram um quadro (Shift: 10),
+    // Ctrl+A escolhe todos, Esc solta
+    canvas.addEventListener('keydown', (e) => {
+      const L = v.layout;
+      if (!L) return;
+      const k = e.key;
+      if ((e.ctrlKey || e.metaKey) && (k === 'a' || k === 'A')) { v.sel.clear(); for (const ln of L.atLanes) for (const q of ln.keys) v.sel.add(atId(ln.name, q.line)); } else if (!v.sel.size) return;
+      else if (k === 'Delete' || k === 'Backspace') { if (host.atDel) host.atDel(chosen()); } else if (k === 'Escape') v.sel.clear();
+      else if (k === 'ArrowLeft' || k === 'ArrowRight') { if (host.atMove) host.atMove(chosen(), ((e.shiftKey ? 5 : 1) * (k === 'ArrowLeft' ? -1 : 1)) / fpsNow(), false); } else return;
+      e.preventDefault();
+      e.stopPropagation();
+      draw();
+    });
     canvas.addEventListener('dblclick', (e) => {
       const [x, y] = pos(e);
       const h = v.layout && x >= GUT ? hit(x, y) : null;
@@ -355,7 +486,7 @@
       draw();
     }, { passive: false });
 
-    return { draw, view: v, hit, xOf, tOf, layout: () => v.layout };
+    return { draw, view: v, hit, xOf, tOf, layout: () => v.layout, sel: chosen };
   }
 
   W.timelineView = timelineView;

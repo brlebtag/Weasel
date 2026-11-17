@@ -1492,6 +1492,12 @@
     edit: timeEdit,
     open: (file) => { if (file && st.files.has(file)) openFile(file); else hint(file ? `Abra "${file}" com Abrir… para editar.` : 'Este bloco é deste arquivo.', 2600); },
     hint: (msg) => hint(msg, 2400),
+    // as faixas dos at, uma por ator, uma da câmera e uma de cada luz, camada ou forma (js/ui-film.js)
+    lanes: (m) => (W.filmUi ? W.filmUi.lanes(m) : []),
+    atMove: (list, dt, copy) => W.filmUi && W.filmUi.atMove(list, dt, copy),
+    atDel: (list) => W.filmUi && W.filmUi.atDel(list),
+    atMenu: (x, y, list) => W.filmUi && W.filmUi.atMenu(x, y, list),
+    shotMenu: (x, y, entry) => W.filmUi && W.filmUi.shotMenu(x, y, entry),
   });
 
   // ---------- tocar o som do filme ----------
@@ -2502,6 +2508,8 @@
       ctx.restore();
     }
     if (pointsOn()) drawHandles(ctx, m, currentPose(), z);
+    // as alças do painel Filme (js/ui-film.js): o zoom da câmera, o tamanho e o giro do ator
+    for (const f of filmHooks) if (f.overlay) { ctx.save(); f.overlay(ctx, z, dpr); ctx.restore(); T(); }
   }
 
   // imagens guia soltas: moldura tracejada, o nome e o canto que muda o tamanho
@@ -3977,6 +3985,8 @@
   const toolHooks = {};
   // desenhos por cima que não são de uma ferramenta (a prévia do Simplificar, js/ui-pencil.js)
   const overlays = [];
+  // no filme: { overlay(ctx, z, dpr), down(e) → true se o aperto é dela, move(e), up(e), cursor(e) } (js/ui-film.js)
+  const filmHooks = [];
   let ctxMenu = null;
   function setTool(id) {
     if (!TOOLS.includes(id) || ((isFilm() || st.view3d) && !FILM_TOOLS.includes(id))) return;
@@ -4163,6 +4173,8 @@
     // numa régua: puxar uma linha guia nova (no quadradinho do canto, só o duplo clique faz algo: apaga todas)
     const ru = e.button === 0 ? rulerAt(e) : null;
     if (ru) { if (ru !== 'corner') startGuide(ru === 'top' ? 'h' : 'v', -1, e); return; }
+    // no filme, as alças de js/ui-film.js pegam o aperto antes das outras
+    if (e.button === 0 && isFilm() && !st.playing) for (const f of filmHooks) if (f.down && f.down(e)) { st.tdrag = f; draw(); return; }
     // o Laço: arrastar desenha o contorno, em cima do que for (Shift soma, Alt tira)
     if (e.button === 0 && st.tool === 'lasso' && !isFilm() && !st.build) { const p = toCanvas(e); st.marq = { lasso: true, pts: [p], a: p, b: p, x: e.clientX, y: e.clientY, add: e.shiftKey, sub: e.altKey, moved: false }; return; }
     // prender: o clique escolhe pontos e arrastar no fundo faz uma caixa (com uma animação escolhida, a bolinha
@@ -4358,6 +4370,7 @@
     if (st.tool === 'zoom') { view.style.cursor = e.altKey ? 'zoom-out' : 'zoom-in'; return; }
     const ru = rulerAt(e);
     if (ru) { view.style.cursor = ru === 'top' ? 'ns-resize' : ru === 'left' ? 'ew-resize' : 'default'; return; }
+    if (isFilm()) for (const f of filmHooks) { const c = f.cursor && f.cursor(e); if (c) { view.style.cursor = c; return; } }
     if (pinOn()) {
       // sob o mouse: de que forma é o ponto e a que osso está preso
       const here = pinsAt(e), hb = here.length ? null : hitBone(e);
@@ -5905,6 +5918,8 @@
     // as ferramentas de desenhar (js/ui-draw.js, etapa 4a) e o menu do botão direito (js/ui-shell.js)
     addTool: (id, hooks) => { toolHooks[id] = hooks; },
     addOverlay: (f) => { overlays.push(f); },
+    addFilmHook: (f) => { filmHooks.push(f); },
+    tlDraw: () => { if (isFilm() && st.timeline) tlView.draw(); },
     // um ponto nas coordenadas da linha (x, y) até o desenho, como os pontos dela aparecem agora (com os ossos;
     // i é o índice do ponto, para o @osso dele)
     localMap: (line) => {

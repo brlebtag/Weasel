@@ -784,6 +784,6 @@
   });
   $('tTimeline').addEventListener('change', () => { show(); render(); });
   if (window.ResizeObserver) new ResizeObserver(() => render()).observe(box);
-  W.animTimeline = { insertKey, clearKey, shiftFrames, setEase, moveKeys, deleteKeys, setFrames, render, sel: () => chosen() };
+  W.animTimeline = { insertKey, clearKey, shiftFrames, setEase, moveKeys, deleteKeys, setFrames, render, sel: () => chosen(), curveSvg, EASES };
   setTimeout(sync, 0);
 })(window.Weasel = window.Weasel || {});
