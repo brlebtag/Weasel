@@ -268,7 +268,7 @@
       Object.assign({ label: 'Trajetória' }, chk('tTraj')),
       Object.assign({ label: 'Estilo de arte', visible: shown('tArtWrap') }, chk('tArt')),
       Object.assign({ label: 'Câmera (o que ela filma)', visible: film }, chk('tCamera')),
-      Object.assign({ label: 'Linha do tempo', visible: film }, chk('tTimeline')),
+      Object.assign({ label: 'Linha do tempo', visible: () => film() || (!!A.st.model && A.st.model.anims.length > 0) }, chk('tTimeline')),
     ] },
     { label: 'Janela', items: [
       { label: 'Propriedades', visible: drawing, on: () => P().isOn('props'), run: () => P().toggle('props') },
@@ -283,6 +283,8 @@
     ] },
   ];
   const menus = W.ui.menubar($('menubar'), MENUS);
+  // o menu solto, para os painéis (o botão direito na linha do tempo da animação, js/ui-anim.js)
+  W.ui.popup = (items, x, y) => menus.popup(items, x, y);
 
   // ---------- o menu do botão direito no desenho (etapa 4a) ----------
   // O do Illustrator: o que vale para a escolha (Organizar, Agrupar, Transformar…), sem os itens apagados. A forma

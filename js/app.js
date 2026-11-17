@@ -1539,7 +1539,8 @@
       if (st.frame >= tl.frames) st.frame = 0;
     } else st.shot = '';
     $('tCameraWrap').hidden = !isFilm();
-    $('tTimelineWrap').hidden = !isFilm();
+    // a linha do tempo: a do filme (js/timeline.js) ou, num desenho com anim, a das key (js/ui-anim.js)
+    $('tTimelineWrap').hidden = !(isFilm() || st.model.anims.length > 0);
     $('timeline').hidden = !(isFilm() && st.timeline);
     $('bSound').hidden = !(isFilm() && tline().audios.length);
     $('bSubs').hidden = !(isFilm() && tline().subs.length);

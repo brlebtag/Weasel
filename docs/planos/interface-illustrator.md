@@ -935,7 +935,69 @@ A etapa 6 também foi dividida em duas **(R)**, como a 3, a 4 e a 5: a **6a** (C
 - Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
 - O guia (capítulo 5), o README e a referência (F1) contam o que mudou.
 
-**A etapa 7** (a linha do tempo da animação no jeito do Animate, o filme, o acabamento e o estilo) vem em seguida.
+### 11.8 A etapa 7 em detalhe (16/11/2026)
+
+A etapa 7 junta três itens grandes que não dependem um do outro. Ela foi quebrada em três, cada uma com a sua versão **(R)**:
+- **7a. A linha do tempo da animação** (item 9): as `key`, os `event` e o `ease` no jeito do Animate.
+- **7b. O filme** (item 10): as linhas `at` numa faixa por ator e uma para a câmera, as alças do `zoom=` da câmera e do `scale=`/`rot=` do ator, o seletor de transição do `shot … in=` com prévia e a lista de animações do ator.
+- **7c. O acabamento e o estilo** (item 11): o `finish` com sliders e a galeria do `art` com miniaturas do desenho atual (em escala menor, porque os estilos são lentos).
+
+#### A 7a: a linha do tempo da animação
+
+- **Onde fica:**
+  - embaixo do desenho, entre a vista e o player, num desenho com `anim` e uma delas escolhida no player **(R)**;
+  - em "pose parada", ela mostra os nomes das animações, e um clique escolhe uma **(R)**;
+  - o botão da linha do tempo no player (e **Exibir › Linha do tempo**) esconde e mostra, o mesmo do filme **(R)**. Antes, ele só aparecia no filme.
+- **Feita à parte do `js/timeline.js` do filme** **(R)**. O plano do editor visual pedia para reaproveitar a do filme, mas ela mede em segundos e mostra blocos com duração, e a da animação mede em quadros e mostra losangos. Ficou um arquivo novo, o `js/ui-anim.js`, também num canvas, com as cores do resto.
+- **As linhas** **(R)**:
+  - uma por osso ou `forma.propriedade` que aparece nas `key` da animação, na ordem em que aparece no código;
+  - em cima, **todas** (as `key` de cada quadro, juntas) e **eventos** (só se a animação tem `event`);
+  - num quadro com duas linhas `key` para o mesmo alvo, ela mostra a última, que é a que vale.
+- **O desenho** **(R)**:
+  - um losango em cada `key`;
+  - entre duas `key`, uma barra: roxa para osso, verde-água para propriedade e cinza para `step`, com o desenho pequeno da curva do `ease` no meio;
+  - a volta do loop (da última `key` para a primeira) mais apagada; numa `once`, depois da última `key`, só um traço (parada);
+  - colunas de 5 em 5, o quadro `frames` com outra cor e o depois dele apagado, e a faixa laranja no quadro do player.
+- **O mouse** **(R)**:
+  - um clique num losango leva o player ao quadro e o código à linha da `key`;
+  - arrastar muda o quadro; **Alt** copia; **Shift** ou **Ctrl** somam e tiram; o nome da linha escolhe todas as `key` dela;
+  - na régua e nos quadros vazios, clicar e arrastar levam o player;
+  - a roda anda, **Ctrl**+roda dá zoom, e um duplo clique num quadro vazio volta a caber tudo.
+- **O teclado** (com o foco nela) **(R)**: **Delete**, **← →** (com **Shift**, 5), **Ctrl+A**, **Esc**, e os do Animate: **F6**, **Shift+F6**, **F5** e **Shift+F5**.
+- **O botão direito** abre um menu próprio, não o do desenho **(R)**: os seis `ease` com o desenho da curva (o atual marcado), e Inserir key, Limpar key do quadro, Inserir quadro, Remover quadro e Apagar.
+- **Como escreve no código:**
+  - mover uma `key` cuja linha tem outros alvos tira só ela para uma linha nova **(R)**. No Animate, a key é da camada; aqui, a "camada" é o alvo, e a linha `key` é só onde o código guarda;
+  - uma `key` que chega a um quadro onde o mesmo alvo já tinha `key` fica, e a outra sai **(R)**, como no Animate;
+  - uma linha nova entra logo antes da primeira `key` (ou `event`) de quadro maior; se já existe uma linha do mesmo quadro e do mesmo `ease`, o alvo entra nela **(R)**;
+  - o `ease` vale para a linha inteira: trocar o de um alvo numa linha com outros também o tira para uma linha só dele **(R)**;
+  - o F6 escreve o valor que o player mostra naquele quadro (posição e giro com uma casa, escala com três, sem os zeros do fim: `b2=40`) e herda o `ease` do trecho onde caiu **(R)**. Cores e formas (`c=`, `shape=`) ele não interpola, então não escreve e avisa **(R)**;
+  - o F5 e o Shift+F5 mudam o `frames=` e levam junto as `key` e os `event` depois do quadro. O Shift+F5 num quadro com `key` recusa **(R)**: o Animate apagaria a key, e aqui seria perder código sem querer;
+  - a alça do fim muda o `frames=` e leva junto as `key` do quadro `frames` (as que fecham o loop) **(R)**. Ela não deixa o fim passar para antes de uma `key` ou de um `event`;
+  - depois de cada gesto, o cursor do código vai para a linha do `anim` **(R)**: numa linha `key`, o player pularia para o quadro dela (isso já existia), e o F6 seguido do Shift+F6 mexeria em quadros diferentes. Para isso, o `rewrite` do `js/ui-select.js` ganhou onde deixar o cursor;
+  - com o player tocando, ela só mostra **(R)**.
+- **Fora, por enquanto** **(R)**:
+  - escolher arrastando uma caixa;
+  - copiar e colar quadros entre animações;
+  - as pastas de camadas do Animate;
+  - as animações de `mix=`, `from=` e `to=` (a linha do tempo só diz que elas vêm das outras);
+  - uma régua que fica parada quando a lista rola (com muitas linhas, a caixa vai até 200 px e rola inteira).
+
+**Como ficou (16/11/2026):** a 7a saiu na 1.62.0.
+- O código novo está no `js/ui-anim.js`.
+- Conferido no navegador, com uma bola de dois ossos, um `event` e uma `forma.opacity`, e com o cavaleiro dos exemplos:
+  - o desenho das linhas, das barras e do quadro do player;
+  - o clique (o quadro e a linha do código);
+  - arrastar uma `key` sozinha na linha, uma que divide a linha, a coluna inteira pela linha **todas**, e o Alt+arrastar;
+  - o Delete, as setas, o Ctrl+A e o Ctrl+Z;
+  - o `ease` pelo menu do botão direito;
+  - o F6 numa linha e em todas, o Shift+F6, o F5 e o Shift+F5 (com a recusa num quadro com `key`);
+  - a alça do fim, para mais e para menos;
+  - arrastar e apagar um `event`;
+  - a "pose parada", o botão que esconde e um desenho sem `anim`.
+- Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
+- O guia (capítulo 7), o README e a referência (F1) contam o que mudou.
+
+**A 7b** (o filme) vem em seguida.
 
 ### Como ficaria por dentro
 

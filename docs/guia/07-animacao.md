@@ -620,6 +620,45 @@ Mais detalhes:
 - Os números saem com uma casa decimal. A escala (`sx,sy`) fica como estava: arrastar não estica.
 - **Ctrl+Z** desfaz. Com **Exibir › Papel vegetal** ligado, dá para ver os quadros vizinhos enquanto você posa.
 
+## A linha do tempo
+
+Com uma animação escolhida no player, o editor mostra a **linha do tempo** dela embaixo do desenho, no jeito do Adobe Animate. Ela lê as linhas `key` e `event` do código. Quando você mexe nela, ela reescreve essas linhas: o código continua sendo o que vale, e cada gesto se desfaz com um **Ctrl+Z**.
+
+Com a bola quicando do começo do capítulo, ela fica assim:
+
+- **Uma linha por alvo.** Cada **osso** ou **forma.propriedade** que aparece nas `key` ganha uma linha (`bola`; num personagem, `corpo`, `cabeca`, `olho.opacity`…).
+- **Losangos e barras.** Cada quadro com `key` ganha um **losango**. Entre dois losangos há uma **barra**: roxa para osso, verde-água para propriedade, cinza para `ease=step`. O desenho pequeno na barra é a curva do `ease`. Numa animação em loop, uma barra mais apagada depois da última `key` mostra a volta para a primeira.
+- **As linhas de cima.** A linha **todas** junta as `key` de cada quadro. A linha **eventos** mostra cada `event` com uma bandeirinha.
+- **A régua.** Ela numera os quadros, e o quadro do player é a faixa laranja. Clique ou arraste na régua (ou num quadro vazio) para levar o player até lá. A coluna de outra cor no fim é o quadro `frames`, o que fecha o loop.
+
+O que dá para fazer:
+
+| Gesto | O que muda no código |
+|---|---|
+| Clicar num losango | nada: o player vai até o quadro, e o código, até a linha da `key` |
+| Arrastar um losango | o número da `key` (`key 12` vira `key 14`). Se a linha tem outros alvos, só o arrastado sai para uma linha nova |
+| **Alt**+arrastar | uma cópia da `key` no quadro onde você soltar |
+| Arrastar na linha **todas** | todas as `key` daquele quadro, juntas |
+| **Shift**+clique, ou clique no nome da linha | escolhe mais de uma (o nome escolhe todas as `key` da linha); **Ctrl+A** escolhe todas |
+| **←** e **→** | empurram as escolhidas um quadro (com **Shift**, cinco); sem nada escolhido, trocam de quadro |
+| **Delete** | apaga as escolhidas: só aquele alvo sai da linha `key`, e a linha some quando fica vazia |
+| Botão direito | o menu com os seis `ease` (cada um com o desenho da curva) e as ações abaixo |
+| **F6** | uma `key` no quadro do player, com o valor que o player mostra ali, na linha escolhida (clicando num quadro da linha **todas**, em todas) |
+| **Shift+F6** | tira as `key` desse quadro |
+| **F5** / **Shift+F5** | um quadro a mais (ou a menos) depois do quadro do player: as `key` e os `event` seguintes andam junto, e o `frames=` muda |
+| Arrastar a alça laranja no fim da régua | o `frames=`; as `key` do último quadro (as que fecham o loop) vão junto |
+| Arrastar a bandeirinha | o quadro do `event` (**Delete** apaga) |
+| Roda do mouse | anda pela linha do tempo; **Ctrl**+roda aproxima e afasta; duplo clique num quadro vazio volta a caber tudo |
+
+Bom saber:
+
+- O `ease` vale para a linha `key` inteira. Trocar o de um alvo numa linha que tem outros tira esse alvo para uma linha só dele.
+- O F6 sabe o valor de ossos e de propriedades de número (`opacity`, `w`, `glow`…). Uma cor ou uma forma (`c=`, `shape=`) ele não inventa: escreva a `key` no código ou copie uma com Alt+arrastar.
+- Uma `key` que chega a um quadro onde o mesmo alvo já tinha `key` toma o lugar da antiga.
+- O Shift+F5 não tira um quadro que tem `key`: tire a `key` antes (Shift+F6).
+- As teclas valem com o foco na linha do tempo: clique nela antes. Com o player tocando, ela só mostra; pause para mexer.
+- O botão da linha do tempo no player (ou **Exibir › Linha do tempo**) esconde e mostra. Uma animação feita de outras (`mix=`, `from=` e `to=`) não tem `key` próprias, e a linha do tempo só avisa isso.
+
 ## Eventos: `event`
 
 ```
@@ -764,7 +803,7 @@ ref pulo "rascunhos/pulo.png" 0,0 only=jump opacity=0.3
 
 ## Vendo e exportando
 
-- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e `,` e `.` trocam de quadro). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador. **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros; com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)).
+- **No editor**, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro (com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e `,` e `.` trocam de quadro). Com o cursor numa linha `key` ou `event`, o player pula para aquele quadro. A [linha do tempo](#a-linha-do-tempo), entre o desenho e o player, mostra e muda as `key`. **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador. **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros; com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)).
 - **Na linha de comando:**
 
 ```bash

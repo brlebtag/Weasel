@@ -179,7 +179,8 @@
   const depth = (g) => { let n = 0; for (let x = g; x; x = x.parent) n++; return n; };
 
   // ---------- escrever: só o trecho que mudou, numa edição só ----------
-  function rewrite(next, key) {
+  // caret: a linha (de next) onde o cursor do código fica depois (sem ela, no fim do trecho trocado)
+  function rewrite(next, key, caret) {
     const ed = A.editor, v = ed.value, cur = v.split('\n');
     let a = 0;
     while (a < cur.length && a < next.length && cur[a] === next[a]) a++;
@@ -198,7 +199,9 @@
       to = v.length;
       text = add.length ? (a > 0 ? '\n' : '') + add.join('\n') : '';
     }
-    ed.replaceRange(from, to, text, { key });
+    const o = { key };
+    if (caret >= 0 && caret < next.length) { let off = 0; for (let i = 0; i < caret; i++) off += next[i].length + 1; o.select = [off, off]; }
+    ed.replaceRange(from, to, text, o);
     return true;
   }
 

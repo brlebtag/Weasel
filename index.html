@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.61.0">
+<link rel="stylesheet" href="css/style.css?v=1.62.0">
 </head>
 <body>
 <header class="top">
@@ -50,7 +50,7 @@
       <button id="pinBtn" class="refbtn ic" type="button" title="Prender (Shift+P): escolha pontos de shape, stroke e line (clique, Shift, caixa) e prenda a um osso pelo botão direito; escreve @osso no código" aria-label="Prender"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 1.6l5.2 5.2M10.4 2.8 7.6 6.1l-2.7.6 4.4 4.4.6-2.7 3.3-2.8M7.1 8.9 1.8 14.2"/></svg></button>
       <button id="layerBtn" class="refbtn ic" type="button" title="Camadas: as camadas e o que desenha em cada uma; escolha formas (ou uma camada inteira) para mover e girar juntas" aria-label="Camadas"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3M2 11l6 3 6-3"/></svg></button>
       <button id="refBtn" class="refbtn ic" type="button" title="Referências: imagens guia por baixo para desenhar por cima (não saem na exportação)" aria-label="Referências"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="1"/><circle cx="10.5" cy="6" r="1.2"/><path d="M1.8 11.2 5.5 7.5l3.2 3.2 1.8-1.8 3.7 3.5"/></svg></button>
-      <label class="tog ic" id="tTimelineWrap" title="Linha do tempo: planos, sons e legendas no tempo; arraste para mudar os tempos no código" hidden><input type="checkbox" id="tTimeline" checked aria-label="Linha do tempo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h6M4 8h7M2 11.5h5M12 2v12"/></svg></label>
+      <label class="tog ic" id="tTimelineWrap" title="Linha do tempo: no filme, os planos, sons e legendas; numa animação, as key. Arraste para mudar o código" hidden><input type="checkbox" id="tTimeline" checked aria-label="Linha do tempo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h6M4 8h7M2 11.5h5M12 2v12"/></svg></label>
       <label class="tog ic" id="tCameraWrap" title="Câmera: ligado, o que a câmera filma; desligado, o mundo inteiro como foi desenhado, com a moldura da câmera" hidden><input type="checkbox" id="tCamera" checked aria-label="Câmera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="9" height="7" rx="1"/><path d="M10.5 7.2 14.5 5v6l-4-2.2z"/></svg></label>
     </div>
     <nav id="tools" class="tools" aria-label="Ferramentas"></nav>
@@ -256,7 +256,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <h3>A tela</h3>
     <ul>
       <li>No alto, à direita, três vistas: <b>Código</b> (só o código), <b>Dividido</b> (o código e o desenho) e <b>Design</b> (só o desenho). Também no menu <b>Exibir</b>. No Design, um erro aparece na barra de baixo; clicar nele abre o Dividido na linha.</li>
-      <li>Os menus: <b>Arquivo</b> (novo, abrir, exemplos, os arquivos do projeto, salvar, exportar), <b>Editar</b> (desfazer, recortar, copiar, colar, colar na frente e atrás, apagar, duplicar), <b>Objeto</b> (repetir a transformação, organizar, alinhar, agrupar, símbolo, travar, inserir uma forma, esconder), <b>Texto</b> (negrito, itálico, alinhar, tamanho), <b>Selecionar</b> (tudo, nada, inverter, a mesma cor ou camada), <b>Efeito</b> (os efeitos da camada da forma escolhida), <b>Exibir</b> (vistas, zoom, camadas em 3D, réguas, guias, hitboxes, ossos, papel vegetal, trajetória, estilo de arte; no filme, câmera e linha do tempo), <b>Janela</b> (Propriedades, Amostras, Camadas, Símbolos, Referências, Sons) e <b>Ajuda</b>.</li>
+      <li>Os menus: <b>Arquivo</b> (novo, abrir, exemplos, os arquivos do projeto, salvar, exportar), <b>Editar</b> (desfazer, recortar, copiar, colar, colar na frente e atrás, apagar, duplicar), <b>Objeto</b> (repetir a transformação, organizar, alinhar, agrupar, símbolo, travar, inserir uma forma, esconder), <b>Texto</b> (negrito, itálico, alinhar, tamanho), <b>Selecionar</b> (tudo, nada, inverter, a mesma cor ou camada), <b>Efeito</b> (os efeitos da camada da forma escolhida), <b>Exibir</b> (vistas, zoom, camadas em 3D, réguas, guias, hitboxes, ossos, papel vegetal, trajetória, estilo de arte, linha do tempo; no filme, câmera), <b>Janela</b> (Propriedades, Amostras, Camadas, Símbolos, Referências, Sons) e <b>Ajuda</b>.</li>
       <li>A coluna da direita tem <b>Propriedades</b> e <b>Amostras</b> (no menu Janela, cada uma abre e fecha). Propriedades mostra o que está escolhido (sem escolha, a forma da linha do cursor; sem forma, o documento: o tamanho do <code>canvas</code> e o fundo). <b>Transformar</b>: X, Y, largura e altura da caixa (sem a grossura do contorno; o elo estica sem perder a proporção) e o ângulo (o <code>rot=</code> de uma <code>ellipse</code>, <code>rect</code>, <code>text</code> ou <code>use</code>; nas outras, um giro a partir de 0). <b>Aparência</b>: preenchimento, contorno, grossura, largura do traço, cantos, afinar, pontas, tracejado e opacidade. <b>Texto</b>: as letras, o tamanho, a fonte, negrito, itálico e alinhamento. <b>Camada</b>: opacidade, mistura e os efeitos (desfoque, brilho, sombra, tingir, claridade, saturação, contraste, matiz). Enter grava; ↑ e ↓ mudam de 1 em 1 (<kbd>Shift</kbd>: 10); arrastar o nome de um campo de número muda o valor; ↺ tira o atributo do código. Cada mudança é um <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Amostras: clique numa cor pinta o preenchimento (ou o contorno, com <b>Contorno</b> marcado ou com <kbd>Alt</kbd>); as espessuras vão para o <code>ink=</code> (ou o <code>w=</code>); as variantes trocam com um clique; <b>+ nova</b> guarda a cor da forma na <code>palette</code>.</li>
       <li>A barra de baixo mostra os erros, o caminho da escolha (<code>arquivo › camada › forma</code>; clicar na camada escolhe ela inteira), a linha do código, as coordenadas do mouse, a variante de cores e o zoom (clicar no número volta a 100%).</li>
       <li><b>Exibir › Camadas em 3D</b> (ou o botão de camadas na ponta direita da barra de baixo) afasta as camadas no espaço, para ver o que fica na frente de quê: cada linha do painel Camadas vira uma peça. Arraste para girar; <kbd>Espaço</kbd>, a Mão ou o botão do meio movem; a roda e o Zoom aproximam; <kbd>Ctrl</kbd>+<kbd>0</kbd> volta de frente. Clique numa peça escolhe a linha dela (<kbd>Shift</kbd> soma ou tira), e as setas, <kbd>Ctrl</kbd>+<kbd>3</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd> e <kbd>Ctrl</kbd>+<kbd>Z</kbd> valem como no desenho. Na barrinha: <b>Explodir</b>, <b>De frente</b>, <b>De lado</b>, <b>Juntar</b>, quanto as camadas (e as formas de cada camada) se afastam e as molduras com os nomes; o olho de cada nome esconde a camada só ali. O mouse numa linha do painel Camadas apaga as outras peças. Acompanha o player (pulando quadros num desenho pesado), sem estilo de arte e sem os halos das luzes. Não aparece em filmes.</li>
@@ -303,6 +303,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus. Para criar um, use a ferramenta Degradê (<kbd>G</kbd>).</li>
       <li>Com o cursor entre <code>def</code> e <code>end</code>, a <b>prévia</b> mostra o componente sozinho, com uma cruz rosa no <code>0,0</code> (o ponto que vai para o x,y do <code>use</code>): na hora, se o <code>def</code> não tem <code>use</code>; com a chave <b>Prévia do def</b>, se tem. No painel <b>Prévia</b>, mude os parâmetros (arraste o nome de um número para os lados) sem mudar o código; <b>Copiar como use</b> copia uma linha <code>use</code> com o que mudou. As alças mudam as linhas do <code>def</code>.</li>
       <li><b>Janela › Símbolos</b> (na coluna da direita): cada <code>def</code> com uma miniatura e o número de <code>use</code>. Arraste uma para o desenho e sai um <code>use</code> ali (<b>Colocar</b>: no meio da vista). <kbd>F8</kbd> (ou o ＋) faz das formas escolhidas um <code>def</code> novo, com o <code>0,0</code> no meio delas, e deixa um <code>use</code> no lugar. Duplo clique num <code>use</code> (ou na miniatura) entra no símbolo, com a prévia: lá dentro, mover, esticar, girar, apagar e agrupar valem como no desenho; <kbd>Esc</kbd> (ou duplo clique no vazio) sai. <b>Quebrar vínculo</b> troca o <code>use</code> pelas formas do <code>def</code>, no mesmo lugar, tamanho e giro, com os parâmetros escritos. Duplo clique no nome renomeia o <code>def</code> e os <code>use</code>; <b>Apagar</b> só apaga um <code>def</code> sem <code>use</code>. Também em <b>Objeto › Símbolo</b>.</li>
+      <li><b>Linha do tempo da animação</b> (num desenho com <code>anim</code>, embaixo do desenho): uma linha por osso ou <code>forma.propriedade</code>, um losango em cada <code>key</code> e, entre dois, a barra com a curva do <code>ease</code>; em cima, <b>todas</b> e <b>eventos</b>. Clique num losango vai ao quadro e à linha; arrastar muda o quadro da <code>key</code> (<kbd>Alt</kbd>: copia); <kbd>Shift</kbd>+clique soma; o nome da linha escolhe as <code>key</code> dela; <kbd>Delete</kbd> apaga; <kbd>←</kbd> <kbd>→</kbd> empurram (<kbd>Shift</kbd>: 5); o botão direito escolhe o <code>ease</code>. <kbd>F6</kbd> põe uma <code>key</code> com o valor do quadro, <kbd>Shift</kbd>+<kbd>F6</kbd> tira, <kbd>F5</kbd> e <kbd>Shift</kbd>+<kbd>F5</kbd> põem e tiram um quadro; a alça laranja no fim da régua muda o <code>frames=</code>. Tudo reescreve as linhas <code>key</code> (um <kbd>Ctrl</kbd>+<kbd>Z</kbd> por gesto).</li>
       <li><b>Janela › Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
       <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. O cadeado, ao lado, põe e tira o <code>lock</code> (amarelo: travada; apagado: travada pela camada ou pelo grupo). <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). O painel fica na coluna da direita (o título de cada parte dobra). Arrastar uma linha muda o lugar dela (em cima do nome de uma camada, vai para a frente dela); arrastar o nome de uma camada muda a ordem das camadas; <b>Objeto › Mandar para a camada</b> leva a escolha. O ＋ cria uma camada logo acima da camada onde se desenha (a da barrinha laranja), o duplo clique num nome renomeia (com o que aponta para ele) e a lixeira apaga a camada com as formas dela. Não aparece em filmes.</li>
       <li><b>Réguas</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>, ou <b>Exibir › Réguas</b>) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (<b>Exibir › Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
@@ -408,40 +409,41 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.61.0"></script>
-<script src="js/lang.js?v=1.61.0"></script>
-<script src="js/simplify.js?v=1.61.0"></script>
-<script src="js/pathops.js?v=1.61.0"></script>
-<script src="js/art.js?v=1.61.0"></script>
-<script src="js/scene.js?v=1.61.0"></script>
-<script src="js/film.js?v=1.61.0"></script>
-<script src="js/audio.js?v=1.61.0"></script>
-<script src="js/nle.js?v=1.61.0"></script>
-<script src="js/webm.js?v=1.61.0"></script>
-<script src="js/svg.js?v=1.61.0"></script>
-<script src="js/gif.js?v=1.61.0"></script>
-<script src="js/webp.js?v=1.61.0"></script>
-<script src="js/mp4.js?v=1.61.0"></script>
-<script src="js/zip.js?v=1.61.0"></script>
-<script src="js/normal.js?v=1.61.0"></script>
-<script src="js/export.js?v=1.61.0"></script>
-<script src="js/godot.js?v=1.61.0"></script>
-<script src="js/rig.js?v=1.61.0"></script>
-<script src="js/editor.js?v=1.61.0"></script>
-<script src="js/examples.js?v=1.61.0"></script>
-<script src="js/timeline.js?v=1.61.0"></script>
-<script src="js/app.js?v=1.61.0"></script>
-<script src="js/ui-menu.js?v=1.61.0"></script>
-<script src="js/ui-shell.js?v=1.61.0"></script>
-<script src="js/ui-3d.js?v=1.61.0"></script>
-<script src="js/ui-props.js?v=1.61.0"></script>
-<script src="js/ui-select.js?v=1.61.0"></script>
-<script src="js/ui-draw.js?v=1.61.0"></script>
-<script src="js/ui-pen.js?v=1.61.0"></script>
-<script src="js/ui-pencil.js?v=1.61.0"></script>
-<script src="js/ui-paths.js?v=1.61.0"></script>
-<script src="js/ui-cut.js?v=1.61.0"></script>
-<script src="js/ui-layers.js?v=1.61.0"></script>
-<script src="js/ui-symbols.js?v=1.61.0"></script>
+<script src="js/geom.js?v=1.62.0"></script>
+<script src="js/lang.js?v=1.62.0"></script>
+<script src="js/simplify.js?v=1.62.0"></script>
+<script src="js/pathops.js?v=1.62.0"></script>
+<script src="js/art.js?v=1.62.0"></script>
+<script src="js/scene.js?v=1.62.0"></script>
+<script src="js/film.js?v=1.62.0"></script>
+<script src="js/audio.js?v=1.62.0"></script>
+<script src="js/nle.js?v=1.62.0"></script>
+<script src="js/webm.js?v=1.62.0"></script>
+<script src="js/svg.js?v=1.62.0"></script>
+<script src="js/gif.js?v=1.62.0"></script>
+<script src="js/webp.js?v=1.62.0"></script>
+<script src="js/mp4.js?v=1.62.0"></script>
+<script src="js/zip.js?v=1.62.0"></script>
+<script src="js/normal.js?v=1.62.0"></script>
+<script src="js/export.js?v=1.62.0"></script>
+<script src="js/godot.js?v=1.62.0"></script>
+<script src="js/rig.js?v=1.62.0"></script>
+<script src="js/editor.js?v=1.62.0"></script>
+<script src="js/examples.js?v=1.62.0"></script>
+<script src="js/timeline.js?v=1.62.0"></script>
+<script src="js/app.js?v=1.62.0"></script>
+<script src="js/ui-menu.js?v=1.62.0"></script>
+<script src="js/ui-shell.js?v=1.62.0"></script>
+<script src="js/ui-3d.js?v=1.62.0"></script>
+<script src="js/ui-props.js?v=1.62.0"></script>
+<script src="js/ui-select.js?v=1.62.0"></script>
+<script src="js/ui-draw.js?v=1.62.0"></script>
+<script src="js/ui-pen.js?v=1.62.0"></script>
+<script src="js/ui-pencil.js?v=1.62.0"></script>
+<script src="js/ui-paths.js?v=1.62.0"></script>
+<script src="js/ui-cut.js?v=1.62.0"></script>
+<script src="js/ui-layers.js?v=1.62.0"></script>
+<script src="js/ui-symbols.js?v=1.62.0"></script>
+<script src="js/ui-anim.js?v=1.62.0"></script>
 </body>
 </html>

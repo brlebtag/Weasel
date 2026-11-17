@@ -468,6 +468,21 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .tsw-pick { position: absolute; left: 30px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
 .timeline { border-top: 1px solid var(--line); background: #10131a; max-height: 230px; overflow-y: auto; overflow-x: hidden; }
 .timeline canvas { display: block; width: 100%; touch-action: none; }
+/* a linha do tempo da animação (js/ui-anim.js, etapa 7a): no jeito do Animate */
+.atl { max-height: 200px; }
+.atl canvas:focus { outline: none; }
+.atl canvas:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+.atl-pop { position: fixed; z-index: 1000; min-width: 220px; padding: 6px; background: #141c24; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 30px rgba(0, 0, 0, .5); font-size: 12px; }
+.atl-h { color: var(--dim); font-size: 11px; padding: 0 2px 5px; }
+.atl-eases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.atl-eases button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px 3px; font: 11px var(--mono); background: var(--panel2); }
+.atl-eases button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.atl-eases svg { width: 34px; height: 26px; fill: none; stroke: #b9adf5; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.atl-eases svg .ax { stroke: #3a4352; stroke-width: 1; }
+.atl-acts { display: flex; flex-direction: column; }
+.atl-acts button { display: flex; justify-content: space-between; gap: 14px; border: 0; background: transparent; padding: 5px 6px; border-radius: 5px; text-align: left; color: var(--text); }
+.atl-acts button:hover { background: #1d2833; }
+.atl-acts kbd { color: var(--dim); font: 11px var(--mono); background: none; border: 0; }
 .viewbar, .player {
   display: flex;
   align-items: center;
