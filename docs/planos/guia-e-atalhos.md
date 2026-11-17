@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0. Próximo: a tarefa A (seção 2) e a etapa 3.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1. Próximo: a etapa 3.
 
 ## O pedido
 
@@ -97,7 +97,7 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 
 | # | O quê | Antes de qual etapa |
 |---|---|---|
-| A | **`opacity=` e `blend=` da camada.** Sem efeito na camada, eles valem forma por forma: duas formas da mesma camada `opacity=0.5` aparecem uma através da outra. Com qualquer efeito (`blur=`, `hue=`…), valem para a camada inteira. Parece um defeito (`scene.js:2601` contra `:2593`). Corrigir muda a imagem de quem usa `opacity=` em camada com formas sobrepostas. | Camadas (etapa 3) |
+| A | **`opacity=` e `blend=` da camada.** Sem efeito na camada, eles valem forma por forma: duas formas da mesma camada `opacity=0.5` aparecem uma através da outra. Com qualquer efeito (`blur=`, `hue=`…), valem para a camada inteira. Parece um defeito (`scene.js:2601` contra `:2593`). Corrigir muda a imagem de quem usa `opacity=` em camada com formas sobrepostas. **Feito na 1.67.1** (abaixo). | Camadas (etapa 3) |
 | B | **Ajudante do Godot.** Ele começa virado para baixo (`godot.js:335`). Num personagem de lado (só `_left` e `_right`), `tocar("idle")` procura `idle_down`, não acha e toca `idle`, que não existe. O script de exemplo do capítulo 9 cai nisso. **Feito na 1.66.1** (abaixo). | Jogo (etapa 8) |
 | C | **Valores cortados sem aviso:** a força do `glow=`, o `tint=`, a sombra do `cast=`, o `emit=`, a queda do `trail=`, o `taper=`. E aceitos sem fazer nada: `cut=` em `stroke`/`line`/`text`, `bold` numa elipse, `cloth=` no texto, `~` na `line`, `camera.fog=none` no `at`, `audio at=+1s`. | nenhuma: o guia diz o que o código faz |
 | D | **Faixas diferentes no `at` e na linha do comando:** `zoom` vai até 100 na `camera` e até 1000 no `at`; `lag`, até 10 e até 100; numa `key`, a luz aceita `power=30` e `cone=999` sem aviso. | nenhuma |
@@ -106,8 +106,25 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 | G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`, `#f6f200`) sai preto: uma divisão 0/0 em `art.js` (`pencilPost` e `crayonPost`). Achado na etapa 2. | nenhuma: a referência ensina a trocar `00` por `01` até a correção |
 | H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; um `-o` com extensão desconhecida (`.bmp`) salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. Achado na etapa 2. | nenhuma |
 | I | **Mais coisas aceitas sem fazer nada** (achadas na etapa 2): `key emissor.c=`; no `expr`, as propriedades de camada, luz e caixa; `turn=nao` e `turn=off` (só `0` desliga); `let pi=3`; `let a-b=5` (não dá para usar nas contas); `rand(x,a)` ignora o `a`; nas funções, um número a mais é ignorado; a mensagem "não pode ficar dentro de def (só formas e use)" esquece `repeat`, `group` e `include`. | nenhuma |
+| J | **`opacity=` da forma e do `use`** (achado na tarefa A): o mesmo "pedaço por pedaço" que a camada tinha. Numa forma com contorno e `opacity=0.5`, a metade de dentro do contorno mostra o preenchimento por baixo (sai `128,64,64` num contorno preto sobre vermelho, em vez do cinza `128,128,128` da metade de fora). Num `use` com `opacity=0.5`, as formas do componente aparecem uma através da outra (`128,64,191` no cruzamento de um vermelho com um azul). Hoje dá para ter o componente inteiro transparente pondo o `use` numa camada com `opacity=`. | Cores e contorno (etapa 3): decidir se o guia descreve ou se corrige antes |
 
 Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D, E e I podem esperar uma tarefa de "avisos que faltam". F, G e H são defeitos: valem uma tarefa de conserto (G muda a imagem só no caso que hoje sai preto).
+
+### A: como ficou (1.67.1, 17/11/2026)
+
+**Conferido nas imagens** (antes, depois e diferença, mostradas ao usuário antes do "pode fazer"): duas formas que se cruzam numa camada `opacity=0.5` apareciam uma através da outra; numa camada `blend=multiply`, amarelo e ciano davam verde no cruzamento, e duas sombras que se cruzavam faziam uma mancha mais escura no meio. O SVG exportado já fazia a camada inteira (`svg.js`: `opacity` e `mix-blend-mode` no `<g>` da camada), então o PNG e o SVG do mesmo arquivo saíam diferentes.
+
+**A correção** fica em `js/scene.js` (a função `whole`): uma camada com transparência menor que 1 (no código, numa `key` ou num `at`) ou com `blend=` diferente de `normal` passa pelo mesmo caminho das camadas com efeito (`drawFxLayer`): pintada à parte e aplicada de uma vez. Vale também na virada e na metamorfose (`drawPartGroup`). O passe de textura dos estilos de arte continua como era. O editor e a linha de comando usam o mesmo código.
+
+**O que mudou:**
+- `regress --strict`: nenhum jogo. Cinco referências regravadas, só por arredondamento: `caso_3d_chao` (`pose`, `sheet`, `vento_meio`: a camada `curva opacity=0.4`; até 108 pixels, 1 nível de cor) e o `filme.weasel` (`filme/quadros.png` e `_conferencia/filme.png`: o letreiro que aparece e some com `at … titulo.opacity`; até 6 e 10 níveis, nas bordas das letras e no bloom). A `noite.weasel` tem `opacity=0.22` com `blur=14`: já era a camada inteira.
+- Guia: `04_opacity.png` (os olhos dos fantasmas ficam mais escuros: não mostram mais o fantasma por baixo deles) e `04_blend.png` (1 a 2 níveis). O texto do capítulo 4 já dizia "a camada inteira". Na ficha `layer` do 19, o **Cuidado** de "Transparência e mistura" foi reescrito, e o de "Efeitos" que remetia a ele saiu.
+- Uma forma só, com contorno, numa camada transparente, também muda: a metade de dentro do contorno não mostra mais o preenchimento por baixo.
+- Pintar à parte e aplicar com transparência muda até 1 nível de cor mesmo onde nada se cruza (o fantasma de `opacity=0.25`). Não dá para ver.
+- A vista 3D das camadas continua forma por forma: lá cada forma é um plano.
+- Quem quiser o jeito antigo da `opacity=` põe a transparência em cada forma. O do `blend=`, só com cada forma na sua camada.
+
+**Fica de fora:** a `opacity=` da forma e do `use` (linha J da tabela).
 
 ### B: como ficou (1.66.1, 17/11/2026)
 
@@ -348,14 +365,16 @@ Cada etapa sai numa versão, com `npm test` e `regress --strict` passando, as im
 |---|---|---|
 | 1 | 1.66.0 | **Folha de atalhos:** `js/keys.js`, o painel, Ajuda › Atalhos (Shift+F1 e Ctrl+?), o capítulo 23 gerado e as conferências no `npm test` |
 | 2 | 1.67.0 | **A consulta:** referência completa (19) com a conferência no `npm test`, funções das contas (20), linha de comando (21), glossário (25) e o índice novo do guia |
-| 3 | 1.67.1 | Primeiros passos, Formas, Cores e contorno, Camadas (1 a 4); o capítulo do editor (22) começa a receber as dicas |
-| 4 | 1.67.2 | Contas e repetição, Componentes e arquivos (5 e 6) |
-| 5 | 1.67.3 | Primeiro movimento, Ossos, Animação (7 a 9) |
-| 6 | 1.67.4 | Luz e sombra, Efeitos e partículas, Acabamento (10 a 12) |
-| 7 | 1.67.5 | Estilos de arte, Profundidade (13 e 14) |
-| 8 | 1.67.6 | Jogo (15 e 16) |
-| 9 | 1.67.7 | Filme (17 e 18) |
-| 10 | 1.67.8 | Problemas comuns (24), o editor (22) terminado, revisão dos links e do README |
+| 3 | 1.67.2 | Primeiros passos, Formas, Cores e contorno, Camadas (1 a 4); o capítulo do editor (22) começa a receber as dicas |
+| 4 | 1.67.3 | Contas e repetição, Componentes e arquivos (5 e 6) |
+| 5 | 1.67.4 | Primeiro movimento, Ossos, Animação (7 a 9) |
+| 6 | 1.67.5 | Luz e sombra, Efeitos e partículas, Acabamento (10 a 12) |
+| 7 | 1.67.6 | Estilos de arte, Profundidade (13 e 14) |
+| 8 | 1.67.7 | Jogo (15 e 16) |
+| 9 | 1.67.8 | Filme (17 e 18) |
+| 10 | 1.67.9 | Problemas comuns (24), o editor (22) terminado, revisão dos links e do README |
+
+A tarefa A saiu na 1.67.1, e as etapas 3 a 10 andaram uma versão.
 
 Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos que faltam, os antigos.
 
@@ -387,4 +406,4 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 - **O índice novo** (`docs/guia/README.md`) mostra as seis partes e os 25 números. Os capítulos que ainda não foram reescritos levam ao antigo, marcados "(antigo)".
 - **A conferência** (`docs/guia/conferir.js`, no `npm test` pelo `gerar.js`): a referência precisa ter uma ficha para cada comando de `KEYWORDS`, com toda opção de `ATTRS` e toda palavra de `FLAGS`; cada estilo do `art` com as opções de `ART_OPTS`; cada alvo da `key` e do `at` com as suas propriedades. O 20 precisa ter toda função de `FN` e o `pi`; o 21, toda opção do `parseArgs`. E todo link entre os capítulos precisa levar a um arquivo e a um título que existem (um link do capítulo 1 estava quebrado e foi corrigido).
 - **O capítulo 12 antigo saiu**, com as 11 imagens `12_*`. Os links para ele levam agora ao 19 e ao 21.
-- **Para as próximas etapas:** cada capítulo reescrito precisa atualizar os links **Para aprender** do 19 que apontam para o capítulo antigo, e o link do começo do 20 (hoje para o 5 antigo). Quando a tarefa A mudar a `opacity=`/`blend=` da camada, o **Cuidado** da ficha `layer` no 19 muda junto.
+- **Para as próximas etapas:** cada capítulo reescrito precisa atualizar os links **Para aprender** do 19 que apontam para o capítulo antigo, e o link do começo do 20 (hoje para o 5 antigo). Quando a tarefa A mudar a `opacity=`/`blend=` da camada, o **Cuidado** da ficha `layer` no 19 muda junto (feito na 1.67.1).

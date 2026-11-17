@@ -1462,11 +1462,13 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 
 | Opção | O que faz | Valores | Padrão | Anima? |
 |---|---|---|---|---|
-| `opacity=` | a transparência | de 0 (invisível) a 1 (inteira) | 1 | `key` e `at` |
-| `blend=` | como a cor se mistura com o que está embaixo | `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color-dodge`, `color-burn`, `hard-light`, `soft-light`, `difference`, `exclusion`, `hue`, `saturation`, `color` ou `luminosity` (em minúsculas; outro nome dá erro) | `normal` | não |
+| `opacity=` | a transparência da camada inteira | de 0 (invisível) a 1 (sem transparência) | 1 | `key` e `at` |
+| `blend=` | como a camada se mistura com o que está embaixo dela | `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color-dodge`, `color-burn`, `hard-light`, `soft-light`, `difference`, `exclusion`, `hue`, `saturation`, `color` ou `luminosity` (em minúsculas; outro nome dá erro) | `normal` | não |
 
 **Cuidado:**
-- Numa camada sem efeito, `opacity=` e `blend=` valem forma por forma: duas formas da mesma camada com `opacity=0.5` aparecem uma através da outra, e com `blend=` elas se misturam também entre si. Com um efeito (`blur=`, `glow=`, `shadow=`, `tint=`, `brightness=`, `saturate=`, `contrast=` ou `hue=`, ou o `trail=` com uma animação tocando), a camada vira uma imagem só, e a transparência e a mistura valem para ela inteira.
+- `opacity=` e `blend=` tratam a camada como uma imagem só. Duas formas da mesma camada com `opacity=0.5` não aparecem uma através da outra: a de cima cobre a de baixo, e as duas juntas ficam meio transparentes. Com `blend=`, as formas da camada não se misturam entre si, só com o que está embaixo da camada.
+- Para as formas se verem umas através das outras, ponha o `opacity=` em cada forma, não na camada.
+- Até a versão 1.67.0, numa camada sem efeito, `opacity=` e `blend=` valiam forma por forma. Um desenho antigo com formas que se cruzam numa camada assim sai diferente.
 
 **Para aprender:** [`opacity=`](04-camadas.md#transparência-da-camada-opacity) e [`blend=`](04-camadas.md#misturar-com-o-que-está-embaixo-blend).
 
@@ -1485,7 +1487,6 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 | `trail=quadros,queda,cor` | rastro: as poses anteriores da animação ficam pintadas atrás, cada uma mais fraca | quadros: de 1 a 30 (arredonda; fora disso, erro); queda: de 0.05 a 0.95; quanto maior, mais fortes as cópias (fora disso, corta sem avisar); cor: uma cor `#hex`, opcional, que tinge as cópias | queda 0.5, sem cor | não |
 
 **Cuidado:**
-- Os efeitos pintam a camada inteira de uma vez. Por isso, mudam o `opacity=` e o `blend=` dela (veja acima).
 - O `trail=` só aparece com uma animação tocando: na pose parada, não há quadros anteriores.
 - Uma `key` no `tint` de uma camada sem `tint=cor` avisa: sem a cor, não há o que pintar.
 

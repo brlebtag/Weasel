@@ -1504,7 +1504,7 @@
       c.restore();
     };
     const fx = PASS && PASS.tex ? null : layerFx(layer, lp);
-    if (fx) drawFxLayer(ctx, R, layer, null, alpha, lit, fx, body);
+    if (fx || (!(PASS && PASS.tex) && whole(layer, alpha))) drawFxLayer(ctx, R, layer, null, alpha, lit, fx || {}, body);
     else body(ctx, alpha, false);
   }
 
@@ -2590,7 +2590,7 @@
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
       const fx = tex ? null : layerFx(layer, lp);
-      if (fx || (layer.trail && pose.anim && !tex)) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
+      if (fx || (!tex && ((layer.trail && pose.anim) || whole(layer, alpha)))) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
       else drawLayer(ctx, R, layer, items, alpha, lit, pose, false);
     }
     if (lighting && opts.glows !== false) drawLightGlows(ctx, lighting);
@@ -2605,6 +2605,10 @@
     ctx.restore();
   }
 
+  // A transparência (opacity=, key/at camada.opacity) e a mistura (blend=) valem para a camada inteira, como no
+  // Illustrator, no Photoshop e no SVG: a camada é pintada à parte e aplicada de uma vez, como as com efeito. Pintada
+  // forma por forma, as formas da camada se veriam umas através das outras e se misturariam entre si (até a 1.67.0).
+  const whole = (layer, alpha) => alpha < 1 || layer.blend !== 'source-over';
   // Camada com efeitos: desenhada à parte e aplicada de uma vez (sombra, brilho, cor, desfoque, rastro).
   function drawFxLayer(ctx, R, layer, items, alpha, lit, fx, body) {
     const { model, pose } = R;
