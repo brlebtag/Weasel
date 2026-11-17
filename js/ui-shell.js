@@ -259,6 +259,7 @@
       { label: 'Tamanho real (100%)', key: 'Ctrl+1', run: A.zoomActual },
       '-',
       { label: 'Camadas em 3D', visible: drawing, on: () => st.view3d, run: () => A.set3d(!st.view3d) },
+      { label: 'Palco em 3D', visible: () => A.isFilm(), on: () => st.view3d, run: () => A.set3d(!st.view3d) },
       '-',
       Object.assign({ label: 'Réguas', key: 'Ctrl+R', visible: drawing }, chk('tRulers')),
       Object.assign({ label: 'Guias (camadas guide, luzes, encaixes)' }, chk('tGuides')),

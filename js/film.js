@@ -826,6 +826,15 @@
     ctx.restore();
   }
 
+  // a luz do quadro: a do palco e, em cada ator, a dele mais a do palco (nas coordenadas dele)
+  function lightUp(fs) {
+    fs.stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
+    for (const w of fs.who) {
+      if (!w.stage && w.model && w.pose) w.lighting = actorLighting(fs.stageLighting, w, w.mat);
+      if (w.morph) for (const s of [w.morph.A, w.morph.B]) s.lighting = actorLighting(fs.stageLighting, s, s.mat);
+    }
+  }
+
   // Um quadro sem transição: o plano daquele quadro, com câmera, atores e legendas.
   // opts.art: com os estilos de arte. Cada trecho de camadas com o mesmo estilo vai numa imagem de trabalho,
   // na grade presa ao quadro do filme; o escurecer da câmera e as legendas vêm por cima, sem estilo.
@@ -835,11 +844,7 @@
     // film: o que o desenho guarda durante o quadro (os mapas de luz) e o jeito mais rápido do filme (S.drawScene)
     opts = Object.assign({}, opts, { film: S.filmFrame() });
     const base = matOf(ctx);
-    fs.stageLighting = S.sceneLights(fs.owner, fs.who[0].pose);
-    for (const w of fs.who) {
-      if (!w.stage && w.model && w.pose) w.lighting = actorLighting(fs.stageLighting, w, w.mat);
-      if (w.morph) for (const s of [w.morph.A, w.morph.B]) s.lighting = actorLighting(fs.stageLighting, s, s.mat);
-    }
+    lightUp(fs);
     const groups = plates(fs, opts);
     const runs = opts.art && W.art ? artRuns(fs, groups) : null;
     if (!runs) paintPlates(ctx, model, fs, base, groups, opts, true, true);
@@ -905,6 +910,27 @@
     return out;
   }
 
+  // A vista do palco (js/ui-3d.js): as placas do quadro f, cada grupo de camadas na profundidade dele (o que plates
+  // junta), para a vista pintar cada uma numa tela e pôr no espaço. É o plano daquele quadro (sem a transição), sem o
+  // estilo de arte, sem o acabamento e sem o escurecer da câmera. paint(ctx, g, base) pinta um grupo como ele sai no
+  // quadro (base: quadro do filme → tela); paintBg, o fundo. null fora do filme.
+  function stageOf(model, frame) {
+    const fs = frameState(model, frame);
+    if (!fs) return null;
+    const opts = { film: S.filmFrame() };
+    lightUp(fs);
+    // os halos das lâmpadas do palco só viram placa quando há lâmpada com halo
+    const glow = !!(fs.stageLighting && fs.stageLighting.lights.some((L) => L.glow > 0));
+    const groups = plates(fs, opts).filter((g) => glow || !(g.w.stage && g.glows && !g.layers.size));
+    return {
+      fs,
+      groups,
+      paint: (ctx, g, base) => paintPlates(ctx, model, fs, base, [g], opts, false, false),
+      paintBg: (ctx, base) => { ctx.save(); paintBg(ctx, model, fs, base); ctx.restore(); },
+      hasBg: !!(model.canvas.bg || (fs.owner !== model && fs.owner.canvas.bg)),
+    };
+  }
+
   // Os 4 cantos do que a câmera vê, no plano da ação (profundidade 1) — para desenhar a moldura na vista do mundo.
   function cameraQuad(model, frame) {
     const loc = locate(model, frame);
@@ -934,5 +960,5 @@
     return e.start + Math.min(e.frames - 1, Math.round((t || 0) * tl.fps));
   }
 
-  W.film = { timeline, locate, timecode, frameState, morphPlan, autoReport, AUTO_MAX, transitionAt, composeTransition, drawFrame, renderFrame, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
+  W.film = { timeline, locate, timecode, frameState, morphPlan, autoReport, AUTO_MAX, transitionAt, composeTransition, drawFrame, renderFrame, stageOf, cameraQuad, viewAt, frameOfShot, actorState, valueAt, subtitles, langs, audioClips, lipAt, cuesOf };
 })(window.Weasel = window.Weasel || {});

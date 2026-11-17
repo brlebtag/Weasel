@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026, **feito**. As 9 decisões foram tomadas no mesmo dia (seção 12), e as etapas saíram no mesmo dia: a 1 (a casca) na 1.50.0, a 1b (camadas em 3D) na 1.51.0, a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0, a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0, a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0, a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0, a 6a (Camadas completas) na 1.60.0, a 6b (Símbolos) na 1.61.0, a 7a (linha do tempo da animação) na 1.62.0, a 7b (o filme pela tela) na 1.63.0 e a 7c (acabamento e estilo) na 1.64.0. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar. Em 17/11/2026 você confirmou as seis que deixam marca nos arquivos (a lista está no fim da seção 12), e a 1.64.1 passou para o inglês os três nomes automáticos que tinham ficado em português; as outras **(R)** continuam esperando.
+**Situação:** estudo de 16/11/2026, **feito**. As 9 decisões foram tomadas no mesmo dia (seção 12), e as etapas saíram no mesmo dia: a 1 (a casca) na 1.50.0, a 1b (camadas em 3D) na 1.51.0, a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0, a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0, a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0, a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0, a 6a (Camadas completas) na 1.60.0, a 6b (Símbolos) na 1.61.0, a 7a (linha do tempo da animação) na 1.62.0, a 7b (o filme pela tela) na 1.63.0 e a 7c (acabamento e estilo) na 1.64.0. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar. Em 17/11/2026 você confirmou as seis que deixam marca nos arquivos (a lista está no fim da seção 12), e a 1.64.1 passou para o inglês os três nomes automáticos que tinham ficado em português; as outras **(R)** continuam esperando. Depois, você pediu a vista 3D no filme: o **Palco em 3D** saiu na 1.65.0 (seção 13).
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -662,7 +662,7 @@ Dividi a etapa em três **(R)**, para cada uma sair testada e publicada sozinha:
   - o Conta-gotas nos dois sentidos;
   - o Degradê criando um gradiente, trocando para radial, copiando um gradiente dividido e avisando na camada travada;
   - o menu do botão direito, o Inserir forma no lugar do clique e as casas da barra.
-- A prévia do `def` não foi conferida.
+- A prévia do `def` ficou para depois e foi conferida em 17/11/2026, na 1.65.0, no `def olho` da coruja: o retângulo, a linha e a estrela arrastando, e o **Inserir forma** do botão direito, entram na linha de baixo do cursor, nas coordenadas do `def`; o Degradê escreve o gradiente nessas coordenadas; o Conta-gotas pinta a forma da linha do cursor.
 - O guia (capítulos 1, 2 e 3), o README e a referência (F1) contam o que mudou.
 
 **A 4b.** O Bézier completo (o pedido 3 do seu irmão, seção 5.5), a Caneta, a Curvatura e o Ponto de ancoragem. As escolhas marcadas com **(R)** esperam a sua confirmação:
@@ -1148,3 +1148,61 @@ Das escolhas **(R)**, você confirmou primeiro as seis que deixam marca nos arqu
 4. **Os nomes automáticos todos em inglês**, como na decisão 5: a 1.64.1 trocou os três que tinham ficado em português. A cor nova das Amostras virou `color1` (era `cor1`), o furo da Borracha `nome_hole1` (era `nome_furo1`) e a saída do `--simplify` `arquivo_simple.weasel` (era `arquivo_simples.weasel`). Os arquivos que já existem não mudam: só o que nasce daqui para frente.
 5. **O valor padrão tira o atributo** nos painéis (o Brilho em 0 apaga o `bloom=`; alinhar à esquerda tira o `align=`).
 6. **O símbolo novo (F8)** com o `0,0` no meio da caixa e o `def` no alto do arquivo. Escolher o ponto de registro (a grade de 9 do Illustrator; o meio de baixo serve bem para personagens) fica como ideia para depois.
+
+---
+
+## 13. Palco em 3D: a vista 3D no filme (17/11/2026)
+
+Você pediu a vista do palco depois do fim do plano. No filme, a vista **Camadas em 3D** (1b) mostra o filme de fora, no quadro do player:
+- cada camada e cada ator vira uma placa, na distância do `depth=` dela;
+- a câmera do filme é uma pirâmide; olhar por ela mostra o quadro do player;
+- um controle aperta as distâncias (do 0.5 ao 12, a pilha fica enorme);
+- clicar escolhe o ator ou a camada e leva o código à linha;
+- é só para olhar. Arrastar para mudar a profundidade fica para depois, e o jogo não muda.
+
+As escolhas marcadas com **(R)** esperam a sua confirmação:
+- **Onde fica** **(R)**:
+  - o mesmo botão da barra de baixo e **Exibir › Palco em 3D**, que aparece no lugar de **Camadas em 3D** quando o arquivo é um filme;
+  - trocar de um desenho para um filme (ou o contrário) com a vista aberta começa a vista de novo, do jeito certo.
+- **As placas** **(R)**:
+  - uma placa para cada grupo de camadas que o quadro pinta junto: as camadas de um ator na mesma profundidade, ou as do arquivo do filme;
+  - um ator com camadas em profundidades diferentes (o `cenario`, com o céu a 12 e a serra a 5) vira uma placa por profundidade, com o nome `ator › camada`;
+  - cada placa é pintada pela mesma conta do quadro (`W.film.stageOf`, no `js/film.js`), com a câmera, a luz, a névoa e a transparência daquele quadro;
+  - a placa é o quadro mais um quarto de cada lado, para ver o que a câmera não pega.
+- **As distâncias** **(R)**:
+  - o olho da câmera fica a uma distância E do plano da ação (a profundidade 1). A placa da profundidade d fica a E·d^γ do olho, crescida na mesma conta. Assim, vista do olho, cada placa cai em cima do quadro, e **Da câmera** é o quadro do player;
+  - o controle **Distâncias** é o γ, de 0.25 a 1. Em 1, as distâncias são as de verdade;
+  - ele começa apertado quando a mais longe passa de 4 vezes a mais perto: no `filme.weasel` (de 0.6 a 12), começa em 0.46;
+  - as placas da mesma profundidade (o chão e os atores no plano da ação) se afastam em direção à câmera, pelo controle **Mesma distância**. Elas vão no máximo até a metade do caminho para a próxima profundidade, para a ordem não trocar;
+  - uma camada `screen` (no vidro da câmera) fica na metade do caminho entre o olho e a placa mais perto. O fundo (`bg=`) fica atrás da mais longe.
+- **A câmera** **(R)**:
+  - uma pirâmide amarela do olho até o quadro na placa mais longe, o quadro do plano da ação em traço grosso e um ponto com o nome **câmera**;
+  - três jeitos de olhar: **Por fora** (38° de lado e 16° de cima, longe o bastante para caber tudo), **Da câmera** e **De lado** (72°);
+  - em **Da câmera**, o que fica fora do quadro aparece escurecido, e as molduras, os nomes e a pirâmide somem (eles aparecem quando a vista gira).
+- **O que a vista não mostra** **(R)**: a transição entre planos (é o plano do quadro), o estilo de arte (`art`), o acabamento (`finish`), o escurecer da câmera (`fade=`) e as legendas.
+- **O clique** **(R)**:
+  - numa placa de ator, escolhe o ator (o painel Filme mostra ele) e leva o código à linha dele;
+  - numa camada do arquivo do filme, leva à linha da camada;
+  - a placa dos halos das lâmpadas do filme não tem linha e não pega o clique de quem está atrás;
+  - numa cena de outro arquivo (`scene`), as linhas são de lá e o clique só escolhe o ator.
+- O olho em cada nome esconde a placa só na vista, como na 1b. A vista acompanha o player e, tocando, pula quadros, como na 1b.
+- **Fora, por enquanto** **(R)**:
+  - arrastar uma placa para mudar o `depth=`;
+  - mexer na câmera pela vista;
+  - mostrar o estilo de arte e o acabamento nas placas;
+  - uma vista de cima.
+
+**Como ficou (17/11/2026):** saiu na 1.65.0.
+- O `js/film.js` ganhou o `stageOf` (as placas do quadro e o jeito de pintar cada uma). A preparação da luz do quadro virou uma função só, usada pelo quadro e pela vista.
+- O `js/ui-3d.js` ganhou o modo do palco: as placas na distância, a pirâmide e o escurecido num SVG por cima, os jeitos de olhar, os dois controles e o clique.
+- O `app.js` deixou a vista abrir no filme, e o `js/ui-shell.js` ganhou o item **Exibir › Palco em 3D**.
+- Conferido no navegador, com o `filme.weasel`:
+  - no quadro 408, nove placas e o fundo, do céu (12) às moitas da frente (0.6);
+  - **Da câmera** igual ao quadro do player, sem acabamento e sem estilo: montei as placas com as matrizes da própria vista e comparei com o quadro. A diferença média foi de 0.7 numa escala de 0 a 255, e só 0.56% dos pontos passaram de 24 (as bordas, da reamostragem);
+  - **Por fora** e **De lado**;
+  - o título `screen` do primeiro plano (quadro 30) e a coruja que entra no plano 3 (quadro 300);
+  - o clique no herói escolhendo ele e levando o código à linha 21;
+  - a troca entre filme e desenho com a vista aberta;
+  - a vista do desenho (o cavaleiro) igual a antes, e o console sem erros.
+- Não há teste automático novo (é tudo da página). O `npm test` e o `regress --strict` continuam iguais: o quadro do filme passa pela mesma conta de antes.
+- O guia (capítulo 10, "Ver as distâncias: Palco em 3D", e a dica do capítulo 4), o README e a referência (F1) contam o que mudou.

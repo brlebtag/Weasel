@@ -1559,7 +1559,6 @@
     fillLayerPanel();
     syncRulers();
     updateErrors();
-    if (isFilm() && st.view3d) set3d(false);
     if (isFilm() && !FILM_TOOLS.includes(st.tool)) { st.tool = 'select'; stage.dataset.tool = 'select'; emit('tool'); }
     selMemo = null;
     updateCaretInfo();
@@ -4002,11 +4001,11 @@
     emit('tool');
     draw();
   }
-  // a vista Camadas em 3D (js/ui-3d.js): toma o lugar do desenho, só em desenhos (no filme, não). Nela valem as
+  // a vista Camadas em 3D (js/ui-3d.js): toma o lugar do desenho (no filme, é a vista do palco). Nela valem as
   // ferramentas do filme; o zoom e o ajustar da barra de baixo e do teclado vão para ela (v3, que ela registra).
   let v3 = null;
   function set3d(on) {
-    on = !!on && !!st.model && !isFilm();
+    on = !!on && !!st.model;
     if (on === st.view3d) return;
     st.view3d = on;
     stage.classList.toggle('v3-on', on);

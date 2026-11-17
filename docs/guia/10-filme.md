@@ -1225,6 +1225,18 @@ actor c "cavaleiro.weasel" 1250,520 scale=0.8 front
 - **ator front**: o Cavaleiro com `front` volta para a frente, mesmo da moita `front`.
 - `front` só decide a ordem entre coisas da **mesma profundidade**. Uma camada com `depth=0.5` fica na frente de tudo o que tem `depth=1`, com ou sem `front`.
 
+### Ver as distâncias: Palco em 3D
+
+No editor, o botão de camadas na ponta direita da barra de baixo (ou **Exibir › Palco em 3D**) mostra o filme **de fora**, no quadro do player. Cada camada e cada ator vira uma **placa**, na distância do `depth=` dela, e a câmera do filme aparece como uma **pirâmide** amarela que sai do olho dela.
+
+- **Por fora** olha o palco um pouco de lado e de cima. **De lado** mostra as distâncias em fila. **Da câmera** olha pelo olho da câmera e mostra o quadro do player; o que fica fora do quadro aparece escurecido.
+- Cada placa diz o nome e a profundidade: `cenario › serra · 5` é a camada `serra` do ator `cenario`, na profundidade 5. Uma camada `screen` diz `tela` e fica perto do olho, no vidro da câmera.
+- **Distâncias** aperta as distâncias para tudo caber. No `filme.weasel`, a lua (`depth=12`) ficaria 20 vezes mais longe que as moitas da frente (`depth=0.6`); toda à direita, as distâncias são as de verdade. Da câmera, o quadro não muda.
+- **Mesma distância** afasta as placas que estão na mesma profundidade (o chão e os atores no plano da ação), para dar para ver e clicar em cada uma.
+- Clicar numa placa escolhe o ator (o painel Filme mostra ele) e leva o código à linha dele. Numa camada do arquivo do filme, leva à linha da camada.
+- O olho em cada nome esconde a placa só nessa vista. Arrastar gira, a roda aproxima e **Ctrl+0** volta para a câmera. O player muda o quadro, e tocando a vista acompanha.
+- É só para olhar: para mudar a distância, mude o `depth=` no código. A vista mostra o plano do quadro sem a transição, sem o estilo de arte (`art`), sem o acabamento (`finish`) e sem o escurecer da câmera.
+
 ## Luz no filme
 
 As `light` e o `ambient` do arquivo do filme iluminam **o cenário e todos os atores**: o lampião esquenta a cor do Cavaleiro quando ele chega perto. As luzes que cada ator tem no próprio arquivo continuam valendo para ele, e `unlit` no `actor` faz um ator ignorar a luz do filme.

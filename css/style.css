@@ -655,6 +655,14 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .stage.lp-open .v3-info { left: 266px; }
 .stage.ruled.lp-open .v3-info { left: 286px; }
 #z3d.on { color: var(--accent); border-color: var(--accent); }
+/* a vista do palco (o filme em 3D): a câmera do filme por cima das placas */
+.v3[data-mode=film] [data-only=draw], .v3[data-mode=draw] [data-only=film] { display: none; }
+.v3-cam { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+.v3-cam .v3-matte { fill: rgba(8, 11, 15, .62); fill-rule: evenodd; stroke: none; }
+.v3-cam .v3-ray { fill: none; stroke: #ffd36b; stroke-width: 1; stroke-opacity: .75; }
+.v3-cam .v3-act { fill: none; stroke: #ffd36b; stroke-width: 2; }
+.v3-cam circle { fill: #ffd36b; }
+.v3-cam text { fill: #ffd36b; font: 11px var(--mono); }
 .hint {
   position: absolute;
   left: 50%;

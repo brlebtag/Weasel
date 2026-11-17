@@ -36,7 +36,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | 10 | Filme: `at` na linha do tempo, zoom e escala com alça, transições | editor visual, item 8 | ✅ 1.63.0 (etapa 7b) |
 | 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ✅ 1.64.0 (etapa 7c) |
 | 12 | ~~Emissores, caixas do jogo e exportar pelo editor~~ | editor visual, itens 10 a 12 | ➖ fora (16/11/2026) |
-| 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ✅ 1.51.0 (etapa 1b) |
+| 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ✅ 1.51.0 (etapa 1b); no filme, o Palco em 3D na 1.65.0 |
 
 Por que essa ordem:
 - **1:** pequeno e já pedido.
@@ -57,7 +57,7 @@ Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o
 | ✅ [Virada e metamorfose](metamorfose.md) | o personagem de lado virando de frente (`anim … turn`, jogo) e a aranha virando jacaré (`morph=`, filme) | 1.45.0 e 1.46.0 |
 | ✅ [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender (gira os ossos só na tela) e a ponta do `ik` que move o alvo (o resto saiu na revisão de 15/11/2026) | 1.47.0 |
 | ✅ [Velocidade automática](velocidade-automatica.md) | `speed=auto` no filme: a animação acompanha o ator andando no palco, e os pés não escorregam | 1.48.0 |
-| ✅ [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | 1.50.0 a 1.64.0 (etapas 1 a 7c, todas em 16/11/2026; as escolhas marcadas **(R)** esperam a sua confirmação) |
+| ✅ [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | 1.50.0 a 1.64.0 (etapas 1 a 7c, todas em 16/11/2026; as escolhas marcadas **(R)** esperam a sua confirmação) e 1.65.0 (o Palco em 3D, seção 13, em 17/11/2026) |
 | ✅ [Editor visual](editor-visual.md) | menos código digitado: repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo), camadas arrastando, linha do tempo da animação e o filme pela tela | 1.49.0 e, pelas etapas da interface, 1.52.0 a 1.64.0; os itens 6, 10, 11 e 12 ficaram fora |
 | ✅ [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | 1.51.0, 1.56.0, 1.57.0 e 1.58.0 (etapas 1b, 4b, 4c e 5a da interface) |
 

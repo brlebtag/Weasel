@@ -19,7 +19,7 @@ Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo 
 | 7 | [Animação](07-animacao.md) | `anim` e `key`, como os quadros do meio são calculados (`ease`), loop, animar cores e formas, desenhar aos poucos, morph, animações combinadas, posar com o mouse e eventos |
 | 8 | [Luz, efeitos e partículas](08-luz-efeitos.md) | lâmpadas, holofotes, sol e lua, brilho, sombra no chão, efeitos de camada, rastro e partículas |
 | 9 | [Jogo e Godot](09-jogo-godot.md) | caixas de colisão, golpe e dano por quadro, pontos de encaixe, andar sem os pés escorregarem, a cena pronta do Godot, o esqueleto de verdade, direções, tileset e sprite sheet |
-| 10 | [Filme](10-filme.md) | atores, planos e transições, câmera, mudanças no tempo, expressões, marcadores, caminhos, profundidade, som, legendas e lip sync, o filme pela tela (faixas dos `at`, painel Filme, alças) |
+| 10 | [Filme](10-filme.md) | atores, planos e transições, câmera, mudanças no tempo, expressões, marcadores, caminhos, profundidade (e o Palco em 3D, para ver as distâncias), som, legendas e lip sync, o filme pela tela (faixas dos `at`, painel Filme, alças) |
 | 11 | [Profundidade (2.5D)](11-profundidade.md) | girar formas em 3D, verso e espessura, a cabeça que olha para os lados, chão em perspectiva, mapa isométrico, lente e névoa no filme |
 | 12 | [Referência rápida](12-referencia.md) | todas as instruções e atributos, com os valores padrão |
 | 13 | [Problemas comuns](13-problemas.md) | o que costuma dar errado e como resolver |

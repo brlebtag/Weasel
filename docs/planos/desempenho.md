@@ -298,7 +298,7 @@ Legenda: ✅ feito · 🔶 feito em parte ou falta fechar · ⬜ falta fazer · 
 
 ## Conferências pendentes
 
-- A prévia do filme no editor do navegador não foi conferida depois da 1.48.1 (o painel do navegador recusou abrir a página de teste). O código é o mesmo da linha de comando e usa só a API normal do canvas.
+Nenhuma. A prévia do filme no editor do navegador, que tinha ficado sem conferir depois da 1.48.1, foi usada e conferida nas etapas 7a, 7b e 7c do plano da interface (1.62.0 a 1.64.0, em 16/11/2026) e de novo na 1.65.0, com o `filme.weasel`.
 
 ## O que já está bom
 
