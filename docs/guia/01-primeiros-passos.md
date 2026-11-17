@@ -238,7 +238,7 @@ As três bolas se encostam sem nenhuma conta feita à mão:
 
 **Experimente:** mude o raio de `baixo` de 50 para 60. O `50` aparece uma vez em cada linha das bolas; troque nas três e veja as bolas de cima subirem juntas.
 
-Repetir o mesmo número em vários lugares cansa. O [capítulo 5](05-componentes.md#contas---e-let) mostra o `let`, que dá um nome a um número para usar nas contas, e as funções que valem dentro das chaves.
+Repetir o mesmo número em vários lugares cansa. O [capítulo 5](05-componentes.md#contas----e-let) mostra o `let`, que dá um nome a um número para usar nas contas, e as funções que valem dentro das chaves.
 
 ## Quando algo dá errado
 
@@ -330,7 +330,7 @@ Para uma animação em GIF:
 node cli/weasel.js meu_desenho.weasel -a nome_da_animacao -o anima.gif
 ```
 
-Outras opções que ajudam desde o começo (a lista completa está na [referência](12-referencia.md#linha-de-comando) e em `node cli/weasel.js --help`):
+Outras opções que ajudam desde o começo (a lista completa está no [capítulo 21](21-linha-de-comando.md) e em `node cli/weasel.js --help`):
 
 | Comando | O que faz | O que responde |
 |---|---|---|

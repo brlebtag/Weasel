@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0. Próximo: as tarefas à parte A e B (seção 2) e a etapa 2.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0. Próximo: a tarefa A (seção 2) e a etapa 3.
 
 ## O pedido
 
@@ -102,8 +102,12 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 | C | **Valores cortados sem aviso:** a força do `glow=`, o `tint=`, a sombra do `cast=`, o `emit=`, a queda do `trail=`, o `taper=`. E aceitos sem fazer nada: `cut=` em `stroke`/`line`/`text`, `bold` numa elipse, `cloth=` no texto, `~` na `line`, `camera.fog=none` no `at`, `audio at=+1s`. | nenhuma: o guia diz o que o código faz |
 | D | **Faixas diferentes no `at` e na linha do comando:** `zoom` vai até 100 na `camera` e até 1000 no `at`; `lag`, até 10 e até 100; numa `key`, a luz aceita `power=30` e `cone=999` sem aviso. | nenhuma |
 | E | **`rect` com tamanho negativo e `r=`** desenha os cantos para dentro (`geom.js:139`). | nenhuma |
+| F | **`line dash=0`** (ou com número negativo) passa no `--check`, mas a exportação para com `Make line dash path effect failed`. Achado na etapa 2. | nenhuma: a referência diz "números maiores que 0" |
+| G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`, `#f6f200`) sai preto: uma divisão 0/0 em `art.js` (`pencilPost` e `crayonPost`). Achado na etapa 2. | nenhuma: a referência ensina a trocar `00` por `01` até a correção |
+| H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; um `-o` com extensão desconhecida (`.bmp`) salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. Achado na etapa 2. | nenhuma |
+| I | **Mais coisas aceitas sem fazer nada** (achadas na etapa 2): `key emissor.c=`; no `expr`, as propriedades de camada, luz e caixa; `turn=nao` e `turn=off` (só `0` desliga); `let pi=3`; `let a-b=5` (não dá para usar nas contas); `rand(x,a)` ignora o `a`; nas funções, um número a mais é ignorado; a mensagem "não pode ficar dentro de def (só formas e use)" esquece `repeat`, `group` e `include`. | nenhuma |
 
-Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D e E podem esperar uma tarefa de "avisos que faltam".
+Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D, E e I podem esperar uma tarefa de "avisos que faltam". F, G e H são defeitos: valem uma tarefa de conserto (G muda a imagem só no caso que hoje sai preto).
 
 ### B: como ficou (1.66.1, 17/11/2026)
 
@@ -374,3 +378,13 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 - **Ctrl+?** também vale na tecla /? do teclado brasileiro (ao lado do Shift direito).
 - **As conferências** ficam no `docs/guia/gerar.js` e rodam no `npm test`: a página 23 precisa estar igual à que sairia da lista; toda letra de ferramenta (`TOOLS` no `ui-shell.js`), toda tecla dos menus (`ui-shell.js` e `ui-symbols.js`) e toda tecla das dicas das linhas do tempo (`ui-anim.js` e `ui-film.js`) precisam estar na lista.
 - **As teclas corrigidas:** Shift+F1 não abre mais a F1; Ctrl+O e o zoom (Ctrl+0, Ctrl+1, Ctrl+=, Ctrl+-) valem também com o cursor no código; Cmd vale no lugar do Ctrl na linha do tempo da animação; o README não diz mais que Ctrl+D duplica no desenho.
+
+### Etapa 2 (1.67.0): a consulta
+
+- **Capítulo 19, Referência completa** (no lugar do 12): 48 fichas, uma por comando, com a tabela `Opção | O que faz | Valores | Padrão | Anima?`, um exemplo que roda e o link **Para aprender**. Antes das fichas, "Como ler", "A escrita" (nomes, pontos, cores, tempos, curvas, misturas…) e "A ordem das linhas". O `art` tem um título por estilo; a `key` e o `at` têm uma tabela por alvo (forma, camada, luz, osso, caixa; ator, câmera, luz, camada, forma), com as colunas "sem `key`/antes do primeiro `at`" e "aos poucos/de uma vez".
+- **Ficou maior que as 700 linhas** da seção 3.2 (cerca de 3.400; só o `art` tem 670). É consulta, não aula: uma página só deixa a busca do navegador achar tudo, e as âncoras ficam simples (`19-referencia.md#ellipse`).
+- **Capítulo 20, Funções das contas** (com 3 imagens novas, `20_*.png`), **21, Linha de comando** (as 62 grafias de opção, todos os comandos rodados, inclusive os de vídeo) e **25, Glossário**.
+- **O índice novo** (`docs/guia/README.md`) mostra as seis partes e os 25 números. Os capítulos que ainda não foram reescritos levam ao antigo, marcados "(antigo)".
+- **A conferência** (`docs/guia/conferir.js`, no `npm test` pelo `gerar.js`): a referência precisa ter uma ficha para cada comando de `KEYWORDS`, com toda opção de `ATTRS` e toda palavra de `FLAGS`; cada estilo do `art` com as opções de `ART_OPTS`; cada alvo da `key` e do `at` com as suas propriedades. O 20 precisa ter toda função de `FN` e o `pi`; o 21, toda opção do `parseArgs`. E todo link entre os capítulos precisa levar a um arquivo e a um título que existem (um link do capítulo 1 estava quebrado e foi corrigido).
+- **O capítulo 12 antigo saiu**, com as 11 imagens `12_*`. Os links para ele levam agora ao 19 e ao 21.
+- **Para as próximas etapas:** cada capítulo reescrito precisa atualizar os links **Para aprender** do 19 que apontam para o capítulo antigo, e o link do começo do 20 (hoje para o 5 antigo). Quando a tarefa A mudar a `opacity=`/`blend=` da camada, o **Cuidado** da ficha `layer` no 19 muda junto.

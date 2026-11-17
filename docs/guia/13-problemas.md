@@ -1,6 +1,6 @@
 # 13. Problemas comuns
 
-[← Referência rápida](12-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
+[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
 
 O que costuma dar errado, por que acontece e como resolver. Cada problema tem três partes:
 
@@ -1115,4 +1115,4 @@ $Sprite.flip_h = velocity.x < 0
 anim.tocar("walk", velocity)
 ```
 
-[← Referência rápida](12-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
+[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)

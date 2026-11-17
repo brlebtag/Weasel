@@ -9,6 +9,9 @@
      npm run docs                       gera todas as imagens
      node docs/guia/gerar.js formas     só os capítulos cujo nome contém "formas"
      node docs/guia/gerar.js --check    só confere que os exemplos rodam sem erro nem aviso (vai no npm test)
+
+   Nos dois casos, também roda as conferências do conferir.js: a referência tem todo comando e toda opção do código,
+   as funções e a linha de comando estão completas, e os links entre os capítulos levam a títulos que existem.
 */
 'use strict';
 const fs = require('fs');
@@ -36,7 +39,8 @@ const KEYS_MD = '23-atalhos.md';
 function keysPage() {
   const K = W.keys, out = [];
   const keyText = (it) => K.list(it.k).map((k) => '`' + k + '`').join(' ou ') + (it.mac ? ` (no Mac, ${K.list(it.mac).map((k) => '`' + k + '`').join(' ou ')})` : '');
-  out.push('# 23. Atalhos do teclado', '', '[← Índice](README.md)', '');
+  const nav = '[← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)';
+  out.push('# 23. Atalhos do teclado', '', nav, '');
   out.push('<!-- Esta página é escrita pelo npm run docs a partir de js/keys.js. Para mudar um atalho, mude a lista. -->', '');
   out.push('Esta é a lista de todos os atalhos do editor. No editor, a mesma lista fica em **Ajuda › Atalhos do teclado** (**Shift+F1** ou **Ctrl+?**), com uma busca em cima.', '');
   out.push(K.intro, '', K.macNote, '');
@@ -47,7 +51,7 @@ function keysPage() {
     for (const it of g.items) out.push(`| ${keyText(it)} | ${it.d} | ${it.w || g.where || 'no desenho'} |`);
     out.push('');
   }
-  out.push('[← Índice](README.md)', '');
+  out.push(nav, '');
   return out.join('\n');
 }
 function keysProblems() {
@@ -71,6 +75,8 @@ function keysProblems() {
 }
 let keysBad = 0;
 for (const p of keysProblems()) { keysBad++; console.log(`atalhos: ${p}`); }
+// a referência (todo comando e toda opção), as funções, a linha de comando e os links entre os capítulos
+for (const p of require('./conferir').all(W, fs.readdirSync(GUIA).filter((f) => /\.md$/.test(f)))) { keysBad++; console.log(p); }
 if (!only.length || only.some((o) => KEYS_MD.includes(o))) {
   const file = path.join(GUIA, KEYS_MD), page = keysPage();
   const now = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : null;

@@ -1,6 +1,6 @@
 # 11. Profundidade (2.5D)
 
-[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Referência rápida →](12-referencia.md)
+[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)
 
 O Weasel continua desenhando no plano, mas cada forma pode **ficar de pé num mundo com fundo**: girar como uma carta, ter espessura, ir para perto ou para longe, deitar como chão. É o truque do **2.5D**: peças chatas, arrumadas em 3D. Dá para fazer uma carta que vira, uma cabeça que olha para os lados, uma estrada que some no horizonte, um mapa isométrico e o zoom do *Vertigo* no filme.
 
@@ -654,4 +654,4 @@ Repare:
 - **No editor**, as alças das formas giradas, deitadas ou isométricas ficam onde a forma aparece, e arrastar muda o número certo no código.
 - Uma peça fora do raio da bola (`round=`) não tem onde ficar na superfície: quando a cabeça vira, ela entra por cima do rosto. O que fica de fora, como orelhas e cabelo, vai num cartão com `z=` (como as orelhas do exemplo) ou no osso de cima.
 
-[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Referência rápida →](12-referencia.md)
+[← Filme](10-filme.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)

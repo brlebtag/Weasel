@@ -2,44 +2,83 @@
 
 # Guia da linguagem Weasel
 
-Este guia ensina a linguagem do Weasel do começo, com um exemplo em cada passo e a imagem que ele gera logo abaixo. Se o [README](../../README.md) é a lista de tudo o que existe, este guia é o **porquê** e o **como**: o que cada coisa faz, em que ordem aprender e onde estão as armadilhas.
+Este guia ensina a linguagem do Weasel desde o começo, para quem nunca escreveu um desenho em código. Cada passo tem um exemplo e, logo abaixo, a imagem que ele gera. O [README](../../README.md) é a lista de tudo o que existe; este guia explica o que cada coisa faz, em que ordem aprender e onde estão as armadilhas.
 
 ![O Pingo, o personagem do capítulo de animação, respirando, falando e piscando](img/07_pingo.gif)
 
-## Capítulos
+> **O guia está sendo reescrito.** Os capítulos novos entram aos poucos. Enquanto um capítulo novo não fica pronto, o link dele leva ao capítulo antigo que tem o mesmo assunto; esses estão marcados com "(antigo)" e ainda têm o número velho no título.
+
+## Os capítulos
+
+O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque cada exemplo só usa o que já foi ensinado. A sexta é para **consultar** quando precisar.
+
+### 1. O básico (leia em ordem)
 
 | | Capítulo | O que você aprende |
 |---|---|---|
-| 1 | [Primeiros passos](01-primeiros-passos.md) | a ideia, as coordenadas (y para baixo!), o formato de uma linha, como ler os erros e como rodar os exemplos |
-| 2 | [Formas](02-formas.md) | elipse, retângulo, formas com pontos (lisos, cantos e alças), traços, linhas, texto, contornos e desenhar por cima de uma imagem guia |
-| 3 | [Cores e estilos](03-cores.md) | cores com transparência, a `palette`, variantes (de cor e de peças), gradientes e hachuras |
-| 4 | [Camadas, recortes e acabamento](04-camadas.md) | `layer`, a ordem de pintura, recortar por dentro e por fora, contorno por cima, buracos e o estilo do desenho inteiro (com os acabamentos de cinema e os efeitos de tela) |
-| 5 | [Contas, componentes e arquivos](05-componentes.md) | `let` e `{contas}`, `repeat` e `rand()`, componentes com `def`/`use`, espelho e `include` |
-| 6 | [Ossos](06-ossos.md) | o que é um osso, o pivô, pai e filho, movimentos automáticos, molas, tecido, pernas com IK, formas que dobram (`bones=`), pontos presos a um osso (`@osso`, e a ferramenta Prender do editor), IK nos ossos (`ik`) e caminhos (`path=`) |
-| 7 | [Animação](07-animacao.md) | `anim` e `key`, como os quadros do meio são calculados (`ease`), loop, animar cores e formas, desenhar aos poucos, morph, animações combinadas, posar com o mouse e eventos |
-| 8 | [Luz, efeitos e partículas](08-luz-efeitos.md) | lâmpadas, holofotes, sol e lua, brilho, sombra no chão, efeitos de camada, rastro e partículas |
-| 9 | [Jogo e Godot](09-jogo-godot.md) | caixas de colisão, golpe e dano por quadro, pontos de encaixe, andar sem os pés escorregarem, a cena pronta do Godot, o esqueleto de verdade, direções, tileset e sprite sheet |
-| 10 | [Filme](10-filme.md) | atores, planos e transições, câmera, mudanças no tempo, expressões, marcadores, caminhos, profundidade (e o Palco em 3D, para ver as distâncias), som, legendas e lip sync, o filme pela tela (faixas dos `at`, painel Filme, alças) |
-| 11 | [Profundidade (2.5D)](11-profundidade.md) | girar formas em 3D, verso e espessura, a cabeça que olha para os lados, chão em perspectiva, mapa isométrico, lente e névoa no filme |
-| 12 | [Referência rápida](12-referencia.md) | todas as instruções e atributos, com os valores padrão |
-| 13 | [Problemas comuns](13-problemas.md) | o que costuma dar errado e como resolver |
-| 14 | [Estilos de arte](14-estilos.md) | a linha `art`: o mesmo desenho em pixel art (paletas, pontilhado, contorno, folha pequena para o Godot), em letras (ASCII, também em `.txt`), em cel shading, gravura, xilogravura, retícula, HQ (moderna, antiga e tira de jornal), mangá, risografia, estêncil e silhueta (com a textura presa à forma), em esboço, marcador, lápis de cor, giz de cera e giz no quadro (que fervem), em aquarela, só no contorno e em neon, em recorte de papel e em massinha (peças com sombra), em vitral e em bordado, em ponto-cruz, mosaico e tricô, o estilo no filme, na cena, no plano ou num ator, e o painel Acabamento e estilo do editor (uma miniatura de cada estilo) |
-| 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor (teclado e mouse), a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
+| 1 | [Primeiros passos](01-primeiros-passos.md) (antigo) | como rodar um desenho, as coordenadas (o `y` cresce para baixo), o formato de uma linha e como ler os erros |
+| 2 | [Formas](02-formas.md) (antigo) | círculo e elipse, retângulo, formas com pontos (lisos, cantos e alças), traços, linhas e texto |
+| 3 | [Cores e contorno](03-cores.md) (antigo) | cores com transparência, a `palette`, gradientes, texturas e o contorno das formas |
+| 4 | [Camadas](04-camadas.md) (antigo) | `layer`, a ordem de pintura, recortar por dentro e por fora e furar formas |
 
-**Por onde começar:** leia os capítulos 1 a 4 em ordem; eles são a base de tudo. Depois, os capítulos 6 e 7 (ossos e animação) são os mais importantes para personagens. O resto pode ser lido conforme a necessidade.
+### 2. Organizar
+
+| | Capítulo | O que você aprende |
+|---|---|---|
+| 5 | [Contas e repetição](05-componentes.md) (antigo) | `let` e `{contas}`, `repeat` e `rand()` |
+| 6 | [Componentes e arquivos](05-componentes.md#componentes-def-e-use) (antigo) | `def` e `use`, `group`, o espelho `mirror=`, `include` e as variantes (`variant`) |
+
+### 3. Movimento
+
+| | Capítulo | O que você aprende |
+|---|---|---|
+| 7 | Primeiro movimento (ainda não escrito) | um osso, uma animação, a `key`, as curvas, o loop e o `once`: o mínimo para os dois capítulos seguintes |
+| 8 | [Ossos](06-ossos.md) (antigo) | o pivô, pai e filho, movimentos automáticos, molas, tecido, pernas com IK, formas que dobram, pontos presos a um osso e caminhos |
+| 9 | [Animação](07-animacao.md) (antigo) | animar cores e formas, desenhar aos poucos, morph, animações combinadas, posar com o mouse e eventos |
+
+### 4. Luz e aparência
+
+| | Capítulo | O que você aprende |
+|---|---|---|
+| 10 | [Luz e sombra](08-luz-efeitos.md) (antigo) | lâmpadas, holofotes, sol e lua, brilho e sombra no chão |
+| 11 | [Efeitos e partículas](08-luz-efeitos.md#efeitos-de-camada) (antigo) | os efeitos de camada, o rastro e as partículas |
+| 12 | [Acabamento](04-camadas.md#acabamento-finish) (antigo) | a linha `finish`: o estilo do desenho inteiro, os acabamentos de cinema e os efeitos de tela |
+| 13 | [Estilos de arte](14-estilos.md) (antigo) | a linha `art`: o mesmo desenho em pixel art, aquarela, gravura, HQ, mangá, vitral, tricô e mais 19 estilos |
+| 14 | [Profundidade (2.5D)](11-profundidade.md) (antigo) | girar formas em 3D, verso e espessura, chão em perspectiva, mapa isométrico, lente e névoa |
+
+### 5. Jogo e filme
+
+| | Capítulo | O que você aprende |
+|---|---|---|
+| 15 | [Jogo: o personagem no Godot](09-jogo-godot.md) (antigo) | caixas de colisão, pontos de encaixe, andar sem escorregar e exportar para o Godot |
+| 16 | [Jogo: fases e recursos avançados](09-jogo-godot.md#direções-jogos-vistos-de-cima) (antigo) | direções, transições entre animações, a virada, o tileset, o esqueleto de verdade e o Unity |
+| 17 | [Filme: atores, planos e câmera](10-filme.md) (antigo) | atores, planos e transições, a câmera e as mudanças no tempo (`at`) |
+| 18 | [Filme: atuação, som e legendas](10-filme.md#expressões-expr) (antigo) | expressões, marcadores, caminhos, profundidade, som, legendas e lip sync |
+
+### 6. Consulta
+
+| | Capítulo | O que tem |
+|---|---|---|
+| 19 | [Referência completa](19-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
+| 20 | [Funções das contas](20-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
+| 21 | [Linha de comando](21-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
+| 22 | O editor (ainda não escrito) | as ferramentas e os painéis do editor |
+| 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
+| 24 | [Problemas comuns](13-problemas.md) (antigo) | o que costuma dar errado e como resolver |
+| 25 | [Glossário](25-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |
 
 ## Como testar os exemplos
 
-Todo exemplo deste guia é um desenho completo: copie, cole e rode.
+Os exemplos grandes do guia são desenhos completos: copie, cole e rode. Alguns blocos são só pedaços de um desenho, para mostrar uma linha; o texto em volta diz quando é assim.
 
 - **No editor web:** abra o `index.html`, crie um arquivo novo na barra acima do código e cole. O desenho aparece à direita, e as animações tocam no player.
-- **Na linha de comando:** salve como `teste.weasel` e rode `node cli/weasel.js teste.weasel` (ou `-a nome_da_anim -o teste.gif` para uma animação).
+- **Na linha de comando:** salve como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 21](21-linha-de-comando.md) tem todas as opções.
 
 Os exemplos que usam outros arquivos (`include "cavaleiro.weasel"`, `actor … "fantasma.weasel"`) esperam estar na pasta [`exemplos/`](../../exemplos/), junto com os personagens de exemplo.
 
 ## Como este guia é feito
 
-As imagens não foram desenhadas à mão: cada uma é a saída do exemplo que está logo acima dela, gerada pela linha de comando. Um comentário invisível antes do bloco de código diz o nome da imagem e as opções:
+As imagens não são desenhadas à mão: cada uma é a saída do exemplo que está logo acima dela, feita pela linha de comando. Um comentário invisível antes do bloco de código diz o nome da imagem e as opções:
 
 ```
 <!-- gerar: img/07_bola.gif -a quica -->
@@ -51,4 +90,10 @@ Para gerar tudo de novo (depois de mudar um exemplo ou o próprio Weasel):
 npm run docs
 ```
 
-O `npm test` também lê todos os exemplos do guia e falha se algum deles der erro ou aviso, para o guia não ficar desatualizado em relação à linguagem.
+O `npm test` confere o guia:
+- os exemplos com o comentário `<!-- gerar: … -->` ou `<!-- conferir -->` precisam rodar sem erro e sem aviso;
+- a referência (capítulo 19) precisa ter todo comando e toda opção que o Weasel aceita; as funções (20) e a linha de comando (21) também;
+- os atalhos (capítulo 23) precisam estar iguais à lista do editor;
+- todo link de um capítulo para outro precisa levar a um título que existe.
+
+Assim, uma opção nova no Weasel não fica de fora do guia.

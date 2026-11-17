@@ -16,7 +16,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
-| [Guia novo e folha de atalhos](guia-e-atalhos.md) | o guia reescrito para quem está começando (todas as opções, faixas e padrões, com exemplos) e uma folha com todos os atalhos do editor | aprovada em 17/11/2026; etapa 1 (a folha de atalhos) na 1.66.0; próximo: as tarefas A e B e a etapa 2 |
+| [Guia novo e folha de atalhos](guia-e-atalhos.md) | o guia reescrito para quem está começando (todas as opções, faixas e padrões, com exemplos) e uma folha com todos os atalhos do editor | aprovada em 17/11/2026; etapa 1 (a folha de atalhos) na 1.66.0; etapa 2 (a consulta) na 1.67.0; próximo: a tarefa A e a etapa 3 |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; item 9 (o editor, 9a a 9e) na 1.65.1; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
 
 ### Ordem sugerida para o editor (editor visual e ferramentas de desenho)

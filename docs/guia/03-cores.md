@@ -248,7 +248,7 @@ palette cabelo=#5e4030
 
 Na linha de cima, `cabelo` ainda não existe. Troque as duas linhas de lugar, ou escreva tudo numa linha só: `palette cabelo=#5e4030 sombra=cabelo`.
 
-Essa cópia é a única referência a um nome que depende da ordem. Formas, camadas, ossos, gradientes e componentes podem ser usados antes da linha que os cria: a lista completa está em [a ordem das linhas](12-referencia.md#a-ordem-das-linhas).
+Essa cópia é a única referência a um nome que depende da ordem. Formas, camadas, ossos, gradientes e componentes podem ser usados antes da linha que os cria: a lista completa está em [a ordem das linhas](19-referencia.md#a-ordem-das-linhas).
 
 ### Variantes: outra versão das cores
 
