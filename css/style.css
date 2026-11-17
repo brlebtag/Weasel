@@ -558,7 +558,22 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .pp-fx.on .pp-chk { color: var(--text); }
 .pp-fxv { display: flex; gap: 3px; flex: 1; min-width: 0; }
 /* o painel Filme (js/ui-film.js): no filme, a coluna mostra só ele; no desenho, ele some */
-.dock.film > :not([data-sec=film]), .dock:not(.film) > [data-sec=film] { display: none; }
+.dock.film > :not([data-sec=film]):not([data-sec=style]), .dock:not(.film) > [data-sec=film] { display: none; }
+/* o Acabamento e estilo (js/ui-style.js): os controles do finish e a galeria do art */
+.st-sec .pp-num { width: 46px; }
+.st-sec .pp-k { width: 82px; }
+.st-sub { min-height: 20px; margin-top: -3px; }
+.st-sub .pp-k { width: 82px; }
+.st-where { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.st-line { margin-left: auto; }
+.st-gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.st-gal button { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 3px 3px 2px; font-size: 11px; background: var(--panel2); min-width: 0; }
+.st-gal button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-gal button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.st-gal canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; display: block; border-radius: 3px; background: #1d2833; }
+.st-gal button.old canvas { opacity: .55; }
+.st-opts .pp-txt { min-width: 0; }
+.st-flags { flex-wrap: wrap; }
 .fm-dest { font: 11px var(--mono); padding: 1px 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm-dest code { color: var(--kw-setup); }
 .fm-no { color: var(--dim); }

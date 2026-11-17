@@ -923,6 +923,8 @@ Os quatro códigos são iguais, menos a linha `finish`. Repare:
 
 **Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
 
+**No editor:** **Janela › Acabamento e estilo** tem um controle deslizante para cada número do `finish` (e a escolha entre `game` e `flat`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; sem a linha, ela nasce logo depois do `canvas`. Veja [o painel no capítulo 14](14-estilos.md#pelo-editor-janela--acabamento-e-estilo).
+
 O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítido, com as cores do desenho, paletas de console e contorno de 1 bloco, use a linha `art pixel` do [capítulo 14](14-estilos.md#pixel-art-art-pixel).
 
 ### Só as cores da palette: `posterize=palette`

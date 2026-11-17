@@ -277,6 +277,7 @@
       { label: 'Símbolos', visible: drawing, on: () => P().isOn('sym'), run: () => P().toggle('sym') },
       { label: 'Referências', visible: drawing, on: panelOn('refPanel'), run: () => $('refBtn').click() },
       { label: 'Filme', visible: film, on: () => P().isOn('film'), run: () => P().toggle('film') },
+      { label: 'Acabamento e estilo', on: () => P().isOn('style'), run: () => P().toggle('style') },
       { label: 'Sons guardados', visible: shown('mediaBtn'), on: panelOn('mediaList'), run: () => $('mediaBtn').click() },
     ] },
     { label: 'Ajuda', items: [

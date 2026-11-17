@@ -17,13 +17,10 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
-| [Editor visual](editor-visual.md) | menos código digitado: botão de repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo) e alças (luzes, emissores, caixas), linha do tempo da animação | proposta de 16/11/2026; item 1 na 1.49.0; itens 6, 10, 11 e 12 fora por enquanto; o 2 e os efeitos do 4 voltam na etapa 2 da interface |
-| [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | estudo de 16/11/2026, decidido no mesmo dia (9 decisões); as etapas dele substituem a ordem sugerida abaixo; etapa 1 (a casca) feita na 1.50.0 e a 1b (camadas em 3D) na 1.51.0, a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar, organizar) na 1.53.0, a 3b (travar, alinhar, grupos) na 1.54.0, a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê, botão direito) na 1.55.0, a 4b (alça quebrada, Caneta, Curvatura, Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel, Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha, Borracha) na 1.58.0, a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar, Construtor de formas) na 1.59.0, a 6a (Camadas completas) na 1.60.0, a 6b (Símbolos) na 1.61.0, a 7a (linha do tempo da animação) na 1.62.0, a 7b (o filme pela tela) na 1.63.0; a próxima é a 7c (acabamento e estilo) |
-| [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | proposta recebida em 16/11/2026; nada feito; os cinco pedidos entram nas etapas da interface (o pincel de bolha voltou, na etapa 5) |
 
 ### Ordem sugerida para o editor (editor visual e ferramentas de desenho)
 
-**Substituída em 16/11/2026** pelas etapas da [interface no jeito do Illustrator](interface-illustrator.md) (seção 11). A tabela fica como registro; a coluna "Situação" diz onde cada item entrou.
+**Substituída em 16/11/2026** pelas etapas da [interface no jeito do Illustrator](interface-illustrator.md) (seção 11). A tabela fica como registro; a coluna "Situação" diz onde cada item entrou. Com a etapa 7c (1.64.0), todos os itens que não ficaram fora estão feitos.
 
 | # | O quê | Plano | Situação |
 |---|---|---|---|
@@ -32,12 +29,12 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 | 3 | Bézier completo (alças quebradas, ver as automáticas, dividir sem mudar a forma) | ferramentas, item 3 | ✅ 1.56.0 (etapa 4b, com a Caneta; dobrar o lado direto ficou para depois) |
 | 4 | Simplificar pontos | ferramentas, item 4 | ✅ 1.57.0 (etapa 4c, com o Lápis e o Pincel; o `--simplify` na linha de comando) |
 | 5 | ~~Luzes com alças e efeitos da camada~~ | editor visual, itens 6 e 4 | ➖ as luzes com alças continuam fora; os efeitos voltaram na 1.52.0 (etapa 2) |
-| 6 | Ordem das camadas arrastando, e paleta | editor visual, itens 5 e 3 | ⬜ paleta ✅ 1.52.0 (Amostras); camadas arrastando na etapa 6 |
+| 6 | Ordem das camadas arrastando, e paleta | editor visual, itens 5 e 3 | ✅ paleta 1.52.0 (Amostras); camadas arrastando 1.60.0 (etapa 6a) |
 | 7 | Borracha (Shift+E) | ferramentas, item 2 | ✅ 1.58.0 (etapa 5a; um buraco vira `cut=`) |
 | 8 | Pincel de bolha (Shift+B) | ferramentas, item 1 | ✅ 1.58.0 (riscado e depois de volta: etapa 5a da interface) |
 | 9 | Linha do tempo da animação (as `key` e o `ease`) | editor visual, item 7 | ✅ 1.62.0 (etapa 7a) |
 | 10 | Filme: `at` na linha do tempo, zoom e escala com alça, transições | editor visual, item 8 | ✅ 1.63.0 (etapa 7b) |
-| 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ⬜ etapa 7c |
+| 11 | Acabamento e estilo de arte com prévia | editor visual, item 9 | ✅ 1.64.0 (etapa 7c) |
 | 12 | ~~Emissores, caixas do jogo e exportar pelo editor~~ | editor visual, itens 10 a 12 | ➖ fora (16/11/2026) |
 | 13 | Vista 3D das camadas (já existe um protótipo fora do Weasel, `weasel-camadas3d`: ver a seção 4.4 da [interface no jeito do Illustrator](interface-illustrator.md)) | ferramentas, item 5 | ✅ 1.51.0 (etapa 1b) |
 
@@ -60,6 +57,9 @@ Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o
 | ✅ [Virada e metamorfose](metamorfose.md) | o personagem de lado virando de frente (`anim … turn`, jogo) e a aranha virando jacaré (`morph=`, filme) | 1.45.0 e 1.46.0 |
 | ✅ [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender (gira os ossos só na tela) e a ponta do `ik` que move o alvo (o resto saiu na revisão de 15/11/2026) | 1.47.0 |
 | ✅ [Velocidade automática](velocidade-automatica.md) | `speed=auto` no filme: a animação acompanha o ator andando no palco, e os pés não escorregam | 1.48.0 |
+| ✅ [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | 1.50.0 a 1.64.0 (etapas 1 a 7c, todas em 16/11/2026; as escolhas marcadas **(R)** esperam a sua confirmação) |
+| ✅ [Editor visual](editor-visual.md) | menos código digitado: repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo), camadas arrastando, linha do tempo da animação e o filme pela tela | 1.49.0 e, pelas etapas da interface, 1.52.0 a 1.64.0; os itens 6, 10, 11 e 12 ficaram fora |
+| ✅ [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | 1.51.0, 1.56.0, 1.57.0 e 1.58.0 (etapas 1b, 4b, 4c e 5a da interface) |
 
 A fila combinada de 10/11/2026 (ajudante do Godot, contas novas, folha de conferência e transições) está toda feita.
 

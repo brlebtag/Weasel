@@ -1047,5 +1047,77 @@
     };
   }
 
-  W.exporter = { imageCanvas, trajectoryCanvas, contactCanvas, filmContactCanvas, contactTime, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg };
+  // ---------- as miniaturas dos estilos de arte (o painel Acabamento e estilo, js/ui-style.js) ----------
+  // Feitas no worker (js/worker.js), para não travar a página; sem worker, na página.
+  // O art que o painel muda: o do desenho; no filme, o do plano do quadro (quando ele tem um art próprio) ou o do
+  // filme todo. { level: 'file', 'shot' ou 'film', line (-1: a linha ainda não existe), art (o lido, ou null), shot }
+  function artTarget(m, frame) {
+    if (!m.film) {
+      let line = -1;
+      for (const [l, r] of m.byLine) if (r && r.st && r.st.cmd === 'art' && (line < 0 || l < line)) line = l;
+      const r = line >= 0 ? m.byLine.get(line) : null;
+      return { level: 'file', line, art: r && r.art ? r.art : null };
+    }
+    const loc = W.film.locate(m, frame), shot = loc && loc.entry.owner === m && !loc.entry.shot.implicit ? loc.entry.shot : null;
+    if (shot && shot.art !== undefined) return { level: 'shot', line: shot.art.line, art: shot.art, shot };
+    const fa = m.film.art;
+    return { level: 'film', line: fa ? fa.line : -1, art: fa || null, shot };
+  }
+  // o art de um estilo com as opções padrão (o do arquivo, com as opções dele, fica na miniatura do estilo de agora)
+  const artDefaults = new Map();
+  function artDefault(style) {
+    if (!artDefaults.has(style)) {
+      let a = null;
+      try { a = W.lang.parse(`canvas 8 8\nart ${style}`, {}).art || null; } catch (e) { a = null; }
+      artDefaults.set(style, a);
+    }
+    return artDefaults.get(style);
+  }
+  // A miniatura de um estilo (none: sem estilo), w × h pixels: o desenho inteiro quando cabe; num desenho grande, um
+  // pedaço do meio com no máximo 480 pixels de largura (no filme, 720), para o estilo aparecer. O art é trocado só
+  // enquanto desenha (o desenho é feito na hora, e a troca volta antes de qualquer outro ler o modelo).
+  // o: { w, h, frame, pose (no desenho) }
+  function artThumb(m, style, o) {
+    const tg = artTarget(m, o.frame || 0), cur = tg.art ? tg.art.style : 'none';
+    const a = style === cur ? tg.art : style === 'none' ? null : artDefault(style);
+    const w = o.w, h = o.h, c = m.canvas;
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    const x = out.getContext('2d');
+    const draw = () => {
+      if (!m.film) {
+        const s = Math.max(w / c.w, h / c.h, w / 480), rw = w / s, rh = h / s;
+        const rect = { x: (c.w - rw) / 2, y: (c.h - rh) / 2, w: rw, h: rh };
+        const img = S.renderImage(m, o.pose || S.makePose(m, null, 0), { scale: s, rect, art: !!a, guides: false });
+        x.drawImage(img, 0, 0, w, h);
+        return;
+      }
+      const s = Math.max(w / c.w, h / c.h, w / 720);
+      const img = W.film.renderFrame(m, o.frame || 0, { scale: s, art: true });
+      const cw = Math.min(w, img.width), ch = Math.min(h, img.height);
+      x.drawImage(img, (img.width - cw) / 2, (img.height - ch) / 2, cw, ch, (w - cw) / 2, (h - ch) / 2, cw, ch);
+    };
+    if (!m.film) {
+      const sv = m.art;
+      m.art = a || undefined;
+      try { draw(); } finally { m.art = sv; }
+      return out;
+    }
+    const f = m.film, NONE = { style: 'none', key: '' };
+    if (tg.level === 'shot') {
+      const sv = tg.shot.art;
+      tg.shot.art = a || NONE;
+      try { draw(); } finally { tg.shot.art = sv; }
+      return out;
+    }
+    const sv = [f.art, m.art, f.hasArt];
+    f.art = a || NONE;
+    m.art = a || undefined;
+    f.hasArt = true;
+    try { draw(); } finally { f.art = sv[0]; m.art = sv[1]; f.hasArt = sv[2]; }
+    return out;
+  }
+
+  W.exporter = { imageCanvas, trajectoryCanvas, contactCanvas, filmContactCanvas, contactTime, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg, artTarget, artThumb };
 })(window.Weasel = window.Weasel || {});

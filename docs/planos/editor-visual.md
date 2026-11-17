@@ -1,6 +1,6 @@
 # Editor visual: menos código digitado, mais arrastar e painéis
 
-**Situação:** proposta de 16/11/2026. O item 1 saiu na 1.49.0. Os itens 2, 4, 6, 10, 11 e 12 ficaram fora por enquanto (decisão de 16/11/2026); no mesmo dia, o 2 e os efeitos do 4 voltaram, na etapa 2 da [interface no jeito do Illustrator](interface-illustrator.md), que agora dá a ordem do resto.
+**Situação:** proposta de 16/11/2026, **feita**. O item 1 saiu na 1.49.0. Os itens 2, 4, 6, 10, 11 e 12 ficaram fora por enquanto (decisão de 16/11/2026); no mesmo dia, o 2 e os efeitos do 4 voltaram, na etapa 2 da [interface no jeito do Illustrator](interface-illustrator.md), que deu a ordem do resto. Pelas etapas dela, o resto saiu da 1.52.0 à 1.64.0 (a tabela abaixo diz onde); o 6, o 10, o 11 e o 12 continuam fora.
 
 A ideia: o Weasel continua sendo código. Cada painel ou alça só **reescreve a linha** que está no código, como já fazem o editor de degradê e as alças dos pontos. Nada fica escondido fora do texto, e cada gesto vira um Ctrl+Z.
 
@@ -19,14 +19,14 @@ Legenda: ⬜ falta fazer · 🔶 em parte (ou falta o commit) · ✅ feito · �
 | # | Melhoria | Tipo | Situação |
 |---|---|---|---|
 | 1 | Player: repetir ou tocar uma vez | botão no player | ✅ 1.49.0 |
-| 2 | Painel de propriedades da linha (cores, números, palavras) | painel | ⬜ volta na etapa 2 da interface |
-| 3 | Paleta com amostras e seletores | painel | ⬜ |
-| 4 | Efeitos da camada (opacity, blur, glow, shadow, tint…) | painel + alças | ⬜ o painel volta na etapa 2 da interface; as alças, não |
-| 5 | Ordem das camadas arrastando | arrastar no painel de camadas | ⬜ |
+| 2 | Painel de propriedades da linha (cores, números, palavras) | painel | ✅ 1.52.0 (etapa 2 da interface) |
+| 3 | Paleta com amostras e seletores | painel | ✅ 1.52.0 (Amostras, etapa 2) |
+| 4 | Efeitos da camada (opacity, blur, glow, shadow, tint…) | painel + alças | ✅ o painel na 1.52.0 (etapa 2); as alças ficaram fora |
+| 5 | Ordem das camadas arrastando | arrastar no painel de camadas | ✅ 1.60.0 (etapa 6a) |
 | 6 | Luzes: raio, cone, mira e brilho | alças no desenho | ➖ |
-| 7 | Linha do tempo da animação (as `key`, com easing) | tela nova | ⬜ |
-| 8 | Filme: linhas `at` na linha do tempo, zoom e escala com alça, transições | linha do tempo + alças | ⬜ |
-| 9 | Acabamento (`finish`) e estilo de arte (`art`) | painel com prévia | ⬜ |
+| 7 | Linha do tempo da animação (as `key`, com easing) | tela nova | ✅ 1.62.0 (etapa 7a) |
+| 8 | Filme: linhas `at` na linha do tempo, zoom e escala com alça, transições | linha do tempo + alças | ✅ 1.63.0 (etapa 7b) |
+| 9 | Acabamento (`finish`) e estilo de arte (`art`) | painel com prévia | ✅ 1.64.0 (etapa 7c) |
 | 10 | Emissores: área, ângulo e espalhamento | alças + painel | ➖ |
 | 11 | Jogo: tamanho e tipo de `box`, `point` | alças | ➖ |
 | 12 | Exportar pelo editor (folha, GIF, Godot) | tela | ➖ |

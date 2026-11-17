@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.63.0">
+<link rel="stylesheet" href="css/style.css?v=1.64.0">
 </head>
 <body>
 <header class="top">
@@ -256,7 +256,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
     <h3>A tela</h3>
     <ul>
       <li>No alto, à direita, três vistas: <b>Código</b> (só o código), <b>Dividido</b> (o código e o desenho) e <b>Design</b> (só o desenho). Também no menu <b>Exibir</b>. No Design, um erro aparece na barra de baixo; clicar nele abre o Dividido na linha.</li>
-      <li>Os menus: <b>Arquivo</b> (novo, abrir, exemplos, os arquivos do projeto, salvar, exportar), <b>Editar</b> (desfazer, recortar, copiar, colar, colar na frente e atrás, apagar, duplicar), <b>Objeto</b> (repetir a transformação, organizar, alinhar, agrupar, símbolo, travar, inserir uma forma, esconder), <b>Texto</b> (negrito, itálico, alinhar, tamanho), <b>Selecionar</b> (tudo, nada, inverter, a mesma cor ou camada), <b>Efeito</b> (os efeitos da camada da forma escolhida), <b>Exibir</b> (vistas, zoom, camadas em 3D, réguas, guias, hitboxes, ossos, papel vegetal, trajetória, estilo de arte, linha do tempo; no filme, câmera), <b>Janela</b> (Propriedades, Amostras, Camadas, Símbolos, Referências, Sons; no filme, Filme) e <b>Ajuda</b>.</li>
+      <li>Os menus: <b>Arquivo</b> (novo, abrir, exemplos, os arquivos do projeto, salvar, exportar), <b>Editar</b> (desfazer, recortar, copiar, colar, colar na frente e atrás, apagar, duplicar), <b>Objeto</b> (repetir a transformação, organizar, alinhar, agrupar, símbolo, travar, inserir uma forma, esconder), <b>Texto</b> (negrito, itálico, alinhar, tamanho), <b>Selecionar</b> (tudo, nada, inverter, a mesma cor ou camada), <b>Efeito</b> (os efeitos da camada da forma escolhida), <b>Exibir</b> (vistas, zoom, camadas em 3D, réguas, guias, hitboxes, ossos, papel vegetal, trajetória, estilo de arte, linha do tempo; no filme, câmera), <b>Janela</b> (Propriedades, Amostras, Camadas, Símbolos, Referências, Sons, Acabamento e estilo; no filme, Filme) e <b>Ajuda</b>.</li>
       <li>A coluna da direita tem <b>Propriedades</b> e <b>Amostras</b> (no menu Janela, cada uma abre e fecha). Propriedades mostra o que está escolhido (sem escolha, a forma da linha do cursor; sem forma, o documento: o tamanho do <code>canvas</code> e o fundo). <b>Transformar</b>: X, Y, largura e altura da caixa (sem a grossura do contorno; o elo estica sem perder a proporção) e o ângulo (o <code>rot=</code> de uma <code>ellipse</code>, <code>rect</code>, <code>text</code> ou <code>use</code>; nas outras, um giro a partir de 0). <b>Aparência</b>: preenchimento, contorno, grossura, largura do traço, cantos, afinar, pontas, tracejado e opacidade. <b>Texto</b>: as letras, o tamanho, a fonte, negrito, itálico e alinhamento. <b>Camada</b>: opacidade, mistura e os efeitos (desfoque, brilho, sombra, tingir, claridade, saturação, contraste, matiz). Enter grava; ↑ e ↓ mudam de 1 em 1 (<kbd>Shift</kbd>: 10); arrastar o nome de um campo de número muda o valor; ↺ tira o atributo do código. Cada mudança é um <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Amostras: clique numa cor pinta o preenchimento (ou o contorno, com <b>Contorno</b> marcado ou com <kbd>Alt</kbd>); as espessuras vão para o <code>ink=</code> (ou o <code>w=</code>); as variantes trocam com um clique; <b>+ nova</b> guarda a cor da forma na <code>palette</code>.</li>
       <li>A barra de baixo mostra os erros, o caminho da escolha (<code>arquivo › camada › forma</code>; clicar na camada escolhe ela inteira), a linha do código, as coordenadas do mouse, a variante de cores e o zoom (clicar no número volta a 100%).</li>
       <li><b>Exibir › Camadas em 3D</b> (ou o botão de camadas na ponta direita da barra de baixo) afasta as camadas no espaço, para ver o que fica na frente de quê: cada linha do painel Camadas vira uma peça. Arraste para girar; <kbd>Espaço</kbd>, a Mão ou o botão do meio movem; a roda e o Zoom aproximam; <kbd>Ctrl</kbd>+<kbd>0</kbd> volta de frente. Clique numa peça escolhe a linha dela (<kbd>Shift</kbd> soma ou tira), e as setas, <kbd>Ctrl</kbd>+<kbd>3</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd> e <kbd>Ctrl</kbd>+<kbd>Z</kbd> valem como no desenho. Na barrinha: <b>Explodir</b>, <b>De frente</b>, <b>De lado</b>, <b>Juntar</b>, quanto as camadas (e as formas de cada camada) se afastam e as molduras com os nomes; o olho de cada nome esconde a camada só ali. O mouse numa linha do painel Camadas apaga as outras peças. Acompanha o player (pulando quadros num desenho pesado), sem estilo de arte e sem os halos das luzes. Não aparece em filmes.</li>
@@ -305,6 +305,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><b>Janela › Símbolos</b> (na coluna da direita): cada <code>def</code> com uma miniatura e o número de <code>use</code>. Arraste uma para o desenho e sai um <code>use</code> ali (<b>Colocar</b>: no meio da vista). <kbd>F8</kbd> (ou o ＋) faz das formas escolhidas um <code>def</code> novo, com o <code>0,0</code> no meio delas, e deixa um <code>use</code> no lugar. Duplo clique num <code>use</code> (ou na miniatura) entra no símbolo, com a prévia: lá dentro, mover, esticar, girar, apagar e agrupar valem como no desenho; <kbd>Esc</kbd> (ou duplo clique no vazio) sai. <b>Quebrar vínculo</b> troca o <code>use</code> pelas formas do <code>def</code>, no mesmo lugar, tamanho e giro, com os parâmetros escritos. Duplo clique no nome renomeia o <code>def</code> e os <code>use</code>; <b>Apagar</b> só apaga um <code>def</code> sem <code>use</code>. Também em <b>Objeto › Símbolo</b>.</li>
       <li><b>Linha do tempo da animação</b> (num desenho com <code>anim</code>, embaixo do desenho): uma linha por osso ou <code>forma.propriedade</code>, um losango em cada <code>key</code> e, entre dois, a barra com a curva do <code>ease</code>; em cima, <b>todas</b> e <b>eventos</b>. Clique num losango vai ao quadro e à linha; arrastar muda o quadro da <code>key</code> (<kbd>Alt</kbd>: copia); <kbd>Shift</kbd>+clique soma; o nome da linha escolhe as <code>key</code> dela; <kbd>Delete</kbd> apaga; <kbd>←</kbd> <kbd>→</kbd> empurram (<kbd>Shift</kbd>: 5); o botão direito escolhe o <code>ease</code>. <kbd>F6</kbd> põe uma <code>key</code> com o valor do quadro, <kbd>Shift</kbd>+<kbd>F6</kbd> tira, <kbd>F5</kbd> e <kbd>Shift</kbd>+<kbd>F5</kbd> põem e tiram um quadro; a alça laranja no fim da régua muda o <code>frames=</code>. Tudo reescreve as linhas <code>key</code> (um <kbd>Ctrl</kbd>+<kbd>Z</kbd> por gesto).</li>
       <li><b>O filme pela tela</b> (num filme): na linha do tempo, embaixo dos planos, uma faixa por ator, uma da câmera e uma de cada luz, camada ou forma, com um losango em cada <code>at</code>. Arrastar muda o tempo (<kbd>Alt</kbd>: copia; os <code>at +…</code> seguintes andam junto); <kbd>Shift</kbd>+clique soma; o nome da faixa escolhe as dela; <kbd>Delete</kbd> apaga; <kbd>←</kbd> <kbd>→</kbd> empurram; o botão direito escolhe o <code>ease</code> e, num plano, a transição <code>in=</code> (com prévia). <b>Janela › Filme</b>: o plano (duração e transição), a câmera (zoom, giro, tremor, escurecer) e o ator escolhido (animação, velocidade, tamanho, giro, espelho, opacidade). Escreve no <code>at</code> do cursor ou na declaração; <b>+ at aqui</b> cria um <code>at</code> no momento do player. No desenho, os cantos do ator mudam o <code>scale=</code>, a bolinha verde o <code>rot=</code> e os cantos da moldura da câmera (vista do mundo) o <code>zoom=</code>; clicar num ator escolhe ele.</li>
+      <li><b>Janela › Acabamento e estilo</b> (na coluna da direita, no desenho e no filme): <b>Acabamento</b> tem o contorno (<code>finish game</code> ou <code>flat</code>) e um controle deslizante para cada número do <code>finish</code> (brilho, vinheta, granulado, posterizar, pixel, traço de dentro e os efeitos de tela); arrastar escreve na linha <code>finish</code> (um <kbd>Ctrl</kbd>+<kbd>Z</kbd> por arraste), e o valor padrão tira o atributo. <b>Estilo de arte</b> mostra uma miniatura de cada estilo feita com o seu desenho (no filme, no quadro do player): um clique escreve a linha <code>art</code>, e embaixo ficam as opções do estilo (o campo vazio mostra o padrão). No filme, ele muda o <code>art</code> do plano quando o plano tem um próprio; senão, o do filme todo. <b>linha N</b> leva o código à linha.</li>
       <li><b>Janela › Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
       <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. O cadeado, ao lado, põe e tira o <code>lock</code> (amarelo: travada; apagado: travada pela camada ou pelo grupo). <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). O painel fica na coluna da direita (o título de cada parte dobra). Arrastar uma linha muda o lugar dela (em cima do nome de uma camada, vai para a frente dela); arrastar o nome de uma camada muda a ordem das camadas; <b>Objeto › Mandar para a camada</b> leva a escolha. O ＋ cria uma camada logo acima da camada onde se desenha (a da barrinha laranja), o duplo clique num nome renomeia (com o que aponta para ele) e a lixeira apaga a camada com as formas dela. Não aparece em filmes.</li>
       <li><b>Réguas</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>, ou <b>Exibir › Réguas</b>) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (<b>Exibir › Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
@@ -410,42 +411,43 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.63.0"></script>
-<script src="js/lang.js?v=1.63.0"></script>
-<script src="js/simplify.js?v=1.63.0"></script>
-<script src="js/pathops.js?v=1.63.0"></script>
-<script src="js/art.js?v=1.63.0"></script>
-<script src="js/scene.js?v=1.63.0"></script>
-<script src="js/film.js?v=1.63.0"></script>
-<script src="js/audio.js?v=1.63.0"></script>
-<script src="js/nle.js?v=1.63.0"></script>
-<script src="js/webm.js?v=1.63.0"></script>
-<script src="js/svg.js?v=1.63.0"></script>
-<script src="js/gif.js?v=1.63.0"></script>
-<script src="js/webp.js?v=1.63.0"></script>
-<script src="js/mp4.js?v=1.63.0"></script>
-<script src="js/zip.js?v=1.63.0"></script>
-<script src="js/normal.js?v=1.63.0"></script>
-<script src="js/export.js?v=1.63.0"></script>
-<script src="js/godot.js?v=1.63.0"></script>
-<script src="js/rig.js?v=1.63.0"></script>
-<script src="js/editor.js?v=1.63.0"></script>
-<script src="js/examples.js?v=1.63.0"></script>
-<script src="js/timeline.js?v=1.63.0"></script>
-<script src="js/app.js?v=1.63.0"></script>
-<script src="js/ui-menu.js?v=1.63.0"></script>
-<script src="js/ui-shell.js?v=1.63.0"></script>
-<script src="js/ui-3d.js?v=1.63.0"></script>
-<script src="js/ui-props.js?v=1.63.0"></script>
-<script src="js/ui-select.js?v=1.63.0"></script>
-<script src="js/ui-draw.js?v=1.63.0"></script>
-<script src="js/ui-pen.js?v=1.63.0"></script>
-<script src="js/ui-pencil.js?v=1.63.0"></script>
-<script src="js/ui-paths.js?v=1.63.0"></script>
-<script src="js/ui-cut.js?v=1.63.0"></script>
-<script src="js/ui-layers.js?v=1.63.0"></script>
-<script src="js/ui-symbols.js?v=1.63.0"></script>
-<script src="js/ui-anim.js?v=1.63.0"></script>
-<script src="js/ui-film.js?v=1.63.0"></script>
+<script src="js/geom.js?v=1.64.0"></script>
+<script src="js/lang.js?v=1.64.0"></script>
+<script src="js/simplify.js?v=1.64.0"></script>
+<script src="js/pathops.js?v=1.64.0"></script>
+<script src="js/art.js?v=1.64.0"></script>
+<script src="js/scene.js?v=1.64.0"></script>
+<script src="js/film.js?v=1.64.0"></script>
+<script src="js/audio.js?v=1.64.0"></script>
+<script src="js/nle.js?v=1.64.0"></script>
+<script src="js/webm.js?v=1.64.0"></script>
+<script src="js/svg.js?v=1.64.0"></script>
+<script src="js/gif.js?v=1.64.0"></script>
+<script src="js/webp.js?v=1.64.0"></script>
+<script src="js/mp4.js?v=1.64.0"></script>
+<script src="js/zip.js?v=1.64.0"></script>
+<script src="js/normal.js?v=1.64.0"></script>
+<script src="js/export.js?v=1.64.0"></script>
+<script src="js/godot.js?v=1.64.0"></script>
+<script src="js/rig.js?v=1.64.0"></script>
+<script src="js/editor.js?v=1.64.0"></script>
+<script src="js/examples.js?v=1.64.0"></script>
+<script src="js/timeline.js?v=1.64.0"></script>
+<script src="js/app.js?v=1.64.0"></script>
+<script src="js/ui-menu.js?v=1.64.0"></script>
+<script src="js/ui-shell.js?v=1.64.0"></script>
+<script src="js/ui-3d.js?v=1.64.0"></script>
+<script src="js/ui-props.js?v=1.64.0"></script>
+<script src="js/ui-select.js?v=1.64.0"></script>
+<script src="js/ui-draw.js?v=1.64.0"></script>
+<script src="js/ui-pen.js?v=1.64.0"></script>
+<script src="js/ui-pencil.js?v=1.64.0"></script>
+<script src="js/ui-paths.js?v=1.64.0"></script>
+<script src="js/ui-cut.js?v=1.64.0"></script>
+<script src="js/ui-layers.js?v=1.64.0"></script>
+<script src="js/ui-symbols.js?v=1.64.0"></script>
+<script src="js/ui-anim.js?v=1.64.0"></script>
+<script src="js/ui-film.js?v=1.64.0"></script>
+<script src="js/ui-style.js?v=1.64.0"></script>
 </body>
 </html>

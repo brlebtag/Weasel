@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0 a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0 e a 6a (Camadas completas) na 1.60.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026, **feito**. As 9 decisões foram tomadas no mesmo dia (seção 12), e as etapas saíram no mesmo dia: a 1 (a casca) na 1.50.0, a 1b (camadas em 3D) na 1.51.0, a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0, a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0, a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0, a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0, a 6a (Camadas completas) na 1.60.0, a 6b (Símbolos) na 1.61.0, a 7a (linha do tempo da animação) na 1.62.0, a 7b (o filme pela tela) na 1.63.0 e a 7c (acabamento e estilo) na 1.64.0. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -1060,7 +1060,63 @@ A etapa 7 junta três itens grandes que não dependem um do outro. Ela foi quebr
 - Não há teste automático novo (é tudo da página). O `npm test` e o `regress --strict` continuam iguais.
 - O guia (capítulo 10, "O filme pela tela"), o README e a referência (F1) contam o que mudou.
 
-**A 7c** (o acabamento e o estilo) vem em seguida.
+#### A 7c: o acabamento e o estilo
+
+- **Onde fica** **(R)**:
+  - uma parte nova da coluna da direita, **Acabamento e estilo**, no desenho e no filme (no filme, ela fica junto do painel Filme);
+  - **Janela › Acabamento e estilo** abre e fecha, o ✕ fecha e o título dobra, como as outras partes;
+  - tem dois grupos: **Acabamento** (o `finish`) e **Estilo de arte** (o `art`). Cada título tem um botão **linha N**, que leva o código à linha.
+- **O acabamento** **(R)**:
+  - uma lista para o contorno (`game`: com contorno; `flat`: sem);
+  - um controle deslizante, com uma caixa de número ao lado, para cada número do `finish`, nos limites da linguagem: Brilho (`bloom=`, 0 a 3), Vinheta (`vignette=`, 0 a 1), Granulado (`grain=`, 0 a 0.33), Posterizar (`posterize=`), Pixel (`pixel=`, 1 a 32) e Traço de dentro (`inner=`, 0 a 1);
+  - o Posterizar vai de 0 a 32 no controle (0 desliga) e até 64 na caixa. A caixinha **só as cores da palette** escreve `posterize=palette` e trava o controle;
+  - os efeitos de tela (Filme antigo, VHS, Tubo e Falha), de 0 a 1, num subgrupo que diz onde eles valem (filme, vídeo, GIF e PNG);
+  - nomes em português, e o atributo do código na dica de cada linha.
+- **Como o acabamento escreve** **(R)**:
+  - arrastar escreve na linha `finish` uma vez por quadro da tela, com um Ctrl+Z para o arraste inteiro;
+  - o valor padrão **tira** o atributo da linha (o Brilho em 0 apaga o `bloom=`), para o código ficar limpo;
+  - sem a linha `finish`, ela nasce logo depois do `canvas` (num filme sem `canvas`, depois do `film`), e só quando o valor não é o padrão. O `game` sem linha não escreve nada; o `flat` entra como a segunda palavra;
+  - com o player andando, o painel não escreve: um aviso pede para pausar.
+- **A galeria** **(R)**:
+  - 27 botões, três por linha: **nenhum** e os 26 estilos, com o nome em português e o do código na dica;
+  - cada miniatura (72 por 54, e o dobro numa tela de alta densidade) é o desenho aberto, na variante, na animação e no quadro do player. No filme, é o quadro do player inteiro, com a câmera, os atores e o `finish`;
+  - **o recorte**: o desenho inteiro quando cabe; num desenho maior, um pedaço do meio com até 480 pixels de largura do desenho (no filme, 720). Os estilos trabalham em casinhas do tamanho do desenho, e um desenho grande reduzido a 72 pixels deixaria todos iguais;
+  - a miniatura do estilo de agora usa as opções da linha `art`; as outras, as opções padrão de cada estilo.
+- **Onde as miniaturas são feitas** **(R)**:
+  - cada uma custa de 100 a 400 ms, então elas saem no worker da exportação (`js/worker.js`), fora da página, e a digitação não trava;
+  - a do estilo de agora sai primeiro. Um pedido novo (o código, o quadro ou a variante mudou) abandona o anterior, e as velhas ficam meio apagadas até as novas chegarem;
+  - só com a parte aberta, sem dobrar e à vista na coluna (a conta é pela posição na tela: o `IntersectionObserver` não avisa com o painel escondido), meio segundo depois de o código parar de mudar, e nunca com o player andando ou durante um arraste;
+  - num navegador sem worker com `OffscreenCanvas`, elas saem na página, uma de cada vez, com uma pausa entre elas.
+- **O clique numa miniatura** **(R)**:
+  - troca o estilo na linha `art` que existe, e ficam só as opções que valem no novo (e as de todos: `boil=`, `seed=` e `actor=`). Sem a linha, ela nasce logo depois do `finish` (senão, do `canvas`);
+  - **nenhum** tira a linha. No plano de um filme, escreve `art none`, senão o plano pegaria o estilo do filme;
+  - liga **Exibir › Estilo de arte**, se estava desligada, e um aviso diz o que mudou e lembra do Ctrl+Z.
+- **As opções do estilo** **(R)**, embaixo das miniaturas:
+  - um campo de texto para cada uma (vazio, ele mostra o padrão apagado; apagar o que tem nele tira a opção da linha);
+  - uma lista para o `palette=` e o `dither=`, e uma caixinha para cada palavra (`outline`, `small`, `color`, `old`, `bw`, `frame`);
+  - campos em vez de controles deslizantes, porque as opções têm formatos diferentes (`size=5,10`, `c=#cor`, `palette=pico8`).
+- **No filme** **(R)**:
+  - o painel muda o `art` do plano do player quando o plano tem um `art` próprio (o título diz "do plano …"); senão, o do filme todo ("do filme todo"), que nasce depois do `finish`;
+  - para dar a um plano um estilo só dele, escreva `art` no bloco do `shot`: daí em diante, o painel mexe nele;
+  - o `art` de uma cena (`scene`) e o de um ator (`actor=`) ficam só no código.
+- **Fora, por enquanto** **(R)**:
+  - controles deslizantes para as opções do `art`;
+  - criar o `art` de um plano, de uma cena ou de um ator pelo painel;
+  - miniaturas que andam (a animação inteira em cada estilo).
+
+**Como ficou (16/11/2026):** a 7c saiu na 1.64.0.
+- O painel está no `js/ui-style.js`. O `js/export.js` ganhou o `artTarget` (qual `art` o painel muda) e o `artThumb` (uma miniatura), a mesma conta na página e no worker; o `js/worker.js` ganhou o pedido das miniaturas. O `js/ui-props.js` e o `js/ui-shell.js` ganharam a parte nova na coluna e no menu Janela.
+- Conferido no navegador:
+  - no `cavaleiro.weasel`, as 27 miniaturas pelo worker (perto de 5 segundos para todas, com a página livre);
+  - no `filme.weasel`, as 27 do quadro 408 (perto de 8 segundos), com o cenário, o herói, o fantasma e o lampião em cada estilo;
+  - os controles do acabamento escrevendo e tirando os atributos, a linha `finish` nascendo depois do `canvas` e o Ctrl+Z de cada arraste;
+  - a troca de estilo mantendo as opções que valem, o **nenhum** tirando a linha e as opções do estilo;
+  - no filme, o `art` do filme todo nascendo depois do `finish`, e o de um plano (`art comic` → `art toon` → `art none`);
+  - **Janela › Acabamento e estilo** abrindo e fechando, e o console sem erros.
+- Não há teste automático novo (é tudo da página). O `npm test` e o `regress --strict` continuam iguais: as funções novas do `js/export.js` só rodam quando o painel pede.
+- O guia (capítulo 14, "Pelo editor: Janela › Acabamento e estilo", e uma nota no `finish` do capítulo 4), o README e a referência (F1) contam o que mudou.
+
+**Com a 7c, o plano acabou.** Todas as etapas saíram, da 1.50.0 à 1.64.0. O que ficou de fora em cada uma está no fim da seção dela, e as escolhas que fiz sem você estão marcadas com **(R)**, para você confirmar.
 
 ### Como ficaria por dentro
 

@@ -60,7 +60,7 @@ Os três códigos são iguais, menos a linha `art`. Repare:
 
 Nesta versão existem vinte e seis estilos: `pixel` e `ascii` (logo abaixo), os cinco [estilos de tom](#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette) (`toon`, `engraving`, `halftone`, `stencil` e `silhouette`), as quatro [combinações de tom](#as-combinações-de-tom-woodcut-comic-manga-e-riso) (`woodcut`, `comic`, `manga` e `riso`), os oito [estilos de traço](#os-estilos-de-traço) (`sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `lines` e `neon`), os quatro [estilos de peças](#os-estilos-de-peças) (`cutout`, `clay`, `glass` e `embroidery`) e os três de casinhas, [ponto-cruz, mosaico e tricô](#ponto-cruz-mosaico-e-tricô) (`stitch`, `mosaic` e `knit`).
 
-**No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece **Exibir › Estilo de arte**: desligada, ela mostra o desenho normal, que é mais fácil de ajustar.
+**No editor:** o desenho aparece no estilo, e as alças continuam nos pontos das formas, então você edita do mesmo jeito. Quando o arquivo tem `art`, aparece **Exibir › Estilo de arte**: desligada, ela mostra o desenho normal, que é mais fácil de ajustar. Para escolher o estilo vendo uma miniatura de cada um, use **Janela › Acabamento e estilo** ([mais abaixo](#pelo-editor-janela--acabamento-e-estilo)).
 
 ## Pixel art: `art pixel`
 
@@ -1302,6 +1302,17 @@ Repare:
 - `art none` num plano ou num ator desliga o estilo só ali.
 - Num quadro todo em `ascii`, a linha de comando também tira o `.txt`: `node cli/weasel.js filme.weasel --frame 18 -o quadro.txt`.
 - O `--info` mostra o `art` do filme, de cada plano e de cada ator.
+
+## Pelo editor: Janela › Acabamento e estilo
+
+Na coluna da direita do editor, a parte **Acabamento e estilo** (no menu **Janela**) escreve as linhas `finish` e `art` por você, no desenho e no filme.
+
+- **Acabamento:** o contorno (`finish game` ou `finish flat`) e um controle deslizante para cada número do [`finish`](04-camadas.md#acabamento-finish): brilho (`bloom=`), vinheta (`vignette=`), granulado (`grain=`), posterizar (`posterize=`, com a caixinha **só as cores da palette** para o `posterize=palette`), pixel (`pixel=`), traço de dentro (`inner=`) e os efeitos de tela (`oldfilm=`, `vhs=`, `crt=` e `glitch=`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; a caixa ao lado aceita o número digitado. Voltar ao padrão (0; no pixel e no traço de dentro, 1) tira o atributo da linha. Sem a linha `finish`, ela nasce logo depois do `canvas`.
+- **Estilo de arte:** uma miniatura de cada um dos vinte e seis estilos, e **nenhum**, feita com o seu desenho (na pose do player; no filme, no quadro do player). Num desenho grande, a miniatura é um pedaço do meio, para o estilo aparecer. Um clique escreve a linha `art` (sem ela, a linha nasce logo depois do `finish`) e liga **Exibir › Estilo de arte**; **nenhum** tira a linha. Trocar de estilo mantém as opções que valem no novo, e o `boil=`, o `seed=` e o `actor=`.
+- **As opções do estilo** ficam embaixo das miniaturas: um campo para cada uma (vazio, ele mostra o padrão apagado; apagar o que tem nele tira a opção da linha), uma lista para o `palette=` e o `dither=` e uma caixinha para cada palavra (`outline`, `color`, `old`, `bw`…).
+- **No filme:** o painel muda o `art` do plano do player quando o plano tem um `art` próprio (o título diz "do plano …", e **nenhum** vira `art none`); senão, o do filme todo ("do filme todo"). O `art` de uma cena ou de um ator continua só no código.
+- O botão **linha N**, ao lado de cada título, leva o código à linha. Com o player andando, o painel não escreve: pause antes.
+- As miniaturas são feitas fora da página, no mesmo ajudante da exportação, então digitar continua leve. Enquanto o código muda, as velhas ficam apagadas até as novas chegarem.
 
 ## Junto com o resto
 
