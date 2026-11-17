@@ -98,12 +98,31 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 | # | O quê | Antes de qual etapa |
 |---|---|---|
 | A | **`opacity=` e `blend=` da camada.** Sem efeito na camada, eles valem forma por forma: duas formas da mesma camada `opacity=0.5` aparecem uma através da outra. Com qualquer efeito (`blur=`, `hue=`…), valem para a camada inteira. Parece um defeito (`scene.js:2601` contra `:2593`). Corrigir muda a imagem de quem usa `opacity=` em camada com formas sobrepostas. | Camadas (etapa 3) |
-| B | **Ajudante do Godot.** Ele começa virado para baixo (`godot.js:335`). Num personagem de lado (só `_left` e `_right`), `tocar("idle")` procura `idle_down`, não acha e toca `idle`, que não existe. O script de exemplo do capítulo 9 cai nisso. Lido no código; não testado no Godot. | Jogo (etapa 8) |
+| B | **Ajudante do Godot.** Ele começa virado para baixo (`godot.js:335`). Num personagem de lado (só `_left` e `_right`), `tocar("idle")` procura `idle_down`, não acha e toca `idle`, que não existe. O script de exemplo do capítulo 9 cai nisso. **Feito na 1.66.1** (abaixo). | Jogo (etapa 8) |
 | C | **Valores cortados sem aviso:** a força do `glow=`, o `tint=`, a sombra do `cast=`, o `emit=`, a queda do `trail=`, o `taper=`. E aceitos sem fazer nada: `cut=` em `stroke`/`line`/`text`, `bold` numa elipse, `cloth=` no texto, `~` na `line`, `camera.fog=none` no `at`, `audio at=+1s`. | nenhuma: o guia diz o que o código faz |
 | D | **Faixas diferentes no `at` e na linha do comando:** `zoom` vai até 100 na `camera` e até 1000 no `at`; `lag`, até 10 e até 100; numa `key`, a luz aceita `power=30` e `cone=999` sem aviso. | nenhuma |
 | E | **`rect` com tamanho negativo e `r=`** desenha os cantos para dentro (`geom.js:139`). | nenhuma |
 
 Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D e E podem esperar uma tarefa de "avisos que faltam".
+
+### B: como ficou (1.66.1, 17/11/2026)
+
+**Conferido no Godot 4.7.2**, sem janela, com a gosma do capítulo 9 (só `_right` e as `_left` espelhadas):
+- `tocar("idle")` e `tocar("attack")` no começo dão "Animation not found", e a animação de antes continua. O golpe só sai depois que o jogador aperta ← ou →.
+- Andar reto para cima ou para baixo, ou na diagonal que arredonda para cima ou para baixo, dá o mesmo erro. `quadros("attack")` devolve 0.
+- No personagem de 4 direções, tudo funciona, menos uma ação que só existe de lado (`attack_right`) com ele olhando para cima ou para baixo.
+
+**A correção** fica só no `nome_com_direcao` do `weasel_anim.gd`. Ela age quando nem a animação com a direção nem a ação sem direção existem, o caso que dava erro. Aí ela escolhe o lado:
+- Andando para a esquerda ou para a direita (também na diagonal), toca a `_left` ou a `_right` desse lado.
+- Reto para cima ou para baixo (até 22,5° de inclinação, a fatia do "cima" nas oito direções) ou parado, continua no lado da animação atual (`assigned_animation`).
+- A `direcao` continua começando em `Vector2.DOWN`.
+
+**Por que não "começar na primeira direção":** só consertaria o começo, e subir ou descer continuaria com o erro. Num personagem de 4 direções cuja primeira animação é `_right`, mudaria a direção inicial de jogos que funcionam.
+
+**O que mudou:**
+- **No Weasel:** só o texto do `weasel_anim.gd`, nas exportações por quadros e com esqueleto. No `regress --strict`, só a referência `test/ref/_godot/weasel_anim.gd` mudou; as outras conferências (imagens, `.tscn`, `.tres`) ficaram iguais byte a byte. O README e o capítulo 9 ganharam uma frase.
+- **No jogo:** o que funcionava continua igual. O ForestPatrol chama `nome_com_direcao(acao, Vector2(_facing, 0.0))`, sempre na horizontal, e não muda. Os jogos já exportados só pegam o ajudante novo quando você exportar de novo.
+- No teste no Godot, os erros caíram de 24 para 2. Os 2 que sobram são `tocar("walk")` na gosma, que não tem `walk`.
 
 ## 3. A nova estrutura
 

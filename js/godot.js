@@ -371,6 +371,8 @@ func tocar(acao: String, dir := Vector2.ZERO, mesma_fase := false) -> void:
 
 
 ## O nome da animação de "acao" para a direção (ou "acao", se não houver versões com direção).
+## Sem a versão para cima ou para baixo (um personagem só de lado, com _right e _left), olha para o lado
+## para onde vai; reto para cima ou para baixo (ou parado), continua virado para o lado em que está.
 func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 	var angulo := rad_to_deg(dir.angle())
 	if has_animation(acao + "_down_right") or has_animation(acao + "_up_right"):
@@ -380,6 +382,13 @@ func nome_com_direcao(acao: String, dir: Vector2) -> StringName:
 	var quatro := acao + DIRECOES_4[posmod(roundi(angulo / 90.0), 4)]
 	if has_animation(quatro):
 		return StringName(quatro)
+	if not has_animation(acao):
+		# reto para cima ou para baixo: menos de 22,5 graus de inclinação (a fatia de cima nas oito direções)
+		var reto := absf(dir.x) <= absf(dir.y) * 0.4142
+		var esquerda := String(assigned_animation).ends_with("_left") if reto else dir.x < 0.0
+		var lado := acao + ("_left" if esquerda else "_right")
+		if has_animation(lado):
+			return StringName(lado)
 	return StringName(acao)
 
 
