@@ -180,6 +180,9 @@
         { label: 'Enviar para baixo', key: 'Ctrl+[', run: () => X().arrange('bwd') },
         { label: 'Enviar para trás', key: 'Ctrl+Shift+[', run: () => X().arrange('back') },
       ] },
+      // as camadas (js/ui-layers.js, etapa 6a)
+      { label: 'Mandar para a camada', enabled: hasSel, sub: () => (W.layers ? W.layers.menu() : []) },
+      { label: 'Nova camada', enabled: drawing, run: () => (W.layers || NOP).add() },
       { label: 'Alinhar', enabled: hasSel, sub: () => [
         { label: 'À esquerda', run: () => X().align('left') },
         { label: 'No centro (horizontal)', run: () => X().align('hcenter') },
@@ -289,7 +292,7 @@
     return [
       ...pickItems('Editar', ['Desfazer', 'Refazer', '-', 'Recortar', 'Copiar', 'Colar', 'Apagar']).map((it) => (it === '-' || it.label.startsWith('Desfazer') || it.label.startsWith('Refazer') || it.label === 'Colar' ? it : onlyOn(it))),
       '-',
-      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
+      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Mandar para a camada', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
       '-',
       { label: 'Selecionar', sub: () => MENUS.find((m) => m.label === 'Selecionar').items },
       { label: 'Inserir forma', sub: () => A.shapes().map((x, i) => ({ label: `${x.label} (${x.cmd})`, run: () => A.insertAt(i, at) })) },

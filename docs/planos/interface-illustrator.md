@@ -1,6 +1,6 @@
 # Interface no jeito do Illustrator (código e desenho, como no Dreamweaver)
 
-**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0 e a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
+**Situação:** estudo de 16/11/2026. As 9 decisões foram tomadas no mesmo dia (seção 12), a etapa 1 (a casca) saiu na 1.50.0, a 1b (camadas em 3D) na 1.51.0 a 2 (Propriedades e Amostras) na 1.52.0, a 3a (escolher, copiar, apagar e organizar) na 1.53.0, a 3b (travar, alinhar e grupos) na 1.54.0 a 4a (formas arrastando, caixinhas de cor, Conta-gotas, Degradê e o menu do botão direito) na 1.55.0 a 4b (alça quebrada, Caneta, Curvatura e Ponto de ancoragem) na 1.56.0, a 4c (Lápis, Pincel e Simplificar) na 1.57.0, a 5a (Pathfinder, Pincel de bolha e Borracha) na 1.58.0 a 5b (Tesoura, Faca, Junção, Borracha de caminho, Suavizar e Construtor de formas) na 1.59.0 e a 6a (Camadas completas) na 1.60.0, no mesmo dia. Você pediu que eu fizesse as outras sozinho: as escolhas que fiz sem você estão marcadas com **(R)** em cada etapa, para você confirmar.
 
 Hoje o Weasel tem duas pessoas usando:
 - **você**, programador, que pensa em código;
@@ -856,7 +856,44 @@ Junto com ela, **a Borracha (Shift+E) passou a cortar os traços do mesmo jeito,
   - os atalhos C e Shift+M, as casas da barra e o Esc.
 - O guia (capítulo 2, "Cortar, juntar e alisar"), o README e a referência (F1) contam o que mudou.
 
-**A etapa 6** (Símbolos e Camadas completas) vem em seguida.
+### 11.7 A etapa 6 em detalhe (16/11/2026)
+
+A etapa 6 também foi dividida em duas **(R)**, como a 3, a 4 e a 5: a **6a** (Camadas completas) e a **6b** (Símbolos). As duas mexem em painéis diferentes, e cada uma já dá para usar sozinha.
+
+**A 6a (16/11/2026): o painel Camadas completo.**
+- **Na coluna da direita,** entre as Propriedades e as Amostras, como no desenho da seção 4.2 **(R)**. Ele começa aberto, como no Illustrator, e lembra se você fechou **(R)**. Numa janela estreita (até 640 px), onde a coluna some, ele continua por cima do desenho, como antes **(R)**.
+- **O título de cada parte da coluna dobra e desdobra** (Propriedades, Camadas, Amostras), como os painéis do Illustrator, e isso fica guardado neste navegador **(R)**. Com as três abertas, a coluna ficava comprida demais.
+- **Arrastar uma linha** muda o lugar dela no código:
+  - solta entre duas linhas, entra ali;
+  - solta em cima do nome de uma camada, vai para a frente dela, no fim dela, como no Illustrator **(R)**;
+  - com várias escolhidas, todas vão juntas, na ordem do código, com os comentários logo acima de cada uma, como no Organizar **(R)**. Um grupo inteiro anda inteiro, e uma linha de dentro de um `repeat` leva o `repeat`.
+- **Objeto › Mandar para a camada** (também no botão direito): o mesmo, pelo menu, com a lista das camadas **(R)**. O Illustrator faz isso arrastando o quadradinho da escolha no painel; o menu é mais fácil de achar.
+- **Arrastar o nome de uma camada** muda a ordem das camadas. O bloco dela anda no código: os comentários de cima, a linha `layer` e as linhas até a última forma dela. O que vem depois da última forma (as `anim` no fim do arquivo, por exemplo) fica onde está **(R)**. Uma linha em branco separa o bloco das camadas vizinhas. A camada automática (o que vem antes do primeiro `layer`) fica sempre no fundo e não se arrasta **(R)**.
+- **A ordem do painel é a do código:** a de cima é a de trás **(R)**. No Illustrator é o contrário (a de cima fica na frente). Mantive a do código, que é a do painel desde a etapa 1. Se o seu irmão estranhar, dá para inverter só a lista.
+- **O ＋ cria uma camada:** `layer layer1` (o nome em inglês, decisão 5), logo acima da camada onde se desenha. O cursor vai para a linha dela, e ela passa a ser a camada onde se desenha **(R)**.
+- **A camada onde se desenha** ganha uma barrinha laranja no nome **(R)**. É a do cursor, como desde a etapa 4a. Escolher uma forma ou clicar no nome de uma camada muda essa camada.
+- **Duplo clique num nome** (da camada ou de uma linha) renomeia ali mesmo:
+  - Enter grava, Esc desiste;
+  - trocam a linha e as palavras que apontam para o nome no arquivo inteiro: `clip=`, `cut=`, `inkon=`, `hide=`, `show=`, `above=`, `below=`, `mirror=`, `shape=`, o `mouth`, a `key forma.prop=` e o `at` do filme;
+  - um nome que outra linha também cria (dois furos com o mesmo nome) muda só na linha, e o resto fica **(R)**;
+  - um nome que já aparece no arquivo não é aceito **(R)**;
+  - o `use` e o `include` não têm nome (o painel avisa), e a camada automática não tem linha.
+- **A lixeira** aparece com o mouse no nome de uma camada. Ela apaga a linha `layer`, as formas da camada (com os comentários de cima) e a linha em branco antes dela. As `anim`, as `key` e o resto do trecho ficam **(R)**. Se alguma linha usava o nome da camada (`clip=`…), o editor avisa, e o código mostra o erro.
+- Tudo é uma edição só do código: um Ctrl+Z desfaz. Esc no meio de um arraste desiste.
+
+**Como ficou (16/11/2026):** a 6a saiu na 1.60.0.
+- O código novo está no `js/ui-layers.js`. O renomear fica no `js/app.js`, ao lado do renomear das cópias (Ctrl+D).
+- Conferido no navegador:
+  - arrastar linhas entre camadas, antes e depois de outra linha (com o comentário junto), e camadas antes e depois de outras;
+  - o Ctrl+Z;
+  - o ＋ (o cursor vai para a camada nova);
+  - renomear a camada (o `clip=` acompanha), a forma (as `key` acompanham), um furo repetido (só a linha) e os nomes recusados;
+  - a lixeira e o Mandar para a camada;
+  - o painel dobrando e, numa janela estreita, de volta por cima do desenho.
+- Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
+- O guia (capítulo 4), o README e a referência (F1) contam o que mudou.
+
+**A 6b** (Símbolos) vem em seguida.
 
 ### Como ficaria por dentro
 

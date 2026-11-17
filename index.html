@@ -6,7 +6,7 @@
 <title>Weasel — desenho por código</title>
 <link rel="icon" type="image/svg+xml" href="docs/logo.svg">
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
-<link rel="stylesheet" href="css/style.css?v=1.59.0">
+<link rel="stylesheet" href="css/style.css?v=1.60.0">
 </head>
 <body>
 <header class="top">
@@ -65,7 +65,7 @@
       <div id="gradPanel" class="ref-panel grad-panel" hidden></div>
       <div id="defPanel" class="ref-panel def-panel" hidden></div>
     </div>
-    <aside id="dock" class="dock" aria-label="Propriedades e Amostras" hidden></aside>
+    <aside id="dock" class="dock" aria-label="Propriedades, Camadas e Amostras" hidden></aside>
     <div id="timeline" class="timeline" hidden><canvas id="tlCanvas"></canvas></div>
     <div class="player">
       <button id="btnBuild" class="build ic" title="Pintar: pinta o desenho de novo, traço a traço" aria-label="Pintar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2c-.8-.8-5.6 3.6-7.4 5.6l1.8 1.8C10.4 7.6 14.8 2.8 14 2z"/><path d="M6.2 8.2c-1.7-.3-3.2.8-3.3 2.6-.1 1.3-.5 2-1.4 2.6 2.8.8 5.5-.1 6.2-3.1z"/></svg></button>
@@ -303,7 +303,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>Com o cursor numa linha <code>gradient</code> (ou numa forma pintada com um), abre o painel do gradiente: arraste as marcas da barra para mudar a posição das cores, clique na barra para pôr uma cor nova e o botão direito numa marca tira. Embaixo, cor, opacidade e posição da marca escolhida; em cima, <code>linear</code>/<code>radial</code> e <code>box</code>. No desenho, as alças mudam o começo e o fim (ou o centro, o raio e o foco); com <kbd>Shift</kbd>, a direção anda de 45 em 45 graus. Para criar um, use a ferramenta Degradê (<kbd>G</kbd>).</li>
       <li>Com o cursor entre <code>def</code> e <code>end</code>, a <b>prévia</b> mostra o componente sozinho, com uma cruz rosa no <code>0,0</code> (o ponto que vai para o x,y do <code>use</code>): na hora, se o <code>def</code> não tem <code>use</code>; com a chave <b>Prévia do def</b>, se tem. No painel <b>Prévia</b>, mude os parâmetros (arraste o nome de um número para os lados) sem mudar o código; <b>Copiar como use</b> copia uma linha <code>use</code> com o que mudou. As alças mudam as linhas do <code>def</code>.</li>
       <li><b>Janela › Referências</b> abre o painel das imagens guia (<code>ref</code>). Uma imagem solta arrasta no desenho: por dentro move, pelo quadradinho do canto muda o tamanho.</li>
-      <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. O cadeado, ao lado, põe e tira o <code>lock</code> (amarelo: travada; apagado: travada pela camada ou pelo grupo). <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). Não aparece em filmes.</li>
+      <li><b>Janela › Camadas</b> abre a árvore das camadas, cada uma com as linhas que desenham nela. Clique escolhe uma linha; <kbd>Ctrl</kbd>+clique soma ou tira; <kbd>Shift</kbd>+clique pega um trecho; o nome da camada escolhe todas as linhas dela. No desenho, <kbd>Shift</kbd>+clique numa forma também soma ou tira. Com duas ou mais escolhidas, arraste uma delas (ou o ✥ do meio da caixa) para mover todas, e a bolinha verde para girar em volta do meio da caixa (com <kbd>Shift</kbd>, de 15 em 15 graus): os pontos giram, e <code>ellipse</code>, <code>rect</code>, <code>text</code> e <code>use</code> mudam de lugar e ganham <code>rot=</code>. Os quadradinhos azuis da caixa esticam todas: o lado de lá fica parado (com <kbd>Alt</kbd>, o meio), <kbd>Shift</kbd> mantém a proporção e passar para o outro lado espelha. Os pontos esticam, a <code>ellipse</code> muda o raio, o <code>rect</code> a largura e a altura, o <code>text</code> o <code>size=</code> (pela altura) e o <code>use</code> o <code>scale=</code> (e o <code>flip=</code>, espelhando); o <code>w=</code>, o <code>ink=</code> e o <code>r=</code> não mudam. <kbd>Esc</kbd> solta. Linhas com <code>{contas}</code> na posição, de <code>repeat</code> ou de <code>include</code>, espelhos e membros com IK ficam paradas (apagadas no painel). O olho à direita de cada linha (e de cada camada) liga e desliga o <code>hidden</code> dela: fechado e laranja, a linha está escondida. O cadeado, ao lado, põe e tira o <code>lock</code> (amarelo: travada; apagado: travada pela camada ou pelo grupo). <kbd>Ctrl</kbd>+<kbd>3</kbd> faz o mesmo nas linhas escolhidas ou, sem escolha, na linha do cursor (no código, também o <kbd>Ctrl</kbd>+<kbd>H</kbd>). O painel fica na coluna da direita (o título de cada parte dobra). Arrastar uma linha muda o lugar dela (em cima do nome de uma camada, vai para a frente dela); arrastar o nome de uma camada muda a ordem das camadas; <b>Objeto › Mandar para a camada</b> leva a escolha. O ＋ cria uma camada logo acima da camada onde se desenha (a da barrinha laranja), o duplo clique num nome renomeia (com o que aponta para ele) e a lixeira apaga a camada com as formas dela. Não aparece em filmes.</li>
       <li><b>Réguas</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>, ou <b>Exibir › Réguas</b>) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (<b>Exibir › Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
       <li><b>Medir</b> (na barra de ferramentas): arraste no desenho de um ponto a outro para ver a distância, o ângulo (como no <code>rot=</code>) e quanto anda em x e em y. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com <kbd>Shift</kbd>, de 45 em 45 graus. Arraste uma ponta para ajustar; um clique ou <kbd>Esc</kbd> tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos.</li>
       <li><b>Prender</b> (<kbd>Shift</kbd>+<kbd>P</kbd>): mostra os pontos de todos os <code>shape</code>, <code>stroke</code> e <code>line</code>; os presos a um osso (<code>@osso</code>) ficam com a cor dele, e os soltos, cinza. Clique num ponto para escolhê-lo (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira) ou arraste uma caixa em volta de vários. Pontos no mesmo lugar (formas coladas) vêm juntos; clique de novo no mesmo lugar para pegar só o de uma forma. O botão direito abre o menu: um osso (o mais perto primeiro) escreve <code>@osso</code> depois de cada ponto escolhido, com o peso do campo (<code>@osso:0.5</code>); <b>Cada um no osso mais perto</b> e <b>Soltar</b> (tira o <code>@</code>). Um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz tudo. Com o painel Camadas aberto e formas escolhidas nele, só aparecem os pontos delas. Ficam de fora as cópias de <code>use</code>, as linhas de <code>repeat</code> e de <code>include</code> e as formas com <code>bones=</code>. Com uma animação escolhida, arraste a bolinha de um osso para ver os pontos irem junto. Não aparece em filmes.</li>
@@ -407,38 +407,39 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.59.0"></script>
-<script src="js/lang.js?v=1.59.0"></script>
-<script src="js/simplify.js?v=1.59.0"></script>
-<script src="js/pathops.js?v=1.59.0"></script>
-<script src="js/art.js?v=1.59.0"></script>
-<script src="js/scene.js?v=1.59.0"></script>
-<script src="js/film.js?v=1.59.0"></script>
-<script src="js/audio.js?v=1.59.0"></script>
-<script src="js/nle.js?v=1.59.0"></script>
-<script src="js/webm.js?v=1.59.0"></script>
-<script src="js/svg.js?v=1.59.0"></script>
-<script src="js/gif.js?v=1.59.0"></script>
-<script src="js/webp.js?v=1.59.0"></script>
-<script src="js/mp4.js?v=1.59.0"></script>
-<script src="js/zip.js?v=1.59.0"></script>
-<script src="js/normal.js?v=1.59.0"></script>
-<script src="js/export.js?v=1.59.0"></script>
-<script src="js/godot.js?v=1.59.0"></script>
-<script src="js/rig.js?v=1.59.0"></script>
-<script src="js/editor.js?v=1.59.0"></script>
-<script src="js/examples.js?v=1.59.0"></script>
-<script src="js/timeline.js?v=1.59.0"></script>
-<script src="js/app.js?v=1.59.0"></script>
-<script src="js/ui-menu.js?v=1.59.0"></script>
-<script src="js/ui-shell.js?v=1.59.0"></script>
-<script src="js/ui-3d.js?v=1.59.0"></script>
-<script src="js/ui-props.js?v=1.59.0"></script>
-<script src="js/ui-select.js?v=1.59.0"></script>
-<script src="js/ui-draw.js?v=1.59.0"></script>
-<script src="js/ui-pen.js?v=1.59.0"></script>
-<script src="js/ui-pencil.js?v=1.59.0"></script>
-<script src="js/ui-paths.js?v=1.59.0"></script>
-<script src="js/ui-cut.js?v=1.59.0"></script>
+<script src="js/geom.js?v=1.60.0"></script>
+<script src="js/lang.js?v=1.60.0"></script>
+<script src="js/simplify.js?v=1.60.0"></script>
+<script src="js/pathops.js?v=1.60.0"></script>
+<script src="js/art.js?v=1.60.0"></script>
+<script src="js/scene.js?v=1.60.0"></script>
+<script src="js/film.js?v=1.60.0"></script>
+<script src="js/audio.js?v=1.60.0"></script>
+<script src="js/nle.js?v=1.60.0"></script>
+<script src="js/webm.js?v=1.60.0"></script>
+<script src="js/svg.js?v=1.60.0"></script>
+<script src="js/gif.js?v=1.60.0"></script>
+<script src="js/webp.js?v=1.60.0"></script>
+<script src="js/mp4.js?v=1.60.0"></script>
+<script src="js/zip.js?v=1.60.0"></script>
+<script src="js/normal.js?v=1.60.0"></script>
+<script src="js/export.js?v=1.60.0"></script>
+<script src="js/godot.js?v=1.60.0"></script>
+<script src="js/rig.js?v=1.60.0"></script>
+<script src="js/editor.js?v=1.60.0"></script>
+<script src="js/examples.js?v=1.60.0"></script>
+<script src="js/timeline.js?v=1.60.0"></script>
+<script src="js/app.js?v=1.60.0"></script>
+<script src="js/ui-menu.js?v=1.60.0"></script>
+<script src="js/ui-shell.js?v=1.60.0"></script>
+<script src="js/ui-3d.js?v=1.60.0"></script>
+<script src="js/ui-props.js?v=1.60.0"></script>
+<script src="js/ui-select.js?v=1.60.0"></script>
+<script src="js/ui-draw.js?v=1.60.0"></script>
+<script src="js/ui-pen.js?v=1.60.0"></script>
+<script src="js/ui-pencil.js?v=1.60.0"></script>
+<script src="js/ui-paths.js?v=1.60.0"></script>
+<script src="js/ui-cut.js?v=1.60.0"></script>
+<script src="js/ui-layers.js?v=1.60.0"></script>
 </body>
 </html>

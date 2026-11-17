@@ -18,9 +18,10 @@
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sem armazenamento */ } },
   };
   // as seções abertas ficam guardadas neste navegador
-  const cfg = { props: true, sw: true, ink: false, lock: false };
+  const cfg = { props: true, sw: true, ink: false, lock: false, layers: true, sym: true, fold: [] };
   try { Object.assign(cfg, JSON.parse(store.get('weasel.dock') || '{}')); } catch (e) { /* padrão */ }
-  const saveCfg = () => store.set('weasel.dock', JSON.stringify({ props: cfg.props, sw: cfg.sw, lock: cfg.lock }));
+  const saveCfg = () => store.set('weasel.dock', JSON.stringify({ props: cfg.props, sw: cfg.sw, lock: cfg.lock, layers: cfg.layers, sym: cfg.sym, fold: cfg.fold }));
+  if (!Array.isArray(cfg.fold)) cfg.fold = [];
   // os campos da caixa e do documento: números que valem como estão (sem ↺, sem apagar)
   const TF = ['tx', 'ty', 'tw', 'th', 'rot', 'cw', 'ch'];
   const DRAWN = new Set(['shape', 'stroke', 'line', 'ellipse', 'rect', 'text', 'use', 'emitter']);
@@ -43,12 +44,27 @@
   const secP = dock.querySelector('[data-sec=props]'), secS = dock.querySelector('[data-sec=sw]');
   const bodyP = secP.querySelector('.dk-body'), bodyS = secS.querySelector('.dk-body'), whatP = secP.querySelector('.dk-what'), whatS = secS.querySelector('.dk-what');
   dock.addEventListener('click', (e) => { const b = e.target.closest('[data-close]'); if (b) toggle(b.dataset.close, false); });
+  // o título de cada parte dobra e desdobra (como os painéis do Illustrator); guardado neste navegador
+  const foldKey = (sec) => sec.dataset.sec || sec.id;
+  const applyFold = () => { for (const sec of dock.children) if (sec.dataset.sec || sec.id === 'layerPanel') sec.classList.toggle('fold', cfg.fold.includes(foldKey(sec))); };
+  dock.addEventListener('click', (e) => {
+    const t = e.target.closest('.dk-head b, .layer-panel.docked .rp-head b');
+    if (!t) return;
+    const sec = t.closest('.dk-sec, #layerPanel'), k = foldKey(sec);
+    cfg.fold = cfg.fold.includes(k) ? cfg.fold.filter((x) => x !== k) : cfg.fold.concat(k);
+    saveCfg();
+    applyFold();
+  });
 
   function syncDock() {
     secP.hidden = !cfg.props;
     secS.hidden = !cfg.sw;
-    // no filme, a coluna some (as propriedades dos atores ficam para a etapa 7)
-    dock.hidden = (!cfg.props && !cfg.sw) || !st.model || A.isFilm();
+    // no filme, a coluna some (as propriedades dos atores ficam para a etapa 7). As outras partes (Camadas, em
+    // js/ui-layers.js, e Símbolos) abrem e fecham sozinhas: a coluna aparece com qualquer uma aberta.
+    const any = [...dock.children].some((c) => (c.classList.contains('dk-sec') || c.id === 'layerPanel') && !c.hidden);
+    const h = !any || !st.model || A.isFilm();
+    if (dock.hidden !== h) dock.hidden = h;
+    applyFold();
   }
   function toggle(sec, on) {
     cfg[sec] = on === undefined ? !cfg[sec] : !!on;
@@ -513,6 +529,9 @@
   W.props = {
     toggle,
     isOn: (sec) => !!cfg[sec],
+    // para as outras partes da coluna (js/ui-layers.js): guardar aberta ou fechada e mostrar ou esconder a coluna
+    setCfg: (k, v) => { if (cfg[k] === v) return; cfg[k] = v; saveCfg(); },
+    sync: () => syncDock(),
     textOn: () => { const i = gather(); return !!i && allOf(i, 'text'); },
     flag: (f) => { const i = gather(); if (!i || !allOf(i, 'text')) { A.hint('Escolha um texto.', 1800); return; } A.setAttrs(i.lines, null, { [f]: !flagOf(i.lines, f) }, keyNow(f)); },
     flagOn: (f) => { const i = gather(); return !!i && allOf(i, 'text') && flagOf(i.lines, f) === true; },

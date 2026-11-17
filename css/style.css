@@ -265,6 +265,32 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .lp-layer.off .ln { opacity: .5; font-style: italic; }
 .lp-foot { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
 .lp-foot small { display: block; color: var(--dim); line-height: 1.45; }
+/* etapa 6a (js/ui-layers.js): a lixeira da camada, o ＋, a camada onde se desenha, arrastar e renomear */
+.lp-del { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; color: var(--dim); opacity: 0; cursor: pointer; }
+.lp-del svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.lp-layer:hover .lp-del { opacity: .6; }
+.lp-del:hover { opacity: 1 !important; background: var(--panel2); color: #ff8a80; }
+.lp-del.na { visibility: hidden; }
+.lp-add { border: none; background: none; padding: 0 6px; color: var(--dim); font-size: 14px; line-height: 1; }
+.lp-add:hover:not(:disabled) { color: var(--text); background: var(--panel2); }
+.lp-layer.draw .ln { box-shadow: inset 3px 0 0 var(--accent); }
+.lp-tree { position: relative; }
+.lp-drop { position: absolute; right: 0; height: 2px; background: var(--accent); border-radius: 1px; pointer-events: none; }
+.lp-drop[hidden] { display: none; }
+.lp-layer.drop-in .ln { background: rgba(92,198,212,.28); outline: 1px dashed var(--accent); }
+.layer-panel.dragging, .layer-panel.dragging * { cursor: grabbing !important; }
+.lp-ren { flex: 1; min-width: 0; height: 20px; padding: 0 4px; font: 12px var(--mono); background: var(--panel2); border: 1px solid var(--accent); border-radius: 3px; color: var(--text); }
+/* na coluna da direita: uma parte dela, como as Propriedades */
+.layer-panel.docked { position: static; z-index: auto; width: auto; max-width: none; max-height: none; overflow: visible; border: none; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0 10px 8px; }
+.dock > .layer-panel.docked:first-child { border-top: none; }
+.layer-panel.docked .rp-head { position: sticky; top: 0; z-index: 1; background: var(--panel); margin: 0 -10px 2px; padding: 6px 6px 4px 10px; gap: 8px; }
+.layer-panel.docked .rp-head b { font-size: 12px; }
+/* o título dobra a parte da coluna */
+.dk-head b, .layer-panel.docked .rp-head b { cursor: pointer; user-select: none; white-space: nowrap; }
+.dk-head b::before, .layer-panel.docked .rp-head b::before { content: '▾'; display: inline-block; width: 12px; color: var(--dim); font-size: 10px; }
+.dk-sec.fold .dk-head b::before, .layer-panel.docked.fold .rp-head b::before { content: '▸'; }
+.dk-sec.fold > .dk-body, .layer-panel.docked.fold > .lp-tree, .layer-panel.docked.fold > .lp-foot { display: none; }
+.layer-panel.docked.fold { padding-bottom: 0; }
 .gp-name { border: none; background: none; padding: 0 2px; font: 600 12px var(--mono); color: var(--kw-setup); }
 .gp-name:hover:not(:disabled) { background: none; text-decoration: underline; }
 .gp-via { color: var(--dim); font: 11px var(--mono); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

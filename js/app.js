@@ -178,6 +178,68 @@
     return { text, at };
   }
 
+  // Renomear (painéis Camadas e Símbolos, etapa 6): o nome que a linha cria e, no arquivo inteiro, as palavras que
+  // apontam para ele: alvo.prop= (key, at), clip=, cut=, inkon=, hide=, show=, above=, below=, mirror=, shape=, o
+  // mouth, o use de um def, a cor que usa um gradient… Um nome que outra linha também cria (dois furos com o mesmo
+  // nome) muda só nesta linha. Devolve { n: quantas palavras trocou, only } ou { why }.
+  const REFS = Object.assign({}, NAME_REFS, {
+    clip: [...DRAWN, 'layer'], cut: [...DRAWN, 'layer'], above: [...DRAWN, 'layer'], below: [...DRAWN, 'layer'],
+    inkon: ['layer'], hide: [...DRAWN, 'layer'], show: [...DRAWN, 'layer'], from: ['layer'], shape: DRAWN,
+  });
+  // a palavra do nome que a linha cria (a primeira solta depois da instrução; nas formas, pulando hidden, bold…)
+  function nameWord(sp) {
+    const cmd = sp.words[0] && sp.words[0].text;
+    if (!NAMES_NEW.has(cmd)) return null;
+    const w = sp.words.slice(1).find((x) => (x.text[0] === '"' || L.topIndex(x.text, '=') < 0) && !(L.DRAWABLE.has(cmd) && L.DRAW_FLAGS.has(x.text)));
+    return w && L.IDENT.test(w.text) ? w : null;
+  }
+  function renameAt(line, to, key) {
+    const v = editor.value, lines = v.split('\n'), sp = L.splitLine(lines[line] || ''), cmd = sp.words[0] && sp.words[0].text;
+    const dw = nameWord(sp), from = dw && dw.text;
+    if (!from) return { why: cmd === 'use' ? 'o use não tem nome: renomeie o def dele (no painel Símbolos)' : 'esta linha não cria um nome' };
+    to = String(to || '').trim();
+    if (to === from) return { n: 0 };
+    if (!L.IDENT.test(to)) return { why: `"${to}" não serve de nome: use letras, números, _ e -, começando por uma letra` };
+    if (new RegExp(`(^|[^\\w-])${to.replace(/-/g, '\\-')}(?![\\w-])`).test(v)) return { why: `o nome ${to} já aparece no arquivo` };
+    const kind = cmd, drawn = L.DRAWABLE.has(kind);
+    // quantas linhas criam este nome (do mesmo tipo de coisa: forma com forma)
+    let twins = 0;
+    lines.forEach((t, i) => {
+      if (i === line) return;
+      const s2 = L.splitLine(t), c2 = s2.words[0] && s2.words[0].text, w2 = nameWord(s2);
+      if (w2 && w2.text === from && (drawn ? L.DRAWABLE.has(c2) : c2 === kind)) twins++;
+    });
+    const edits = [];
+    let off = 0;
+    lines.forEach((t, li) => {
+      const s2 = L.splitLine(t), c2 = s2.words[0] && s2.words[0].text;
+      s2.words.slice(1).forEach((w, wi) => {
+        if (li === line && w.from === dw.from) { edits.push(off + w.from); return; }
+        if (twins || w.text[0] === '"') return;
+        if (wi === 0 && (c2 === 'use' || c2 === 'mouth')) { if (w.text === from && ((c2 === 'use' && kind === 'def') || (c2 === 'mouth' && drawn))) edits.push(off + w.from); return; }
+        const eq = L.topIndex(w.text, '=');
+        if (eq < 0) return;
+        const k = w.text.slice(0, eq), dot = k.indexOf('.');
+        if (dot > 0 && k.slice(0, dot) === from && kind !== 'def') edits.push(off + w.from);
+        const kinds = c2 === 'mouth' ? DRAWN : dot > 0 ? (k.slice(dot + 1) === 'shape' ? DRAWN : PAINTS) : REFS[k] || PAINTS;
+        if (!kinds.includes(kind)) return;
+        for (const mt of w.text.slice(eq + 1).matchAll(/[A-Za-z_][\w-]*/g)) {
+          const i = eq + 1 + mt.index, prev = w.text[i - 1];
+          if (mt[0] !== from || (prev && /[\w#.$-]/.test(prev))) continue;
+          edits.push(off + w.from + i);
+        }
+      });
+      off += t.length + 1;
+    });
+    // tudo numa edição só (do primeiro nome trocado ao último); o cursor fica onde estava
+    const at = [...new Set(edits)].sort((a, b) => a - b), a = at[0], b = at[at.length - 1] + from.length;
+    let mid = v.slice(a, b);
+    for (const i of [...at].reverse()) mid = mid.slice(0, i - a) + to + mid.slice(i - a + from.length);
+    const c0 = editor.ta.selectionStart, shift = (o) => o + at.filter((i) => i + from.length <= o).length * (to.length - from.length);
+    editor.replaceRange(a, b, mid, { key: key || 'rename' + Date.now(), select: [shift(c0), shift(c0)] });
+    return { n: at.length, only: twins > 0, from };
+  }
+
   const resolveFile = (name) => {
     for (const k of [name, name + '.weasel']) if (st.files.has(k)) return k === st.current ? editor.value : st.files.get(k);
     return null;
@@ -623,6 +685,7 @@
   const LOCK_OFF = '<svg viewBox="0 0 16 16"><rect x="3.5" y="7.2" width="9" height="6.3" rx="1.2"/><path d="M5.6 7.2V5.4a2.4 2.4 0 0 1 4.6-.9"/></svg>';
   const EYE_ON = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
   const EYE_OFF = '<svg viewBox="0 0 16 16"><path d="M1.5 8S4 3.8 8 3.8 14.5 8 14.5 8 12 12.2 8 12.2 1.5 8 1.5 8z"/><path d="M2.5 13.5 13.5 2.5"/></svg>';
+  const TRASH = '<svg viewBox="0 0 16 16"><path d="M2.5 4.5h11M6 4.5V2.8h4v1.7M4 4.5l.8 9h6.4l.8-9M6.6 7v4.5M9.4 7v4.5"/></svg>';
 
   let layerSig = '';
   function fillLayerPanel() {
@@ -630,14 +693,15 @@
     $('layerBtn').hidden = film;
     if (film) p.hidden = true;
     $('layerBtn').classList.toggle('on', !p.hidden);
-    stage.classList.toggle('lp-open', !p.hidden);
+    // na coluna da direita (js/ui-layers.js), o painel não empurra os de dentro do desenho
+    stage.classList.toggle('lp-open', !p.hidden && p.parentNode === stage);
     if (p.hidden || !m) return;
     const tree = layerTree(m);
     const sig = tree.map((t) => `${t.layer.name}@${t.line}:${t.layer.guide ? 'g' : ''}${t.layer.hidden ? 'h' : ''}:` + t.kids.map((k) => `${k.line}=${k.sig}*${k.els.length}`).join(',')).join('/') + '#' + [...st.layerShut].join('/');
     if (sig !== layerSig) {
       layerSig = sig;
-      p.innerHTML = '<div class="rp-head"><b>Camadas</b><small class="lp-count"></small><span class="grow"></span><button type="button" class="x" title="Fechar">✕</button></div><div class="lp-tree"></div>' +
-        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. No desenho, arraste uma forma escolhida (ou o ✥) para mover, a bolinha verde para girar e as setas para empurrar. O olho (ou <kbd>Ctrl</kbd>+<kbd>3</kbd> nas escolhidas) liga e desliga o <code>hidden</code>; o cadeado (ou <kbd>Ctrl</kbd>+<kbd>2</kbd>), o <code>lock</code>. <kbd>Esc</kbd> solta.</small></div>';
+      p.innerHTML = '<div class="rp-head"><b>Camadas</b><small class="lp-count"></small><span class="grow"></span><button type="button" class="lp-add" title="Nova camada (layer): entra logo acima da camada onde se desenha, e passa a ser ela">＋</button><button type="button" class="x" title="Fechar">✕</button></div><div class="lp-tree"></div>' +
+        '<div class="lp-foot"><small>Clique escolhe; <kbd>Ctrl</kbd> soma; <kbd>Shift</kbd> pega um trecho; a camada pega tudo dela. Arraste uma linha (ou as escolhidas) para mudar a ordem ou levar para outra camada, e uma camada para mudar a ordem das camadas. Duplo clique num nome renomeia. O olho (ou <kbd>Ctrl</kbd>+<kbd>3</kbd> nas escolhidas) liga e desliga o <code>hidden</code>; o cadeado (ou <kbd>Ctrl</kbd>+<kbd>2</kbd>), o <code>lock</code>; a lixeira apaga a camada. <kbd>Esc</kbd> solta.</small></div>';
       const box = p.querySelector('.lp-tree');
       if (!tree.length) box.innerHTML = '<div class="rp-empty">Nada desenhado ainda.</div>';
       tree.forEach((t, i) => {
@@ -647,7 +711,7 @@
         row.className = 'lp-layer';
         row.dataset.li = i;
         row.dataset.name = t.layer.name;
-        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>${t.line >= 0 ? `<span class="lp-lock" role="button" data-line="${t.line}"></span><span class="lp-eye" role="button" data-line="${t.line}"></span>` : '<span class="lp-lock na"></span><span class="lp-eye na"></span>'}`;
+        row.innerHTML = `<button type="button" class="tw" title="${shut ? 'Abrir' : 'Fechar'}">${shut ? '▸' : '▾'}</button><button type="button" class="ln" title="Escolher as ${t.kids.length} linhas desta camada"></button>${tags ? `<span class="lp-tag">${tags}</span>` : ''}<span class="cnt">${t.kids.length || 'vazia'}</span>${t.line >= 0 ? `<span class="lp-del" role="button" title="Apagar a camada ${esc(name)} e o que desenha nela (Ctrl+Z desfaz)">${TRASH}</span><span class="lp-lock" role="button" data-line="${t.line}"></span><span class="lp-eye" role="button" data-line="${t.line}"></span>` : '<span class="lp-del na"></span><span class="lp-lock na"></span><span class="lp-eye na"></span>'}`;
         row.querySelector('.ln').textContent = name;
         box.appendChild(row);
         if (shut) return;
@@ -715,6 +779,8 @@
   $('layerPanel').addEventListener('click', (e) => {
     const p = $('layerPanel');
     if (e.target.closest('.x')) { p.hidden = true; fillLayerPanel(); return; }
+    // o ＋, a lixeira e o nome sendo renomeado são do js/ui-layers.js
+    if (e.target.closest('.lp-add, .lp-del, .lp-ren')) return;
     const eye = e.target.closest('.lp-eye[data-line]');
     if (eye) { if (!eye.classList.contains('na')) toggleHidden([+eye.dataset.line]); return; }
     const lk = e.target.closest('.lp-lock[data-line]');
@@ -5740,6 +5806,10 @@
     setSel: (lines, caret) => { const l = [...new Set(lines)].sort((a, b) => a - b); if (!l.length) deselect(); else setSel(l, caret !== undefined ? caret : l.includes(st.caret.line) ? st.caret.line : l[0]); },
     deselect,
     renameCopy: (block) => renameCopy(block),
+    // renomear pelo painel (etapa 6): o nome da linha e as palavras que apontam para ele
+    rename: (line, to, key) => renameAt(line, to, key),
+    nameOf: (line) => { const w = nameWord(L.splitLine(lineOf(line))); return w ? w.text : ''; },
+    fillLayers: () => { layerSig = ''; fillLayerPanel(); },
     duplicate2: (key) => duplicateSel(key),
     again: transformAgain,
     viewCenter: () => viewCenter(),

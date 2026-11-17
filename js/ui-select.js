@@ -510,5 +510,7 @@
     arrange, group, ungroup, isGroup, lock, unlockAll, align,
     has: () => !!model() && sel().length > 0,
     hasClip: () => !!st.clip,
+    // para as camadas (js/ui-layers.js, etapa 6): os blocos, as peças e o escrever numa edição só
+    kit: { blocks, unitsOf, layerUnits, noteTop, indentOf, reindent, rewrite, ready, many },
   };
 })(window.Weasel = window.Weasel || {});

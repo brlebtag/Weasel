@@ -89,6 +89,14 @@ Então para que servem as camadas? Para dar a um grupo de formas algo que vale p
 > - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK. Ao esticar, também ficam paradas as linhas com `{conta}` no tamanho (o raio, a largura e a altura, o `size=`, o `scale=`) ou no `rot=`.
 > - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+3** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor; com o foco no código, também o **Ctrl+H**): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
 
+> **Dica do editor:** o painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amostras. O título de cada parte da coluna dobra e desdobra; numa janela estreita, o painel aparece por cima do desenho.
+>
+> - **Arrastar uma linha** muda o lugar dela no código: solte entre duas linhas, ou em cima do nome de uma camada para levar a linha para a frente dessa camada (o fim dela). Com várias escolhidas, todas vão juntas, com os comentários logo acima de cada uma. **Objeto › Mandar para a camada** faz o mesmo com a escolha.
+> - **Arrastar o nome de uma camada** muda a ordem das camadas: o bloco dela (os comentários de cima, a linha `layer` e as linhas até a última forma dela) muda de lugar no código. A camada automática fica sempre no fundo.
+> - O **＋** cria uma camada (`layer layer1`) logo acima da camada onde se desenha. Ela passa a ser a camada onde se desenha, marcada com uma barrinha laranja no nome. Escolher uma forma, ou clicar no nome de uma camada, também muda a camada onde se desenha.
+> - **Duplo clique num nome** renomeia a linha e as palavras que apontam para ele (`clip=`, `cut=`, `inkon=`, `hide=`, a `key forma.prop=`…). Um nome que outra linha também cria (como dois furos com o mesmo nome) muda só naquela linha.
+> - A **lixeira**, que aparece com o mouse no nome da camada, apaga a camada e as formas dela. As `anim` e as `key` ficam.
+
 ## A ordem de pintura
 
 O Weasel não pinta enquanto lê. Ele lê o arquivo **inteiro** primeiro, monta o desenho e só então pinta, nesta ordem:
