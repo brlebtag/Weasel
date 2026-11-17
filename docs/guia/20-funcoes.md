@@ -2,7 +2,7 @@
 
 [← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Linha de comando →](21-linha-de-comando.md)
 
-Este capítulo é para consulta. Ele mostra onde uma conta pode aparecer, quais variáveis valem dentro dela, as operações, o `pi` e todas as funções, cada uma com exemplos. Para aprender `let` e `repeat` desde o começo, veja o [capítulo 5](05-componentes.md).
+Este capítulo é para consulta. Ele mostra onde uma conta pode aparecer, quais variáveis valem dentro dela, as operações, o `pi` e todas as funções, cada uma com exemplos. Para aprender `let` e `repeat` desde o começo, veja o [capítulo 5](05-contas.md).
 
 Os resultados aparecem como o Weasel escreve os números: com ponto, como em `2.5`.
 

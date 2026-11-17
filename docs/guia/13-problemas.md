@@ -669,7 +669,7 @@ key 0 bola.show=0
 key 6 bola.show=1
 ```
 
-Para uma peça que aparece só numa versão do personagem, use `hidden` com `variant … show=` ([capítulo 6](05-componentes.md#variantes-que-trocam-peças-show-e-hide)): aí a `key` funciona nessa versão.
+Para uma peça que aparece só numa versão do personagem, use `hidden` com `variant … show=` ([capítulo 6](06-componentes.md#trocar-peças-show-e-hide)): aí a `key` funciona nessa versão.
 
 ### A `key` de `tint` não muda a cor
 
@@ -781,7 +781,7 @@ Dentro de um `def`, os **limites** de um `repeat` são diferentes: eles são lid
 erro: variável desconhecida "n": dentro de def, os limites do repeat usam números ou variáveis do let (os parâmetros do def só valem nas contas das linhas de dentro)
 ```
 
-Use um número (`repeat i 0..7`) ou uma variável do `let`. Nas contas das linhas de dentro do `repeat`, os parâmetros valem normalmente ([capítulo 5](05-componentes.md#repeat-dentro-do-componente)).
+Use um número (`repeat i 0..7`) ou uma variável do `let`. Nas contas das linhas de dentro do `repeat`, os parâmetros valem normalmente ([capítulo 6](06-componentes.md#repeat-dentro-do-componente)).
 
 ### "parâmetro desconhecido" num `use`
 

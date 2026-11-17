@@ -1185,7 +1185,7 @@ ellipse brilho {cx - r/3},{75 - r/3} {r/4} c=#fff6c0
 - O `let` só guarda números. As cores com nome vão na [`palette`](#palette).
 - O `let` não pode ficar dentro de um `def` (erro). As variáveis do arquivo já valem dentro do componente.
 
-**Para aprender:** [Contas e `let`](05-componentes.md#contas----e-let).
+**Para aprender:** [Nomes para números: `let`](05-contas.md#nomes-para-números-let).
 
 ### `gradient`
 
@@ -1302,7 +1302,7 @@ ellipse estrela 240,40 4 c=#ffffff hidden
 - Uma palavra a mais (`variant noite clara`) não dá aviso: o Weasel não liga para ela.
 - Num filme, o `--variant` não vale: escolha a versão de cada ator com `variant=` no `actor` ou com `at ator.variant=`.
 
-**Para aprender:** [Variantes](05-componentes.md#variantes-outra-versão-do-desenho-variant) e [peças](05-componentes.md#variantes-que-trocam-peças-show-e-hide).
+**Para aprender:** [Variantes](06-componentes.md#variantes-variant) e [Trocar peças](06-componentes.md#trocar-peças-show-e-hide).
 
 ### `include`
 
@@ -1345,7 +1345,7 @@ ellipse pupila 85,65 6 c=escuro
 - Na linha de comando, escreva o nome com o `.weasel`: `include "cores"` não acha o `cores.weasel`. No editor, o outro arquivo precisa estar aberto numa aba.
 - Uma palavra a mais na linha não dá aviso.
 
-**Para aprender:** [Vários arquivos](05-componentes.md#vários-arquivos-include).
+**Para aprender:** [Vários arquivos](06-componentes.md#vários-arquivos-include).
 
 ### `ref`
 
@@ -1598,7 +1598,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 - No `cut=`, a forma que recorta precisa ser fechada (`shape`, `ellipse` ou `rect`): um nome de camada dá erro. Todas as formas com aquele nome abrem buraco, e buracos que se cruzam viram um só.
 - No `mirror=`, a forma copiada precisa ter nome e ser do mesmo comando. A cópia leva as opções dela; as que você escrever na linha do `mirror=` trocam essas. Os pontos escritos na linha do `mirror=` são ignorados (aviso).
 
-**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](06-ossos.md#formas-que-dobram-bones), [`cloth=`](06-ossos.md#tecido-cloth), [`mirror=`](05-componentes.md#espelho-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
+**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](06-ossos.md#formas-que-dobram-bones), [`cloth=`](06-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
 
 ### `shape`
 
@@ -1917,7 +1917,7 @@ Qualquer outra linha (`layer`, `bone`, `anim`, `light`, `palette`, `let`, outro 
 - Um parâmetro sem `=` (`def flor tam`) é ignorado, sem aviso.
 - Uma forma de dentro tem o mesmo nome em todas as cópias: `key 6 miolo.c=#ffffff` muda o miolo de todas as flores. Para animar uma cópia só, prenda essa cópia num osso (`use … bone=`).
 
-**Para aprender:** [Componentes](05-componentes.md#componentes-def-e-use) e [`repeat` dentro do componente](05-componentes.md#repeat-dentro-do-componente).
+**Para aprender:** [Componentes](06-componentes.md#componentes-def-e-use) e [`repeat` dentro do componente](06-componentes.md#repeat-dentro-do-componente).
 
 ### `use`
 
@@ -1973,7 +1973,7 @@ Um nome que não é nada disso dá um aviso com a lista dos parâmetros do `def`
 - Um componente dentro do outro vai até 8 níveis. Um componente que usa a si mesmo dá erro.
 - O `use` não tem nome: uma `key` não muda a cópia inteira. Para animar a cópia, prenda num osso (`bone=`) e anime o osso.
 
-**Para aprender:** [Parâmetros](05-componentes.md#parâmetros-números-e-cores), [Tamanho e giro](05-componentes.md#tamanho-e-giro-scale-e-rot), [Espelhar](05-componentes.md#espelhar-flip) e [Transparência](05-componentes.md#transparência-opacity).
+**Para aprender:** [Parâmetros](06-componentes.md#parâmetros-números-e-cores), [Tamanho e giro](06-componentes.md#tamanho-e-giro-scale-e-rot), [Espelhar](06-componentes.md#espelhar-flip) e [Transparência](06-componentes.md#transparência-opacity).
 
 ### `repeat`
 
@@ -2023,7 +2023,7 @@ end
 - Um `let` dentro do `repeat` não enxerga a variável dele (dá erro). Escreva a conta direto na linha.
 - Um `repeat` sem o `end` dá erro.
 
-**Para aprender:** [Repetir](05-componentes.md#repetir-repeat), [Um `repeat` dentro do outro](05-componentes.md#um-repeat-dentro-do-outro) e [De trás para a frente](05-componentes.md#de-trás-para-a-frente).
+**Para aprender:** [Repetir](05-contas.md#repetir-repeat), [Um `repeat` dentro do outro](05-contas.md#um-repeat-dentro-do-outro) e [De trás para a frente](05-contas.md#de-trás-para-a-frente).
 
 ### `group`
 
@@ -2064,7 +2064,7 @@ end
 
 No editor, Ctrl+G escreve o `group` e o `end` em volta das formas escolhidas.
 
-**Para aprender:** [Grupos](05-componentes.md#grupos-group) e [travas](04-camadas.md#travar-no-editor-lock).
+**Para aprender:** [Grupos](06-componentes.md#grupos-group) e [travas](04-camadas.md#travar-no-editor-lock).
 
 ## Ossos e animação
 

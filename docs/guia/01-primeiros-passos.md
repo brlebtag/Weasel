@@ -320,7 +320,7 @@ ellipse cabeca 150,{190-50-32-32-20} 20 c=#ffffff
 
 **Experimente:** troque o raio de `baixo` por 60 e o `50` das outras duas linhas por `60`. As bolas de cima sobem juntas.
 
-As contas têm muito mais: nomes para números (`let`), repetições e sorteios, no [capítulo 5](05-componentes.md). As funções que cabem nas chaves estão no [capítulo 20](20-funcoes.md).
+As contas têm muito mais: nomes para números (`let`), repetições e sorteios, no [capítulo 5](05-contas.md). As funções que cabem nas chaves estão no [capítulo 20](20-funcoes.md).
 
 ## Quando algo dá errado
 

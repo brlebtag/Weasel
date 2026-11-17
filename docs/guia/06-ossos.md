@@ -1,6 +1,6 @@
 # 6. Ossos: o que faz o desenho se mexer
 
-[← Contas e componentes](05-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)
+[← Componentes e arquivos](06-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)
 
 Este é o capítulo que mais confunde, então vamos devagar.
 
@@ -654,7 +654,7 @@ O membro é desenhado com a cor `c=` (padrão: a cor de tinta) e não precisa de
 
 ### Até onde o braço alcança
 
-O comprimento do braço não aparece no desenho. Para ver até onde a mão pode ir, desenhe um círculo em volta do ombro, com esse raio, numa camada `guide` (ela só aparece no editor). A função [`dist`](05-componentes.md#distância-dist) faz a conta:
+O comprimento do braço não aparece no desenho. Para ver até onde a mão pode ir, desenhe um círculo em volta do ombro, com esse raio, numa camada `guide` (ela só aparece no editor). A função [`dist`](20-funcoes.md#dist) faz a conta:
 
 <!-- gerar: img/06_alcance.gif -a estica --guides -->
 ```weasel
@@ -1066,7 +1066,7 @@ Repare:
 
 ## Outras coisas que seguem um osso
 
-Formas não são as únicas que andam com um osso. Um **componente inteiro** (`use`, [capítulo 5](05-componentes.md)) também aceita `bone=`: todas as peças dele vão juntas, como se cada uma tivesse o `bone=`.
+Formas não são as únicas que andam com um osso. Um **componente inteiro** (`use`, [capítulo 6](06-componentes.md)) também aceita `bone=`: todas as peças dele vão juntas, como se cada uma tivesse o `bone=`.
 
 <!-- gerar: img/06_chapeu.gif -a parado -->
 ```weasel
@@ -1106,4 +1106,4 @@ Também seguem um osso, com o mesmo `bone=`:
 - uma **luz** (`light … bone=`): a lanterna na mão, o lampião balançando ([capítulo 8](08-luz-efeitos.md#os-três-tipos-de-luz-e-o-ambiente));
 - as **caixas de colisão** (`box … bone=`) e os **pontos de encaixe** (`point … bone=`) de um jogo ([capítulo 9](09-jogo-godot.md)).
 
-[← Contas e componentes](05-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)
+[← Componentes e arquivos](06-componentes.md) · [Índice](README.md) · [Próximo: Animação →](07-animacao.md)

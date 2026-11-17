@@ -660,7 +660,7 @@ ellipse olho 75,80 7 c=ink
 - O gradiente `corpo` usa os nomes `claro` e `escuro`.
 - O peixe usa `c=corpo`. A cor dele vem da `palette`, passando pelo gradiente.
 
-**Experimente:** na `palette`, troque para `claro=#bfe3ff escuro=#2f6fb5`. O peixe inteiro fica azul, com o brilho no mesmo lugar. No [capítulo 6](05-componentes.md), as variantes usam isso para fazer o mesmo desenho em várias cores.
+**Experimente:** na `palette`, troque para `claro=#bfe3ff escuro=#2f6fb5`. O peixe inteiro fica azul, com o brilho no mesmo lugar. No [capítulo 6](06-componentes.md#variantes-variant), as variantes usam isso para fazer o mesmo desenho em várias cores.
 
 ### Opções do `gradient`
 
@@ -681,7 +681,7 @@ No editor, a ferramenta **Degradê** (G) cria um gradiente quando você arrasta 
 - Posições fora de 0 a 1, ou fora de ordem, são corrigidas sem aviso: `#fff@1.5` vale 1.
 - Um gradiente não vale onde só cabe o código `#` (a textura, as luzes, os efeitos das camadas): dá o erro `aqui só vale cor simples`.
 - Um gradiente com o mesmo nome de uma cor da `palette` dá aviso, e vale a cor.
-- Num componente ([capítulo 6](05-componentes.md)), os pontos sem `box` são medidos no componente, e o gradiente anda junto com cada cópia.
+- Num componente ([capítulo 6](06-componentes.md)), os pontos sem `box` são medidos no componente, e o gradiente anda junto com cada cópia.
 
 ## Textura: `pattern`
 

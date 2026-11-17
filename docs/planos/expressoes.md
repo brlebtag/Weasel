@@ -1,10 +1,10 @@
 # Contas novas dentro de `{}`
 
-**Situação:** feito na 1.38.0 (14/11/2026). Item 2 da fila combinada em 10/11/2026. O que ficou está no [capítulo 5 do guia](../guia/05-componentes.md#o-que-vale-dentro-das-chaves) e em [Como ficou](#como-ficou-1380), no fim deste arquivo.
+**Situação:** feito na 1.38.0 (14/11/2026). Item 2 da fila combinada em 10/11/2026. O que ficou está no [capítulo 5 do guia](../guia/05-contas.md#o-que-cabe-nas-chaves) e em [Como ficou](#como-ficou-1380), no fim deste arquivo.
 
 ## Hoje
 
-O que vale dentro das chaves está no [capítulo 5](../guia/05-componentes.md#o-que-vale-dentro-das-chaves): as quatro operações, `%`, `^`, e as funções `sin`, `cos`, `tan`, `atan2`, `sqrt`, `abs`, `min`, `max`, `floor`, `ceil`, `round`, `pow`, `lerp`, `clamp`, `dist` e `rand`.
+O que vale dentro das chaves está no [capítulo 5](../guia/05-contas.md#o-que-cabe-nas-chaves): as quatro operações, `%`, `^`, e as funções `sin`, `cos`, `tan`, `atan2`, `sqrt`, `abs`, `min`, `max`, `floor`, `ceil`, `round`, `pow`, `lerp`, `clamp`, `dist` e `rand`.
 
 ## O que entra
 

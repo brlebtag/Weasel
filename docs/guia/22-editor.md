@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 4. As dicas dos outros assuntos (ossos, animação, luz, estilos, filme) ainda estão nos capítulos antigos.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 6. As dicas dos outros assuntos (ossos, animação, luz, estilos, filme) ainda estão nos capítulos antigos.
 
 ## Abrir e rodar
 
@@ -22,6 +22,12 @@ O editor escreve o código por você: cada ferramenta, painel e ponto de arrasta
 - Um clique numa forma do desenho leva o cursor até a linha dela. Só conta clicar e soltar: arrastar move a vista.
 - Com formas uma em cima da outra, clique de novo no mesmo lugar para pegar a de baixo.
 - Numa cópia de um componente, o clique leva à linha do `use`.
+
+## Números no código
+
+- Segure **Alt** e arraste um número do código para os lados: ele muda, e o desenho acompanha. Com **Shift**, ele muda 10 vezes mais rápido.
+- Os pontos que vêm de uma conta (`{cx-20},{cy}`) aparecem **cinza** no desenho e não se movem com o mouse: o editor não sabe reescrever a conta. Para ajustar, mude a variável do `let`, ou use o Alt+arrastar no número.
+- Os pontos de uma linha dentro de um `repeat` também ficam cinza: mexer num mudaria todas as cópias.
 
 ## As ferramentas
 
@@ -371,7 +377,7 @@ Não confunda com as [linhas guia das réguas](#réguas-linhas-guia-e-medir), qu
 - No painel Camadas, o cadeado de cada linha (e de cada camada) põe e tira o `lock`.
 - Uma forma travada não se escolhe nem se arrasta no desenho: o clique passa para o que está embaixo.
 
-**Agrupar (`group`, do [capítulo 6](05-componentes.md#grupos-group)):**
+**Agrupar (`group`, do [capítulo 6](06-componentes.md#grupos-group)):**
 - **Ctrl+G** agrupa as formas escolhidas: o editor escreve o `group group1` e o `end` em volta delas. Se as formas estavam espalhadas no código, o editor as junta onde estava a primeira.
 - **Ctrl+Shift+G** desfaz o grupo, um nível por vez. Os dois também estão no menu **Objeto**.
 - Com a **Seleção** (V), um clique numa forma do grupo escolhe o grupo inteiro. A **Seleção direta** (A) pega uma forma só.
@@ -379,5 +385,43 @@ Não confunda com as [linhas guia das réguas](#réguas-linhas-guia-e-medir), qu
 - Copiar, colar, apagar, organizar e o Alt+arrastar levam o grupo inteiro, do `group` ao `end`.
 
 **Alinhar:** **Objeto › Alinhar** (e o grupo **Alinhar** do painel Propriedades) alinha as formas escolhidas à esquerda, ao centro, à direita, em cima, no meio ou embaixo. Com três ou mais, distribui com a mesma distância entre os meios. Um grupo anda inteiro. Com uma forma (ou um grupo) só, ela se alinha no papel, o `canvas`.
+
+## Prévia do componente
+
+Com o cursor em qualquer linha entre o `def` e o `end` ([capítulo 6](06-componentes.md#componentes-def-e-use)), o editor mostra o componente sozinho. Dá para experimentar valores para os parâmetros sem mudar o código.
+
+- Se o `def` não tem nenhum `use`, o editor mostra só o componente, sozinho, enquanto o cursor estiver nele. Saindo do `def`, o desenho volta.
+- Num `def` que já tem `use`, o desenho continua. Ligue a chave **Prévia do def**, que aparece na barra de baixo com o cursor num `def`. A mesma chave desliga a prévia de um `def` sem `use`.
+- A **cruz rosa** marca a origem `0,0`: o ponto que vai parar no `x,y` do `use`.
+- O painel **Prévia**, embaixo à direita, tem uma linha para cada parâmetro, começando no valor padrão:
+  - **número:** escreva no campo, ou arraste o nome para os lados (com **Shift**, 10 vezes mais rápido);
+  - **cor:** o quadradinho abre o seletor; o campo aceita `#hex`, um nome da `palette`, um nome de cor ou `none`;
+  - **gradiente:** uma lista com os do arquivo.
+- O painel **não muda o código**: os valores ficam só enquanto a página está aberta. O ↺ de uma linha volta aquele parâmetro ao padrão, e **Voltar ao padrão** volta todos.
+- **Copiar como use** copia uma linha pronta com o que você mudou (por exemplo, `use botao 0,0 borda=10`). Cole no código e troque o `0,0` pela posição.
+- Os pontos de arrastar continuam valendo: arrastar um muda a linha do `def`, nas coordenadas dele.
+- A prévia não mostra animação, luzes nem o que vem de fora do `def`. Um erro que só acontece com um valor do painel aparece no painel, não no código.
+- **Pintar** pinta só o componente.
+
+## Painel Símbolos
+
+O editor chama o `def` de **símbolo**, e cada `use` de **instância**. O painel **Símbolos**, na coluna da direita (**Janela › Símbolos**), mostra cada `def` do arquivo com uma miniatura, desenhada com os valores padrão. O número no canto conta os `use`.
+
+- **Arraste uma miniatura para o desenho:** o editor escreve `use nome x,y` na camada onde se desenha, com a origem do símbolo onde você soltou. **Colocar** faz o mesmo no meio da vista.
+- **Criar símbolo** (**F8**, ou o ＋ do painel): as formas escolhidas viram um `def` novo (`symbol1`, `symbol2`…), com a origem no meio delas. No lugar delas fica um `use`, e o desenho não muda. O `def` entra depois do último `def` do arquivo (sem nenhum, antes da primeira camada). Os comentários logo acima das formas vão junto.
+- **Duplo clique num `use`** (ou na miniatura, ou **Editar**) entra no símbolo: o desenho mostra só ele, com a prévia. Lá dentro, as formas se escolhem, se mexem, esticam e giram como no desenho, e dá para apagar, agrupar e criar outro símbolo (um dentro do outro). **Esc**, ou um duplo clique no vazio, sai e escolhe de novo o `use` de onde você entrou.
+- **Quebrar vínculo** troca os `use` escolhidos pelas formas do `def`, no mesmo lugar, tamanho, giro e espelho. Os parâmetros viram os valores do `use`, as contas viram números, o `ink=` e o `w=` engrossam junto com o `scale=`, e o `opacity=` e o `z=` do `use` passam para cada forma. Um `rect` girado, numa cópia esticada só para um lado, vira o `rect` mais parecido, porque o `rect` não entorta.
+- Não dá para quebrar o vínculo de um `def` com `repeat`, de um `use` com `bone=`, `cloth=` ou `billboard`, nem de um `use` com conta na posição.
+- **Duplo clique no nome** de uma miniatura renomeia o `def` e todos os `use` dele. **Apagar** apaga um `def` sem nenhum `use`, com os comentários de cima.
+- Cada gesto vira uma única mudança no código. Um **Ctrl+Z** desfaz o gesto inteiro.
+
+## Vários arquivos
+
+- Para o `include` ([capítulo 6](06-componentes.md#vários-arquivos-include)) funcionar no editor, o arquivo incluído precisa estar aberto numa aba (**Arquivo › Abrir…**). O editor acha o arquivo pelo nome.
+- Num arquivo só de peças, que não desenha nada, ponha o cursor num `def`: a prévia mostra o componente, e dá para conferir as peças sem sair do arquivo.
+
+## Variantes
+
+- O seletor de variante fica na barra da vista do desenho. Ele mostra a versão escolhida da `variant` ([capítulo 6](06-componentes.md#variantes-variant)), sem mudar o código.
 
 [← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)

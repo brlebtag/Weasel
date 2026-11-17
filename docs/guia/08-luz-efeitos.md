@@ -128,7 +128,7 @@ ellipse olhoD 192,100 3,5 c=ink
 
 ![Uma pracinha de dia: céu azul, grama verde, uma caixa laranja, uma bola vermelha e um bichinho verde](img/08_praca.png)
 
-Vários exemplos a seguir começam com `include "praca.weasel"`: o arquivo inteiro entra naquela linha ([capítulo 5](05-componentes.md#vários-arquivos-include)), e o exemplo só acrescenta a luz embaixo.
+Vários exemplos a seguir começam com `include "praca.weasel"`: o arquivo inteiro entra naquela linha ([capítulo 6](06-componentes.md#vários-arquivos-include)), e o exemplo só acrescenta a luz embaixo.
 
 Repare em três detalhes da pracinha. Eles só fazem diferença quando houver luz:
 

@@ -587,7 +587,7 @@ As outras opções das formas aparecem nos próximos capítulos:
 |---|---|---|
 | `ink=`, `inkc=`, `weight=`, `opacity=` | o contorno e a transparência | [capítulo 3](03-cores.md) |
 | `cut=`, `inkon=` | buracos e o contorno em outra camada | [capítulo 4](04-camadas.md) |
-| `mirror=` | uma cópia espelhada de outra forma | [capítulo 6](05-componentes.md#espelho-mirror) |
+| `mirror=` | uma cópia espelhada de outra forma | [capítulo 6](06-componentes.md#espelho-de-uma-forma-mirror) |
 | `bone=`, `bones=`, `cloth=` | a forma segue ossos ou balança como pano | [capítulo 8](06-ossos.md) |
 | `emit=` | a forma brilha | [capítulo 11](08-luz-efeitos.md#coisas-que-brilham-emit) |
 | `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](11-profundidade.md) |

@@ -1,6 +1,6 @@
 # 4. Camadas
 
-[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-componentes.md)
+[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-contas.md)
 
 Uma camada junta formas com um nome. Com ela, você aplica uma coisa a todas as formas do grupo de uma vez: uma transparência, um jeito de misturar as cores, um recorte. Neste capítulo você aprende a abrir camadas, a ordem em que o Weasel pinta, a deixar uma camada transparente, a recortar uma camada pelo formato de outra forma e a abrir buracos. Você só precisa dos capítulos 1 a 3.
 
@@ -479,7 +479,7 @@ text t2 330,186 "cut=olho1,olho2" size=16 align=center
 
 ![Um queijo amarelo com quatro furos contornados e uma bolacha com um buraco em forma de óculos, de contorno contínuo](img/04_furos_juntos.png)
 
-- As quatro elipses se chamam `furo`, e `cut=furo` abre as quatro. É assim que um `repeat` faz dezenas de furos de uma vez ([capítulo 5](05-componentes.md)): todas as cópias têm o mesmo nome.
+- As quatro elipses se chamam `furo`, e `cut=furo` abre as quatro. É assim que um `repeat` faz dezenas de furos de uma vez ([capítulo 5](05-contas.md#repetir-repeat)): todas as cópias têm o mesmo nome.
 - `olho1` e `olho2` se cruzam no meio. O pedaço em comum também fica vazio, e o contorno segue a borda do buraco inteiro, sem riscar o meio.
 
 **Experimente:** mude o raio de `olho1` e `olho2` de `28` para `40`. O buraco passa da borda da bolacha, como a mordida do biscoito.
@@ -623,7 +623,7 @@ O `lock` **trava**: no editor, o desenho não deixa escolher nem arrastar as for
 - Numa forma, trava só ela.
 - No editor, **Ctrl+2** trava a escolha e **Ctrl+Alt+2** destrava tudo, menos as camadas. O cadeado do painel Camadas põe e tira o `lock` ([capítulo 22](22-editor.md#travar-e-agrupar)).
 
-Para juntar formas e mexer nelas de uma vez, existe o `group` ([capítulo 6](05-componentes.md#grupos-group)).
+Para juntar formas e mexer nelas de uma vez, existe o `group` ([capítulo 6](06-componentes.md#grupos-group)).
 
 ## Todas as opções da camada
 
@@ -723,4 +723,4 @@ rect tampa 314,96 32,22 r=4 c=#c08a55 ink=line
 - `inkon=` pinta o contorno de uma forma junto com outra camada, para ele ficar por cima.
 - `hidden` não pinta a camada (as formas dela continuam recortando), `guide` só aparece no editor e com `--guides`, e `lock` trava as formas no editor.
 
-[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-componentes.md)
+[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-contas.md)

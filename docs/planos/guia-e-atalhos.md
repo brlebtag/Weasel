@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2. Próximo: a etapa 4.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3. Próximo: a etapa 5.
 
 ## O pedido
 
@@ -428,3 +428,20 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 - **As imagens:** 46 novas ou refeitas nos capítulos 1 a 4. Saíram 28 que nenhum exemplo gera mais (`01_sol_lua`, nove `02_*` do contorno e da transparência, treze `03_*` da variante e do gradiente antigos e cinco `04_*`).
 - **Os links:** os **Para aprender** do 19, os capítulos 7, 8, 13, 14 e 21, o índice e dois planos levam aos títulos novos. A conferência do `npm test` não acha nenhum link quebrado.
 - **Problemas do código achados de passagem:** juntados em [Problemas achados no código](problemas-achados.md), com os das outras sessões e do diagnóstico.
+
+### Etapa 4 (1.67.3): organizar
+
+- **O capítulo 5 antigo (`05-componentes.md`) virou dois**, no formato da seção 3.3: o 5, Contas e repetição (`05-contas.md`, 495 linhas), e o 6, Componentes e arquivos (`06-componentes.md`, 666 linhas).
+- **"As funções, uma por uma"** (420 linhas do 5 antigo) saiu: o capítulo 20 já tem todas, com exemplos. O 5 novo ensina o `cos` e o `sin` com um relógio, as comparações e o `? :` com uma régua, e mostra uma tabela das funções mais usadas, com o link para o 20.
+- **Os desenhos de vitrine:** o jardim num dia de sol (5) e a cidade à noite na beira de um lago (6): um componente de prédio dentro de um componente de cidade, refletido com `flip=y`.
+- **Escolhas minhas:**
+  - o 5 começa onde o 1 parou: o boneco de neve do capítulo 1 ganha `let`;
+  - nenhum exemplo usa o que ainda não foi ensinado: o `repeat` começa sem `rand` (a cerca), e o `%` entra na tabela das contas, antes do xadrez;
+  - o `0,0` do componente se chama **origem**, como no glossário, e não mais "alça";
+  - o exemplo do `include` com o Cavaleiro saiu (o `canvas` depois do `include` confundia); ficou o arquivo de peças, e o `noite.weasel` é citado;
+  - o 6 junta `def`/`use`, `mirror=`, `include`, `group` e `variant` (estes dois estavam no fim do 5 antigo desde a etapa 3).
+- **Erros de fato corrigidos** (do diagnóstico): o `def` aceita também `repeat`, `group`, `mirror=` e `include` (o texto dizia "só formas e use"); com o mesmo `rand` em `x`, `y` e no tamanho, as estrelas ficam numa diagonal, as maiores à direita (não "cada uma maior que a anterior"); o nome de uma variável também pode começar com `_`; o `mirror=` sem `@` usa a linha em pé no meio do canvas.
+- **As dicas do editor** foram para o 22, em cinco títulos novos: Números no código, Prévia do componente, Painel Símbolos, Vários arquivos e Variantes.
+- **Linha J:** o "Repare" da transparência do `use` (no 6) ficou neutro, verdadeiro antes e depois da correção, com a marca `<!-- conferir -->`, como o do 3. Quando a J sair, ela devolve ali a frase do componente transparente como uma imagem só, gera de novo o `05_use_opacity.png` e o `05_reflexo.png` (agora no 6) e tira a marca. O `05_grade.png` saiu com as funções.
+- **As imagens:** 11 novas (`05_boneco`, `05_cerca`, `05_bolhas`, `05_piramide`, `05_capim`, `05_regua`, `05_relogio`, `05_jardim`, `06_arvores`, `06_parametros` e `06_cidade`). As outras 18 dos dois capítulos saem iguais, byte a byte. Saíram 16 que nenhum exemplo gera mais: as 13 das funções, o `05_componentes`, o `05_include` e o `05_repeat`.
+- **Os links:** os **Para aprender** do 19, os capítulos 1 a 4, 20 e 21, os antigos de ossos, luz e problemas, o índice e o plano das expressões levam aos arquivos novos. A navegação do capítulo de ossos volta para o 6, até o 7 existir.

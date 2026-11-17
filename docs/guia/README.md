@@ -25,8 +25,8 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 
 | | Capítulo | O que você aprende |
 |---|---|---|
-| 5 | [Contas e repetição](05-componentes.md) (antigo) | `let` e `{contas}`, `repeat` e `rand()` |
-| 6 | [Componentes e arquivos](05-componentes.md#componentes-def-e-use) (antigo) | `def` e `use`, `group`, o espelho `mirror=`, `include` e as variantes (`variant`) |
+| 5 | [Contas e repetição](05-contas.md) | `let` e as contas, `repeat`, `rand()`, comparar e escolher, e as funções mais usadas |
+| 6 | [Componentes e arquivos](06-componentes.md) | `def` e `use`, o espelho `mirror=`, `include`, `group` e as variantes (`variant`) |
 
 ### 3. Movimento
 
