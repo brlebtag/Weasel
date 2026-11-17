@@ -221,7 +221,7 @@ As `key` também mudam formas, camadas e luzes. Em vez do nome de um osso, escre
 | `show` | forma, camada, caixa | aparece (`1`) ou some (`0`) | de uma vez |
 | `shape` | forma | **morph**: vira outra forma (fechada com fechada, traço com traço) | aos poucos (veja abaixo) |
 | `draw` | forma | quanto já foi **desenhado**, de 0 a 1 | aos poucos ([abaixo](#desenhar-aos-poucos-draw)) |
-| `above` `below` | forma, camada | pinta na frente (ou atrás) de outra ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)) | de uma vez |
+| `above` `below` | forma, camada | pinta na frente (ou atrás) de outra ([mais abaixo](#trocar-quem-fica-na-frente-above-e-below)) | de uma vez |
 | `blur` `glow` `tint` `brightness` `saturate` `contrast` `hue` | camada | efeitos ([capítulo 8](08-luz-efeitos.md#efeitos-de-camada)) | aos poucos |
 | `power` `radius` `c` `glow` `aim` `cone` | luz | a luz ([capítulo 8](08-luz-efeitos.md)) | aos poucos |
 
@@ -356,7 +356,7 @@ Repare, estrela por estrela (os números vão de "normal", no quadro 0, até o v
 
 - `glow` e `tint` precisam de uma **cor**, e ela vem da linha do `layer`: `layer l4 glow=#ff6b4a,0` diz a cor (vermelha) e começa sem brilho (raio 0). Do mesmo jeito, `layer l5 tint=#4a90d9,0` diz o azul e começa sem tingir. Sem o `tint=cor,…` na camada, a `key` do `tint` não muda nada; sem o `glow=` na camada, o brilho sai branco.
 - `opacity` e `show` também valem para uma forma só; os outros efeitos são só de camada. Os efeitos parados (sem animar) estão no [capítulo 8](08-luz-efeitos.md#efeitos-de-camada).
-- `above` e `below` mudam a ordem das camadas ([capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)).
+- `above` e `below` mudam a ordem das camadas ([mais abaixo](#trocar-quem-fica-na-frente-above-e-below)).
 
 **Experimente:** troque `l9.hue=180` por `l9.hue=90`. A estrela para no verde, em vez de ir até o azul.
 
@@ -784,6 +784,41 @@ Repare:
 - A imagem da esquerda foi gerada sem `-a`: é a pose parada. Sem `pose` na lista dos olhos, o bicho ficaria sem olhos nessa imagem e no editor, quando nenhuma animação está escolhida.
 
 **Experimente:** tire o `pose,` da camada `olhos`. Gere a imagem sem animação: o bicho fica sem olhos.
+
+## Trocar quem fica na frente: `above=` e `below=`
+
+Uma animação também pode mudar a ordem de pintura. `key quadro forma.above=outra` faz a forma ser pintada logo **depois** da outra (na frente dela) a partir daquele quadro, e `below=` faz ela ser pintada logo **antes** (atrás). É assim que uma bola dá a volta num poste, um braço passa atrás do corpo ou uma espada gira em volta do personagem:
+
+<!-- gerar: img/04_volta.gif -a volta -->
+```weasel
+canvas 320 200 bg=#f4efe6
+palette ink=#2b2a33 line=5 bola=#ff6b4a madeira=#a8794f
+
+bone bola pivot=160,110
+
+ellipse bola 160,110 28 c=bola ink=line bone=bola
+rect poste 154,16 12,176 r=4 c=madeira ink=line
+
+anim volta frames=24 fps=12
+key 0 bola=-110,0,0,1,1 bola.below=poste
+key 6 bola=0,-18,0,0.85,0.85
+key 12 bola=110,0,0,1,1 bola.above=poste
+key 18 bola=0,18,0,1.15,1.15
+key 24 bola=-110,0,0,1,1 bola.below=poste
+```
+
+![Uma bola vermelha dá a volta num poste: na ida passa por trás dele, na volta passa pela frente](img/04_volta.gif)
+
+Repare:
+
+- Na ida (quadros 0 a 12), `bola.below=poste` põe a bola atrás do poste. Na volta (quadros 12 a 24), `bola.above=poste` põe na frente.
+- A troca é **de uma vez**, como o `show`, e vale até a próxima `key` que mude a ordem da bola. Por isso ela fica nos quadros 0 e 12, quando a bola está longe do poste e ninguém vê o salto.
+- Na ida a bola sobe e encolhe um pouco (escala `0.85`), e na volta desce e cresce (`1.15`): isso dá a impressão de longe e perto.
+- As duas formas precisam estar na **mesma camada**. Para mudar uma camada inteira de lugar, use os nomes das camadas: `key 8 bracoD.above=corpo`.
+- `none` volta para a ordem do arquivo: `key 20 bola.above=none`.
+- Na pose parada, sem animação, vale a ordem do arquivo.
+
+**Experimente:** na `key 0`, troque `bola.below=poste` por `bola.above=poste`. A bola passa a ficar na frente do poste a volta inteira.
 
 ## Uma imagem guia para cada movimento
 

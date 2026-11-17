@@ -1,12 +1,17 @@
-# 4. Camadas, recortes e acabamento
+# 4. Camadas
 
-[← Cores e estilos](03-cores.md) · [Índice](README.md) · [Próximo: Contas, componentes e arquivos →](05-componentes.md)
+[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-componentes.md)
 
-## O que é uma camada
+Uma camada junta formas com um nome. Com ela, você aplica uma coisa a todas as formas do grupo de uma vez: uma transparência, um jeito de misturar as cores, um recorte. Neste capítulo você aprende a abrir camadas, a ordem em que o Weasel pinta, a deixar uma camada transparente, a recortar uma camada pelo formato de outra forma e a abrir buracos. Você só precisa dos capítulos 1 a 3.
 
-Uma **camada** é um grupo de formas com nome. Ela serve para dar ao grupo inteiro alguma coisa de uma vez só: um recorte, uma transparência, um efeito.
+## O que é uma camada: `layer`
 
-`layer nome` abre uma camada. Tudo o que vem abaixo dela entra nela, até a próxima linha `layer`:
+```
+layer nome
+layer nome opções…
+```
+
+`layer nome` abre uma camada. As formas escritas abaixo dela entram nela, até a próxima linha `layer`:
 
 <!-- gerar: img/04_camadas.png -->
 ```weasel
@@ -27,14 +32,16 @@ ellipse olho 186,116 7 c=ink
 
 ![Céu azul com sol e nuvem, chão verde e uma bola vermelha de um olho só em cima do chão](img/04_camadas.png)
 
-Repare:
+Linha por linha:
 
-- `layer ceu` abre a camada `ceu`. O sol e a nuvem entram nela, porque vêm logo abaixo.
+- O chão vem **antes** do primeiro `layer`. Formas assim caem numa camada automática chamada `base`.
+- `layer ceu` abre a camada `ceu`. O sol e a nuvem entram nela.
 - `layer personagem` fecha a `ceu` e abre outra. O corpo e o olho entram na `personagem`.
-- O chão foi escrito **antes** do primeiro `layer`. Formas assim caem numa camada automática chamada `base`.
-- O desenho sai igual ao que sairia sem nenhuma linha `layer`: as camadas não mudam quem fica na frente (veja [a ordem de pintura](#a-ordem-de-pintura), logo abaixo).
+- O desenho fica igual ao de um arquivo sem nenhuma linha `layer`. A camada não muda quem fica na frente: isso é a [ordem de pintura](#a-ordem-de-pintura), logo abaixo.
 
-Para conferir em que camada cada coisa caiu, salve o exemplo como `teste.weasel` e peça um resumo com `--info`:
+O nome da camada segue a regra dos nomes das formas: letras sem acento, números, `_` e `-`, começando com uma letra ou `_`.
+
+Para ver em que camada cada forma caiu, salve o exemplo como `teste.weasel` e peça um resumo com `--info`:
 
 ```bash
 node cli/weasel.js teste.weasel --info
@@ -50,73 +57,45 @@ formas   5
 animações nenhuma
 ```
 
-A lista mostra as camadas na ordem em que são pintadas e quantas formas (itens) cada uma tem. A `base` está lá, com o chão, mesmo sem nenhuma linha `layer base`. (O `fundo #bfe3f5` da primeira linha é a cor de fundo do `canvas`, não uma camada.)
+As camadas aparecem na ordem em que são pintadas, com o número de formas de cada uma. A `base` está lá, com o chão, mesmo sem nenhuma linha `layer base`.
 
-Uma camada **não pode ser aberta de novo** mais adiante. Se você acrescentar estas linhas no fim do arquivo, para pôr mais uma nuvem no céu:
+No editor, o painel **Camadas** mostra esta mesma lista, em árvore, e deixa criar, renomear, esconder e arrastar camadas ([capítulo 22](22-editor.md#painel-camadas)).
 
-```
-layer ceu
-ellipse nuvem2 250,40 30,14 c=#ffffff
-```
+**Experimente:** troque a linha `layer ceu` por `layer fundo`. Nada muda na imagem, e o `--info` passa a mostrar a camada `fundo` com o sol e a nuvem.
 
-o Weasel reclama (a linha 15 é a do segundo `layer ceu`):
+**Cuidado:**
+- Uma camada não pode ser aberta de novo mais adiante. Se você acrescentar estas linhas no fim do arquivo, depois de uma linha em branco, para pôr mais uma nuvem no céu:
 
-```
-teste.weasel:15:7: erro: camada "ceu" já existe
-  15 | layer ceu
-     |       ^^^
-1 erro(s).
-```
+  ```
+  layer ceu
+  ellipse nuvem2 250,40 30,14 c=#ffffff
+  ```
 
-Para pôr mais uma forma numa camada, escreva a linha dentro dela, lá em cima.
+  o Weasel mostra um erro na linha do segundo `layer ceu`:
 
-Então para que servem as camadas? Para dar a um grupo de formas algo que vale para o grupo todo: **recorte** (`clip`, `cut`), **transparência**, **efeitos** (desfoque, brilho, sombra…), aparecer **só em certas animações** (`only=`), **luz** (`unlit`) e **profundidade** num filme (`depth=`). E para organizar: cada linha `layer` funciona como um título de seção no código. No editor, com o cursor numa forma, a barra de baixo diz em que camada ela está (`ellipse iris na camada olhos`), e os nomes das camadas aparecem nas sugestões de `clip=`, `cut=`, `inkon=` e `hide=`. O menu **Janela › Camadas** abre a mesma lista do `--info` em forma de árvore: cada camada, na ordem do código, com as linhas que desenham nela.
+  ```
+  teste.weasel:15:7: erro: camada "ceu" já existe
+    15 | layer ceu
+       |       ^^^
+  1 erro(s).
+  ```
 
-> **Dica do editor:** no painel **Camadas**, clique numa linha para escolhê-la. **Ctrl** + clique soma ou tira uma linha, e **Shift** + clique pega um trecho. Clicar no nome de uma camada escolhe todas as linhas dela. No desenho, **Shift** + clique numa forma também soma ou tira.
->
-> - Com duas linhas ou mais escolhidas, as formas ganham um contorno azul e uma caixa tracejada em volta. Arraste qualquer uma delas (ou o **✥** do meio da caixa) e todas andam juntas.
-> - A bolinha **verde** em cima da caixa gira tudo em volta do meio da caixa (com **Shift**, de 15 em 15 graus). Os pontos do `shape`, do `stroke` e da `line` giram. A `ellipse`, o `rect`, o `text` e o `use` mudam de lugar e ganham `rot=` (ou têm o `rot=` somado). O círculo e o `emitter` só mudam de lugar.
-> - Os quadradinhos **azuis** nos cantos e no meio dos lados da caixa esticam tudo junto, como num programa de desenho. O de um canto muda a largura e a altura; o do meio de um lado, só uma delas. O lado de lá fica parado (com **Alt**, o meio), **Shift** mantém a proporção, e passar para o outro lado espelha. Cada linha muda do seu jeito:
->   - os pontos e as alças de curva do `shape`, do `stroke` e da `line` esticam;
->   - a `ellipse` muda o raio, e o círculo vira elipse (`rx,ry`) quando a largura e a altura mudam diferente;
->   - o `rect` muda a largura e a altura;
->   - o `text` muda o `size=` pela altura: esticar só para o lado leva as letras junto, sem mudar o tamanho delas;
->   - o `use` ganha `scale=` e, quando espelha, `flip=`;
->   - o `emitter` só muda de lugar.
->
->   Uma forma girada (`rot=`) esticada de lado não entorta: ganha um giro e um tamanho novos que chegam perto. O `w=`, o `ink=` e o `r=` dos cantos não mudam. Com as réguas, o lado que anda gruda nas linhas guia.
-> - Um arraste inteiro se desfaz com um Ctrl+Z só. **Esc**, um clique fora das formas ou o cursor numa linha de fora soltam a escolha.
-> - Algumas linhas ficam paradas, e o painel as mostra apagadas, com o motivo quando o mouse para em cima: as que têm `{conta}` na posição, as cópias de um `repeat`, o que vem de um `include`, os espelhos (`mirror=`) e os membros com IK. Ao esticar, também ficam paradas as linhas com `{conta}` no tamanho (o raio, a largura e a altura, o `size=`, o `scale=`) ou no `rot=`.
-> - O **olho** no fim de cada linha (e de cada camada) esconde e mostra: ele escreve ou apaga o `hidden` daquela linha no código. Fechado e laranja, a linha está escondida e aparece em itálico no painel; as linhas de uma camada escondida ficam apagadas. **Ctrl+3** faz o mesmo em todas as linhas escolhidas (ou, sem escolha, na linha do cursor; com o foco no código, também o **Ctrl+H**): se alguma aparece, todas somem; se todas já estão escondidas, todas voltam. O `use` e o `include` não têm `hidden`, então não têm olho.
-
-> **Dica do editor:** o painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amostras. O título de cada parte da coluna dobra e desdobra; numa janela estreita, o painel aparece por cima do desenho.
->
-> - **Arrastar uma linha** muda o lugar dela no código: solte entre duas linhas, ou em cima do nome de uma camada para levar a linha para a frente dessa camada (o fim dela). Com várias escolhidas, todas vão juntas, com os comentários logo acima de cada uma. **Objeto › Mandar para a camada** faz o mesmo com a escolha.
-> - **Arrastar o nome de uma camada** muda a ordem das camadas: o bloco dela (os comentários de cima, a linha `layer` e as linhas até a última forma dela) muda de lugar no código. A camada automática fica sempre no fundo.
-> - O **＋** cria uma camada (`layer layer1`) logo acima da camada onde se desenha. Ela passa a ser a camada onde se desenha, marcada com uma barrinha laranja no nome. Escolher uma forma, ou clicar no nome de uma camada, também muda a camada onde se desenha.
-> - **Duplo clique num nome** renomeia a linha e as palavras que apontam para ele (`clip=`, `cut=`, `inkon=`, `hide=`, a `key forma.prop=`…). Um nome que outra linha também cria (como dois furos com o mesmo nome) muda só naquela linha.
-> - A **lixeira**, que aparece com o mouse no nome da camada, apaga a camada e as formas dela. As `anim` e as `key` ficam.
+  Para pôr mais uma forma numa camada, escreva a linha junto com as outras dela, antes da próxima linha `layer`.
+- Uma palavra solta que não é opção da camada dá aviso, com a lista das que existem: `layer ceu escondida` avisa `opção desconhecida "escondida"`.
 
 ## A ordem de pintura
 
-O Weasel não pinta enquanto lê. Ele lê o arquivo **inteiro** primeiro, monta o desenho e só então pinta, nesta ordem:
+O Weasel lê o arquivo inteiro primeiro e só depois pinta, nesta ordem:
 
 1. as camadas, na ordem em que aparecem no arquivo (a `base` primeiro);
 2. dentro de cada camada, as formas na ordem das linhas.
 
-Como uma camada não pode ser aberta de novo, isso dá o mesmo que ler o arquivo de cima para baixo: **o que vem depois fica por cima**.
+Como uma camada não pode ser aberta de novo, dá o mesmo que ler o arquivo de cima para baixo: **o que vem depois fica por cima**.
 
-<!-- gerar: img/04_ordem.png -->
+<!-- gerar: img/04_ordem_pintura.png -->
 ```weasel
 canvas 460 240 bg=#f4efe6
 palette ink=#2b2a33 line=6
-
-# o def está no começo, mas não pinta nada aqui:
-# o selo só é pintado na linha do use, a última do arquivo
-def selo
-ellipse fundo 0,0 34 c=#ffd34d ink=line
-text n 0,10 "5" size=28 align=center bold
-end
 
 ellipse um 90,96 62 c=#ff6b4a ink=line
 text n1 58,92 "1" size=28 align=center bold
@@ -125,522 +104,39 @@ text n2 192,92 "2" size=28 align=center bold
 ellipse tres 125,156 62 c=#7bd36b ink=line
 text n3 125,196 "3" size=28 align=center bold
 
+layer mesa
 rect cartao 270,40 150,150 r=12 c=#ffffff ink=line
 text n4 345,125 "4" size=28 align=center bold
-
-use selo 410,50
+ellipse selo 410,50 34 c=#ffd34d ink=line
+text n5 410,60 "5" size=28 align=center bold
 ```
 
-![Três círculos numerados de 1 a 3, cada um por cima do anterior, e um cartão branco (4) com um selo amarelo (5) por cima do canto](img/04_ordem.png)
+![Três círculos numerados de 1 a 3, cada um por cima do anterior, e um cartão branco (4) com um selo amarelo (5) por cima do canto](img/04_ordem_pintura.png)
 
-Os números mostram a ordem em que cada coisa foi pintada. O verde (3) cobre o vermelho e o azul porque veio depois deles. O selo (5) é o mais curioso: o `def` dele está no começo do arquivo, mas um `def` sozinho não pinta nada (os componentes são o assunto do [capítulo 5](05-componentes.md#componentes-def-e-use)). O selo só é pintado na linha do `use`, a última, e por isso fica por cima do cartão.
+Os números mostram a ordem em que cada forma foi pintada:
 
-**Experimente:** mova a linha `use selo 410,50` para logo depois do `end`. Agora o selo é pintado antes do cartão, e o cartão cobre quase todo ele: só a pontinha que passa da borda continua aparecendo.
+- O verde (3) cobre o vermelho e o azul, porque veio depois deles.
+- O cartão (4) e o selo (5) estão na camada `mesa`, que vem depois da `base`. Por isso ficam por cima de tudo o que veio antes.
+- O selo vem depois do cartão, na mesma camada, e cobre o canto dele.
 
-> **Dica do editor:** no desenho, escolha a forma e use **Ctrl+]** (trazer para cima) e **Ctrl+[** (enviar para baixo); com **Shift**, ela vai para a frente ou para trás de tudo da camada. Também estão em **Objeto › Organizar**. É o mesmo que mudar a linha de lugar no código: o editor muda por você, e os comentários logo acima da linha vão junto.
+Só as linhas que desenham entram nessa ordem: `ellipse`, `rect`, `shape`, `stroke`, `line` e `text`. As outras (`canvas`, `palette`, `gradient`, `pattern`) não pintam nada, e o lugar delas não muda quem fica na frente.
 
-> **Dica do editor:** para ver a ordem de pintura de um desenho inteiro, use **Exibir › Camadas em 3D** (ou o botão de camadas na ponta direita da barra de baixo). As camadas se afastam no espaço, a de baixo no fundo e a de cima mais perto de você, e cada linha do painel **Camadas** vira uma peça. Arraste para girar; **Espaço**, a **Mão** ou o botão do meio movem a vista, e a roda aproxima. Clique numa peça para escolher a linha dela (**Shift** soma ou tira); as setas, **Ctrl+3**, **Ctrl+D** e **Ctrl+Z** valem como no desenho. A barrinha de cima tem **Explodir**, **De frente**, **De lado** e **Juntar**, quanto as camadas (e as formas de uma mesma camada) se afastam e as molduras com os nomes. O olho de cada nome esconde a camada só nessa vista. Passe o mouse numa linha do painel Camadas e as outras peças se apagam. A vista acompanha o player, sem estilo de arte e sem os halos das luzes. Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na distância do `depth=` (veja [Ver as distâncias](10-filme.md#ver-as-distâncias-palco-em-3d)).
+No editor, **Ctrl+]** e **Ctrl+[** levam a forma escolhida para cima ou para baixo: o editor muda a linha de lugar por você ([capítulo 22](22-editor.md#organizar)).
 
-### Linhas que não pintam
+**Experimente:** leve a linha `ellipse selo 410,50 34 …` (e o texto `n5` logo abaixo dela) para logo depois do `text n3`, antes do `layer mesa`. O selo passa para a camada `base`, é pintado antes do cartão, e o cartão cobre quase todo ele: só a parte que passa da borda do cartão continua aparecendo.
 
-Só as linhas que desenham entram nessa fila: `shape`, `ellipse`, `rect`, `stroke`, `line`, `text`, `use` e os emissores de partículas (`emitter`). As outras (`canvas`, `palette`, `let`, `bone`, `light`, `anim`, `key`, `box`…) não mudam quem fica na frente, seja qual for a posição delas no arquivo. É por isso que um `let` vale no arquivo inteiro e as `key` podem vir fora de ordem: tudo é lido antes de qualquer coisa ser pintada.
+Algumas coisas mudam essa ordem, e aparecem mais adiante:
+- o `inkon=`, que pinta o contorno de uma forma junto com outra camada ([mais abaixo](#o-contorno-por-cima-inkon));
+- numa animação, o `above=` e o `below=`, que trocam quem fica na frente ([capítulo 9](07-animacao.md#trocar-quem-fica-na-frente-above-e-below));
+- num filme, a distância de cada camada (`depth=`) ([capítulo 17](10-filme.md#profundidade-e-paralaxe)).
 
-### As exceções
-
-Algumas coisas não são pintadas na linha em que estão escritas:
-
-| O quê | Onde é pintado |
-|---|---|
-| `use` | na linha do `use`, não na do `def` (o selo acima) |
-| `include "arquivo"` | o arquivo inteiro entra na linha do `include`: o que vem antes fica atrás dele, o que vem depois fica na frente ([capítulo 5](05-componentes.md#vários-arquivos-include)) |
-| `mirror=` | a cópia espelhada é pintada na linha dela, não na da forma original ([capítulo 5](05-componentes.md#espelho-mirror)) |
-| `inkon=camada` | o preenchimento fica na camada da forma, mas o **contorno** é pintado junto com a outra camada ([mais abaixo](#o-contorno-por-cima-inkon)) |
-| `cast=` (sombra no chão) | no lugar da camada que tem o `cast=`, logo **antes** das formas dela, para a sombra ficar por baixo ([capítulo 8](08-luz-efeitos.md#sombra-projetada-no-chão)) |
-| o halo das lâmpadas (`light … glow=`) | depois de todas as camadas, por cima do desenho inteiro ([capítulo 8](08-luz-efeitos.md#os-três-tipos-de-luz-e-o-ambiente)) |
-| `key … forma.above=outra` (ou `below=`) | numa animação, a partir daquele quadro, logo depois (ou antes) da outra forma ou camada ([mais abaixo](#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below)) |
-| atores e camadas num filme | pela distância: o mais longe (`depth=` maior) primeiro, `front` na frente dos outros da mesma distância e `screen` por cima de tudo. Só quando a distância empata vale a ordem do arquivo ([capítulo 10](10-filme.md#profundidade-e-paralaxe)) |
-
-### Trocar quem fica na frente durante uma animação: `above=` e `below=`
-
-Uma animação também pode mudar a ordem de pintura. `key quadro forma.above=outra` faz a forma ser pintada logo **depois** da outra (na frente dela) a partir daquele quadro, e `below=` faz ela ser pintada logo **antes** (atrás). É assim que uma bola dá a volta num poste, um braço passa atrás do corpo ou uma espada gira em volta do personagem:
-
-<!-- gerar: img/04_volta.gif -a volta -->
-```weasel
-canvas 320 200 bg=#f4efe6
-palette ink=#2b2a33 line=5 bola=#ff6b4a madeira=#a8794f
-
-bone bola pivot=160,110
-
-ellipse bola 160,110 28 c=bola ink=line bone=bola
-rect poste 154,16 12,176 r=4 c=madeira ink=line
-
-anim volta frames=24 fps=12
-key 0 bola=-110,0,0,1,1 bola.below=poste
-key 6 bola=0,-18,0,0.85,0.85
-key 12 bola=110,0,0,1,1 bola.above=poste
-key 18 bola=0,18,0,1.15,1.15
-key 24 bola=-110,0,0,1,1 bola.below=poste
-```
-
-![Uma bola vermelha dá a volta num poste: na ida passa por trás dele, na volta passa pela frente](img/04_volta.gif)
-
-Os ossos e as `key` são explicados com calma nos capítulos [6](06-ossos.md) e [7](07-animacao.md). Para ler este exemplo, basta saber:
-
-- `anim volta frames=24 fps=12` é uma animação de 24 quadros, tocados a 12 por segundo: a volta dura 2 segundos.
-- `key 0 bola=-110,0,0,1,1` diz onde o osso `bola` está no quadro 0: 110 pixels para a esquerda (`-110`), 0 pixels para baixo, girado 0 graus, com escala 1 na largura e 1 na altura (o tamanho normal).
-
-Agora, a ordem de pintura:
-
-- Na ida (quadros 0 a 12), `bola.below=poste` põe a bola atrás do poste. Na volta (quadros 12 a 24), `bola.above=poste` põe na frente.
-- A troca é **de uma vez**, como o `show`, e vale até a próxima `key` que mude a ordem da bola. Por isso ela fica nos quadros 0 e 12, quando a bola está longe do poste e ninguém vê o salto.
-- Na ida a bola sobe e encolhe um pouco (escala `0.85`), e na volta desce e cresce (`1.15`): isso dá a impressão de longe e perto.
-- As duas formas precisam estar na **mesma camada**. Para mudar uma camada inteira de lugar, use os nomes das camadas: `key 8 bracoD.above=corpo`.
-- `none` volta para a ordem do arquivo: `key 20 bola.above=none`.
-- Na pose parada, sem animação, vale a ordem do arquivo.
-
-**Experimente:** na `key 0`, troque `bola.below=poste` por `bola.above=poste`. A bola passa a ficar na frente do poste a volta inteira.
-
-## Recortar por dentro: `clip=`
-
-`layer nome clip=forma` faz a camada só aparecer **dentro** da forma indicada. É o jeito de pintar sombra, brilho, manchas e listras sem ter que desenhar cada uma no formato exato do corpo: você desenha grande e o recorte apara.
-
-<!-- gerar: img/04_clip.png -->
-```weasel
-canvas 440 220 bg=#f4efe6
-palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c brilho=#ffc2ad
-
-layer bolas
-ellipse semClip 110,110 80 c=bola ink=line
-ellipse comClip 330,110 80 c=bola ink=line
-
-layer vazando
-ellipse s1 150,150 90 c=sombra opacity=0.8
-ellipse b1 80,80 26,16 rot=-30 c=brilho
-
-layer aparado clip=comClip
-ellipse s2 370,150 90 c=sombra opacity=0.8
-ellipse b2 300,80 26,16 rot=-30 c=brilho
-```
-
-![À esquerda, a sombra vaza para fora da bola; à direita, com clip, a sombra fica só dentro dela](img/04_clip.png)
-
-A sombra é só uma elipse grande deslocada para baixo e para a direita (`opacity=0.8`: 80% opaca, de 0 a 1). O brilho é uma elipse pequena girada 30 graus para trás (`rot=-30`). À esquerda os dois vazam; à direita, com `clip=comClip`, ficam exatamente dentro da bola.
-
-- `clip=` aceita o nome de uma **forma fechada** (`shape`, `ellipse`, `rect`) ou de uma **camada** (veja [logo abaixo](#recortar-com-uma-camada-inteira)).
-- Um `stroke` ou uma `line` não servem de molde: eles não têm lado de dentro, e a camada inteira sumiria. O Weasel avisa quando isso acontece.
-- O recorte acompanha a forma quando ela se mexe com um osso.
-- O molde pode estar **antes ou depois** da camada no arquivo: o Weasel procura o nome no arquivo inteiro. Vale o mesmo para o `cut=`: no [exemplo do `cut=`](#recortar-por-fora-cut), `janela` vem antes da camada que a usa, e `furo` vem depois da forma que o usa. O que a ordem muda é só a pintura: a camada recortada precisa vir depois da forma para ficar por cima dela. Veja [a ordem das linhas](19-referencia.md#a-ordem-das-linhas).
-
-**Experimente:** apague o `clip=comClip` da linha `layer aparado`. A bola da direita fica igual à da esquerda, com a sombra vazando.
-
-### Recortar com uma camada inteira
-
-Às vezes o molde não é uma forma só: um corpo feito de vários gomos, uma cabeça com orelhas. Para isso, `clip=` também aceita o nome de uma **camada**. O molde passa a ser o formato de todas as formas fechadas dela, juntas.
-
-<!-- gerar: img/04_clip_camada.png -->
-```weasel
-canvas 460 210 bg=#f4efe6
-palette ink=#2b2a33 verde=#8ad46a sombra=#4f9a45
-
-# lagarta da esquerda: os gomos têm nomes diferentes
-layer corpoE
-ellipse g1 50,110 32 c=verde
-ellipse g2 98,102 34 c=verde
-ellipse g3 148,106 32 c=verde
-ellipse g4 194,96 36 c=verde
-
-layer sombraE clip=corpoE
-ellipse s1 120,160 130,46 c=sombra
-
-# lagarta da direita: todos os gomos se chamam gomo
-layer corpoD
-ellipse gomo 270,110 32 c=verde
-ellipse gomo 318,102 34 c=verde
-ellipse gomo 368,106 32 c=verde
-ellipse gomo 414,96 36 c=verde
-
-layer sombraD clip=gomo
-ellipse s2 340,160 130,46 c=sombra
-
-layer rosto
-ellipse olhoE 206,86 6 c=ink
-ellipse olhoD 426,86 6 c=ink
-text t1 122,196 "clip=corpoE" size=16 align=center
-text t2 342,196 "clip=gomo" size=16 align=center
-```
-
-![Duas lagartas verdes de quatro gomos, cada uma com uma sombra escura na parte de baixo que segue todos os gomos sem vazar](img/04_clip_camada.png)
-
-Repare:
-
-- A sombra de cada lagarta é **uma elipse só**, larga, embaixo. O recorte apara essa elipse no formato dos quatro gomos de uma vez.
-- À esquerda, `clip=corpoE` usa a **camada** `corpoE`: valem todas as formas fechadas dela.
-- À direita, os quatro gomos têm o **mesmo nome**, `gomo`. Aí `clip=gomo` usa todos eles. Dá o mesmo resultado, e os gomos poderiam até dividir a camada com outras formas: só os que se chamam `gomo` contam.
-- No editor, o **Ctrl+D** dá um nome novo à cópia (`gomo_1`). Para ela entrar no grupo, apague o `_1`.
-- Quando um nome é ao mesmo tempo de uma forma e de uma camada, vale a forma.
-
-**Experimente:** à esquerda, troque `clip=corpoE` por `clip=g4`. A sombra só aparece no último gomo, a cabeça.
-
-### O contorno por cima: `inkon=`
-
-Repare na bola da direita do [primeiro exemplo de `clip=`](#recortar-por-dentro-clip): a sombra cobriu a metade de dentro do contorno, que ficou mais fino do lado de baixo. O contorno é pintado junto com a forma, e a camada recortada vem depois, por cima dele.
-
-`inkon=camada` resolve isso: o **preenchimento** fica onde está, mas o **contorno** é pintado em outra camada, que você põe por último.
-
-<!-- gerar: img/04_inkon.png -->
-```weasel
-canvas 440 220 bg=#f4efe6
-palette ink=#2b2a33 line=10 bola=#ff6b4a reflexo=#ffe2c2
-
-layer bolas
-ellipse semInkon 110,110 80 c=bola ink=line
-ellipse comInkon 330,110 80 c=bola ink=line inkon=contorno
-
-layer reflexo1 clip=semInkon
-ellipse r1 160,160 70 c=reflexo
-
-layer reflexo2 clip=comInkon
-ellipse r2 380,160 70 c=reflexo
-
-layer contorno
-```
-
-![À esquerda o reflexo claro come metade do contorno embaixo; à direita, com inkon, o contorno fica inteiro por cima](img/04_inkon.png)
-
-À esquerda, sem `inkon`, o reflexo claro come a metade de dentro do contorno. À direita, o contorno de `comInkon` vai para a camada `contorno`, pintada por último, e fica inteiro. A camada `contorno` está vazia no código: ela só recebe o contorno de `comInkon`. É a técnica do Cavaleiro de exemplo: o corpo, a capa e a máscara mandam o contorno para camadas por cima das sombras e dos olhos.
-
-- `inkon=` só vale em formas fechadas com contorno (`ink=` maior que 0). Sem `ink=`, o Weasel avisa que não faz sentido.
-- A camada de `inkon=` precisa existir no arquivo, mesmo vazia.
-- Com a camada de `inkon=` **antes** da forma, o contorno fica só por fora: o preenchimento cobre a metade de dentro. Veja o [capítulo 2](02-formas.md#contorno-só-por-fora).
-
-**Experimente:** com `line=10`, o contorno tem 10 pixels de largura e a diferença é fácil de ver. Mude para `line=4`: a perda fica pequena, mas ainda está lá.
-
-#### Quando a camada recortada encosta na borda toda
-
-No exemplo acima, o reflexo só encosta na borda embaixo, e é só ali que o contorno afina. Se a camada recortada encosta na borda **inteira**, o contorno perde a metade de dentro na volta toda. É o que acontece com um sombreado que escurece as beiradas da forma:
-
-<!-- gerar: img/04_inkon_borda.png -->
-```weasel
-canvas 660 240 bg=#f4efe6
-palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c
-gradient aro radial 0.5,0.5 0.5 box : #c8402c00 #c8402c00@0.6 sombra
-
-layer bolas
-ellipse semNada 110,110 80 c=bola ink=line
-ellipse semInkon 330,110 80 c=bola ink=line
-ellipse comInkon 550,110 80 c=bola ink=line inkon=contorno
-
-layer aro1 clip=semInkon
-ellipse a1 330,110 80 c=aro
-
-layer aro2 clip=comInkon
-ellipse a2 550,110 80 c=aro
-
-layer contorno
-
-layer nomes
-text t1 110,222 "sem sombreado" size=16 align=center
-text t2 330,222 "sombreado" size=16 align=center
-text t3 550,222 "sombreado + inkon=" size=16 align=center
-```
-
-![Três bolas vermelhas com contorno escuro: a primeira sem sombreado; a do meio com as beiradas escurecidas e o contorno mais fino na volta inteira; a terceira com as beiradas escurecidas e o contorno inteiro](img/04_inkon_borda.png)
-
-O contorno é pintado em cima da linha da forma: metade para dentro, metade para fora. O recorte usa o formato da forma, que é essa mesma linha, então a camada recortada só alcança a metade de **dentro**. A metade de fora nunca é coberta.
-
-- O gradiente `aro` é transparente até 60% do raio e escurece até a beirada. Com `box`, ele se ajusta ao tamanho de cada elipse (veja o [capítulo 3](03-cores.md#radial-com-box-o-mesmo-brilho-em-bolas-diferentes)). As elipses `a1` e `a2` têm o tamanho das bolas, então o sombreado chega à borda na volta toda.
-- À esquerda, sem nada por cima, o contorno tem os 8 pixels do `line`.
-- No meio, o contorno parece ter 4 pixels. Como não falta nenhum pedaço, parece que o `line` é que está menor. É o caso mais difícil de notar: a gente procura o erro no `ink=`, e ele está na camada recortada.
-- À direita, `inkon=contorno` pinta o contorno depois do sombreado, e os 8 pixels voltam.
-- Com `opacity=` menor que 1 na camada recortada, a metade de dentro não some de todo: ela fica tingida pela cor de cima. Foi o que aconteceu com a sombra de `opacity=0.8` do [primeiro exemplo de `clip=`](#recortar-por-dentro-clip).
-
-**Experimente:** na `palette`, troque `line=8` por `line=16`. As três bolas engrossam o contorno, mas a do meio continua com metade da largura das outras. Com o contorno grosso, dá para ver a faixa vermelha escura onde estava a metade de dentro: o sombreado sempre a cobre.
-
-#### O contrário: cobrir o contorno inteiro com um molde maior
-
-E se a ideia for o contrário: a camada de cima cobrir o contorno **inteiro**, as duas metades? Aí a própria forma não serve de molde, porque o recorte para no meio do contorno. O jeito é um molde escondido um pouco maior: o raio da forma **mais metade do contorno**.
-
-<!-- gerar: img/04_clip_contorno.png -->
-```weasel
-canvas 880 250 bg=#f4efe6
-palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c
-gradient aro radial 0.5,0.5 0.5 box : #c8402c00 #c8402c00@0.6 sombra
-
-layer bolas
-ellipse b1 110,110 80 c=bola ink=line
-ellipse b2 330,110 80 c=bola ink=line
-ellipse b3 550,110 80 c=bola ink=line
-ellipse b4 770,110 80 c=bola ink=line
-
-# os moldes: raio da bola + metade do contorno (80 + 8/2)
-ellipse molde2 330,110 84 hidden
-ellipse molde4 770,110 84 hidden
-
-layer x1 clip=b1
-ellipse a1 110,110 80 c=aro
-
-layer x2 clip=molde2
-ellipse a2 330,110 84 c=aro
-
-layer x3 clip=b3
-ellipse s3 590,150 90 c=sombra opacity=0.8
-
-layer x4 clip=molde4
-ellipse s4 810,150 90 c=sombra opacity=0.8
-
-layer nomes
-text t1 110,222 "clip=b1" size=16 align=center
-text t2 330,222 "clip=molde2" size=16 align=center
-text t3 550,222 "clip=b3" size=16 align=center
-text t4 770,222 "clip=molde4" size=16 align=center
-```
-
-![Quatro bolas vermelhas em dois pares. No primeiro par, um sombreado nas beiradas: com clip=b1 o contorno escuro continua aparecendo por fora; com clip=molde2 o sombreado cobre o contorno inteiro. No segundo par, uma sombra deslocada para baixo e para a direita: com clip=b3 ela para no meio do contorno; com clip=molde4 ela cobre o contorno de ponta a ponta](img/04_clip_contorno.png)
-
-- `molde2` e `molde4` têm raio 84: os 80 da bola mais 4, a metade do `line=8`. A opção `hidden` faz a forma não aparecer: ela só empresta o formato (é o mesmo `hidden` dos moldes de `cut=`, [logo abaixo](#buraco-numa-forma-cut-na-forma)).
-- Em cada par, à esquerda, o molde é a própria bola, e a camada de cima para no meio do contorno. À direita, o molde maior deixa a camada cobrir o contorno até a beirada de fora.
-- A sombra deslocada de `molde4` cobre o contorno de ponta a ponta onde passa, e mesmo assim não vaza para fora da bola.
-
-Cuidados com o molde maior:
-
-- Ele é uma forma à parte. Se você mudar o `line` ou o tamanho da bola, ajuste o molde também. Se a bola tem `bone=`, o molde precisa do mesmo `bone=` para ir junto.
-- Numa `shape` feita de pontos, não basta aumentar um raio: a cópia mais larga precisa ser desenhada à mão.
-- Quando a forma de cima tem o mesmo formato e o mesmo lugar da de baixo, como o sombreado `a2`, nem precisa de `clip=`: basta desenhá-la com raio 84 por cima da bola. O molde só faz falta quando a forma de cima passa da borda, como a sombra `s4`.
-
-## Recortar por fora: `cut=`
-
-`cut=` é o contrário do `clip=`: a camada aparece em todo lugar, **menos** dentro da forma. Serve para abrir janelas, portas e buracos.
-
-<!-- gerar: img/04_cut.png -->
-```weasel
-canvas 440 200 bg=#bfe3f5
-palette ink=#2b2a33
-pattern listra hatch angle=90 gap=14 w=7 c=#c44536 bg=#f4efe6
-
-ellipse janela 120,100 56 hidden
-layer parede cut=janela
-rect tinta 20,20 200,160 c=listra
-
-layer rosquinha
-ellipse rosca 330,100 76 c=#e0a050 ink=6 cut=furo
-ellipse furo 330,100 28 hidden
-```
-
-![À esquerda, um retângulo listrado com um buraco redondo sem contorno; à direita, uma rosca com o buraco contornado](img/04_cut.png)
-
-A parede é um retângulo com o padrão de listras `listra` (os padrões são do [capítulo 3](03-cores.md)). Pelo buraco da janela aparece o fundo azul do canvas.
-
-### Buraco numa forma: `cut=` na forma
-
-O `cut=` também vai **numa forma**, como na rosca da direita: `cut=furo` abre um buraco com o formato de `furo`, e o contorno da forma **contorna o buraco também**. Na camada (à esquerda), o buraco sai sem contorno.
-
-Nos dois casos, a forma que serve de molde (`janela`, `furo`) tem a opção `hidden`: ela não aparece, só empresta o formato.
-
-### Vários buracos e mordidas
-
-Uma forma pode ter vários buracos: escreva os nomes separados por vírgula, `cut=f1,f2,f3`. E o buraco pode passar da borda da forma: aí ele vira uma **mordida**.
-
-<!-- gerar: img/04_buracos.png -->
-```weasel
-canvas 440 210 bg=#cfe8f5
-palette ink=#2b2a33 line=5
-
-# um queijo com três furos
-rect queijo 30,50 180,110 r=8 c=#ffd34d ink=line cut=f1,f2,f3
-ellipse f1 75,90 18 hidden
-ellipse f2 150,125 22 hidden
-ellipse f3 178,78 10 hidden
-
-# um biscoito mordido: o buraco passa da borda
-ellipse biscoito 330,105 72 c=#d9a066 ink=line cut=mordida
-ellipse mordida 395,50 42 hidden
-ellipse gota1 300,90 7 c=#5a3a22
-ellipse gota2 335,140 7 c=#5a3a22
-ellipse gota3 290,130 6 c=#5a3a22
-
-text t1 120,196 "cut=f1,f2,f3" size=16 align=center
-text t2 330,196 "cut=mordida" size=16 align=center
-```
-
-![Um queijo amarelo com três furos contornados e um biscoito redondo com uma mordida no canto de cima, também contornada](img/04_buracos.png)
-
-Repare:
-
-- Cada furo do queijo ganhou contorno, como o da rosca.
-- A `mordida` é um círculo que fica metade dentro, metade fora do biscoito. Só a parte de dentro vira buraco, e o contorno acompanha a curva da mordida.
-- O molde precisa ser uma forma **fechada** (`shape`, `ellipse` ou `rect`).
-
-**Experimente:** mude o raio da mordida de `42` para `70`. A mordida fica enorme e leva um pedaço grande do biscoito, com contorno e tudo.
-
-### Furos com o mesmo nome e furos que se cruzam
-
-Os furos também podem ter **o mesmo nome**: `cut=furo` abre um buraco em cada forma chamada `furo`. E dois furos podem se cruzar: eles viram **um buraco só**, com um contorno só.
-
-<!-- gerar: img/04_furos_juntos.png -->
-```weasel
-canvas 440 200 bg=#cfe8f5
-palette ink=#2b2a33 line=5
-
-# quatro furos com o mesmo nome
-rect queijo 20,40 190,110 r=8 c=#ffd34d ink=line cut=furo
-ellipse furo 60,75 14 hidden
-ellipse furo 100,118 18 hidden
-ellipse furo 145,70 11 hidden
-ellipse furo 178,115 14 hidden
-
-# dois furos que se cruzam: um buraco só, em forma de óculos
-ellipse bolacha 330,95 70 c=#d9a066 ink=line cut=olho1,olho2
-ellipse olho1 310,95 28 hidden
-ellipse olho2 350,95 28 hidden
-
-text t1 115,186 "cut=furo" size=16 align=center
-text t2 330,186 "cut=olho1,olho2" size=16 align=center
-```
-
-![Um queijo amarelo com quatro furos contornados e uma bolacha com um buraco em forma de óculos, de contorno contínuo](img/04_furos_juntos.png)
-
-Repare:
-
-- As quatro elipses se chamam `furo`, e `cut=furo` abre as quatro. É assim que um [`repeat`](05-componentes.md#repetir-repeat) faz dezenas de furos de uma vez: todas as cópias têm o mesmo nome.
-- `olho1` e `olho2` se cruzam no meio. O pedaço em comum também fica vazio, e o contorno segue a borda do buraco inteiro, sem riscar o meio.
-- Dentro de um componente (`def`), `cut=furo` usa os furos da mesma cópia: cada uso do componente tem os seus.
-
-**Experimente:** mude o raio de `olho1` e `olho2` de `28` para `40`. O buraco cresce e passa da borda da bolacha, como a mordida do biscoito.
-
-### Molde com buraco
-
-Uma forma com buraco também pode ser o molde de um `clip=` ou de um `cut=` de camada. O buraco continua buraco:
-
-<!-- gerar: img/04_molde_buraco.png -->
-```weasel
-canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33 line=5
-
-# a calda fica só em cima da massa: não entra no buraco
-layer massa
-ellipse rosca 110,100 75 c=#e0a050 ink=line cut=miolo inkon=contorno
-ellipse miolo 110,100 28 hidden
-layer calda clip=rosca
-rect cobertura 20,20 180,70 c=#d1477a
-
-# a toalha some atrás da rosca, mas aparece pelo buraco dela
-layer massa2
-ellipse rosca2 330,100 75 c=#e0a050 ink=line cut=miolo2
-ellipse miolo2 330,100 28 hidden
-layer toalha cut=massa2
-rect pano 230,80 200,40 c=#3a78c2
-
-layer contorno
-```
-
-![À esquerda, uma rosca com calda rosa só na metade de cima e o buraco limpo; à direita, uma faixa azul que passa atrás da rosca e aparece pelo buraco](img/04_molde_buraco.png)
-
-Repare:
-
-- `clip=rosca`: a calda aparece só onde a rosca tem massa. O buraco do meio (`cut=miolo`) fica sem calda.
-- `cut=massa2`: a toalha some onde está a rosca, mas aparece pelo buraco, como se passasse por trás dela.
-- `miolo2` está na camada `massa2`, mas ele é o molde de um buraco: só empresta o formato e não tapa o buraco.
-- `inkon=contorno` põe o contorno da primeira rosca por cima da calda, como no [exemplo do `inkon=`](#o-contorno-por-cima-inkon).
-
-**Experimente:** apague o `cut=miolo` da primeira rosca. Ela fica inteira, e a calda passa a cobrir o meio também.
-
-## Outras opções de camada
+## Transparência da camada: `opacity=`
 
 ```
-layer nome [guide] [hidden] [lock] [unlit] opacity= blend= only= clip= cut= …
+layer nome opacity=número
 ```
 
-| Opção | O que faz |
-|---|---|
-| `guide` | Camada de **construção**: aparece no editor com **Exibir › Guias** ligado e na linha de comando com `--guides`, mas não sai na exportação. Use para linhas de referência, eixos, o chão ([exemplo](#camada-de-construção-guide)). |
-| `hidden` | A camada não é pintada. As formas dela continuam valendo como molde de `clip` e `cut` ([exemplo](#camada-escondida-hidden)). |
-| `lock` | Só no editor: as formas da camada não se escolhem nem se arrastam pelo desenho ([exemplo](#grupos-e-travas-group-e-lock)). |
-| `opacity=0.5` | Transparência da camada inteira, de 0 (invisível) a 1 (normal, o padrão) ([exemplo](#transparência-da-camada-opacity)). |
-| `blend=multiply` | Como a camada se mistura com o que está embaixo: `multiply` escurece (bom para sombras), `screen` clareia (brilhos), `overlay`, `soft-light`, `color-dodge`… (os modos de mistura do Photoshop e do CSS) ([exemplo](#misturar-com-o-que-está-embaixo-blend)). |
-| `only=anim1,anim2` | A camada só aparece nessas animações. O nome `pose` vale para a pose parada ([exemplo](#só-em-certas-animações-only)). |
-| `unlit` | Não recebe a luz da cena: fica com as cores do desenho, mesmo no escuro ([capítulo 8](08-luz-efeitos.md)). `lit` também é aceito, mas é o padrão: não muda nada. |
-| `blur=` `glow=` `shadow=` `tint=` `trail=` `cast=` `rim=` … | Efeitos da camada inteira ([capítulo 8](08-luz-efeitos.md#efeitos-de-camada)). |
-| `depth=` `screen` `front` | Profundidade num filme ([capítulo 10](10-filme.md#profundidade-e-paralaxe)). |
-
-### Camada de construção: `guide`
-
-Uma camada `guide` guarda as **linhas de ajuda** que você usa para desenhar (o meio do rosto, a altura dos olhos, a linha do chão) e que não devem sair na imagem final.
-
-<!-- gerar: img/04_guide.png -->
-<!-- gerar: img/04_guide_on.png --guides -->
-```weasel
-canvas 300 220 bg=#f4efe6
-palette ink=#2b2a33 line=5
-
-layer rosto
-ellipse cara 150,110 80 c=#ffd34d ink=line
-ellipse olhoE 122,95 8,12 c=ink
-ellipse olhoD 178,95 8,12 c=ink
-stroke boca w=5 : 115,135 150,155 185,135
-
-# linhas de construção: só no editor e com --guides
-layer construcao guide
-line meio w=1 c=#c44536 dash=6,4 : 150,8 150,212
-line olhos w=1 c=#c44536 dash=6,4 : 40,95 260,95
-text nota 156,206 "meio: x=150" size=13 c=#c44536
-```
-
-| Exportado normalmente | Com `--guides` |
-|---|---|
-| ![Uma carinha amarela sorridente, sem nenhuma linha de ajuda](img/04_guide.png) | ![A mesma carinha com duas linhas vermelhas tracejadas, uma no meio e outra na altura dos olhos, e a anotação "meio: x=150"](img/04_guide_on.png) |
-
-Repare:
-
-- A camada `construcao` tem a opção `guide`. As duas linhas tracejadas e a anotação ficam nela.
-- Na exportação normal (à esquerda), a camada some. Com `--guides` na linha de comando (à direita), ela aparece. No editor, quem decide é **Exibir › Guias**.
-- `dash=6,4` é o tracejado: 6 pixels de traço, 4 de vão.
-- Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada.
-
-Para exportar com as guias:
-
-```bash
-node cli/weasel.js teste.weasel --guides
-```
-
-### Camada escondida: `hidden`
-
-Uma camada `hidden` não é pintada, mas as formas dela continuam existindo. Serve para guardar **moldes**: formas que só emprestam o formato para um `clip=` ou um `cut=` de outra camada.
-
-<!-- gerar: img/04_hidden.png -->
-```weasel
-canvas 400 260 bg=#1d2140
-palette ink=#2b2a33 line=5
-
-# 1. o que fica atrás da parede: a luz de dentro da casa
-layer dentro
-rect luz 60,90 280,150 c=#ffd56b
-
-# 2. a parede, com buracos no formato das formas da camada janelas
-layer parede cut=janelas
-rect frente 60,90 280,150 c=#b5835a ink=line
-shape telhado c=#7a3b2c ink=line : 40,94! 200,20! 360,94!
-
-# 3. os moldes: a camada não é pintada, só empresta o formato
-layer janelas hidden
-rect j1 90,120 60,50 r=4 c=none ink=4
-rect j2 250,120 60,50 r=4 c=none ink=4
-rect porta 175,160 50,80 r=4 c=none ink=4
-```
-
-![Uma casa marrom à noite, com duas janelas e uma porta pelas quais se vê uma luz amarela por dentro](img/04_hidden.png)
-
-Repare:
-
-- A parede é um retângulo inteiro. Os buracos vêm de `cut=janelas`: o nome é de uma **camada**, então valem as três formas dela juntas.
-- A camada `janelas` tem `hidden`: as três formas não são pintadas, só servem de molde.
-- Pelos buracos aparece o que foi pintado antes da parede: a camada `dentro`, amarela.
-- `c=none ink=4` nos moldes não muda nada enquanto a camada está escondida. Eles estão aí para o "Experimente".
-
-**Experimente:** apague o `hidden` da linha `layer janelas`. Os moldes passam a ser pintados também: sem preenchimento (`c=none`) e com contorno de 4 pixels, eles viram a moldura das janelas e da porta.
-
-### Transparência da camada: `opacity=`
-
-`opacity=` deixa a camada inteira transparente com uma linha só, em vez de pôr `opacity=` em cada forma. O número vai de 0 (invisível) a 1 (normal, o padrão).
+`opacity=` deixa a camada inteira transparente com uma linha só. O número vai de 0 (invisível) a 1 (normal, o padrão).
 
 <!-- gerar: img/04_opacity.png -->
 ```weasel
@@ -673,21 +169,25 @@ text t3 350,206 "opacity=0.25" size=15 align=center
 
 ![Três fantasmas brancos na frente de uma parede de tábuas: o primeiro é sólido, o segundo deixa ver um pouco das tábuas e o terceiro quase sumiu](img/04_opacity.png)
 
-Repare:
-
-- Os três fantasmas são o mesmo desenho, cada um na sua camada. O que muda é o `opacity=` da linha `layer`.
-- Com `opacity=0.6`, o fantasma e os olhos ficam 60% visíveis: as tábuas aparecem através deles.
+- Os três fantasmas são o mesmo desenho, cada um na sua camada. Só muda o `opacity=` da linha `layer`.
+- Com `opacity=0.6`, o fantasma fica 60% visível: as tábuas aparecem através dele.
 - Com `opacity=0.25`, sobra só um quarto: o fantasma quase sumiu.
-- A transparência da camada se multiplica com a de cada forma: uma forma com `opacity=0.5` numa camada com `opacity=0.5` fica com `0.25` (0,5 × 0,5).
-- Numa animação, `key 12 meio.opacity=0` faz a camada inteira sumir aos poucos ([capítulo 7](07-animacao.md)).
+- A camada fica transparente **de uma vez**, como uma folha só. Os olhos deixam ver as tábuas, mas não o branco do fantasma por baixo deles.
+- A transparência da camada se multiplica pela de cada forma: uma forma com `opacity=0.5` numa camada com `opacity=0.5` fica com 0,25 (0,5 × 0,5).
 
 **Experimente:** mude `opacity=0.25` para `opacity=0`. O terceiro fantasma desaparece de vez.
 
-### Misturar com o que está embaixo: `blend=`
+**Cuidado:** um `opacity=` fora de 0 a 1 dá o aviso `opacity= deve ficar entre 0 e 1`, e o Weasel usa o limite.
 
-Normalmente, uma camada **cobre** o que está embaixo dela. `blend=` muda isso: em vez de cobrir, a cor da camada faz uma **conta** com a cor de baixo. É assim que se pinta sombra que só escurece, brilho que só clareia, ou se dá cor a um desenho cinza.
+## Misturar com o que está embaixo: `blend=`
 
-Neste exemplo, os oito quadrados laranja são iguais. Cada um está numa camada com um `blend=` diferente, e todos passam por cima de três faixas: branca, azul e escura.
+```
+layer nome blend=modo
+```
+
+Normalmente, uma camada **cobre** o que está embaixo dela. Com `blend=`, a cor da camada faz uma conta com a cor de baixo. É assim que se pinta uma sombra que só escurece, um brilho que só clareia, ou se dá cor a um desenho cinza.
+
+Os oito quadrados laranja abaixo são iguais. Cada um está numa camada com um `blend=` diferente, e todos passam por cima de três faixas: branca, azul e escura.
 
 <!-- gerar: img/04_blend.png -->
 ```weasel
@@ -733,516 +233,494 @@ Olhe cada quadrado de cima para baixo, passando pelas três faixas:
 | Modo | O que faz | Bom para |
 |---|---|---|
 | `normal` | cobre (o padrão) | quase tudo |
-| `multiply` | multiplica as cores: **só escurece**. No branco, fica a cor da camada; no escuro, fica escuro | sombras |
-| `screen` | o contrário: **só clareia**. No branco continua branco; no escuro, aparece a cor da camada | brilhos e luz |
-| `overlay` | escurece o que é escuro e clareia o que é claro (mais contraste) | texturas, luz e sombra juntas |
+| `multiply` | **só escurece**: no branco, fica a cor da camada; no escuro, fica escuro | sombras |
+| `screen` | **só clareia**: no branco, continua branco; no escuro, aparece a cor da camada | brilhos e luz |
+| `overlay` | escurece o que é escuro e clareia o que é claro | texturas, luz e sombra juntas |
 | `darken` | fica a mais escura das duas cores | sombras com cor |
 | `lighten` | fica a mais clara das duas cores | brilhos com cor |
-| `difference` | subtrai uma cor da outra: no branco, vira a cor "inversa" | efeitos estranhos, conferir se duas coisas estão alinhadas |
-| `color` | pega a cor (o tom) da camada e a claridade de baixo | colorir um desenho feito em cinza |
+| `difference` | tira uma cor da outra: no branco, vira a cor "ao contrário" | conferir se duas coisas estão alinhadas |
+| `color` | pega o tom da camada e a claridade de baixo | colorir um desenho feito em cinza |
 
-Os outros modos são `color-dodge`, `color-burn`, `hard-light`, `soft-light`, `exclusion`, `hue`, `saturation` e `luminosity`. São os mesmos do Photoshop e do CSS; o jeito mais fácil de conhecer é trocar o nome num destes quadrados e olhar.
+Existem mais oito: `color-dodge`, `color-burn`, `hard-light`, `soft-light`, `exclusion`, `hue`, `saturation` e `luminosity`. Os nomes são os mesmos dos programas de desenho. O jeito mais fácil de conhecer cada um é trocar o nome num destes quadrados e olhar.
 
 **Experimente:** troque `blend=color` por `blend=luminosity`. É o contrário do `color`: o quadrado fica com o tom da faixa de baixo e a claridade do laranja.
 
-### Só em certas animações: `only=`
+**Cuidado:**
+- Assim como o `opacity=`, o `blend=` vale para a camada inteira de uma vez. Duas formas da mesma camada `blend=multiply` que se cruzam não escurecem uma à outra: só o que está embaixo da camada escurece.
+- O nome vai em minúsculas. Um nome que não existe, ou com maiúscula, é erro: `blend=Multiply` dá `blend desconhecido "Multiply"`.
 
-Um personagem costuma ter partes que só existem em alguns momentos: a poeira de um pulo, o rastro de um golpe, um balão de fala. `only=` faz a camada aparecer **só nas animações** que você nomear.
+## Recortar por dentro: `clip=`
 
-<!-- gerar: img/04_only_pose.png -->
-<!-- gerar: img/04_only_pula.png -a pula --frame 6 -->
+```
+layer nome clip=forma
+layer nome clip=camada
+```
+
+Com `clip=`, a camada só aparece **dentro** da forma indicada. É o jeito de pintar sombra, brilho, manchas e listras sem desenhar cada uma no formato exato do corpo: você desenha grande, e o recorte apara.
+
+<!-- gerar: img/04_clip.png -->
 ```weasel
-canvas 300 220 bg=#cfe8f5
-palette ink=#2b2a33 line=5
+canvas 440 220 bg=#f4efe6
+palette ink=#2b2a33 line=8 bola=#ff6b4a sombra=#c8402c brilho=#ffc2ad
 
-bone corpo pivot=150,150
+layer bolas
+ellipse semClip 110,110 80 c=bola ink=line
+ellipse comClip 330,110 80 c=bola ink=line
 
-rect chao 0,190 300,30 c=#7cc56a
+layer vazando
+ellipse s1 150,150 90 c=sombra opacity=0.8
+ellipse b1 80,80 26,16 rot=-30 c=brilho
 
-layer bicho
-ellipse corpo 150,150 40 c=#ff6b4a ink=line bone=corpo
-ellipse olho 164,140 6 c=ink bone=corpo
-
-# só na pose parada (sem animação)
-layer placa only=pose
-text p 150,40 "parado" size=22 align=center bold
-
-# só na animação pula
-layer poeira only=pula
-ellipse p1 104,192 18,7 c=#d9c9a8
-ellipse p2 196,192 18,7 c=#d9c9a8
-text t 150,40 "pulando" size=22 align=center bold
-
-anim pula frames=12 fps=12
-key 0 corpo=0,0
-key 6 corpo=0,-50
-key 12 corpo=0,0
+layer aparado clip=comClip
+ellipse s2 370,150 90 c=sombra opacity=0.8
+ellipse b2 300,80 26,16 rot=-30 c=brilho
 ```
 
-| A pose parada | O quadro 6 da animação `pula` |
-|---|---|
-| ![Uma bola vermelha parada no chão, com a palavra "parado" em cima](img/04_only_pose.png) | ![A mesma bola no alto do pulo, com duas nuvenzinhas de poeira no chão e a palavra "pulando" em cima](img/04_only_pula.png) |
+![À esquerda, a sombra vaza para fora da bola; à direita, com clip, a sombra fica só dentro dela](img/04_clip.png)
 
-Repare:
+- A sombra é uma elipse grande, deslocada para baixo e para a direita, com `opacity=0.8`. O brilho é uma elipse pequena, girada 30 graus para trás.
+- À esquerda, na camada `vazando`, os dois passam da borda da bola.
+- À direita, a camada `aparado` tem `clip=comClip`. A sombra e o brilho ficam exatamente dentro da bola `comClip`.
+- A forma que recorta pode estar antes ou depois da camada no arquivo. Mas, para a camada recortada ficar **por cima** da bola, ela precisa vir depois.
 
-- A camada `placa` tem `only=pose`. `pose` é o nome da **pose parada**: o desenho sem nenhuma animação tocando, exatamente como as coordenadas do código dizem. Ela aparece à esquerda e some no pulo.
-- A `pose` não é criada em nenhuma linha do arquivo: ela sempre existe. No editor, é a primeira opção do menu de animações do player, com o nome "pose parada" (num arquivo sem `anim`, essa opção se chama "sem animações"). Na linha de comando, é a imagem gerada sem `-a`.
-- Como o nome `pose` já tem dono, não o use numa animação: `anim pose` dá aviso, porque `only=pose` passaria a valer nas duas.
-- A camada `poeira` tem `only=pula`: só aparece enquanto a animação `pula` toca.
-- `key 6 corpo=0,-50` sobe o osso `corpo` 50 pixels no quadro 6 (y negativo é para cima). Por isso a bola está no alto à direita.
-- Para mais de uma animação, separe os nomes com vírgula: `only=pose,pula,corre`.
-- Um nome que não é de nenhuma animação dá aviso.
+**Experimente:** apague o `clip=comClip` da linha `layer aparado`. A bola da direita fica igual à da esquerda, com a sombra vazando.
 
-A imagem da direita veio da linha de comando, escolhendo a animação e o quadro:
+### Recortar com uma camada inteira
 
-```bash
-node cli/weasel.js teste.weasel -a pula --frame 6 -o pulo.png
-```
+Às vezes, quem recorta não é uma forma só: um corpo de vários gomos, uma cabeça com orelhas. Para isso, o `clip=` também aceita o nome de uma **camada**. Aí todas as formas fechadas dela recortam juntas.
 
-O [capítulo 7](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-only) mostra o `only=` num personagem de jogo.
-
-## Grupos e travas: `group` e `lock`
-
-Duas coisas que **só o editor lê**: a imagem não muda com elas, nem no jogo, nem no filme. Servem para mexer no desenho com o mouse sem estragar o que já está pronto.
-
-<!-- conferir -->
+<!-- gerar: img/04_clip_camada.png -->
 ```weasel
-canvas 400 300 bg=#f4efe6
-palette ink=#2b2a33 line=3
-
-layer fundo lock
-rect chao 0,240 400,60 c=#8a7a5a
-
-layer boneco
-group cabeca
-  ellipse rosto 200,100 40 c=#f0c8a0 ink=line
-  group olhos
-    ellipse olhoA 186,95 5,6 c=ink
-    ellipse olhoB 214,95 5,6 c=ink
-  end
-end
-rect corpo 175,140 50,80 c=#3a6ea5 ink=line
-rect bracoA 140,140 20,60 c=#3a6ea5 ink=line lock
-rect bracoB 240,140 20,60 c=#3a6ea5 ink=line
-```
-
-Repare:
-
-- `group nome` … `end` junta as linhas de dentro. No desenho, um clique com a **Seleção** (V) numa forma do grupo escolhe o grupo inteiro: o rosto e os dois olhos andam, giram e esticam juntos. A **Seleção direta** (A) pega uma forma só.
-- Um grupo pode ter outro dentro (`olhos` está dentro de `cabeca`). O recuo de dois espaços é só para ler melhor.
-- O grupo fica **dentro de uma camada**: uma linha `layer` no meio dele dá erro. Ele também pode ficar dentro de um `def`; o contrário (um `def` dentro do grupo) não.
-- `lock` **trava**: o desenho não deixa escolher nem arrastar, e o clique passa para o que está embaixo. No código, a linha continua igual de mexer. Vale numa forma, num `use`, num `group` (trava tudo de dentro) e numa `layer` (trava a camada inteira, como o chão aqui).
-
-**No editor:**
-
-- **Ctrl+G** agrupa as formas escolhidas: o editor escreve o `group group1` e o `end` em volta delas (no lugar da de cima, se não estavam juntas no código). **Ctrl+Shift+G** desfaz o grupo (um nível por vez). Os dois também estão em **Objeto**.
-- **Duplo clique** numa forma de um grupo **entra nele** (isolamento): o resto do desenho fica apagado e parado, e o clique escolhe só as formas de dentro. **Esc** (ou um duplo clique fora) sai.
-- **Ctrl+2** trava a escolha (num grupo inteiro, o `lock` vai na linha do `group`); **Ctrl+Alt+2** destrava tudo, menos as camadas. No painel **Camadas**, o cadeado de cada linha (e de cada camada) põe e tira o `lock`.
-- Copiar, colar, apagar, organizar (Ctrl+] e Ctrl+[) e o Alt+arrastar levam o grupo inteiro, do `group` ao `end`. Dentro do isolamento, organizar muda a ordem dentro do grupo.
-- **Objeto › Alinhar** (e o grupo **Alinhar** do painel Propriedades) alinha as escolhidas à esquerda, ao centro, à direita, em cima, no meio ou embaixo, e distribui três ou mais com a mesma distância entre os meios. Um grupo anda inteiro. Com uma forma (ou um grupo) só, ela se alinha na prancheta, o `canvas`.
-
-## Acabamento: `finish`
-
-`finish` muda o estilo do desenho **inteiro** de uma vez. A linha `finish` pode ficar em qualquer lugar do arquivo (o costume é logo depois do `canvas`):
-
-```
-finish game|flat inner= pixel= posterize= bloom= vignette= grain= oldfilm= vhs= crt= glitch=
-```
-
-| | `game` (padrão) | `finish flat` | `pixel=4` | `posterize=4` |
-|---|---|---|---|---|
-| | ![Gosma verde com contorno](img/04_finish_game.png) | ![A mesma gosma sem contorno](img/04_finish_flat.png) | ![A gosma pixelada](img/04_finish_pixel.png) | ![A gosma com poucas cores](img/04_finish_posterize.png) |
-
-<details>
-<summary>Código dos quatro</summary>
-
-<!-- gerar: img/04_finish_game.png -->
-```weasel
-canvas 200 160 bg=#cfe8f5
-palette ink=#2b2a33 line=5
-gradient verde linear 0,0 0,1 box : #9be38c #3f9a4a
-shape corpo c=verde ink=line weight=0.3 : 100,24 160,96 152,138! 48,138! 40,96
-ellipse olhoE 84,90 8,12 c=ink
-ellipse olhoD 118,90 8,12 c=ink
-ellipse brilho 76,60 11,6 rot=-35 c=#e6fadf
-```
-
-<!-- gerar: img/04_finish_flat.png -->
-```weasel
-canvas 200 160 bg=#cfe8f5
-finish flat
-palette ink=#2b2a33 line=5
-gradient verde linear 0,0 0,1 box : #9be38c #3f9a4a
-shape corpo c=verde ink=line weight=0.3 : 100,24 160,96 152,138! 48,138! 40,96
-ellipse olhoE 84,90 8,12 c=ink
-ellipse olhoD 118,90 8,12 c=ink
-ellipse brilho 76,60 11,6 rot=-35 c=#e6fadf
-```
-
-<!-- gerar: img/04_finish_pixel.png -->
-```weasel
-canvas 200 160 bg=#cfe8f5
-finish game pixel=4
-palette ink=#2b2a33 line=5
-gradient verde linear 0,0 0,1 box : #9be38c #3f9a4a
-shape corpo c=verde ink=line weight=0.3 : 100,24 160,96 152,138! 48,138! 40,96
-ellipse olhoE 84,90 8,12 c=ink
-ellipse olhoD 118,90 8,12 c=ink
-ellipse brilho 76,60 11,6 rot=-35 c=#e6fadf
-```
-
-<!-- gerar: img/04_finish_posterize.png -->
-```weasel
-canvas 200 160 bg=#cfe8f5
-finish game posterize=4
-palette ink=#2b2a33 line=5
-gradient verde linear 0,0 0,1 box : #9be38c #3f9a4a
-shape corpo c=verde ink=line weight=0.3 : 100,24 160,96 152,138! 48,138! 40,96
-ellipse olhoE 84,90 8,12 c=ink
-ellipse olhoD 118,90 8,12 c=ink
-ellipse brilho 76,60 11,6 rot=-35 c=#e6fadf
-```
-
-</details>
-
-Os quatro códigos são iguais, menos a linha `finish`. Repare:
-
-- `game` é o padrão: com ou sem a linha `finish game`, os contornos (`ink=`) são desenhados.
-- `flat` tira **todos** os contornos de uma vez, para um visual de recorte de papel. Os olhos continuam, porque são preenchimento (`c=ink`), não contorno.
-- `pixel=4` desenha a imagem 4 vezes menor e depois aumenta sem suavizar: cada "pixel" vira um bloco de 4×4.
-- `posterize=4` deixa só 4 níveis em cada canal de cor (vermelho, verde e azul). O degradê suave da gosma vira faixas.
-
-| Atributo | O que faz |
-|---|---|
-| `game` / `flat` | `game` desenha os contornos (`ink=`); `flat` tira todos, para um visual de recorte de papel. |
-| `inner=0.6` | Opacidade dos **traços** (`stroke`) dentro de camadas com `clip`, de 0 a 1 (padrão 1). Deixa penas, rugas e dobras mais suaves que o contorno de fora ([os dois `inner`](#os-dois-inner)). |
-| `pixel=4` | Desenha em blocos de 4×4 pixels (pixel art), de 1 a 32 (padrão 1, sem blocos). |
-| `posterize=4` | Reduz cada canal de cor a 4 níveis (de 2 a 64). `posterize=palette` reduz às cores da `palette` ([exemplo](#só-as-cores-da-palette-posterizepalette)). |
-| `bloom=` `vignette=` `grain=` | Brilho que vaza do claro, bordas escurecidas e granulado de filme (padrão 0 nos três). Cada um tem a sua faixa: `bloom` de 0 a 3, `vignette` de 0 a 1 e `grain` de 0 a 0.33 ([detalhes e exemplo](#acabamentos-de-cinema-bloom-vignette-e-grain)). |
-| `oldfilm=` `vhs=` `crt=` `glitch=` | Efeitos de tela: filme antigo, fita VHS, televisão de tubo e falha digital, de 0 a 1 (padrão 0). Só no filme, no vídeo, no GIF e no PNG; a sprite sheet e o Godot saem sem eles ([detalhes e exemplo](#efeitos-de-tela-oldfilm-vhs-crt-e-glitch)). |
-
-**Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
-
-**No editor:** **Janela › Acabamento e estilo** tem um controle deslizante para cada número do `finish` (e a escolha entre `game` e `flat`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; sem a linha, ela nasce logo depois do `canvas`. Veja [o painel no capítulo 14](14-estilos.md#pelo-editor-janela--acabamento-e-estilo).
-
-O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítido, com as cores do desenho, paletas de console e contorno de 1 bloco, use a linha `art pixel` do [capítulo 14](14-estilos.md#pixel-art-art-pixel).
-
-### Só as cores da palette: `posterize=palette`
-
-Com `posterize=palette`, cada ponto da imagem vira a cor **mais parecida** entre as cores da sua `palette`. Serve para garantir que o desenho inteiro use só as cores escolhidas, como numa pixel art de poucas cores.
-
-<!-- gerar: img/04_finish_palette.png -->
-```weasel
-canvas 200 160 bg=#cfe8f5
-finish game posterize=palette
-palette ink=#2b2a33 line=5 ceu=#cfe8f5 claro=#9be38c escuro=#3f9a4a brilho=#e6fadf
-gradient verde linear 0,0 0,1 box : claro escuro
-shape corpo c=verde ink=line weight=0.3 : 100,24 160,96 152,138! 48,138! 40,96
-ellipse olhoE 84,90 8,12 c=ink
-ellipse olhoD 118,90 8,12 c=ink
-ellipse brilho 76,60 11,6 rot=-35 c=brilho
-```
-
-| Sem `posterize` | `posterize=palette` |
-|---|---|
-| ![A gosma verde com degradê suave](img/04_finish_game.png) | ![A mesma gosma com só dois verdes, sem degradê: metade de cima clara, metade de baixo escura](img/04_finish_palette.png) |
-
-Repare:
-
-- A `palette` tem cinco cores: `ink`, `ceu`, `claro`, `escuro` e `brilho`. Os números (`line=5`) não contam.
-- O degradê ia do `claro` ao `escuro`, passando por vários verdes do meio. Com `posterize=palette`, cada verde do meio virou o `claro` ou o `escuro`, o que estiver mais perto.
-- Liste na `palette` todas as cores que você quer na imagem. Uma cor que não está lá vira a parecida mais próxima, que pode ser bem diferente.
-
-**Experimente:** acrescente `meio=#6dbe6a` na linha `palette`. O degradê ganha uma terceira faixa, verde média.
-
-### Acabamentos de cinema: `bloom=`, `vignette=` e `grain=`
-
-Estes três imitam o que acontece numa câmera de verdade. Eles valem para a **imagem pronta**, então ficam bem em cenas inteiras (cenários, filmes) e quase não aparecem num personagem sozinho num fundo claro.
-
-| Sem nada | `bloom=1.5` | `vignette=1` | `grain=0.15` |
-|---|---|---|---|
-| ![Uma casinha à noite com uma janela acesa e a lua](img/04_finish_noite.png) | ![A mesma cena: a lua e a janela soltam um brilho suave em volta](img/04_finish_bloom.png) | ![A mesma cena com os cantos escurecidos](img/04_finish_vignette.png) | ![A mesma cena coberta de granulado fino, como um filme antigo](img/04_finish_grain.png) |
-
-<details>
-<summary>Código dos quatro</summary>
-
-<!-- gerar: img/04_finish_noite.png -->
-```weasel
-canvas 200 140 bg=#1d2140
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#2c3a2e
-ellipse lua 156,36 17 c=#fff6c8
-rect casa 26,58 84,54 c=#5a4a5e ink=line
-shape telhado c=#3b2f45 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#ffd56b ink=line
-rect porta 78,78 20,34 c=#2b2233 ink=line
-```
-
-<!-- gerar: img/04_finish_bloom.png -->
-```weasel
-canvas 200 140 bg=#1d2140
-finish game bloom=1.5
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#2c3a2e
-ellipse lua 156,36 17 c=#fff6c8
-rect casa 26,58 84,54 c=#5a4a5e ink=line
-shape telhado c=#3b2f45 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#ffd56b ink=line
-rect porta 78,78 20,34 c=#2b2233 ink=line
-```
-
-<!-- gerar: img/04_finish_vignette.png -->
-```weasel
-canvas 200 140 bg=#1d2140
-finish game vignette=1
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#2c3a2e
-ellipse lua 156,36 17 c=#fff6c8
-rect casa 26,58 84,54 c=#5a4a5e ink=line
-shape telhado c=#3b2f45 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#ffd56b ink=line
-rect porta 78,78 20,34 c=#2b2233 ink=line
-```
-
-<!-- gerar: img/04_finish_grain.png -->
-```weasel
-canvas 200 140 bg=#1d2140
-finish game grain=0.15
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#2c3a2e
-ellipse lua 156,36 17 c=#fff6c8
-rect casa 26,58 84,54 c=#5a4a5e ink=line
-shape telhado c=#3b2f45 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#ffd56b ink=line
-rect porta 78,78 20,34 c=#2b2233 ink=line
-```
-
-</details>
-
-| Atributo | O que faz | Valores |
-|---|---|---|
-| `bloom=` | o que é muito claro (a lua, a janela) "vaza" num brilho suave em volta | de 0 a 3; 1 já é bem visível, e cada número a mais soma mais uma camada de brilho |
-| `vignette=` | escurece as bordas e os cantos, e leva o olho para o meio | de 0 a 1: em 1, os cantos ficam pretos (acima de 1 não escurece mais) |
-| `grain=` | granulado de filme, um chuvisco fino por cima de tudo | de 0 a 0.33: `0.03` é sutil, `0.15` é forte (acima de 0.33 não aumenta mais) |
-
-Fora da faixa, o Weasel avisa. No `bloom`, acima de 3, vale 3. No `vignette` e no `grain`, o valor é aceito, mas acima de 1 e de 0.33 a imagem não muda mais.
-
-Os três podem ir juntos na mesma linha: `finish game bloom=0.5 vignette=0.6 grain=0.03`. O [capítulo 8](08-luz-efeitos.md#acabamentos-de-cinema) usa assim numa fogueira animada.
-
-> O granulado é ruído, e ruído não comprime: um GIF ou PNG com `grain=` fica bem maior.
-
-**Experimente:** no código do `bloom`, mude a cor da lua para `c=#8a7a4a`, um amarelo apagado. O brilho em volta dela some: o `bloom` só pega o que é bem claro. A janela, que continua clara, continua brilhando.
-
-### Efeitos de tela: `oldfilm=`, `vhs=`, `crt=` e `glitch=`
-
-Estes quatro imitam o caminho da imagem até quem assiste: o filme antigo no projetor, a fita de vídeo, a televisão de tubo e o arquivo digital quebrando. Cada um vai de 0 a 1 (1 é o mais forte) e muda a cada quadro, sempre do mesmo jeito: o vídeo sai igual toda vez.
-
-| `oldfilm=1` | `vhs=1` | `crt=1` | `glitch=1` |
-|---|---|---|---|
-| ![Uma casinha de dia em sépia, com grão, as bordas escuras e um risco claro de cima a baixo](img/04_tela_oldfilm.png) | ![A mesma casinha com a cor borrada e atrasada, chiado e uma faixa de linhas brancas atravessando a imagem](img/04_tela_vhs.png) | ![A mesma casinha numa tela de tubo: linhas de varredura, a imagem curva e os cantos redondos e escuros](img/04_tela_crt.png) | ![A mesma casinha com faixas da imagem deslocadas de lado e o vermelho e o azul separados](img/04_tela_glitch.png) |
-
-<details>
-<summary>Código dos quatro</summary>
-
-<!-- gerar: img/04_tela_oldfilm.png -s 2 -->
-```weasel
-canvas 200 140 bg=#9fd0f0
-finish oldfilm=1
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#6aa84f
-ellipse sol 156,36 17 c=#ffe27a
-rect casa 26,58 84,54 c=#e8d9b5 ink=line
-shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#7fc8f0 ink=line
-rect porta 78,78 20,34 c=#8a5a3c ink=line
-```
-
-<!-- gerar: img/04_tela_vhs.png -s 2 -->
-```weasel
-canvas 200 140 bg=#9fd0f0
-finish vhs=1
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#6aa84f
-ellipse sol 156,36 17 c=#ffe27a
-rect casa 26,58 84,54 c=#e8d9b5 ink=line
-shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#7fc8f0 ink=line
-rect porta 78,78 20,34 c=#8a5a3c ink=line
-```
-
-<!-- gerar: img/04_tela_crt.png -s 2 -->
-```weasel
-canvas 200 140 bg=#9fd0f0
-finish crt=1
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#6aa84f
-ellipse sol 156,36 17 c=#ffe27a
-rect casa 26,58 84,54 c=#e8d9b5 ink=line
-shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#7fc8f0 ink=line
-rect porta 78,78 20,34 c=#8a5a3c ink=line
-```
-
-<!-- gerar: img/04_tela_glitch.png -s 2 -->
-```weasel
-canvas 200 140 bg=#9fd0f0
-finish glitch=1
-palette ink=#141320 line=4
-rect chao 0,110 200,30 c=#6aa84f
-ellipse sol 156,36 17 c=#ffe27a
-rect casa 26,58 84,54 c=#e8d9b5 ink=line
-shape telhado c=#c44536 ink=line : 18,60! 68,26! 118,60!
-rect janela 42,72 22,22 c=#7fc8f0 ink=line
-rect porta 78,78 20,34 c=#8a5a3c ink=line
-```
-
-</details>
-
-| Atributo | O que faz |
-|---|---|
-| `oldfilm=` | filme antigo: sépia, a luz piscando, o quadro tremendo de leve, o grão, as bordas escuras, riscos que duram uns quadros, poeira e, às vezes, um fio de cabelo |
-| `vhs=` | fita VHS: as linhas tremendo de lado, a cor borrada e atrasada, o preto lavado, o chiado, a faixa do tracking descendo devagar e a faixa torta embaixo |
-| `crt=` | televisão de tubo: as linhas de varredura, a máscara de cor (vermelho, verde e azul lado a lado) e a imagem curva, com os cantos redondos e escuros; a curva cresce com o valor, e em 1 só uma faixa fina da borda some |
-| `glitch=` | falha digital: em alguns quadros, em rajadas, faixas da imagem pulam de lado (algumas com as cores trocadas), o vermelho e o azul se separam e uns blocos se repetem fora do lugar; quanto maior o valor, mais vezes e mais forte |
-
-Repare:
-
-- **São para o filme e o vídeo**, e valem também no GIF, no WebP e no PNG. A sprite sheet e o Godot saem **sem eles** (um personagem de jogo não deve levar a tela de tubo em cada quadro), e o Weasel avisa na janela de exportar e na linha de comando. O SVG também sai sem eles.
-- Eles entram por último: depois do estilo (`art`), do `bloom`, do `vignette`, do `grain` e do `posterize`. Com `pixel=`, entram depois dos blocos.
-- Podem ir juntos: `finish crt=0.6 vhs=0.4` é uma fita velha passando numa televisão de tubo.
-- Na imagem transparente, eles mexem só no desenho: o que é transparente continua transparente.
-
-> Como no granulado, o chiado, o grão e a poeira não comprimem: o vídeo e o GIF ficam maiores.
-
-**Experimente:** no código do `crt=1`, mude para `crt=0.3`. As linhas ficam leves, e a imagem quase não curva.
-
-### Os dois `inner`
-
-A palavra `inner` aparece em **dois lugares** do Weasel, com sentidos diferentes. Os dois cuidam da mesma coisa, os traços **de dentro** do personagem (penas, rugas, dobras de roupa), por isso têm o mesmo nome. Mas um diz a **espessura** desses traços, e o outro diz **o quanto eles aparecem**.
-
-| Nome | Onde se escreve | O que é | Exemplo |
-|---|---|---|---|
-| `inner` da `palette` | como valor de `w=` ou `ink=` (e, para mudar o número, numa linha `palette`) | um **número com nome**: uma espessura em pixels. Já vem pronto, valendo 5 | `stroke pena w=inner : …` |
-| `inner=` do `finish` | só na linha `finish` | uma **opacidade**, de 0 (invisível) a 1 (normal). Padrão 1. Vale só para os `stroke` de camadas com `clip=` | `finish game inner=0.4` |
-
-**O `inner` da palette** foi apresentado no [capítulo 3](03-cores.md#nomes-que-já-existem): é um número pronto, como `line` e `edge`. Escrever `w=inner` é o mesmo que escrever `w=5`, com a vantagem de poder trocar o 5 de todos os traços numa linha só.
-
-**O `inner=` do finish** deixa mais claros os traços que ficam **dentro** de uma forma recortada, para que pareçam um detalhe e não briguem com o contorno de fora.
-
-Os dois exemplos abaixo desenham o mesmo passarinho. O primeiro gera duas imagens: a normal e a variante `fino`, que troca o `inner` da palette. O segundo só acrescenta a linha `finish game inner=0.4`.
-
-<!-- gerar: img/04_inner_padrao.png -->
-<!-- gerar: img/04_inner_fino.png --variant fino -->
-```weasel
-canvas 240 220 bg=#f4efe6
-palette ink=#2b2a33 line=8
-variant fino inner=2
-
-layer corpo
-ellipse bola 120,116 80 c=#ffb347 ink=line
-
-# as penas: traços de dentro, numa camada recortada pela bola
-layer penas clip=bola
-stroke asa w=inner : 70,98 64,124 76,144 102,152
-stroke p1 w=inner : 92,164 104,174 116,164
-stroke p2 w=inner : 116,164 128,174 140,164
-stroke p3 w=inner : 104,184 116,194 128,184
-
-# o rosto e o topete: numa camada sem clip
-layer rosto
-stroke topete w=inner : 112,38 118,16 134,10
-ellipse olhoE 102,100 7,10 c=ink
-ellipse olhoD 142,100 7,10 c=ink
-shape bico c=#e8743b ink=4 : 112,118! 132,118! 122,132!
-```
-
-<!-- gerar: img/04_inner_04.png -->
-```weasel
-canvas 240 220 bg=#f4efe6
-finish game inner=0.4
-palette ink=#2b2a33 line=8
-
-layer corpo
-ellipse bola 120,116 80 c=#ffb347 ink=line
-
-layer penas clip=bola
-stroke asa w=inner : 70,98 64,124 76,144 102,152
-stroke p1 w=inner : 92,164 104,174 116,164
-stroke p2 w=inner : 116,164 128,174 140,164
-stroke p3 w=inner : 104,184 116,194 128,184
+canvas 460 210 bg=#f4efe6
+palette ink=#2b2a33 verde=#8ad46a sombra=#4f9a45
+
+# lagarta da esquerda: os gomos têm nomes diferentes
+layer corpoE
+ellipse g1 50,110 32 c=verde
+ellipse g2 98,102 34 c=verde
+ellipse g3 148,106 32 c=verde
+ellipse g4 194,96 36 c=verde
+
+layer sombraE clip=corpoE
+ellipse s1 120,160 130,46 c=sombra
+
+# lagarta da direita: todos os gomos se chamam gomo
+layer corpoD
+ellipse gomo 270,110 32 c=verde
+ellipse gomo 318,102 34 c=verde
+ellipse gomo 368,106 32 c=verde
+ellipse gomo 414,96 36 c=verde
+
+layer sombraD clip=gomo
+ellipse s2 340,160 130,46 c=sombra
 
 layer rosto
-stroke topete w=inner : 112,38 118,16 134,10
-ellipse olhoE 102,100 7,10 c=ink
-ellipse olhoD 142,100 7,10 c=ink
-shape bico c=#e8743b ink=4 : 112,118! 132,118! 122,132!
+ellipse olhoE 206,86 6 c=ink
+ellipse olhoD 426,86 6 c=ink
+text t1 122,196 "clip=corpoE" size=16 align=center
+text t2 342,196 "clip=gomo" size=16 align=center
 ```
 
-| Padrão | `--variant fino` (`inner=2` na palette) | `finish game inner=0.4` |
-|---|---|---|
-| ![Um passarinho laranja redondo com asa e penas escuras de 5 pixels](img/04_inner_padrao.png) | ![O mesmo passarinho com a asa, as penas e o topete bem finos, de 2 pixels](img/04_inner_fino.png) | ![O mesmo passarinho com a asa e as penas da mesma grossura, mas bem claras; o topete continua escuro](img/04_inner_04.png) |
+![Duas lagartas verdes de quatro gomos, cada uma com uma sombra escura na parte de baixo que segue todos os gomos sem vazar](img/04_clip_camada.png)
 
-Repare:
+- A sombra de cada lagarta é **uma elipse só**, larga, embaixo. O recorte apara essa elipse no formato dos quatro gomos de uma vez.
+- À esquerda, `clip=corpoE` usa a **camada** `corpoE`: valem todas as formas fechadas dela.
+- À direita, os quatro gomos têm o **mesmo nome**, `gomo`, e `clip=gomo` usa os quatro. O resultado é o mesmo. A diferença é que os gomos poderiam dividir a camada com outras formas: só os que se chamam `gomo` contam.
+- Quando um nome é de uma forma e também de uma camada, vale a forma.
 
-- **No meio**, a variante troca o **número** `inner` da palette de 5 para 2. Todos os traços com `w=inner` afinam juntos: a asa, as penas **e** o topete. Nenhum fica mais claro.
-- **À direita**, `finish game inner=0.4` não mexe na espessura: a asa e as penas continuam com 5 pixels, mas aparecem só 40%. O topete **não muda**, porque está na camada `rosto`, que não tem `clip=`.
-- O contorno da bola (`ink=line`) e o bico não mudam em nenhuma das três.
+**Experimente:** à esquerda, troque `clip=corpoE` por `clip=g4`. A sombra só aparece no último gomo, a cabeça.
 
-O Cavaleiro de exemplo ([`cavaleiro.weasel`](../../exemplos/cavaleiro.weasel)) usa os dois juntos: `palette … inner=7` deixa os traços de dentro com 7 pixels, e `finish game inner=0.6` deixa as dobras da capa, que estão na camada `cloakshade clip=cloak`, com 60%.
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| `clip=` | a camada só aparece dentro da forma que recorta | **um** nome: de forma fechada (`ellipse`, `rect`, `shape`) ou de camada | sem recorte |
 
-#### O que o `inner=` do finish deixa mais claro
+**Cuidado:**
+- O `clip=` aceita um nome só. Para recortar com várias formas, ponha todas numa camada ou dê o mesmo nome a elas. `clip=a,b` é erro: `clip: "a,b" não é forma nem camada`.
+- Um `stroke` ou uma `line` não servem para recortar: eles não têm lado de dentro. O Weasel avisa que é um traço aberto, e a camada some.
+- O recorte segue a linha da borda, que fica no meio do contorno. A camada recortada só cobre a metade de **dentro** do contorno. Para cobrir o contorno inteiro, recorte com uma forma escondida (`hidden`) um pouco maior: o tamanho da forma mais metade do contorno.
 
-Para não restar dúvida, este exemplo põe lado a lado as mesmas três coisas, com a mesma espessura (`inner`, da palette), numa camada **sem** recorte e numa camada **com** `clip=`:
+### O contorno por cima: `inkon=`
 
-<!-- gerar: img/04_inner_juntos.png -->
+```
+forma … ink=grossura inkon=camada
+```
+
+Repare na bola da direita do [primeiro exemplo de `clip=`](#recortar-por-dentro-clip): a sombra cobriu a metade de dentro do contorno, que ficou mais fino embaixo. É que o contorno é pintado junto com a forma, e a camada recortada vem depois, por cima dele.
+
+`inkon=camada` resolve isso. O **preenchimento** fica onde está, e o **contorno** é pintado junto com outra camada, que você põe por último.
+
+<!-- gerar: img/04_inkon.png -->
 ```weasel
-canvas 460 250 bg=#f4efe6
-finish game inner=0.3
-palette ink=#2b2a33 line=4 inner=8
+canvas 440 220 bg=#f4efe6
+palette ink=#2b2a33 line=10 bola=#ff6b4a reflexo=#ffe2c2
 
-layer papeis
-rect papelE 20,40 200,195 r=10 c=#ffffff ink=line
-rect papelD 240,40 200,195 r=10 c=#ffffff ink=line
+layer bolas
+ellipse semInkon 110,110 80 c=bola ink=line
+ellipse comInkon 330,110 80 c=bola ink=line inkon=contorno
 
-# à esquerda: camada sem clip
-layer livre
-stroke tracoE w=inner : 50,80 190,80
-line linhaE w=inner : 50,125 190,125
-ellipse bolaE 120,175 20 c=#ffd34d ink=inner
+layer reflexo1 clip=semInkon
+ellipse r1 160,160 70 c=reflexo
 
-# à direita: a mesma coisa, numa camada com clip
-layer recortada clip=papelD
-stroke tracoD w=inner : 270,80 410,80
-line linhaD w=inner : 270,125 410,125
-ellipse bolaD 340,175 20 c=#ffd34d ink=inner
+layer reflexo2 clip=comInkon
+ellipse r2 380,160 70 c=reflexo
 
-layer rotulos
-text t1 120,28 "camada sem clip" size=15 align=center
-text t2 340,28 "camada com clip=" size=15 align=center
-text s 120,100 "stroke" size=12 align=center
-text l 120,145 "line" size=12 align=center
-text s2 340,100 "stroke" size=12 align=center
-text l2 340,145 "line" size=12 align=center
-text c 120,220 "contorno (ink=)" size=12 align=center
-text c2 340,220 "contorno (ink=)" size=12 align=center
+layer contorno
 ```
 
-![Dois cartões brancos lado a lado, cada um com um traço, uma linha e uma bolinha com contorno, todos da mesma grossura; só o traço do cartão da direita está bem claro](img/04_inner_juntos.png)
+![À esquerda o reflexo claro come metade do contorno embaixo; à direita, com inkon, o contorno fica inteiro por cima](img/04_inkon.png)
 
-Repare:
+- À esquerda, sem `inkon=`, o reflexo claro cobre a metade de dentro do contorno.
+- À direita, o contorno de `comInkon` vai para a camada `contorno`, a última, e fica inteiro.
+- A camada `contorno` não tem nenhuma forma: ela só recebe o contorno de `comInkon`.
+- O exemplo `exemplos/cavaleiro.weasel` faz isso na capa e na máscara do cavaleiro.
 
-- Os seis desenhos usam a mesma espessura: `w=inner` ou `ink=inner`, que nesta palette vale 8 pixels.
-- Só **um** ficou claro: o `stroke` da direita, que é um `stroke` **e** está numa camada com `clip=`.
-- A `line` da direita está na mesma camada recortada, mas não muda. O contorno da bolinha também não.
+**Experimente:** na `palette`, troque `line=10` por `line=4`. A diferença entre as duas bolas fica pequena, mas ainda está lá.
 
-Resumindo, `finish inner=` só vale para:
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| `inkon=` | pinta o contorno da forma junto com outra camada | o nome de uma camada | o contorno fica com a forma |
 
-- `stroke` (traços). Não vale para `line`, `text`, preenchimentos, nem para o contorno das formas (`ink=`);
-- em camadas com `clip=`. Uma camada só com `cut=` não conta;
-- e não vale para braços e pernas com IK (`stroke … limb=`, do [capítulo 6](06-ossos.md)).
+**Cuidado:**
+- O `inkon=` vale só no `ellipse`, no `rect` e no `shape`, e só com contorno. Sem `ink=`, o Weasel avisa: `inkon= só faz sentido com ink=`.
+- A camada do `inkon=` precisa existir no arquivo, mesmo vazia. Senão é erro: `camada "contorno" não existe`.
+- Com a camada do `inkon=` **antes** da forma, o contorno fica só por fora: o preenchimento cobre a metade de dentro. É outro jeito de fazer o contorno só por fora do [capítulo 3](03-cores.md#contorno-só-por-fora).
 
-A opacidade do `finish` se multiplica com a do próprio traço: um `stroke` com `opacity=0.5` numa camada com `clip=` e `finish inner=0.4` aparece só 20% (0,5 × 0,4).
+## Recortar por fora: `cut=`
 
-**Experimente:** mude `inner=0.3` para `inner=0` na linha `finish`. O traço da direita some de vez, e todo o resto fica igual.
+```
+layer nome cut=forma
+layer nome cut=camada
+forma … cut=forma
+forma … cut=forma1,forma2,…
+```
 
-[← Cores e estilos](03-cores.md) · [Índice](README.md) · [Próximo: Contas, componentes e arquivos →](05-componentes.md)
+O `cut=` é o contrário do `clip=`: a camada aparece em todo lugar, **menos** dentro da forma que recorta. Serve para abrir janelas, portas e buracos. Ele vale na camada e também numa forma.
+
+<!-- gerar: img/04_cut.png -->
+```weasel
+canvas 440 200 bg=#bfe3f5
+palette ink=#2b2a33
+pattern listra hatch angle=90 gap=14 w=7 c=#c44536 bg=#f4efe6
+
+ellipse janela 120,100 56 hidden
+layer parede cut=janela
+rect tinta 20,20 200,160 c=listra
+
+layer rosquinha
+ellipse rosca 330,100 76 c=#e0a050 ink=6 cut=furo
+ellipse furo 330,100 28 hidden
+```
+
+![À esquerda, um retângulo listrado com um buraco redondo sem contorno; à direita, uma rosca com o buraco contornado](img/04_cut.png)
+
+- À esquerda, a camada `parede` tem `cut=janela`. Pelo buraco aparece o fundo azul do `canvas`.
+- À direita, o `cut=furo` está na **forma** `rosca`. O buraco tem o formato de `furo`, e o contorno da rosca passa também em volta dele. Na camada, o buraco sai sem contorno.
+- As formas que recortam, `janela` e `furo`, têm `hidden`: não são pintados, só emprestam o formato (o `hidden` é do [capítulo 2](02-formas.md)).
+
+**Experimente:** apague o `hidden` da linha `ellipse furo`. O furo passa a ser pintado, na cor da tinta (a `ink` da `palette`), e tapa o buraco.
+
+### Vários buracos e mordidas
+
+Numa forma, o `cut=` aceita vários nomes, separados por vírgula: `cut=f1,f2,f3`. E o buraco pode passar da borda da forma: aí ele vira uma **mordida**.
+
+<!-- gerar: img/04_buracos.png -->
+```weasel
+canvas 440 210 bg=#cfe8f5
+palette ink=#2b2a33 line=5
+
+# um queijo com três furos
+rect queijo 30,50 180,110 r=8 c=#ffd34d ink=line cut=f1,f2,f3
+ellipse f1 75,90 18 hidden
+ellipse f2 150,125 22 hidden
+ellipse f3 178,78 10 hidden
+
+# um biscoito mordido: o buraco passa da borda
+ellipse biscoito 330,105 72 c=#d9a066 ink=line cut=mordida
+ellipse mordida 395,50 42 hidden
+ellipse gota1 300,90 7 c=#5a3a22
+ellipse gota2 335,140 7 c=#5a3a22
+ellipse gota3 290,130 6 c=#5a3a22
+
+text t1 120,196 "cut=f1,f2,f3" size=16 align=center
+text t2 330,196 "cut=mordida" size=16 align=center
+```
+
+![Um queijo amarelo com três furos contornados e um biscoito redondo com uma mordida no canto de cima, também contornada](img/04_buracos.png)
+
+- Cada furo do queijo ganhou contorno.
+- A `mordida` fica metade dentro, metade fora do biscoito. Só a parte de dentro vira buraco, e o contorno acompanha a curva da mordida.
+
+**Experimente:** mude o raio da mordida de `42` para `70`. A mordida leva um pedaço grande do biscoito, com contorno e tudo.
+
+### Furos com o mesmo nome e furos que se cruzam
+
+Os furos também podem ter **o mesmo nome**: `cut=furo` abre um buraco em cada forma chamada `furo`. E dois furos que se cruzam viram **um buraco só**, com um contorno só.
+
+<!-- gerar: img/04_furos_juntos.png -->
+```weasel
+canvas 440 200 bg=#cfe8f5
+palette ink=#2b2a33 line=5
+
+# quatro furos com o mesmo nome
+rect queijo 20,40 190,110 r=8 c=#ffd34d ink=line cut=furo
+ellipse furo 60,75 14 hidden
+ellipse furo 100,118 18 hidden
+ellipse furo 145,70 11 hidden
+ellipse furo 178,115 14 hidden
+
+# dois furos que se cruzam: um buraco só, em forma de óculos
+ellipse bolacha 330,95 70 c=#d9a066 ink=line cut=olho1,olho2
+ellipse olho1 310,95 28 hidden
+ellipse olho2 350,95 28 hidden
+
+text t1 115,186 "cut=furo" size=16 align=center
+text t2 330,186 "cut=olho1,olho2" size=16 align=center
+```
+
+![Um queijo amarelo com quatro furos contornados e uma bolacha com um buraco em forma de óculos, de contorno contínuo](img/04_furos_juntos.png)
+
+- As quatro elipses se chamam `furo`, e `cut=furo` abre as quatro. É assim que um `repeat` faz dezenas de furos de uma vez ([capítulo 5](05-componentes.md)): todas as cópias têm o mesmo nome.
+- `olho1` e `olho2` se cruzam no meio. O pedaço em comum também fica vazio, e o contorno segue a borda do buraco inteiro, sem riscar o meio.
+
+**Experimente:** mude o raio de `olho1` e `olho2` de `28` para `40`. O buraco passa da borda da bolacha, como a mordida do biscoito.
+
+### Recortar com uma forma que tem buraco
+
+Uma forma com buraco também pode recortar uma camada, no `clip=` e no `cut=`. O buraco continua buraco:
+
+<!-- gerar: img/04_molde_buraco.png -->
+```weasel
+canvas 440 200 bg=#f4efe6
+palette ink=#2b2a33 line=5
+
+# a calda fica só em cima da massa: não entra no buraco
+layer massa
+ellipse rosca 110,100 75 c=#e0a050 ink=line cut=miolo inkon=contorno
+ellipse miolo 110,100 28 hidden
+layer calda clip=rosca
+rect cobertura 20,20 180,70 c=#d1477a
+
+# a toalha some atrás da rosca, mas aparece pelo buraco dela
+layer massa2
+ellipse rosca2 330,100 75 c=#e0a050 ink=line cut=miolo2
+ellipse miolo2 330,100 28 hidden
+layer toalha cut=massa2
+rect pano 230,80 200,40 c=#3a78c2
+
+layer contorno
+```
+
+![À esquerda, uma rosca com calda rosa só na metade de cima e o buraco limpo; à direita, uma faixa azul que passa atrás da rosca e aparece pelo buraco](img/04_molde_buraco.png)
+
+- `clip=rosca`: a calda aparece só onde a rosca tem massa. O buraco do meio fica sem calda.
+- `cut=massa2`: a toalha some onde está a rosca, mas aparece pelo buraco, como se passasse por trás dela.
+- `miolo2` está na camada `massa2`, mas não recorta a toalha: ele é o buraco. Por isso a toalha aparece por ele.
+- `inkon=contorno` põe o contorno da primeira rosca por cima da calda.
+
+**Experimente:** apague o `cut=miolo` da primeira rosca. Ela fica inteira, e a calda passa a cobrir o meio também.
+
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| `cut=` na camada | a camada some dentro da forma que recorta | **um** nome: de forma fechada ou de camada | sem buraco |
+| `cut=` na forma | abre buracos com contorno | um ou mais nomes de formas fechadas, separados por vírgula | sem buraco |
+
+**Cuidado:**
+- Numa forma, o `cut=` só aceita nomes de **formas**. O nome de uma camada é erro: `cut: forma "m" não existe`.
+- A forma que recorta precisa ser fechada (`ellipse`, `rect` ou `shape`). Com um `stroke`, é erro: `cut: "b" precisa ser uma forma fechada`.
+- O `cut=` abre buracos só no `ellipse`, no `rect` e no `shape`. No `stroke`, na `line` e no `text`, ele é aceito, mas não faz nada.
+
+## Camadas que não saem na imagem: `hidden` e `guide`
+
+```
+layer nome hidden
+layer nome guide
+```
+
+### Camada escondida: `hidden`
+
+Uma camada `hidden` não é pintada, mas as formas dela continuam existindo. Ela guarda formas que só emprestam o formato para um `clip=` ou um `cut=`.
+
+<!-- gerar: img/04_hidden.png -->
+```weasel
+canvas 400 260 bg=#1d2140
+palette ink=#2b2a33 line=5
+
+# 1. o que fica atrás da parede: a luz de dentro da casa
+layer dentro
+rect luz 60,90 280,150 c=#ffd56b
+
+# 2. a parede, com buracos no formato das formas da camada janelas
+layer parede cut=janelas
+rect frente 60,90 280,150 c=#b5835a ink=line
+shape telhado c=#7a3b2c ink=line : 40,94! 200,20! 360,94!
+
+# 3. as formas que recortam: a camada não é pintada, só empresta o formato
+layer janelas hidden
+rect j1 90,120 60,50 r=4 c=none ink=4
+rect j2 250,120 60,50 r=4 c=none ink=4
+rect porta 175,160 50,80 r=4 c=none ink=4
+```
+
+![Uma casa marrom à noite, com duas janelas e uma porta pelas quais se vê uma luz amarela por dentro](img/04_hidden.png)
+
+- A parede é um retângulo inteiro. Os buracos vêm de `cut=janelas`, o nome de uma **camada**: valem as três formas dela juntas.
+- A camada `janelas` tem `hidden`. As três formas não são pintadas, só servem para recortar.
+- Pelos buracos aparece o que foi pintado antes da parede: a camada `dentro`, amarela.
+- As três formas têm `c=none ink=4`. Escondidos, isso não muda nada. No **Experimente**, você vê para que serve.
+
+**Experimente:** apague o `hidden` da linha `layer janelas`. As três formas passam a ser pintadas: sem preenchimento e com contorno de 4 pixels, elas viram a moldura das janelas e da porta.
+
+### Camada de construção: `guide`
+
+Uma camada `guide` guarda as **linhas de ajuda** que você usa para desenhar (o meio do rosto, a altura dos olhos, a linha do chão) e que não saem na imagem final.
+
+<!-- gerar: img/04_guide.png -->
+<!-- gerar: img/04_guide_on.png --guides -->
+```weasel
+canvas 300 220 bg=#f4efe6
+palette ink=#2b2a33 line=5
+
+layer rosto
+ellipse cara 150,110 80 c=#ffd34d ink=line
+ellipse olhoE 122,95 8,12 c=ink
+ellipse olhoD 178,95 8,12 c=ink
+stroke boca w=5 : 115,135 150,155 185,135
+
+# linhas de construção: só no editor e com --guides
+layer construcao guide
+line meio w=1 c=#c44536 dash=6,4 : 150,8 150,212
+line olhos w=1 c=#c44536 dash=6,4 : 40,95 260,95
+text nota 156,206 "meio: x=150" size=13 c=#c44536
+```
+
+| Exportado normalmente | Com `--guides` |
+|---|---|
+| ![Uma carinha amarela sorridente, sem nenhuma linha de ajuda](img/04_guide.png) | ![A mesma carinha com duas linhas vermelhas tracejadas, uma no meio e outra na altura dos olhos, e a anotação "meio: x=150"](img/04_guide_on.png) |
+
+- A camada `construcao` tem `guide`. As duas linhas tracejadas e a anotação ficam nela.
+- Na exportação normal (à esquerda), a camada some.
+- Com `--guides` na linha de comando (à direita), ela aparece:
+
+  ```bash
+  node cli/weasel.js teste.weasel --guides
+  ```
+
+- No editor, quem decide é o menu **Exibir › Guias** ([capítulo 22](22-editor.md#guias)).
+- Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada (a luz é do [capítulo 10](08-luz-efeitos.md)).
+
+**Experimente:** troque `guide` por `hidden`. As linhas somem também com `--guides`: a camada `hidden` nunca é pintada.
+
+## Travar no editor: `lock`
+
+```
+layer nome lock
+forma … lock
+```
+
+O `lock` **trava**: no editor, o desenho não deixa escolher nem arrastar as formas, e o clique passa para o que está embaixo. A imagem não muda. No código, você continua podendo editar a linha.
+
+- Numa camada (`layer fundo lock`), trava todas as formas dela. É bom para o cenário, que você não quer arrastar sem querer.
+- Numa forma, trava só ela.
+- No editor, **Ctrl+2** trava a escolha e **Ctrl+Alt+2** destrava tudo, menos as camadas. O cadeado do painel Camadas põe e tira o `lock` ([capítulo 22](22-editor.md#travar-e-agrupar)).
+
+Para juntar formas e mexer nelas de uma vez, existe o `group` ([capítulo 6](05-componentes.md#grupos-group)).
+
+## Todas as opções da camada
+
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| `opacity=` | transparência da camada inteira | de 0 (invisível) a 1 | 1 |
+| `blend=` | como a camada se mistura com o que está embaixo | `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color-dodge`, `color-burn`, `hard-light`, `soft-light`, `difference`, `exclusion`, `hue`, `saturation`, `color`, `luminosity` | `normal` |
+| `clip=` | a camada só aparece dentro da forma que recorta | um nome de forma fechada ou de camada | sem recorte |
+| `cut=` | a camada some dentro da forma que recorta | um nome de forma fechada ou de camada | sem buraco |
+| `hidden` | a camada não é pintada; as formas dela continuam recortando | palavra solta | pintada |
+| `guide` | só aparece no editor (com **Exibir › Guias**) e com `--guides` | palavra solta | sempre aparece |
+| `lock` | trava as formas no editor; a imagem não muda | palavra solta | destravada |
+
+A camada tem outras opções, que aparecem mais adiante:
+- `only=`: a camada só aparece em certas animações ([capítulo 9](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-only));
+- `unlit` e `shade=`: a luz na camada ([capítulo 10](08-luz-efeitos.md));
+- `blur=`, `glow=`, `shadow=`, `tint=`, `brightness=`, `saturate=`, `contrast=`, `hue=`, `trail=`, `cast=`, `rim=`: os efeitos ([capítulo 11](08-luz-efeitos.md#efeitos-de-camada));
+- `yaw=`, `pitch=`, `persp=`, `pivot=`, `floor`, `horizon=`, `iso`, `zsort`: a profundidade 2.5D ([capítulo 14](11-profundidade.md));
+- `depth=`, `screen`, `front`: a distância num filme ([capítulo 17](10-filme.md#profundidade-e-paralaxe)).
+
+A lista completa está na [referência do `layer`](19-referencia.md#layer).
+
+## Juntando tudo
+
+Uma poção mágica na mesa, numa noite de lua. A parede tem um buraco no formato da janela, e a poção só aparece dentro do vidro:
+
+<!-- gerar: img/04_pocao.png -->
+```weasel
+canvas 480 360 bg=#1f2a55
+palette ink=#2b2a33 line=5 madeira=#8a5a3a vidro=#dff1ff66 pocao=#8b4fd8 bolha=#c9a6ff
+pattern papel hatch angle=90 gap=26 w=10 c=#e4d2b4 bg=#efe2c9
+
+# o céu da noite: aparece pelo buraco da janela
+ellipse lua 150,80 22 c=#fff4c2
+ellipse estrela1 90,70 3 c=#ffffff
+ellipse estrela2 190,130 2 c=#ffffff
+ellipse estrela3 110,150 2 c=#ffffff
+
+# a parede tem um buraco no formato da janela
+layer parede cut=janela
+rect fundo 0,0 480,300 c=papel
+
+layer recortes hidden
+rect janela 60,40 170,150 r=6
+
+layer moldura
+rect aro 60,40 170,150 r=6 c=none ink=10 inkc=madeira
+rect travessa 141,40 8,150 c=madeira
+rect peitoril 48,190 194,14 r=4 c=madeira ink=3
+
+layer mesa
+rect tampo 0,290 480,70 c=madeira ink=line
+ellipse sombraMesa 330,298 70,8 c=#00000033
+
+# o frasco: vidro claro, um pouco transparente
+layer frasco
+shape vidro c=vidro ink=line inkon=contorno : 312,112! 348,112! 348,172 382,196 394,236 376,280 330,296 284,280 266,236 278,196 312,172
+
+# a poção só aparece dentro do vidro
+layer liquido clip=vidro
+shape onda c=pocao : 250,226! 290,216 330,226 370,216 410,226! 410,310! 250,310!
+ellipse b1 310,262 7 c=bolha
+ellipse b2 344,246 5 c=bolha
+ellipse b3 326,284 4 c=bolha
+
+# uma sombra que só escurece e um brilho que só clareia
+layer sombra clip=vidro blend=multiply
+ellipse s 376,262 70 c=#b9a6d9
+
+layer brilho clip=vidro blend=screen opacity=0.8
+ellipse reflexo 296,214 10,30 rot=20 c=#ffffff
+
+layer contorno
+
+layer rolha
+rect tampa 314,96 32,22 r=4 c=#c08a55 ink=line
+```
+
+![Uma sala com papel de parede listrado; pela janela de madeira se vê a noite com a lua e estrelas. Na mesa, um frasco redondo de vidro com uma poção roxa e bolhas, um reflexo branco à esquerda e uma sombra à direita](img/04_pocao.png)
+
+- **O céu:** a lua e as estrelas estão na camada `base`, por trás de tudo. O fundo azul é o `bg=` do `canvas`.
+- **A janela:** a camada `parede` tem `cut=janela`, e a `janela` mora numa camada `hidden`. A moldura é um `rect` no mesmo lugar, só com contorno.
+- **O vidro:** um `shape` com uma cor transparente (`#dff1ff66`): a parede aparece através dele.
+- **A poção:** a camada `liquido` tem `clip=vidro`. A onda e as bolhas podem passar da borda à vontade: o recorte apara no formato do frasco.
+- **Sombra e brilho:** duas camadas recortadas pelo mesmo vidro. A `sombra` usa `blend=multiply` e só escurece. O `brilho` usa `blend=screen` com `opacity=0.8` e só clareia.
+- **O contorno:** o `inkon=contorno` leva o contorno do vidro para depois da poção, da sombra e do brilho, e ele fica inteiro.
+- **A rolha:** a última camada, por cima de tudo.
+
+**Experimente:** apague o `inkon=contorno` do vidro. O contorno fica mais fino onde a poção, a sombra e o brilho passam por cima dele.
+
+## Resumo
+
+- `layer nome` abre uma camada; as formas antes do primeiro `layer` ficam na camada `base`. Uma camada não pode ser aberta de novo.
+- O Weasel pinta as camadas na ordem do arquivo e, dentro de cada uma, as formas na ordem das linhas: o que vem depois fica por cima.
+- `opacity=` e `blend=` valem para a camada inteira de uma vez.
+- `clip=` mostra a camada só dentro de outra forma; `cut=` abre um buraco nela. Numa forma, `cut=` abre buracos com contorno.
+- `inkon=` pinta o contorno de uma forma junto com outra camada, para ele ficar por cima.
+- `hidden` não pinta a camada (as formas dela continuam recortando), `guide` só aparece no editor e com `--guides`, e `lock` trava as formas no editor.
+
+[← Cores e contorno](03-cores.md) · [Índice](README.md) · [Próximo: Contas e repetição →](05-componentes.md)

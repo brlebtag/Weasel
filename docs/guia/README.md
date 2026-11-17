@@ -16,10 +16,10 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 
 | | Capítulo | O que você aprende |
 |---|---|---|
-| 1 | [Primeiros passos](01-primeiros-passos.md) (antigo) | como rodar um desenho, as coordenadas (o `y` cresce para baixo), o formato de uma linha e como ler os erros |
-| 2 | [Formas](02-formas.md) (antigo) | círculo e elipse, retângulo, formas com pontos (lisos, cantos e alças), traços, linhas e texto |
-| 3 | [Cores e contorno](03-cores.md) (antigo) | cores com transparência, a `palette`, gradientes, texturas e o contorno das formas |
-| 4 | [Camadas](04-camadas.md) (antigo) | `layer`, a ordem de pintura, recortar por dentro e por fora e furar formas |
+| 1 | [Primeiros passos](01-primeiros-passos.md) | como rodar um desenho, as coordenadas (o `y` cresce para baixo), o formato de uma linha e como ler os erros |
+| 2 | [Formas](02-formas.md) | círculo e elipse, retângulo, formas com pontos (lisos, cantos e alças), traços, linhas e texto |
+| 3 | [Cores e contorno](03-cores.md) | cores com transparência, a `palette`, gradientes, texturas e o contorno das formas |
+| 4 | [Camadas](04-camadas.md) | `layer`, a ordem de pintura, recortar por dentro e por fora e furar formas |
 
 ### 2. Organizar
 
@@ -42,7 +42,7 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 |---|---|---|
 | 10 | [Luz e sombra](08-luz-efeitos.md) (antigo) | lâmpadas, holofotes, sol e lua, brilho e sombra no chão |
 | 11 | [Efeitos e partículas](08-luz-efeitos.md#efeitos-de-camada) (antigo) | os efeitos de camada, o rastro e as partículas |
-| 12 | [Acabamento](04-camadas.md#acabamento-finish) (antigo) | a linha `finish`: o estilo do desenho inteiro, os acabamentos de cinema e os efeitos de tela |
+| 12 | [Acabamento](12-acabamento.md) (antigo) | a linha `finish`: o estilo do desenho inteiro, os acabamentos de cinema e os efeitos de tela |
 | 13 | [Estilos de arte](14-estilos.md) (antigo) | a linha `art`: o mesmo desenho em pixel art, aquarela, gravura, HQ, mangá, vitral, tricô e mais 19 estilos |
 | 14 | [Profundidade (2.5D)](11-profundidade.md) (antigo) | girar formas em 3D, verso e espessura, chão em perspectiva, mapa isométrico, lente e névoa |
 
@@ -62,7 +62,7 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 | 19 | [Referência completa](19-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
 | 20 | [Funções das contas](20-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
 | 21 | [Linha de comando](21-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
-| 22 | O editor (ainda não escrito) | as ferramentas e os painéis do editor |
+| 22 | [O editor](22-editor.md) | as ferramentas e os painéis do editor (por enquanto, os dos capítulos 1 a 4) |
 | 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
 | 24 | [Problemas comuns](13-problemas.md) (antigo) | o que costuma dar errado e como resolver |
 | 25 | [Glossário](25-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |
@@ -71,7 +71,7 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 
 Os exemplos grandes do guia são desenhos completos: copie, cole e rode. Alguns blocos são só pedaços de um desenho, para mostrar uma linha; o texto em volta diz quando é assim.
 
-- **No editor web:** abra o `index.html`, crie um arquivo novo na barra acima do código e cole. O desenho aparece à direita, e as animações tocam no player.
+- **No editor web:** abra o `index.html`, crie um arquivo com **Arquivo › Novo** e cole o exemplo no lugar do desenho que vem nele. O desenho aparece à direita, e as animações tocam no player.
 - **Na linha de comando:** salve como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 21](21-linha-de-comando.md) tem todas as opções.
 
 Os exemplos que usam outros arquivos (`include "cavaleiro.weasel"`, `actor … "fantasma.weasel"`) esperam estar na pasta [`exemplos/`](../../exemplos/), junto com os personagens de exemplo.

@@ -234,7 +234,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#vitral-e-bordado-art
 
 ## Como o ponto-cruz, o mosaico, o tricô e os efeitos de tela ficaram (1.37.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#ponto-cruz-mosaico-e-tricô) e no [capítulo 4](../guia/04-camadas.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch), mais as escolhas feitas no caminho.
+O que está no [capítulo 14 do guia](../guia/14-estilos.md#ponto-cruz-mosaico-e-tricô) e no [capítulo 12](../guia/12-acabamento.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch), mais as escolhas feitas no caminho.
 
 - **A grade do ponto-cruz e do tricô:** presa ao canto do canvas (no filme, ao quadro), com casas de `size=` unidades (no tricô, 0,78 `size=` de altura). Cada casa fica com a cor mais votada entre os seus pontos (em 4 bits por canal, e depois a média dos que votaram nela). No ponto-cruz, a casa vale quando o desenho cobre a metade dela; no tricô, o contorno ganha a casa com um terço.
 - **`stitch`, o X:** duas pernas, a de baixo (/) e a de cima (\\), cada uma um fio torcido, com as listras dos fios, um brilho de cilindro (do lado da luz do canvas) e as pontas afinando. A de cima faz sombra na de baixo e no pano.
@@ -253,7 +253,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#ponto-cruz-mosaico-e
 
 ## O que já existe
 
-Tudo no `finish` ([capítulo 4](../guia/04-camadas.md#acabamento-finish)):
+Tudo no `finish` ([capítulo 12](../guia/12-acabamento.md#acabamento-finish)):
 - `pixel=8`: desenha 8 vezes menor e aumenta sem suavizar.
 - `posterize=4`: poucas cores; `posterize=palette`: só as cores da `palette`.
 - `flat`: tira todos os contornos.

@@ -27,7 +27,7 @@
      - js/scene.js: ~2058;
      - js/svg.js: ~255.
   3. Tirar da documentação:
-     - capítulo 4, seção [Os dois `inner`](../guia/04-camadas.md#os-dois-inner) (~978), e as linhas ~796 e ~865;
+     - capítulo 12, seção [Os dois `inner`](../guia/12-acabamento.md#os-dois-inner) (~978), e as linhas ~796 e ~865;
      - capítulo 3, o aviso da linha ~197;
      - capítulo 12, a linha do `finish` (~131);
      - a ajuda do index.html (~118) e o README (~238).

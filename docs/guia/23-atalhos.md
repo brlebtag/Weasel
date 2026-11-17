@@ -1,6 +1,6 @@
 # 23. Atalhos do teclado
 
-[← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)
+[← O editor](22-editor.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)
 
 <!-- Esta página é escrita pelo npm run docs a partir de js/keys.js. Para mudar um atalho, mude a lista. -->
 
@@ -258,4 +258,4 @@ Para entrar e sair: Exibir › Camadas em 3D (no filme, Palco em 3D) ou o botão
 | `botão direito numa marca` | tira a cor | painel do gradiente |
 | `Esc` | fecha a janela | janela Exportar |
 
-[← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)
+[← O editor](22-editor.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)

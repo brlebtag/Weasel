@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1. Próximo: a etapa 3.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2. Próximo: a etapa 4.
 
 ## O pedido
 
@@ -109,6 +109,8 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 | J | **`opacity=` da forma e do `use`** (achado na tarefa A): o mesmo "pedaço por pedaço" que a camada tinha. Numa forma com contorno e `opacity=0.5`, a metade de dentro do contorno mostra o preenchimento por baixo (sai `128,64,64` num contorno preto sobre vermelho, em vez do cinza `128,128,128` da metade de fora). Num `use` com `opacity=0.5`, as formas do componente aparecem uma através da outra (`128,64,191` no cruzamento de um vermelho com um azul). Hoje dá para ter o componente inteiro transparente pondo o `use` numa camada com `opacity=`. | Cores e contorno (etapa 3): decidir se o guia descreve ou se corrige antes |
 
 Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D, E e I podem esperar uma tarefa de "avisos que faltam". F, G e H são defeitos: valem uma tarefa de conserto (G muda a imagem só no caso que hoje sai preto).
+
+A lista completa e atualizada, com o que o diagnóstico achou nos outros capítulos, fica em [Problemas achados no código](problemas-achados.md).
 
 ### A: como ficou (1.67.1, 17/11/2026)
 
@@ -407,3 +409,22 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 - **A conferência** (`docs/guia/conferir.js`, no `npm test` pelo `gerar.js`): a referência precisa ter uma ficha para cada comando de `KEYWORDS`, com toda opção de `ATTRS` e toda palavra de `FLAGS`; cada estilo do `art` com as opções de `ART_OPTS`; cada alvo da `key` e do `at` com as suas propriedades. O 20 precisa ter toda função de `FN` e o `pi`; o 21, toda opção do `parseArgs`. E todo link entre os capítulos precisa levar a um arquivo e a um título que existem (um link do capítulo 1 estava quebrado e foi corrigido).
 - **O capítulo 12 antigo saiu**, com as 11 imagens `12_*`. Os links para ele levam agora ao 19 e ao 21.
 - **Para as próximas etapas:** cada capítulo reescrito precisa atualizar os links **Para aprender** do 19 que apontam para o capítulo antigo, e o link do começo do 20 (hoje para o 5 antigo). Quando a tarefa A mudar a `opacity=`/`blend=` da camada, o **Cuidado** da ficha `layer` no 19 muda junto (feito na 1.67.1).
+
+### Etapa 3 (1.67.2): o básico
+
+- **Os capítulos 1 a 4 foram reescritos do zero**, no formato da seção 3.3 (ficha de cada comando, Experimente, Cuidado, Juntando tudo e Resumo). Tamanhos: 1 com 508 linhas, 2 com 668, 3 com 914 e 4 com 726. O 3 passou das 700 porque juntou o contorno do 2 antigo (`ink`, `inkc`, `weight`, contorno só por fora).
+- **Os desenhos de vitrine** (Juntando tudo): a Vila Sol (1), a placa do café (2), a natureza-morta com a maçã (3) e a poção na janela (4).
+- **O que saiu dos capítulos e para onde foi:**
+  - o `finish` foi para um capítulo 12 provisório (`12-acabamento.md`), com o texto antigo, até a etapa 6;
+  - a `variant` (do 3) e o `group` (do 4) foram para o fim do capítulo 6 (`05-componentes.md`), ainda no texto antigo;
+  - o `above=`/`below=` foi para o capítulo 9 (`07-animacao.md`), que já tinha o `only=`;
+  - as dicas do editor viraram o **capítulo 22** (`22-editor.md`), com as dicas dos capítulos 1 a 4 e os três exemplos com imagem do 2 antigo (Simplificar, Pathfinder e Borracha, Tesoura e Faca);
+  - os dois casos de borda do `inkon=` (a camada recortada que encosta na borda toda e a forma maior que cobre o contorno inteiro) viraram uma linha de **Cuidado** no `clip=`.
+- **Escolhas minhas:**
+  - "molde" saiu do texto: no lugar, "a forma que recorta";
+  - a ordem de pintura do 4 não usa mais `def`/`use` (é do capítulo 6);
+  - o capítulo 1 dizia que as camadas mudam a ordem de pintura, o que não é verdade: agora aponta para a ordem completa no 4.
+- **Linha J** (a `opacity=` da forma e do `use`): a sessão que corrige ainda não terminou. O texto do 3 ("Cor transparente ou forma transparente") ficou neutro, verdadeiro antes e depois da correção, com uma marca `<!-- conferir -->`. Quando a J sair, ela gera de novo o `03_opacity.png` e o `03_cor_ou_opacity.png`, devolve a frase "o contorno e o preenchimento ficam transparentes juntos, como uma peça só" e tira a marca.
+- **As imagens:** 46 novas ou refeitas nos capítulos 1 a 4. Saíram 28 que nenhum exemplo gera mais (`01_sol_lua`, nove `02_*` do contorno e da transparência, treze `03_*` da variante e do gradiente antigos e cinco `04_*`).
+- **Os links:** os **Para aprender** do 19, os capítulos 7, 8, 13, 14 e 21, o índice e dois planos levam aos títulos novos. A conferência do `npm test` não acha nenhum link quebrado.
+- **Problemas do código achados de passagem:** juntados em [Problemas achados no código](problemas-achados.md), com os das outras sessões e do diagnóstico.

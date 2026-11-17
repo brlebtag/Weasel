@@ -39,7 +39,7 @@ const KEYS_MD = '23-atalhos.md';
 function keysPage() {
   const K = W.keys, out = [];
   const keyText = (it) => K.list(it.k).map((k) => '`' + k + '`').join(' ou ') + (it.mac ? ` (no Mac, ${K.list(it.mac).map((k) => '`' + k + '`').join(' ou ')})` : '');
-  const nav = '[← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)';
+  const nav = '[← O editor](22-editor.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)';
   out.push('# 23. Atalhos do teclado', '', nav, '');
   out.push('<!-- Esta página é escrita pelo npm run docs a partir de js/keys.js. Para mudar um atalho, mude a lista. -->', '');
   out.push('Esta é a lista de todos os atalhos do editor. No editor, a mesma lista fica em **Ajuda › Atalhos do teclado** (**Shift+F1** ou **Ctrl+?**), com uma busca em cima.', '');

@@ -393,7 +393,7 @@ ellipse bola 150,75 50 c=#ffb000 ink=4 weight=2
 - `bg=none` não deixa a imagem exportada transparente: ela sai com fundo branco. Para o fundo sair transparente, use `-t` na linha de comando. Com `-t`, o fundo some, qualquer que seja o `bg=`.
 - O `unity` sem `root=` usa o tamanho do `canvas` de cima: escreva o `canvas` antes dele.
 
-**Para aprender:** [O primeiro desenho](01-primeiros-passos.md#o-primeiro-desenho) e [o contorno que engrossa](02-formas.md#contorno-que-engrossa-no-lado-da-sombra-weight).
+**Para aprender:** [O primeiro desenho](01-primeiros-passos.md#o-primeiro-desenho) e [o contorno que engrossa](03-cores.md#contorno-que-engrossa-no-lado-da-sombra-weight).
 
 ### `finish`
 
@@ -437,7 +437,7 @@ ellipse lua 150,75 40 c=#fff6c0 ink=4
 - Os efeitos de tela (`oldfilm=`, `vhs=`, `crt=`, `glitch=`) mudam a cada quadro. Eles saem no PNG, no JPG, no GIF, no WebP, no vídeo e no filme. Na folha de sprites, no Godot, no SVG e nas folhas de conferência (`--contact`, `--trajectory`), ficam de fora.
 - No SVG, o `pixel=` e o `posterize=` também ficam de fora.
 
-**Para aprender:** [Acabamento](04-camadas.md#acabamento-finish).
+**Para aprender:** [Acabamento](12-acabamento.md#acabamento-finish).
 
 ### `art`
 
@@ -1152,7 +1152,7 @@ palette ink=#2b2a33
 - Um `gradient` com o nome de uma cor da `palette` dá aviso, e vale a cor. Um `pattern` com esse nome não avisa, e também vale a cor.
 - Num componente, um parâmetro com o mesmo nome troca o valor só dentro dele: `use boneco 100,80 pele=#c08060` ([`use`](#use)).
 
-**Para aprender:** [A palette](03-cores.md#a-palette-cores-com-nome) e [antes ou depois](03-cores.md#antes-ou-depois-onde-um-nome-da-palette-vale).
+**Para aprender:** [A palette](03-cores.md#cores-com-nome-palette) e [um nome que copia outro](03-cores.md#um-nome-que-copia-outro-sombracabelo).
 
 ### `let`
 
@@ -1225,7 +1225,7 @@ ellipse astro 150,75 40 c=sol
 - O nome de outro `gradient` ou `pattern` é erro. O nome de uma cor da `palette` dá aviso, e vale a cor.
 - A `variant` troca as cores com nome do gradiente: elas são lidas depois da variante.
 
-**Para aprender:** [Gradientes](03-cores.md#gradientes).
+**Para aprender:** [Gradientes](03-cores.md#gradientes-gradient).
 
 ### `pattern`
 
@@ -1265,7 +1265,7 @@ ellipse bola 220,75 50 c=bolinhas ink=3
 - As linhas e os pontos seguem a forma: andam com o osso e o tecido e crescem com o `scale=` do `use`.
 - O nome de outro `pattern` ou `gradient` é erro. Com o nome de uma cor da `palette`, vale a cor, sem aviso.
 
-**Para aprender:** [Hachura e pontos](03-cores.md#hachura-e-pontos-pattern).
+**Para aprender:** [Hachura e pontos](03-cores.md#textura-pattern).
 
 ### `variant`
 
@@ -1302,7 +1302,7 @@ ellipse estrela 240,40 4 c=#ffffff hidden
 - Uma palavra a mais (`variant noite clara`) não dá aviso: o Weasel não liga para ela.
 - Num filme, o `--variant` não vale: escolha a versão de cada ator com `variant=` no `actor` ou com `at ator.variant=`.
 
-**Para aprender:** [Variantes](03-cores.md#variantes-outra-versão-das-cores) e [peças](03-cores.md#variantes-que-trocam-peças-show-e-hide).
+**Para aprender:** [Variantes](05-componentes.md#variantes-outra-versão-do-desenho-variant) e [peças](05-componentes.md#variantes-que-trocam-peças-show-e-hide).
 
 ### `include`
 
@@ -1456,7 +1456,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 - Um nome do `only=` que não existe avisa.
 - Numa animação, uma `key` não mostra uma camada `hidden`. Num filme, `at camada.show=1` mostra uma camada `hidden` do próprio arquivo do filme.
 
-**Para aprender:** [Camadas](04-camadas.md#o-que-é-uma-camada), [recortar por dentro](04-camadas.md#recortar-por-dentro-clip) e [por fora](04-camadas.md#recortar-por-fora-cut), [`guide`](04-camadas.md#camada-de-construção-guide), [`hidden`](04-camadas.md#camada-escondida-hidden), [`only=`](04-camadas.md#só-em-certas-animações-only).
+**Para aprender:** [Camadas](04-camadas.md#o-que-é-uma-camada-layer), [recortar por dentro](04-camadas.md#recortar-por-dentro-clip) e [por fora](04-camadas.md#recortar-por-fora-cut), [`guide`](04-camadas.md#camada-de-construção-guide), [`hidden`](04-camadas.md#camada-escondida-hidden), [`only=`](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-only).
 
 #### Transparência e mistura
 
@@ -1598,7 +1598,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 - No `cut=`, a forma que recorta precisa ser fechada (`shape`, `ellipse` ou `rect`): um nome de camada dá erro. Todas as formas com aquele nome abrem buraco, e buracos que se cruzam viram um só.
 - No `mirror=`, a forma copiada precisa ter nome e ser do mesmo comando. A cópia leva as opções dela; as que você escrever na linha do `mirror=` trocam essas. Os pontos escritos na linha do `mirror=` são ignorados (aviso).
 
-**Para aprender:** [Opções que toda forma aceita](02-formas.md#opções-que-toda-forma-aceita), [contorno](02-formas.md#contorno-ink-inkc-e-weight), [buracos com `cut=`](04-camadas.md#buraco-numa-forma-cut-na-forma), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](06-ossos.md#formas-que-dobram-bones), [`cloth=`](06-ossos.md#tecido-cloth), [`mirror=`](05-componentes.md#espelho-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
+**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](06-ossos.md#formas-que-dobram-bones), [`cloth=`](06-ossos.md#tecido-cloth), [`mirror=`](05-componentes.md#espelho-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
 
 ### `shape`
 
@@ -1631,7 +1631,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - O `shape` não tem `rot=` (aviso de atributo desconhecido): para girar, use um osso (`bone=`).
 - O peso do `@osso` fora de 0 a 1 avisa e é cortado.
 
-**Para aprender:** [Formas livres com pontos](02-formas.md#formas-livres-com-pontos-shape), [a alça da curva](02-formas.md#alça-da-curva-xydxdy), [pontos presos a um osso](06-ossos.md#pontos-presos-a-um-osso-osso).
+**Para aprender:** [Formas livres com pontos](02-formas.md#formas-livres-com-pontos-shape), [a alça da curva](02-formas.md#curvas-sob-medida-alças), [pontos presos a um osso](06-ossos.md#pontos-presos-a-um-osso-osso).
 
 ### `stroke`
 
@@ -1740,7 +1740,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - Sem `c=` e sem `ink=`, a elipse sai pintada na cor `ink` da `palette`. Com `ink=` e sem `c=`, ela fica vazia: só o contorno aparece.
 - Num círculo, `rot=` não muda nada.
 
-**Para aprender:** [Elipse e círculo](02-formas.md#elipse-e-círculo).
+**Para aprender:** [Elipse e círculo](02-formas.md#círculo-e-elipse-ellipse).
 
 ### `rect`
 
@@ -1772,7 +1772,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - Sem `c=` e sem `ink=`, o retângulo sai pintado na cor `ink` da `palette`. Com `ink=` e sem `c=`, ele fica vazio: só o contorno aparece.
 - Com a largura ou a altura negativa e `r=`, os cantos saem curvados para dentro. Use um tamanho positivo e mude o `x,y`.
 
-**Para aprender:** [Retângulo](02-formas.md#retângulo) e [cantos redondos](02-formas.md#cantos-redondos-r).
+**Para aprender:** [Retângulo](02-formas.md#retângulo-rect) e [cantos redondos](02-formas.md#cantos-redondos-r).
 
 ### `text`
 
@@ -1811,7 +1811,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - Se a fonte não existir no computador, o texto sai numa fonte padrão.
 - `weight=` e `inkon=` não existem no `text` (aviso).
 
-**Para aprender:** [Texto](02-formas.md#texto), [fonte e tamanho](02-formas.md#fonte-e-tamanho-font-e-size), [contorno e giro do texto](02-formas.md#contorno-e-giro-do-texto).
+**Para aprender:** [Texto](02-formas.md#texto-text), [fonte e tamanho](02-formas.md#fonte-e-tamanho-font-e-size), [giro do texto](02-formas.md#girar-o-texto) e [contorno do texto](03-cores.md#o-contorno-no-texto).
 
 ### `emitter`
 
@@ -2064,7 +2064,7 @@ end
 
 No editor, Ctrl+G escreve o `group` e o `end` em volta das formas escolhidas.
 
-**Para aprender:** [Grupos e travas](04-camadas.md#grupos-e-travas-group-e-lock).
+**Para aprender:** [Grupos](05-componentes.md#grupos-group) e [travas](04-camadas.md#travar-no-editor-lock).
 
 ## Ossos e animação
 

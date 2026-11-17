@@ -1,152 +1,211 @@
 # 2. Formas
 
-[← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e estilos →](03-cores.md)
+[← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e contorno →](03-cores.md)
 
-O Weasel tem sete tipos de forma:
+Este capítulo mostra as formas do Weasel, uma de cada vez, e termina com a placa de um café. Você já precisa saber o que o [capítulo 1](01-primeiros-passos.md) ensina: o `canvas`, as coordenadas (o `y` cresce para baixo), o `rot=` e o formato de uma linha.
 
-| Comando | Desenha | Fechada? |
-|---|---|---|
-| `ellipse` | elipse ou círculo | sim |
-| `rect` | retângulo, com ou sem cantos arredondados | sim |
-| `shape` | qualquer forma, ligando pontos com curvas | sim |
-| `stroke` | traço aberto (como uma pincelada), com curvas | não |
-| `line` | linha reta entre pontos | não |
-| `text` | texto | — |
-| `emitter` | partículas (fagulhas, chuva) — veja o [capítulo 8](08-luz-efeitos.md#partículas) | — |
+| Comando | Desenha |
+|---|---|
+| `ellipse` | um círculo ou uma elipse |
+| `rect` | um retângulo, com ou sem cantos redondos |
+| `line` | linhas retas, ligando pontos |
+| `shape` | uma forma livre, fechada, com curvas que passam pelos pontos |
+| `stroke` | um traço aberto, como uma pincelada |
+| `text` | um texto |
 
-**Fechada** quer dizer que tem lado de dentro: pode ser preenchida (`c=`), ter contorno (`ink=`) e servir de molde para recortes. Traço e linha só têm a cor da própria linha.
+Três delas são **fechadas**: `ellipse`, `rect` e `shape` têm um lado de dentro, que a cor preenche. A `line` e o `stroke` são só o risco; o `text` são as letras. Há ainda o `ref`, que põe uma imagem por baixo para você copiar, e as partículas (`emitter`), do [capítulo 11](08-luz-efeitos.md#partículas).
 
-> **Dica do editor:** para começar uma forma sem digitar, use as ferramentas da barra à esquerda do desenho.
->
-> - **Retângulo** (M), **Elipse** (L), **Polígono**, **Estrela** e **Linha** (`\`): aperte e arraste. Com **Shift**, sai um quadrado, um círculo, uma linha de 45 em 45 graus, ou o polígono e a estrela em pé; com **Alt**, a forma cresce a partir do meio. No Polígono e na Estrela, as setas **↑** e **↓** (sem soltar o mouse) mudam o número de lados ou de pontas. **Esc** desiste.
-> - Um clique sem arrastar põe ali uma forma de tamanho padrão. O **Texto** (T) já abre uma caixinha para você escrever as letras.
-> - **Caneta** (P) e **Curvatura** (Shift+~): ponto a ponto. Na Caneta, o clique põe um canto, e apertar e arrastar puxa as alças da curva; na Curvatura, cada clique põe um ponto liso (o duplo clique, um canto). Clicar no primeiro ponto fecha um `shape`; **Enter** ou **Esc** termina um `stroke`, e **Backspace** tira o último ponto. As alças estão [mais abaixo](#alça-da-curva-xydxdy).
-> - **Lápis** (N) e **Pincel** (B): à mão livre. O traço do mouse vira um `stroke` com poucos pontos (quem faz isso é o [Simplificar](#menos-pontos-simplificar)), e onde o traço vira de repente sai um canto (`!`). O Lápis que termina perto do começo fecha um `shape`. O Pincel sai com as pontas afinando (`taper=`). Nos dois, `[` e `]` mudam a grossura.
-> - **Pincel de bolha** (Shift+B) e **Borracha** (Shift+E): pintam e apagam **área**, juntando e cortando as formas que já existem. Veja [Juntar e apagar áreas](#juntar-e-apagar-áreas-pathfinder-pincel-de-bolha-e-borracha).
-> - **Tesoura** (C), **Faca**, **Junção**, **Borracha de caminho**, **Suavizar** e **Construtor de formas** (Shift+M): cortam, juntam e alisam caminhos. Veja [Cortar, juntar e alisar](#cortar-juntar-e-alisar-tesoura-faca-junção-suavizar-e-construtor-de-formas).
-> - O Retângulo, a Elipse, o Polígono e a Estrela dividem a mesma casa da barra: segure o botão (ou clique nele com o botão direito) para escolher outra. O triangulinho no canto marca as casas com mais de uma ferramenta.
-> - A forma entra **na frente** de tudo na camada da linha do cursor, com um nome novo em inglês (`rect1`, `ellipse1`, `polygon1`…), e já vem escolhida, com as alças: é só mover, girar e mudar o tamanho. Num grupo isolado (duplo clique nele), ela entra no grupo. Uma camada travada não aceita formas novas.
-> - A cor vem das **caixinhas de preenchimento e contorno**, no pé da barra de ferramentas (veja o [capítulo 3](03-cores.md#a-palette-cores-com-nome)).
-> - O **botão direito** no desenho abre o menu do objeto (copiar, organizar, agrupar…). **Inserir forma** põe uma forma pronta onde você clicou, e o menu **Objeto › Inserir**, no meio da tela; é por ali que saem também o `shape`, o `stroke` e o `text` prontos.
->
-> Para achar a linha de uma forma que já existe, **clique nela** no desenho. O cursor vai para a linha dela.
->
-> - Só conta clicar e soltar: arrastar continua movendo a vista.
-> - Com formas uma em cima da outra, clique de novo no mesmo lugar para pegar a de baixo.
-> - Numa cópia de um componente, o clique leva à linha do `use`.
+As cores aparecem como `c=#rrggbb` em todos os exemplos. Elas são o assunto do [capítulo 3](03-cores.md); por enquanto, copie.
 
-> Nos exemplos deste capítulo, os pontinhos vermelhos e as anotações ficam numa camada `guide`. Uma camada `guide` aparece no editor (com **Exibir › Guias** ligado) e não sai na exportação; ela está aí só para mostrar onde ficam os pontos. As camadas são explicadas no [capítulo 4](04-camadas.md).
-
-## Elipse e círculo
+## Círculo e elipse: `ellipse`
 
 ```
 ellipse nome cx,cy raio
-ellipse nome cx,cy raioX,raioY rot=graus
+ellipse nome cx,cy raioX,raioY
 ```
+
+Para um círculo, diga onde fica o centro e qual é o raio:
+
+<!-- gerar: img/02_circulo.png -->
+```weasel
+canvas 300 200 bg=#f4efe6
+ellipse bola 150,100 60 c=#ff6b4a
+```
+
+![Um círculo laranja no meio de um fundo bege](img/02_circulo.png)
+
+- `bola` é o nome.
+- `150,100` é o centro: 150 para a direita e 100 para baixo.
+- `60` é o raio, a distância do centro até a borda. O círculo fica com 120 de largura.
+
+Com dois raios, o círculo vira uma elipse. O primeiro raio é o da largura; o segundo, o da altura:
 
 <!-- gerar: img/02_elipses.png -->
 ```weasel
 canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-ellipse circulo 80,100 54 c=#ff6b4a ink=4
-ellipse oval 220,100 64,38 c=#4a90d9 ink=4
-ellipse girada 360,100 64,30 rot=30 c=#6cbb3c ink=4
+ellipse circulo 80,100 54 c=#ff6b4a
+ellipse deitada 220,100 64,38 c=#4a90d9
+ellipse girada 360,100 64,30 rot=30 c=#6cbb3c
 ```
 
-![Um círculo, uma elipse deitada e uma elipse girada 30 graus](img/02_elipses.png)
+![Um círculo laranja, uma elipse azul deitada e uma elipse verde girada](img/02_elipses.png)
 
-- `cx,cy` é o **centro**.
-- Um raio só (`54`) dá um círculo. Dois raios (`64,38`) dão uma elipse: o primeiro é o raio na horizontal, o segundo na vertical. Os raios são em pixels.
-- `rot=30` gira 30° em volta do centro, no sentido horário.
+- `64,38`: 64 para cada lado na largura e 38 na altura. A elipse fica deitada.
+- `rot=30` gira a elipse 30 graus em volta do centro, no sentido do relógio.
 
-**Experimente:** troque `rot=30` por `rot=90`: a elipse verde fica em pé. Num círculo, `rot=` não muda nada.
+**Experimente:** troque `rot=30` por `rot=90`. A elipse verde fica em pé. Num círculo, o `rot=` não muda nada.
 
-> **Dica do editor:** ponha o cursor na linha de uma elipse. Além da bolinha do centro (arraste para mudar o `cx,cy`), aparecem **quadradinhos** na borda, ligados ao centro por uma linha tracejada. Arraste um quadradinho para mudar o tamanho:
->
-> - num **círculo** há um só, e ele muda o raio;
-> - numa **elipse** há dois: o da direita muda o primeiro raio (o da largura) e o de baixo, o segundo (o da altura). Segure **Shift** para mudar os dois juntos, sem deformar a elipse;
-> - os quadradinhos giram junto com o `rot=`, então ficam sempre na ponta de cada raio.
->
-> Para girar a elipse, use a **alça de giro**: a bolinha **verde** presa numa haste em cima da forma, com uma seta curva. Arraste-a em volta da elipse, e o `rot=` muda no código. Se a linha ainda não tem `rot=`, arrastar escreve um para você. Com **Shift**, o giro vai de 15 em 15 graus, e um **duplo clique** na bolinha verde volta a `rot=0`. O círculo não tem essa alça, porque girá-lo não muda nada.
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| o centro `cx,cy` | onde fica o meio | dois números, em pixels | obrigatório |
+| o raio | do centro até a borda; com dois números, o da largura e o da altura | um ou dois números, em pixels | obrigatório |
+| `rot=` | gira em volta do centro | qualquer número, em graus | 0 |
+| `c=` | a cor de dentro | uma cor | quase preto |
 
-## Retângulo
+A lista completa está na [referência do `ellipse`](19-referencia.md#ellipse). No editor, a ferramenta **Elipse** (L) escreve esta linha para você ([capítulo 22](22-editor.md#elipse-e-retângulo)).
+
+## Retângulo: `rect`
 
 ```
-rect nome x,y largura,altura r=raio_do_canto rot=graus
+rect nome x,y largura,altura
 ```
 
-<!-- gerar: img/02_retangulos.png --guides -->
+<!-- gerar: img/02_retangulos.png -->
 ```weasel
 canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-rect quadrado 30,50 100,100 c=#ffb000 ink=4
-rect arredondado 170,50 100,100 r=24 c=#ff6b4a ink=4
-rect girado 320,60 80,80 r=8 rot=20 c=#4a90d9 ink=4
-
-layer anotacao guide
+rect quadrado 30,50 100,100 c=#ffb000
+rect cartao 170,60 120,80 c=#ff6b4a
+rect girado 330,60 80,80 rot=20 c=#4a90d9
+# o pontinho marca o canto 30,50 do primeiro
 ellipse canto 30,50 5 c=#c44536
-text tc 36,40 "30,50" size=13 c=#c44536
 ```
 
-![Um quadrado, um quadrado de cantos arredondados e um quadrado girado; o ponto 30,50 marca o canto de cima do primeiro](img/02_retangulos.png)
+![Um quadrado amarelo com um pontinho vermelho no canto de cima, à esquerda, um retângulo laranja deitado e um quadrado azul girado](img/02_retangulos.png)
 
-- `x,y` é o **canto de cima, à esquerda** (o ponto vermelho), e não o centro.
-- `largura,altura` é o tamanho.
-- `r=` arredonda os cantos.
-- `rot=` gira em volta do centro do retângulo.
+- `30,50` é o **canto de cima, à esquerda** (o pontinho vermelho), e não o centro.
+- `100,100` é o tamanho: a largura e depois a altura.
+- O `rot=` gira em volta do **meio** do retângulo.
 
-> **Dica do editor:** com o cursor na linha de um `rect`, a bolinha do canto de cima move o retângulo, e o **quadradinho** do canto de baixo, à direita, muda a `largura,altura`. Segure **Shift** ao arrastar o quadradinho para manter a proporção (um quadrado continua quadrado). A bolinha **verde** em cima do retângulo é a alça de giro: arraste-a em volta para mudar o `rot=` (com **Shift**, de 15 em 15 graus; duplo clique volta a `rot=0`), como na elipse.
+**Experimente:** troque o tamanho do primeiro por `100,40`. Ele fica baixinho, e o canto de cima não sai do lugar.
 
 ### Cantos redondos: `r=`
 
-`r=` é o **raio do canto**, em pixels: o tamanho da curva que entra no lugar de cada canto vivo. Serve para botões, placas, janelas e dentes. Os quatro retângulos abaixo têm o mesmo tamanho (100 de largura, 60 de altura); só o `r=` muda:
+O `r=` é o raio dos cantos, em pixels. Os quatro retângulos abaixo têm o mesmo tamanho, 100 por 60; só o `r=` muda:
 
 <!-- gerar: img/02_cantos.png -->
 ```weasel
-canvas 480 150 bg=#f4efe6
-palette ink=#2b2a33
-rect r0 20,30 100,60 c=#ffb000 ink=4
-rect r10 135,30 100,60 r=10 c=#ffb000 ink=4
-rect r30 250,30 100,60 r=30 c=#ffb000 ink=4
-rect r99 365,30 100,60 r=99 c=#ffb000 ink=4
-text t0 70,125 "sem r=" size=14 align=center
-text t10 185,125 "r=10" size=14 align=center
-text t30 300,125 "r=30" size=14 align=center
-text t99 415,125 "r=99" size=14 align=center
+canvas 480 120 bg=#f4efe6
+rect r0 20,30 100,60 c=#ffb000
+rect r10 135,30 100,60 r=10 c=#ffb000
+rect r30 250,30 100,60 r=30 c=#ffb000
+rect r99 365,30 100,60 r=99 c=#ffb000
 ```
 
-![Quatro retângulos laranja: de cantos vivos, de cantos pouco arredondados, e dois iguais em forma de cápsula](img/02_cantos.png)
+![Quatro retângulos amarelos: de cantos vivos, de cantos pouco redondos, e dois iguais em forma de cápsula](img/02_cantos.png)
 
-Repare:
+Da esquerda para a direita:
 
-- Sem `r=` (é o mesmo que `r=0`), os cantos são vivos.
-- `r=10` arredonda só a pontinha de cada canto.
-- `r=30` arredonda até o meio da altura (30 é metade de 60): as laterais viram meios círculos, e o retângulo vira uma **cápsula**.
-- O canto nunca passa da metade do lado menor. Com `r=99`, valeu 30, e o resultado é igual ao de `r=30`.
+- sem `r=`, os cantos são vivos;
+- `r=10` arredonda só a pontinha de cada canto;
+- `r=30` arredonda até o meio da altura (30 é a metade de 60): os lados viram meios círculos, e o retângulo vira uma cápsula;
+- `r=99` sai igual ao `r=30`. O canto nunca passa da metade do lado menor.
 
-**Experimente:** num quadrado (`100,100`), use `r=50`. Ele vira um círculo.
+**Experimente:** num quadrado de `100,100`, use `r=50`. Ele vira um círculo.
 
-> **Dica do editor:** o `r=` também se arrasta. Com o cursor na linha do `rect`, um **losango azul** fica na borda de cima, perto do canto. Arraste-o para a direita e o canto arredonda (o `r=` muda no código). Volte com ele até o canto e o `r=` vira 0. Se a linha ainda não tem `r=`, o losango fica colado no canto, e arrastar escreve o `r=` para você.
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| o canto `x,y` | o canto de cima, à esquerda | dois números, em pixels | obrigatório |
+| o tamanho `largura,altura` | a largura e a altura | dois números, em pixels | obrigatório |
+| `r=` | o raio dos cantos redondos | 0 ou mais, em pixels (no máximo, a metade do lado menor) | 0, cantos vivos |
+| `rot=` | gira em volta do meio | qualquer número, em graus | 0 |
+
+A lista completa está na [referência do `rect`](19-referencia.md#rect). No editor, a ferramenta **Retângulo** (M) escreve esta linha ([capítulo 22](22-editor.md#elipse-e-retângulo)).
+
+**Cuidado:** um tamanho negativo desenha o retângulo para o outro lado do canto (para a esquerda ou para cima). Com `r=`, porém, os cantos saem curvados para dentro. Prefira sempre um tamanho positivo e mude o `x,y`.
+
+## Linha reta: `line`
+
+```
+line nome : ponto ponto ponto …
+```
+
+A `line` liga pontos com retas. Os pontos vêm depois de um `:`, separados por espaço. Ela serve para chão, cercas, réguas, raios e setas.
+
+<!-- gerar: img/02_linhas.png -->
+```weasel
+canvas 440 160 bg=#f4efe6
+line chao w=3 : 20,130 420,130
+line serra w=3 c=#4a90d9 : 20,90 80,40 140,90 200,40 260,90
+line esquina w=6 c=#c44536 : 290,40 420,40 420,110
+```
+
+![Uma linha preta de chão, uma linha azul em zigue-zague e uma linha vermelha grossa que vira a esquina](img/02_linhas.png)
+
+- `chao` tem dois pontos: é uma reta só, de `20,130` a `420,130`.
+- `serra` tem cinco pontos: quatro retas, uma depois da outra.
+- `w=` é a grossura, em pixels. Sem `w=`, a linha tem 1 pixel.
+- As pontas da `line` são sempre retas, cortadas no ponto.
+
+**Experimente:** acrescente o ponto `290,110` no fim da linha `esquina`. Ela vira um "U" de cabeça para baixo.
+
+### Tracejado: `dash=`
+
+O `dash=` corta a linha em pedaços. Os números são comprimentos em pixels, alternando **traço** e **vão**:
+
+<!-- gerar: img/02_tracejado.png -->
+```weasel
+canvas 320 240 bg=#f4efe6
+line l1 w=3 : 20,30 300,30
+line l2 w=3 dash=10 : 20,75 300,75
+line l3 w=3 dash=20,6 : 20,120 300,120
+line l4 w=3 dash=2,6 : 20,165 300,165
+line l5 w=3 dash=16,5,3,5 : 20,210 300,210
+```
+
+![Cinco linhas: uma contínua, uma de traços e vãos iguais, uma de traços longos, uma pontilhada e uma de traço e ponto](img/02_tracejado.png)
+
+De cima para baixo:
+
+- sem `dash=`, a linha é contínua;
+- `dash=10`: um número só vale para os dois, traço de 10 e vão de 10;
+- `dash=20,6`: traço comprido e vão curto;
+- `dash=2,6`: traços tão curtos que parecem pontos;
+- `dash=16,5,3,5`: traço de 16, vão de 5, traço de 3, vão de 5, e repete. É o "traço e ponto".
+
+**Experimente:** troque `w=3` por `w=8` na linha pontilhada. Cada ponto vira um tracinho em pé: o traço tem 2 de comprimento e 8 de grossura. Para quadradinhos, use `dash=8,6`.
+
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| os pontos (depois do `:`) | por onde a linha passa | 2 ou mais pontos | obrigatório |
+| `w=` | a grossura | 0 ou mais, em pixels | 1 |
+| `dash=` | o tracejado: traço, vão, traço, vão… | de 1 a 8 números maiores que 0, em pixels | contínua |
+| `c=` | a cor da linha | uma cor | quase preto |
+
+A lista completa está na [referência da `line`](19-referencia.md#line). No editor, a ferramenta **Linha** (`\`) escreve esta linha ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
+
+**Cuidado:** não use `dash=0` nem números negativos. Hoje eles passam sem aviso, mas a exportação pela linha de comando para com um erro.
 
 ## Formas livres com pontos: `shape`
 
-`shape` liga uma lista de pontos e fecha a volta (o último ponto se liga ao primeiro). O mais importante do Weasel está aqui:
+```
+shape nome : ponto ponto ponto …
+```
 
-- um ponto comum (`x,y`) é **liso**: a curva passa por ele fazendo uma volta suave;
-- um ponto com `!` no fim (`x,y!`) é um **canto vivo**: a linha muda de direção de uma vez.
+O `shape` também liga uma lista de pontos, mas com **curvas**, e fecha a volta: o último ponto se liga ao primeiro. Cada ponto pode ser de dois tipos:
 
-Os três desenhos abaixo usam os **mesmos quatro pontos** (só deslocados para o lado):
+- **liso** (`x,y`): a curva passa por ele fazendo uma volta suave;
+- **canto** (`x,y!`): com `!` no fim, a linha muda de direção de uma vez.
 
-<!-- gerar: img/02_pontos.png --guides -->
+Os três desenhos abaixo usam os **mesmos quatro pontos**, só deslocados para o lado. Os pontinhos vermelhos marcam os pontos:
+
+<!-- gerar: img/02_pontos.png -->
 ```weasel
 canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
+shape liso c=#4a90d9 : 80,30 130,100 80,170 30,100
+shape cantos c=#ffb000 : 220,30! 270,100! 220,170! 170,100!
+shape gota c=#6cbb3c : 360,30! 410,100 360,170 310,100
 
-shape liso c=#4a90d9 ink=4 : 80,30 130,100 80,170 30,100
-shape cantos c=#ffb000 ink=4 : 220,30! 270,100! 220,170! 170,100!
-shape gota c=#6cbb3c ink=4 : 360,30! 410,100 360,170 310,100
-
-layer pontos guide
+# os pontos de cada forma
 ellipse a1 80,30 4 c=#c44536
 ellipse a2 130,100 4 c=#c44536
 ellipse a3 80,170 4 c=#c44536
@@ -161,7 +220,7 @@ ellipse c3 360,170 4 c=#c44536
 ellipse c4 310,100 4 c=#c44536
 ```
 
-![Os mesmos quatro pontos viram um círculo (todos lisos), um losango (todos com !) e uma gota (só o de cima com !)](img/02_pontos.png)
+![Os mesmos quatro pontos viram um círculo azul (todos lisos), um losango amarelo (todos com !) e uma gota verde (só o de cima com !)](img/02_pontos.png)
 
 1. **Todos lisos:** vira um círculo.
 2. **Todos com `!`:** vira um losango.
@@ -169,457 +228,241 @@ ellipse c4 310,100 4 c=#c44536
 
 **Experimente:** na gota, ponha `!` também no ponto de baixo (`360,170!`). Ela vira um limão, com duas pontas.
 
-A curva lisa é calculada sozinha a partir dos vizinhos de cada ponto: você só diz **por onde** a linha passa. Para desenhar algo novo, pense nos pontos principais do contorno, comece com poucos, veja o resultado e vá acrescentando. Uma forma precisa de pelo menos 3 pontos.
-
-> **Dica do editor:** com o cursor na linha do `shape`, os pontos aparecem no desenho.
->
-> - **Arrastar** um ponto muda o número dele no código.
-> - **Duplo clique** num ponto liga e desliga o `!`.
-> - Para **apagar** um ponto, clique nele (ele fica laranja) e aperte **Delete**. Só esse ponto sai do código, junto com a alça de curva dele, se tiver. A forma não pode ficar com menos de 3 pontos, e um Ctrl+Z traz o ponto de volta.
-> - Para pôr um **ponto novo** entre dois, use a bolinha clara e menor que fica no meio de cada lado. Arraste-a (ou só clique nela) e ela vira um ponto de verdade, escrito no código entre os dois vizinhos. Num lado curvo, o desenho não muda: o ponto novo e os dois vizinhos ganham as [alças](#alça-quebrada-xyaxaybxby) de como a curva já estava. Entre dois cantos vivos, o ponto novo também ganha `!`, e o lado continua reto. Um Ctrl+Z desfaz tudo.
-> - Para mover a **forma inteira**, arraste o **✥** (a bolinha com quatro setas no meio dos pontos), ou segure **Shift** e arraste qualquer ponto. Todos os pontos andam juntos, e os `!` e as alças vão junto. Para copiar uma forma, use a **Seleção** (V): segure **Alt** e arraste a forma, e a cópia nasce no lugar e vai com o mouse (no código, o **Ctrl+D** duplica a linha). Depois, o **Ctrl+D** no desenho repete o passo: cópias em fila, com a mesma distância.
-> - Para **esticar** a forma, use os quadradinhos azuis da caixa tracejada em volta dela. O de um canto muda a largura e a altura; o do meio de um lado muda só uma delas. O lado de lá fica parado, e o Weasel reescreve os números de todos os pontos (as alças de curva esticam junto). Com **Shift**, a forma não perde a proporção; com **Alt**, estica a partir do meio; e passar para o outro lado espelha a forma, como num programa de desenho. A grossura da borda (`ink=`) não muda. Um Ctrl+Z desfaz o arraste inteiro.
-> - A cópia ganha um nome novo (com o **Ctrl+D** do código, o **Alt+arrastar** ou o **Ctrl+C** e **Ctrl+V** do desenho): `asa` vira `asa_1`, e copiar de novo dá `asa_2`. Vale para tudo o que tem nome: formas, `ref`, `layer`, `bone`, `anim`, `def`… Duplicando várias linhas de uma vez (selecione todas), o que usa esses nomes muda junto: a forma copiada com `bone=braco` fica presa no `braco_1` copiado, e as `key` da animação copiada mexem nas cópias. As cores (`c=asa` da `palette`) não mudam. Num `def … end` copiado inteiro, só o componente ganha nome novo; as formas de dentro continuam iguais.
-> - Para **girar a forma inteira**, arraste a bolinha **verde** que fica numa haste em cima dos pontos. O `shape` não tem `rot=`, então o Weasel gira os próprios pontos em volta do meio da forma e reescreve os números (as alças de curva giram junto). Com **Shift**, o giro vai de 15 em 15 graus. Um Ctrl+Z desfaz o giro inteiro.
+A curva lisa é calculada a partir dos vizinhos de cada ponto: você só diz **por onde** a linha passa. Para desenhar algo novo, marque poucos pontos no contorno, veja o resultado e vá acrescentando. O `shape` precisa de pelo menos 3 pontos.
 
 ### Quanto a curva arredonda: `smooth=`
 
-`smooth=` muda o quanto as curvas lisas "estufam", de 0 a 2 (padrão 1). Com `0`, todos os pontos viram cantos (um polígono).
+O `smooth=` muda o quanto as voltas lisas estufam, de 0 a 2. Os três têm os mesmos cinco pontos lisos:
 
 <!-- gerar: img/02_smooth.png -->
 ```weasel
-canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-shape s0 smooth=0 c=#ff6b4a ink=4 : 80,30 130,80 110,150 50,150 30,80
-shape s1 smooth=1 c=#ffb000 ink=4 : 220,30 270,80 250,150 190,150 170,80
-shape s2 smooth=2 c=#6cbb3c ink=4 : 360,30 410,80 390,150 330,150 310,80
-text t0 80,192 "smooth=0" size=14 align=center
-text t1 220,192 "smooth=1" size=14 align=center
-text t2 360,192 "smooth=2" size=14 align=center
+canvas 440 180 bg=#f4efe6
+shape s0 smooth=0 c=#ff6b4a : 80,30 130,80 110,150 50,150 30,80
+shape s1 smooth=1 c=#ffb000 : 220,30 270,80 250,150 190,150 170,80
+shape s2 smooth=2 c=#6cbb3c : 360,30 410,80 390,150 330,150 310,80
 ```
 
-![O mesmo pentágono com smooth 0 (pontudo), 1 (arredondado) e 2 (bem estufado)](img/02_smooth.png)
-
-Os três têm os mesmos cinco pontos lisos. O número não tem unidade: é **quanto** arredondar, e vale para a forma inteira.
+![O mesmo pentágono três vezes: pontudo, arredondado e bem estufado](img/02_smooth.png)
 
 - `smooth=0`: as voltas viram cantos, e sobra um pentágono.
-- `smooth=1` (o padrão): o arredondado normal.
-- `smooth=2`: as voltas estufam o dobro, e a forma fica cheia, quase redonda.
-- Pontos com `!` continuam sendo cantos, qualquer que seja o `smooth=`.
+- `smooth=1`: o arredondado normal. É o que vale sem `smooth=`.
+- `smooth=2`: as voltas estufam o dobro, e a forma fica quase redonda.
+- Os pontos com `!` continuam cantos, qualquer que seja o `smooth=`.
 
-**Experimente:** no do meio, troque `smooth=1` por `smooth=0.5`. Fica no meio do caminho entre o pentágono e o arredondado.
+**Experimente:** no do meio, troque `smooth=1` por `smooth=0.5`. Fica entre o pentágono e o arredondado.
 
-### Alça da curva: `x,y~dx,dy`
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| os pontos (depois do `:`) | o contorno da forma | 3 ou mais: `x,y` (liso), `x,y!` (canto) e as alças, mais abaixo | obrigatório |
+| `smooth=` | quanto os pontos lisos arredondam | de 0 a 2 | 1 |
+| `c=` | a cor de dentro | uma cor | quase preto |
 
-Às vezes a curva automática não faz a volta que você quer. Uma **alça** diz para onde a curva aponta ao passar pelo ponto, como nos programas de desenho vetorial:
+A lista completa está na [referência do `shape`](19-referencia.md#shape). No editor, a **Caneta** (P) e a **Curvatura** escrevem um `shape` ponto a ponto ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
 
-- `x,y~dx,dy`: a curva passa em `x,y` indo na direção `dx,dy` (relativa ao ponto);
-- a alça vale para os dois lados: a curva chega pelo lado oposto (`-dx,-dy`) e sai pelo lado de `dx,dy`;
-- quanto **maior** a alça, mais tempo a curva segue aquela direção (mais "achatada" fica a volta).
-
-<!-- gerar: img/02_alca.png --guides -->
-```weasel
-canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-stroke auto w=6 : 30,170 120,50 210,170
-stroke alca w=6 : 230,170 320,50~80,0 410,170
-
-layer alca guide
-line braco c=#c44536 w=2 : 240,50 400,50
-ellipse p1 240,50 5 c=#c44536
-ellipse p2 400,50 5 c=#c44536
-ellipse meio 320,50 4 c=#2b2a33
-text t1 120,194 "automático" size=14 align=center c=#8a8478
-text t2 320,194 "320,50~80,0" size=14 align=center c=#c44536
-```
-
-![À esquerda o morro com a curva automática; à direita o mesmo morro com uma alça horizontal no topo, que deixa o alto achatado](img/02_alca.png)
-
-À direita, `320,50~80,0` faz a curva passar pelo topo indo reto para a direita (a alça vermelha vai de 80 para trás até 80 para a frente), e o morro fica com o alto largo. Use alças só onde a curva automática não bastar. Um ponto com alça não pode ter `!` ao mesmo tempo.
-
-O **tamanho** da alça muda o formato da volta. Os três morros abaixo têm a mesma alça deitada no topo, cada vez mais comprida:
-
-<!-- gerar: img/02_alca_tamanho.png --guides -->
-```weasel
-canvas 500 190 bg=#f4efe6
-palette ink=#2b2a33
-stroke a w=5 : 20,160 80,50~20,0 140,160
-stroke b w=5 : 170,160 240,50~50,0 310,160
-stroke c w=5 : 330,160 400,50~90,0 470,160
-
-layer alcas guide
-line la c=#c44536 w=2 : 60,50 100,50
-line lb c=#c44536 w=2 : 190,50 290,50
-line lc c=#c44536 w=2 : 310,50 490,50
-text ta 80,184 "~20,0" size=14 align=center c=#c44536
-text tb 240,184 "~50,0" size=14 align=center c=#c44536
-text tc 400,184 "~90,0" size=14 align=center c=#c44536
-```
-
-![Três morros com uma alça vermelha deitada no topo: com a alça curta o topo é quase pontudo, com a média fica redondo e com a longa fica achatado como um n](img/02_alca_tamanho.png)
-
-Repare:
-
-- Os números da alça são em pixels: `~20,0` vai 20 pixels para a direita (e, do outro lado, 20 para a esquerda). As linhas vermelhas mostram a alça inteira.
-- `~20,0`: alça curta. A curva logo esquece a direção, e o topo fica quase pontudo.
-- `~50,0`: o topo fica redondo e largo.
-- `~90,0`: a curva corre deitada por muito tempo e depois cai de uma vez. O morro parece um "n".
-
-**Experimente:** troque `~50,0` por `~50,30`. A alça fica inclinada (30 pixels para baixo), e a curva passa pelo topo já descendo para a direita: o morro fica torto.
-
-### Alça quebrada: `x,y~ax,ay~bx,by`
-
-A alça `~dx,dy` vale para os dois lados: a curva chega e sai do ponto na mesma direção, com o mesmo tamanho. Para cada lado ter o seu, escreva **duas** alças:
-
-- `x,y~ax,ay~bx,by`: a curva **chega** ao ponto andando na direção `ax,ay` e **sai** na direção `bx,by`;
-- as duas contam no sentido em que a curva anda, então `~40,0~40,0` é o mesmo que `~40,0`;
-- na mesma direção, com tamanhos diferentes, o ponto continua liso, mas a volta fica mais longa de um lado;
-- em direções diferentes, o ponto vira uma **ponta curva**, como a de cima do coração;
-- `~0,0~bx,by` recolhe a alça de chegada: a curva chega reta e só sai curva.
-
-<!-- gerar: img/02_alca_quebrada.png --guides -->
-```weasel
-canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-stroke liso w=6 : 30,170 120,50~30,0~90,0 210,170
-shape coracao c=#e05050 ink=3 : 320,170! 270,95~0,-40 320,80~15,40~15,-40 370,95~0,40
-
-layer alcas guide
-line l1 c=#c44536 w=2 : 90,50 210,50
-line l2 c=#c44536 w=2 : 305,40 320,80 335,40
-ellipse m1 120,50 4 c=#2b2a33
-ellipse m2 320,80 4 c=#2b2a33
-text t1 120,194 "120,50~30,0~90,0" size=14 align=center c=#c44536
-text t2 320,194 "320,80~15,40~15,-40" size=14 align=center c=#c44536
-```
-
-![À esquerda, um morro com o topo liso, mas com a alça de saída três vezes mais longa que a de chegada; à direita, um coração cuja ponta de cima tem as duas alças em direções diferentes](img/02_alca_quebrada.png)
-
-Repare:
-
-- À esquerda, o topo continua liso (as duas alças estão na mesma reta), mas a de saída é três vezes mais longa: a curva sobe depressa e desce devagar.
-- À direita, a ponta de cima do coração: a curva chega descendo (`15,40`) e sai subindo (`15,-40`).
-- As linhas vermelhas mostram as alças: a de chegada fica **atrás** do ponto (em `x-ax`, `y-ay`), e a de saída, na frente (em `x+bx`, `y+by`).
-
-**Experimente:** no morro, troque `~30,0~90,0` por `~90,0~30,0`. A volta longa passa para o outro lado.
-
-> **Dica do editor:** as alças também se puxam com o mouse.
->
-> - Com a **Seleção direta** (A), clique num ponto: ele fica laranja, e, se for liso, aparecem clarinhas as **alças automáticas** (as que o Weasel calcula). Arraste uma delas: as duas vão para o código do jeito que a curva já está (`~ax,ay~bx,by`), sem pular, e o lado de lá gira junto, para o ponto continuar liso.
-> - Uma alça escrita aparece como dois **losangos azuis**, um de cada lado do ponto. Na alça inteira (`~dx,dy`), arrastar um losango muda os dois lados. Com **Alt**, só aquele lado anda, e a alça quebra.
-> - **Duplo clique** num losango de uma alça quebrada junta os dois lados de novo (fica o lado do clique). Numa alça inteira, o duplo clique (no losango ou no ponto) tira a alça, e a curva volta a ser automática. Soltar um losango em cima do próprio ponto também tira (na quebrada, só aquele lado, que fica `0,0`).
-> - A ferramenta **Ponto de ancoragem** (**Shift+C**, na casa da Caneta): o clique num ponto troca canto e liso; arrastar um ponto puxa uma alça nova; arrastar um losango mexe só naquele lado.
-> - **Alt** e arrastar um ponto, na Seleção direta, leva uma **cópia** da forma inteira, como no Illustrator.
-
-### Menos pontos: Simplificar
-
-Desenhos que vêm de outro programa (um vetorizador, um SVG convertido) costumam ter pontos demais: cada pedacinho de curva vira um ponto. Como o Weasel faz as curvas lisas sozinho, quase sempre dá para ter o mesmo desenho com bem menos pontos.
-
-<!-- gerar: img/02_simplificar.png -->
-```weasel
-canvas 440 220 bg=#f4efe6
-shape antes c=#6aa84f ink=3 : 30,130 41,114 53,100 64,86 76,75 87,67 99,62 110,60 121,62 133,67 144,75 156,86 167,100 179,114 190,130 179,139 167,147 156,155 144,161 133,166 121,169 110,170 99,169 87,166 76,161 64,155 53,147 41,139
-shape depois c=#6aa84f ink=3 : 250,130 261,114 296,75 330,60 364,75 387,100 410,130 399,139 353,166 330,170 296,161 261,139
-```
-
-![Duas folhas verdes iguais, lado a lado: a da esquerda com 28 pontos, a da direita com 12](img/02_simplificar.png)
-
-As duas folhas são iguais. A da esquerda tem 28 pontos; a da direita, 12. Foi o Simplificar que escolheu quais ficavam.
-
-- **No editor:** escolha a forma (ou várias) e use o menu **Objeto › Caminho › Simplificar**. A **tolerância** diz quanto cada forma pode se afastar da de antes, em pixels do desenho. Enquanto você mexe, a forma de antes aparece cinza, a nova aparece azul por cima, com os pontos, e o painel mostra quantos pontos havia e quantos ficam. **Enter** aplica (um Ctrl+Z desfaz); **Esc** desiste.
-- **Na linha de comando:** `node cli/weasel.js vetorizado.weasel --simplify 1.5` grava o `vetorizado_simple.weasel`, com todos os `shape`, `stroke` e `line` simplificados.
-- Os pontos que ficam são os da forma, sem mudar nada, com o `@osso` e as alças. Onde a curva vira de repente (uma ponta fina), o ponto ganha `!`.
-- Ficam como estão: os pontos com `{contas}` e os membros (`limb=`).
-- Uma forma usada na troca de forma (`x.shape=`, `mouth`) com outro número de pontos deixa de trocar ponto a ponto. O editor avisa; a linha de comando nem mexe nela (a não ser com `--force`).
-
-### Juntar e apagar áreas: Pathfinder, Pincel de bolha e Borracha
-
-No editor, três ferramentas mexem na **área** das formas fechadas e escrevem os pontos novos no código.
-
-<!-- gerar: img/02_caminhos.png -->
-```weasel
-canvas 470 200 bg=#f4efe6
-palette ink=#2b2a33
-
-# antes: um retângulo e um círculo
-rect a1 20,55 90,70 c=#ffb000 ink=3
-ellipse b1 118,92 38 c=#ffb000 ink=3
-
-# Unir: os dois viraram um shape só, com o nome da forma de cima
-shape b2 c=#ffb000 ink=3 : 278.6,54.4 298.2,63.6 307.8,76.8 310.6,97.6 301.7,116.9 289.5,126.2 280.4,129.3 267.4,129.6 254.1,125! 175,125! 175,55! 264.3,55!
-
-# Borracha: um clique abriu um furo (cut=), e um arraste mordeu a borda
-shape c3 c=#6cbb3c ink=3 cut=c3_hole1 : 335,50! 450,50! 450,92.4! 440.4,87.9 435.1,85.4 426.4,86.8 420.6,94.7 420.9,100 424.6,106.5 450,119.3! 450,145! 335,145!
-shape c3_hole1 hidden : 363.9,83 359.9,93.3 365,101.9 373.8,104 381.6,99.3 383.8,90.2 378.7,81.9 371,80.2
-
-text t1 80,185 "antes" size=15 align=center
-text t2 235,185 "Unir" size=15 align=center
-text t3 392,185 "Borracha" size=15 align=center
-```
-
-![Três desenhos lado a lado: um retângulo laranja com um círculo laranja por cima, os dois contornados; a mesma dupla unida numa forma só, com um contorno só; e um retângulo verde com um furo redondo e uma mordida na borda da direita](img/02_caminhos.png)
-
-Os dois primeiros desenhos têm as mesmas formas: o do meio é o resultado do **Unir**. O da direita era um retângulo verde, e a **Borracha** fez o resto.
-
-- **Objeto › Caminho › Unir, Subtrair, Interseção e Excluir** (o *Pathfinder* do Illustrator): escolha duas formas ou mais (`shape`, `rect` ou `ellipse`, na mesma camada) e a conta. **Unir** junta tudo; **Subtrair** tira da forma de trás as que estão na frente; **Interseção** deixa só o que todas têm em comum; **Excluir** tira o que se sobrepõe. O resultado fica na linha da forma de cima (no Subtrair, na de trás), e as outras linhas saem.
-- **Pincel de bolha** (Shift+B): o arraste pinta uma área cheia, com a cor da caixinha do preenchimento. Se ele encosta numa forma da **mesma cor** (o mesmo `c=`) na mesma camada, as duas viram uma forma só; senão, nasce um `shape` novo.
-- **Borracha** (Shift+E): tira área das formas escolhidas; sem escolha, das formas da camada do cursor (assim ela não apaga sem querer o que está embaixo). Num `stroke` ou numa `line`, corta o traço em pedaços.
-- `[` e `]` mudam o tamanho do Pincel de bolha e da Borracha, e um círculo no mouse mostra o tamanho. **Esc**, no meio do arraste, desiste.
-- Um pedaço que se solta vira uma linha nova logo abaixo, com o mesmo resto e o nome numerado (`c3_1`, `c3_2`…); o maior fica com o nome. A forma que some inteira sai do código. Um buraco no meio vira um `shape` escondido (`hidden`), com o nome terminado em `_hole1`, que entra no `cut=` da forma, como nos [buracos do capítulo 4](04-camadas.md#buraco-numa-forma-cut-na-forma).
-- O `rect` e a `ellipse` que a conta muda viram `shape` (o editor avisa).
-- As retas continuam retas, e os cantos onde duas bordas se cruzam ficam no lugar exato (como o `264.3,55!` acima). Os pontos que a conta não tocou ficam como estavam; os da beira da mudança ganham as alças (`~`), para o resto da forma não mexer. A curva nova passa pelo [Simplificar](#menos-pontos-simplificar).
-- Um Ctrl+Z desfaz o gesto inteiro.
-
-### Cortar, juntar e alisar: Tesoura, Faca, Junção, Suavizar e Construtor de formas
-
-Mais seis ferramentas do editor mexem nos caminhos e escrevem o resultado no código.
-
-<!-- gerar: img/02_cortar.png -->
-```weasel
-canvas 470 200 bg=#f4efe6
-palette ink=#2b2a33
-
-# Faca: um círculo cortado por um arraste ondulado (o pedaço de baixo foi puxado um pouco para baixo)
-shape a c=#ff6b4a ink=3 : 72.2,30.1 93,33.3 110.7,45 122,62.8 124.9,77.2 124.8,84.1! 96.9,75.1 43,92.7 26,89.9! 25.1,83.8 26.2,68.9 35.3,49.6 51.3,36
-shape a_1 c=#ff6b4a ink=3 : 124.8,98.1! 123.3,106.9 120.2,115.3 110,129.7 95.5,139.6 77.8,143.9 60.4,141.8 44.6,133.7 32.8,120.8 28.7,112.8 26,103.9! 43,106.7 96.9,89.1
-
-# Construtor de formas: dois círculos; um clique na região do meio a separou (e ela ganhou outra cor)
-shape b1 c=#4a90d9 ink=3 : 216.8,46.2 231.6,50.3 238,54.3! 233,58.6 225.3,69.4 221,88 225.3,106.6 233,117.4 238,121.7! 231.6,125.7 216.8,129.8 194.4,125.7 177.5,110.5 171,88 177.5,65.5 194.4,50.3
-shape b2 c=#ffb000 ink=3 : 238,54.3! 247,63.3 251.1,70.2 255,88 251.1,105.8 247,112.7 238,121.7! 229,112.7 224.9,105.8 221,88 224.9,70.2 229,63.3
-shape b2_1 c=#4a90d9 ink=3 : 281.6,50.3 298.5,65.5 305,88 298.5,110.5 281.6,125.7 259.2,129.8 244.4,125.7 238,121.7! 243,117.4 250.7,106.6 255,88 250.7,69.4 243,58.6 238,54.3! 244.4,50.3 259.2,46.2
-
-# Tesoura: um stroke cortado num clique (o pedaço da direita ganhou outra cor)
-stroke s w=8 c=#6cbb3c : 330,120 365,50~28.2,0~16.2,0 383.3,92.1~2.3,19.5
-stroke s_1 w=8 c=#8e5bd1 : 383.3,92.1~1.7,14.4 400,120~11.9,0.8~27.4,1.8 440,55
-
-text t1 75,185 "Faca" size=15 align=center
-text t2 238,185 "Construtor de formas" size=15 align=center
-text t3 385,185 "Tesoura" size=15 align=center
-```
-
-![Três desenhos lado a lado: um círculo laranja cortado em dois por uma linha ondulada, com o pedaço de baixo um pouco afastado; dois círculos azuis que se cruzam, com a região do meio separada e pintada de amarelo; e um traço em zigue-zague cortado em dois, metade verde e metade roxa](img/02_cortar.png)
-
-- **Tesoura** (C), na casa da Borracha: um clique num `stroke` ou numa `line` corta o traço ali, e os dois pedaços continuam com a mesma curva de antes (o ponto do corte ganha as alças, como o `383.3,92.1~2.3,19.5` acima). Numa forma fechada, são **dois cliques na borda**: ela se divide em duas numa reta entre eles (Esc desiste depois do primeiro).
-- **Faca**, na casa da Borracha: o arraste corta as formas fechadas que ele atravessa de um lado ao outro (as escolhidas; sem escolha, as da camada). O corte segue o arraste, e os dois lados ficam com os mesmos pontos, como o `124.8,84.1!` e o `96.9,75.1` acima, antes de o pedaço de baixo ser puxado.
-- **Junção**, na casa do Lápis: aperte na ponta de um `stroke` e solte na ponta de outro, e eles viram um traço só. **Objeto › Caminho › Juntar** (Ctrl+J) faz o mesmo com os dois traços escolhidos, pelas pontas mais perto. Pontas que se encostam viram um ponto; senão, uma reta liga as duas. Fica a linha de cima, com a cor e a grossura dela (juntando `s` e `s_1`, volta o nome `s`).
-- **Borracha de caminho**, na casa do Lápis: apaga o pedaço do traço (`stroke` ou `line`) por onde passa, sem mexer no resto. Para tirar área de uma forma fechada, use a Borracha (Shift+E).
-- **Suavizar**, na casa do Lápis: com uma forma (`shape`) ou um traço (`stroke`) escolhido, passe o arraste por cima de um trecho tremido: ali a curva fica mais lisa e com menos pontos, e o resto não muda. Cada passada alisa mais.
-- **Construtor de formas** (Shift+M): escolha duas formas fechadas ou mais que se cruzam. O mouse acende a **região** debaixo dele (cada pedaço que as bordas separam). Arraste por cima de várias regiões e elas viram uma forma só, com a cor da forma onde o arraste começou; um clique numa região só a separa das outras (como a do meio, acima). Com **Alt**, o arraste apaga as regiões.
-- Como na Borracha: um pedaço que se solta vira `nome_1`, o `rect` e a `ellipse` cortados viram `shape` (o editor avisa), e um Ctrl+Z desfaz o gesto inteiro.
+**Cuidado:** o `shape` não tem `rot=` (aviso). Para girar, mude os pontos; no editor, a alça de giro faz essa conta por você.
 
 ## Traço aberto: `stroke`
 
-`stroke` liga os pontos com as mesmas curvas lisas do `shape`, mas **não fecha a volta** nem tem lado de dentro: é uma pincelada. Serve para fios, bigodes, cabelos, sobrancelhas, rachaduras e pernas finas.
+```
+stroke nome : ponto ponto …
+```
 
-```
-stroke nome w=espessura c=cor taper=início,fim cap=round|butt|square : pontos
-```
+O `stroke` liga os pontos com as mesmas curvas do `shape`, mas **não fecha a volta**: é uma pincelada. Serve para fios, bigodes, cabelos, sobrancelhas e rachaduras. Ele aceita os mesmos pontos (lisos e com `!`) e o `smooth=`, e precisa de pelo menos 2 pontos.
 
 <!-- gerar: img/02_tracos.png -->
 ```weasel
-canvas 440 260 bg=#f4efe6
-palette ink=#2b2a33
-stroke comum w=12 : 40,40 160,60 280,30 400,50
-stroke reto w=12 cap=butt : 40,100 160,120 280,90 400,110
-stroke pincel w=16 taper=0,1 : 40,160 160,180 280,150 400,170
-stroke folha w=16 taper=0.5,0.5 : 40,220 160,240 280,210 400,230
+canvas 440 200 bg=#f4efe6
+stroke onda w=8 c=#4a90d9 : 30,60 130,30 230,70 330,30 410,50
+stroke raio w=8 c=#ffb000 : 30,170 110,110! 170,160! 250,100! 330,150! 410,100
 ```
 
-![Quatro traços: ponta redonda, ponta reta, um que afina até o fim e um que afina nas duas pontas](img/02_tracos.png)
+![Uma onda azul lisa e um zigue-zague amarelo de linhas retas](img/02_tracos.png)
 
-De cima para baixo:
+- `w=` é a grossura do traço, em pixels. Sem `w=`, 4.
+- Na onda, todos os pontos são lisos. No raio, os do meio têm `!` e viram cantos. O primeiro e o último não precisam: a ponta de um traço já é uma ponta.
 
-1. **Ponta redonda**, o padrão (`cap=round`).
-2. **Ponta reta** (`cap=butt`). Com `cap=square`, a ponta é reta e passa um pouco do último ponto.
-3. **`taper=0,1`** afina o traço ao longo de 100% do comprimento até o fim, como uma pincelada.
-4. **`taper=0.5,0.5`** afina na primeira metade e na última, grosso no meio.
-
-O `taper` vai de 0 a 1 e conta a fração do comprimento que afina: o primeiro número é o começo do traço e o segundo, o fim. O traço tem cor `c=` (padrão: a cor de tinta) e espessura `w=` em pixels (padrão 4). Ele precisa de pelo menos 2 pontos, e `!` faz canto vivo também aqui.
-
-As próximas três partes olham cada coisa de perto, uma de cada vez: as pontas, o afinamento e os cantos.
+**Experimente:** acrescente `smooth=0.5` na onda. As voltas ficam mais apertadas.
 
 ### Pontas: `cap=`
 
-`cap=` escolhe o formato das duas pontas do traço. Ele só aparece de verdade em traços grossos, por isso o exemplo usa `w=24`:
+O `cap=` escolhe o formato das duas pontas. Ele só aparece em traços grossos. As linhas tracejadas passam pelo primeiro e pelo último ponto de cada traço:
 
-<!-- gerar: img/02_pontas.png --guides -->
+<!-- gerar: img/02_pontas.png -->
 ```weasel
-canvas 440 210 bg=#f4efe6
-palette ink=#2b2a33
+canvas 400 200 bg=#f4efe6
 stroke redonda w=24 : 100,40 300,40
 stroke reta w=24 cap=butt : 100,100 300,100
 stroke quadrada w=24 cap=square : 100,160 300,160
-text t1 330,46 "cap=round" size=14
-text t2 330,106 "cap=butt" size=14
-text t3 330,166 "cap=square" size=14
-
-layer marcas guide
-line e1 c=#4a90d9 dash=4,4 : 100,10 100,190
-line e2 c=#4a90d9 dash=4,4 : 300,10 300,190
-ellipse p1 100,40 4 c=#c44536
-ellipse p2 300,40 4 c=#c44536
-ellipse p3 100,100 4 c=#c44536
-ellipse p4 300,100 4 c=#c44536
-ellipse p5 100,160 4 c=#c44536
-ellipse p6 300,160 4 c=#c44536
+# as linhas vêm depois, para ficar por cima dos traços
+line e1 w=2 c=#4a90d9 dash=4,4 : 100,10 100,190
+line e2 w=2 c=#4a90d9 dash=4,4 : 300,10 300,190
 ```
 
-![Três traços grossos entre as mesmas duas linhas tracejadas: o de ponta redonda e o de ponta quadrada passam das linhas, o de ponta reta termina exatamente nelas](img/02_pontas.png)
+![Três traços grossos entre duas linhas tracejadas: o de cima e o de baixo passam das linhas; o do meio termina exatamente nelas](img/02_pontas.png)
 
-Repare:
-
-- Os pontinhos vermelhos são o primeiro e o último ponto de cada traço. As linhas azuis tracejadas passam por eles.
-- `cap=round` (o padrão): a ponta é redonda e passa do ponto metade da espessura (aqui, 12 pixels, metade de `w=24`).
+- `cap=round` (o padrão): a ponta é redonda e passa do ponto metade da grossura (aqui, 12).
 - `cap=butt`: a ponta é reta e termina **exatamente** no ponto.
-- `cap=square`: a ponta é reta, mas passa do ponto metade da espessura, como a redonda.
+- `cap=square`: a ponta é reta, mas passa do ponto metade da grossura, como a redonda.
 
-**Experimente:** troque `w=24` por `w=4` nos três. A diferença quase some: `cap=` importa nos traços grossos.
+**Experimente:** troque `w=24` por `w=4` nos três. A diferença quase some.
 
 ### Afinar as pontas: `taper=`
 
-`taper=início,fim` afina o traço nas pontas, como uma pincelada. Cada número vai de 0 a 1 e diz **quanto do comprimento** afina: `0` é nada, `0.3` é 30% do traço, `1` é o traço inteiro.
+O `taper=começo,fim` afina o traço nas pontas, como uma pincelada. Cada número vai de 0 a 1 e diz **quanto do comprimento** afina: `0` é nada, `0.3` é 30% do traço, `1` é o traço inteiro.
 
 <!-- gerar: img/02_taper.png -->
 ```weasel
-canvas 440 250 bg=#f4efe6
-palette ink=#2b2a33
+canvas 360 250 bg=#f4efe6
 stroke t00 w=14 : 30,40 140,30 260,50 330,40
 stroke t10 w=14 taper=1,0 : 30,95 140,85 260,105 330,95
 stroke t03 w=14 taper=0,0.3 : 30,150 140,140 260,160 330,150
 stroke t11 w=14 taper=1,1 : 30,205 140,195 260,215 330,205
-text l00 350,46 "sem taper=" size=14
-text l10 350,101 "taper=1,0" size=14
-text l03 350,156 "taper=0,0.3" size=14
-text l11 350,211 "taper=1,1" size=14
 ```
 
-![Quatro traços ondulados: um de espessura igual, um que começa fino e engrossa até o fim, um que só afina no último pedaço e um fino nas duas pontas](img/02_taper.png)
+![Quatro traços ondulados: um de grossura igual, um que começa fino e engrossa até o fim, um que só afina no último pedaço e um fino nas duas pontas](img/02_taper.png)
 
-Repare:
+De cima para baixo:
 
-- `taper=1,0`: o começo afina ao longo do traço inteiro. O traço nasce fino e só chega à espessura toda no fim.
-- `taper=0,0.3`: só os últimos 30% afinam. Parece um rabo.
-- `taper=1,1`: afina dos dois lados ao longo do traço inteiro. O meio fica com só metade da espessura, e as pontas, finíssimas.
-- Com `taper=`, a ponta que não afina sai sempre redonda: o `cap=` não vale.
+- sem `taper=`, a grossura é igual do começo ao fim;
+- `taper=1,0`: o começo afina ao longo do traço inteiro. Ele nasce fino e só chega à grossura toda no fim;
+- `taper=0,0.3`: só os últimos 30% afinam, como um rabo;
+- `taper=1,1`: afina dos dois lados ao longo do traço inteiro. O meio fica com a metade da grossura.
 
-**Experimente:** troque `taper=1,1` por `taper=0.5,0.5` (como no quarto traço do exemplo anterior): o meio volta a ter a espessura toda.
+**Experimente:** troque `taper=1,1` por `taper=0.5,0.5`. O meio volta a ter a grossura toda.
 
-### Cantos e curvas no traço
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| os pontos (depois do `:`) | o caminho do traço | 2 ou mais, lisos ou com `!` | obrigatório |
+| `w=` | a grossura | 0 ou mais, em pixels | 4 |
+| `cap=` | o formato das pontas | `round`, `butt` ou `square` | `round` |
+| `taper=começo,fim` | afina as pontas | dois números, de 0 a 1 | 0,0 (não afina) |
+| `smooth=` | quanto os pontos lisos arredondam | de 0 a 2 | 1 |
+| `c=` | a cor do traço | uma cor | quase preto |
 
-O traço usa os mesmos tipos de ponto do `shape` (liso, `!` e alça) e também aceita `smooth=`. Os três traços abaixo têm o mesmo zigue-zague de quatro pontos:
+O `stroke` também vira um braço ou uma perna que dobra sozinho, com `hip=` e `limb=` ([capítulo 8](06-ossos.md#pernas-e-braços-com-ik)). A lista completa está na [referência do `stroke`](19-referencia.md#stroke). No editor, o **Lápis** (N) e o **Pincel** (B) escrevem um `stroke` à mão livre ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
 
-<!-- gerar: img/02_traco_cantos.png -->
+**Cuidado:**
+- O `taper=` precisa dos dois números: `taper=0.5` dá erro.
+- Com `taper=`, as pontas saem sempre redondas: o `cap=` não vale (aviso).
+
+## Curvas sob medida: alças
+
+Às vezes a curva automática não faz a volta que você quer. Uma **alça** diz para onde a curva aponta quando passa pelo ponto, como nos programas de desenho. Ela vale no `shape` e no `stroke`.
+
+```
+x,y~dx,dy
+```
+
+- A curva passa em `x,y` indo na direção `dx,dy`, contada a partir do ponto.
+- A alça vale para os dois lados: a curva chega pelo lado de `-dx,-dy` e sai pelo lado de `dx,dy`.
+- Quanto **maior** a alça, mais tempo a curva segue aquela direção.
+
+Os dois morros abaixo têm os mesmos três pontos. O da direita tem uma alça deitada no topo, desenhada em vermelho:
+
+<!-- gerar: img/02_alca.png -->
 ```weasel
-canvas 500 170 bg=#f4efe6
-palette ink=#2b2a33
-stroke liso w=6 : 20,130 65,40 110,130 155,40
-stroke cantos w=6 : 180,130 225,40! 270,130! 315,40
-stroke menos w=6 smooth=0.5 : 340,130 385,40 430,130 475,40
-text t1 88,160 "lisos" size=14 align=center
-text t2 248,160 "com !" size=14 align=center
-text t3 408,160 "smooth=0.5" size=14 align=center
+canvas 440 200 bg=#f4efe6
+stroke auto w=6 : 30,170 120,50 210,170
+stroke alca w=6 : 230,170 320,50~80,0 410,170
+# a alça: de 80 para trás até 80 para a frente do ponto
+line braco c=#c44536 w=2 : 240,50 400,50
+ellipse p1 240,50 5 c=#c44536
+ellipse p2 400,50 5 c=#c44536
 ```
 
-![Três traços com os mesmos quatro pontos: um em ondas redondas, um em zigue-zague de linhas retas e um em ondas mais apertadas](img/02_traco_cantos.png)
+![À esquerda, um morro de topo redondo; à direita, o mesmo morro com uma alça vermelha deitada no topo, que deixa o alto largo e achatado](img/02_alca.png)
 
-Repare:
+A alça `~80,0` faz a curva passar pelo topo indo reto para a direita, e o morro fica com o alto largo.
 
-- **lisos:** o traço faz ondas redondas.
-- **com `!`** nos dois pontos do meio: vira um zigue-zague de linhas retas. O primeiro e o último ponto não precisam de `!`: a ponta de um traço já é uma ponta.
-- **`smooth=0.5`:** as ondas ficam mais apertadas que no liso (o padrão é `smooth=1`).
+O **tamanho** da alça muda o formato da volta:
 
-**Experimente:** use `smooth=0` no terceiro traço. Ele fica igual ao do meio, todo em retas.
-
-> **Dica do editor:** no traço, os pontos se editam como no `shape`. Arraste o **✥** do meio (ou **Shift** + um ponto) para mover o traço inteiro, a bolinha **verde** de cima para girá-lo e os quadradinhos azuis da caixa em volta para esticá-lo (o `w=` fica igual). Use o **Ponto de ancoragem** (Shift+C) num ponto para puxar uma alça, e **duplo clique** para pôr ou tirar o `!`. As bolinhas claras entre os pontos criam um ponto novo ali, e **Delete** apaga o ponto escolhido (o laranja); o traço precisa de pelo menos 2 pontos. Na `line` também: numa linha de dois pontos, a bolinha fica no meio, e o ✥ desce um pouco para não ficar em cima dela. Numa `line` em pé ou deitada, a caixa de esticar só tem os dois quadradinhos das pontas.
-
-## Linha reta: `line`
-
-`line` liga os pontos com **retas**, sem curva. É boa para guias, chão, réguas e desenhos técnicos. `dash=traço,vão` faz tracejado.
-
-<!-- gerar: img/02_linhas.png -->
+<!-- gerar: img/02_alca_tamanho.png -->
 ```weasel
-canvas 440 160 bg=#f4efe6
-palette ink=#2b2a33
-line chao w=3 : 20,130 420,130
-line serra w=3 c=#4a90d9 : 20,90 80,40 140,90 200,40 260,90
-line tracejada w=2 dash=10,6 c=#c44536 : 290,40 420,40 420,110
+canvas 500 180 bg=#f4efe6
+stroke a w=5 : 20,160 80,50~20,0 140,160
+stroke b w=5 : 170,160 240,50~50,0 310,160
+stroke c w=5 : 330,160 400,50~90,0 470,160
+line la c=#c44536 w=2 : 60,50 100,50
+line lb c=#c44536 w=2 : 190,50 290,50
+line lc c=#c44536 w=2 : 310,50 490,50
 ```
 
-![Uma linha de chão, uma linha em zigue-zague e uma linha tracejada que vira a esquina](img/02_linhas.png)
+![Três morros com uma alça vermelha deitada no topo: com a alça curta o topo é quase pontudo, com a média fica redondo e com a longa fica achatado como um n](img/02_alca_tamanho.png)
 
-A espessura padrão da `line` é 1 (pixel); a cor padrão é a de tinta. A `line` também é o "chão" das pernas com IK ([capítulo 6](06-ossos.md#pernas-e-braços-com-ik)) e da sombra projetada ([capítulo 8](08-luz-efeitos.md#sombra-projetada-no-chão)).
+- `~20,0`: a alça é curta. A curva logo esquece a direção, e o topo fica quase pontudo.
+- `~50,0`: o topo fica redondo e largo.
+- `~90,0`: a curva corre deitada por muito tempo e depois cai de uma vez. O morro parece um "n".
 
-Diferente do `stroke`, a `line` não faz curvas (com ou sem `!`, as voltas são cantos) e as pontas são sempre retas, cortadas no ponto.
+**Experimente:** troque `~50,0` por `~50,30`. A alça fica inclinada para baixo, e o topo do morro fica torto.
 
-### Tracejado: `dash=`
+### Uma alça para cada lado
 
-`dash=` corta a linha em pedaços. Serve para guias, caminhos pontilhados, costuras e marcas de recorte. Os números são comprimentos em pixels, alternando **traço** e **vão**:
+Para a curva chegar de um jeito e sair de outro, escreva **duas** alças:
 
-<!-- gerar: img/02_tracejado.png -->
+```
+x,y~ax,ay~bx,by
+```
+
+- A curva **chega** ao ponto andando na direção `ax,ay` e **sai** na direção `bx,by`.
+- Na mesma direção, com tamanhos diferentes, o ponto continua liso, mas a volta fica mais longa de um lado.
+- Em direções diferentes, o ponto vira uma **ponta curva**, como a de cima de um coração.
+
+<!-- gerar: img/02_alca_quebrada.png -->
 ```weasel
-canvas 440 230 bg=#f4efe6
-palette ink=#2b2a33
-line l1 w=3 : 20,30 300,30
-line l2 w=3 dash=10 : 20,75 300,75
-line l3 w=3 dash=20,6 : 20,120 300,120
-line l4 w=3 dash=2,6 : 20,165 300,165
-line l5 w=3 dash=16,5,3,5 : 20,210 300,210
-text t1 320,36 "sem dash=" size=14
-text t2 320,81 "dash=10" size=14
-text t3 320,126 "dash=20,6" size=14
-text t4 320,171 "dash=2,6" size=14
-text t5 320,216 "dash=16,5,3,5" size=14
+canvas 440 200 bg=#f4efe6
+stroke liso w=6 : 30,170 120,50~30,0~90,0 210,170
+shape coracao c=#e05050 : 320,170! 270,95~0,-40 320,80~15,40~15,-40 370,95~0,40
+# as alças do topo do morro e da ponta do coração
+line l1 c=#c44536 w=2 : 90,50 210,50
+line l2 c=#c44536 w=2 : 305,40 320,80 335,40
 ```
 
-![Cinco linhas: uma contínua, uma de traços e vãos iguais, uma de traços longos, uma pontilhada e uma de traço e ponto](img/02_tracejado.png)
+![À esquerda, um morro que sobe depressa e desce devagar; à direita, um coração vermelho com as duas alças da ponta de cima desenhadas](img/02_alca_quebrada.png)
 
-Repare:
+- No morro, as duas alças estão na mesma reta, então o topo continua liso. Mas a de saída é três vezes mais longa: o topo se estende para a direita antes de a curva cair.
+- No coração, a curva chega à ponta de cima descendo (`15,40`) e sai subindo (`15,-40`).
 
-- `dash=10`: um número só vale para os dois: traço de 10, vão de 10.
-- `dash=20,6`: traço comprido (20) e vão curto (6).
-- `dash=2,6`: traços tão curtos que parecem pontos.
-- `dash=16,5,3,5`: com quatro números, o desenho é traço de 16, vão de 5, traço de 3, vão de 5, e repete. É o "traço e ponto". Cabem até 8 números.
-- `dash=` só existe na `line`. O `stroke` não tem tracejado.
+**Experimente:** no morro, troque `~30,0~90,0` por `~90,0~30,0`. A volta longa passa para o outro lado.
 
-**Experimente:** troque `w=3` por `w=8` na linha pontilhada. Os pontos viram quadradinhos, porque a ponta da `line` é reta.
+**Cuidado:**
+- Um ponto não pode ter alça e `!` ao mesmo tempo (erro).
+- O `smooth=` não muda os pontos com alça: com `smooth=0`, eles continuam curvos.
 
-## Texto
+No editor, as alças se puxam com o mouse ([capítulo 22](22-editor.md#pontos-e-alças)).
+
+## Texto: `text`
 
 ```
-text nome x,y "o texto" size=tamanho font=fonte align=left|center|right rot=graus bold italic
+text nome x,y "o texto"
 ```
 
-<!-- gerar: img/02_texto.png --guides -->
+<!-- gerar: img/02_texto.png -->
 ```weasel
-canvas 440 220 bg=#f4efe6
-palette ink=#2b2a33
+canvas 440 200 bg=#f4efe6
+# a linha tracejada passa pelo x dos três textos
+line eixo c=#4a90d9 dash=4,4 : 220,10 220,190
 text esq 220,50 "align=left" size=24
 text meio 220,110 "align=center" size=24 align=center bold
 text dir 220,170 "align=right" size=24 align=right italic c=#c44536
-text titulo 330,200 "Olá!" size=34 bold c=#ffd34d ink=3 rot=-8
-
-layer ancora guide
-line eixo c=#4a90d9 dash=4,4 : 220,10 220,190
 ellipse a1 220,50 4 c=#4a90d9
 ellipse a2 220,110 4 c=#4a90d9
 ellipse a3 220,170 4 c=#4a90d9
 ```
 
-![Três textos que começam, ficam centrados e terminam na mesma linha vertical, e um título amarelo com contorno, inclinado](img/02_texto.png)
+![Três textos na mesma linha vertical azul: um começa nela, um fica centrado nela e um, vermelho e inclinado, termina nela](img/02_texto.png)
 
-- `x,y` é o **ponto de apoio** (os pontos azuis): as letras "sentam" na altura `y` (a linha de base), e `align=` diz se o texto começa (`left`, o padrão), fica centrado (`center`) ou termina (`right`) no `x`.
-- `size=` é a altura da letra em pixels (padrão 24). `font=` escolhe a fonte pelo nome (padrão `sans-serif`; aceita `serif`, `monospace` ou o nome de uma fonte instalada, entre aspas se tiver espaço: `font="Comic Sans MS"`).
-- `c=` é a cor das letras e `ink=` faz um contorno em volta delas (com a cor `inkc=`).
-- Texto usa as fontes do computador: o mesmo arquivo pode sair um pouco diferente em outra máquina.
+- `x,y` é o **ponto de apoio** (os pontos azuis). As letras "sentam" na altura `y`.
+- O `align=` diz se o texto começa no `x` (`left`, o padrão), fica centrado nele (`center`) ou termina nele (`right`).
+- `bold` deixa as letras em negrito, e `italic` as inclina.
+- O texto vai entre aspas duplas, numa linha só. Não dá para pôr uma aspa dentro dele.
+
+**Experimente:** troque o `220` dos três textos por `300`. Os três andam juntos para a direita.
 
 ### Fonte e tamanho: `font=` e `size=`
-
-`font=` escolhe o **desenho das letras** pelo nome da fonte, e `size=` o **tamanho**, em pixels.
 
 <!-- gerar: img/02_fontes.png -->
 ```weasel
 canvas 460 230 bg=#f4efe6
-palette ink=#2b2a33
 text f1 20,45 "sans-serif (o padrão)" size=26
 text f2 20,90 "Georgia" size=26 font=Georgia
 text f3 20,135 "Courier New" size=26 font="Courier New"
@@ -630,354 +473,196 @@ text s3 250,205 "size=40" size=40
 
 ![Três linhas de texto em fontes diferentes, uma simples, uma com serifa e uma de máquina de escrever, e embaixo o mesmo texto em três tamanhos](img/02_fontes.png)
 
-Repare:
-
-- Na primeira linha não há `font=`, então a fonte é `sans-serif`: a fonte simples, sem enfeites, do sistema.
-- `font=Georgia` usa a fonte Georgia, com serifa (os "pezinhos" nas letras). Um nome com espaço vai entre aspas: `font="Courier New"`.
-- O nome precisa ser de uma fonte **instalada** no computador. Se ela não existir, o texto sai na fonte padrão, sem aviso.
-- `size=12`, `24` e `40`: quanto maior o número, maiores as letras. O padrão é 24.
-- Existem também os nomes genéricos `serif` (alguma fonte com serifa) e `monospace` (todas as letras com a mesma largura). No editor eles funcionam; na linha de comando, podem sair iguais à `sans-serif`, como aconteceu no computador que gerou estas imagens. Por isso o exemplo usa nomes de fontes.
+- `font=` escolhe a fonte pelo nome. Um nome com espaço vai entre aspas: `font="Courier New"`. Sem `font=`, a fonte é `sans-serif`, a simples do sistema.
+- A fonte precisa estar **instalada** no computador. Se não estiver, o texto sai na fonte padrão, sem aviso. Por isso o mesmo arquivo pode sair um pouco diferente em outra máquina.
+- `size=` é o tamanho da fonte, em pixels, de 1 a 2000. Não é a altura da letra: as maiúsculas ficam com uns 70% disso. Sem `size=`, 24.
 
 **Experimente:** troque `Georgia` por `"Comic Sans MS"` ou `Impact`, que vêm no Windows.
 
-### Contorno e giro do texto
+### Girar o texto
 
-O texto também tem contorno (`ink=` e `inkc=`), que ajuda a ler sobre um fundo colorido e deixa títulos com cara de desenho animado. E `rot=` gira o texto.
+O `rot=` gira o texto em volta do ponto de apoio (os pontinhos escuros):
 
-<!-- gerar: img/02_texto_contorno.png --guides -->
+<!-- gerar: img/02_texto_giro.png -->
 ```weasel
-canvas 460 200 bg=#f4efe6
-palette ink=#2b2a33
-text a 20,70 "Oi" size=56 bold c=#ffd34d
-text b 130,70 "Oi" size=56 bold c=#ffd34d ink=3
-text c 240,70 "Oi" size=56 bold c=#ffd34d ink=3 inkc=#c44536
-text d 350,70 "Oi" size=56 bold c=none ink=2
-text la 50,100 "só c=" size=13 align=center
-text lb 160,100 "ink=3" size=13 align=center
-text lc 270,100 "inkc=#c44536" size=13 align=center
-text ld 380,100 "c=none ink=2" size=13 align=center
-text giro 120,180 "rot=-15" size=28 bold rot=-15 c=#4a90d9
-text giro2 300,150 "rot=20" size=28 bold rot=20 c=#c44536
-
-layer apoio guide
-ellipse p1 120,180 4 c=#2b2a33
-ellipse p2 300,150 4 c=#2b2a33
+canvas 440 180 bg=#f4efe6
+text sobe 60,130 "rot=-15" size=30 bold rot=-15 c=#4a90d9
+text desce 260,60 "rot=20" size=30 bold rot=20 c=#c44536
+ellipse p1 60,130 4 c=#2b2a33
+ellipse p2 260,60 4 c=#2b2a33
 ```
 
-![Quatro palavras Oi: amarela sem contorno, amarela com contorno escuro, amarela com contorno vermelho e só o contorno; embaixo, um texto azul inclinado para cima e um vermelho inclinado para baixo](img/02_texto_contorno.png)
+![Um texto azul inclinado para cima e um vermelho inclinado para baixo, cada um girando em volta de um pontinho escuro](img/02_texto_giro.png)
 
-Repare:
+Como em toda forma, o número positivo gira no sentido do relógio. Com `align=left`, o fim do texto desce; com o negativo, sobe.
 
-- `ink=3` desenha um contorno de 3 pixels **em volta** das letras. Diferente das formas, o contorno do texto fica todo do lado de fora: as letras não afinam.
-- `inkc=` troca a cor do contorno (o padrão é a cor de tinta).
-- `c=none ink=2`: sem preenchimento, sobra só o contorno, e as letras ficam vazadas.
-- `rot=` gira o texto em volta do **ponto de apoio** (os pontinhos escuros), em graus. Negativo gira para cima; positivo, para baixo.
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| o ponto `x,y` | onde o texto se apoia | dois números, em pixels | obrigatório |
+| o texto | as letras | entre aspas duplas, numa linha só | obrigatório |
+| `size=` | o tamanho da fonte | de 1 a 2000, em pixels | 24 |
+| `font=` | a fonte | o nome de uma fonte instalada | `sans-serif` |
+| `align=` | que parte do texto fica no `x` | `left`, `center` ou `right` | `left` |
+| `rot=` | gira em volta do ponto de apoio | qualquer número, em graus | 0 |
+| `bold` | negrito | — | desligado |
+| `italic` | itálico | — | desligado |
+| `c=` | a cor das letras | uma cor | quase preto |
 
-**Experimente:** no primeiro "Oi", acrescente `ink=8 inkc=#ffffff`: um contorno branco e grosso, como nos adesivos.
-
-> **Dica do editor:** com o cursor na linha de um `text`, uma caixa tracejada mostra onde as letras estão.
->
-> - A bolinha do ponto de apoio move o texto.
-> - O **quadradinho** no canto de cima da caixa muda o tamanho das letras: arraste para fora e o `size=` cresce, para dentro e ele diminui. O ponto de apoio fica parado. Se a linha não tem `size=`, arrastar escreve um. Com **Shift**, o tamanho vai de 4 em 4. No `align=right`, o quadradinho fica no canto da esquerda, que é para onde o texto cresce.
-> - A bolinha **verde** em cima das letras gira. Arraste-a em volta do ponto de apoio, e o `rot=` muda no código (ou é escrito, se a linha não tem). Com **Shift**, o giro vai de 15 em 15 graus; um duplo clique na bolinha verde volta a `rot=0`.
-> - **Duplo clique nas letras** abre uma caixinha por cima delas para trocar o texto. **Enter** (ou clicar fora) grava o que está entre as aspas, **Esc** desiste, e um Ctrl+Z desfaz. Uma aspa (`"`) escrita ali vira `”`, porque a aspa reta fecharia o texto no código.
-
-## Contorno: `ink`, `inkc` e `weight`
-
-Formas fechadas (`shape`, `ellipse`, `rect`) têm dois "pincéis": o **preenchimento** (`c=`) e o **contorno** (`ink=`, a espessura, e `inkc=`, a cor).
-
-| Você escreve | Resultado |
-|---|---|
-| nem `c=` nem `ink=` | preenchida com a cor de tinta (quase preto), sem contorno |
-| só `c=` | preenchida com a cor, **sem contorno** |
-| só `ink=` | **só o contorno**, vazada por dentro |
-| `c=` e `ink=` | preenchida e com contorno |
-
-<!-- gerar: img/02_contorno.png -->
-```weasel
-canvas 440 150 bg=#f4efe6
-palette ink=#2b2a33
-ellipse nada 60,70 40
-ellipse soC 160,70 40 c=#ffb000
-ellipse soInk 260,70 40 ink=5
-ellipse ambos 360,70 40 c=#ffb000 ink=5
-text t1 60,140 "nada" size=14 align=center
-text t2 160,140 "c=" size=14 align=center
-text t3 260,140 "ink=" size=14 align=center
-text t4 360,140 "c= e ink=" size=14 align=center
-```
-
-![Quatro círculos: todo escuro, só laranja, só o contorno e laranja com contorno](img/02_contorno.png)
-
-O contorno é desenhado **centrado na borda**: metade dele fica para fora e metade para dentro da forma. Dá para ver isso com um contorno bem grosso e meio transparente:
-
-<!-- gerar: img/02_contorno_meio.png --guides -->
-```weasel
-canvas 440 190 bg=#f4efe6
-palette ink=#2b2a33
-ellipse fino 110,90 60 c=#ffb000 ink=4 inkc=#4a90d9
-ellipse grosso 320,90 60 c=#ffb000 ink=24 inkc=#4a90d980
-text t1 110,180 "ink=4" size=14 align=center
-text t2 320,180 "ink=24" size=14 align=center
-
-layer borda guide
-ellipse b1 110,90 60 c=none ink=1.5 inkc=#c44536
-ellipse b2 320,90 60 c=none ink=1.5 inkc=#c44536
-```
-
-![Dois círculos laranja de mesmo raio com uma linha vermelha fina na borda; no da direita, o contorno azul grosso fica metade para fora e metade para dentro da linha vermelha](img/02_contorno_meio.png)
-
-Repare:
-
-- A linha vermelha fina é a borda de verdade dos dois círculos (raio 60). Ela está numa camada `guide`, só para mostrar.
-- Com `ink=4`, quase não se nota: são 2 pixels para fora e 2 para dentro.
-- Com `ink=24`, a borda vermelha passa **no meio** do contorno: 12 pixels para fora, 12 para dentro. O azul do contorno tem `80` no fim da cor (meio transparente; veja o [capítulo 3](03-cores.md#escrevendo-uma-cor)), por isso a metade de dentro aparece misturada com o laranja.
-- Por isso um contorno grosso deixa a forma maior por fora e esconde um pouco do preenchimento por dentro.
-
-**Experimente:** tire o `80` do fim da cor (`inkc=#4a90d9`). O contorno fica sólido e cobre a borda do laranja.
-
-### Contorno só por fora
-
-Para o contorno não esconder nada do preenchimento, mande-o para uma camada que é pintada **antes** da forma, com `inkon=camada`. O preenchimento vem depois e cobre a metade de dentro do contorno; sobra só a de fora.
-
-<!-- gerar: img/02_contorno_fora.png --guides -->
-```weasel
-canvas 440 190 bg=#f4efe6
-palette ink=#2b2a33
-
-layer atras
-
-layer bolas
-ellipse normal 110,90 60 c=#ffb000 ink=24 inkc=#4a90d9
-ellipse soFora 320,90 60 c=#ffb000 ink=24 inkc=#4a90d9 inkon=atras
-text t1 110,180 "normal" size=14 align=center
-text t2 320,180 "inkon=atras" size=14 align=center
-
-layer borda guide
-ellipse b1 110,90 60 c=none ink=1.5 inkc=#c44536
-ellipse b2 320,90 60 c=none ink=1.5 inkc=#c44536
-```
-
-![Dois círculos laranja com contorno azul grosso e uma linha vermelha fina na borda; à esquerda o azul cobre a borda do laranja, à direita o laranja vai inteiro até a linha vermelha e o azul fica todo do lado de fora](img/02_contorno_fora.png)
-
-Repare:
-
-- `inkon=atras` manda o contorno de `soFora` para a camada `atras`. Ela vem antes de `bolas` no arquivo, então é pintada primeiro, e o laranja cobre a metade de dentro do contorno. A camada `atras` está vazia no código: ela só recebe esse contorno.
-- À direita, o laranja vai inteiro até a borda vermelha. À esquerda, o azul cobre 12 pixels da borda do laranja.
-- Só a metade de fora aparece: com `ink=24`, o contorno de fora tem 12 pixels. Para ter um contorno de 12 pixels só por fora, escreva o dobro, `ink=24`.
-- A camada que recebe o contorno precisa vir **antes** da camada da forma. Se vier depois, o contorno é pintado por cima, inteiro (é o que o [capítulo 4](04-camadas.md#o-contorno-por-cima-inkon) faz para ele não ser coberto por sombras).
-- No `text` não precisa disso: com preenchimento, o contorno das letras já fica só por fora.
-
-**Experimente:** no `soFora`, mude `ink=24` para `ink=12`. O contorno de fora fica com 6 pixels.
-
-### Contorno que engrossa no lado da sombra: `weight=`
-
-No desenho à mão, o contorno costuma ser mais grosso do lado oposto à luz. `weight=` faz isso, de 0 (contorno igual em volta toda) até 3. O lado da luz vem do `light=` do `canvas`: um par `x,y` que **aponta para onde a luz está**. O padrão `light=-0.6,-0.8` é uma luz em cima, à esquerda.
-
-<!-- gerar: img/02_weight.png -->
-```weasel
-canvas 440 170 bg=#f4efe6 light=-0.6,-0.8
-palette ink=#2b2a33
-ellipse w0 80,80 50 c=#ffb000 ink=6
-ellipse w1 220,80 50 c=#ffb000 ink=6 weight=0.3
-ellipse w2 360,80 50 c=#ffb000 ink=6 weight=0.7
-text t0 80,160 "weight=0" size=14 align=center
-text t1 220,160 "weight=0.3" size=14 align=center
-text t2 360,160 "weight=0.7" size=14 align=center
-```
-
-![Três círculos laranja: o contorno do primeiro é igual em volta; nos outros, fica mais grosso embaixo à direita, longe da luz](img/02_weight.png)
-
-O `light=` do `canvas` só afeta essa espessura do contorno. Luz de verdade, que muda as cores, é a do [capítulo 8](08-luz-efeitos.md).
-
-Mudando a luz de lugar, o lado grosso muda junto. Em `light=x,y`, o primeiro número aponta para a direita (positivo) ou para a esquerda (negativo), e o segundo para baixo (positivo) ou para cima (negativo). Aqui, `light=1,0` põe a luz bem à direita:
-
-<!-- gerar: img/02_weight_luz.png -->
-```weasel
-canvas 440 180 bg=#f4efe6 light=1,0
-palette ink=#2b2a33
-ellipse bola 80,80 50 c=#ffb000 ink=6 weight=0.8
-rect caixa 170,35 100,90 r=10 c=#4a90d9 ink=6 weight=0.8
-shape gota c=#6cbb3c ink=6 weight=0.8 : 360,25! 410,100 360,135 310,100
-text luz 220,166 "light=1,0: a luz vem da direita →" size=14 align=center c=#c44536
-```
-
-![Um círculo, um retângulo e uma gota com contorno grosso do lado esquerdo e quase sumindo do lado direito](img/02_weight_luz.png)
-
-Repare:
-
-- Agora o lado grosso é o da **esquerda**, longe da luz. Do lado direito, virado para a luz, o contorno quase some.
-- `weight=` funciona igual em `ellipse`, `rect` e `shape`.
-- O `light=` é um só para o desenho inteiro.
-
-**Experimente:** troque para `light=0,1` (a luz embaixo). O lado grosso passa para cima.
-
-> **Dica do editor:** o `light=` não tem um ponto para arrastar, porque não é um lugar no desenho: é uma direção. No lugar do ponto, ele tem uma **seta**. Ponha o cursor na linha do `canvas`: uma seta amarela sai do centro do quadro e aponta para a luz, com um sol na ponta. Arraste o sol em volta e veja o lado grosso dos contornos girar junto; o `light=` muda no código a cada movimento. Segure **Shift** para girar de 15 em 15 graus (fica fácil acertar `0,-1`, a luz bem em cima). Se a linha do `canvas` ainda não tem `light=`, a seta mostra o padrão (`-0.6,-0.8`), e arrastar escreve o `light=` para você. A barra de baixo do editor diz, em palavras, de que lado a luz vem.
-
-Há ainda `inkon=camada`, que pinta o contorno de uma forma numa **outra camada**, por cima de tudo. Ele resolve um problema que só aparece com camadas e recortes; o exemplo está no [capítulo 4](04-camadas.md#o-contorno-por-cima-inkon).
+O texto também pode ter contorno, como as formas fechadas ([capítulo 3](03-cores.md)). A lista completa está na [referência do `text`](19-referencia.md#text). No editor, a ferramenta **Texto** (T) escreve esta linha, e um duplo clique nas letras troca o texto ([capítulo 22](22-editor.md#texto)).
 
 ## Desenhar por cima de uma imagem: `ref`
 
-Para copiar um rascunho, uma foto ou um personagem que já existe, ponha a imagem **por baixo**, como guia, e desenhe as formas por cima dela, como num papel vegetal:
+Para copiar um rascunho, uma foto ou um personagem que já existe, ponha a imagem **por baixo**, como guia, e desenhe as formas por cima dela, como num papel vegetal.
+
+```
+ref nome "imagem.png" x,y
+```
 
 <!-- gerar: img/02_ref.png -s 0.5 --refs -->
 ```weasel
 canvas 512 512 bg=#ffffff
-palette ink=#1c1f2b line=10 pelo=#b8733a
 ref modelo "../docs/logo.png" 0,0 opacity=0.35 lock
-
-layer cabeca
-shape cara c=pelo ink=line : 256,112 314,122 356,160 368,218 354,280 320,340 286,388 256,404 226,388 192,340 158,280 144,218 156,160 198,122
-ellipse olhoE 212,222 18,23 rot=-12 c=ink
-ellipse olhoD 300,222 18,23 rot=12 c=ink
+shape cara c=#b8733a : 256,112 314,122 356,160 368,218 354,280 320,340 286,388 256,404 226,388 192,340 158,280 144,218 156,160 198,122
+ellipse olhoE 212,222 18,23 rot=-12 c=#1c1f2b
+ellipse olhoD 300,222 18,23 rot=12 c=#1c1f2b
 ```
 
 ![O logo do Weasel bem clarinho, por baixo, e por cima dele a cabeça e os olhos da doninha já redesenhados](img/02_ref.png)
 
-A doninha clarinha é a **imagem guia**; a cabeça e os olhos por cima são as formas, que copiam o contorno dela. A imagem guia **nunca sai na exportação**: PNG, GIF, SVG, sprite sheet e Godot só têm as formas. Ela aparece no editor e na linha de comando com `--refs` (a imagem acima foi feita assim).
-
-```
-ref nome "imagem.png" x,y scale= rot= opacity= [lock] [hidden] [front]
-```
-
-| Parte | O que faz |
-|---|---|
-| `"imagem.png"` | A imagem: PNG, JPG, GIF, WebP ou SVG. Na linha de comando, o caminho é relativo ao arquivo `.weasel` (o exemplo usa o logo do projeto, visto da pasta `exemplos/`). |
-| `x,y` | Onde fica o canto de cima à esquerda da imagem (padrão `0,0`). |
-| `scale=` | Tamanho: `0.5` é metade (padrão `1`, um pixel da imagem por unidade do desenho). |
-| `rot=` | Giro em graus, em volta do centro da imagem (padrão `0`). |
-| `opacity=` | De 0 a 1 (padrão `0.5`): clarinha o bastante para ver as suas formas por cima. |
-| `lock` | Travada: no editor, não sai do lugar quando você arrasta por cima dela. |
-| `hidden` | Escondida, sem tirar a linha do arquivo. |
-| `front` | Por cima das formas, em vez de por baixo (para conferir o traço). |
-
-**No editor**, o menu **Janela › Referências** abre o painel das imagens guia:
-
-- **Adicionar imagem…** escolhe um arquivo do computador e escreve a linha `ref`, com a imagem cabendo no desenho. A imagem fica guardada **neste navegador** (como os sons dos filmes); o código só tem o nome dela.
-- **Arrastar e soltar** faz o mesmo sem abrir o painel: traga a imagem do computador e solte na janela do Weasel. A linha `ref` entra abaixo do `canvas` (depois das outras imagens guia). Solta no **desenho**, o meio da imagem fica no ponto onde ela caiu; solta no **código**, fica no meio do desenho. Várias de uma vez viram uma linha cada, uma um pouco abaixo da outra.
-- Em cada imagem guia: a caixa liga e desliga (`hidden`), o controle muda a opacidade (`opacity=`) e o cadeado trava (`lock`). Clicar no nome leva à linha dela no código. **mostrar** esconde todas de uma vez, sem mexer no código.
-- No desenho, uma imagem **solta** (sem `lock`) tem uma moldura tracejada: arraste por dentro para mover e pelo quadradinho do canto para mudar o tamanho. O Weasel reescreve o `x,y` e o `scale=` (Ctrl+Z desfaz). Uma imagem travada não se mexe: arrastar por cima dela move a vista.
-- Se o código tem um `ref` com uma imagem que este navegador ainda não guardou, o painel mostra **abrir …** ao lado dele.
-
-Quando terminar de copiar, apague a linha `ref` ou deixe `hidden`. Para usar uma imagem diferente em cada animação, veja o [capítulo 7](07-animacao.md#uma-imagem-guia-para-cada-movimento).
+- A doninha clarinha é a **imagem guia**: o logo do Weasel, com `opacity=0.35` (35% visível). A cabeça e os olhos por cima são as formas que copiam o contorno dela.
+- A imagem guia **nunca sai na exportação**. Ela aparece no editor e, na linha de comando, só com `--refs`.
+- O caminho da imagem conta a partir da pasta do arquivo `.weasel`. Este exemplo está na pasta `exemplos/`, e o logo, em `docs/`.
+- No editor, a imagem precisa ser aberta antes: **Janela › Referências › Adicionar imagem…**, ou arraste o arquivo para a janela ([capítulo 22](22-editor.md#referências)).
 
 ### Por baixo ou por cima: `front`
 
-Enquanto você copia, a imagem guia fica **por baixo** das formas. Na hora de conferir se o traço bateu com o original, `front` põe a imagem **por cima**:
+Na hora de conferir se o traço bateu com o original, `front` põe a imagem **por cima** das formas:
 
 <!-- gerar: img/02_ref_front.png --refs -->
 ```weasel
 canvas 440 220 bg=#ffffff
-palette ink=#2b2a33
 ref atras "../docs/logo.png" 20,20 scale=0.35 opacity=0.6
 ref nafrente "../docs/logo.png" 240,20 scale=0.35 opacity=0.6 front
 rect quadro1 40,50 140,120 c=#ffb000
 rect quadro2 260,50 140,120 c=#ffb000
-text t1 110,212 "padrão (por baixo)" size=14 align=center
+text t1 110,212 "por baixo" size=14 align=center
 text t2 330,212 "front (por cima)" size=14 align=center
 ```
 
-![Duas cópias clarinhas do logo com um retângulo laranja em cima de cada uma: à esquerda o retângulo cobre a imagem, à direita a imagem aparece por cima do retângulo](img/02_ref_front.png)
+![Duas cópias clarinhas do logo com um retângulo amarelo em cima de cada uma: à esquerda o retângulo cobre a imagem, à direita a imagem aparece por cima do retângulo](img/02_ref_front.png)
 
-Repare:
-
-- As duas linhas `ref` usam o mesmo logo, com `scale=0.35` (35% do tamanho: o logo tem 512 pixels de lado, então fica com uns 180) e `opacity=0.6` (60% visível).
-- À esquerda, sem `front`, o retângulo laranja tapa a imagem guia. Só a borda dela aparece.
-- À direita, com `front`, a imagem guia fica por cima do retângulo, e a doninha aparece.
-- Como sempre, nada disso sai na exportação: esta imagem foi feita com `--refs`.
+- `scale=0.35` deixa o logo com 35% do tamanho.
+- À esquerda, sem `front`, o retângulo tapa a imagem guia. À direita, com `front`, a doninha aparece por cima.
 
 **Experimente:** acrescente `rot=20` à segunda linha `ref`. A imagem gira 20 graus em volta do próprio centro.
 
-## Réguas, linhas guia e medir
+| Opção | O que faz | Valores | Se não escrever |
+|---|---|---|---|
+| a imagem | o arquivo | entre aspas: PNG, JPG, GIF, WebP ou SVG | obrigatório |
+| o canto `x,y` | o canto de cima, à esquerda | dois números, em pixels | `0,0` |
+| `scale=` | o tamanho: 1 é o tamanho da imagem | de 0.001 a 100 | 1 |
+| `rot=` | gira em volta do centro da imagem | qualquer número, em graus | 0 |
+| `opacity=` | a transparência | de 0 (invisível) a 1 (inteira) | 0.5 |
+| `front` | por cima das formas | — | por baixo |
+| `lock` | no editor, a imagem não se arrasta | — | solta |
+| `hidden` | esconde a imagem, que continua no arquivo | — | aparece |
 
-Para alinhar formas (os olhos na mesma altura, o pé em cima do chão, duas portas com o mesmo topo), o editor tem réguas e linhas guia, como num programa de desenho. Nada disso entra no código nem na exportação: são só ajudas na tela.
+Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítulo 9](07-animacao.md#uma-imagem-guia-para-cada-movimento)). A lista completa está na [referência do `ref`](19-referencia.md#ref).
 
-- **Réguas:** ligue **Exibir › Réguas** (ou aperte **Ctrl+R**). Aparecem duas réguas, em cima e à esquerda, que contam os pixels do desenho: o `0` é o canto de cima à esquerda do `canvas`, e a parte do papel fica mais clara. Os números acompanham o zoom.
-- **Linha guia:** arraste de uma régua para dentro do desenho. Da régua de cima sai uma linha **deitada** (marca um `y`); da régua da esquerda, uma linha **em pé** (marca um `x`). Enquanto você arrasta, a linha gruda nas bordas e no meio do papel e nos pontos da forma do cursor, e um aviso embaixo do desenho mostra onde ela está (`linha guia em pé: x = 400`).
-- **Mudar e apagar:** arraste uma linha para mudá-la de lugar. Para apagar, solte-a em cima de uma régua. Duplo clique no quadradinho do canto das réguas apaga todas as linhas do arquivo.
-- **Grudar:** com as réguas ligadas, o que você arrasta gruda nas linhas guia quando passa a menos de 6 pixels (da tela) delas, e a linha fica branca enquanto segura. Um ponto gruda nele mesmo; a forma inteira (o **✥**, ou o centro de uma `ellipse`, o canto de um `rect`) gruda pelas bordas e pelo meio; ao esticar, gruda o lado (ou o canto) que anda; a escolha do painel **Camadas** gruda pela caixa dela (ao esticar, pelo lado que anda). Segure **Ctrl** durante o arraste para não grudar.
-- **Medir:** a ferramenta **Medir** (na barra à esquerda do desenho) liga a régua de medir. Arraste no desenho de um ponto a outro: ela mostra a distância, o ângulo e quanto anda em x e em y (`100 px · -53,1° · dx 60 · dy -80`). O ângulo é como no `rot=`: em graus, positivo gira no sentido do relógio, e `0°` aponta para a direita. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com **Shift**, a régua anda de 45 em 45 graus. Arraste uma ponta para ajustar; um clique (sem arrastar) ou **Esc** tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos: volte para a Seleção (**V**) ou a Seleção direta (**A**) para editar.
+Quando terminar de copiar, apague a linha `ref` ou ponha `hidden` nela.
 
-As linhas guia ficam guardadas **neste navegador**, uma lista para cada arquivo (ao renomear o arquivo, vão junto). **Exibir › Réguas** desliga tudo de uma vez: réguas, linhas e o grude. Não confunda com **Exibir › Guias**, que mostra as camadas `guide` do seu código (linhas de construção que você desenha de propósito, como no [capítulo 4](04-camadas.md#camada-de-construção-guide)). Em filmes, não há réguas nem Medir.
+## O que vale em toda forma
 
-## Opções que toda forma aceita
+Algumas opções valem em todas as formas:
 
-| Atributo | O que faz |
-|---|---|
-| `opacity=0.5` | Transparência, de 0 (invisível) a 1 (sólida). |
-| `hidden` | A forma **não aparece**, mas continua existindo: serve de molde para recortes (`clip`, `cut`) e para morph. Veja os capítulos [4](04-camadas.md) e [7](07-animacao.md#morph-uma-forma-vira-outra). |
-| `bone=osso` | A forma segue um osso ([capítulo 6](06-ossos.md)). |
-| `cloth=tecido` | A forma balança como pano ([capítulo 6](06-ossos.md#tecido-cloth)). |
-| `cut=forma` | Abre um buraco com o formato de outra forma ([capítulo 4](04-camadas.md#buraco-numa-forma-cut-na-forma)). |
-| `mirror=forma@x` | Copia outra forma espelhada ([capítulo 5](05-componentes.md#espelho-mirror)). |
-| `emit=cor` | A forma brilha ([capítulo 8](08-luz-efeitos.md#coisas-que-brilham-emit)). |
-| `bones=a,b,…` | A forma dobra, seguindo vários ossos ([capítulo 6](06-ossos.md#formas-que-dobram-bones)). |
-| `z=` `yaw=` `pitch=` | Profundidade e giro em 3D ([capítulo 11](11-profundidade.md)). |
+- **O nome.** É opcional, mas sem ele não dá para recortar, animar nem mudar a forma num filme. Duas formas podem ter o mesmo nome: tudo o que usa o nome vale para as duas.
+- **`c=`**, a cor. Sem `c=`, a forma sai quase preta: é a cor de tinta, que o [capítulo 3](03-cores.md) mostra como trocar.
+- **`hidden`**: a forma não é pintada, mas continua existindo. Uma forma escondida ainda serve para recortar outras ([capítulo 4](04-camadas.md)).
 
-Cada linha da tabela tem um exemplo no capítulo indicado. As duas primeiras, que valem para qualquer desenho, estão logo abaixo.
+O `rot=` **não** vale em todas. A `ellipse`, o `rect` e o `text` têm `rot=`. O `shape`, o `stroke` e a `line` não têm: nelas, cada ponto já diz onde fica, e girar é escrever outros pontos.
 
-E o `rot=`? Ele não está na tabela porque **não vale para toda forma**:
+As outras opções das formas aparecem nos próximos capítulos:
 
-- **Têm `rot=`:** `ellipse`, `rect` e `text`. Cada uma gira em volta de um ponto: o centro da elipse, o centro do retângulo e o ponto de apoio do texto. O `use` de um componente também tem `rot=` ([capítulo 5](05-componentes.md#tamanho-e-giro-scale-e-rot)).
-- **Não têm:** `shape`, `stroke` e `line`. Nelas, cada ponto já diz exatamente onde fica, e girar é escrever outros pontos. No editor, a bolinha verde de giro faz essa conta por você ([veja a dica do `shape`](#formas-livres-com-pontos-shape)). Para girar um desenho feito de várias formas, junte-as num componente e gire o `use`.
+| Opções | O que fazem | Onde |
+|---|---|---|
+| `ink=`, `inkc=`, `weight=`, `opacity=` | o contorno e a transparência | [capítulo 3](03-cores.md) |
+| `cut=`, `inkon=` | buracos e o contorno em outra camada | [capítulo 4](04-camadas.md) |
+| `mirror=` | uma cópia espelhada de outra forma | [capítulo 6](05-componentes.md#espelho-mirror) |
+| `bone=`, `bones=`, `cloth=` | a forma segue ossos ou balança como pano | [capítulo 8](06-ossos.md) |
+| `emit=` | a forma brilha | [capítulo 11](08-luz-efeitos.md#coisas-que-brilham-emit) |
+| `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](11-profundidade.md) |
 
-### Transparência: `opacity=`
+Todas, com as faixas e os padrões, estão em [Opções de todas as formas](19-referencia.md#opções-de-todas-as-formas), na referência.
 
-`opacity=` deixa a forma inteira transparente: o preenchimento e o contorno juntos. O número vai de `0` (invisível) a `1` (sólida, o padrão); `0.6` quer dizer 60% visível.
+## Juntando tudo
 
-<!-- gerar: img/02_opacidade.png -->
+A placa de um café, pendurada num prego. Usa todas as formas do capítulo:
+
+<!-- gerar: img/02_placa.png -->
 ```weasel
-canvas 440 170 bg=#f4efe6
-palette ink=#2b2a33
-rect faixa 20,62 400,36 c=ink
-ellipse o1 80,80 46 c=#4a90d9 ink=4
-ellipse o2 220,80 46 c=#4a90d9 ink=4 opacity=0.6
-ellipse o3 360,80 46 c=#4a90d9 ink=4 opacity=0.25
-text t1 80,158 "sem opacity=" size=14 align=center
-text t2 220,158 "opacity=0.6" size=14 align=center
-text t3 360,158 "opacity=0.25" size=14 align=center
+canvas 480 340 bg=#264653
+
+# o prego e a corda (uma line de três pontos)
+line corda c=#e9d8a6 w=3 : 100,120 240,40 380,120
+ellipse prego 240,40 7 c=#adb5bd
+
+# a placa: uma sombra escura e a madeira por cima, com cantos redondos
+rect sombra 66,126 360,180 r=24 c=#1d3640
+rect placa 60,118 360,180 r=24 c=#e9c46a
+# a costura tracejada, um pouco para dentro da borda
+line costura c=#fff3d6 w=2 dash=10,6 : 74,132 406,132 406,284 74,284 74,132
+
+# a doninha: as orelhas vêm antes, para a cabeça ficar por cima delas
+ellipse orelhaE 104,160 17 c=#9c6644
+ellipse dentroE 104,160 9 c=#e5989b
+ellipse orelhaD 186,160 17 c=#9c6644
+ellipse dentroD 186,160 9 c=#e5989b
+# a cabeça: só pontos lisos, com alças no alto (achatado) e no queixo (estreito)
+shape cabeca c=#9c6644 : 145,148~42,0 198,205 145,278~-14,0 92,205
+# o queixo claro: cantos (!) nos lados e no meio, bochechas lisas
+shape queixo c=#fff3d6 : 98,238! 122,226 145,232! 168,226 192,238! 145,272~-12,0
+ellipse olhoE 124,198 8,9 c=#1b1b1e
+ellipse olhoD 166,198 8,9 c=#1b1b1e
+ellipse brilhoE 126,195 2.5 c=#ffffff
+ellipse brilhoD 168,195 2.5 c=#ffffff
+ellipse nariz 145,234 7,5 c=#3d2b1f
+stroke boca c=#3d2b1f w=2.5 : 135,245 140,250 145,246! 150,250 155,245
+# os bigodes afinam até sumir na ponta
+stroke bigode1 c=#3d2b1f w=2 taper=0,1 : 120,240 96,234 72,237
+stroke bigode2 c=#3d2b1f w=2 taper=0,1 : 120,246 96,248 74,256
+stroke bigode3 c=#3d2b1f w=2 taper=0,1 : 170,240 194,234 218,237
+stroke bigode4 c=#3d2b1f w=2 taper=0,1 : 170,246 194,248 216,256
+
+# o nome do café
+text nome 312,200 "Café" size=50 font=Georgia bold align=center c=#3d2b1f
+text sobrenome 312,236 "da Doninha" size=24 font=Georgia italic align=center c=#6b4226
+
+# a etiqueta torta no canto: o retângulo e o texto giram juntos
+rect etiqueta 318,272 104,36 r=8 rot=-6 c=#e76f51
+text aberto 370,297 "aberto!" size=18 bold align=center rot=-6 c=#fff3d6
 ```
 
-![Três círculos azuis sobre uma faixa escura: o primeiro sólido, o segundo deixa ver a faixa através dele e o terceiro está quase sumindo](img/02_opacidade.png)
+![Uma placa amarela de cantos redondos, pendurada num prego por uma corda, com uma costura tracejada, o rosto de uma doninha, o nome Café da Doninha e uma etiqueta laranja torta escrita aberto!](img/02_placa.png)
 
-Repare:
+Como cada parte funciona:
 
-- A faixa escura passa **atrás** dos três círculos. Quanto menor o número, mais dela aparece através do círculo.
-- O contorno também fica transparente, junto com o azul.
-- Para deixar transparente só o preenchimento, use uma cor com transparência, como `c=#4a90d980` ([capítulo 3](03-cores.md#escrevendo-uma-cor)).
+- **A corda** é uma `line` de três pontos: sobe da placa até o prego e desce do outro lado.
+- **A sombra** é o mesmo retângulo da placa, mais escuro, um pouco para a direita e para baixo. Ela vem antes, então fica atrás.
+- **A costura** é uma `line` tracejada que volta ao primeiro ponto e fecha o retângulo.
+- **A cabeça** tem só quatro pontos lisos. A alça `~42,0` no alto deixa a testa larga; a `~-14,0` embaixo deixa o queixo estreito.
+- **O queixo claro** mistura cantos e pontos lisos: os cantos fazem as bochechas, e a alça arredonda a ponta de baixo.
+- **Os bigodes** são `stroke` com `taper=0,1`: afinam até sumir na ponta.
+- **A etiqueta** é um `rect` e um `text` com o mesmo `rot=-6`. O texto está centrado no meio do retângulo, então os dois giram juntos.
 
-**Experimente:** use `opacity=0`. O círculo some, mas continua existindo (no [capítulo 7](07-animacao.md) dá para animar a opacidade e fazê-lo aparecer aos poucos).
+**Experimente:** troque o `rot=-6` da etiqueta e do texto por `rot=6`. A etiqueta tomba para o outro lado.
 
-### Escondida, mas existe: `hidden`
+## Resumo
 
-`hidden` é uma **opção** (uma palavra solta, sem `=`) que esconde a forma: ela não é pintada, mas continua no desenho. Serve para formas que são só um **molde**: o formato de um buraco, de um recorte ou de um morph.
+- `ellipse` (centro e raio) e `rect` (canto, tamanho e `r=`) são as formas prontas; as duas têm `rot=`.
+- `line`, `shape` e `stroke` ligam pontos escritos depois do `:`. A `line` faz retas; o `shape` fecha uma forma com curvas; o `stroke` é um traço aberto.
+- Um ponto é liso (`x,y`), canto (`x,y!`) ou tem alça (`x,y~dx,dy`, ou duas alças).
+- O traço tem grossura (`w=`), pontas (`cap=`) e afina (`taper=`); a linha tem tracejado (`dash=`).
+- O `text` escreve entre aspas, com `size=`, `font=`, `align=`, `bold` e `italic`.
+- O `ref` põe uma imagem guia por baixo, que nunca sai na exportação.
 
-<!-- gerar: img/02_escondida.png -->
-```weasel
-canvas 440 200 bg=#f4efe6
-palette ink=#2b2a33
-rect faixa 20,82 400,36 c=#c44536
-
-ellipse rosca1 110,100 70 c=#e0a050 ink=5 cut=furo1
-ellipse furo1 110,100 26 c=#4a90d9
-
-ellipse rosca2 330,100 70 c=#e0a050 ink=5 cut=furo2
-ellipse furo2 330,100 26 hidden
-
-text t1 110,192 "furo1 sem hidden" size=14 align=center
-text t2 330,192 "furo2 com hidden" size=14 align=center
-```
-
-![Duas roscas sobre uma faixa vermelha: na da esquerda o furo está tampado por um círculo azul; na da direita o furo está vazio e a faixa aparece através dele](img/02_escondida.png)
-
-Repare:
-
-- As duas roscas usam `cut=` para abrir um buraco com o formato de outra forma: `cut=furo1` e `cut=furo2`. O buraco é de verdade: a faixa vermelha, que está atrás, aparece por ele.
-- À esquerda, `furo1` não tem `hidden`. Ele é pintado como qualquer forma e tampa o buraco com um círculo azul.
-- À direita, `furo2` tem `hidden`. Ele não aparece; só empresta o formato. O buraco fica vazio.
-
-**Experimente:** apague o `c=#4a90d9` de `furo1` e escreva `hidden` no lugar. As duas roscas ficam iguais.
-
-> **Dica do editor:** com uma forma escolhida (ou o cursor na linha dela), **Ctrl+3** escreve o `hidden` (ou apaga, se já tem); no código, o **Ctrl+H** também. No painel **Camadas**, o olho no fim de cada linha faz o mesmo, e é por ali que uma forma escondida volta a aparecer, já que ela não se clica no desenho.
-
-[← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e estilos →](03-cores.md)
+[← Primeiros passos](01-primeiros-passos.md) · [Índice](README.md) · [Próximo: Cores e contorno →](03-cores.md)

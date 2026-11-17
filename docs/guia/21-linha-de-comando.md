@@ -1,6 +1,6 @@
 # 21. Linha de comando
 
-[← Funções das contas](20-funcoes.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)
+[← Funções das contas](20-funcoes.md) · [Índice](README.md) · [Próximo: O editor →](22-editor.md)
 
 A linha de comando desenha e exporta sem abrir o editor. Você escreve um comando, e o Weasel lê o arquivo `.weasel` e salva a imagem, a animação, a sprite sheet, a cena do Godot ou o vídeo. Ela usa o mesmo código do editor, então o desenho sai igual. O editor exporta quase tudo isso pela janela **Exportar**; o vídeo com som e o ProRes só saem daqui.
 
@@ -271,7 +271,7 @@ Um SVG da coruja e um de cada variante de cor: `coruja.svg`, `coruja_neve.svg` e
 - `--frame` sem `-a` dá erro: `--frame precisa de --anim`. Um quadro que não existe também: `--frame 30 não existe em "jump" (quadros 0 a 23)`.
 - O JPG não tem transparência: com `-t`, ele sai com o fundo do `canvas`.
 - O SVG sai sem o estilo do `art` (a resposta avisa). O `.txt` só sai de um desenho com `art ascii` ([capítulo 14](14-estilos.md#ascii-art-ascii)); em outro, a resposta é `o .txt sai do estilo ascii (ponha "art ascii" no arquivo)`.
-- As variantes estão no [capítulo 3](03-cores.md#variantes-outra-versão-das-cores); as camadas `guide`, no [capítulo 4](04-camadas.md#camada-de-construção-guide); as imagens guia, no [capítulo 7](07-animacao.md#uma-imagem-guia-para-cada-movimento).
+- As variantes estão no [capítulo 6](05-componentes.md#variantes-outra-versão-do-desenho-variant); as camadas `guide`, no [capítulo 4](04-camadas.md#camada-de-construção-guide); as imagens guia, no [capítulo 7](07-animacao.md#uma-imagem-guia-para-cada-movimento).
 
 ## Uma animação
 
@@ -656,7 +656,7 @@ salvo chefe_menos.weasel  código simplificado · 11 KB
 - Sem `--force`, as formas usadas na troca de forma ficam como estão: com outro número de pontos, a troca deixaria de ir ponto a ponto.
 - Com erros no código, nada é gravado: `weasel: 1 erro(s); nada foi simplificado (corrija antes, ou use --force).`
 - O `-o` precisa terminar em `.weasel` (`--simplify grava código: use -o arquivo.weasel`) e, sem `--force`, ser outro arquivo (`--simplify não grava em cima do arquivo de entrada: use outro nome no -o (ou --force)`).
-- O mesmo Simplificar existe no editor: [capítulo 2](02-formas.md#menos-pontos-simplificar).
+- O mesmo Simplificar existe no editor: [capítulo 22](22-editor.md#simplificar).
 
 ## Ver enquanto edita
 
@@ -724,4 +724,4 @@ Algumas opções só fazem sentido com um formato ou com um tipo de arquivo. For
 - Vídeo precisa do ffmpeg; num filme, `--shot`, `--from` e `--to` escolhem o pedaço.
 - `--check` e `--info` conferem sem salvar, e `--watch` salva de novo a cada mudança.
 
-[← Funções das contas](20-funcoes.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)
+[← Funções das contas](20-funcoes.md) · [Índice](README.md) · [Próximo: O editor →](22-editor.md)

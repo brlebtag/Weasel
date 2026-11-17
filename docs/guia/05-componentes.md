@@ -1095,4 +1095,137 @@ Repare:
 
 Para pôr personagens de outros arquivos num **filme**, o caminho é outro (`actor`), que mantém cada personagem separado, com as animações dele: veja o [capítulo 10](10-filme.md).
 
+## Grupos: `group`
+
+Duas coisas que **só o editor lê**: a imagem não muda com elas, nem no jogo, nem no filme. Servem para mexer no desenho com o mouse sem estragar o que já está pronto.
+
+<!-- conferir -->
+```weasel
+canvas 400 300 bg=#f4efe6
+palette ink=#2b2a33 line=3
+
+layer fundo lock
+rect chao 0,240 400,60 c=#8a7a5a
+
+layer boneco
+group cabeca
+  ellipse rosto 200,100 40 c=#f0c8a0 ink=line
+  group olhos
+    ellipse olhoA 186,95 5,6 c=ink
+    ellipse olhoB 214,95 5,6 c=ink
+  end
+end
+rect corpo 175,140 50,80 c=#3a6ea5 ink=line
+rect bracoA 140,140 20,60 c=#3a6ea5 ink=line lock
+rect bracoB 240,140 20,60 c=#3a6ea5 ink=line
+```
+
+Repare:
+
+- `group nome` … `end` junta as linhas de dentro. No desenho, um clique com a **Seleção** (V) numa forma do grupo escolhe o grupo inteiro: o rosto e os dois olhos andam, giram e esticam juntos. A **Seleção direta** (A) pega uma forma só.
+- Um grupo pode ter outro dentro (`olhos` está dentro de `cabeca`). O recuo de dois espaços é só para ler melhor.
+- O grupo fica **dentro de uma camada**: uma linha `layer` no meio dele dá erro. Ele também pode ficar dentro de um `def`; o contrário (um `def` dentro do grupo) não.
+- `lock` **trava**: o desenho não deixa escolher nem arrastar, e o clique passa para o que está embaixo. No código, a linha continua igual de mexer. Vale numa forma, num `use`, num `group` (trava tudo de dentro) e numa `layer` (trava a camada inteira, como o chão aqui).
+
+**No editor:**
+
+- **Ctrl+G** agrupa as formas escolhidas: o editor escreve o `group group1` e o `end` em volta delas (no lugar da de cima, se não estavam juntas no código). **Ctrl+Shift+G** desfaz o grupo (um nível por vez). Os dois também estão em **Objeto**.
+- **Duplo clique** numa forma de um grupo **entra nele** (isolamento): o resto do desenho fica apagado e parado, e o clique escolhe só as formas de dentro. **Esc** (ou um duplo clique fora) sai.
+- **Ctrl+2** trava a escolha (num grupo inteiro, o `lock` vai na linha do `group`); **Ctrl+Alt+2** destrava tudo, menos as camadas. No painel **Camadas**, o cadeado de cada linha (e de cada camada) põe e tira o `lock`.
+- Copiar, colar, apagar, organizar (Ctrl+] e Ctrl+[) e o Alt+arrastar levam o grupo inteiro, do `group` ao `end`. Dentro do isolamento, organizar muda a ordem dentro do grupo.
+- **Objeto › Alinhar** (e o grupo **Alinhar** do painel Propriedades) alinha as escolhidas à esquerda, ao centro, à direita, em cima, no meio ou embaixo, e distribui três ou mais com a mesma distância entre os meios. Um grupo anda inteiro. Com uma forma (ou um grupo) só, ela se alinha na prancheta, o `canvas`.
+
+## Variantes: outra versão do desenho (`variant`)
+
+Uma **variante** é outra versão do mesmo desenho, com algumas cores da `palette` trocadas. Serve para inimigos de outra cor, dia e noite, times e roupas. O desenho de sempre continua igual: a variante só vale quando você a escolhe.
+
+```
+variant nome cor=valor cor=valor … [hide=nomes] [show=nomes]
+```
+
+<!-- gerar: img/06_variante_casa.png -->
+<!-- gerar: img/06_variante_casa_noite.png --variant noite -->
+```weasel
+canvas 400 260 bg=ceu
+palette ink=#2b2a33 line=5 fino=3
+palette ceu=#bfe3f5 parede=#f1d9b5 telhado=#c4512b porta=#7a4a2c janela=#e8f4fb grama=#7cc56a
+
+rect chao 0,222 400,40 c=grama
+rect parede 110,120 180,110 c=parede ink=line
+shape telhado c=telhado ink=line : 90,124! 200,50! 310,124!
+rect porta 180,160 44,70 r=6 c=porta ink=line
+rect janela1 128,140 36,36 c=janela ink=fino
+rect janela2 238,140 36,36 c=janela ink=fino
+
+variant noite ceu=#1b2140 grama=#2f5a3a parede=#a99a8a janela=#ffd56b
+```
+
+| Sem variante | Com `--variant noite` |
+|---|---|
+| ![Casa de dia: céu azul claro, janelas brancas](img/06_variante_casa.png) | ![A mesma casa à noite: céu escuro, janelas amarelas](img/06_variante_casa_noite.png) |
+
+- A linha `variant noite …` não muda nada sozinha. Ela diz: "na versão `noite`, troque estas cores da `palette`".
+- A variante só alcança o que usa o nome. Uma cor escrita direto, como `c=#c4512b`, não muda. Por isso é bom dar nome a toda cor que você talvez queira trocar.
+- A variante troca só os nomes que ela cita. Se a `palette` tem `sobrancelha=cabelo`, a sobrancelha copiou a cor do cabelo quando a `palette` foi lida. Então `variant ruivo cabelo=#c4512b` muda o cabelo e não muda a sobrancelha. Para trocar as duas, cite as duas: `variant ruivo cabelo=#c4512b sobrancelha=#c4512b`.
+
+**No editor**, o seletor de variante fica na barra da vista do desenho. **Na linha de comando**, `--variant noite` exporta essa versão, e `--variant all` exporta todas de uma vez, com o nome da variante no fim do arquivo. Com a casa salva como `casa.weasel`:
+
+```
+$ node cli/weasel.js casa.weasel --variant all
+salvo casa.png  400×260 · 6 KB
+salvo casa_noite.png  400×260 · 5 KB
+
+$ node cli/weasel.js casa.weasel --variant noite
+salvo casa.png  400×260 · 5 KB
+
+$ node cli/weasel.js casa.weasel --variant dia
+weasel: variante "dia" não existe (tem: noite)
+Use "weasel --help" para ver as opções.
+```
+
+`--variant noite` sozinho salva com o nome de sempre (`casa.png`), por cima da versão sem variante. Para guardar as duas, use `--variant all` ou escolha o nome: `--variant noite -o casa_noite.png`. E `--info` lista as variantes que o arquivo tem (`variantes noite`).
+
+### Variantes que trocam peças: `show=` e `hide=`
+
+Além das cores, uma variante pode **esconder** e **mostrar** partes do desenho. É o que os jogos chamam de *skin*: o mesmo personagem com peças trocadas (outra arma, um chapéu, sem o elmo).
+
+<!-- gerar: img/06_pecas.png -->
+<!-- gerar: img/06_pecas_mago.png --variant mago -->
+<!-- gerar: img/06_pecas_sem_elmo.png --variant sem_elmo -->
+```weasel
+canvas 200 160 bg=#cfe8f5
+palette ink=#2b2a33 line=4 pele=#ffb36b
+
+layer boneco
+ellipse cabeca 100,76 34 c=pele ink=line
+ellipse olhoE 88,72 4,6 c=ink
+ellipse olhoD 112,72 4,6 c=ink
+rect elmo 66,36 68,22 r=8 c=#9aa6b2 ink=line
+shape chapeu c=#6a4bc4 ink=line hidden : 100,4! 130,50! 70,50!
+
+layer espada
+rect lamina 142,50 8,72 c=#d9dde3 ink=line
+rect guarda 132,114 28,8 r=3 c=#c58a4c ink=line
+
+layer cajado hidden
+stroke vara w=6 c=#8a5a2b : 148,42 152,146
+ellipse gema 148,36 9 c=#7ae0ff ink=line
+
+variant mago pele=#ffd9a0 hide=elmo,espada show=chapeu,cajado
+variant sem_elmo hide=elmo
+```
+
+| Sem variante | `--variant mago` | `--variant sem_elmo` |
+|---|---|---|
+| ![Um boneco de elmo cinza com uma espada](img/06_pecas.png) | ![O mesmo boneco de chapéu roxo pontudo e um cajado com uma gema azul](img/06_pecas_mago.png) | ![O boneco com a espada e sem o elmo](img/06_pecas_sem_elmo.png) |
+
+- `hide=` esconde formas ou camadas inteiras nessa versão. A espada é uma camada com duas formas, então `hide=espada` some com a lâmina e com a guarda.
+- `show=` mostra o que está escondido no código com `hidden`: o chapéu (uma forma) e o cajado (uma camada `hidden`).
+- O nome vale para todas as formas com aquele nome, também dentro de componentes.
+- A mesma variante pode trocar cores e peças, como `mago`, que também clareia a pele.
+- O que some continua valendo para recortar com `clip=` e `cut=`, como qualquer forma `hidden`.
+- Num filme, `at 3s heroi.variant=mago` troca as peças no meio da cena ([capítulo 10](10-filme.md#mudanças-no-tempo-at)).
+
+A ficha completa está na [referência do `variant`](19-referencia.md#variant).
+
 [← Camadas](04-camadas.md) · [Índice](README.md) · [Próximo: Ossos →](06-ossos.md)

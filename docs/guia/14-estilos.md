@@ -70,7 +70,7 @@ art pixel size= palette= dither= outline small
 
 ### O voto por bloco
 
-O `finish pixel=` (do [capítulo 4](04-camadas.md#acabamento-finish)) já pixelava o desenho, mas ele faz a **média** das cores de cada bloco. O `art pixel` faz um **voto**: cada bloco fica com a cor que mais aparece nele.
+O `finish pixel=` (do [capítulo 12](12-acabamento.md#acabamento-finish)) já pixelava o desenho, mas ele faz a **média** das cores de cada bloco. O `art pixel` faz um **voto**: cada bloco fica com a cor que mais aparece nele.
 
 | `finish game pixel=8` | `art pixel size=8` |
 |---|---|
@@ -355,7 +355,7 @@ Repare:
 
 - Cada forma ganha uma **faixa de sombra** dura, do lado oposto à luz do `canvas` (o `light=`, o mesmo que engrossa o contorno com `weight=`). A faixa é a forma menos ela mesma empurrada para a luz: numa bola, ela vira uma lua crescente.
 - Formas quase do tamanho do canvas (o chão, o céu) e as camadas `unlit` ficam sem faixa.
-- Com luzes (`light` e `ambient`, do [capítulo 4](04-camadas.md)), a luz também vira **degraus**: o Weasel desenha a cena com luz e sem luz e arredonda a diferença. O halo do lampião vira um disco, e a luz espalhada no Cavaleiro vira faixas.
+- Com luzes (`light` e `ambient`, do [capítulo 10](08-luz-efeitos.md)), a luz também vira **degraus**: o Weasel desenha a cena com luz e sem luz e arredonda a diferença. O halo do lampião vira um disco, e a luz espalhada no Cavaleiro vira faixas.
 - Sem luzes, só a faixa de sombra muda o desenho (o Cavaleiro de cima).
 
 | Opção | O que faz |
@@ -1307,7 +1307,7 @@ Repare:
 
 Na coluna da direita do editor, a parte **Acabamento e estilo** (no menu **Janela**) escreve as linhas `finish` e `art` por você, no desenho e no filme.
 
-- **Acabamento:** o contorno (`finish game` ou `finish flat`) e um controle deslizante para cada número do [`finish`](04-camadas.md#acabamento-finish): brilho (`bloom=`), vinheta (`vignette=`), granulado (`grain=`), posterizar (`posterize=`, com a caixinha **só as cores da palette** para o `posterize=palette`), pixel (`pixel=`), traço de dentro (`inner=`) e os efeitos de tela (`oldfilm=`, `vhs=`, `crt=` e `glitch=`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; a caixa ao lado aceita o número digitado. Voltar ao padrão (0; no pixel e no traço de dentro, 1) tira o atributo da linha. Sem a linha `finish`, ela nasce logo depois do `canvas`.
+- **Acabamento:** o contorno (`finish game` ou `finish flat`) e um controle deslizante para cada número do [`finish`](12-acabamento.md#acabamento-finish): brilho (`bloom=`), vinheta (`vignette=`), granulado (`grain=`), posterizar (`posterize=`, com a caixinha **só as cores da palette** para o `posterize=palette`), pixel (`pixel=`), traço de dentro (`inner=`) e os efeitos de tela (`oldfilm=`, `vhs=`, `crt=` e `glitch=`). Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste; a caixa ao lado aceita o número digitado. Voltar ao padrão (0; no pixel e no traço de dentro, 1) tira o atributo da linha. Sem a linha `finish`, ela nasce logo depois do `canvas`.
 - **Estilo de arte:** uma miniatura de cada um dos vinte e seis estilos, e **nenhum**, feita com o seu desenho (na pose do player; no filme, no quadro do player). Num desenho grande, a miniatura é um pedaço do meio, para o estilo aparecer. Um clique escreve a linha `art` (sem ela, a linha nasce logo depois do `finish`) e liga **Exibir › Estilo de arte**; **nenhum** tira a linha. Trocar de estilo mantém as opções que valem no novo, e o `boil=`, o `seed=` e o `actor=`.
 - **As opções do estilo** ficam embaixo das miniaturas: um campo para cada uma (vazio, ele mostra o padrão apagado; apagar o que tem nele tira a opção da linha), uma lista para o `palette=` e o `dither=` e uma caixinha para cada palavra (`outline`, `color`, `old`, `bw`…).
 - **No filme:** o painel muda o `art` do plano do player quando o plano tem um `art` próprio (o título diz "do plano …", e **nenhum** vira `art none`); senão, o do filme todo ("do filme todo"). O `art` de uma cena ou de um ator continua só no código.
@@ -1316,7 +1316,7 @@ Na coluna da direita do editor, a parte **Acabamento e estilo** (no menu **Janel
 
 ## Junto com o resto
 
-- **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta, e os [efeitos de tela](04-camadas.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch) (`oldfilm=`, `vhs=`, `crt=` e `glitch=`) por último. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
+- **`finish`:** o `bloom=`, o `vignette=`, o `grain=` e o `posterize=` entram **depois** do estilo, por cima da imagem pronta, e os [efeitos de tela](12-acabamento.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch) (`oldfilm=`, `vhs=`, `crt=` e `glitch=`) por último. O `finish pixel=` não entra junto com um `art` (o Weasel avisa): use o `size=` do `art pixel`.
 - **SVG:** o SVG é feito das formas, então sai **sem o estilo** (a linha de comando avisa, e a janela de exportar diz isso).
 - **`boil=` e `seed=`:** valem nos estilos com textura (`engraving`, `woodcut`, `halftone`, `comic`, `manga`, `riso`, `stencil`, `sketch`, `marker`, `pencil`, `crayon`, `chalk`, `watercolor`, `cutout`, `clay`, `glass`, `embroidery` e `mosaic`); veja [A textura presa à forma](#a-textura-presa-à-forma-boil-e-seed). Nos outros, os dois não mudam nada (o Weasel avisa).
 

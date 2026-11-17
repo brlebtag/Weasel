@@ -82,7 +82,7 @@ key 0 bracoD.below=corpo     # no quadro 0, o braço está atrás do corpo
 key 6 bracoD.above=corpo     # no quadro 6, passa para a frente
 ```
 
-O [capítulo 4](04-camadas.md#trocar-quem-fica-na-frente-durante-uma-animação-above-e-below) tem o exemplo completo, com a imagem.
+O [capítulo 9](07-animacao.md#trocar-quem-fica-na-frente-above-e-below) tem o exemplo completo, com a imagem.
 
 ### "não está na mesma camada" no `above=` ou `below=`
 
@@ -116,7 +116,7 @@ ellipse bola 120,70 50 c=#ff6b4a ink=line
 |---|---|
 | ![Uma bola vermelha sem contorno](img/13_sem_contorno.png) | ![A mesma bola com um contorno escuro grosso](img/13_com_contorno.png) |
 
-**Como resolver:** ponha `ink=` com a espessura do contorno: um número (`ink=4`) ou um nome da `palette` (`ink=line`, que vale 8; veja [nomes que já existem](03-cores.md#nomes-que-já-existem)). Se mesmo assim não aparece, procure `finish flat` no arquivo: ele tira todos os contornos de propósito.
+**Como resolver:** ponha `ink=` com a espessura do contorno: um número (`ink=4`) ou um nome da `palette` (`ink=line`, que vale 8; veja [nomes que já existem](03-cores.md#a-cor-da-tinta-e-os-nomes-prontos)). Se mesmo assim não aparece, procure `finish flat` no arquivo: ele tira todos os contornos de propósito.
 
 ### O contorno ficou fino de um lado
 
@@ -252,7 +252,7 @@ shape morro c=#6cbf4a ink=4 : 30,110! 120,30! 210,110!
 
 Repare na linha tracejada: com os pontos lisos, a forma passa **por baixo** do chão, porque a curva continua depois de cada ponto.
 
-**Como resolver:** ponha `!` onde deve haver canto. Se a curva ainda fizer uma volta estranha, acrescente um ponto no meio do trecho, ou afaste dois pontos lisos que estão muito perto um do outro. Para controlar a curva de um ponto, use uma alça `x,y~dx,dy` ([capítulo 2](02-formas.md#alça-da-curva-xydxdy)).
+**Como resolver:** ponha `!` onde deve haver canto. Se a curva ainda fizer uma volta estranha, acrescente um ponto no meio do trecho, ou afaste dois pontos lisos que estão muito perto um do outro. Para controlar a curva de um ponto, use uma alça `x,y~dx,dy` ([capítulo 2](02-formas.md#curvas-sob-medida-alças)).
 
 ### O recorte (`clip=`) apagou a camada inteira
 
@@ -669,7 +669,7 @@ key 0 bola.show=0
 key 6 bola.show=1
 ```
 
-Para uma peça que aparece só numa versão do personagem, use `hidden` com `variant … show=` ([capítulo 3](03-cores.md)): aí a `key` funciona nessa versão.
+Para uma peça que aparece só numa versão do personagem, use `hidden` com `variant … show=` ([capítulo 6](05-componentes.md#variantes-que-trocam-peças-show-e-hide)): aí a `key` funciona nessa versão.
 
 ### A `key` de `tint` não muda a cor
 

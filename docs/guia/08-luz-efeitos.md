@@ -4,7 +4,7 @@
 
 ## Luz de verdade
 
-O `light=` do `canvas` ([capítulo 2](02-formas.md#contorno-que-engrossa-no-lado-da-sombra-weight)) só engrossa contornos. As instruções deste capítulo mudam **as cores**: o que está perto de uma lâmpada fica com a cor dela, o resto fica no escuro, e cada forma fica mais clara do lado da luz.
+O `light=` do `canvas` ([capítulo 3](03-cores.md#contorno-que-engrossa-no-lado-da-sombra-weight)) só engrossa contornos. As instruções deste capítulo mudam **as cores**: o que está perto de uma lâmpada fica com a cor dela, o resto fica no escuro, e cada forma fica mais clara do lado da luz.
 
 | A mesma cena sem luz | Com `ambient` e `light` |
 |---|---|
@@ -97,7 +97,7 @@ Atributos de todas as luzes:
 
 Luzes também animam com `key` (`key 6 lampiao.power=0.4`): `power`, `radius`, `c`, `glow`, `aim` e `cone`.
 
-> **Dica do editor:** com o cursor na linha de uma luz, ela aparece no desenho para você ajustar com o mouse. A `point` e a `spot` têm um **ponto** no lugar da lâmpada: arraste para mudar o `x,y`. A `dir` não tem lugar, só direção; por isso ela tem uma **seta** amarela que sai do centro do quadro e aponta para o sol. Arraste o sol da ponta para girar o `dx,dy` (com **Shift**, de 15 em 15 graus). É a mesma seta do `light=` do `canvas` ([capítulo 2](02-formas.md#contorno-que-engrossa-no-lado-da-sombra-weight)).
+> **Dica do editor:** com o cursor na linha de uma luz, ela aparece no desenho para você ajustar com o mouse. A `point` e a `spot` têm um **ponto** no lugar da lâmpada: arraste para mudar o `x,y`. A `dir` não tem lugar, só direção; por isso ela tem uma **seta** amarela que sai do centro do quadro e aponta para o sol. Arraste o sol da ponta para girar o `dx,dy` (com **Shift**, de 15 em 15 graus). É a mesma seta do `light=` do `canvas` ([capítulo 3](03-cores.md#contorno-que-engrossa-no-lado-da-sombra-weight)).
 
 As seções abaixo mostram cada uma dessas coisas sozinha, com um exemplo para rodar.
 
@@ -1317,7 +1317,7 @@ A fogueira usa `finish game bloom=0.5 vignette=0.6`:
 | `vignette=` | escurece as bordas da imagem e leva o olho para o meio |
 | `grain=` | granulado de filme (pouco já basta: `grain=0.03`) |
 
-O `bloom` vai de 0 a 3, o `vignette` de 0 a 1 e o `grain` de 0 a 0.33. Eles valem para a imagem pronta, então ficam bem em cenas inteiras (cenários, filmes) e pouco fazem num personagem sozinho. O granulado deixa GIFs bem maiores, porque ruído não comprime. Cada um deles, sozinho e lado a lado, está no [capítulo 4](04-camadas.md#acabamentos-de-cinema-bloom-vignette-e-grain), junto com os [efeitos de tela](04-camadas.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch) (`oldfilm=`, `vhs=`, `crt=` e `glitch=`), que são para o filme e o vídeo.
+O `bloom` vai de 0 a 3, o `vignette` de 0 a 1 e o `grain` de 0 a 0.33. Eles valem para a imagem pronta, então ficam bem em cenas inteiras (cenários, filmes) e pouco fazem num personagem sozinho. O granulado deixa GIFs bem maiores, porque ruído não comprime. Cada um deles, sozinho e lado a lado, está no [capítulo 12](12-acabamento.md#acabamentos-de-cinema-bloom-vignette-e-grain), junto com os [efeitos de tela](12-acabamento.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch) (`oldfilm=`, `vhs=`, `crt=` e `glitch=`), que são para o filme e o vídeo.
 
 Eles combinam muito bem com luz: o `bloom` faz as lâmpadas e as janelas acesas "vazarem" de verdade. Aqui está a rua do começo do capítulo (o `rua.weasel` que você guardou), com e sem os dois:
 
