@@ -24,7 +24,7 @@ key quadro forma.propriedade=valor …
 | `shape` | o formato: a forma vira outra ([abaixo](#morph-uma-forma-vira-outra)) | aos poucos |
 | `above` e `below` | quem fica na frente ([abaixo](#trocar-quem-fica-na-frente-above-e-below)) | de uma vez |
 
-A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](11-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](10-luz.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](11-profundidade.md)). As tabelas completas estão na [referência da `key`](19-referencia.md#key-numa-forma).
+A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](11-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](10-luz.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](14-profundidade.md)). As tabelas completas estão na [referência da `key`](19-referencia.md#key-numa-forma).
 
 <!-- gerar: img/07_lampada.gif -a acende -->
 ```weasel

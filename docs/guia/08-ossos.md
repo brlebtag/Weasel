@@ -300,7 +300,7 @@ Repare:
 | `jitter=` | treme a cada quadro | de 0 a 200, em pixels | 0 |
 | `spring=` | mola: gira atrasado e balança até parar | de 0 a 1 (perto de 1: dura) | sem mola |
 
-O osso tem mais opções: `path=` e `turn=` (andar por um caminho, [capítulo 9](09-animacao.md#andar-por-um-caminho-path)) e `yaw=`, `pitch=`, `persp=` e `round=` (o giro 3D, [capítulo 14](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)). A ficha completa está na [referência do `bone`](19-referencia.md#bone).
+O osso tem mais opções: `path=` e `turn=` (andar por um caminho, [capítulo 9](09-animacao.md#andar-por-um-caminho-path)) e `yaw=`, `pitch=`, `persp=` e `round=` (o giro 3D, [capítulo 14](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)). A ficha completa está na [referência do `bone`](19-referencia.md#bone).
 
 ## Tecido: `cloth`
 

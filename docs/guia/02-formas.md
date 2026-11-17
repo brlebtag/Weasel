@@ -590,7 +590,7 @@ As outras opções das formas aparecem nos próximos capítulos:
 | `mirror=` | uma cópia espelhada de outra forma | [capítulo 6](06-componentes.md#espelho-de-uma-forma-mirror) |
 | `bone=`, `bones=`, `cloth=` | a forma segue ossos ou balança como pano | [capítulo 8](08-ossos.md) |
 | `emit=` | a forma brilha | [capítulo 11](10-luz.md#coisas-que-brilham-emit) |
-| `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](11-profundidade.md) |
+| `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](14-profundidade.md) |
 
 Todas, com as faixas e os padrões, estão em [Opções de todas as formas](19-referencia.md#opções-de-todas-as-formas), na referência.
 

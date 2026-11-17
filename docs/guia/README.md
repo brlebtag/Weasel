@@ -43,8 +43,8 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 | 10 | [Luz e sombra](10-luz.md) | lâmpadas, holofotes, sol e lua, brilho e sombra no chão |
 | 11 | [Efeitos e partículas](11-efeitos.md) | os efeitos de camada, o rastro e as partículas |
 | 12 | [Acabamento](12-acabamento.md) | a linha `finish`: o estilo do desenho inteiro, os acabamentos de cinema e os efeitos de tela |
-| 13 | [Estilos de arte](14-estilos.md) (antigo) | a linha `art`: o mesmo desenho em pixel art, aquarela, gravura, HQ, mangá, vitral, tricô e mais 19 estilos |
-| 14 | [Profundidade (2.5D)](11-profundidade.md) (antigo) | girar formas em 3D, verso e espessura, chão em perspectiva, mapa isométrico, lente e névoa |
+| 13 | [Estilos de arte](13-estilos.md) | a linha `art`: o mesmo desenho em pixel art, aquarela, gravura, HQ, mangá, vitral, tricô e mais 19 estilos |
+| 14 | [Profundidade (2.5D)](14-profundidade.md) | girar formas em 3D, verso e espessura, chão em perspectiva, mapa isométrico, lente e névoa |
 
 ### 5. Jogo e filme
 
@@ -62,7 +62,7 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 | 19 | [Referência completa](19-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
 | 20 | [Funções das contas](20-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
 | 21 | [Linha de comando](21-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
-| 22 | [O editor](22-editor.md) | as ferramentas e os painéis do editor (por enquanto, os dos capítulos 1 a 12) |
+| 22 | [O editor](22-editor.md) | as ferramentas e os painéis do editor (por enquanto, os dos capítulos 1 a 14) |
 | 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
 | 24 | [Problemas comuns](13-problemas.md) (antigo) | o que costuma dar errado e como resolver |
 | 25 | [Glossário](25-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |

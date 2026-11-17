@@ -1111,7 +1111,7 @@ ellipse bola 90,62 30 c=#e8553a ink=line
 | `size=` | A largura de cada V. A altura é um pouco menor (0.78 da largura). | de 2 a 64 pixels | 8 | não |
 | `paper=` | O papel de baixo. Só aparece onde não há forma, num `canvas` sem fundo. | uma cor `#hex` | `#f6f2ea` | não |
 
-**Para aprender:** [Estilos de arte](14-estilos.md); no filme, [o filme, a cena, o plano e o ator](14-estilos.md#no-filme-o-filme-a-cena-o-plano-e-o-ator).
+**Para aprender:** [Estilos de arte](13-estilos.md); no filme, [No filme](13-estilos.md#no-filme).
 
 ### `palette`
 
@@ -1534,7 +1534,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 - `iso` não junta com `yaw=`, `pitch=` nem `floor`: vale o `iso` (aviso).
 - `zsort` só muda a ordem quando o desenho tem 3D (`z=`, `yaw=`, `pitch=`, `floor`, `iso`…).
 
-**Para aprender:** [Girar a camada inteira](11-profundidade.md#girar-a-camada-inteira-yaw-pitch-e-pivot), [chão em perspectiva](11-profundidade.md#chão-em-perspectiva-floor), [mapa isométrico](11-profundidade.md#mapa-isométrico-iso), [`zsort`](11-profundidade.md#quem-fica-na-frente-zsort), [profundidade no filme](10-filme.md#profundidade-e-paralaxe).
+**Para aprender:** [Girar a camada inteira](14-profundidade.md#girar-a-camada-inteira-yaw-pitch-e-pivot), [chão em perspectiva](14-profundidade.md#chão-em-perspectiva-floor), [mapa isométrico](14-profundidade.md#mapa-isométrico-iso), [`zsort`](14-profundidade.md#perto-ou-longe-z-e-zsort), [profundidade no filme](14-profundidade.md#profundidade-no-filme).
 
 ## Formas
 
@@ -1598,7 +1598,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 - No `cut=`, a forma que recorta precisa ser fechada (`shape`, `ellipse` ou `rect`): um nome de camada dá erro. Todas as formas com aquele nome abrem buraco, e buracos que se cruzam viram um só.
 - No `mirror=`, a forma copiada precisa ter nome e ser do mesmo comando. A cópia leva as opções dela; as que você escrever na linha do `mirror=` trocam essas. Os pontos escritos na linha do `mirror=` são ignorados (aviso).
 
-**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](10-luz.md#coisas-que-brilham-emit), [`bones=`](08-ossos.md#formas-que-dobram-bones), [`cloth=`](08-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
+**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](10-luz.md#coisas-que-brilham-emit), [`bones=`](08-ossos.md#formas-que-dobram-bones), [`cloth=`](08-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](14-profundidade.md#os-três-eixos-e-os-dois-giros), [`thick=` e `back=`](14-profundidade.md#uma-carta-que-vira-back), [`billboard`](14-profundidade.md#de-pé-ou-deitado-billboard).
 
 ### `shape`
 
@@ -2120,7 +2120,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 - `spring=0` não desliga a mola. Para tirar a mola, apague o `spring=`.
 - O `ik` muda a pose também no desenho parado: veja o [`ik`](#ik).
 
-**Para aprender:** [O primeiro osso](07-movimento.md#a-primeira-animação), [Pai e filho](08-ossos.md#pai-e-filho-parent), [Movimentos automáticos](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](08-ossos.md#molas-spring), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
+**Para aprender:** [O primeiro osso](07-movimento.md#a-primeira-animação), [Pai e filho](08-ossos.md#pai-e-filho-parent), [Movimentos automáticos](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](08-ossos.md#molas-spring), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
 ### `cloth`
 
@@ -2424,7 +2424,7 @@ A pose do osso vai direto, sem ponto: `key 6 braco=0,0,30`. As outras propriedad
 
 Um `along=` num osso sem `path=` dá erro.
 
-**Para aprender:** [Quantos números escrever](07-movimento.md#quantos-números-escrever), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
+**Para aprender:** [Quantos números escrever](07-movimento.md#quantos-números-escrever), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
 #### `key` numa caixa
 
@@ -2792,7 +2792,7 @@ Para exportar: `-f godot` ou `-o fase.tres` (sai o `.png` e o `.tres`); com `--n
 - Com `iso`, um bloco mais baixo que a metade da largura dá aviso: o losango não cabe.
 - Com `-s`, o bloco precisa continuar com um tamanho inteiro em pixels (32 com `-s 0.5` dá 16; com `-s 0.3`, dá erro).
 
-**Para aprender:** [Tileset: blocos para montar fases](09-jogo-godot.md#tileset-blocos-para-montar-fases) e [Tileset isométrico para o Godot](11-profundidade.md#tileset-isométrico-para-o-godot).
+**Para aprender:** [Tileset: blocos para montar fases](09-jogo-godot.md#tileset-blocos-para-montar-fases) e [Tileset isométrico](14-profundidade.md#tileset-isométrico).
 
 ### `tile`
 
@@ -3122,7 +3122,7 @@ at 3s heroi.x=600
 - `lag=` não é um atraso fixo: em `lag` segundos, a câmera faz uns dois terços do caminho até o alvo. Ele vale para seguir um ator e também para os `at` que mudam o `pos=`.
 - O `follow=` leva em conta a distância do ator: um ator longe (com `depth=`) também fica no meio do quadro.
 
-**Para aprender:** [Câmera: `camera`](10-filme.md#câmera-camera) e [Profundidade no filme: lente e névoa](11-profundidade.md#profundidade-no-filme-lente-e-névoa).
+**Para aprender:** [Câmera: `camera`](10-filme.md#câmera-camera) e [Profundidade no filme](14-profundidade.md#profundidade-no-filme).
 
 ### `at`
 

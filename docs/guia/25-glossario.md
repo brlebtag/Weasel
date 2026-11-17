@@ -176,6 +176,6 @@ As palavras que o guia usa, em ordem alfabética. Cada uma tem **um sentido só*
 
 ## Números
 
-**2.5D:** dar profundidade a um desenho 2D: girar formas como cartões no espaço (`yaw=`, `pitch=`), pôr umas mais perto e outras mais longe (`z=`, `depth=`), um chão em perspectiva. Ver o [capítulo de profundidade](11-profundidade.md).
+**2.5D:** dar profundidade a um desenho 2D: girar formas como cartões no espaço (`yaw=`, `pitch=`), pôr umas mais perto e outras mais longe (`z=`, `depth=`), um chão em perspectiva. Ver o [capítulo de profundidade](14-profundidade.md).
 
 [← Atalhos do teclado](23-atalhos.md) · [Índice](README.md)

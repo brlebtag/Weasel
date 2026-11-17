@@ -1,6 +1,6 @@
 # 13. Problemas comuns
 
-[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
+[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)
 
 O que costuma dar errado, por que acontece e como resolver. Cada problema tem três partes:
 
@@ -911,7 +911,7 @@ Sem ele, dá para exportar PNGs (`--frames`) ou GIF.
 
 **Por quê:** sem giro, o `z=` não tira nada do lugar. Ele vale quando a forma, o osso ou a camada **gira** (`yaw=`, `pitch=`, `floor`, `iso`), e para a ordem com `zsort`.
 
-**Como resolver:** se você só quer pôr uma forma na frente de outra, mude a ordem das linhas. Para ver o efeito do `z=`, gire alguma coisa (veja o [capítulo 11](11-profundidade.md)).
+**Como resolver:** se você só quer pôr uma forma na frente de outra, mude a ordem das linhas. Para ver o efeito do `z=`, gire alguma coisa (veja o [capítulo 14](14-profundidade.md)).
 
 ### A carta virou e mostra a frente espelhada
 
@@ -1115,4 +1115,4 @@ $Sprite.flip_h = velocity.x < 0
 anim.tocar("walk", velocity)
 ```
 
-[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Estilos de arte →](14-estilos.md)
+[← Referência completa](19-referencia.md) · [Índice](README.md) · [Próximo: Glossário →](25-glossario.md)

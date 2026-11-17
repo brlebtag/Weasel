@@ -128,7 +128,7 @@ No editor, **Ctrl+]** e **Ctrl+[** levam a forma escolhida para cima ou para bai
 Algumas coisas mudam essa ordem, e aparecem mais adiante:
 - o `inkon=`, que pinta o contorno de uma forma junto com outra camada ([mais abaixo](#o-contorno-por-cima-inkon));
 - numa animação, o `above=` e o `below=`, que trocam quem fica na frente ([capítulo 9](09-animacao.md#trocar-quem-fica-na-frente-above-e-below));
-- num filme, a distância de cada camada (`depth=`) ([capítulo 17](10-filme.md#profundidade-e-paralaxe)).
+- num filme, a distância de cada camada (`depth=`) ([capítulo 14](14-profundidade.md#paralaxe-depth-e-screen)).
 
 ## Transparência da camada: `opacity=`
 
@@ -641,7 +641,7 @@ A camada tem outras opções, que aparecem mais adiante:
 - `only=`: a camada só aparece em certas animações ([capítulo 9](09-animacao.md#camadas-que-só-aparecem-em-certas-animações-only));
 - `unlit` e `shade=`: a luz na camada ([capítulo 10](10-luz.md));
 - `blur=`, `glow=`, `shadow=`, `tint=`, `brightness=`, `saturate=`, `contrast=`, `hue=`, `trail=`, `cast=`, `rim=`: os efeitos ([capítulo 11](11-efeitos.md#efeitos-de-camada));
-- `yaw=`, `pitch=`, `persp=`, `pivot=`, `floor`, `horizon=`, `iso`, `zsort`: a profundidade 2.5D ([capítulo 14](11-profundidade.md));
+- `yaw=`, `pitch=`, `persp=`, `pivot=`, `floor`, `horizon=`, `iso`, `zsort`: a profundidade 2.5D ([capítulo 14](14-profundidade.md));
 - `depth=`, `screen`, `front`: a distância num filme ([capítulo 17](10-filme.md#profundidade-e-paralaxe)).
 
 A lista completa está na [referência do `layer`](19-referencia.md#layer).

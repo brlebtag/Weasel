@@ -315,7 +315,7 @@ use flor 290,95 cor=#4a9eff giro=25
 | `opacity=` | a transparência da cópia | de 0 a 1 | 1 |
 | `parâmetro=valor` (no `use`) | troca um parâmetro nesta cópia | como no `def`; aceita conta `{…}` | o padrão do `def` |
 
-O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](11-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
+O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](14-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
 
 **Cuidado:**
 - Dentro de um `def` valem as formas, o `use`, o `repeat`, o `group`, o `mirror=` e o `include`. Uma `layer`, um `let`, uma `palette` ou outro `def` lá dentro dão erro: `layer não pode ficar dentro de def (só formas e use)`.

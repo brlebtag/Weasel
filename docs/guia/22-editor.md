@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 12. As dicas dos outros assuntos (estilos, jogo, filme) ainda estão nos capítulos antigos.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 14. As dicas dos outros assuntos (jogo, filme) ainda estão nos capítulos antigos.
 
 ## Abrir e rodar
 
@@ -382,12 +382,32 @@ Os efeitos de camada ([capítulo 11](11-efeitos.md#efeitos-de-camada)) se ligam 
 
 ## Acabamento e estilo
 
-**Janela › Acabamento e estilo** abre, na coluna da direita, o painel que escreve as linhas `finish` ([capítulo 12](12-acabamento.md#acabamento-finish)) e `art` por você, no desenho e no filme.
+**Janela › Acabamento e estilo** abre, na coluna da direita, o painel que escreve as linhas `finish` ([capítulo 12](12-acabamento.md#acabamento-finish)) e `art` ([capítulo 13](13-estilos.md)) por você, no desenho e no filme. O botão **linha N**, ao lado de cada título, leva o código à linha. Com o player andando, o painel não escreve: pause antes.
 
-- **Acabamento:** a escolha entre `game` e `flat` e um controle deslizante para cada número do `finish` (`bloom=`, `vignette=`, `grain=`, `posterize=`, `pixel=`, `inner=` e os efeitos de tela). A caixinha **só as cores da palette** escreve o `posterize=palette`.
+**Acabamento:**
+
+- A escolha entre `game` e `flat` e um controle deslizante para cada número do `finish` (`bloom=`, `vignette=`, `grain=`, `posterize=`, `pixel=`, `inner=` e os efeitos de tela). A caixinha **só as cores da palette** escreve o `posterize=palette`.
 - Arrastar escreve na linha `finish`, com um Ctrl+Z por arraste. A caixa ao lado aceita o número digitado.
 - Voltar ao padrão (0; no `pixel=` e no `inner=`, 1) tira a opção da linha. Sem a linha `finish`, ela nasce logo depois do `canvas`.
-- **Estilo de arte:** as miniaturas dos estilos e as opções de cada um estão explicadas [no capítulo dos estilos](14-estilos.md#pelo-editor-janela--acabamento-e-estilo).
+
+**Estilo de arte:**
+
+- Uma miniatura de cada um dos 26 estilos, e **nenhum**, feita com o seu desenho (na pose do player; no filme, no quadro do player). Num desenho grande, a miniatura é um pedaço do meio, para o estilo aparecer.
+- Um clique escreve a linha `art` (sem ela, a linha nasce logo depois do `finish`) e liga **Exibir › Estilo de arte**. A miniatura **nenhum** tira a linha. Trocar de estilo mantém as opções que valem no novo, e o `boil=`, o `seed=` e o `actor=`.
+- As opções do estilo ficam embaixo das miniaturas: um campo para cada número (vazio, ele mostra o padrão apagado; apagar o que tem nele tira a opção da linha), uma lista para o `palette=` e o `dither=` e uma caixinha para cada palavra (`outline`, `color`, `old`, `bw`…).
+- **No filme:** quando o plano do player tem um `art` próprio, o painel muda esse `art` (o título diz "do plano …", e **nenhum** vira `art none`). Senão, muda o do filme todo ("do filme todo"). O `art` de uma cena ou de um ator só muda no código.
+- As miniaturas são feitas fora da página, no mesmo ajudante da exportação, então digitar continua leve. Enquanto o código muda, as velhas ficam apagadas até as novas chegarem.
+
+**O desenho com estilo:**
+
+- O desenho aparece no estilo, e as alças continuam nos pontos das formas: você edita do mesmo jeito.
+- Quando o arquivo tem `art`, aparece **Exibir › Estilo de arte**. Desligada, ela mostra o desenho normal, mais fácil de ajustar.
+- Os estilos mais pesados (todos, menos `pixel`, `ascii`, `silhouette` e `lines`) mostram o desenho normal enquanto você arrasta uma alça. Quando você solta, o estilo volta.
+- Na janela de exportar, o botão **Texto (ASCII)** salva o `.txt` de um desenho com `art ascii` ([capítulo 13](13-estilos.md#letras-art-ascii)).
+
+## Formas em 3D
+
+As alças das formas giradas (`yaw=`, `pitch=`), dos chãos (`floor`) e dos mapas isométricos (`iso`) ficam onde a forma aparece na tela, e arrastar muda o número certo no código ([capítulo 14](14-profundidade.md)).
 
 ## Guias
 

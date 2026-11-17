@@ -1,6 +1,6 @@
 # 12. Acabamento
 
-[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
+[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte →](13-estilos.md)
 
 O acabamento é o último passo: depois de tudo pintado, a linha `finish` muda a imagem **inteira** de uma vez. Ela tira os contornos, pixela, reduz as cores, imita uma câmera de verdade (brilho, bordas escuras, granulado) ou imita uma tela antiga (filme, fita VHS, televisão de tubo, falha digital). Você precisa dos capítulos 1 a 11.
 
@@ -83,7 +83,7 @@ Repare:
 - Várias linhas `finish` se somam, e cada opção fica com o último valor escrito.
 - Com `flat`, uma forma com `ink=` e sem `c=` some inteira: ela não tem cor de dentro, só o contorno.
 - O bloco do `pixel=` é medido na imagem exportada: com `-s 2`, `pixel=4` dá blocos de 4 pixels da imagem, que são 2 do desenho.
-- O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítida, com as cores do desenho e o contorno de um bloco, use a linha `art pixel` do [capítulo 13](14-estilos.md#pixel-art-art-pixel). Num arquivo com `art`, o `pixel=` do `finish` fica de fora (aviso).
+- O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítida, com as cores do desenho e o contorno de um bloco, use a linha `art pixel` do [capítulo 13](13-estilos.md#pixel-art-art-pixel). Num arquivo com `art`, o `pixel=` do `finish` fica de fora (aviso).
 
 No editor, **Janela › Acabamento e estilo** escreve a linha `finish` por você ([capítulo 22](22-editor.md#acabamento-e-estilo)).
 
@@ -473,4 +473,4 @@ key 16 pulo=0,0 ease=in
 - `oldfilm=`, `vhs=`, `crt=` e `glitch=` imitam uma tela antiga e mudam a cada quadro. Eles saem nas imagens, nos GIFs, nos vídeos e nos filmes, mas não na folha de sprites nem no Godot.
 - O `inner` da `palette` é uma espessura; o `inner=` do `finish` é o quanto aparecem os traços de uma camada com `clip=`.
 
-[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte (antigo) →](14-estilos.md)
+[← Efeitos e partículas](11-efeitos.md) · [Índice](README.md) · [Próximo: Estilos de arte →](13-estilos.md)

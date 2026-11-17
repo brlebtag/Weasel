@@ -1,6 +1,6 @@
 # 10. Filme
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Profundidade (2.5D) →](11-profundidade.md)
+[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)
 
 Um arquivo que começa com `film` é um **filme**. Ele não desenha personagens: ele **põe em cena** arquivos `.weasel` que já existem (os mesmos do jogo), divide o tempo em **planos** e diz o que muda e quando. Corrigiu o personagem no arquivo dele? A correção vale no jogo e no filme.
 
@@ -387,7 +387,7 @@ camera x,y zoom= rot= follow= offset= lag= shake= fade= fadec=
 | `follow=ator` | segue um ator; `offset=dx,dy` desloca o ponto seguido; `lag=0.5` faz a câmera chegar meio segundo atrasada, macia |
 | `shake=16` | treme, em pixels (um pouso, uma explosão) |
 | `fade=1` | escurece tudo (0 = normal); `fadec=` muda a cor do escurecido (`#ffffff` para um clarão) |
-| `lens=` | a lente: aumenta perto e longe por igual (veja [Profundidade no filme](11-profundidade.md#profundidade-no-filme-lente-e-névoa)) |
+| `lens=` | a lente: aumenta perto e longe por igual (veja [Andar ou aproximar](14-profundidade.md#andar-ou-aproximar-zoom-e-lens)) |
 | `fog=cor` `haze=` | névoa da distância: o que está longe (`depth=` maior que 1) some nessa cor; `haze=` é onde ela chega na metade (6) |
 
 A câmera parada no centro do canvas e com `zoom=1` mostra o desenho exatamente como foi feito.
@@ -577,7 +577,7 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 | camada do filme | `opacity`, `show`, `yaw`, `pitch` e os efeitos (`blur`, `glow`, `tint`…) |
 | forma do filme | `draw` (desenha aos poucos, [capítulo 9](09-animacao.md#desenhar-aos-poucos-draw)), `opacity`, `show`, `yaw`, `pitch`, `z` |
 
-As formas do próprio arquivo do filme (um mapa, uma seta, um título) mudam com `at` como as camadas: `at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota aos poucos. As formas dos atores mudam pelas animações deles. O giro em 3D (`yaw`, `pitch`, `z`) está no [capítulo 11](11-profundidade.md#profundidade-no-filme-lente-e-névoa).
+As formas do próprio arquivo do filme (um mapa, uma seta, um título) mudam com `at` como as camadas: `at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota aos poucos. As formas dos atores mudam pelas animações deles. O giro em 3D (`yaw`, `pitch`, `z`) está no [capítulo 14](14-profundidade.md#girar-no-filme-at-com-yaw-e-pitch).
 
 ### Uma bolinha para os testes
 
@@ -1123,73 +1123,14 @@ at susto heroi.expr=susto heroi.along=1
 
 ## Profundidade e paralaxe
 
-Quando a câmera anda, o que está **longe** deveria andar menos que o que está perto. Olhe pela janela de um carro: o poste passa voando, o morro anda devagar e a lua parece ir junto com você. Isso é a **paralaxe**, e no Weasel ela vem do `depth=`:
+Quando a câmera anda, o que está **longe** deveria andar menos que o que está perto: é a **paralaxe**. No Weasel, ela vem do `depth=`. A paralaxe, a lente, a névoa da distância e o efeito de vertigem têm exemplos com imagens no [capítulo 14](14-profundidade.md#profundidade-no-filme). Em resumo:
 
-- `depth=1` (o padrão) é o plano da ação.
-- `depth=2` está duas vezes mais longe: quando a câmera anda ou dá zoom, anda e cresce menos. A lua do cenário tem `depth=12` e quase não sai do lugar.
-- `depth=0.5` está perto da câmera e passa mais rápido (moitas na frente).
+- `depth=1` (o padrão) é a distância da ação. `depth=2` está duas vezes mais longe: quando a câmera anda ou dá zoom, anda e cresce menos. `depth=0.5` está perto da câmera e passa mais rápido. A lua do cenário tem `depth=12` e quase não sai do lugar.
 - `depth=` vai num ator inteiro ou em cada camada de qualquer arquivo. O [`cenario.weasel`](../../exemplos/cenario.weasel) tem o céu, a serra, os morros e as moitas da frente em profundidades diferentes. Fora de um filme, `depth=` não muda nada.
 - `layer … screen` fica **preso na tela** (títulos, legendas desenhadas, molduras): não anda com a câmera.
-- `layer … front` põe a camada na frente dos atores da mesma profundidade (a moita na frente do personagem).
+- `layer … front` põe a camada na frente dos atores da mesma profundidade (abaixo).
 - No arquivo do filme, `only=` de uma camada aceita nomes de **plano**: o título do exemplo só aparece no plano `chegada`.
-- A câmera também tem **lente** (`lens=`) e **névoa da distância** (`fog=`, `haze=`); juntas, dão o efeito do *Vertigo*. Estão em [Profundidade no filme](11-profundidade.md#profundidade-no-filme-lente-e-névoa).
-
-### A câmera anda para o lado
-
-Cada camada tem o número do `depth=` dela escrito em cima. A câmera anda 960 pixels para a direita:
-
-<!-- gerar: img/10_paralaxe.gif -s 0.5 -->
-```weasel
-film fps=10 dur=3s
-canvas 960 540 bg=#bfe3f5
-
-layer longe depth=8
-ellipse sol 300,80 45 c=#ffd34d
-text t8 300,160 "8" size=34 align=center c=#1c1f2b bold
-
-layer montes depth=4
-shape serra c=#8fa9c7 : -300,540! -300,300 100,200 450,290 800,190 1150,280 1500,200 1800,300 1800,540!
-repeat i 0..2
-  text t4_{i} {i*700+100},300 "4" size=34 align=center c=#1c1f2b bold
-end
-
-layer morros depth=2
-shape morro c=#6fae6a : -300,540! -300,360 300,320 900,370 1500,310 2100,370 2700,330 2700,540!
-repeat i 0..4
-  text t2_{i} {i*500+220},400 "2" size=34 align=center c=#1c1f2b bold
-end
-
-layer chao
-rect terra -300,430 3000,110 c=#c9a66b
-repeat i 0..9
-  rect poste{i} {i*240+100},360 14,80 c=#6b4a30
-  text t1_{i} {i*240+107},480 "1" size=34 align=center c=#1c1f2b bold
-end
-
-layer frente depth=0.5
-repeat i 0..7
-  ellipse moita{i} {i*420+150},575 130,70 c=#2f6e3a
-  text t05_{i} {i*420+150},532 "0.5" size=34 align=center c=#f4efe6 bold
-end
-
-layer letreiro screen
-text tela 940,40 "screen" size=34 align=right c=#c0392b bold
-
-at 0.3s camera.x=480
-at 2.7s camera.x=1440
-```
-
-![A câmera anda para a direita: as moitas da frente passam rápido, os postes andam, os morros andam devagar, a serra quase não se mexe, o sol fica quase parado e a palavra screen não sai do canto](img/10_paralaxe.gif)
-
-Repare, com a câmera andando 960 pixels:
-
-- As **moitas** (`depth=0.5`) andam o **dobro**: 1920 pixels. Passam voando.
-- Os **postes** (`depth=1`) andam os 960 pixels da câmera.
-- Os **morros** (`depth=2`) andam a metade (480), a **serra** (`depth=4`) um quarto (240) e o **sol** (`depth=8`) um oitavo (120).
-- O letreiro `screen` fica sempre no canto: ele não está no mundo, está no vidro da câmera.
-- Quanto mais perto (número menor), mais largo o desenho precisa ser: a câmera passa por mais coisa dele. Por isso as moitas se repetem até `x=3090`, e o sol é um só.
-
-**Experimente:** ponha `depth=1` nas montanhas (`layer montes`). Elas passam a andar junto com os postes, e o fundo perde a sensação de distância.
+- A câmera também tem **lente** (`lens=`) e **névoa da distância** (`fog=`, `haze=`).
 
 ### Na frente do ator: `front`
 
@@ -1555,7 +1496,7 @@ Na linha de comando (vídeo precisa do [ffmpeg](https://ffmpeg.org) instalado):
 | só o som misturado | `node cli/weasel.js filme.weasel -o som.wav` |
 | ver planos, tempos, atores, sons e legendas | `node cli/weasel.js filme.weasel --info` |
 
-O filme todo, uma cena, um plano ou um ator também podem sair em outro estilo, como pixel art ou letras: veja a linha `art` no [capítulo 14](14-estilos.md#no-filme-o-filme-a-cena-o-plano-e-o-ator).
+O filme todo, uma cena, um plano ou um ator também podem sair em outro estilo, como pixel art ou letras: veja a linha `art` no [capítulo 13](13-estilos.md#no-filme).
 
 O que a linha de comando responde, com o `conversa.weasel` de cima. Um vídeo em um quarto do tamanho (`-s 0.25`):
 
@@ -1603,4 +1544,4 @@ salvo render/conversa.fcpxml  FCPXML 1.9: 1 vídeo, 4 sons em 3 trilhas, 1 marca
 
 O [README](../../README.md#filmes-na-linha-de-comando) tem a lista completa, inclusive como levar o filme para o DaVinci Resolve, o Final Cut ou o Premiere.
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Profundidade (2.5D) →](11-profundidade.md)
+[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)

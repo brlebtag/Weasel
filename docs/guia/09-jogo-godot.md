@@ -1,6 +1,6 @@
 # 9. Jogo e Godot
 
-[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
+[← Profundidade (2.5D)](14-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
 
 Um personagem de jogo no Weasel é um arquivo `.weasel` comum, com desenho, ossos e animações (`idle`, `walk`, `attack`…). Este capítulo mostra o que se acrescenta para ele sair **pronto para o jogo**: colisão, golpe e dano por quadro, pontos de encaixe, o ponto de origem, direções, e como exportar para o Godot (ou qualquer motor).
 
@@ -965,7 +965,7 @@ tile rampa 2,0 collision=rampa
 - Exporte com `node cli/weasel.js blocos.weasel -f godot -o godot/blocos.tres` (`--normal` acrescenta o normal map). O `.png` e o `.tres` precisam ficar na mesma pasta.
 - O exemplo [`blocos.weasel`](../../exemplos/blocos.weasel) tem grama, terra, pedra em hachura, plataforma, rampa, espinhos, caixa, moeda que brilha e uma nuvem que o `auto` vira blocos.
 - No editor, com **Guias**, aparecem a grade, o nome de cada bloco e a colisão.
-- Para jogos **isométricos**, `tileset size=64,64 iso` faz blocos em losango: veja [Tileset isométrico para o Godot](11-profundidade.md#tileset-isométrico-para-o-godot).
+- Para jogos **isométricos**, `tileset size=64,64 iso` faz blocos em losango: veja [Tileset isométrico](14-profundidade.md#tileset-isométrico).
 
 O `.tres` (um **TileSet** do Godot: a lista de blocos que o editor de fases do Godot usa) dos três blocos acima tem, para cada célula, a colisão e o nome:
 
@@ -1126,6 +1126,6 @@ Repare:
 | `--layout rows` | uma linha por animação, em vez de uma grade (como a [folha das direções](#um-bichinho-com-cinco-vistas)) |
 | `--variant all` | uma folha para cada variante de cor |
 
-**Pixel art:** com `art pixel … small` ([capítulo 14](14-estilos.md#pixel-art-no-jogo-small)), a folha e o pacote do Godot saem com 1 pixel por bloco, e a cena do Godot já vem sem suavizar a imagem (`texture_filter` em *nearest*).
+**Pixel art:** com `art pixel … small` ([capítulo 13](13-estilos.md#pixel-art-pequeno-de-verdade-small)), a folha e o pacote do Godot saem com 1 pixel por bloco, e a cena do Godot já vem sem suavizar a imagem (`texture_filter` em *nearest*).
 
-[← Profundidade (2.5D)](11-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
+[← Profundidade (2.5D)](14-profundidade.md) · [Índice](README.md) · [Próximo: Filme →](10-filme.md)
