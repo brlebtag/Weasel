@@ -770,7 +770,7 @@ Repare:
 - A imagem é a **sprite sheet** com `--layout rows`: uma linha por animação, na ordem do arquivo (`walk_down`, `walk_up`, `walk_right`, `walk_down_right`, `walk_up_right`).
 - O corpo (`layer corpo`) não tem `only=`: aparece em todas as vistas. Só a "cara" muda, uma camada por direção.
 - A camada `baixo` tem `only=walk_down,pose`: o `pose` faz a vista de frente aparecer também no desenho parado, sem animação.
-- As animações não têm `key`: o pulinho vem do `bob=2,0.5` do osso ([capítulo 6](06-ossos.md#movimentos-automáticos-sway-bob-e-jitter)), que funciona em qualquer animação tocando.
+- As animações não têm `key`: o pulinho vem do `bob=2,0.5` do osso ([capítulo 8](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter)), que funciona em qualquer animação tocando.
 
 Na exportação para o Godot, as três direções da esquerda aparecem sozinhas:
 

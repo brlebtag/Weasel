@@ -1,6 +1,6 @@
 # 8. Luz, efeitos e partículas
 
-[← Animação](07-animacao.md) · [Índice](README.md) · [Próximo: Jogo e Godot →](09-jogo-godot.md)
+[← Animação](09-animacao.md) · [Índice](README.md) · [Próximo: Jogo e Godot →](09-jogo-godot.md)
 
 ## Luz de verdade
 
@@ -399,7 +399,7 @@ anim balanca frames=16 fps=8
 
 Repare:
 
-- `bone corda pivot=160,0 sway=30,2` é um osso que balança sozinho 30 graus para cada lado, a cada 2 segundos ([movimentos automáticos, capítulo 6](06-ossos.md#movimentos-automáticos-sway-bob-e-jitter)).
+- `bone corda pivot=160,0 sway=30,2` é um osso que balança sozinho 30 graus para cada lado, a cada 2 segundos ([movimentos automáticos, capítulo 8](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter)).
 - O fio e o vidro têm `bone=corda`: balançam com o osso. A luz também tem `bone=corda`, e o ponto `160,94` dela gira junto, como se fosse uma forma.
 - A animação `balanca` dura 16 quadros a 8 por segundo: 2 segundos, uma volta inteira do `sway`. Assim o GIF fecha o loop sem pulo.
 
@@ -1039,7 +1039,7 @@ Repare:
 - O **primeiro número** é quantos quadros para trás aparecem (de 1 a 30): 3 dá um rastro curto, 10 um rastro longo.
 - O **segundo** é a queda: com 0.5, cada cópia tem metade da força da anterior e some rápido; com 0.8, sobra mais de cada uma.
 - O **terceiro**, opcional, é a cor do rastro: a bola continua azul, só as cópias ficam rosa.
-- `key 12 vaiA=240` com um número só move o osso 240 pixels para a direita ([capítulo 6](06-ossos.md#quantos-números-escrever)).
+- `key 12 vaiA=240` com um número só move o osso 240 pixels para a direita ([capítulo 7](07-movimento.md#quantos-números-escrever)).
 
 ## Partículas
 
@@ -1337,4 +1337,4 @@ Repare:
 - O `bloom` pega o que já é bem claro: a lanterna, a lua, a parede iluminada e o halo do `glow=`. O que é escuro (o céu, a rua longe do poste) quase não muda.
 - A imagem foi gerada com `-s 0.5` (metade do tamanho), só para caber lado a lado.
 
-[← Animação](07-animacao.md) · [Índice](README.md) · [Próximo: Jogo e Godot →](09-jogo-godot.md)
+[← Animação](09-animacao.md) · [Índice](README.md) · [Próximo: Jogo e Godot →](09-jogo-godot.md)

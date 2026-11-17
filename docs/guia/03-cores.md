@@ -85,7 +85,7 @@ ellipse amarela 300,90 60 c=#ffb00099
 **Cuidado:**
 - `rgb(…)` e `hsl(…)` não valem: dão o erro `cor desconhecida "rgb(255,0,0)"`. Um nome errado também dá esse erro (`tomatoo`).
 - Maiúsculas valem: `#F80`, `Tomato`.
-- Alguns comandos dos próximos capítulos só aceitam o código `#`: a textura deste capítulo, as luzes e os efeitos das camadas. Para uma cor mudar aos poucos numa animação ([capítulo 9](07-animacao.md)), ela também precisa ser `#`. Na dúvida, prefira o código.
+- Alguns comandos dos próximos capítulos só aceitam o código `#`: a textura deste capítulo, as luzes e os efeitos das camadas. Para uma cor mudar aos poucos numa animação ([capítulo 9](09-animacao.md)), ela também precisa ser `#`. Na dúvida, prefira o código.
 
 ## O contorno: `ink=` e `inkc=`
 
@@ -281,7 +281,7 @@ text t3 360,158 "opacity=0.25" size=14 align=center
 - `0.6` quer dizer 60% visível. Com `0.25`, o círculo quase some.
 - O contorno fica transparente junto com o azul.
 
-**Experimente:** use `opacity=0` no primeiro círculo. Ele some, mas continua no desenho (no [capítulo 9](07-animacao.md), dá para animar a `opacity=` e fazê-lo aparecer aos poucos).
+**Experimente:** use `opacity=0` no primeiro círculo. Ele some, mas continua no desenho (no [capítulo 9](09-animacao.md), dá para animar a `opacity=` e fazê-lo aparecer aos poucos).
 
 ### Cor transparente ou forma transparente
 

@@ -339,7 +339,7 @@ De cima para baixo:
 | `smooth=` | quanto os pontos lisos arredondam | de 0 a 2 | 1 |
 | `c=` | a cor do traço | uma cor | quase preto |
 
-O `stroke` também vira um braço ou uma perna que dobra sozinho, com `hip=` e `limb=` ([capítulo 8](06-ossos.md#pernas-e-braços-com-ik)). A lista completa está na [referência do `stroke`](19-referencia.md#stroke). No editor, o **Lápis** (N) e o **Pincel** (B) escrevem um `stroke` à mão livre ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
+O `stroke` também vira um braço ou uma perna que dobra sozinho, com `hip=` e `limb=` ([capítulo 8](08-ossos.md#pernas-e-braços-com-ik)). A lista completa está na [referência do `stroke`](19-referencia.md#stroke). No editor, o **Lápis** (N) e o **Pincel** (B) escrevem um `stroke` à mão livre ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
 
 **Cuidado:**
 - O `taper=` precisa dos dois números: `taper=0.5` dá erro.
@@ -567,7 +567,7 @@ text t2 330,212 "front (por cima)" size=14 align=center
 | `lock` | no editor, a imagem não se arrasta | — | solta |
 | `hidden` | esconde a imagem, que continua no arquivo | — | aparece |
 
-Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítulo 9](07-animacao.md#uma-imagem-guia-para-cada-movimento)). A lista completa está na [referência do `ref`](19-referencia.md#ref).
+Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítulo 9](09-animacao.md#uma-imagem-guia-para-cada-movimento)). A lista completa está na [referência do `ref`](19-referencia.md#ref).
 
 Quando terminar de copiar, apague a linha `ref` ou ponha `hidden` nela.
 
@@ -588,7 +588,7 @@ As outras opções das formas aparecem nos próximos capítulos:
 | `ink=`, `inkc=`, `weight=`, `opacity=` | o contorno e a transparência | [capítulo 3](03-cores.md) |
 | `cut=`, `inkon=` | buracos e o contorno em outra camada | [capítulo 4](04-camadas.md) |
 | `mirror=` | uma cópia espelhada de outra forma | [capítulo 6](06-componentes.md#espelho-de-uma-forma-mirror) |
-| `bone=`, `bones=`, `cloth=` | a forma segue ossos ou balança como pano | [capítulo 8](06-ossos.md) |
+| `bone=`, `bones=`, `cloth=` | a forma segue ossos ou balança como pano | [capítulo 8](08-ossos.md) |
 | `emit=` | a forma brilha | [capítulo 11](08-luz-efeitos.md#coisas-que-brilham-emit) |
 | `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](11-profundidade.md) |
 

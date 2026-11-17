@@ -82,7 +82,7 @@ key 0 bracoD.below=corpo     # no quadro 0, o braço está atrás do corpo
 key 6 bracoD.above=corpo     # no quadro 6, passa para a frente
 ```
 
-O [capítulo 9](07-animacao.md#trocar-quem-fica-na-frente-above-e-below) tem o exemplo completo, com a imagem.
+O [capítulo 9](09-animacao.md#trocar-quem-fica-na-frente-above-e-below) tem o exemplo completo, com a imagem.
 
 ### "não está na mesma camada" no `above=` ou `below=`
 
@@ -548,7 +548,7 @@ erro: "b" não combina com "a": uma forma fechada só vira outra fechada, e um t
 
 **Por quê:** o morph (`key … a.shape=b`) transforma uma forma em outra aos poucos. Uma forma fechada (`shape`, `ellipse`, `rect`) só vira outra fechada; um traço (`stroke`), outro traço. O número de pontos pode ser diferente.
 
-**Como resolver:** use como alvo uma forma do mesmo tipo. Veja o morph no [capítulo 7](07-animacao.md).
+**Como resolver:** use como alvo uma forma do mesmo tipo. Veja o morph no [capítulo 9](09-animacao.md#morph-uma-forma-vira-outra).
 
 ### "key precisa vir depois de um anim" e "osso … não existe"
 
@@ -721,7 +721,7 @@ erro: @osso só vale nos pontos de shape, stroke e line (depois do ":"): para o 
 
 **Por quê:** `@osso` prende um **ponto escrito** a um osso. Uma `ellipse` e um `rect` não têm pontos escritos: o centro e o canto deles não são pontos do contorno.
 
-**Como resolver:** para a forma inteira seguir o osso, use `bone=`. Para só um lado dela esticar, reescreva a forma como `shape`, com os pontos do contorno, e prenda os que devem andar ([capítulo 6](06-ossos.md#pontos-presos-a-um-osso-osso)):
+**Como resolver:** para a forma inteira seguir o osso, use `bone=`. Para só um lado dela esticar, reescreva a forma como `shape`, com os pontos do contorno, e prenda os que devem andar ([capítulo 8](08-ossos.md#pontos-presos-a-um-osso-osso)):
 
 ```
 ellipse barriga 200,150@corpo 40,30                                  # errado

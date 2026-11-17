@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 6. As dicas dos outros assuntos (ossos, animação, luz, estilos, filme) ainda estão nos capítulos antigos.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 9. As dicas dos outros assuntos (luz, estilos, jogo, filme) ainda estão nos capítulos antigos.
 
 ## Abrir e rodar
 
@@ -423,5 +423,124 @@ O editor chama o `def` de **símbolo**, e cada `use` de **instância**. O painel
 ## Variantes
 
 - O seletor de variante fica na barra da vista do desenho. Ele mostra a versão escolhida da `variant` ([capítulo 6](06-componentes.md#variantes-variant)), sem mudar o código.
+
+## Player
+
+O player fica embaixo do desenho e mostra as animações ([capítulo 7](07-movimento.md#ver-a-animação)).
+
+- O menu escolhe a animação. A primeira opção é a **pose parada**, sem animação (a mesma que se chama `pose` no `only=`).
+- Com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e **,** e **.** vão para o quadro anterior e o seguinte. As setas, no desenho, empurram a forma escolhida; para trocar de quadro com elas, clique antes na [linha do tempo](#linha-do-tempo).
+- Com o cursor numa linha `key` ou `event`, o player vai para aquele quadro.
+- Uma animação com `once` toca uma vez e para no último quadro; as outras repetem. O botão ao lado de ▶ troca entre **repetir** e **tocar uma vez**, só no player: o código não muda.
+- Os quadros com `event` aparecem com ⚑.
+- **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador.
+- **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros. Com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 16](09-jogo-godot.md#andar-sem-escorregar-feet)).
+- **Adicionar imagem…** com uma animação escolhida já escreve o `only=` dela na linha `ref`.
+
+### Exportar uma animação
+
+Na janela **Exportar**:
+
+- o botão **Vídeo** grava um vídeo sem precisar do ffmpeg;
+- a origem **Sequência de animações** põe várias animações em seguida, como o `-a "idle walk*3"` da linha de comando;
+- no WebP animado, **Figurinha do WhatsApp** faz o WebP do jeito que o WhatsApp pede: 512 × 512, fundo transparente e até 500 KB. Ela só fica animada se entrar pelo celular, por um aplicativo de figurinhas que importa `.webp`. O WhatsApp do computador a deixa parada, tanto arrastando o arquivo quanto pelo **Criar figurinha**, e o visualizador de fotos do Windows mostra só o primeiro quadro. Para mandar a animação no chat, use o vídeo.
+
+## Ossos no desenho
+
+**Exibir › Ossos** mostra os ossos: cada um ganha uma **bolinha** no pivô e uma **haste** verde-água, com uma ponta redonda. Com uma animação escolhida e **pausada** no player, dá para posar arrastando, e o editor escreve a `key` daquele quadro:
+
+- arrastar a **ponta da haste** gira o osso em volta do pivô;
+- arrastar a **bolinha** move o osso (o `dx,dy`). Num osso filho, o deslocamento é medido na direção do pai, como em qualquer `key`;
+- se o quadro já tem uma linha `key`, o editor troca só o valor daquele osso nela (ou acrescenta o osso no fim da linha). Se não tem, cria a linha, na ordem dos quadros;
+- os números saem com uma casa decimal. A escala (`sx,sy`) fica como estava: arrastar não estica;
+- com o player tocando, não dá para arrastar os ossos. **Ctrl+Z** desfaz, e **Exibir › Papel vegetal** mostra os quadros vizinhos enquanto você posa.
+
+Para treinar, cole este boneco num arquivo novo:
+
+<!-- conferir -->
+```weasel
+canvas 300 240 bg=#f4efe6
+palette ink=#2b2a33 line=5 pele=#ffcf9e
+
+bone corpo pivot=150,220
+bone braco parent=corpo pivot=172,120
+
+shape tronco c=#4a90d9 ink=line bone=corpo : 150,90 186,120 190,220! 110,220! 114,120
+rect bracoR 166,112 70,16 r=8 c=pele ink=line bone=braco
+
+anim acena frames=24 fps=12
+key 0 braco=0,0,0
+```
+
+1. Ligue **Exibir › Ossos**.
+2. No player, escolha a animação `acena` e deixe-a pausada.
+3. Vá para o quadro 12: arraste a barra do player, ou clique no desenho e aperte **.** doze vezes.
+4. Arraste a ponta da haste do `braco` para cima. O braço gira em volta do ombro.
+5. Olhe o código: apareceu uma linha nova depois da `key 0`, algo como `key 12 braco=0,0,-41.5` (o número depende de quanto você arrastou).
+6. Toque a animação: o braço sobe até o quadro 12 e volta, porque o loop leva de volta para a `key 0`.
+
+**O `ik` no desenho** ([capítulo 8](08-ossos.md#ik-nos-ossos-ik)): a raiz e o meio de um `ik` não giram arrastando a bolinha, porque quem os gira é o `ik`; mexa no alvo ou no corpo. Arrastar a bolinha da ponta move o **alvo** (`target=`): o editor escreve a `key` do osso alvo naquele quadro, e a ponta vai junto. Com `foot=`, a ponta fica no chão, e a bolinha dela não arrasta (para animar o pé, use `target=` com um osso de alvo). A haste da ponta ainda gira o pé ou a mão.
+
+## Prender
+
+A ferramenta **Prender** (o botão da tachinha na barra de ferramentas, ou **Shift+P**) escreve os `@osso` dos pontos para você ([capítulo 8](08-ossos.md#pontos-presos-a-um-osso-osso)):
+
+1. Com ela ligada, aparecem os pontos de todos os `shape`, `stroke` e `line`. Cada osso ganha uma cor (um anel em volta da bolinha dele). Um ponto preso fica com a cor do osso dele, mais apagada se o peso for menor que 1; um ponto solto fica cinza.
+2. Escolha os pontos. Um clique escolhe um ponto; **Shift**+clique soma; **Alt**+clique tira. Arrastar no fundo faz uma caixa e escolhe os pontos de dentro (com **Shift**, soma; com **Alt**, tira). Os escolhidos ganham um anel laranja, e os que já estão presos, um fio tracejado até o osso.
+3. Clique com o botão direito. O menu mostra os ossos, o mais perto dos pontos primeiro, e quantos pontos já estão em cada um. Escolher um osso (ou apertar o número dele, de 1 a 9) escreve `@osso` depois de cada ponto escolhido, com o **Peso** do campo (`0.5` escreve `@osso:0.5`); um ponto que já tinha outro osso troca. **Soltar** tira o `@`. Um **Ctrl+Z** desfaz tudo.
+
+- **Cada um no osso mais perto** prende cada ponto ao osso mais próximo. É um palpite: confira as cores e troque o que não ficou bom.
+- Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso.
+- Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como em [Ossos no desenho](#ossos-no-desenho)).
+
+**Testar giro, sem escrever nada:** na pose parada (sem animação no player), arraste a ponta da haste de um osso. Ele gira **só na tela**: os pontos presos vão junto, e dá para ver onde a forma abre ou sobra antes de escrever a animação.
+
+- Uma nota no canto diz quanto cada osso girou (`Testar giro: corpo 30° · pe -40°`).
+- Os giros ficam até o **Esc**, até escolher uma animação ou até desligar o Prender. O código não muda. Um segundo **Esc** tira a escolha dos pontos.
+- O `ik` continua valendo: girando o corpo, a perna dobra e o pé fica no chão. A raiz e o meio de um `ik` não giram pela haste: gire o osso de cima.
+- Com o giro, a bolinha do osso não arrasta: um clique nela escolhe os pontos, como no resto do Prender.
+
+**Formas uma por cima da outra:**
+
+- Duas formas coladas costumam dividir um ponto (o mesmo `x,y` nas duas). Um clique ali escolhe os dois, porque eles precisam ir juntos: se só um anda, a forma abre no meio. Clique de novo no mesmo lugar para pegar só o da forma de cima; de novo, só o da de baixo; e mais uma vez, os dois.
+- A caixa pega os pontos de todas as formas dentro dela. Para mexer só em algumas, abra o painel **Camadas** e escolha as formas lá: enquanto ele está aberto, só os pontos delas aparecem.
+
+Não aparecem: as cópias de um `use` e as linhas de `repeat` e de `include` (escreva o `@` no código delas), as formas com `bones=` (os `@` não valem junto) e as pernas feitas com `stroke … hip=`.
+
+## Linha do tempo
+
+Com uma animação escolhida no player, o editor mostra a **linha do tempo** dela embaixo do desenho, como no Adobe Animate. Ela lê as linhas `key` e `event` do código. Quando você mexe nela, ela reescreve essas linhas: o código continua sendo o que vale, e cada gesto se desfaz com um **Ctrl+Z**.
+
+- **Uma linha por alvo.** Cada osso ou `forma.propriedade` que aparece nas `key` ganha uma linha (`bola`; num personagem, `corpo`, `cabeca`, `olho.opacity`…).
+- **Losangos e barras.** Cada quadro com `key` ganha um **losango**. Entre dois losangos há uma **barra**: roxa para osso, verde-água para propriedade, cinza para `ease=step`. O desenho pequeno na barra é a curva do `ease`. Numa animação em loop, uma barra mais apagada depois da última `key` mostra a volta para a primeira.
+- **As linhas de cima.** A linha **todas** junta as `key` de cada quadro. A linha **eventos** mostra cada `event` com uma bandeirinha.
+- **A régua.** Ela numera os quadros, e o quadro do player é a faixa laranja. Clique ou arraste na régua (ou num quadro vazio) para levar o player até lá. A coluna de outra cor no fim é o quadro `frames=`, o mesmo que o 0 da volta seguinte.
+
+| Gesto | O que muda no código |
+|---|---|
+| Clicar num losango | nada: o player vai até o quadro, e o código, até a linha da `key` |
+| Arrastar um losango | o número da `key` (`key 12` vira `key 14`). Se a linha tem outros alvos, só o arrastado sai para uma linha nova |
+| **Alt**+arrastar | uma cópia da `key` no quadro onde você soltar |
+| Arrastar na linha **todas** | todas as `key` daquele quadro, juntas |
+| **Shift**+clique, ou clique no nome da linha | escolhe mais de uma (o nome escolhe todas as `key` da linha); **Ctrl+A** escolhe todas |
+| **←** e **→** | empurram as escolhidas um quadro (com **Shift**, cinco); sem nada escolhido, trocam de quadro |
+| **Delete** | apaga as escolhidas: só aquele alvo sai da linha `key`, e a linha some quando fica vazia |
+| Botão direito | o menu com os seis `ease` (cada um com o desenho da curva) e as ações abaixo |
+| **F6** | uma `key` no quadro do player, com o valor que o player mostra ali, na linha escolhida (clicando num quadro da linha **todas**, em todas) |
+| **Shift+F6** | tira as `key` desse quadro |
+| **F5** / **Shift+F5** | um quadro a mais (ou a menos) depois do quadro do player: as `key` e os `event` seguintes andam junto, e o `frames=` muda |
+| Arrastar o puxador laranja no fim da régua | o `frames=`; as `key` do último quadro vão junto |
+| Arrastar a bandeirinha | o quadro do `event` (**Delete** apaga) |
+| Roda do mouse | anda pela linha do tempo; **Ctrl**+roda aproxima e afasta; duplo clique num quadro vazio volta a caber tudo |
+
+Bom saber:
+
+- O `ease` vale para a linha `key` inteira. Se você muda o `ease` de um alvo só, ele ganha uma linha `key` própria.
+- O F6 sabe o valor de ossos e de propriedades de número (`opacity`, `w`, `glow`…). Uma cor ou uma forma (`c=`, `shape=`) ele não inventa: escreva a `key` no código ou copie uma com **Alt**+arrastar.
+- Uma `key` que chega a um quadro onde o mesmo alvo já tinha `key` toma o lugar da antiga.
+- O **Shift+F5** não tira um quadro que tem `key`: tire a `key` antes (**Shift+F6**).
+- As teclas valem com o foco na linha do tempo: clique nela antes. Fora dela, o F5 recarrega a página. Com o player tocando, ela só mostra; pause para mexer.
+- O botão da linha do tempo no player (ou **Exibir › Linha do tempo**) esconde e mostra.
+- Uma transição (`from=` e `to=`) não tem `key`, nem uma combinada (`mix=`) sem `key` própria: nelas, a linha do tempo só avisa isso.
 
 [← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)

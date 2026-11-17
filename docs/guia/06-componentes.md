@@ -1,6 +1,6 @@
 # 6. Componentes e arquivos
 
-[← Contas e repetição](05-contas.md) · [Índice](README.md) · [Próximo: Ossos →](06-ossos.md)
+[← Contas e repetição](05-contas.md) · [Índice](README.md) · [Próximo: Primeiro movimento →](07-movimento.md)
 
 Um **componente** é um desenho com nome: você desenha uma vez e põe no desenho quantas vezes quiser, em lugares, tamanhos e cores diferentes. Neste capítulo você aprende a criar componentes (`def`) e a usá-los (`use`), a espelhar uma forma para fazer o outro lado (`mirror=`), a dividir o trabalho em arquivos (`include`), a juntar formas para o editor (`group`) e a fazer outras versões do mesmo desenho (`variant`). Você precisa dos capítulos 1 a 5.
 
@@ -315,7 +315,7 @@ use flor 290,95 cor=#4a9eff giro=25
 | `opacity=` | a transparência da cópia | de 0 a 1 | 1 |
 | `parâmetro=valor` (no `use`) | troca um parâmetro nesta cópia | como no `def`; aceita conta `{…}` | o padrão do `def` |
 
-O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](06-ossos.md)), `z=` e `billboard` ([capítulo 14](11-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
+O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](11-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
 
 **Cuidado:**
 - Dentro de um `def` valem as formas, o `use`, o `repeat`, o `group`, o `mirror=` e o `include`. Uma `layer`, um `let`, uma `palette` ou outro `def` lá dentro dão erro: `layer não pode ficar dentro de def (só formas e use)`.
@@ -663,4 +663,4 @@ end
 - `include "arquivo.weasel"` traz outro arquivo para aquela linha; `group` junta linhas para o editor.
 - `variant` faz outra versão do desenho, trocando cores da `palette` e mostrando ou escondendo peças.
 
-[← Contas e repetição](05-contas.md) · [Índice](README.md) · [Próximo: Ossos →](06-ossos.md)
+[← Contas e repetição](05-contas.md) · [Índice](README.md) · [Próximo: Primeiro movimento →](07-movimento.md)

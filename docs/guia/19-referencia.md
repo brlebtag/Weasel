@@ -1384,7 +1384,7 @@ ellipse cabeca 200,120 60 c=#f2c9a0 ink=3
 - Uma palavra que não é `lock`, `hidden` ou `front` dá aviso. Um segundo `x,y` também.
 - `frames=8..2` vale como `frames=2..8`. Na pose parada, sem animação, o `frames=` não esconde a imagem.
 
-**Para aprender:** [Desenhar por cima de uma imagem](02-formas.md#desenhar-por-cima-de-uma-imagem-ref) e [uma imagem guia para cada movimento](07-animacao.md#uma-imagem-guia-para-cada-movimento).
+**Para aprender:** [Desenhar por cima de uma imagem](02-formas.md#desenhar-por-cima-de-uma-imagem-ref) e [uma imagem guia para cada movimento](09-animacao.md#uma-imagem-guia-para-cada-movimento).
 
 ## Camadas
 
@@ -1456,7 +1456,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 - Um nome do `only=` que não existe avisa.
 - Numa animação, uma `key` não mostra uma camada `hidden`. Num filme, `at camada.show=1` mostra uma camada `hidden` do próprio arquivo do filme.
 
-**Para aprender:** [Camadas](04-camadas.md#o-que-é-uma-camada-layer), [recortar por dentro](04-camadas.md#recortar-por-dentro-clip) e [por fora](04-camadas.md#recortar-por-fora-cut), [`guide`](04-camadas.md#camada-de-construção-guide), [`hidden`](04-camadas.md#camada-escondida-hidden), [`only=`](07-animacao.md#camadas-que-só-aparecem-em-certas-animações-only).
+**Para aprender:** [Camadas](04-camadas.md#o-que-é-uma-camada-layer), [recortar por dentro](04-camadas.md#recortar-por-dentro-clip) e [por fora](04-camadas.md#recortar-por-fora-cut), [`guide`](04-camadas.md#camada-de-construção-guide), [`hidden`](04-camadas.md#camada-escondida-hidden), [`only=`](09-animacao.md#camadas-que-só-aparecem-em-certas-animações-only).
 
 #### Transparência e mistura
 
@@ -1598,7 +1598,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 - No `cut=`, a forma que recorta precisa ser fechada (`shape`, `ellipse` ou `rect`): um nome de camada dá erro. Todas as formas com aquele nome abrem buraco, e buracos que se cruzam viram um só.
 - No `mirror=`, a forma copiada precisa ter nome e ser do mesmo comando. A cópia leva as opções dela; as que você escrever na linha do `mirror=` trocam essas. Os pontos escritos na linha do `mirror=` são ignorados (aviso).
 
-**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](06-ossos.md#formas-que-dobram-bones), [`cloth=`](06-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
+**Para aprender:** [O que vale em toda forma](02-formas.md#o-que-vale-em-toda-forma), [contorno](03-cores.md#o-contorno-ink-e-inkc), [buracos com `cut=`](04-camadas.md#recortar-por-fora-cut), [`inkon=`](04-camadas.md#o-contorno-por-cima-inkon), [`emit=`](08-luz-efeitos.md#coisas-que-brilham-emit), [`bones=`](08-ossos.md#formas-que-dobram-bones), [`cloth=`](08-ossos.md#tecido-cloth), [`mirror=`](06-componentes.md#espelho-de-uma-forma-mirror), [2.5D nas formas](11-profundidade.md#as-três-direções), [`thick=` e `back=`](11-profundidade.md#uma-carta-que-vira-back-e-thick), [`billboard`](11-profundidade.md#de-pé-ou-deitado-billboard-numa-forma).
 
 ### `shape`
 
@@ -1631,7 +1631,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - O `shape` não tem `rot=` (aviso de atributo desconhecido): para girar, use um osso (`bone=`).
 - O peso do `@osso` fora de 0 a 1 avisa e é cortado.
 
-**Para aprender:** [Formas livres com pontos](02-formas.md#formas-livres-com-pontos-shape), [a alça da curva](02-formas.md#curvas-sob-medida-alças), [pontos presos a um osso](06-ossos.md#pontos-presos-a-um-osso-osso).
+**Para aprender:** [Formas livres com pontos](02-formas.md#formas-livres-com-pontos-shape), [a alça da curva](02-formas.md#curvas-sob-medida-alças), [pontos presos a um osso](08-ossos.md#pontos-presos-a-um-osso-osso).
 
 ### `stroke`
 
@@ -1676,7 +1676,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - `on=` e `bend=` num traço que não é membro não fazem nada (sem aviso).
 - O `stroke` não tem contorno: `ink=` avisa.
 
-**Para aprender:** [Traço aberto](02-formas.md#traço-aberto-stroke), [pontas](02-formas.md#pontas-cap), [afinar as pontas](02-formas.md#afinar-as-pontas-taper), [pernas e braços com IK](06-ossos.md#pernas-e-braços-com-ik).
+**Para aprender:** [Traço aberto](02-formas.md#traço-aberto-stroke), [pontas](02-formas.md#pontas-cap), [afinar as pontas](02-formas.md#afinar-as-pontas-taper), [pernas e braços com IK](08-ossos.md#pernas-e-braços-com-ik).
 
 ### `line`
 
@@ -2120,7 +2120,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 - `spring=0` não desliga a mola. Para tirar a mola, apague o `spring=`.
 - O `ik` muda a pose também no desenho parado: veja o [`ik`](#ik).
 
-**Para aprender:** [Ossos](06-ossos.md#a-ideia), [Pai e filho](06-ossos.md#pai-e-filho-parent), [Movimentos automáticos](06-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](06-ossos.md#molas-spring), [Andar por um caminho](06-ossos.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
+**Para aprender:** [O primeiro osso](07-movimento.md#a-primeira-animação), [Pai e filho](08-ossos.md#pai-e-filho-parent), [Movimentos automáticos](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](08-ossos.md#molas-spring), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
 ### `cloth`
 
@@ -2161,7 +2161,7 @@ key 24 mastro=0,0,-8
 - Numa forma, `cloth=` junto com `bones=` dá aviso: a forma dobra pelos ossos e o pano fica parado.
 - Dois `cloth` com o mesmo nome: vale o de baixo, sem aviso.
 
-**Para aprender:** [Tecido](06-ossos.md#tecido-cloth) e [`bone=` no `cloth`](06-ossos.md#bone-no-cloth-vento-com-o-mastro-parado).
+**Para aprender:** [Tecido](08-ossos.md#tecido-cloth) e [`bone=` no `cloth`](08-ossos.md#vento-com-o-mastro-parado-bone-no-cloth).
 
 ### `ik`
 
@@ -2215,7 +2215,7 @@ key 24 quadril=0,0
 - `foot=` e `target=` juntos dão aviso: vale o `target=`.
 - Sem `foot=` nem `target=`, dá erro.
 
-**Para aprender:** [IK nos ossos](06-ossos.md#ik-nos-ossos-ik) e [Braço com alvo](06-ossos.md#braço-com-alvo-target).
+**Para aprender:** [IK nos ossos](08-ossos.md#ik-nos-ossos-ik) e [Braço com alvo](08-ossos.md#braço-com-alvo-target).
 
 ### `anim`
 
@@ -2276,7 +2276,7 @@ key 12 b2=0,0
 - `loop` numa transição dá aviso: as peças sempre tocam uma vez.
 - No GIF, uma animação com `once` recomeça do quadro 0 ao chegar no fim; no jogo, ela toca uma vez e para.
 
-**Para aprender:** [A primeira animação](07-animacao.md#a-primeira-animação-a-bola-quicando), [Loop ou uma vez só](07-animacao.md#loop-ou-uma-vez-só-once), [Animações combinadas](07-animacao.md#animações-combinadas-mix), [Andar sem escorregar](09-jogo-godot.md#andar-sem-escorregar-feet), [Transições](09-jogo-godot.md#sair-de-uma-animação-sem-corte-from-e-to) e [Virada](09-jogo-godot.md#virar-de-lado-para-a-frente-turn).
+**Para aprender:** [A primeira animação](07-movimento.md#a-primeira-animação), [Loop ou uma vez só](07-movimento.md#loop-ou-uma-vez-só-once), [Animações combinadas](09-animacao.md#animações-combinadas-mix), [Andar sem escorregar](09-jogo-godot.md#andar-sem-escorregar-feet), [Transições](09-jogo-godot.md#sair-de-uma-animação-sem-corte-from-e-to) e [Virada](09-jogo-godot.md#virar-de-lado-para-a-frente-turn).
 
 ### `key`
 
@@ -2344,7 +2344,7 @@ key 12 b=180,0,0,0.6 bola.c=#ff6b4a
 - Uma forma de um componente tem o mesmo nome em todas as cópias: a `key` muda todas.
 - Num filme, quem muda as coisas com o tempo é o [`at`](#at).
 
-**Para aprender:** [Como os quadros do meio são calculados](07-animacao.md#como-os-quadros-do-meio-são-calculados-ease), [Regras das `key`](07-animacao.md#regras-das-key), [Quantos números escrever](06-ossos.md#quantos-números-escrever) e [Animando outras coisas](07-animacao.md#animando-outras-coisas-formapropriedadevalor).
+**Para aprender:** [Devagar ou depressa: `ease`](07-movimento.md#devagar-ou-depressa-ease), [As regras das `key`](07-movimento.md#as-regras-das-key), [Quantos números escrever](07-movimento.md#quantos-números-escrever) e [Animar formas](09-animacao.md#animar-formas-formapropriedadevalor).
 
 #### `key` numa forma
 
@@ -2368,7 +2368,7 @@ Escreva o nome da forma, um ponto, a propriedade e o valor: `key 6 olho.opacity=
 
 Numa forma com `hidden`, a `key` não a faz aparecer (dá aviso). Para começar escondida, tire o `hidden` e escreva `key 0 nome.show=0`.
 
-**Para aprender:** [Animando outras coisas](07-animacao.md#animando-outras-coisas-formapropriedadevalor), [Desenhar aos poucos](07-animacao.md#desenhar-aos-poucos-draw) e [Morph](07-animacao.md#morph-uma-forma-vira-outra).
+**Para aprender:** [Animar formas](09-animacao.md#animar-formas-formapropriedadevalor), [Desenhar aos poucos](09-animacao.md#desenhar-aos-poucos-draw) e [Morph](09-animacao.md#morph-uma-forma-vira-outra).
 
 #### `key` numa camada
 
@@ -2392,7 +2392,7 @@ Escreva o nome da camada: `key 6 fundo.blur=4`.
 
 Na `key`, os efeitos da camada não têm as faixas da linha [`layer`](#layer) e não dão aviso. Não use números negativos em `brightness=`, `saturate=` e `contrast=`: a `key` aceita, mas o resultado não é garantido.
 
-**Para aprender:** [Camadas inteiras](07-animacao.md#camadas-inteiras-efeitos-opacity-e-show).
+**Para aprender:** [Efeitos de camada](08-luz-efeitos.md#efeitos-de-camada).
 
 #### `key` numa luz
 
@@ -2409,7 +2409,7 @@ Escreva o nome da luz: `key 6 lampada.power=0`.
 
 A luz não tem `show`: para apagar, use `power=0`. O `ambient` não tem nome e não muda com a `key`.
 
-**Para aprender:** [Luzes](07-animacao.md#luzes).
+**Para aprender:** [Luz de verdade](08-luz-efeitos.md#luz-de-verdade).
 
 #### `key` num osso
 
@@ -2424,7 +2424,7 @@ A pose do osso vai direto, sem ponto: `key 6 braco=0,0,30`. As outras propriedad
 
 Um `along=` num osso sem `path=` dá erro.
 
-**Para aprender:** [Quantos números escrever](06-ossos.md#quantos-números-escrever), [Andar por um caminho](06-ossos.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
+**Para aprender:** [Quantos números escrever](07-movimento.md#quantos-números-escrever), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
 #### `key` numa caixa
 
@@ -2471,7 +2471,7 @@ Os eventos vão para o JSON da sprite sheet, para a folha de conferência (`--co
 **Cuidado:**
 - Um `event` precisa vir depois de um `anim`, e não vale numa transição (`from=` e `to=`).
 
-**Para aprender:** [Eventos](07-animacao.md#eventos-event).
+**Para aprender:** [Eventos](09-animacao.md#eventos-event).
 
 ## Luz
 

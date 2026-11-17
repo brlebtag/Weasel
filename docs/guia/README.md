@@ -32,9 +32,9 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 
 | | Capítulo | O que você aprende |
 |---|---|---|
-| 7 | Primeiro movimento (ainda não escrito) | um osso, uma animação, a `key`, as curvas, o loop e o `once`: o mínimo para os dois capítulos seguintes |
-| 8 | [Ossos](06-ossos.md) (antigo) | o pivô, pai e filho, movimentos automáticos, molas, tecido, pernas com IK, formas que dobram, pontos presos a um osso e caminhos |
-| 9 | [Animação](07-animacao.md) (antigo) | animar cores e formas, desenhar aos poucos, morph, animações combinadas, posar com o mouse e eventos |
+| 7 | [Primeiro movimento](07-movimento.md) | um osso, uma animação, a `key`, andar, girar e esticar, o pivô, `frames=` e `fps=`, o `ease`, o loop e o `once` |
+| 8 | [Ossos](08-ossos.md) | pai e filho, o esqueleto de um personagem, movimentos automáticos, molas, tecido, formas que dobram, pontos presos a um osso e pernas com IK |
+| 9 | [Animação](09-animacao.md) | animar cores e formas, desenhar aos poucos, morph, eventos, andar por um caminho, `only=`, quem fica na frente, animações combinadas e exportar |
 
 ### 4. Luz e aparência
 

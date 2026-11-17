@@ -575,7 +575,7 @@ O `at` é a `key` dos filmes, mas contada em **tempo** e com atores, câmera, lu
 | `camera` | `pos`, `x`, `y`, `zoom`, `rot`, `shake`, `follow`, `offset`, `lag`, `fade`, `fadec`, `lens`, `fog`, `haze` |
 | luz do filme | `power`, `radius`, `c`, `glow`, `aim`, `cone` |
 | camada do filme | `opacity`, `show`, `yaw`, `pitch` e os efeitos (`blur`, `glow`, `tint`…) |
-| forma do filme | `draw` (desenha aos poucos, [capítulo 7](07-animacao.md#desenhar-aos-poucos-draw)), `opacity`, `show`, `yaw`, `pitch`, `z` |
+| forma do filme | `draw` (desenha aos poucos, [capítulo 9](09-animacao.md#desenhar-aos-poucos-draw)), `opacity`, `show`, `yaw`, `pitch`, `z` |
 
 As formas do próprio arquivo do filme (um mapa, uma seta, um título) mudam com `at` como as camadas: `at 1s rota.draw=0` e `at 4s rota.draw=1` desenham a rota aos poucos. As formas dos atores mudam pelas animações deles. O giro em 3D (`yaw`, `pitch`, `z`) está no [capítulo 11](11-profundidade.md#profundidade-no-filme-lente-e-névoa).
 
@@ -1056,7 +1056,7 @@ actor heroi "rosto.weasel" 60,250 scale=0.6 path=trilha turn=0
 
 - Com `along`, a posição do ator vem do caminho (o `pos` deixa de valer).
 - O ator vira junto com a curva, a não ser com `turn=0` (como no exemplo, em que o rosto continua de pé).
-- Ossos de um personagem também andam por caminhos, dentro de uma animação ([capítulo 6](06-ossos.md#andar-por-um-caminho-path)).
+- Ossos de um personagem também andam por caminhos, dentro de uma animação ([capítulo 9](09-animacao.md#andar-por-um-caminho-path)).
 
 ### Virar com a curva ou ficar de pé: `turn=`
 

@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3. Próximo: a etapa 5.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4. Próximo: a etapa 6.
 
 ## O pedido
 
@@ -445,3 +445,31 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 - **Linha J:** o "Repare" da transparência do `use` (no 6) ficou neutro, verdadeiro antes e depois da correção, com a marca `<!-- conferir -->`, como o do 3. Quando a J sair, ela devolve ali a frase do componente transparente como uma imagem só, gera de novo o `05_use_opacity.png` e o `05_reflexo.png` (agora no 6) e tira a marca. O `05_grade.png` saiu com as funções.
 - **As imagens:** 11 novas (`05_boneco`, `05_cerca`, `05_bolhas`, `05_piramide`, `05_capim`, `05_regua`, `05_relogio`, `05_jardim`, `06_arvores`, `06_parametros` e `06_cidade`). As outras 18 dos dois capítulos saem iguais, byte a byte. Saíram 16 que nenhum exemplo gera mais: as 13 das funções, o `05_componentes`, o `05_include` e o `05_repeat`.
 - **Os links:** os **Para aprender** do 19, os capítulos 1 a 4, 20 e 21, os antigos de ossos, luz e problemas, o índice e o plano das expressões levam aos arquivos novos. A navegação do capítulo de ossos volta para o 6, até o 7 existir.
+
+### Etapa 5 (1.67.4): o movimento
+
+- **Os capítulos de ossos e de animação antigos (`06-ossos.md` e `07-animacao.md`) viraram três**, no formato da seção 3.3: o 7, Primeiro movimento (`07-movimento.md`, 492 linhas), o 8, Ossos (`08-ossos.md`, 829 linhas), e o 9, Animação (`09-animacao.md`, 624 linhas).
+- **O 8 passou das 700 linhas.** Ele junta o capítulo de ossos antigo inteiro (1.109 linhas), menos a primeira animação (foi para o 7) e o `path=` (foi para o 9). Cada coisa que mexe sozinha (o `sway`, a mola, o pano, o vento, o peso do `@osso`, o IK com alvo) precisa de um exemplo que mexe, e dividir em dois deixaria o IK sozinho num capítulo pequeno.
+- **Os desenhos de vitrine:** o sapo que pula entre duas folhas no lago (7), o bicho de cachecol que prepara o pulo, salta e cai, com as pernas em IK e as antenas e o rabo em mola (8), e a abertura de um vídeo explicativo, com o título digitado, a lâmpada que acende, a seta que se desenha, o morph e os eventos (9).
+- **O que saiu dos capítulos e para onde foi:**
+  - o `path=` (no capítulo de ossos antigo) foi para o 9, junto das outras animações que não são de osso;
+  - "Camadas inteiras" e "Luzes" (no capítulo de animação antigo) saíram: o capítulo de luz e efeitos (o 8 antigo) já ensina a `key` nas luzes e nos efeitos de camada, e o 9 aponta para lá. A etapa 6 reescreve esse capítulo; o texto antigo está no b3c66e6 (`docs/guia/07-animacao.md`), se ela quiser aproveitar;
+  - cinco exemplos com imagem viraram texto ou entraram em outro exemplo: "Com e sem `parent=`" virou o **Experimente** de "Pai e filho"; o chapéu de "Outras coisas que seguem um osso" entrou no esqueleto (`08_esqueleto`); o tremor (`jitter`), o pé num ponto (`foot=x,y`) e "Até onde o braço alcança" ficaram só com texto;
+  - as dicas do editor foram para o 22, em quatro títulos novos: Player (com Exportar uma animação), Ossos no desenho (com um boneco para treinar), Prender e Linha do tempo. O aviso do começo do 22 diz agora "capítulos 1 a 9".
+- **Escolhas minhas:**
+  - o 7 começa com um osso só (a bola que sobe e desce) e não usa `parent=`: o esqueleto é o começo do 8;
+  - a ponta que gira o osso no editor se chama **haste**, porque "alça" já é a da curva (capítulo 2);
+  - nenhum exemplo usa o que ainda não foi ensinado: o `ease` vem antes da bola quicando, e o `only=`, o `above=` e o `mix=` ficam no 9, depois do personagem completo.
+- **Erros de fato corrigidos** (do diagnóstico):
+  - a `key` no quadro `frames=` igual à `key 0` não é obrigatória: o loop volta para a primeira `key` sozinho;
+  - no exemplo do pai e filho, o texto antigo falava em 60° na tela; o antebraço fica em −80° (−25 − 55);
+  - um `target=` com um nome errado é um erro, não um aviso do editor;
+  - com `foot=`, o pé guarda o ângulo que teria sem o `ik`;
+  - o `ik` muda também a pose parada, não só as animações;
+  - os comprimentos dos ossos do IK mudam com o `sx,sy`;
+  - o `foot=` aceita também `stroke` e `shape`, não só `line`;
+  - `spring=0` não desliga a mola; o `jitter` vai de 0 a 200; a corrente do `ik` é obrigatória; um osso só pode estar num `ik`;
+  - o morph não precisa do mesmo número de pontos, e o texto conta como ele junta os pontos de uma forma com os da outra;
+  - uma animação combinada (`mix=`) aceita `key` próprias.
+- **As imagens:** 5 novas (`07_primeira`, `07_sapo`, `08_esqueleto`, `08_bicho` e `09_abertura`). As outras 37 dos três capítulos são as mesmas de antes: os exemplos ficaram iguais, letra por letra, e os arquivos não foram gerados de novo (um GIF gerado de novo sai com outros bytes). Saíram 7 que nenhum exemplo gera mais: `06_alcance`, `06_chapeu`, `06_degrau`, `06_jitter`, `06_sem_pai`, `07_camadas` e `07_luzes`.
+- **Os links:** os **Para aprender** do 19, os capítulos 2, 3, 4, 6, 12, 13 e 21, os antigos de luz, jogo e filme, o índice e o plano da metamorfose levam aos arquivos novos. A navegação do capítulo de luz antigo volta para o 9.

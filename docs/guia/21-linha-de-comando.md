@@ -271,7 +271,7 @@ Um SVG da coruja e um de cada variante de cor: `coruja.svg`, `coruja_neve.svg` e
 - `--frame` sem `-a` dá erro: `--frame precisa de --anim`. Um quadro que não existe também: `--frame 30 não existe em "jump" (quadros 0 a 23)`.
 - O JPG não tem transparência: com `-t`, ele sai com o fundo do `canvas`.
 - O SVG sai sem o estilo do `art` (a resposta avisa). O `.txt` só sai de um desenho com `art ascii` ([capítulo 14](14-estilos.md#ascii-art-ascii)); em outro, a resposta é `o .txt sai do estilo ascii (ponha "art ascii" no arquivo)`.
-- As variantes estão no [capítulo 6](06-componentes.md#variantes-variant); as camadas `guide`, no [capítulo 4](04-camadas.md#camada-de-construção-guide); as imagens guia, no [capítulo 7](07-animacao.md#uma-imagem-guia-para-cada-movimento).
+- As variantes estão no [capítulo 6](06-componentes.md#variantes-variant); as camadas `guide`, no [capítulo 4](04-camadas.md#camada-de-construção-guide); as imagens guia, no [capítulo 9](09-animacao.md#uma-imagem-guia-para-cada-movimento).
 
 ## Uma animação
 

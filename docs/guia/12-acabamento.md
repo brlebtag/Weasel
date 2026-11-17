@@ -402,7 +402,7 @@ Resumindo, `finish inner=` só vale para:
 
 - `stroke` (traços). Não vale para `line`, `text`, preenchimentos, nem para o contorno das formas (`ink=`);
 - em camadas com `clip=`. Uma camada só com `cut=` não conta;
-- e não vale para braços e pernas com IK (`stroke … limb=`, do [capítulo 6](06-ossos.md)).
+- e não vale para braços e pernas com IK (`stroke … limb=`, do [capítulo 8](08-ossos.md#pernas-e-braços-com-ik)).
 
 A opacidade do `finish` se multiplica com a do próprio traço: um `stroke` com `opacity=0.5` numa camada com `clip=` e `finish inner=0.4` aparece só 20% (0,5 × 0,4).
 
