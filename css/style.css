@@ -555,6 +555,25 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .sw-c { width: 16px; height: 16px; flex: none; border-radius: 3px; border: 1px solid rgba(255, 255, 255, .25); }
 .sw-chip.width .sw-c { border: none; border-radius: 2px; color: var(--dim); }
 .sw-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* os símbolos (js/ui-symbols.js, etapa 6b): uma miniatura por def; arrastar para o desenho põe um use */
+.sy-new { border: none; background: none; padding: 0 6px; color: var(--dim); font-size: 14px; line-height: 1; }
+.sy-new:hover { color: var(--text); background: var(--panel2); }
+.sy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; }
+.sy-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 3px 3px; min-width: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--panel2); cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+.sy-tile:hover { border-color: var(--dim); }
+.sy-tile.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.sy-tile canvas { width: 76px; height: 60px; border-radius: 2px; background: repeating-conic-gradient(#d9d9d9 0 25%, #fff 0 50%) 0 0 / 10px 10px; pointer-events: none; }
+.sy-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px var(--mono); color: var(--text); cursor: text; }
+.sy-uses { position: absolute; top: 2px; right: 3px; min-width: 14px; padding: 0 3px; border-radius: 7px; font: 10px var(--mono); text-align: center; color: var(--text); background: rgba(10, 14, 19, .7); pointer-events: none; }
+.sy-uses:empty { display: none; }
+.sy-tile.inc .sy-name { color: var(--dim); font-style: italic; }
+.sy-ren { width: 100%; height: 18px; padding: 0 3px; font: 11px var(--mono); background: var(--panel); border: 1px solid var(--accent); border-radius: 3px; color: var(--text); }
+.sy-foot { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 0 2px; }
+.sy-foot button { padding: 1px 7px; font-size: 11px; }
+.sy-tip { display: block; color: var(--dim); font-size: 11px; line-height: 1.4; padding-top: 2px; }
+.sy-ghost { position: fixed; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px; font: 11px var(--mono); color: var(--text); background: rgba(10, 14, 19, .85); border: 1px dashed var(--dim); border-radius: 4px; pointer-events: none; opacity: .75; }
+.sy-ghost.ok { border: 1px solid var(--accent); opacity: .95; }
+.sy-ghost canvas { width: 50px; height: 40px; }
 /* a vista Camadas em 3D (js/ui-3d.js): por cima do desenho, abaixo dos painéis */
 .v3 { position: absolute; inset: 0; z-index: 2; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none; }
 .v3[hidden] { display: none; }

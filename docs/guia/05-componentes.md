@@ -763,6 +763,18 @@ No editor, com o cursor em qualquer linha entre `def` e `end`, dá para ver o co
 - A prévia é parada: sem animação, luzes, caixas e o que vem do desenho em volta (a camada do `use`, `bone=`). Um erro que só acontece com um valor do painel aparece no painel, não no código.
 - **Pintar** pinta só o componente.
 
+### No desenho: o painel Símbolos
+
+No Illustrator, um desenho que se repete vira um **símbolo**, e cada cópia dele no desenho é uma **instância**. No Weasel, o símbolo é o `def` e a instância é o `use`. O painel **Símbolos**, na coluna da direita (**Janela › Símbolos**), mostra cada `def` do arquivo com uma miniatura, desenhada com os valores padrão dos parâmetros. O número no canto conta os `use`.
+
+- **Arraste uma miniatura para o desenho:** o editor escreve `use nome x,y` na camada onde se desenha, com o `0,0` do símbolo no lugar onde você soltou. **Colocar** faz o mesmo no meio da vista.
+- **Criar símbolo (F8, ou o ＋ do painel):** as formas escolhidas viram um `def` novo (`symbol1`, `symbol2`…), com o `0,0` no meio delas. No lugar delas fica um `use`, e o desenho não muda. O `def` entra depois do último `def` do arquivo (sem nenhum, antes da primeira camada). Os comentários logo acima das formas vão junto.
+- **Duplo clique num `use`** (ou na miniatura, ou **Editar**) entra no símbolo: o desenho mostra só ele, com a prévia de sempre. Lá dentro, as formas se escolhem, se mexem, esticam e giram como no desenho, e dá para apagar, agrupar e criar outro símbolo (um dentro do outro). **Esc**, ou um duplo clique no vazio, sai e escolhe de novo o `use` de onde você entrou.
+- **Quebrar vínculo:** troca os `use` escolhidos pelas formas do `def`, no mesmo lugar, tamanho, giro e espelho, como no Illustrator. Os parâmetros viram os valores do `use` (`c=c` vira a cor dele), as `{contas}` viram números, o `ink=` e o `w=` engrossam junto com o `scale=`, e o `opacity=` e o `z=` do `use` passam para cada forma. Um `rect` girado dentro de um `use` esticado só para um lado vira o `rect` mais parecido (o `rect` não entorta). Não quebra: um `def` com `repeat`, um `use` com `bone=`, `cloth=` ou `billboard`, ou com `{contas}` na posição.
+- **Duplo clique no nome** de uma miniatura renomeia o `def` e todos os `use` dele. **Apagar** apaga um `def` sem nenhum `use` (com os comentários de cima).
+
+Cada gesto é uma edição só do código: um Ctrl+Z desfaz.
+
 ### Tamanho e giro: `scale=` e `rot=`
 
 `scale=` muda o tamanho de um uso, e `rot=` gira. Os dois acontecem **em volta da alça** (o `0,0` do componente). Neste peixe, a alça está marcada com um pontinho vermelho:

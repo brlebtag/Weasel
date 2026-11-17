@@ -893,7 +893,49 @@ A etapa 6 também foi dividida em duas **(R)**, como a 3, a 4 e a 5: a **6a** (C
 - Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
 - O guia (capítulo 4), o README e a referência (F1) contam o que mudou.
 
-**A 6b** (Símbolos) vem em seguida.
+**A 6b (16/11/2026): os símbolos.** No Illustrator, um desenho que se repete vira um símbolo, e cada cópia é uma instância ligada a ele. No Weasel isso já existe: o `def` é o símbolo e o `use` é a instância. A 6b dá a eles um painel e os gestos do Illustrator.
+- **O painel Símbolos fica na coluna da direita,** depois das Amostras **(R)**. Ele abre e fecha pelo **Janela › Símbolos** e pelo ✕, lembra se você fechou e dobra pelo título, como as outras partes. Começa aberto **(R)**.
+- **Uma miniatura por `def`,** desenhada com os valores padrão dos parâmetros (a mesma leitura da prévia), num fundo xadrez **(R)**. Um número no canto conta os `use`. Um `def` que vem de um `include` aparece em itálico e não se edita, renomeia nem apaga daqui **(R)**. As miniaturas são desenhadas uma por vez, depois de uma pausa, e só mudam quando muda uma linha de um `def`, da `palette`, de um `gradient`, de um `pattern` ou de um `let` **(R)**. Assim o painel não pesa enquanto você digita.
+- **Arrastar uma miniatura para o desenho** escreve `use nome x,y` na camada onde se desenha. O `0,0` do símbolo fica onde você soltou **(R)**. **Colocar** (no painel e em **Objeto › Símbolo › Colocar**) põe no meio da vista. Esc no meio do arraste desiste.
+- **Criar símbolo (F8, como no Illustrator, ou o ＋):**
+  - as formas escolhidas viram `def symbol1` … `end` (o nome em inglês, decisão 5) **(R)**;
+  - o `0,0` fica no meio da caixa delas, arredondado, e as formas são escritas em volta dele **(R)**. O Illustrator deixa escolher o ponto de registro; aqui ele é sempre o meio, e mudar depois é mexer nas formas dentro do símbolo;
+  - no lugar da de cima fica `use symbol1 x,y`, e o desenho não muda;
+  - o `def` entra logo depois do último `def` do arquivo; sem nenhum, antes da primeira camada; sem camada, logo antes do `use` **(R)**. Assim os símbolos ficam juntos no alto do arquivo, como nos exemplos do guia;
+  - os comentários logo acima das formas vão junto, como no Agrupar.
+- **Entrar no símbolo (isolamento):**
+  - duplo clique num `use` com a Seleção, duplo clique na miniatura, **Editar** ou **Objeto › Símbolo › Editar símbolo** **(R)**;
+  - o desenho mostra só o símbolo, com a prévia que já existia (cruz rosa no `0,0`, painel dos parâmetros). O cursor vai para dentro do `def`;
+  - lá dentro, a escolha passou a valer como no desenho: caixa, mover, esticar, girar, as setas, apagar, agrupar, desagrupar, travar e criar outro símbolo (um dentro do outro) **(R)**. Organizar, alinhar, colar, a Varinha e os Selecionar ainda pedem para sair: eles olham as camadas do desenho, e o símbolo não tem camadas **(R)**;
+  - duplo clique num `use` lá dentro entra no de dentro;
+  - **Esc** (ou duplo clique no vazio, ou **Sair do símbolo**) sai um nível e escolhe de novo o `use` de onde você entrou. Se as linhas mudaram de número lá dentro, ele acha o `use` desse símbolo mais perto **(R)**. Com algo escolhido lá dentro, o Esc também sai direto, como o Esc do isolamento do Illustrator **(R)**.
+- **Quebrar vínculo** (no painel e em **Objeto › Símbolo**) troca cada `use` escolhido pelas formas do `def`, que ficam escolhidas:
+  - no mesmo lugar, tamanho, giro e espelho do `use` (`scale=`, `rot=`, `flip=`) **(R)**;
+  - os parâmetros viram os valores do `use` (`c=c` vira a cor dele, e uma cor da `palette` que o `use` troca também), e as `{contas}` viram números **(R)**;
+  - o `ink=`, o `w=`, o `thick=`, o `dash=`, o `size=` das partículas e o `z=` das formas engrossam junto com o `scale=`, como o `use` desenha. Um nome da `palette` nessas espessuras vira o número dele **(R)**;
+  - o `opacity=` do `use` multiplica o de cada forma, e o `z=` dele soma no de cada uma **(R)**;
+  - um nome que já existe no desenho ganha um número (`pupil_1`), como no colar **(R)**;
+  - um `rect` girado dentro de um `use` esticado só para um lado vira o `rect` mais parecido, porque o `rect` não entorta (o mesmo do esticar da etapa 3) **(R)**;
+  - não quebra **(R)**: um `def` com `repeat` (as cópias não viram linhas soltas), um `def` de `include`, e um `use` com `bone=`, `cloth=`, `billboard` ou `{contas}` na posição, no `scale=`, no `rot=`, no `opacity=` ou no `z=`. O editor diz por quê.
+- **Renomear:** duplo clique no nome da miniatura. O renomear da 6a troca o `def` e todos os `use` dele.
+- **Apagar** (no painel) apaga só um `def` sem nenhum `use`, com os comentários de cima **(R)**. Com `use`, ele avisa: apague os `use` ou quebre o vínculo antes. O Illustrator pergunta se quer quebrar ou apagar as instâncias; aqui ficou o mais seguro.
+- **Menus:** **Objeto › Símbolo** (Criar símbolo, Editar símbolo, Sair do símbolo, Colocar, Quebrar vínculo), também no botão direito, e **Janela › Símbolos**.
+- Tudo é uma edição só do código: um Ctrl+Z desfaz.
+
+**Como ficou (16/11/2026):** a 6b saiu na 1.61.0, e a etapa 6 terminou.
+- O código novo está no `js/ui-symbols.js`. O entrar e sair do símbolo ficam no `js/app.js`, ao lado do isolamento do grupo.
+- Conferido no navegador:
+  - a miniatura;
+  - arrastar para o desenho;
+  - o F8 fora e dentro de um símbolo, com o comentário junto;
+  - o duplo clique e o Esc, também um símbolo dentro do outro;
+  - mover, agrupar e apagar lá dentro, com o Ctrl+Z;
+  - quebrar o vínculo de um `use` com `scale=2 rot=30` e parâmetros, e de um com `scale=1.5,2 rot=45 flip=x opacity=0.5 z=3` (as caixas antes e depois batem, a menos de 1 pixel, menos o `rect` girado do segundo, que é o mais parecido);
+  - renomear, apagar (recusado com `use`; sem `use`, sai com o comentário) e os menus.
+- Não há teste automático novo: tudo isso é da página, e o `npm test` roda sem ela.
+- O guia (capítulo 5), o README e a referência (F1) contam o que mudou.
+
+**A etapa 7** (a linha do tempo da animação no jeito do Animate, o filme, o acabamento e o estilo) vem em seguida.
 
 ### Como ficaria por dentro
 

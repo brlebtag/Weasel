@@ -59,6 +59,8 @@
   function syncDock() {
     secP.hidden = !cfg.props;
     secS.hidden = !cfg.sw;
+    // as partes de outros arquivos com chave aqui (Símbolos, js/ui-symbols.js)
+    for (const sec of dock.querySelectorAll(':scope > .dk-sec[data-sec]')) if (sec !== secP && sec !== secS && sec.dataset.sec in cfg) sec.hidden = !cfg[sec.dataset.sec];
     // no filme, a coluna some (as propriedades dos atores ficam para a etapa 7). As outras partes (Camadas, em
     // js/ui-layers.js, e Símbolos) abrem e fecham sozinhas: a coluna aparece com qualquer uma aberta.
     const any = [...dock.children].some((c) => (c.classList.contains('dk-sec') || c.id === 'layerPanel') && !c.hidden);

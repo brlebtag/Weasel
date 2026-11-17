@@ -199,6 +199,8 @@
       { label: 'Agrupar', key: 'Ctrl+G', enabled: hasSel, run: () => X().group() },
       { label: 'Desagrupar', key: 'Ctrl+Shift+G', enabled: () => hasSel() && X().isGroup(), run: () => X().ungroup() },
       { label: 'Sair do grupo', key: 'Esc', enabled: () => drawing() && !!A.iso(), run: () => A.exitIso() },
+      // os símbolos (def e use; js/ui-symbols.js, etapa 6b)
+      { label: 'Símbolo', enabled: drawing, sub: () => (W.symbols ? W.symbols.menu() : []) },
       '-',
       { label: 'Travar a escolha', key: 'Ctrl+2', enabled: hasSel, run: () => X().lock() },
       { label: 'Destravar tudo', key: 'Ctrl+Alt+2', enabled: drawing, run: () => X().unlockAll() },
@@ -272,6 +274,7 @@
       { label: 'Propriedades', visible: drawing, on: () => P().isOn('props'), run: () => P().toggle('props') },
       { label: 'Amostras', visible: drawing, on: () => P().isOn('sw'), run: () => P().toggle('sw') },
       { label: 'Camadas', visible: drawing, on: panelOn('layerPanel'), run: () => $('layerBtn').click() },
+      { label: 'Símbolos', visible: drawing, on: () => P().isOn('sym'), run: () => P().toggle('sym') },
       { label: 'Referências', visible: drawing, on: panelOn('refPanel'), run: () => $('refBtn').click() },
       { label: 'Sons guardados', visible: shown('mediaBtn'), on: panelOn('mediaList'), run: () => $('mediaBtn').click() },
     ] },
@@ -292,7 +295,7 @@
     return [
       ...pickItems('Editar', ['Desfazer', 'Refazer', '-', 'Recortar', 'Copiar', 'Colar', 'Apagar']).map((it) => (it === '-' || it.label.startsWith('Desfazer') || it.label.startsWith('Refazer') || it.label === 'Colar' ? it : onlyOn(it))),
       '-',
-      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Mandar para a camada', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
+      ...pickItems('Objeto', ['Transformar', 'Organizar', 'Mandar para a camada', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', 'Símbolo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
       '-',
       { label: 'Selecionar', sub: () => MENUS.find((m) => m.label === 'Selecionar').items },
       { label: 'Inserir forma', sub: () => A.shapes().map((x, i) => ({ label: `${x.label} (${x.cmd})`, run: () => A.insertAt(i, at) })) },

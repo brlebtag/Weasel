@@ -62,6 +62,7 @@
     none: -1, // a escolha foi tirada de propósito (clique no vazio, Esc) com o cursor nesta linha: a forma dela não vale
     lastXf: null, // a última transformação da escolha (o Ctrl+D repete): { mode, dx, dy | deg | sx, sy, fx, fy, copy }
     iso: null, // o grupo do isolamento (duplo clique num grupo): { line, name }; o resto do desenho fica parado
+    symIso: [], // os símbolos abertos (duplo clique num use, etapa 6b), de fora para dentro: { name, back, had, was }
     clip: null, // o que o Ctrl+C copiou ({ text, n }), para o Ctrl+F e o Ctrl+B (js/ui-select.js)
     view3d: false, // a vista Camadas em 3D (js/ui-3d.js) no lugar do desenho
   };
@@ -245,9 +246,9 @@
     return null;
   };
   // want: o def da prévia (com os valores do painel), só para o que aparece no editor
-  const parseFor = (variant, want) => L.parse(editor.value, {
+  const parseFor = (variant, want, params) => L.parse(editor.value, {
     file: st.current, resolve: resolveFile, media: mediaInfo, image: (f) => !!imageInfo(f), imageHint: 'abra a imagem no painel "Referências" para ela ficar guardada neste navegador', variant: variant || null,
-    preview: want ? { def: want, params: Object.fromEntries(pv.params.get(pvKey(want)) || []) } : null,
+    preview: want ? { def: want, params: params || Object.fromEntries(pv.params.get(pvKey(want)) || []) } : null,
   });
 
   // ---------- sons (audio) ----------
@@ -529,9 +530,11 @@
     return { type: el.type, name: el.name || '', sig: el.type + ' ' + (el.name || '') };
   }
   // o tipo e o nome de cada linha da árvore (para soltar da escolha uma linha que mudou de lugar no código)
+  // (dentro de um símbolo, a prévia do def: as linhas de dentro dele, etapa 6b)
+  const selModel = () => pvModel() || st.model;
   function nodeSigs() {
     const out = new Map();
-    for (const t of layerTree(st.model)) for (const k of t.kids) out.set(k.line, k.sig);
+    for (const t of layerTree(selModel())) for (const k of t.kids) out.set(k.line, k.sig);
     return out;
   }
   function setSel(lines, caretLine) {
@@ -900,7 +903,7 @@
   }
   // a escolha vira uma caixa no desenho: na Seleção, já com uma forma; nas outras, com mais de uma (com uma só,
   // valem as alças de sempre)
-  const groupOn = () => !!st.model && !isFilm() && !st.build && !pvModel() && (SELECTY.has(st.tool) ? selSet().size > 0 : st.sel.size > 1);
+  const groupOn = () => !!st.model && !isFilm() && !st.build && (SELECTY.has(st.tool) ? selSet().size > 0 : st.sel.size > 1);
   function groupBox(m, pose) {
     const lines = selSet(), geo = [];
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -961,7 +964,7 @@
   function hitGroup(e) {
     // a Varinha e o Laço só escolhem: a caixa aparece, mas não pega o clique
     if (!groupOn() || st.tool === 'wand' || st.tool === 'lasso') return null;
-    const b = groupBox(st.model, currentPose());
+    const b = groupBox(selModel(), currentPose());
     if (!b) return null;
     const [x, y] = toCanvas(e), z = st.view.z, s = groupSpots(b, z), r = 10 / z;
     if (Math.hypot(s.spin[0] - x, s.spin[1] - y) < r) return 'spin';
@@ -983,7 +986,7 @@
     const stop = (p) => p.why || (mode === 'spin' && p.noSpin) || (mode === 'scale' && p.noScale) || '';
     const ok = plans.filter((p) => !stop(p)), left = plans.length - ok.length;
     if (!ok.length) { hint(`Nada aqui dá para ${verb} pelo desenho: ${stop(plans[0])}.`, 3200); return; }
-    const b = groupBox(st.model, currentPose()), [px, py] = toCanvas(e);
+    const b = groupBox(selModel(), currentPose()), [px, py] = toCanvas(e);
     for (const p of ok) {
       if (mode !== 'scale') {
         p.l0 = localOf(p.rec, p.ref, px, py);
@@ -4034,7 +4037,7 @@
   function nudge(dx, dy) {
     if (!groupOn()) return false;
     if (st.playing || st.anim) { hint('Para empurrar a escolha, escolha "pose parada" no player.', 2600); return true; }
-    const b = groupBox(st.model, currentPose());
+    const b = groupBox(selModel(), currentPose());
     if (!b) return false;
     const out = new Map(), dec = st.view.z > 3 ? 1 : 0, stuck = [];
     for (const line of selSet().keys()) {
@@ -4600,6 +4603,62 @@
     hint(st.iso ? `De volta ao grupo ${st.iso.name || '(sem nome)'}.` : 'Fora do isolamento.', 1600);
     return true;
   }
+  // Editar um símbolo (etapa 6b): o duplo clique num use (ou no painel Símbolos) leva o cursor para dentro do def
+  // dele com a prévia ligada: o desenho mostra só o componente, em volta do 0,0, e as formas dele se mexem como
+  // sempre. back: a linha do use (ou -1); Esc (ou duplo clique no vazio) volta para ela.
+  function defLines(name) {
+    const m = st.model, d = m && m.defs.get(name);
+    if (!d) return null;
+    const line = m.lineMap ? m.lineMap[d.st.line] : d.st.line, ls = editor.value.split('\n');
+    if (!new RegExp(`^\\s*def\\s+${name}(?![\\w-])`).test(ls[line] || '')) return null;
+    let depth = 0, end = -1;
+    for (let i = line; i < ls.length; i++) {
+      const w = (/^\s*([A-Za-z_]\w*)/.exec(ls[i]) || [])[1];
+      if (w === 'def' || w === 'repeat' || w === 'group') depth++;
+      else if (w === 'end' && --depth === 0) { end = i; break; }
+    }
+    return { line, end };
+  }
+  function enterDef(name, back) {
+    if (isFilm()) return false;
+    const at = defLines(name);
+    if (!at) { hint(`O def ${name} vem de outro arquivo (include): abra o arquivo dele para mudar.`, 3000); return false; }
+    if (st.symIso.some((s) => s.name === name)) { hint(`O símbolo ${name} já está aberto.`, 2000); return false; }
+    const k = pvKey(name);
+    st.symIso.push({ name, back, had: pv.mode.has(k), was: pv.mode.get(k) });
+    pv.mode.set(k, true);
+    st.iso = null;
+    // o cursor vai para a primeira linha de dentro (o def vazio: a linha dele)
+    const first = at.end > at.line + 1 ? at.line + 1 : at.line;
+    st.sel = new Map();
+    editor.reveal(first, /^\s*/.exec(editor.value.split('\n')[first])[0].length);
+    deselect();
+    reparse();
+    hint(`Dentro do símbolo ${name}: o desenho mostra só ele, e a cruz é o 0,0 (o ponto que vai para o x,y do use). Mexa nas formas como sempre; Esc ou duplo clique no vazio volta.`, 4200);
+    return true;
+  }
+  // sai do símbolo aberto (o de mais dentro); false se não há (ou se o cursor já saiu dele por outro caminho)
+  function exitDef() {
+    const s = st.symIso[st.symIso.length - 1], d = caretDef();
+    if (!s) return false;
+    if (!d || d.name !== s.name) { st.symIso = []; return false; }
+    st.symIso.pop();
+    const k = pvKey(s.name);
+    if (s.had) pv.mode.set(k, s.was); else pv.mode.delete(k);
+    // o use de onde se entrou (se as linhas mudaram de número lá dentro, o use desse símbolo mais perto dela)
+    let back = s.back;
+    const isUse = (l) => { const r = l >= 0 ? st.model.byLine.get(l) : null; return !!(r && r.use === s.name); };
+    if (back >= 0 && !isUse(back)) {
+      let best = -1;
+      for (const [l, r] of st.model.byLine) if (r.use === s.name && (best < 0 || Math.abs(l - s.back) < Math.abs(best - s.back))) best = l;
+      back = best;
+    }
+    if (isUse(back)) setSel([back], back);
+    else { editor.reveal(defLines(s.name) ? defLines(s.name).line : st.caret.line, 0); deselect(); }
+    reparse();
+    hint(st.symIso.length ? `De volta ao símbolo ${st.symIso[st.symIso.length - 1].name}.` : `Fora do símbolo ${s.name}.`, 1800);
+    return true;
+  }
   function drawMarq(ctx, z) {
     const q = st.marq;
     ctx.save();
@@ -4678,7 +4737,7 @@
   }
   // A caixa das linhas (sem a grossura do contorno), nas coordenadas do desenho.
   function boxOf(lines) {
-    const m = st.model, pose = currentPose(), set = new Set(lines);
+    const m = selModel(), pose = currentPose(), set = new Set(lines);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
     for (const t of layerTree(m)) for (const k of t.kids) {
@@ -4827,6 +4886,12 @@
     // a Caneta e a Curvatura usam o duplo clique para elas
     const tkd = !isFilm() && toolHooks[st.tool];
     if (tkd && tkd.dbl) { tkd.dbl(e); return; }
+    // na Seleção: duplo clique num use (solto, ou dentro do símbolo aberto) entra no def dele (etapa 6b)
+    if (st.tool === 'select' && !isFilm()) {
+      const l = linesAt(e)[0], rec = l !== undefined ? st.model.byLine.get(l) : null;
+      if (rec && rec.use && selectable(l) && (pvModel() || groupIn(l, isoGroup()) === null)) { enterDef(rec.use, l); return; }
+      if (l === undefined && st.symIso.length && pvModel()) { exitDef(); return; }
+    }
     // na Seleção: duplo clique numa forma de um grupo entra nele (isolamento); no vazio, sai
     if (st.tool === 'select' && !isFilm() && !pvModel()) {
       const l = linesAt(e)[0], g = l === undefined ? null : groupIn(l, isoGroup());
@@ -5602,7 +5667,8 @@
   // o: { key, text: o "Texto" fica selecionado no código }. Devolve o número da linha nova, ou -1.
   function addLine(pl, cmd, base, rest, o) {
     if (!pl || pl.why) { if (pl && pl.why) hint(pl.why, 3200); return -1; }
-    const name = freeName(base), body = `${pl.indent}${cmd} ${name} ${rest}`;
+    // o use (o.name: o def) não cria nome novo
+    const name = o && o.name ? o.name : freeName(base), body = `${pl.indent}${cmd} ${name} ${rest}`;
     const v = editor.value, n = v.split('\n').length;
     let off, txt, nl;
     if (pl.at >= n) {
@@ -5702,7 +5768,7 @@
     // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
     if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
-    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else if (!exitIso()) deselect(); if (st.meas) { st.meas = null; draw(); } return; }
+    if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else if (!exitDef() && !exitIso()) deselect(); if (st.meas) { st.meas = null; draw(); } return; }
     if (inField(t)) return;
     // daqui em diante, o foco está no desenho (ou num botão)
     if (mod && !e.altKey && low === 'z') { e.preventDefault(); undoRedo(e.shiftKey); return; }
@@ -5810,6 +5876,16 @@
     rename: (line, to, key) => renameAt(line, to, key),
     nameOf: (line) => { const w = nameWord(L.splitLine(lineOf(line))); return w ? w.text : ''; },
     fillLayers: () => { layerSig = ''; fillLayerPanel(); },
+    // os símbolos (js/ui-symbols.js, etapa 6b): o componente sozinho com os valores padrão (para a miniatura),
+    // entrar e sair dele, e onde está o def
+    defModel: (name) => {
+      if (!st.model || isFilm() || !st.model.defs.has(name)) return null;
+      try { const m = parseFor(st.variant, name, {}); return (m.preview && m.preview.model) || null; } catch (e) { return null; }
+    },
+    enterDef: (name, back) => enterDef(name, back === undefined ? -1 : back),
+    exitDef: () => exitDef(),
+    symIso: () => st.symIso.map((s) => s.name),
+    defLines: (name) => defLines(name),
     duplicate2: (key) => duplicateSel(key),
     again: transformAgain,
     viewCenter: () => viewCenter(),

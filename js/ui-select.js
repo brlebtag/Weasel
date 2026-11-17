@@ -14,9 +14,13 @@
   const sel = () => A.selected().slice().sort((a, b) => a - b);
   const model = () => (A.isFilm() ? null : st.model);
   // pode mexer no código pela escolha? (no filme não há formas; na prévia do def, o desenho é só o componente)
-  function ready(verb) {
+  // inDef: vale também dentro de um símbolo (a prévia do def), porque só mexe no texto das linhas escolhidas
+  function ready(verb, inDef) {
     if (!model()) return false;
-    if (A.defPreview()) { A.hint(`Para ${verb}, tire o cursor de dentro do def (a prévia mostra só o componente).`, 3000); return false; }
+    if (A.defPreview() && !inDef) {
+      A.hint(A.symIso && A.symIso().length ? `Dentro do símbolo dá para mover, esticar, girar, apagar e agrupar; para ${verb}, saia dele (Esc ou duplo clique no vazio).` : `Para ${verb}, tire o cursor de dentro do def (a prévia mostra só o componente).`, 3400);
+      return false;
+    }
     return true;
   }
   const wordsOf = (line) => L.splitLine(A.lineText(line)).words;
@@ -202,7 +206,7 @@
   // Apaga as linhas escolhidas (os comentários ficam). Uma forma de um repeat só sai pelo código. Se o nome de uma
   // forma apagada ainda aparece em outra linha (uma key, um clip=…), avisa onde.
   function del(lines, key, quiet) {
-    if (!ready('apagar')) return 0;
+    if (!ready('apagar', true)) return 0;
     const m = model();
     lines = lines || sel();
     if (!lines.length) { if (!quiet) A.hint('Escolha uma forma para apagar.', 2000); return 0; }
@@ -368,7 +372,7 @@
   // As peças escolhidas entram num group novo (group1, group2…), no lugar da de cima (a última no código), na ordem
   // em que estavam; os comentários de cima de cada uma vão junto, e as linhas de dentro ganham dois espaços.
   function group() {
-    if (!ready('agrupar')) return;
+    if (!ready('agrupar', true)) return;
     const lines = sel();
     if (!lines.length) { A.hint('Escolha as formas para agrupar (Ctrl+G).', 2400); return; }
     const src = A.editor.value.split('\n'), us = unitsOf(lines, src);
@@ -390,7 +394,7 @@
   }
   // desagrupar: o group e o end saem (um nível por vez); as formas ficam escolhidas
   function ungroup() {
-    if (!ready('desagrupar')) return;
+    if (!ready('desagrupar', true)) return;
     const lines = sel(), src = A.editor.value.split('\n'), us = A.units(lines).filter((u) => u.g && u.g.end < src.length);
     if (!us.length) { A.hint('A escolha não é um grupo inteiro: escolha o grupo com a Seleção (V) e aperte Ctrl+Shift+G.', 3000); return; }
     const drop = new Set(), fix = new Map();
@@ -416,7 +420,7 @@
   // Ctrl+2 trava a escolha (um grupo inteiro: o lock vai na linha do group); Ctrl+Alt+2 destrava tudo (as formas,
   // os use e os grupos; as camadas travadas ficam, elas se destravam pelo cadeado do painel Camadas)
   function lock() {
-    if (!ready('travar')) return;
+    if (!ready('travar', true)) return;
     const lines = sel();
     if (!lines.length) { A.hint('Escolha as formas para travar (Ctrl+2).', 2400); return; }
     const targets = A.units(lines).map((u) => (u.g ? u.g.line : u.a)).filter((l) => A.lockTok(l));
@@ -426,7 +430,7 @@
     A.hint(`${many(targets.length, 'peça travada', 'peças travadas')} (lock): o desenho não deixa escolher nem arrastar. Ctrl+Alt+2 destrava tudo; o cadeado do painel Camadas, uma.`, 3600);
   }
   function unlockAll() {
-    if (!ready('destravar')) return;
+    if (!ready('destravar', true)) return;
     const n = A.editor.value.split('\n').length, before = new Set(A.blocks().locked), targets = [];
     for (let i = 0; i < n; i++) { const h = A.lockTok(i); if (h && h.on && h.cmd !== 'layer') targets.push(i); }
     if (!targets.length) { A.hint(before.size ? 'Só há camadas travadas: destrave pelo cadeado do painel Camadas.' : 'Nada travado.', 2600); return; }
