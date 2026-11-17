@@ -2276,7 +2276,7 @@ key 12 b2=0,0
 - `loop` numa transição dá aviso: as peças sempre tocam uma vez.
 - No GIF, uma animação com `once` recomeça do quadro 0 ao chegar no fim; no jogo, ela toca uma vez e para.
 
-**Para aprender:** [A primeira animação](07-movimento.md#a-primeira-animação), [Loop ou uma vez só](07-movimento.md#loop-ou-uma-vez-só-once), [Animações combinadas](09-animacao.md#animações-combinadas-mix), [Andar sem escorregar](09-jogo-godot.md#andar-sem-escorregar-feet), [Transições](09-jogo-godot.md#sair-de-uma-animação-sem-corte-from-e-to) e [Virada](09-jogo-godot.md#virar-de-lado-para-a-frente-turn).
+**Para aprender:** [A primeira animação](07-movimento.md#a-primeira-animação), [Loop ou uma vez só](07-movimento.md#loop-ou-uma-vez-só-once), [Animações combinadas](09-animacao.md#animações-combinadas-mix), [Andar sem escorregar](15-jogo-personagem.md#andar-sem-escorregar-feet), [Transições](16-jogo-avancado.md#sair-de-uma-animação-sem-corte-from-e-to) e [Virada](16-jogo-avancado.md#virar-de-lado-para-a-frente-turn).
 
 ### `key`
 
@@ -2436,7 +2436,7 @@ Escreva o nome da caixa de colisão ([`box`](#box)): `key 3 golpe.show=1`.
 
 Numa animação com `once`, antes da primeira `key` vale o que a linha `box` diz. Num loop, vale a última `key`, que dá a volta.
 
-**Para aprender:** [Uma caixa que segue o braço](09-jogo-godot.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe).
+**Para aprender:** [Uma caixa que segue o braço](15-jogo-personagem.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe).
 
 ### `event`
 
@@ -2625,7 +2625,7 @@ rect corpo 70,92 60,128 r=20 c=#4a90d9 ink=3
 - O `collider=` é contado do **meio** dele. Com `dy` 0, metade do colisor fica abaixo da raiz. Para a base ficar no chão, use `dy` igual à metade da altura, como no exemplo.
 - Com duas linhas `unity`, vale a de baixo, e o Weasel não avisa.
 
-**Para aprender:** [Para outros motores: sprite sheet e `unity`](09-jogo-godot.md#para-outros-motores-sprite-sheet-e-unity).
+**Para aprender:** [Para outros motores: sprite sheet e `unity`](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity).
 
 ### `box`
 
@@ -2676,7 +2676,7 @@ key 6 golpe.show=0
 - Uma caixa chamada `Sprite`, `Hitbox`, `Hurtbox`, `Corpo` ou `AnimationPlayer` ganha `_caixa` no fim do nome do nó, para não confundir com os nós que o Weasel cria.
 - A `key` só muda o `show=` da caixa: ligar e desligar. Para a caixa andar, use `bone=`.
 
-**Para aprender:** [Caixas de colisão: `box`](09-jogo-godot.md#caixas-de-colisão-box).
+**Para aprender:** [Caixas de colisão: `box`](15-jogo-personagem.md#caixas-de-colisão-box).
 
 ### `point`
 
@@ -2712,7 +2712,7 @@ key 12 braco=0,0,-20
 - Um ponto chamado `Sprite`, `Hitbox`, `Hurtbox`, `Corpo` ou `AnimationPlayer` ganha `_ponto` no fim do nome do nó.
 - Os pontos também são os pés do `feet=` (no [`anim`](#anim)).
 
-**Para aprender:** [Pontos de encaixe: `point`](09-jogo-godot.md#pontos-de-encaixe-point).
+**Para aprender:** [Pontos de encaixe: `point`](15-jogo-personagem.md#pontos-de-encaixe-point).
 
 ### `godot`
 
@@ -2750,7 +2750,7 @@ O `.tscn` sai com a folha (`.png`), o normal map (`_normal.png`), o `.tres` (Spr
 - Com duas linhas `godot`, vale a de baixo (o Weasel avisa).
 - `rig=bones` num desenho com `yaw=`, `pitch=`, `z=` ou `iso` dá aviso: o esqueleto do Godot não gira em 3D, e essas partes ficam paradas.
 
-**Para aprender:** [O nó do Godot: `godot`](09-jogo-godot.md#o-nó-do-godot-godot) e [Exportando para o Godot](09-jogo-godot.md#exportando-para-o-godot).
+**Para aprender:** [O nó do Godot: `godot`](15-jogo-personagem.md#o-nó-do-godot-godot) e [Exportando para o Godot](15-jogo-personagem.md#do-weasel-para-o-godot).
 
 ### `tileset`
 
@@ -2792,7 +2792,7 @@ Para exportar: `-f godot` ou `-o fase.tres` (sai o `.png` e o `.tres`); com `--n
 - Com `iso`, um bloco mais baixo que a metade da largura dá aviso: o losango não cabe.
 - Com `-s`, o bloco precisa continuar com um tamanho inteiro em pixels (32 com `-s 0.5` dá 16; com `-s 0.3`, dá erro).
 
-**Para aprender:** [Tileset: blocos para montar fases](09-jogo-godot.md#tileset-blocos-para-montar-fases) e [Tileset isométrico](14-profundidade.md#tileset-isométrico).
+**Para aprender:** [Tileset: blocos para montar fases](16-jogo-avancado.md#tileset-blocos-para-montar-fases) e [Tileset isométrico](16-jogo-avancado.md#tileset-isométrico).
 
 ### `tile`
 
@@ -2834,7 +2834,7 @@ tile enfeite 3,0
 - Com `oneway` e `collision=`, a forma colide só por cima (uma rampa ou uma tábua).
 - O `tile` pode vir antes ou depois do `tileset` no arquivo.
 
-**Para aprender:** [Tileset: blocos para montar fases](09-jogo-godot.md#tileset-blocos-para-montar-fases).
+**Para aprender:** [Tileset: blocos para montar fases](16-jogo-avancado.md#tileset-blocos-para-montar-fases).
 
 ## Expressões e bocas
 

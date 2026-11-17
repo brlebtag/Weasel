@@ -50,8 +50,8 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 
 | | Capítulo | O que você aprende |
 |---|---|---|
-| 15 | [Jogo: o personagem no Godot](09-jogo-godot.md) (antigo) | caixas de colisão, pontos de encaixe, andar sem escorregar e exportar para o Godot |
-| 16 | [Jogo: fases e recursos avançados](09-jogo-godot.md#direções-jogos-vistos-de-cima) (antigo) | direções, transições entre animações, a virada, o tileset, o esqueleto de verdade e o Unity |
+| 15 | [Jogo: o personagem no Godot](15-jogo-personagem.md) | exportar para o Godot, caixas de colisão, pontos de encaixe, o ajudante `tocar()`, direções e andar sem escorregar |
+| 16 | [Jogo: fases e recursos avançados](16-jogo-avancado.md) | o tileset, transições entre animações, a virada, o esqueleto de verdade, a sprite sheet e a Unity |
 | 17 | [Filme: atores, planos e câmera](10-filme.md) (antigo) | atores, planos e transições, a câmera e as mudanças no tempo (`at`) |
 | 18 | [Filme: atuação, som e legendas](10-filme.md#expressões-expr) (antigo) | expressões, marcadores, caminhos, profundidade, som, legendas e lip sync |
 

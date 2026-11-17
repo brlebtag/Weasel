@@ -358,7 +358,7 @@ Uma linha por animação.
 - `--cols` só vale com `--layout grid`.
 - Uma sequência (`-a "idle walk"`) não vale aqui: escolha `all` ou uma animação.
 - Uma folha com mais de 16384 pixels de lado dá erro: `a folha ficaria grande demais: diminua a escala`.
-- O que vem no JSON, quadro por quadro, está no [capítulo 9](09-jogo-godot.md#para-outros-motores-sprite-sheet-e-unity).
+- O que vem no JSON, quadro por quadro, está no [capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity).
 
 ## Godot (e Unity)
 
@@ -402,9 +402,9 @@ Num arquivo com `tileset`, o `-f godot` faz o TileSet: a imagem dos blocos e o `
 - A cena (`.tscn`) leva **sempre todas** as animações, com fundo transparente e recortadas: o `-a`, o `-t` e o `--trim` não mudam isso. O `--trim=20` só muda a margem (padrão 8).
 - `--layout`, `--cols` e `--padding` arrumam a folha da cena e a do `-f godot`, como na [sprite sheet](#sprite-sheet).
 - Num `tileset`, a escala precisa deixar os blocos com um tamanho inteiro. Senão, a resposta é, por exemplo, `com escala 0.3 o bloco de 32×32 não fica com tamanho inteiro`. Com `-o blocos.tscn`, sai o mesmo TileSet, já com o normal map.
-- O passo a passo do Godot, com o script do jogo, está no [capítulo 9](09-jogo-godot.md#exportando-para-o-godot); o esqueleto de verdade, em [`rig=bones`](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental).
+- O passo a passo do Godot, com o script do jogo, está no [capítulo 15](15-jogo-personagem.md#do-weasel-para-o-godot); o esqueleto de verdade, em [`rig=bones`](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental).
 
-**Unity:** não tem opção na linha de comando. A linha `unity` no arquivo acrescenta ao JSON da sprite sheet (`-f sheet`) os pixels por unidade, o pivô e o colisor ([capítulo 9](09-jogo-godot.md#para-outros-motores-sprite-sheet-e-unity)).
+**Unity:** não tem opção na linha de comando. A linha `unity` no arquivo acrescenta ao JSON da sprite sheet (`-f sheet`) os pixels por unidade, o pivô e o colisor ([capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity)).
 
 ## Conferir o movimento
 
@@ -412,7 +412,7 @@ Duas imagens para achar defeitos numa animação: o caminho dos pés e a folha d
 
 ### A trajetória: `--trajectory`
 
-O caminho dos pés em todos os quadros da animação, numerado, por cima do personagem clarinho. A trajetória precisa de pontos (`point`). O `andador.weasel` é o boneco do [capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet):
+O caminho dos pés em todos os quadros da animação, numerado, por cima do personagem clarinho. A trajetória precisa de pontos (`point`). O `andador.weasel` é o boneco do [capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet):
 
 ```bash
 node cli/weasel.js andador.weasel -a anda_right --trajectory -o pes.png
@@ -434,7 +434,7 @@ anda_right: anda 120 px/s para a direita (10 px por quadro a 12 fps)
 
 - Os pontos vão depois de um `=`, sem espaço: `--trajectory=pe_e`.
 - Num desenho sem pontos, a resposta é `--trajectory segue os pontos (point): o desenho não tem nenhum`.
-- Como ler a imagem: [capítulo 9](09-jogo-godot.md#a-trajetória-dos-pés).
+- Como ler a imagem: [capítulo 15](15-jogo-personagem.md#a-trajetória-dos-pés---trajectory).
 
 ### A folha de conferência: `--contact`
 
@@ -458,7 +458,7 @@ salvo folha.png  2086×1522, folha de conferência: 76 quadros de 6 animações 
 - A folha serve para conferir e não vai para o jogo: a sprite sheet continua sem os números.
 - Quando um pé escorrega, a resposta também diz em que quadros: `aviso: anda_right: pe_d escorrega nos quadros 5, 6`.
 - Num filme, a folha tem uma linha por plano ([abaixo](#a-folha-de-conferência-do-filme)).
-- O que cada marca quer dizer: [capítulo 9](09-jogo-godot.md#a-folha-de-conferência).
+- O que cada marca quer dizer: [capítulo 15](15-jogo-personagem.md#a-folha-de-conferência---contact).
 
 ## Vídeo de um desenho
 

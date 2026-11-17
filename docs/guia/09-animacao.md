@@ -174,7 +174,7 @@ As regras:
 - A forma de destino quase sempre tem `hidden`: ela não aparece, só empresta o formato.
 - Para voltar ao normal, faça o morph para a própria forma: `key 20 olho.shape=olho`.
 - Textos, partículas e pernas feitas com `stroke … hip=` não fazem morph.
-- Para virar um personagem inteiro de lado para a frente, use a virada (`turn`, [capítulo 15](09-jogo-godot.md#virar-de-lado-para-a-frente-turn)).
+- Para virar um personagem inteiro de lado para a frente, use a virada (`turn`, [capítulo 16](16-jogo-avancado.md#virar-de-lado-para-a-frente-turn)).
 
 **Experimente:** acrescente `ease=step` na `key 0`. A bolha, a boca e a linha deixam de se transformar aos poucos e **trocam de uma vez** no quadro 12. A volta (do 12 ao 24) continua aos poucos, porque a `key 12` ainda usa o `smooth`.
 
@@ -232,7 +232,7 @@ Repare:
 - No resumo, cada evento aparece como `nome@quadro`.
 - Um evento no quadro `frames=` (aqui, 24) vale como quadro 0, porque o 24 é o 0 da volta seguinte.
 - Os nomes são livres: use nomes que o jogo vai entender (`passo`, `golpe`, `som_pulo`). Um nome com espaço vai entre aspas (`"um passo"`).
-- No player do editor, os quadros com evento aparecem com ⚑. Na sprite sheet, os eventos vão no arquivo JSON; no Godot, chegam pelo sinal `evento(nome)` ([capítulo 15](09-jogo-godot.md)).
+- No player do editor, os quadros com evento aparecem com ⚑. Na sprite sheet, os eventos vão no arquivo JSON; no Godot, chegam pelo sinal `evento(nome)` ([capítulo 15](15-jogo-personagem.md#no-jogo-o-ajudante-tocar)).
 
 **Experimente:** acrescente `event 0 comeca` e rode o `--info` de novo. A lista ganha `comeca@0`.
 
@@ -430,7 +430,7 @@ Repare:
 - `layer olhos only=pose,parado`: os olhos abertos aparecem na pose parada **e** na animação `parado`. A palavra `pose` quer dizer a pose parada (sem animação); por isso, nenhuma animação deve se chamar `pose` (o Weasel avisa).
 - `layer esforco only=corre`: os olhos apertados e os riscos de vento só aparecem na `corre`.
 - As formas dessas camadas continuam presas aos ossos normalmente.
-- As caixas de colisão de um jogo (`box`, [capítulo 15](09-jogo-godot.md#caixas-de-colisão-box)) aceitam o mesmo `only=`.
+- As caixas de colisão de um jogo (`box`, [capítulo 15](15-jogo-personagem.md#caixas-de-colisão-box)) aceitam o mesmo `only=`.
 
 **Experimente:** tire o `pose,` da camada `olhos`. Na pose parada (a imagem da esquerda, ou o editor sem animação escolhida), o bicho fica sem olhos.
 
@@ -512,7 +512,7 @@ Repare:
 
 - `mix=walk,atk bones=braco`: tudo vem do `walk`, menos o osso `braco` (e os filhos dele), que vem do `atk`. O `mix=` junta exatamente duas animações, nenhuma delas pode ser outro `mix=`, e o `bones=` é obrigatório.
 - O tempo é o da ação: 8 quadros, 12 por segundo e `once`, como o `atk`. Para mudar, escreva `frames=`, `fps=`, `once` ou `loop` na linha do `anim` (`loop` só é preciso aqui, para repetir uma combinada cuja ação tem `once`). Os quadros são copiados pelo **tempo**: um quadro da combinada pega o que a outra animação fazia naquele instante, mesmo com outro `fps=`.
-- O que é da ação vem junto: o evento `golpe` e as camadas com `only=atk`. A linha `box` é uma caixa de colisão de jogo ([capítulo 15](09-jogo-godot.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe)); ela não aparece na imagem, mas também liga nos quadros certos.
+- O que é da ação vem junto: o evento `golpe` e as camadas com `only=atk`. A linha `box` é uma caixa de colisão de jogo ([capítulo 15](15-jogo-personagem.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe)); ela não aparece na imagem, mas também liga nos quadros certos.
 - Uma `key` escrita na própria combinada ganha da que vem das outras animações.
 - Numa combinada em loop, o tempo dela tem de fechar o ciclo das animações de onde os ossos vêm. Exemplo: se o andar dura 2 segundos e a combinada 1,5, ela recomeça no meio do passo e as pernas pulam. Use 2 ou 4 segundos; o editor avisa e sugere um tempo.
 
@@ -556,7 +556,7 @@ O primeiro faz um GIF; o segundo, o PNG de um quadro (o mesmo número das `key`)
 - `-a "idle walk*3 jump"`: várias animações em seguida, na ordem; `*3` repete três vezes;
 - `--sticker` com `.webp`: uma figurinha do WhatsApp.
 
-Os detalhes estão no [capítulo 21](21-linha-de-comando.md#uma-animação). A sprite sheet e a cena do Godot estão no [capítulo 16](09-jogo-godot.md#exportando-para-o-godot). Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info`.
+Os detalhes estão no [capítulo 21](21-linha-de-comando.md#uma-animação). A cena do Godot está no [capítulo 15](15-jogo-personagem.md#do-weasel-para-o-godot), e a sprite sheet, no [capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity). Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info`.
 
 ## Juntando tudo
 

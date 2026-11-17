@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 14. As dicas dos outros assuntos (jogo, filme) ainda estão nos capítulos antigos.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 16. As dicas do filme ainda estão no capítulo antigo.
 
 ## Abrir e rodar
 
@@ -480,7 +480,7 @@ O player fica embaixo do desenho e mostra as animações ([capítulo 7](07-movim
 - Uma animação com `once` toca uma vez e para no último quadro; as outras repetem. O botão ao lado de ▶ troca entre **repetir** e **tocar uma vez**, só no player: o código não muda.
 - Os quadros com `event` aparecem com ⚑.
 - **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador.
-- **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros. Com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 16](09-jogo-godot.md#andar-sem-escorregar-feet)).
+- **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros. Com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet)).
 - **Adicionar imagem…** com uma animação escolhida já escreve o `only=` dela na linha `ref`.
 
 ### Exportar uma animação
@@ -588,5 +588,30 @@ Bom saber:
 - As teclas valem com o foco na linha do tempo: clique nela antes. Fora dela, o F5 recarrega a página. Com o player tocando, ela só mostra; pause para mexer.
 - O botão da linha do tempo no player (ou **Exibir › Linha do tempo**) esconde e mostra.
 - Uma transição (`from=` e `to=`) não tem `key`, nem uma combinada (`mix=`) sem `key` própria: nelas, a linha do tempo só avisa isso.
+
+## Jogo
+
+As dicas dos capítulos [15](15-jogo-personagem.md) e [16](16-jogo-avancado.md).
+
+**As caixas (`box`):** com **Exibir › Hitboxes** ligado (o padrão), elas aparecem por cima do desenho: a do corpo (`body`) em verde, a do golpe (`hit`) em vermelho e a do dano (`hurt`) em amarelo. Uma caixa desligada naquele quadro (`off`, ou `.show=0` numa `key`) fica tracejada e mais apagada. Com **Hitboxes** desligado, o desenho fica limpo, e só aparece a caixa da linha onde está o cursor. As caixas nunca saem nas imagens exportadas: elas só vão para o jogo.
+
+**Com Exibir › Guias:**
+
+- os pontos (`point`) aparecem em roxo, com o nome e uma seta para onde o osso aponta;
+- num `tileset`, aparece a grade das células, com o nome de cada bloco no canto de baixo. A colisão (`solid` ou `collision=`) tem um contorno verde, e um traço verde grosso em cima marca o `oneway`;
+- com `unity`, o colisor aparece tracejado, e o `root=` ganha uma cruz.
+
+**Exibir › Trajetória** mostra o caminho dos pés e a velocidade deles (veja o [Player](#player)).
+
+**Exportar para o jogo:** na janela **Exportar**, o botão **Godot** salva um `.zip` para pôr numa pasta do projeto do Godot. Ele tem a folha (`.png`) e o `.tres` e, com as caixas de marcar, o resto:
+
+| Caixa | O que acrescenta | Na linha de comando |
+|---|---|---|
+| **Cena pronta (.tscn)** | a cena com as caixas, os pontos, o AnimationPlayer e o `weasel_anim.gd` | `-o x.tscn` |
+| **Normal map (luz 2D)** | o relevo para a luz do Godot | `--normal` (com `-o x.tscn`, ele já vem) |
+| **Espelhar direções** | as animações `_right` ganham a `_left` espelhada (e vice-versa) | desligado: `--no-mirror` |
+| **Esqueleto (Bone2D)** | os ossos e as peças, em vez dos quadros ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)); com `godot rig=bones` no arquivo, fica sempre ligado | `--rig` |
+
+Num arquivo com `tileset`, o botão **Godot** salva o TileSet. O botão **Sprite sheet** salva a folha e o JSON para outros motores; **Arranjo**, **Colunas** e **Espaço entre quadros** são o `--layout`, o `--cols` e o `--padding`, e **Recortar ao desenho**, com a **Margem do recorte**, é o `--trim` ([capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity)).
 
 [← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)

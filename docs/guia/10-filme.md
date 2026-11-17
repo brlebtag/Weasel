@@ -1,6 +1,6 @@
 # 10. Filme
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)
+[← Jogo: fases e recursos avançados](16-jogo-avancado.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)
 
 Um arquivo que começa com `film` é um **filme**. Ele não desenha personagens: ele **põe em cena** arquivos `.weasel` que já existem (os mesmos do jogo), divide o tempo em **planos** e diz o que muda e quando. Corrigiu o personagem no arquivo dele? A correção vale no jogo e no filme.
 
@@ -710,18 +710,18 @@ Trocar `anim` recomeça a nova animação do quadro 0. Entre dois jeitos de anda
 at 3s capivara.anim=trote phase
 ```
 
-- Com `feet=` nas duas animações ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)), o Weasel alinha pelos pés: o meio do tempo em que o **primeiro** pé do `feet=` fica no chão cai no mesmo ponto nas duas. Assim, o pé que está no chão continua no chão.
+- Com `feet=` nas duas animações ([capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet)), o Weasel alinha pelos pés: o meio do tempo em que o **primeiro** pé do `feet=` fica no chão cai no mesmo ponto nas duas. Assim, o pé que está no chão continua no chão.
 - Sem `feet=` (numa delas ou nas duas), vale a fração do ciclo: a 40% da passada de `anda`, o `trote` começa nos 40% dele.
 - `phase` só alinha duas animações em loop. Se a de antes ou a nova toca uma vez (`once`), a nova começa do quadro 0, com um aviso.
 - Junto com `blend=`, a mistura começa com as duas já na mesma fase: `at 3s capivara.anim=trote phase blend=0.4s`.
 - `phase` vale só para o `anim=` da mesma linha. As outras trocas recomeçam do quadro 0, como sempre.
-- No Godot, a mesma troca é `tocar("trote", velocity, true)` ([capítulo 9](09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo)).
+- No Godot, a mesma troca é `tocar("trote", velocity, true)` ([capítulo 15](15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés)).
 
 ### Andar sem escorregar: `speed=auto`
 
 Um ator que anda pelo palco (com `at … x,y` ou `path=`) tocando uma animação de andar escorrega os pés quando a velocidade da animação não bate com a dele. Com `speed=auto`, a animação **acompanha o ator**: anda mais depressa quando ele anda mais depressa, e para quando ele para.
 
-O personagem precisa de `feet=` na animação. Aqui ele é o Andador do [capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet), que anda 120 px por segundo:
+O personagem precisa de `feet=` na animação. Aqui ele é o Andador do [capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet), que anda 120 px por segundo:
 
 <details>
 <summary>O <code>andador.weasel</code></summary>
@@ -843,7 +843,7 @@ at 1.2s placa.show=1
 
 ### Um ator vira outro: `morph=`
 
-Com `morph=`, um ator **se transforma** em outro: cada parte de um vai virando uma parte do outro, como na [virada](09-jogo-godot.md#virar-de-lado-para-a-frente-turn) do jogo. Aqui, a capivara correndo vira um furão andando, sem parar de correr:
+Com `morph=`, um ator **se transforma** em outro: cada parte de um vai virando uma parte do outro, como na [virada](16-jogo-avancado.md#virar-de-lado-para-a-frente-turn) do jogo. Aqui, a capivara correndo vira um furão andando, sem parar de correr:
 
 <!-- gerar: img/10_morph.gif -s 0.6 -->
 ```weasel
@@ -1544,4 +1544,4 @@ salvo render/conversa.fcpxml  FCPXML 1.9: 1 vídeo, 4 sons em 3 trilhas, 1 marca
 
 O [README](../../README.md#filmes-na-linha-de-comando) tem a lista completa, inclusive como levar o filme para o DaVinci Resolve, o Final Cut ou o Premiere.
 
-[← Jogo e Godot](09-jogo-godot.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)
+[← Jogo: fases e recursos avançados](16-jogo-avancado.md) · [Índice](README.md) · [Próximo: Referência completa →](19-referencia.md)

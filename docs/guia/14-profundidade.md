@@ -1,6 +1,6 @@
 # 14. Profundidade (2.5D)
 
-[← Estilos de arte](13-estilos.md) · [Índice](README.md) · [Próximo: Jogo: o personagem no Godot (antigo) →](09-jogo-godot.md)
+[← Estilos de arte](13-estilos.md) · [Índice](README.md) · [Próximo: Jogo: o personagem no Godot →](15-jogo-personagem.md)
 
 O Weasel continua desenhando no plano, mas cada forma pode ter profundidade: ir para perto ou para longe, girar como uma carta, ter espessura, deitar como um chão. É o truque do **2.5D**: peças chatas, arrumadas em 3D. Dá para fazer uma carta que vira, uma cabeça que olha para os lados, uma estrada que some no horizonte e um mapa isométrico. Se você não usa estas opções, o desenho fica igual. Você precisa dos capítulos 1 a 9. A parte do fim, sobre o filme, usa o capítulo 17.
 
@@ -466,27 +466,7 @@ text nome 40,40 "3 caixas" size=18 align=center c=#f4efe6 z=150 billboard
 
 ### Tileset isométrico
 
-Esta parte usa o tileset do Godot ([capítulo 16](09-jogo-godot.md#tileset-blocos-para-montar-fases)). Com `iso`, cada célula do `tileset` tem o losango na parte de baixo; a parte de cima sobra para a altura das caixas e das paredes. Cada bloco vai numa camada `iso=`, com o canto 0,0 na ponta de cima do losango da célula:
-
-<!-- conferir -->
-```weasel
-canvas 128 64 bg=none
-palette ink=#1c1f2b line=2 grama=#8bc34a caixa=#d7a86e
-
-tileset size=64,64 iso
-
-layer grama iso=32,32
-rect g 0,0 32,32 c=grama ink=line
-layer caixa iso=96,32
-rect c 0,0 32,32 c=caixa ink=line thick=32
-
-tile grama 0,0
-tile caixa 1,0 solid
-```
-
-- Na célula de 64×64, o losango é de 64×32. Um quadrado de 32×32 no código vira esse losango, e `thick=32` faz uma caixa que enche a célula até em cima.
-- O `.tres` sai no formato isométrico do Godot (*Isometric*, *Diamond Down*), e a colisão de `solid` é o losango. No Godot, use o `TileSet` num `TileMapLayer` e pinte o mapa normalmente.
-- Para um chão sem caixas, `size=64,32` basta.
+Os blocos de um mapa isométrico também podem ir para o Godot: `tileset … iso` faz um TileSet de losangos, e cada bloco vai numa camada `iso=`. Como o tileset é assunto de jogo, ele está no [capítulo 16](16-jogo-avancado.md#tileset-isométrico).
 
 ## Profundidade no filme
 
@@ -765,7 +745,7 @@ Na `key`, mudam aos poucos o `z=`, o `yaw=` e o `pitch=` das formas e o `yaw=` e
 
 **Cuidado:**
 - É ilusão de peças chatas. Uma forma girada continua chata; o volume vem da espessura, da bola e da ordem. Para um objeto que muda de forma quando gira, desenhe as vistas e troque com `.show=` ([capítulo 9](09-animacao.md#animar-formas-formapropriedadevalor)).
-- No Godot, o esqueleto de verdade (`rig=bones`) não gira em 3D. Com `yaw=`, `pitch=`, `z=` ou `iso`, exporte cada quadro pronto (`rig=frames`, o padrão; [capítulo 16](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)).
+- No Godot, o esqueleto de verdade (`rig=bones`) não gira em 3D. Com `yaw=`, `pitch=`, `z=` ou `iso`, exporte cada quadro pronto (`rig=frames`, o padrão; [capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)).
 
 ## Juntando tudo
 
@@ -830,4 +810,4 @@ key 12 pula.z=0
 - `floor` deita a camada como um chão, com `billboard` para o que fica de pé. `iso` faz um mapa isométrico, em que `thick=` e `z=` sobem.
 - No filme, `depth=` dá a paralaxe, `lens=` é a lente e `fog=` e `haze=` são a névoa da distância.
 
-[← Estilos de arte](13-estilos.md) · [Índice](README.md) · [Próximo: Jogo: o personagem no Godot (antigo) →](09-jogo-godot.md)
+[← Estilos de arte](13-estilos.md) · [Índice](README.md) · [Próximo: Jogo: o personagem no Godot →](15-jogo-personagem.md)

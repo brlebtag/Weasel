@@ -116,7 +116,7 @@ O `bone=` do `use` vale para todas as peças do componente. Uma peça lá dentro
 
 - uma **luz** (`light … bone=`): a lanterna na mão, o lampião balançando ([capítulo 10](10-luz.md#luz-que-anda-com-um-osso-bone));
 - um **emissor de partículas** (`emitter … bone=`): a fumaça do cachimbo ([capítulo 11](11-efeitos.md#partículas-presas-a-um-osso-bone));
-- as **caixas de colisão** (`box … bone=`) e os **pontos de encaixe** (`point … bone=`) de um jogo ([capítulo 15](09-jogo-godot.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe)).
+- as **caixas de colisão** (`box … bone=`) e os **pontos de encaixe** (`point … bone=`) de um jogo ([capítulo 15](15-jogo-personagem.md#uma-caixa-que-segue-o-braço-e-só-liga-no-golpe)).
 
 ## Movimentos automáticos: `sway`, `bob` e `jitter`
 
@@ -471,7 +471,7 @@ Repare:
 - Perto de uma junta, os dois ossos dividem o ponto, e a curva sai lisa. Por isso a forma dobra lisa mesmo com poucos pontos: o Weasel dobra a curva inteira, não só os pontos.
 - A forma de baixo (azul) usa `bone=r1`: gira inteira, sem dobrar.
 - `bones=` precisa de pelo menos dois ossos. Vale em `shape`, `stroke`, `line`, `ellipse` e `rect`, mas não em `text`.
-- No Godot com esqueleto ([capítulo 16](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), a forma vira uma malha que dobra do mesmo jeito.
+- No Godot com esqueleto ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)), a forma vira uma malha que dobra do mesmo jeito.
 
 **Experimente:** na `key 6`, deixe só o primeiro osso girar: `r1=0,0,-15 r2=0,0,0 r3=0,0,0`. A cauda inteira gira reta, sem curva, porque `r2` e `r3` só seguem o pai. Quem faz a curva é a diferença de ângulo de um osso para o outro.
 
@@ -759,7 +759,7 @@ key 36 bola=0,0
 | `target=` | o pivô da ponta vai até o pivô de outro osso | um osso de fora da corrente | — |
 | `bend=` | para que lado o meio dobra | `1` ou `-1` (`0` dá erro) | o lado em que o meio está no desenho |
 
-No editor, arrastar a ponta de um `ik` move o alvo ([capítulo 22](22-editor.md#ossos-no-desenho)). No Godot com esqueleto ([capítulo 16](09-jogo-godot.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava os giros na animação. A ficha completa está na [referência do `ik`](19-referencia.md#ik).
+No editor, arrastar a ponta de um `ik` move o alvo ([capítulo 22](22-editor.md#ossos-no-desenho)). No Godot com esqueleto ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava os giros na animação. A ficha completa está na [referência do `ik`](19-referencia.md#ik).
 
 ## Juntando tudo
 

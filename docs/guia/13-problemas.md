@@ -506,7 +506,7 @@ anim parado frames=24 fps=12          # ...mas só com uma animação tocando
 **Como resolver:**
 
 - Use poucos quadros (`frames=3` ou `4`, o padrão). O meio passa rápido, e no jogo o olho lê a virada como um giro.
-- Confira os pares no `--info` ([capítulo 9](09-jogo-godot.md#conferir-o-que-casou---info)). Uma parte casada com outra muito diferente derrete mais: case com outra (`pairs=`) ou desfaça o par com `born=`. Em `born=focinhoL->cabeca`, o focinho de lado some na cabeça, e o de frente nasce sozinho.
+- Confira os pares no `--info` ([capítulo 16](16-jogo-avancado.md#conferir-o-que-casou---info)). Uma parte casada com outra muito diferente derrete mais: case com outra (`pairs=`) ou desfaça o par com `born=`. Em `born=focinhoL->cabeca`, o focinho de lado some na cabeça, e o de frente nasce sozinho.
 
 ### O `draw` desenha do lado errado
 
@@ -593,7 +593,7 @@ erro: o osso "b" não tem caminho: use bone b … path=nome_de_uma_linha
 
 ### Os pés escorregam no jogo
 
-O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 9](09-jogo-godot.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou **Exibir › Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas. A folha de conferência (`--contact`) mostra em vermelho os quadros em que o pé escorrega ([capítulo 9](09-jogo-godot.md#a-folha-de-conferência)).
+O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás no desenho. Marque os pés com `feet=` no `anim` (um `point` na sola de cada um) e use a medida: o `--info` diz quantos px por segundo o personagem tem de andar, e no Godot `velocidade()` dá o mesmo número já na escala da cena ([capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet)). Se o aviso disser que um pé escorrega, veja a trajetória (`--trajectory` ou **Exibir › Trajetória**): as bolinhas no chão têm de ficar em linha e igualmente espaçadas. A folha de conferência (`--contact`) mostra em vermelho os quadros em que o pé escorrega ([capítulo 15](15-jogo-personagem.md#a-folha-de-conferência---contact)).
 
 ### Os pés escorregam no filme
 
@@ -607,7 +607,7 @@ O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás
 
 **Por quê:** trocar de animação recomeça a nova do quadro 0, seja qual for o ponto em que a de antes estava.
 
-**Como resolver:** peça a troca na mesma fase. No filme, `at 3s capivara.anim=trote phase` ([capítulo 10](10-filme.md#trocar-sem-perder-o-passo-phase)); no Godot, `tocar("trote", velocity, true)` ([capítulo 9](09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo)). Com `feet=` nas duas animações, o pé que está no chão continua no chão.
+**Como resolver:** peça a troca na mesma fase. No filme, `at 3s capivara.anim=trote phase` ([capítulo 10](10-filme.md#trocar-sem-perder-o-passo-phase)); no Godot, `tocar("trote", velocity, true)` ([capítulo 15](15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés)). Com `feet=` nas duas animações, o pé que está no chão continua no chão.
 
 ### O `mix=` dá erro
 
@@ -1081,7 +1081,7 @@ O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na m
 
 **Por quê:** o `tocar("idle")` não conhece as peças. E, chamado a cada quadro, ele corta a peça que estiver tocando.
 
-**Como resolver:** troque com `trocar("idle", velocity)` ([capítulo 9](09-jogo-godot.md#no-jogo-trocar)). Ele escolhe a peça, toca o `idle` no fim dela e pode ser chamado a cada quadro.
+**Como resolver:** troque com `trocar("idle", velocity)` ([capítulo 16](16-jogo-avancado.md#no-jogo-trocar)). Ele escolhe a peça, toca o `idle` no fim dela e pode ser chamado a cada quadro.
 
 ### No Godot, a virada pela esquerda pula no último quadro
 
@@ -1097,7 +1097,7 @@ O `.tres` aponta para o `.png` pelo nome do arquivo: os dois precisam ficar na m
 
 **Por quê:** um tempo de mistura no AnimationPlayer (`play("idle", 0.3)`, ou o *Blend Times* do editor do Godot) mistura bem os ossos, mas não o quadro do sprite. A troca de sprite acontece de uma vez, e o Godot não a aplica durante a mistura.
 
-**Como resolver:** na cena por quadros, deixe os tempos de mistura em 0 e use as peças de transição (`anim … from= to=` e `trocar()`, no [capítulo 9](09-jogo-godot.md#sair-de-uma-animação-sem-corte-from-e-to)). A mistura na hora vale para a cena com esqueleto (`rig=bones`), e o `trocar()` já cuida dela.
+**Como resolver:** na cena por quadros, deixe os tempos de mistura em 0 e use as peças de transição (`anim … from= to=` e `trocar()`, no [capítulo 16](16-jogo-avancado.md#sair-de-uma-animação-sem-corte-from-e-to)). A mistura na hora vale para a cena com esqueleto (`rig=bones`), e o `trocar()` já cuida dela.
 
 ### No Godot, o desenho pula para o lado quando o personagem vira
 

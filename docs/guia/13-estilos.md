@@ -988,7 +988,7 @@ Repare:
 
 ## No jogo
 
-Esta parte usa a exportação para o Godot ([capítulo 15](09-jogo-godot.md)).
+Esta parte usa a exportação para o Godot ([capítulo 15](15-jogo-personagem.md)).
 
 - A folha de sprites e o Godot saem com cada quadro pintado no estilo. Com `bg=none`, eles saem transparentes, e o `paper=` não aparece fora das formas (no PNG comum, aparece).
 - Com qualquer `art pixel`, a cena do Godot sai com o filtro que deixa o pixel nítido: o Godot não borra a imagem quando a câmera aproxima. O mapa de relevo (o normal map) também sai em blocos.
