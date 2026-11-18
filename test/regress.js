@@ -774,6 +774,21 @@ async function animCase() {
   lines.push(`cli png com sequência: ${cli('-a', seq, '-o', path.join(dir, 'x.png'))}`);
   lines.push(`cli figurinha em gif: ${cli('-a', 'walk_down', '--sticker', '-o', path.join(dir, 'x.gif'))}`);
   lines.push(`cli --min-length em webp: ${cli('-a', 'walk_down', '--min-length', '2s', '-o', path.join(dir, 'x.webp'))}`);
+  // o -o precisa de uma extensão conhecida, que combine com o -f; senão, erro e nada salvo (antes: um PNG chamado
+  // x.bmp, um GIF chamado x.png)
+  for (const [what, ...a] of [['-o x.bmp', '-o', 'x.bmp'], ['-o sem extensão', '-o', 'x'], ['-o x.weasel', '-o', 'x.weasel'], ['-f build -o x.png', '-f', 'build', '-o', 'x.png'], ['-f gif -o x.png', '-f', 'gif', '-o', 'x.png'], ['-f godot -o x.json', '-f', 'godot', '-o', 'x.json']]) {
+    const out = path.join(dir, a[a.length - 1]);
+    a[a.length - 1] = out;
+    if (fs.existsSync(out)) fs.unlinkSync(out);
+    lines.push(`cli ${what}: ${cli(...a)}${fs.existsSync(out) ? ' (salvou!)' : ''}`);
+  }
+  // dash=: só zeros desliga o tracejado (sem aviso); um negativo avisa e a linha sai cheia (antes, a exportação
+  // parava com "Make line dash path effect failed")
+  lines.push(`dash: ${['0', '0,0', '-3', '4,0'].map((d) => {
+    const m = W.lang.parse(`canvas 60 30\nline l w=3 dash=${d} : 5,15 55,15`);
+    X.imageCanvas(m, null, 0, {});
+    return `${d} → ${m.elements[0].dash ? m.elements[0].dash.join(',') : 'cheia'}${m.errors.length ? ` (${m.errors.map((e) => e.level).join(',')})` : ''}`;
+  }).join(' · ')}`);
   await check('_animado', 'animado.txt', 'text', lines.join('\n') + '\n');
 }
 

@@ -1690,6 +1690,13 @@
     pencilTiles.set(key, T);
     return T;
   }
+  // A força da tinta num ponto: o quanto a cor dele escurece o papel, no canal que mais escurece (lápis, giz de cera
+  // e aquarela). Um canal 0 no papel e no ponto (0/0) vale "igual ao papel": sem isso, o NaN pintava o ponto de
+  // preto (papel #ff0000 sem fundo) ou tirava a textura da aquarela. Os outros casos dão a mesma conta de antes.
+  const inkForce = (c, o, pp) => Math.max(
+    pp[0] ? 1 - c[o] / pp[0] : c[o] ? -Infinity : 0,
+    pp[1] ? 1 - c[o + 1] / pp[1] : c[o + 1] ? -Infinity : 0,
+    pp[2] ? 1 - c[o + 2] / pp[2] : c[o + 2] ? -Infinity : 0);
   const pencilTile = (sp1, sp2, seg, k) => hatchTile([[-60, sp1, seg, 51], [30, sp2, seg * 0.8, 61]], k);
   // A cor vira hachura (o azulejo, preso a cada forma pelo passe tex; no fundo, nos traços e com boil=screen,
   // parado na tela) e ganha o grão do papel. A força (o quanto a cor se afasta do papel, no canal que mais
@@ -1710,7 +1717,7 @@
     for (let py = 0, o = 0; py < Hd; py++) {
       for (let px = 0; px < Wd; px++, o += 4) {
         if (!c[o + 3]) continue;
-        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        const f = inkForce(c, o, pp);
         if (f <= 0.01) continue;
         let v1, v2;
         if (tx && tx[o + 3] >= 128) { v1 = tx[o] / 255; v2 = tx[o + 1] / 255; } else {
@@ -1891,7 +1898,7 @@
     for (let py = 0, o = 0; py < Hd; py++) {
       for (let px = 0; px < Wd; px++, o += 4) {
         if (!c[o + 3]) continue;
-        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        const f = inkForce(c, o, pp);
         if (f <= 0.01) continue;
         tileAt(V, T, tx, o, px, py, k, off);
         const D = Math.min(1, f * 1.15);
@@ -2130,7 +2137,7 @@
         if (!c[o + 3]) continue;
         // o papel: morrinhos (o papel de aquarela), um pouco mais escuros nos vales
         const bump = noiseP(px / gb, py / gb, 4096, 95);
-        const f = Math.max(1 - c[o] / pp[0], 1 - c[o + 1] / pp[1], 1 - c[o + 2] / pp[2]);
+        const f = inkForce(c, o, pp);
         let s = 1;
         if (f > 0.01) {
           tileAt(V, T, tx, o, px, py, k, off);

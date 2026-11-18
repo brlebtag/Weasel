@@ -19,3 +19,10 @@ cli webp: ok (0)
 cli png com sequência: weasel: uma sequência de animações (-a "idle walk*3") vale para gif, webp e vídeo
 cli figurinha em gif: weasel: --sticker vale para webp
 cli --min-length em webp: weasel: --min-length vale para o vídeo (mp4, mov, webm, mkv)
+cli -o x.bmp: weasel: extensão desconhecida ".bmp" no -o (use .png, .jpg, .gif, .webp, .svg, .txt, .json, .zip, .tres, .tscn, .mp4, .mov, .webm, .mkv, .wav, .edl ou .fcpxml)
+cli -o sem extensão: weasel: falta a extensão no -o: ela escolhe o formato (ex.: -o x.png)
+cli -o x.weasel: weasel: -o com .weasel é para o --simplify (o código simplificado); para a imagem, use -o x.png
+cli -f build -o x.png: weasel: a pintura (-f build) sai em GIF, WebP ou vídeo; use -o x.gif (ou .webp, .mp4…)
+cli -f gif -o x.png: weasel: -f gif e -o x.png não combinam; use -o x.gif
+cli -f godot -o x.json: weasel: -f godot e -o x.json não combinam; use -o x.tres
+dash: 0 → cheia · 0,0 → cheia · -3 → cheia (warn) · 4,0 → 4,0

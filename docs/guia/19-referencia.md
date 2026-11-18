@@ -848,8 +848,6 @@ ellipse bola 90,62 30 c=#e8553a ink=line
 | `boil=` | Como em todos ([veja acima](#art)): a hachura ferve a cada 2 quadros. `boil=0` deixa parado. | de 0 a 1000, ou `screen` | 2 | não |
 | `seed=` | Como em todos: outro sorteio da hachura. | de 0 a 1000000000 | 0 | não |
 
-**Cuidado:** hoje, num desenho sem fundo, um `paper=` com um canal `00` (como `#ff0000` ou `#f6f200`) sai preto. Troque o `00` por `01` (`#ff0101`): a olho, a cor fica igual.
-
 
 #### `crayon`
 
@@ -871,8 +869,6 @@ ellipse bola 90,62 30 c=#e8553a ink=line
 | `paper=` | O papel, que aparece onde a cera não pegou (também no fundo do `canvas`). | uma cor `#hex` | `#f6f2ea` | não |
 | `boil=` | Como em todos ([veja acima](#art)): as passadas fervem a cada 2 quadros. `boil=0` deixa parado. | de 0 a 1000, ou `screen` | 2 | não |
 | `seed=` | Como em todos: outra direção e outro sorteio das passadas. | de 0 a 1000000000 | 0 | não |
-
-**Cuidado:** como no `pencil`, num desenho sem fundo um `paper=` com um canal `00` sai preto. Use `01` no lugar (`#ff0101`).
 
 
 #### `chalk`
@@ -1700,14 +1696,15 @@ line regua c=#e8443a w=2 dash=8,5 : 170,50 280,50
 |---|---|---|---|---|
 | os pontos (depois do `:`) | onde a linha passa, sempre em retas | 2 ou mais pontos, em pixels (`@osso` vale; `!` e `~` não mudam nada) | obrigatório | não |
 | `w=` | a grossura da linha | uma espessura, em pixels | 1 | `key` |
-| `dash=traço,vão,…` | tracejado: o comprimento de cada traço e de cada vão | de 1 a 8 números maiores que 0, em pixels; com um número ímpar deles, a lista se repete | sem tracejado | não |
+| `dash=traço,vão,…` | tracejado: o comprimento de cada traço e de cada vão | de 1 a 8 números, 0 ou mais, em pixels; com um número ímpar deles, a lista se repete; `dash=0` (só zeros) desliga | sem tracejado | não |
 
 Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `c=` `opacity=` `bone=` `bones=` `cloth=` `cut=` `mirror=` `emit=` `z=` `yaw=` `pitch=` `persp=` `hidden` `lock` `billboard`.
 
 **Cuidado:**
 - Sem `c=`, a linha sai na cor `ink` da `palette`.
 - As pontas da `line` são sempre retas, no ponto. Com `dash=2,6` e `w=8`, cada traço sai como um tracinho em pé.
-- Mais de 8 números no `dash=` dá erro. Um número negativo, ou só zeros, passa sem aviso, mas a exportação pela linha de comando para com um erro.
+- Mais de 8 números no `dash=` dá erro. Um número negativo dá um aviso, e a linha sai cheia.
+- Até a versão 1.67.10, `dash=0` e os números negativos passavam sem aviso, e a exportação pela linha de comando parava com um erro.
 - `smooth=` não existe na `line` (aviso).
 
 **Para aprender:** [Linha reta](02-formas.md#linha-reta-line) e [tracejado](02-formas.md#tracejado-dash).

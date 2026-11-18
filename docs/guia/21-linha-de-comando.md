@@ -132,7 +132,7 @@ Ao terminar, o Weasel devolve um número ao sistema (o código de saída), útil
 
 ## Os formatos de saída
 
-O formato sai da **extensão** do `-o`. O `-f` escolhe o formato pelo nome: quando a extensão não basta (`-f sheet`, `-f build`) ou quando não há `-o`. Com os dois, vale o `-f`, e o arquivo fica com o nome do `-o`.
+O formato sai da **extensão** do `-o`. O `-f` escolhe o formato pelo nome: quando a extensão não basta (`-f sheet`, `-f build`) ou quando não há `-o`. Com os dois, eles precisam combinar: `-f sheet` com `.png`, `.json` ou `.zip`; `-f godot` com `.tres`, `.png` ou `.zip`; `-f build` com `.gif`, `.webp` ou um vídeo; os outros, com a extensão da tabela.
 
 | Extensão do `-o` | Valor do `-f` | O que sai |
 |---|---|---|
@@ -155,7 +155,10 @@ O formato sai da **extensão** do `-o`. O `-f` escolhe o formato pelo nome: quan
 | `.fcpxml` | `fcpxml` | só filmes: a linha do tempo em outro formato |
 
 - Sem `-o` e sem `-f`, sai PNG. Num filme (um arquivo com a linha `film`), sai MP4; com `--frame`, `--time` ou `--contact`, PNG.
-- Uma extensão que o Weasel não conhece (`.bmp`), ou nenhuma extensão, dá um **PNG com esse nome**, sem aviso. Já um `-f` desconhecido dá erro: `formato desconhecido "bmp"`.
+- Uma extensão que o Weasel não conhece dá erro, e nada é salvo: `extensão desconhecida ".bmp" no -o`. O `-o` sem extensão também: `falta a extensão no -o`. E um `-f` desconhecido: `formato desconhecido "bmp"`.
+- Um `-f` e um `-o` que não combinam dão erro, com a extensão certa: `-f gif e -o x.png não combinam; use -o x.gif`.
+- Um filme não sai em `.tscn`, `.tres`, `.zip` nem `.json`: a sprite sheet e o Godot são para desenhos de jogo.
+- Até a versão 1.67.10, a extensão desconhecida (ou nenhuma) dava um PNG com esse nome, sem aviso, e com os dois, valia o `-f`, com o nome do `-o`.
 - Os vídeos precisam do [ffmpeg](https://ffmpeg.org) (veja [Vídeo de um desenho](#vídeo-de-um-desenho)).
 
 ### O nome do arquivo, sem `-o`
@@ -321,7 +324,7 @@ O desenho sendo pintado, forma por forma, como se alguém desenhasse na hora. No
 | `--speed` | a velocidade da pintura: `2` pinta no dobro da velocidade | de 0.05 a 20 | 1 |
 
 - Sai em GIF, a 20 quadros por segundo. Com `-o pintura.webp`, sai em WebP; com `-o pintura.mp4` (ou outro vídeo), em vídeo.
-- Use `-o` terminado em `.gif`, `.webp` ou num vídeo: com outra extensão, sai um GIF com essa extensão.
+- O `-o` termina em `.gif`, `.webp` ou num vídeo; com outra extensão (`-o pintura.png`), dá erro e nada é salvo.
 
 ## Sprite sheet
 

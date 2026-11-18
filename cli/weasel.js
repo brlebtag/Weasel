@@ -360,6 +360,23 @@ function formatFromOut(out) {
   return { '.png': 'png', '.jpg': 'jpg', '.jpeg': 'jpg', '.gif': 'gif', '.webp': 'webp', '.svg': 'svg', '.txt': 'txt', '.tres': 'godot', '.tscn': 'tscn', '.zip': 'sheet', '.json': 'sheet', '.mp4': 'mp4', '.mov': 'mov', '.webm': 'webm', '.mkv': 'mkv', '.wav': 'wav', '.edl': 'edl', '.fcpxml': 'fcpxml' }[ext] || null;
 }
 
+// as extensões do -o que cada formato aceita (a primeira é a sugerida). A folha e o Godot gravam mais de um arquivo
+// com o nome do -o; a cena (tscn) usa só o nome
+const OUT_EXT = { png: ['.png'], jpg: ['.jpg', '.jpeg'], gif: ['.gif'], webp: ['.webp'], svg: ['.svg'], txt: ['.txt'], sheet: ['.png', '.json', '.zip'], godot: ['.tres', '.png', '.zip'], tscn: ['.tscn', '.tres'], build: ['.gif', '.webp', '.mp4', '.mov', '.webm', '.mkv'], mp4: ['.mp4'], mov: ['.mov'], webm: ['.webm'], mkv: ['.mkv'], wav: ['.wav'], edl: ['.edl'], fcpxml: ['.fcpxml'] };
+// o -o precisa de uma extensão conhecida e que combine com o formato: antes, -o x.bmp salvava um PNG com esse nome,
+// -f build -o x.png um GIF, e um filme com -o x.tscn centenas de PNGs
+function checkOut(out, format, film) {
+  const ext = path.extname(out).toLowerCase(), base = path.basename(out, path.extname(out));
+  if (!ext) usage(`falta a extensão no -o: ela escolhe o formato (ex.: -o ${base}.png)`);
+  if (ext === '.weasel') usage('-o com .weasel é para o --simplify (o código simplificado); para a imagem, use -o ' + base + '.png');
+  if (!formatFromOut(out)) usage(`extensão desconhecida "${ext}" no -o (use .png, .jpg, .gif, .webp, .svg, .txt, .json, .zip, .tres, .tscn, .mp4, .mov, .webm, .mkv, .wav, .edl ou .fcpxml)`);
+  if (film && ['.tscn', '.tres', '.zip', '.json'].includes(ext)) usage(`-o ${base}${ext}: sprite sheet e Godot são para desenhos de jogo; um filme sai em vídeo (mp4, mov, webm), gif ou png`);
+  const ok = OUT_EXT[format];
+  if (!ok || ok.includes(ext)) return;
+  if (format === 'build') usage(`a pintura (-f build) sai em GIF, WebP ou vídeo; use -o ${base}.gif (ou .webp, .mp4…)`);
+  usage(`-f ${format} e -o ${base}${ext} não combinam; use -o ${base}${ok[0]}`);
+}
+
 // os arquivos de um pacote (imagens com canvas, textos com text): as imagens comprimem juntas, cada uma numa thread
 // do libuv (encode, os mesmos bytes do toBuffer)
 const encodeAll = (files) => Promise.all(files.map((f) => (f.canvas ? f.canvas.encode('png') : Buffer.from(f.text))));
@@ -650,6 +667,7 @@ async function run(o) {
 
   let format = o.format || formatFromOut(o.out) || (model.film ? (o.frameSet || o.time !== null || o.contact ? 'png' : 'mp4') : 'png');
   if (format === 'jpeg') format = 'jpg';
+  if (o.out) checkOut(o.out, format, model.film);
   if (![...['png', 'jpg', 'gif', 'webp', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, webp, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
   if (model.film) {
     if (format === 'webp') usage('webp sai de desenhos; para o filme use gif ou mp4');

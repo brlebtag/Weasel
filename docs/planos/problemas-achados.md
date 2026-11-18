@@ -12,14 +12,14 @@ Os casos da linha de comando foram rodados de novo em 17/11/2026 (`node cli/weas
 
 Antes de cada tarefa, a proposta é explicada de novo, e o trabalho só começa com o seu "pode fazer".
 
-## 1. Já têm sessão
+## 1. Já tinham sessão
 
 | # | O quê | Situação |
 |---|---|---|
 | J | **`opacity=` da forma e do `use`** vale pedaço por pedaço. Numa forma com contorno, a metade de dentro do contorno mostra o preenchimento por baixo. Num `use`, as formas do componente aparecem uma através da outra. | **feito na 1.67.10** (17/11/2026) |
-| F | **`line dash=0`** (ou um número negativo) passa no `--check`, mas a exportação para com `Make line dash path effect failed`. | a sessão `corrigir-dash-0-paper-pr` está pronta e espera o seu "pode fazer" |
-| G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`) sai preto. É uma divisão 0/0 em `art.js`. | idem |
-| H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; `-o x.bmp` salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. | idem |
+| F | **`line dash=0`** (ou um número negativo) passa no `--check`, mas a exportação para com `Make line dash path effect failed`. | **feito na 1.67.11** (17/11/2026): `dash=0` desliga o tracejado; um número negativo avisa, e a linha sai cheia |
+| G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`) sai preto. É uma divisão 0/0 em `art.js`. | **feito na 1.67.11**, junto com o `art watercolor`, que tinha a mesma conta (lá a forma saía escura e lisa) |
+| H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; `-o x.bmp` salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. | **feito na 1.67.11**: a extensão desconhecida, a falta dela e um `-f` que não combina com o `-o` dão erro, e nada é salvo |
 
 ## 2. Defeitos: a imagem, o arquivo ou a tecla saem errados
 
@@ -89,7 +89,7 @@ Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avi
 
 ## 5. Recomendação
 
-1. **F, G e H** primeiro: a sessão já está pronta.
+1. **F, G e H** primeiro: feitos na 1.67.11 (a J saiu antes, na 1.67.10).
 2. **Consertos pequenos:** E, 1, 3, 4, 5 e 6, numa versão só. E e 1 mudam a imagem só nos casos que hoje saem errados, com as imagens antes e depois.
 3. **Avisos que faltam:** as seções 3 e 4 juntas. A imagem não muda. Rodar o `--check` nos jogos antes.
 4. **O 2 (Godot sem `root=`)** pede uma decisão sua, porque mexe nos jogos. A recomendação é não mudar o padrão e explicar no capítulo do jogo.

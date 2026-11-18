@@ -178,12 +178,10 @@ De cima para baixo:
 |---|---|---|---|
 | os pontos (depois do `:`) | por onde a linha passa | 2 ou mais pontos | obrigatório |
 | `w=` | a grossura | 0 ou mais, em pixels | 1 |
-| `dash=` | o tracejado: traço, vão, traço, vão… | de 1 a 8 números maiores que 0, em pixels | contínua |
+| `dash=` | o tracejado: traço, vão, traço, vão… | de 1 a 8 números, em pixels; `dash=0` desliga | contínua |
 | `c=` | a cor da linha | uma cor | quase preto |
 
 A lista completa está na [referência da `line`](19-referencia.md#line). No editor, a ferramenta **Linha** (`\`) escreve esta linha ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
-
-**Cuidado:** não use `dash=0` nem números negativos. Hoje eles passam sem aviso, mas a exportação pela linha de comando para com um erro.
 
 ## Formas livres com pontos: `shape`
 

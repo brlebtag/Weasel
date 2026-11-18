@@ -1693,7 +1693,12 @@
         if (A.has('c')) patOnLine(st, A.get('c'), el.color, 'a linha');
         el.w = (A.has('w') ? width(st, A.get('w'), ctx) : 1) * ws;
         el.dash = A.has('dash') ? list(st, A.get('dash'), 1, 8, null) : null;
+        // o canvas recusa um tracejado com número negativo ou que soma 0 (a exportação parava): um negativo avisa e
+        // a linha sai cheia; só zeros (dash=0) desliga o tracejado, sem aviso. Depois da escala: um use com
+        // scale=0 também deixa a linha sem tracejado
+        if (el.dash && el.dash.some((v) => v < 0)) { bad(st, A.get('dash'), 'dash= não aceita número negativo; a linha sai cheia', 'warn'); el.dash = null; }
         if (el.dash) el.dash = el.dash.map((v) => v * ws);
+        if (el.dash && !el.dash.some((v) => v > 0)) el.dash = null;
         if (st.pts.length < 2) err(st.line, 'line precisa de pelo menos 2 pontos depois do ":"', st.cmdTok.from, st.cmdTok.to);
       }
       // As alças dos pontos só são montadas quando alguém lê rec.handles: o editor só mostra as da linha do
