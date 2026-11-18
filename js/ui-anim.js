@@ -22,10 +22,20 @@
   film.after(box);
   const cv = box.querySelector('canvas'), ctx = cv.getContext('2d');
   const RULER = 20, RH = 18, GUT = 128, DOT = 4.5;
-  const C = {
+  // as cores de cada tema (js/ui-theme.js): render() pega a do tema de agora
+  const DARK = {
     bg: '#10131a', gut: '#151a23', row: '#131822', row2: '#161c27', five: 'rgba(255,255,255,.035)', line: '#232b38', text: '#c9d1dc', dim: '#7d8796',
     bone: '#4c3f86', boneHi: '#6655b0', prop: '#2c5d59', propHi: '#3c7d77', hold: '#2f3540', key: '#e9ecf2', sel: '#ff9f43', play: '#ff8a1f', ev: '#ffd166', end: 'rgba(255,159,67,.10)',
+    chip: '#1d2533', shade: 'rgba(0,0,0,.35)', endBar: '#b8742f', holdLine: '#8a93a3', boneLine: '#b9adf5', propLine: '#9fe0d8', ghost: 'rgba(233,236,242,.25)', edge: '#0b0d12',
+    idle: '#9aa3b2', playBg: 'rgba(255,138,31,.16)', playInk: '#16100a', hot: 'rgba(255,159,67,.12)',
   };
+  const LIGHT = {
+    bg: '#f6f7f9', gut: '#f0f2f5', row: '#ffffff', row2: '#f7f8fa', five: 'rgba(29,36,48,.04)', line: '#dde1e6', text: '#1d2430', dim: '#5b6675',
+    bone: '#d9d3f7', boneHi: '#c4baf0', prop: '#c9ebe7', propHi: '#a9ddd7', hold: '#dfe3e8', key: '#3b4252', sel: '#e8730c', play: '#ff8a1f', ev: '#9a6a00', end: 'rgba(232,115,12,.10)',
+    chip: '#e6e9ee', shade: 'rgba(30,40,55,.08)', endBar: '#c2610c', holdLine: '#8a93a3', boneLine: '#6d5bd0', propLine: '#0f766e', ghost: 'rgba(29,36,48,.18)', edge: '#f6f7f9',
+    idle: '#9aa3b2', playBg: 'rgba(255,138,31,.16)', playInk: '#16100a', hot: 'rgba(232,115,12,.10)',
+  };
+  let C = DARK;
   const EASES = [
     ['smooth', 'smooth', 'começa e termina devagar (o padrão)'],
     ['linear', 'linear', 'velocidade constante'],
@@ -383,6 +393,7 @@
   }
   function render() {
     if (box.hidden) return;
+    C = W.theme ? W.theme.pick(DARK, LIGHT) : DARK;
     size();
     const D = data(), w = W0, h = H0;
     ctx.fillStyle = C.bg;
@@ -397,7 +408,7 @@
       let x = 10;
       for (const a of st.model ? st.model.anims : []) {
         const tw = ctx.measureText(a.name).width + 16;
-        ctx.fillStyle = '#1d2533';
+        ctx.fillStyle = C.chip;
         ctx.fillRect(x, RULER + 4, tw, RH);
         ctx.fillStyle = C.text;
         ctx.fillText(a.name, x + 8, RULER + 4 + RH / 2);
@@ -420,7 +431,7 @@
     }
     // depois do fim: apagado
     const xe = xOf(total);
-    if (xe < w) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(xe, RULER, w - xe, h - RULER); }
+    if (xe < w) { ctx.fillStyle = C.shade; ctx.fillRect(xe, RULER, w - xe, h - RULER); }
     // a régua
     ctx.fillStyle = C.gut;
     ctx.fillRect(GUT, 0, w - GUT, RULER);
@@ -438,7 +449,7 @@
     // a alça do fim (frames=)
     const xf = xOf(an.frames) + v.cw;
     if (xf > GUT) {
-      ctx.fillStyle = v.drag && v.drag.kind === 'end' ? C.sel : '#b8742f';
+      ctx.fillStyle = v.drag && v.drag.kind === 'end' ? C.sel : C.endBar;
       ctx.fillRect(xf - 2, 2, 4, RULER - 4);
     }
     // as barras do movimento e os losangos
@@ -461,7 +472,7 @@
           ctx.fillRect(x0, y + 3, x1 - x0, RH - 6);
           ctx.globalAlpha = 1;
           if (x1 - x0 > 26) {
-            ctx.strokeStyle = hold ? '#8a93a3' : r.r.bone ? '#b9adf5' : '#9fe0d8';
+            ctx.strokeStyle = hold ? C.holdLine : r.r.bone ? C.boneLine : C.propLine;
             ctx.lineWidth = 1.2;
             const gw = Math.min(16, x1 - x0 - 12), gx = (x0 + x1) / 2 - gw / 2;
             easeGlyph(gx, y + 5, gw, RH - 10, a.ease);
@@ -471,15 +482,15 @@
           const on = v.sel.has(kid(r.key, k.frame)), x = xOf(k.frame) + v.cw / 2;
           if (x < GUT - DOT || x > w + DOT) continue;
           const moved = dragging && on;
-          diamond(x, cy, DOT, moved && !dragging.copy ? 'rgba(233,236,242,.25)' : on ? C.sel : C.key, '#0b0d12');
-          if (moved) diamond(xOf(k.frame + dragging.df) + v.cw / 2, cy, DOT, C.sel, '#0b0d12');
+          diamond(x, cy, DOT, moved && !dragging.copy ? C.ghost : on ? C.sel : C.key, C.edge);
+          if (moved) diamond(xOf(k.frame + dragging.df) + v.cw / 2, cy, DOT, C.sel, C.edge);
         }
       } else if (r.kind === 'sum') {
         const fs = [...new Set(D.keys.map((k) => k.frame))];
         for (const f of fs) {
           const all = D.rows.filter((x) => x.keys.some((k) => k.frame === f));
           const on = all.length && all.every((x) => v.sel.has(kid(x.key, f)));
-          diamond(xOf(f) + v.cw / 2, cy, DOT - 0.5, on ? C.sel : '#9aa3b2', '#0b0d12');
+          diamond(xOf(f) + v.cw / 2, cy, DOT - 0.5, on ? C.sel : C.idle, C.edge);
         }
       } else if (r.kind === 'ev') {
         for (const e of D.events) {
@@ -494,13 +505,13 @@
     // o quadro do player
     const xp = xOf(st.frame);
     if (xp + v.cw > GUT && xp < w) {
-      ctx.fillStyle = 'rgba(255,138,31,.16)';
+      ctx.fillStyle = C.playBg;
       ctx.fillRect(xp, RULER, v.cw, h - RULER);
       ctx.fillStyle = C.play;
       ctx.fillRect(xp + v.cw / 2 - 0.75, 0, 1.5, h);
       const label = String(st.frame), lw = ctx.measureText(label).width + 8;
       ctx.fillRect(Math.max(GUT, xp + v.cw / 2 - lw / 2), 1, lw, RULER - 3);
-      ctx.fillStyle = '#16100a';
+      ctx.fillStyle = C.playInk;
       ctx.fillText(label, Math.max(GUT, xp + v.cw / 2 - lw / 2) + 4, RULER / 2);
     }
     // os nomes, por cima de tudo
@@ -514,8 +525,8 @@
     rows.forEach((r, i) => {
       const y = RULER + i * RH;
       const hot = r.kind === 'key' && (v.row === r.key || chosen().some((s) => s.row === r.key));
-      if (hot) { ctx.fillStyle = 'rgba(255,159,67,.12)'; ctx.fillRect(0, y, GUT, RH); }
-      ctx.fillStyle = r.kind === 'key' ? (r.r.bone ? '#b9adf5' : '#9fe0d8') : C.dim;
+      if (hot) { ctx.fillStyle = C.hot; ctx.fillRect(0, y, GUT, RH); }
+      ctx.fillStyle = r.kind === 'key' ? (r.r.bone ? C.boneLine : C.propLine) : C.dim;
       ctx.fillRect(6, y + RH / 2 - 3, 6, 6);
       ctx.fillStyle = r.kind === 'key' ? C.text : C.dim;
       let t = r.label;
@@ -788,5 +799,7 @@
   $('tTimeline').addEventListener('change', () => { show(); render(); });
   if (window.ResizeObserver) new ResizeObserver(() => { boxW = box.clientWidth; render(); }).observe(box);
   W.animTimeline = { insertKey, clearKey, shiftFrames, setEase, moveKeys, deleteKeys, setFrames, render, sel: () => chosen(), curveSvg, EASES };
+  // outro tema (Exibir › Tema): pinta de novo com as cores dele
+  if (W.theme) W.theme.on(() => render());
   setTimeout(sync, 0);
 })(window.Weasel = window.Weasel || {});

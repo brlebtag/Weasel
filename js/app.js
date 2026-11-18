@@ -2298,6 +2298,15 @@
     return ctx.createPattern(checker, 'repeat');
   }
 
+  // a moldura em volta do desenho segue o tema (js/ui-theme.js); o desenho e o que vai por cima dele, não
+  const theme = (dark, light) => (W.theme ? W.theme.pick(dark, light) : dark);
+  const paperShadow = () => theme('rgba(0,0,0,.5)', 'rgba(20,30,45,.22)');
+  const RULER_C = {
+    dark: { bg: '#18202a', paper: '#243039', tick: '#6b7885', text: '#9aa7b4', edge: '#2c3843' },
+    light: { bg: '#f0f2f5', paper: '#ffffff', tick: '#9aa5b1', text: '#5b6675', edge: '#d9dde3' },
+  };
+  if (W.theme) W.theme.on(() => draw());
+
   function draw() {
     if (!st.model) return;
     // quem acompanha o desenho (o painel Propriedades, a vista 3D) fica sabendo
@@ -2321,7 +2330,7 @@
 
     // papel
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,.5)';
+    ctx.shadowColor = paperShadow();
     ctx.shadowBlur = 26 * dpr;
     ctx.shadowOffsetY = 6 * dpr;
     ctx.fillStyle = '#ffffff';
@@ -2467,7 +2476,7 @@
     const m = st.model, c = m.canvas, z = st.view.z;
     if (!tline().frames) return;
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,.5)';
+    ctx.shadowColor = paperShadow();
     ctx.shadowBlur = 26 * dpr;
     ctx.shadowOffsetY = 6 * dpr;
     ctx.fillStyle = '#000000';
@@ -3861,13 +3870,14 @@
     const step = RULER_STEPS.find((s) => s * z >= 50) || RULER_STEPS[RULER_STEPS.length - 1];
     const lead = step / Math.pow(10, Math.floor(Math.log10(step) + 1e-9));
     const n = (lead === 1 ? [10, 5, 2] : lead === 2 ? [4, 2] : [5]).find((k) => (step / k) * z >= 5) || 1, minor = step / n;
+    const C = theme(RULER_C.dark, RULER_C.light);
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#18202a';
+    ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, w, RULER);
     ctx.fillRect(0, 0, RULER, h);
     // o papel aparece mais claro nas réguas
-    ctx.fillStyle = '#243039';
+    ctx.fillStyle = C.paper;
     const px0 = v.x + R.x * z, py0 = v.y + R.y * z;
     ctx.fillRect(Math.max(RULER, px0), 0, Math.max(0, Math.min(w, px0 + R.w * z) - Math.max(RULER, px0)), RULER);
     ctx.fillRect(0, Math.max(RULER, py0), RULER, Math.max(0, Math.min(h, py0 + R.h * z) - Math.max(RULER, py0)));
@@ -3884,8 +3894,8 @@
       }
       return out;
     };
-    ctx.strokeStyle = '#6b7885';
-    ctx.fillStyle = '#9aa7b4';
+    ctx.strokeStyle = C.tick;
+    ctx.fillStyle = C.text;
     ctx.beginPath();
     for (const t of ticks(v.x, RULER, w)) {
       ctx.moveTo(t.s, RULER - t.size);
@@ -3910,16 +3920,16 @@
     for (const g of st.guides.v) { const s = v.x + g * z; if (s > RULER && s < w) ctx.fillRect(Math.round(s) - 1, RULER - 4, 3, 4); }
     for (const g of st.guides.h) { const s = v.y + g * z; if (s > RULER && s < h) ctx.fillRect(RULER - 4, Math.round(s) - 1, 4, 3); }
     // bordas e o quadradinho do canto
-    ctx.strokeStyle = '#2c3843';
+    ctx.strokeStyle = C.edge;
     ctx.beginPath();
     ctx.moveTo(0, RULER - 0.5);
     ctx.lineTo(w, RULER - 0.5);
     ctx.moveTo(RULER - 0.5, 0);
     ctx.lineTo(RULER - 0.5, h);
     ctx.stroke();
-    ctx.fillStyle = '#18202a';
+    ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, RULER - 1, RULER - 1);
-    ctx.fillStyle = '#6b7885';
+    ctx.fillStyle = C.tick;
     ctx.font = '9px system-ui, sans-serif';
     ctx.fillText('px', 4, 13);
     ctx.restore();

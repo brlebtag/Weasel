@@ -5,9 +5,20 @@
 (function (W) {
   'use strict';
   const H_RULER = 20, H_SHOT = 30, H_LANE = 18, H_AUDIO = 38, H_SUB = 26, GUT = 70, EDGE = 6, DOT = 4.5;
-  const COLORS = { shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f', mark: '#c77dff', sel: '#ff9f43' };
-  // as faixas dos at (etapa 7b): a cor de cada tipo de alvo
-  const LANE_C = { actor: '#b9adf5', camera: '#ffd166', light: '#ffb860', layer: '#9fe0d8', shape: '#9fe0d8' };
+  // as cores de cada tema (js/ui-theme.js); lane: as faixas dos at (etapa 7b), uma cor por tipo de alvo
+  const DARK = {
+    shotA: '#2f3f63', shotB: '#36486e', other: '#2a2f3c', audio: '#1f5a5a', wave: '#7fe0d0', lips: '#ffd166', sub: '#5b4a1f', subText: '#ffe7a8', play: '#ff8a1f', mark: '#c77dff', sel: '#ff9f43',
+    edge: '#0b0d12', ruler: '#151821', tick: '#3a4152', tickText: '#9aa6b8', wedge: 'rgba(255,255,255,0.16)', shotText: '#c9d4ea', atTick: '#ffd16699', laneA: 'rgba(20,24,33,.55)', laneB: 'rgba(26,31,42,.55)',
+    ghost: 'rgba(233,236,242,.25)', missing: '#ff6b6b', audioText: '#e6fffa', shade: 'rgba(0,0,0,0.45)', preview: '#ffffff', gut: '#11141b', gutText: '#7d889b', laneText: '#aab4c6',
+    lane: { actor: '#b9adf5', camera: '#ffd166', light: '#ffb860', layer: '#9fe0d8', shape: '#9fe0d8', other: '#c9d4ea' },
+  };
+  const LIGHT = {
+    shotA: '#c9d6f2', shotB: '#b9c9ec', other: '#e1e4e9', audio: '#bfe3df', wave: '#0f766e', lips: '#9a6a00', sub: '#f3e3b5', subText: '#5a4300', play: '#ff8a1f', mark: '#8b3fd9', sel: '#e8730c',
+    edge: '#3b4252', ruler: '#eceff3', tick: '#b5bcc7', tickText: '#5b6675', wedge: 'rgba(255,255,255,0.6)', shotText: '#1d2a44', atTick: '#9a6a0099', laneA: 'rgba(29,36,48,.03)', laneB: 'rgba(29,36,48,.06)',
+    ghost: 'rgba(29,36,48,.18)', missing: '#d33535', audioText: '#0b3d3a', shade: 'rgba(30,40,55,0.16)', preview: '#1d2430', gut: '#f0f2f5', gutText: '#5b6675', laneText: '#3e4a57',
+    lane: { actor: '#6d5bd0', camera: '#9a6a00', light: '#b45309', layer: '#0f766e', shape: '#0f766e', other: '#5b6675' },
+  };
+  let COLORS = DARK;
   const SEP = '\u0001';
 
   // picos da forma de onda: o maior valor a cada 5 ms (calculado uma vez por som)
@@ -116,13 +127,15 @@
       ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath();
       ctx.fillStyle = fill;
       ctx.fill();
-      ctx.strokeStyle = '#0b0d12';
+      ctx.strokeStyle = COLORS.edge;
       ctx.stroke();
     }
 
     function draw() {
       const model = host.model();
       if (!model || !model.film) return;
+      COLORS = W.theme ? W.theme.pick(DARK, LIGHT) : DARK;
+      const LANE_C = COLORS.lane;
       const L = (v.layout = layout(model));
       const dpr = window.devicePixelRatio || 1;
       const w = wNow || canvas.clientWidth;
@@ -149,10 +162,10 @@
       // régua: marcas a cada 1, 2, 5, 10… segundos (o que couber)
       const steps = [1 / fps, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
       const step = steps.find((s) => s * v.pps >= 70) || 600;
-      ctx.fillStyle = '#151821';
+      ctx.fillStyle = COLORS.ruler;
       ctx.fillRect(GUT, 0, w - GUT, H_RULER);
-      ctx.strokeStyle = '#3a4152';
-      ctx.fillStyle = '#9aa6b8';
+      ctx.strokeStyle = COLORS.tick;
+      ctx.fillStyle = COLORS.tickText;
       ctx.beginPath();
       for (let t = Math.max(0, Math.floor(v.t0 / step) * step); t <= Math.min(dur, tOf(w)); t += step) {
         const x = Math.round(xOf(t)) + 0.5;
@@ -174,7 +187,7 @@
         // transição na entrada (in=): uma cunha clara no começo do plano
         if (e.shot.trans) {
           const xt = Math.min(x1, xOf(e.start / fps + e.shot.trans.dur));
-          ctx.fillStyle = 'rgba(255,255,255,0.16)';
+          ctx.fillStyle = COLORS.wedge;
           ctx.beginPath();
           ctx.moveTo(x0, y);
           ctx.lineTo(xt, y);
@@ -182,11 +195,11 @@
           ctx.closePath();
           ctx.fill();
         }
-        ctx.fillStyle = '#c9d4ea';
+        ctx.fillStyle = COLORS.shotText;
         clipText(e.name, x0 + 5, y + 10, x1 - x0 - 8);
         const keys = new Set();
         for (const tr of e.shot.tracks.values()) for (const k of tr.keys) keys.add(k.t);
-        ctx.fillStyle = '#ffd16699';
+        ctx.fillStyle = COLORS.atTick;
         for (const k of keys) { const x = xOf(e.start / fps + k); if (x > x0 && x < x1) ctx.fillRect(x - 0.5, y + H_SHOT - 10, 1.5, 5); }
       });
 
@@ -194,8 +207,8 @@
       // de um ao outro); arrastando, os escolhidos aparecem no lugar novo
       const dragAt = v.drag && v.drag.kind === 'at' && v.drag.moved ? v.drag : null;
       L.atLanes.forEach((ln, i) => {
-        const y = L.rows.lanes + i * H_LANE, cy = y + H_LANE / 2, c = LANE_C[ln.kind] || '#c9d4ea';
-        ctx.fillStyle = i % 2 ? 'rgba(20,24,33,.55)' : 'rgba(26,31,42,.55)';
+        const y = L.rows.lanes + i * H_LANE, cy = y + H_LANE / 2, c = LANE_C[ln.kind] || LANE_C.other;
+        ctx.fillStyle = i % 2 ? COLORS.laneA : COLORS.laneB;
         ctx.fillRect(GUT, y, w - GUT, H_LANE);
         ctx.strokeStyle = c;
         ctx.globalAlpha = 0.45;
@@ -214,7 +227,7 @@
           const on = v.sel.has(atId(ln.name, k.line)), x = xOf(k.t);
           if (x < GUT - DOT || x > w + DOT) continue;
           const moved = dragAt && on;
-          diamond(x, cy, k.fixed ? DOT - 1 : DOT, moved && !dragAt.copy ? 'rgba(233,236,242,.25)' : on ? COLORS.sel : c);
+          diamond(x, cy, k.fixed ? DOT - 1 : DOT, moved && !dragAt.copy ? COLORS.ghost : on ? COLORS.sel : c);
           if (moved) diamond(xOf(k.t + dragAt.dt), cy, DOT, COLORS.sel);
         }
       });
@@ -228,7 +241,7 @@
         ctx.fillStyle = host.editable(c.owner) ? COLORS.audio : COLORS.other;
         ctx.fillRect(x0, y, Math.max(1, x1 - x0 - 1), hgt);
         if (!media) {
-          ctx.strokeStyle = '#ff6b6b';
+          ctx.strokeStyle = COLORS.missing;
           ctx.setLineDash([4, 3]);
           ctx.strokeRect(x0 + 0.5, y + 0.5, x1 - x0 - 2, hgt - 1);
           ctx.setLineDash([]);
@@ -248,7 +261,7 @@
           }
           ctx.globalAlpha = 1;
         }
-        ctx.fillStyle = '#e6fffa';
+        ctx.fillStyle = COLORS.audioText;
         clipText(`${c.a.name}${c.a.lips ? ' → ' + c.a.lips : ''}${c.a.loop ? ' · loop' : ''}${media ? '' : ' (falta o som)'}`, x0 + 4, y + 8, x1 - x0 - 8);
         const cues = c.a.lips && W.film.cuesOf(c.a);
         if (cues) {
@@ -296,14 +309,14 @@
 
       // trecho escolhido no player (um plano): o resto fica escuro
       const [lo, hi] = host.range();
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillStyle = COLORS.shade;
       if (lo > 0) ctx.fillRect(GUT, H_RULER, xOf(lo / fps) - GUT, L.height);
       if (hi < L.tl.frames) ctx.fillRect(xOf(hi / fps), H_RULER, w, L.height);
 
       // arrastando: onde o bloco vai ficar
       if (v.drag && v.drag.preview) {
         const p = v.drag.preview;
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = COLORS.preview;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([5, 3]);
         ctx.strokeRect(xOf(p.start) + 0.5, p.y + 0.5, Math.max(2, (p.end - p.start) * v.pps - 1), p.h - 1);
@@ -327,23 +340,23 @@
       ctx.restore();
 
       // nomes das trilhas
-      ctx.fillStyle = '#11141b';
+      ctx.fillStyle = COLORS.gut;
       ctx.fillRect(0, 0, GUT, L.height);
-      ctx.fillStyle = '#7d889b';
+      ctx.fillStyle = COLORS.gutText;
       ctx.fillText(W.film.timecode(host.frame(), fps), 4, 10);
       ctx.fillText('planos', 6, L.rows.shots + H_SHOT / 2);
       L.atLanes.forEach((ln, i) => {
         const y = L.rows.lanes + i * H_LANE;
-        ctx.fillStyle = LANE_C[ln.kind] || '#c9d4ea';
+        ctx.fillStyle = LANE_C[ln.kind] || LANE_C.other;
         ctx.beginPath();
         ctx.arc(9, y + H_LANE / 2, 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#aab4c6';
+        ctx.fillStyle = COLORS.laneText;
         let t = ln.name === 'camera' ? 'câmera' : ln.name;
         while (t.length > 2 && ctx.measureText(t).width > GUT - 20) t = t.slice(0, -2) + '…';
         ctx.fillText(t, 16, y + H_LANE / 2 + 0.5);
       });
-      ctx.fillStyle = '#7d889b';
+      ctx.fillStyle = COLORS.gutText;
       for (let k = 0; k < L.nAudio; k++) ctx.fillText(`som ${k + 1}`, 6, L.rows.audio + k * H_AUDIO + H_AUDIO / 2);
       if (L.tl.subs.length) ctx.fillText('legendas', 6, L.rows.subs + H_SUB / 2);
     }
@@ -489,6 +502,8 @@
       v.t0 = Math.max(-1 / v.pps * 10, Math.min(v.t0, v.layout.tl.duration));
       draw();
     }, { passive: false });
+    // outro tema (Exibir › Tema): pinta de novo com as cores dele
+    if (W.theme) W.theme.on(() => draw());
 
     return { draw, view: v, hit, xOf, tOf, layout: () => v.layout, sel: chosen };
   }

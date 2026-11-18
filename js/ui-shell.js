@@ -270,6 +270,9 @@
       Object.assign({ label: 'Estilo de arte', visible: shown('tArtWrap') }, chk('tArt')),
       Object.assign({ label: 'Câmera (o que ela filma)', visible: film }, chk('tCamera')),
       Object.assign({ label: 'Linha do tempo', visible: () => film() || (!!A.st.model && A.st.model.anims.length > 0) }, chk('tTimeline')),
+      '-',
+      // o tema da moldura (js/ui-theme.js): fica guardado no navegador
+      { label: 'Tema', sub: () => [['light', 'Claro'], ['dark', 'Escuro'], ['system', 'Do sistema']].map(([p, label]) => ({ label, radio: true, on: W.theme.pref() === p, run: () => W.theme.set(p) })) },
     ] },
     { label: 'Janela', items: [
       { label: 'Propriedades', visible: drawing, on: () => P().isOn('props'), run: () => P().toggle('props') },

@@ -6,7 +6,7 @@ Estes problemas foram achados de passagem em novembro de 2026:
 - pelas etapas 1 e 2 do [guia novo](guia-e-atalhos.md);
 - pela etapa 6 do guia novo (os itens 24 a 26, conferidos em 17/11/2026: a imagem sai igual, byte a byte, e o `--check` não avisa).
 
-Em 17/11/2026 você disse "resolver problemas encontrados", com as quatro recomendações (a luz na J, o `watercolor` junto do G, o 2 explicado no guia e o tema claro). A coluna "Situação" e os títulos dizem o que já saiu. As letras A a J são as da seção 2 do plano do guia. Os números novos começam em 1.
+Em 17/11/2026 você disse "resolver problemas encontrados", com as quatro recomendações (a luz na J, o `watercolor` junto do G, o 2 explicado no guia e o tema claro). A coluna "Situação" e os títulos dizem o que já saiu. O tema claro não é um problema da lista: saiu na 1.68.0, no menu **Exibir › Tema** (Claro, o padrão, Escuro e Do sistema). As letras A a J são as da seção 2 do plano do guia. Os números novos começam em 1.
 
 Os casos da linha de comando foram rodados de novo em 17/11/2026 (`node cli/weasel.js -e "…" --check`) e continuam como está escrito. Os do editor e do Godot vêm da leitura do código, com a linha onde estão.
 

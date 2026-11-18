@@ -13,6 +13,16 @@ O editor escreve o código por você: cada ferramenta, painel e ponto de arrasta
 - Uma linha com erro ganha uma marca na margem, e a barra de baixo mostra a mensagem.
 - Os desenhos com `anim` tocam no player.
 
+## Tema
+
+**Exibir › Tema** escolhe as cores do editor:
+
+- **Claro** (o padrão): fundo branco, letras escuras.
+- **Escuro**: fundo escuro, letras claras.
+- **Do sistema**: segue o modo claro ou escuro do computador, e troca sozinho quando ele troca.
+
+O tema muda só a moldura em volta do desenho: os painéis, o código, as réguas, os menus e as linhas do tempo. O desenho, e o que aparece por cima dele (pontos, ossos, caixas e linhas guia), fica igual nos dois, e a exportação também. A escolha fica guardada **neste navegador**.
+
 ## Coordenadas e pontos
 
 - **Ctrl+clique** num lugar do desenho escreve a coordenada daquele lugar no código, onde está o cursor de texto. É o jeito mais fácil de descobrir o número de um lugar.
