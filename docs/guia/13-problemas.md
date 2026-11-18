@@ -599,7 +599,7 @@ O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás
 
 **O que você vê:** o ator anda pelo palco, mas as pernas vão num ritmo e o corpo em outro: ele desliza, ou anda no lugar depois de parar.
 
-**Como resolver:** ponha `feet=` na animação de andar e `speed=auto` no ator (`actor heroi "heroi.weasel" 80,400 anim=anda speed=auto`). A animação passa a acompanhar o quanto ele anda, e para quando ele para ([capítulo 10](10-filme.md#andar-sem-escorregar-speedauto)). Um aviso de "mais rápido que 3× a passada" quer dizer que ele anda depressa demais para essa animação: troque para uma de correr naquele trecho.
+**Como resolver:** ponha `feet=` na animação de andar e `speed=auto` no ator (`actor heroi "heroi.weasel" 80,400 anim=anda speed=auto`). A animação passa a acompanhar o quanto ele anda, e para quando ele para ([capítulo 18](18-filme-atuacao.md#andar-sem-escorregar-speedauto)). Um aviso de "mais rápido que 3× a passada" quer dizer que ele anda depressa demais para essa animação: troque para uma de correr naquele trecho.
 
 ### As pernas pulam quando o personagem troca de jeito de andar
 
@@ -607,7 +607,7 @@ O personagem anda mais depressa (ou mais devagar) do que os pés vão para trás
 
 **Por quê:** trocar de animação recomeça a nova do quadro 0, seja qual for o ponto em que a de antes estava.
 
-**Como resolver:** peça a troca na mesma fase. No filme, `at 3s capivara.anim=trote phase` ([capítulo 10](10-filme.md#trocar-sem-perder-o-passo-phase)); no Godot, `tocar("trote", velocity, true)` ([capítulo 15](15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés)). Com `feet=` nas duas animações, o pé que está no chão continua no chão.
+**Como resolver:** peça a troca na mesma fase. No filme, `at 3s capivara.anim=trote phase` ([capítulo 18](18-filme-atuacao.md#trocar-sem-perder-o-passo-phase)); no Godot, `tocar("trote", velocity, true)` ([capítulo 15](15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés)). Com `feet=` nas duas animações, o pé que está no chão continua no chão.
 
 ### O `mix=` dá erro
 
@@ -652,7 +652,7 @@ key 12 bola.opacity=1
 aviso: "bola" tem hidden e nunca aparece numa animação: show= não muda isso (para começar escondida, tire o hidden e use key 0 bola.show=0)
 ```
 
-**Por quê:** numa animação, `hidden` quer dizer "nunca aparece": a forma só serve de molde (`cut=`, `clip=`, `back=`…). Nenhuma `key` muda isso, nem `show=1`, nem `opacity=`. (Num filme é diferente: lá, `at … bola.show=1` mostra uma forma com `hidden`, como no [capítulo 10](10-filme.md#aparecer-show-ou-opacity).)
+**Por quê:** numa animação, `hidden` quer dizer "nunca aparece": a forma só serve de molde (`cut=`, `clip=`, `back=`…). Nenhuma `key` muda isso, nem `show=1`, nem `opacity=`. (Num filme é diferente: lá, `at … bola.show=1` mostra uma forma com `hidden`, como no [capítulo 17](17-filme.md#aparecer-show-ou-opacity).)
 
 ```
 ellipse bola 150,100 40 hidden      # errado: hidden ganha da key
@@ -874,7 +874,7 @@ at 0s heroi.pos=900,560      # e o plano b começa com ele lá
 
 **Por quê:** as partes casam sozinhas pelo nome, pelo osso, pela cor e pelo lugar dentro do desenho de cada um. Com nomes diferentes e desenhos muito diferentes, o Weasel pode escolher um par ruim.
 
-**Como resolver:** rode `weasel filme.weasel --info`: embaixo do plano, as linhas `vira:`, `nascem:` e `somem:` mostram cada par. Copie para a linha do `morph=` o par que saiu errado e troque a parte: `pairs=pata3->perna1` casa à mão; `born=focinho->cabeca` desfaz o par do focinho e faz ele nascer da cabeça ([capítulo 10](10-filme.md#quem-vira-quem-pairs-e-born)).
+**Como resolver:** rode `weasel filme.weasel --info`: embaixo do plano, as linhas `vira:`, `nascem:` e `somem:` mostram cada par. Copie para a linha do `morph=` o par que saiu errado e troque a parte: `pairs=pata3->perna1` casa à mão; `born=focinho->cabeca` desfaz o par do focinho e faz ele nascer da cabeça ([capítulo 18](18-filme-atuacao.md#quem-vira-quem-pairs-e-born)).
 
 ### O ator ficou parado e depois "pulou" para o lugar
 

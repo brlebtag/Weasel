@@ -1,6 +1,6 @@
 # 16. Jogo: fases e recursos avançados
 
-[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera (antigo) →](10-filme.md)
+[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](17-filme.md)
 
 Este capítulo continua o [capítulo 15](15-jogo-personagem.md). Ele mostra os blocos para montar as fases (`tileset`), as transições entre animações, a virada de lado para a frente, o esqueleto de verdade no Godot e a sprite sheet para outros motores de jogo, como a Unity. Cada parte vale sozinha: leia a que o seu jogo precisa.
 
@@ -327,7 +327,7 @@ O `--info` mostra o que o Weasel decidiu:
 
 ### A virada no Godot
 
-As peças da virada são quadros como os outros, e o `trocar()` toca a virada de lado para a frente, e de trás para a frente na volta. Com esqueleto (`rig=bones`), os ossos do Godot não sabem trocar uma forma por outra: a virada sai quadro a quadro, numa imagem só, e a exportação avisa. No filme, um ator inteiro também pode virar outro, com as mesmas regras ([capítulo 18](10-filme.md#um-ator-vira-outro-morph)).
+As peças da virada são quadros como os outros, e o `trocar()` toca a virada de lado para a frente, e de trás para a frente na volta. Com esqueleto (`rig=bones`), os ossos do Godot não sabem trocar uma forma por outra: a virada sai quadro a quadro, numa imagem só, e a exportação avisa. No filme, um ator inteiro também pode virar outro, com as mesmas regras ([capítulo 18](18-filme-atuacao.md#um-ator-vira-outro-morph)).
 
 ## Esqueleto de verdade: `rig=bones` (experimental)
 
@@ -660,4 +660,4 @@ use flor 448,160
 - `rig=bones` exporta os ossos e as peças, para um movimento liso e uma folha menor.
 - `-f sheet` faz a sprite sheet com o JSON de quadros, eventos, caixas e pontos, para qualquer motor; `unity` acrescenta os dados da Unity.
 
-[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera (antigo) →](10-filme.md)
+[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](17-filme.md)

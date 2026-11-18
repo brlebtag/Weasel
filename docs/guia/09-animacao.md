@@ -138,7 +138,7 @@ Repare:
 - As `key` de cada forma são independentes: o sol começa no quadro 6, enquanto o título ainda está sendo digitado.
 - A animação é `once` para o mapa ficar pronto no fim, em vez de se apagar ao voltar para o começo.
 - Na pose parada, tudo aparece inteiro.
-- Num filme, use `at` no lugar de `key`: `at 1s rota.draw=0` ([capítulo 17](10-filme.md#mudanças-no-tempo-at)).
+- Num filme, use `at` no lugar de `key`: `at 1s rota.draw=0` ([capítulo 17](17-filme.md#mudanças-no-tempo-at)).
 
 **Experimente:** troque os pontos do `caminho` pela ordem contrária (`318,124 252,150 176,186 104,150 48,198`). A rota passa a ser traçada a partir do X.
 
@@ -331,7 +331,7 @@ Repare:
 - As outras `key` do osso continuam valendo por cima: `carro=0,-10` levanta o carro 10 pixels acima da estrada.
 - Sem nenhuma `key` de `along`, o osso fica no pivô dele, fora do caminho. Um `along` num osso sem `path=` dá erro.
 - O caminho é a forma como ela está desenhada: se ela tiver osso, o carro não acompanha esse osso.
-- Num filme, um ator também anda por um caminho ([capítulo 17](10-filme.md#andar-por-um-caminho-path)).
+- Num filme, um ator também anda por um caminho ([capítulo 18](18-filme-atuacao.md#andar-por-um-caminho-path)).
 
 **Experimente:** troque `key 36 carro.along=1` por `key 36 carro.along=0.5`. O carro para no meio da estrada e volta para o começo quando a animação recomeça.
 

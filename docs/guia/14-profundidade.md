@@ -470,7 +470,7 @@ Os blocos de um mapa isométrico também podem ir para o Godot: `tileset … iso
 
 ## Profundidade no filme
 
-Esta parte usa o filme ([capítulo 17](10-filme.md)). Se ainda não chegou lá, pule para o [Juntando tudo](#juntando-tudo) e volte aqui depois.
+Esta parte usa o filme ([capítulo 17](17-filme.md)). Se ainda não chegou lá, pule para o [Juntando tudo](#juntando-tudo) e volte aqui depois.
 
 ### Paralaxe: `depth=` e `screen`
 

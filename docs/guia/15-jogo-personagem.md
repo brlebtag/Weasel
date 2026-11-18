@@ -608,7 +608,7 @@ A cena do Godot guarda a medida de cada animação (já na escala da exportaçã
 ```
 
 - `tocar()` recomeça a animação do quadro 0 quando ela muda. Entre dois jeitos de andar (de `anda` para `trote`), isso faz o pé que estava no chão aparecer de repente no ar. `tocar("trote", velocity, true)` continua no mesmo ponto da passada: com `feet=` nas duas, o pé que está no chão continua no chão. Só vale entre animações em loop.
-- No filme, `speed=auto` usa a mesma medida ([capítulo 18](10-filme.md#andar-sem-escorregar-speedauto)).
+- No filme, `speed=auto` usa a mesma medida ([capítulo 18](18-filme-atuacao.md#andar-sem-escorregar-speedauto)).
 
 ## Opções do personagem de jogo
 

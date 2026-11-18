@@ -513,7 +513,7 @@ Um vídeo com fundo transparente, para pôr por cima de outro no editor de víde
 
 ## Filme
 
-Um arquivo com a linha `film` ([capítulo 10](10-filme.md)) sai em vídeo MP4, se você não pedir outra coisa. O vídeo leva os sons do filme misturados, e as legendas saem ao lado, num `.srt`.
+Um arquivo com a linha `film` ([capítulo 17](17-filme.md)) sai em vídeo MP4, se você não pedir outra coisa. O vídeo leva os sons do filme misturados, e as legendas saem ao lado, num `.srt`.
 
 ```bash
 node cli/weasel.js exemplos/filme.weasel -o previa.mp4 -s 0.5
@@ -586,7 +586,7 @@ Mais alguns:
 
 - As legendas saem com o nome do vídeo: `filme.srt`, e as de outras línguas como `filme.en.srt`. Elas contam o tempo a partir do começo do trecho exportado. O GIF não tem legendas ao lado.
 - `-o som.wav` salva só o som misturado (48 kHz, estéreo), com as legendas ao lado.
-- O som, as legendas e o lip sync estão no [capítulo 10](10-filme.md#som-legendas-e-lip-sync).
+- O som, as legendas e o lip sync estão no [capítulo 18](18-filme-atuacao.md#som-legendas-e-lip-sync).
 
 ### Para o editor de vídeo
 

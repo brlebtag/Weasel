@@ -2878,7 +2878,7 @@ No filme, a troca de uma expressão para outra é aos poucos, do `at` anterior a
 - A expressão aceita, mas não usa no filme: camadas (`camada.opacity=`…), luzes (`luz.power=`…), caixas (`caixa.show=`), `osso.along=` e a ordem (`above=`, `below=`). Nenhuma delas muda o ator, e o Weasel não avisa.
 - A boca do lip sync ([`mouth`](#mouth)) vale por cima da expressão.
 
-**Para aprender:** [Expressões: `expr`](10-filme.md#expressões-expr).
+**Para aprender:** [Expressões: `expr`](18-filme-atuacao.md#expressões-expr).
 
 ### `mouth`
 
@@ -2925,7 +2925,7 @@ Em cada letra, a boca vira a forma indicada, como um morph (`shape=` da `key`). 
 - `@quanto` fora de 0 a 1 é erro.
 - Com duas linhas `mouth`, vale a de baixo (o Weasel avisa).
 
-**Para aprender:** [A coruja fala: lips e legendas desenhadas](10-filme.md#a-coruja-fala-lips-e-legendas-desenhadas).
+**Para aprender:** [A coruja fala](18-filme-atuacao.md#a-coruja-fala).
 
 ## Filme
 
@@ -2964,7 +2964,7 @@ sub 0.5s "Era uma vez um cavaleiro." dur=2s
 - O `.srt` sai sempre ao lado do vídeo, com ou sem `subs=burn`, um por língua (`filme.srt`, `filme.en.srt`). Só não sai no GIF e com `--subs none`.
 - As legendas desenhadas são as da língua do `lang=` (ou do `--lang`, na linha de comando).
 
-**Para aprender:** [`film` e `canvas`](10-filme.md#film-e-canvas).
+**Para aprender:** [O menor filme: `film` e `canvas`](17-filme.md#o-menor-filme-film-e-canvas).
 
 ### `scene`
 
@@ -2997,7 +2997,7 @@ scene "filme.weasel"
 - O acabamento ([`finish`](#finish)) é o do filme principal; sem ele, o da cena.
 - Até 8 arquivos, um dentro do outro. Um arquivo não pode usar a si mesmo.
 
-**Para aprender:** [Filmes longos: `scene`](10-filme.md#filmes-longos-scene).
+**Para aprender:** [Filmes longos: `scene`](18-filme-atuacao.md#filmes-longos-scene).
 
 ### `shot`
 
@@ -3029,7 +3029,7 @@ camera 320,250 zoom=1.5
 - O primeiro plano do filme entra a partir do preto (transparente, com `-t`).
 - Uma transição mais longa que o plano é cortada no tamanho dele (o Weasel avisa).
 
-**Para aprender:** [Planos: `shot`](10-filme.md#planos-shot) e [Transições: `in=`](10-filme.md#transições-in).
+**Para aprender:** [Planos: `shot`](17-filme.md#planos-shot) e [Transições: `in=`](17-filme.md#transições-in).
 
 ### `actor`
 
@@ -3080,7 +3080,7 @@ shot corrida dur=2s
 - `turn=` e `along=` sem `path=` não fazem nada, e o Weasel não avisa. Num caminho aberto, `along=` vai de 0 a 1; num caminho fechado (elipse, retângulo, `shape`), `along=2` dá duas voltas.
 - Se o filme tem `light` ou `ambient`, o `ambient` do arquivo do ator é trocado pelo do filme (sem `ambient` no filme, uma luz branca de força 0.6). Use `unlit` para o ator ficar com a luz dele.
 
-**Para aprender:** [Atores: `actor`](10-filme.md#atores-actor) e [Andar por um caminho: `path=`](10-filme.md#andar-por-um-caminho-path).
+**Para aprender:** [Atores: `actor`](17-filme.md#atores-actor) e [Andar por um caminho: `path=`](18-filme-atuacao.md#andar-por-um-caminho-path).
 
 ### `camera`
 
@@ -3122,7 +3122,7 @@ at 3s heroi.x=600
 - `lag=` não é um atraso fixo: em `lag` segundos, a câmera faz uns dois terços do caminho até o alvo. Ele vale para seguir um ator e também para os `at` que mudam o `pos=`.
 - O `follow=` leva em conta a distância do ator: um ator longe (com `depth=`) também fica no meio do quadro.
 
-**Para aprender:** [Câmera: `camera`](10-filme.md#câmera-camera) e [Profundidade no filme](14-profundidade.md#profundidade-no-filme).
+**Para aprender:** [Câmera: `camera`](17-filme.md#câmera-camera) e [Profundidade no filme](14-profundidade.md#profundidade-no-filme).
 
 ### `at`
 
@@ -3289,7 +3289,7 @@ Só as formas do arquivo do filme (um título, uma seta, um mapa). As formas de 
 - Um `at` depois do fim do plano dá aviso. Um `marca` que cai fora do plano também, e a linha não vale.
 - Uma forma ou camada com `hidden` só aparece com `show=1`. Mudar o `opacity=` dela sem isso dá aviso.
 
-**Para aprender:** [Mudanças no tempo: `at`](10-filme.md#mudanças-no-tempo-at), [Camadas e formas do filme](10-filme.md#camadas-e-formas-do-filme) e [Um ator vira outro: `morph=`](10-filme.md#um-ator-vira-outro-morph).
+**Para aprender:** [Mudanças no tempo: `at`](17-filme.md#mudanças-no-tempo-at), [Camadas e formas do filme](17-filme.md#camadas-e-formas-do-filme) e [Um ator vira outro: `morph=`](18-filme-atuacao.md#um-ator-vira-outro-morph).
 
 ### `audio`
 
@@ -3329,7 +3329,7 @@ audio grilos "som/grilos.wav" vol=0.3 loop
 - Sem `dur=`, o som toca até o fim do arquivo, mesmo depois do fim do plano.
 - No GIF, o som não vai.
 
-**Para aprender:** [Som, legendas e lip sync](10-filme.md#som-legendas-e-lip-sync).
+**Para aprender:** [Som, legendas e lip sync](18-filme-atuacao.md#som-legendas-e-lip-sync).
 
 ### `sub`
 
@@ -3365,7 +3365,7 @@ sub 0.5s "Who's there?" lang=en
 - O vídeo desenha só as legendas de uma língua: a do `film lang=` (ou a do `--lang`).
 - O `dur=` aceita um `+` na frente, mas não faz nada com ele.
 
-**Para aprender:** [Som, legendas e lip sync](10-filme.md#som-legendas-e-lip-sync).
+**Para aprender:** [Som, legendas e lip sync](18-filme-atuacao.md#som-legendas-e-lip-sync).
 
 ### `mark`
 
@@ -3398,6 +3398,6 @@ at salto+0.5s camera.zoom=1.4 ease=out
 - Um `at` pode usar um marcador de outro plano, desde que o momento caia dentro do plano do `at`. Se cair fora, o Weasel avisa e a linha não vale.
 - Os marcadores vão para a linha do tempo do editor de vídeo (`--edl`, `--fcpxml`) e aparecem no `--info`.
 
-**Para aprender:** [Marcadores: `mark`](10-filme.md#marcadores-mark).
+**Para aprender:** [Marcadores: `mark`](18-filme-atuacao.md#marcadores-mark).
 
 [← Índice](README.md) · [Próximo: Funções das contas →](20-funcoes.md)

@@ -997,7 +997,7 @@ Esta parte usa a exportação para o Godot ([capítulo 15](15-jogo-personagem.md
 
 ## No filme
 
-Esta parte usa o filme ([capítulo 17](10-filme.md)). Se ainda não chegou lá, volte aqui depois.
+Esta parte usa o filme ([capítulo 17](17-filme.md)). Se ainda não chegou lá, volte aqui depois.
 
 No filme, o `art` vale em quatro níveis, e o lugar da linha decide qual. O mais específico ganha:
 

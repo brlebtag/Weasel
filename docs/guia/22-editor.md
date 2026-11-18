@@ -4,7 +4,7 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 16. As dicas do filme ainda estão no capítulo antigo.
+> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 18.
 
 ## Abrir e rodar
 
@@ -369,7 +369,7 @@ O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amost
 - Passe o mouse numa linha do painel Camadas, e as outras peças se apagam.
 - A vista mostra o mesmo quadro do player, sem o estilo de arte e sem o halo das luzes.
 - Agrupar, Travar, Organizar, Copiar e Colar ficam no menu, mas as teclas deles não valem nessa vista.
-- Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Ver as distâncias](10-filme.md#ver-as-distâncias-palco-em-3d)).
+- Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Palco em 3D](#palco-em-3d)).
 
 ## Efeitos da camada
 
@@ -613,5 +613,77 @@ As dicas dos capítulos [15](15-jogo-personagem.md) e [16](16-jogo-avancado.md).
 | **Esqueleto (Bone2D)** | os ossos e as peças, em vez dos quadros ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)); com `godot rig=bones` no arquivo, fica sempre ligado | `--rig` |
 
 Num arquivo com `tileset`, o botão **Godot** salva o TileSet. O botão **Sprite sheet** salva a folha e o JSON para outros motores; **Arranjo**, **Colunas** e **Espaço entre quadros** são o `--layout`, o `--cols` e o `--padding`, e **Recortar ao desenho**, com a **Margem do recorte**, é o `--trim` ([capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity)).
+
+## Filme
+
+As dicas dos capítulos [17](17-filme.md) e [18](18-filme-atuacao.md). O editor também muda o filme sem escrever, no jeito do Adobe Animate: arrastando na linha do tempo, num painel e em alças no desenho. Tudo isso reescreve as linhas do código (`at`, `actor`, `camera`, `shot`, `mark`), e cada gesto se desfaz com um **Ctrl+Z**.
+
+**O player:** num filme, o menu escolhe o filme inteiro ou um plano, e o player repete o trecho; o botão ao lado de ▶ troca para **tocar uma vez**, que para no fim. **Exibir › Câmera** alterna entre o que a câmera filma e o cenário inteiro, com a moldura da câmera em laranja.
+
+### A linha do tempo do filme
+
+Embaixo do desenho, a linha do tempo mostra os **planos**, os **sons** (com a forma de onda) e as **legendas**. Arrastar um bloco muda o tempo dele no código.
+
+- A transição de entrada (`in=`) aparece como uma **cunha** clara no começo do plano.
+- Os marcadores (`mark`) aparecem na régua, em roxo, com uma linha tracejada descendo pelos sons. **Arraste** um marcador para cima da forma de onda da narração: o `mark` é reescrito, e tudo o que usa o nome vai junto.
+
+### As faixas dos `at`
+
+Embaixo dos planos, a linha do tempo ganha uma **faixa** para cada ator, uma para a **câmera** e uma para cada luz, camada ou forma que aparece nas linhas `at`. Cada `at` vira um **losango** na faixa de cada alvo dele. Uma linha clara liga os losangos do mesmo plano.
+
+| Gesto | O que muda no código |
+|---|---|
+| Clicar num losango | nada: o player vai até o momento, e o código, até a linha do `at` |
+| Arrastar um losango | o tempo do `at` (`at 1.5s` vira `at 2.5s`). Se a linha tem outros alvos, só o arrastado sai para uma linha nova |
+| **Alt**+arrastar | uma cópia, no tempo onde você soltar |
+| **Shift**+clique, ou clique no nome da faixa | escolhe mais de um (o nome escolhe todos os da faixa); **Ctrl+A** escolhe todos |
+| **←** e **→** | empurram os escolhidos um quadro (com **Shift**, cinco) |
+| **Delete** | apaga os escolhidos: só aquele alvo sai da linha, e a linha some quando fica vazia |
+| Botão direito num losango | o menu com os seis `ease` (no `at`, é como o valor **chega** nele), **Ir para a linha** e **Apagar** |
+| Botão direito num plano | a **transição** de entrada, com uma prévia de cada uma |
+
+Bom saber:
+
+- O losango arrastado cai num quadro e gruda no player e no começo dos planos. Um `at` não sai do plano dele.
+- Um `at +0.5s` conta do anterior. Quando o anterior anda, ele anda junto, e o código continua com `+`. Quando o anterior é apagado, ele ganha o tempo escrito, para ficar onde estava.
+- Um `at` com o tempo de um marcador (`at trovao+0.3s`) não arrasta: ele anda com o marcador (arraste o marcador na régua).
+- Se o `at` chega a um tempo onde outro `at` do plano já mudava o mesmo alvo, o que chegou fica, e o outro sai daquela linha.
+
+### O painel Filme
+
+Num filme, a coluna da direita mostra o painel **Filme** (**Janela › Filme** abre e fecha). Ele mostra o momento do player e tem três partes.
+
+- **Plano.** A **duração** (`dur=`) e a **entrada** (`in=`). São seis botões, **corte**, **dissolver** (`fade`), **cortina** (`wipe`), **empurrar** (`slide`), **zoom** e **íris**, cada um com uma prévia pequena: o fim do plano anterior virando este. Com o mouse em cima, a prévia anda. O campo ao lado de **Entrada** é a duração da transição.
+- **Câmera.** `zoom=`, o giro (`rot=`), o tremor (`shake=`) e o escurecer (`fade=`) no momento do player.
+- **Ator.** Escolha um ator na lista, ou clique nele no desenho. O painel mostra a **animação** dele numa lista (`anim=`), a velocidade, o tamanho (`scale=`), o giro, o espelho (`flip=`), a opacidade e se ele aparece.
+
+**Onde o painel escreve.** O topo do painel diz onde vai cada mudança:
+
+- Com o cursor do código numa linha `at` do plano, a mudança vai **nela**, como `alvo.prop=` (`at 2s heroi.anim=dash`). A lista ao lado escolhe o `ease=` dela.
+- Fora de um `at`, a mudança vai na linha do ator (`actor heroi …`) ou na `camera` do plano. Se o plano não tem uma linha `camera`, ela nasce logo depois do `shot`.
+- Se o valor muda num `at` antes do player, escrever na linha do ator não mudaria o que se vê. Aí o editor avisa, e não escreve.
+- **+ at aqui** cria uma linha `at` no momento do player e põe o cursor nela. O painel e as alças passam a escrever ali. Assim se anima pela tela: leve o player a um momento, aperte **+ at aqui** e mude o que quiser.
+
+### As alças no desenho
+
+Com a Seleção (**V**) e o painel Filme aberto:
+
+- O ator escolhido ganha uma **caixa tracejada**. Os **cantos** mudam o `scale=` a partir do ponto dele (com **Shift**, de 0.05 em 0.05). A **bolinha verde** em cima gira (`rot=`; com **Shift**, de 15 em 15 graus). O ponto do meio move o `x,y`.
+- Com **Exibir › Câmera** desligado, os **cantos** da moldura laranja mudam o `zoom=` da câmera: para dentro aproxima, para fora afasta.
+- Clicar num ator escolhe ele. O cursor do código vai para a linha dele, menos quando está num `at`: aí fica no `at`, para o painel continuar escrevendo nele.
+
+As alças escrevem onde o painel escreve, com um **Ctrl+Z** por arraste. Enquanto o filme toca, elas somem.
+
+### Palco em 3D
+
+O botão de camadas na ponta direita da barra de baixo (ou **Exibir › Palco em 3D**) mostra o filme **de fora**, no quadro do player. Cada camada e cada ator vira uma **placa**, na distância do `depth=` dela ([capítulo 14](14-profundidade.md#profundidade-no-filme)), e a câmera do filme aparece como uma **pirâmide** amarela que sai do olho dela.
+
+- **Por fora** olha o filme um pouco de lado e de cima. **De lado** mostra as distâncias em fila. **Da câmera** olha pelo olho da câmera e mostra o quadro do player; o que fica fora do quadro aparece escurecido.
+- Cada placa diz o nome e a profundidade: `cenario › serra · 5` é a camada `serra` do ator `cenario`, na profundidade 5. Uma camada `screen` diz `tela` e fica perto do olho, no vidro da câmera.
+- **Distâncias** aperta as distâncias para tudo caber. No `exemplos/filme.weasel`, o céu (`depth=12`) ficaria 20 vezes mais longe que as moitas da frente (`depth=0.6`); toda à direita, as distâncias são as de verdade. Da câmera, o quadro não muda.
+- **Mesma distância** afasta as placas que estão na mesma profundidade (o chão e os atores no plano da ação), para dar para ver e clicar em cada uma.
+- Clicar numa placa escolhe o ator (o painel Filme mostra ele) e leva o código à linha dele. Numa camada do arquivo do filme, leva à linha da camada.
+- O olho em cada nome esconde a placa só nessa vista. Arrastar gira, a roda aproxima e **Ctrl+0** volta para a câmera. O player muda o quadro, e tocando a vista acompanha.
+- É só para olhar: para mudar a distância, mude o `depth=` no código. A vista mostra o plano do quadro sem a transição, sem o estilo de arte (`art`), sem o acabamento (`finish`) e sem o escurecer da câmera.
 
 [← Linha de comando](21-linha-de-comando.md) · [Índice](README.md) · [Próximo: Atalhos do teclado →](23-atalhos.md)

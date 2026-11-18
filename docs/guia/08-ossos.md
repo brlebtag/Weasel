@@ -157,7 +157,7 @@ anim parado frames=24 fps=12
 
 Repare:
 
-- Os movimentos automáticos só aparecem quando **uma animação está tocando**. Por isso o exemplo tem `anim parado`, uma animação sem nenhuma `key`. Na pose parada, eles não fazem nada. Num filme ([capítulo 17](10-filme.md)), eles se mexem mesmo sem animação.
+- Os movimentos automáticos só aparecem quando **uma animação está tocando**. Por isso o exemplo tem `anim parado`, uma animação sem nenhuma `key`. Na pose parada, eles não fazem nada. Num filme ([capítulo 17](17-filme.md)), eles se mexem mesmo sem animação.
 - O Weasel ajusta o tempo do vaivém para a animação terminar onde começou. Aqui a animação dura 2 segundos (24 ÷ 12), e cada vaivém também. Numa animação `once`, o tempo é exatamente o que você escreveu.
 - Eles **somam** com as `key`: um osso pode balançar sozinho e ainda ser animado.
 

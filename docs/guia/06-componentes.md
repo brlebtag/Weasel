@@ -455,7 +455,7 @@ Linha por linha:
 - Um erro no outro arquivo aparece na linha do `include`, com o nome e a linha de lá: `pecas.weasel:6: …`.
 - Escreva o nome com o `.weasel`: `include "pecas"` não acha o arquivo.
 - Um arquivo pode incluir outro, até 8 um dentro do outro. Um arquivo que inclui a si mesmo, direto ou por outro, dá erro: `include em ciclo`.
-- O exemplo [`noite.weasel`](../../exemplos/noite.weasel) põe o Cavaleiro de `cavaleiro.weasel` numa rua com chuva e uma lanterna, sem mudar nada no arquivo dele. Para pôr personagens de outros arquivos num **filme**, o caminho é outro: o `actor` ([capítulo 17](10-filme.md)).
+- O exemplo [`noite.weasel`](../../exemplos/noite.weasel) põe o Cavaleiro de `cavaleiro.weasel` numa rua com chuva e uma lanterna, sem mudar nada no arquivo dele. Para pôr personagens de outros arquivos num **filme**, o caminho é outro: o `actor` ([capítulo 17](17-filme.md)).
 
 ## Grupos: `group`
 
