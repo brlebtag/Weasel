@@ -1538,7 +1538,11 @@
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) el.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
       // com bones=, a forma dobra pelos ossos e o tecido não mexe nela
       if (el.bones && A.has('cloth') && el.cloth) bad(st, A.get('cloth'), 'cloth= não vale junto com bones=: a forma dobra com os ossos e o tecido fica parado (use um dos dois)', 'warn');
-      if (A.has('opacity')) el.opacity *= number(st, A.get('opacity'), 1, 0, 1);
+      const own = A.has('opacity') ? number(st, A.get('opacity'), 1, 0, 1) : 1;
+      el.opacity *= own;
+      // numa cópia transparente (use … opacity=), a cópia é pintada inteira e aplicada de uma vez (scene.js): o grupo
+      // leva a transparência dela, e a forma pinta só com a da própria linha (el.own)
+      if (ctx.grp) { el.grp = ctx.grp; el.own = own; }
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
       if (A.has('emit')) {
         const a = A.get('emit'), p = splitTop(a.text, ','), c = plainColor(st, a, p[0], ctx);
@@ -1819,14 +1823,19 @@
       const ctx = {
         xf: parent.xf ? M.mul(parent.xf, local) : local,
         over: new Map(parent.over || []), vars: new Map(parent.vars),
-        bone: parent.bone, cloth: parent.cloth, opacity: parent.opacity, inst: dry ? -1 : ++instCount, use: parent.use !== undefined ? parent.use : st.line,
+        bone: parent.bone, cloth: parent.cloth, opacity: parent.opacity, grp: parent.grp || null, inst: dry ? -1 : ++instCount, use: parent.use !== undefined ? parent.use : st.line,
         zu: (parent.zu || 0) + (A.has('z') ? number(st, A.get('z'), 0) : 0), boardXf: parent.boardXf || null,
       };
       // billboard: o componente inteiro fica de frente, preso no ponto do use
       if (board) ctx.boardXf = ctx.xf;
       if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) ctx.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
       if (A.has('cloth')) { const a = A.get('cloth'); if (m.cloths.has(a.text)) ctx.cloth = a.text; else bad(st, a, `tecido "${a.text}" não existe`); }
-      if (A.has('opacity')) ctx.opacity *= number(st, A.get('opacity'), 1, 0, 1);
+      if (A.has('opacity')) {
+        const op = number(st, A.get('opacity'), 1, 0, 1);
+        ctx.opacity *= op;
+        // a cópia transparente vira um grupo: as formas dela são pintadas juntas e aplicadas de uma vez (scene.js)
+        if (op < 1) ctx.grp = { op, up: ctx.grp };
+      }
       for (const a of def.st.attrs.values()) applyParam(def.st, a, ctx, parent);
       scope = parent.vars;
       for (const a of A.values()) {

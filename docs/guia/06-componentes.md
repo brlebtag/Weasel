@@ -223,8 +223,8 @@ text t3 325,155 "opacity=0.2" size=14 align=center
 
 ![Três peixes na frente de algas verdes: o primeiro sólido, o segundo deixando ver as algas, o terceiro quase sumindo](img/05_use_opacity.png)
 
-<!-- conferir: opacity do use inteiro (linha J) -->
 - Com `opacity=0.5`, dá para ver as algas através do peixe.
+- O componente fica transparente inteiro, como uma imagem só. Onde o corpo cobre o rabo e a barbatana, a ponta deles não aparece através do corpo: só as algas aparecem.
 - A transparência se multiplica: uma forma com `opacity=0.5` dentro de um `use … opacity=0.5` fica com 0.25.
 
 ### Um componente dentro do outro

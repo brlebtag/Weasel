@@ -6,7 +6,7 @@ Estes problemas foram achados de passagem em novembro de 2026:
 - pelas etapas 1 e 2 do [guia novo](guia-e-atalhos.md);
 - pela etapa 6 do guia novo (os itens 24 a 26, conferidos em 17/11/2026: a imagem sai igual, byte a byte, e o `--check` não avisa).
 
-Nada aqui foi corrigido ainda. As letras A a J são as da seção 2 do plano do guia. Os números novos começam em 1.
+Em 17/11/2026 você disse "resolver problemas encontrados", com as quatro recomendações (a luz na J, o `watercolor` junto do G, o 2 explicado no guia e o tema claro). A coluna "Situação" e os títulos dizem o que já saiu. As letras A a J são as da seção 2 do plano do guia. Os números novos começam em 1.
 
 Os casos da linha de comando foram rodados de novo em 17/11/2026 (`node cli/weasel.js -e "…" --check`) e continuam como está escrito. Os do editor e do Godot vêm da leitura do código, com a linha onde estão.
 
@@ -16,7 +16,7 @@ Antes de cada tarefa, a proposta é explicada de novo, e o trabalho só começa 
 
 | # | O quê | Situação |
 |---|---|---|
-| J | **`opacity=` da forma e do `use`** vale pedaço por pedaço. Numa forma com contorno, a metade de dentro do contorno mostra o preenchimento por baixo. Num `use`, as formas do componente aparecem uma através da outra. | sessão própria, em andamento (retomada em 17/11, depois de uma queda da rede) |
+| J | **`opacity=` da forma e do `use`** vale pedaço por pedaço. Numa forma com contorno, a metade de dentro do contorno mostra o preenchimento por baixo. Num `use`, as formas do componente aparecem uma através da outra. | **feito na 1.67.10** (17/11/2026) |
 | F | **`line dash=0`** (ou um número negativo) passa no `--check`, mas a exportação para com `Make line dash path effect failed`. | a sessão `corrigir-dash-0-paper-pr` está pronta e espera o seu "pode fazer" |
 | G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`) sai preto. É uma divisão 0/0 em `art.js`. | idem |
 | H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; `-o x.bmp` salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. | idem |

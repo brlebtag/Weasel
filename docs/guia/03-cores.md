@@ -285,7 +285,6 @@ text t3 360,158 "opacity=0.25" size=14 align=center
 
 ### Cor transparente ou forma transparente
 
-<!-- conferir: opacity da forma inteira (linha J) -->
 A transparência na cor (`#rrggbbaa`) e o `opacity=` parecem iguais, mas não são. Na cor, só **aquela cor** fica transparente. O `opacity=` vale para a **forma inteira**.
 
 <!-- gerar: img/03_cor_ou_opacity.png -->
@@ -302,6 +301,7 @@ text t2 330,184 "opacity=0.5" size=14 align=center
 
 - À esquerda, `c=#4a90d980`: o preenchimento é meio transparente, e a faixa aparece através dele. O contorno (`ink=10`, quase preto) continua inteiro.
 - À direita, `opacity=0.5`: a forma inteira fica meio transparente, o azul **e** o contorno. A faixa aparece através dos dois.
+- O contorno e o preenchimento ficam transparentes juntos, como uma peça só: por baixo do contorno não aparece o azul, só a faixa.
 
 **Experimente:** à esquerda, acrescente `inkc=#14141c80`. Agora o contorno também fica transparente. O quanto, você escolhe separado do preenchimento.
 

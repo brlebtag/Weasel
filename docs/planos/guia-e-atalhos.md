@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4; etapa 6 (luz e aparência: capítulos 10 a 12) feita na 1.67.5; etapa 7 (estilos e profundidade: capítulos 13 e 14) feita na 1.67.6; etapa 8 (jogo: capítulos 15 e 16) feita na 1.67.7; etapa 9 (filme: capítulos 17 e 18) feita na 1.67.8; etapa 10 (os problemas comuns, o editor terminado e a revisão dos links) feita na 1.67.9. Todas as etapas estão feitas.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4; etapa 6 (luz e aparência: capítulos 10 a 12) feita na 1.67.5; etapa 7 (estilos e profundidade: capítulos 13 e 14) feita na 1.67.6; etapa 8 (jogo: capítulos 15 e 16) feita na 1.67.7; etapa 9 (filme: capítulos 17 e 18) feita na 1.67.8; etapa 10 (os problemas comuns, o editor terminado e a revisão dos links) feita na 1.67.9; a tarefa J (a `opacity=` da forma e do `use`) na 1.67.10. Todas as etapas e tarefas estão feitas.
 
 ## O pedido
 
@@ -106,7 +106,7 @@ Não são do guia. Mas o guia precisa descrever o que o código faz, então algu
 | G | **`art pencil` e `art crayon`:** num desenho sem fundo, um `paper=` com um canal `00` (`#ff0000`, `#f6f200`) sai preto: uma divisão 0/0 em `art.js` (`pencilPost` e `crayonPost`). Achado na etapa 2. | nenhuma: a referência ensina a trocar `00` por `01` até a correção |
 | H | **Nomes de saída da linha de comando:** um filme com `-o x.tscn` salva centenas de PNGs com o nome `.tscn`; um `-o` com extensão desconhecida (`.bmp`) salva um PNG sem aviso; `-f build -o x.png` salva um GIF com o nome `.png`. Achado na etapa 2. | nenhuma |
 | I | **Mais coisas aceitas sem fazer nada** (achadas na etapa 2): `key emissor.c=`; no `expr`, as propriedades de camada, luz e caixa; `turn=nao` e `turn=off` (só `0` desliga); `let pi=3`; `let a-b=5` (não dá para usar nas contas); `rand(x,a)` ignora o `a`; nas funções, um número a mais é ignorado; a mensagem "não pode ficar dentro de def (só formas e use)" esquece `repeat`, `group` e `include`. | nenhuma |
-| J | **`opacity=` da forma e do `use`** (achado na tarefa A): o mesmo "pedaço por pedaço" que a camada tinha. Numa forma com contorno e `opacity=0.5`, a metade de dentro do contorno mostra o preenchimento por baixo (sai `128,64,64` num contorno preto sobre vermelho, em vez do cinza `128,128,128` da metade de fora). Num `use` com `opacity=0.5`, as formas do componente aparecem uma através da outra (`128,64,191` no cruzamento de um vermelho com um azul). Hoje dá para ter o componente inteiro transparente pondo o `use` numa camada com `opacity=`. | Cores e contorno (etapa 3): decidir se o guia descreve ou se corrige antes |
+| J | **`opacity=` da forma e do `use`** (achado na tarefa A): o mesmo "pedaço por pedaço" que a camada tinha. Numa forma com contorno e `opacity=0.5`, a metade de dentro do contorno mostra o preenchimento por baixo (sai `128,64,64` num contorno preto sobre vermelho, em vez do cinza `128,128,128` da metade de fora). Num `use` com `opacity=0.5`, as formas do componente aparecem uma através da outra (`128,64,191` no cruzamento de um vermelho com um azul). Hoje dá para ter o componente inteiro transparente pondo o `use` numa camada com `opacity=`. **Feito na 1.67.10** (abaixo). | Cores e contorno (etapa 3): decidir se o guia descreve ou se corrige antes |
 
 Recomendação: A e B viram tarefas à parte, cada uma com as imagens antes/depois. C, D, E e I podem esperar uma tarefa de "avisos que faltam". F, G e H são defeitos: valem uma tarefa de conserto (G muda a imagem só no caso que hoje sai preto).
 
@@ -126,7 +126,25 @@ A lista completa e atualizada, com o que o diagnóstico achou nos outros capítu
 - A vista 3D das camadas continua forma por forma: lá cada forma é um plano.
 - Quem quiser o jeito antigo da `opacity=` põe a transparência em cada forma. O do `blend=`, só com cada forma na sua camada.
 
-**Fica de fora:** a `opacity=` da forma e do `use` (linha J da tabela).
+**Fica de fora:** a `opacity=` da forma e do `use` (linha J da tabela, feita na 1.67.10).
+
+### J: como ficou (1.67.10, 17/11/2026)
+
+**Conferido nas imagens** (antes, depois e diferença, mostradas ao usuário antes do "pode fazer"): os dois casos da tabela saem `127,127,127` dentro e fora do contorno (antes `128,64,64` dentro) e `127,127,255` no cruzamento do `use` (antes `128,64,191`), na linha de comando e no Chrome. O SVG já fazia assim.
+
+**A correção:**
+- `js/lang.js`: um `use … opacity=` menor que 1 vira um grupo; cada forma de dentro guarda o grupo e a `opacity=` da própria linha. A `opacity=` total da forma (a conta de antes) continua lá para o resto do código.
+- `js/scene.js`: as formas seguidas da mesma cópia transparente são pintadas juntas numa tela à parte e aplicadas de uma vez (`drawRun`); cópia dentro de cópia é grupo dentro de grupo. Uma forma transparente que pinta mais de uma vez no mesmo lugar (preenchimento e contorno, texto com contorno, buraco com contorno, luz, `emit=`, `pattern`, os passes dos estilos de arte, `draw=` aos poucos, o bloco do `thick=`) também vai para uma tela à parte (`drawWhole`). Uma pintura só (preenchimento sem contorno nem luz, traço, linha) continua direta, igual byte a byte. Vale também na virada e na metamorfose.
+- A luz numa tela à parte: o `multiply`/`overlay` da luz vazava nos pixels meio transparentes da borda e fazia um fio claro em volta da forma. O preenchimento com luz agora recebe a luz numa tela só dele, um pouco mais larga, e é recortado depois. Isso tira também o fio fraco que a 1.67.1 deixava nas camadas transparentes com luz.
+- `js/svg.js`: a cópia transparente vira um `<g opacity>` só, e o bloco do `thick=` também.
+- Achado no caminho: no @napi-rs/canvas, na escala 0.5, `destination-in` com `fill(path)` apaga a tela inteira. O recorte usa `drawImage` de uma máscara, que funciona.
+
+**O que mudou:**
+- `regress --strict`: 7 de 1048 referências, regravadas com o OK do usuário. O balão "uh-uuh!" da coruja (`coruja/sheet.png` e `pia_meio.png`: texto com contorno que aparece e some; até 73 níveis sobre branco), as nuvens de poeira do Cavaleiro na `noite` (`sheet_sem_acabamento.png` e `dash_meio.png`: formas com luz e `opacity=`), as bochechas e a sombra do fantasma do `filme.weasel` (`filme/quadros.png` e `_conferencia/filme.png`) e 12 pixels do `caso_metamorfose`. Nenhum SVG muda.
+- Guia: `03_opacity.png`, `03_cor_ou_opacity.png`, `03_natureza_morta.png`, `05_use_opacity.png`, `05_reflexo.png`, `06_bones.gif`, `09_abertura.gif`, `10_filme.gif` e `10_morph.gif` (conferido gerando o guia com o código de antes e com o novo: só essas mudam). Textos: a ficha do `use` e a tabela "Opções de todas as formas" no 19 (com um **Cuidado** em cada), o "Repare" do `use` transparente no 6 e um item no 3 ("o contorno e o preenchimento ficam transparentes juntos").
+- Partículas (`emitter`): cada uma continua transparente sozinha, e a fumaça fica mais forte onde elas se juntam. No SVG o `emitter` já era um grupo: essa diferença continua.
+- O passe de textura dos estilos de arte continua forma por forma, como na tarefa A.
+- Quem quiser o jeito antigo do `use` põe a `opacity=` em cada forma dentro do `def`.
 
 ### B: como ficou (1.66.1, 17/11/2026)
 
@@ -376,7 +394,7 @@ Cada etapa sai numa versão, com `npm test` e `regress --strict` passando, as im
 | 9 | 1.67.8 | Filme (17 e 18) |
 | 10 | 1.67.9 | Problemas comuns (24), o editor (22) terminado, revisão dos links e do README |
 
-A tarefa A saiu na 1.67.1, e as etapas 3 a 10 andaram uma versão.
+A tarefa A saiu na 1.67.1, e as etapas 3 a 10 andaram uma versão. A tarefa J saiu na 1.67.10, depois da etapa 10.
 
 Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos que faltam, os antigos.
 

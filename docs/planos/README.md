@@ -16,7 +16,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
-| [Problemas achados no código](problemas-achados.md) | os defeitos e os casos sem aviso que as outras sessões e o diagnóstico do guia acharam de passagem | lista de 17/11/2026; F, G e H com a sessão pronta, J em andamento; o resto esperando você |
+| [Problemas achados no código](problemas-achados.md) | os defeitos e os casos sem aviso que as outras sessões e o diagnóstico do guia acharam de passagem | lista de 17/11/2026, sendo resolvida (pedido de 17/11): J na 1.67.10; depois F, G e H, os consertos pequenos e os avisos |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; item 9 (o editor, 9a a 9e) na 1.65.1; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
 
 ### Ordem sugerida para o editor (editor visual e ferramentas de desenho)
@@ -61,7 +61,7 @@ Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o
 | ✅ [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | 1.50.0 a 1.64.0 (etapas 1 a 7c, todas em 16/11/2026; as escolhas marcadas **(R)** esperam a sua confirmação) e 1.65.0 (o Palco em 3D, seção 13, em 17/11/2026) |
 | ✅ [Editor visual](editor-visual.md) | menos código digitado: repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo), camadas arrastando, linha do tempo da animação e o filme pela tela | 1.49.0 e, pelas etapas da interface, 1.52.0 a 1.64.0; os itens 6, 10, 11 e 12 ficaram fora |
 | ✅ [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | 1.51.0, 1.56.0, 1.57.0 e 1.58.0 (etapas 1b, 4b, 4c e 5a da interface) |
-| ✅ [Guia novo e folha de atalhos](guia-e-atalhos.md) | o guia reescrito para quem está começando (todas as opções, faixas e padrões, com exemplos) e uma folha com todos os atalhos do editor | 1.66.0 a 1.67.9 (etapas 1 a 10, todas em 17/11/2026; tarefa B na 1.66.1 e tarefa A na 1.67.1) |
+| ✅ [Guia novo e folha de atalhos](guia-e-atalhos.md) | o guia reescrito para quem está começando (todas as opções, faixas e padrões, com exemplos) e uma folha com todos os atalhos do editor | 1.66.0 a 1.67.9 (etapas 1 a 10, todas em 17/11/2026; tarefa B na 1.66.1 e tarefa A na 1.67.1); tarefa J (a `opacity=` da forma e do `use`) na 1.67.10 |
 
 A fila combinada de 10/11/2026 (ajudante do Godot, contas novas, folha de conferência e transições) está toda feita.
 

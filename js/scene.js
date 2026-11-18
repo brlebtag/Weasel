@@ -1490,21 +1490,24 @@
     if (lp.show === 0) return;
     const alpha = layer.opacity * (lp.opacity !== undefined ? lp.opacity : 1);
     if (alpha <= 0.001) return;
-    const lit = !!R.lighting && !layer.unlit && !layer.guide;
+    const lit = !!R.lighting && !layer.unlit && !layer.guide, L = lit ? R : null;
+    // cada parte inteira (drawWhole), e as partes seguidas de uma cópia transparente juntas (drawRun)
+    const part = (c, d, a) => {
+      c.save();
+      if (layer.clip) clipInto(c, model, d.sp, layer.clip);
+      if (layer.cut) clipAway(c, model, d.sp, layer.cut);
+      const one = (x) => drawItem0(x, model, d.sp, d.el, d.it.part, layer, a, L);
+      if (!drawWhole(c, model, d.sp, d.el, d.it.part, layer, a, L, false, false, one)) one(c);
+      c.restore();
+    };
     const body = (c, a, solo) => {
       c.save();
       if (!solo) c.globalCompositeOperation = PASS && PASS.tex ? 'source-over' : layer.blend;
-      for (const d of group) {
-        c.save();
-        if (layer.clip) clipInto(c, model, d.sp, layer.clip);
-        if (layer.cut) clipAway(c, model, d.sp, layer.cut);
-        drawItem0(c, model, d.sp, d.el, d.it.part, layer, a, lit ? R : null);
-        c.restore();
-      }
+      drawRun(c, group, a, null, 0, { el: (d) => d.el, draw: part, box: () => null });
       c.restore();
     };
     const fx = PASS && PASS.tex ? null : layerFx(layer, lp);
-    if (fx || (!(PASS && PASS.tex) && whole(layer, alpha))) drawFxLayer(ctx, R, layer, null, alpha, lit, fx || {}, body);
+    if (fx || (!(PASS && PASS.tex) && whole(layer, alpha))) drawFxLayer(ctx, R, layer, null, alpha, lit, fx || {}, body, !fx);
     else body(ctx, alpha, false);
   }
 
@@ -2590,7 +2593,8 @@
       if (!items.length) continue;
       const lit = !!lighting && !layer.unlit && !layer.guide;
       const fx = tex ? null : layerFx(layer, lp);
-      if (fx || (!tex && ((layer.trail && pose.anim) || whole(layer, alpha)))) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {});
+      const trail = !tex && !!layer.trail && !!pose.anim;
+      if (fx || trail || (!tex && whole(layer, alpha))) drawFxLayer(ctx, R, layer, items, alpha, lit, fx || {}, null, !fx && !trail);
       else drawLayer(ctx, R, layer, items, alpha, lit, pose, false);
     }
     if (lighting && opts.glows !== false) drawLightGlows(ctx, lighting);
@@ -2601,7 +2605,59 @@
     if (!solo) ctx.globalCompositeOperation = PASS && PASS.tex ? 'source-over' : layer.blend;
     if (layer.clip) clipInto(ctx, R.model, pose, layer.clip);
     if (layer.cut) clipAway(ctx, R.model, pose, layer.cut);
-    for (const it of items) drawItem(ctx, R.model, pose, it.el, it.part, layer, alpha, lit ? R : null, flat);
+    const L = lit ? R : null;
+    drawRun(ctx, items, alpha, null, 0, {
+      el: (it) => it.el,
+      draw: (c, it, a) => drawItem(c, R.model, pose, it.el, it.part, layer, a, L, flat),
+      box: (run, m) => (FILM ? paintBox(R.model, pose, run, m) : null),
+    });
+    ctx.restore();
+  }
+
+  // A transparência de uma cópia (use … opacity=) vale para ela inteira, como numa camada: as formas seguidas da
+  // mesma cópia (el.grp) são pintadas juntas à parte, sem a transparência dela, e aplicadas de uma vez. Pintadas
+  // forma por forma, as formas da cópia se veriam umas através das outras (até a 1.67.1). Uma cópia dentro da outra
+  // é um grupo dentro do outro. list: o que pintar, em ordem; P.el(x): a forma de x; P.draw(c, x, base): pinta x;
+  // P.box(run, m): a caixa da tela de rascunho (null = a tela inteira). No passe de textura dos estilos, que pinta
+  // forma por forma, não há grupos (ownOp).
+  function drawRun(ctx, list, base, top, depth, P) {
+    const groups = !(PASS && PASS.tex);
+    for (let k = 0; k < list.length;) {
+      const g = groups ? groupUnder(P.el(list[k]).grp, top) : null;
+      if (!g) { P.draw(ctx, list[k], base); k++; continue; }
+      let j = k + 1;
+      while (j < list.length && inGroup(P.el(list[j]).grp, g)) j++;
+      const run = list.slice(k, j);
+      k = j;
+      if (base * g.op <= 0.001) continue;
+      paintApart(ctx, 'grp' + depth, (m) => P.box(run, m), base * g.op, (c) => drawRun(c, run, 1, g, depth + 1, P));
+    }
+  }
+  // o grupo mais de fora dentro de top, na corrente de grupos de uma forma (null: nenhum)
+  function groupUnder(g, top) {
+    let r = null;
+    for (; g && g !== top; g = g.up) r = g;
+    return g === top ? r : null;
+  }
+  const inGroup = (g, top) => { for (; g; g = g.up) if (g === top) return true; return false; };
+  // a transparência com que a forma é pintada: numa cópia transparente, só a da linha dela (a da cópia vem com o
+  // grupo); no passe de textura, a de tudo junto
+  const ownOp = (el) => (el.grp && !(PASS && PASS.tex) ? el.own : el.opacity);
+  // Pinta draw(c) numa tela de rascunho (a caixa de box(m), em pixels de ctx; null = a tela inteira) e aplica de uma
+  // vez em ctx, com a transparência alpha e a mistura e o recorte que ctx já tem.
+  // ISO: pintando numa tela à parte transparente, que não é o fundo de verdade (ver a luz em drawItem0)
+  let ISO = false;
+  function paintApart(ctx, name, box, alpha, draw) {
+    const m = matOf(ctx), T = scratchBox(name, box(m), ctx.canvas);
+    if (!T) return;
+    setMat(T.ctx, shiftMat(m, T.x, T.y));
+    const was = ISO;
+    ISO = true;
+    try { draw(T.ctx); } finally { ISO = was; }
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(T.canvas, T.x, T.y);
     ctx.restore();
   }
 
@@ -2610,7 +2666,8 @@
   // forma por forma, as formas da camada se veriam umas através das outras e se misturariam entre si (até a 1.67.0).
   const whole = (layer, alpha) => alpha < 1 || layer.blend !== 'source-over';
   // Camada com efeitos: desenhada à parte e aplicada de uma vez (sombra, brilho, cor, desfoque, rastro).
-  function drawFxLayer(ctx, R, layer, items, alpha, lit, fx, body) {
+  // iso: só pela transparência ou pela mistura (whole): a luz das formas não vaza na borda (ISO, ver drawItem0)
+  function drawFxLayer(ctx, R, layer, items, alpha, lit, fx, body, iso) {
     const { model, pose } = R;
     const W = ctx.canvas.width, H = ctx.canvas.height, m = matOf(ctx), s = scaleOf(m);
     // no filme, a camada numa tela do tamanho do desenho dela (scratchBox); o rastro desenha outras poses, e o body
@@ -2636,8 +2693,12 @@
       }
     }
     setMat(T.ctx, shiftMat(m, T.x, T.y));
-    if (body) body(T.ctx, 1, true);
-    else drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
+    const was = ISO;
+    ISO = !!iso;
+    try {
+      if (body) body(T.ctx, 1, true);
+      else drawLayer(T.ctx, R, layer, items, 1, lit, pose, true);
+    } finally { ISO = was; }
     T.ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (fx.tint > 0 && fx.tintc) {
       T.ctx.globalCompositeOperation = 'source-atop';
@@ -2727,6 +2788,42 @@
   // Com 3D: some atrás da bola (round=), mostra o verso (back=) quando vira de costas e monta o bloco (thick=).
   function drawItem(ctx, model, pose, el, part, layer, base, R, flat) {
     const d3 = model.has3d && (!el.hidden || propsOf(pose, el).reveal) ? el3(model, pose, el) : null;
+    // a forma que aparece: de costas, o verso (back=); o bloco (thick=) é a própria forma com os lados
+    const solid = !!(d3 && el.thick > 0 && el.closed && !el._src && !el.billboard);
+    const E = d3 && !solid && d3.nz < 0 && el.back ? proxy3(el, 'bk') : el;
+    if (drawWhole(ctx, model, pose, E, part, layer, base * (d3 ? d3.fade : 1), R, flat, solid || (!!d3 && part !== 'ink' && d3.dark > 0.004), (c) => drawItem1(c, model, pose, el, part, layer, base, R, flat, d3))) return;
+    drawItem1(ctx, model, pose, el, part, layer, base, R, flat, d3);
+  }
+  // A transparência de uma forma vale para ela inteira, como no SVG: a forma que pinta mais de uma vez no mesmo
+  // lugar (o contorno por cima do preenchimento, a luz, os buracos, o brilho, o bloco, as passadas de um estilo...)
+  // é pintada à parte sem transparência (OPAQUE) e aplicada de uma vez. Pintada direto, cada pedaço deixaria ver o de
+  // baixo: a metade de dentro do contorno mostrava o preenchimento (até a 1.67.1). Devolve false quando a forma
+  // pinta direto (sem transparência, ou uma pintura só, que dá no mesmo).
+  let OPAQUE = false;
+  // more: a forma pinta mais de uma vez por causa do 3D (o bloco, o cartão escurecendo de lado)
+  function drawWhole(ctx, model, pose, el, part, layer, base, R, flat, more, draw) {
+    if (OPAQUE || (PASS && PASS.tex)) return false;
+    const pr = propsOf(pose, el);
+    if ((el.hidden && !pr.reveal) || pr.show === 0) return false;
+    const alpha = base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
+    if (alpha >= 0.999 || alpha <= 0.001 || !(more || layered(model, pose, el, pr, part, layer, R, flat))) return false;
+    OPAQUE = true;
+    try { paintApart(ctx, 'one', (m) => (FILM ? paintBox(model, pose, [{ el, part }], m) : null), alpha, draw); } finally { OPAQUE = false; }
+    return true;
+  }
+  // a forma pinta mais de uma vez no mesmo lugar? As partículas ficam de fora: cada uma é uma peça (a fumaça fica
+  // mais densa onde elas se juntam); o traço com espessura variável já se cuida (G.drawVar).
+  function layered(model, pose, el, pr, part, layer, R, flat) {
+    if (el.type === 'emitter') return false;
+    if ((el.emit && !flat) || (PASS && PASS.stroke && !layer.guide) || (el.closed && pr.draw !== undefined && pr.draw < 1)) return true;
+    const ink = pr.ink !== undefined ? pr.ink : el.ink, inkc = pr.inkc !== undefined ? pr.inkc : el.inkc;
+    const fill = part !== 'ink' && (pr.c !== undefined ? pr.c : el.fill);
+    const withInk = part !== 'fill' && ink > 0 && !!inkc && model.finish.style !== 'flat' && !(PASS && PASS.noInk);
+    if (el.type === 'text') return !!fill && withInk;
+    if (!el.closed) return false;
+    return (!!fill && (withInk || fill.kind === 'pat' || (!!R && !el.emit) || !!(PASS && PASS.toon))) || (withInk && !!el.cuts);
+  }
+  function drawItem1(ctx, model, pose, el, part, layer, base, R, flat, d3) {
     if (!d3) { drawItem0(ctx, model, pose, el, part, layer, base, R, flat); return; }
     if (d3.fade <= 0.001) return;
     base *= d3.fade;
@@ -2744,7 +2841,7 @@
   // os lados do bloco: primeiro o contorno (fica só por fora), depois o preenchimento de cada lado
   function drawSides(ctx, model, pose, el, quads, base, R, flat) {
     const pr = propsOf(pose, el);
-    const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+    const alpha = OPAQUE ? 1 : base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001 || pr.show === 0 || !quads.length || (PASS && PASS.tex)) return;
     let col = sideColor(el, pr);
     const ink = pr.ink !== undefined ? pr.ink : el.ink;
@@ -2777,7 +2874,7 @@
     // reveal: num filme, at forma.show=1 mostra uma forma com hidden
     if (el.hidden && !pr.reveal) return;
     if (pr.show === 0) return;
-    const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+    const alpha = OPAQUE ? 1 : base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
     if (alpha <= 0.001) return;
     const dr = pr.draw !== undefined ? Math.max(0, Math.min(1, pr.draw)) : 1;
     if (dr <= 0.001) return;
@@ -2813,29 +2910,58 @@
       if (cut) { ctx.save(); if (apart) clipOutEach(ctx, model, pose, el.cuts); else ctx.clip(inverse(cut), 'evenodd'); }
       if (part !== 'ink' && fill && (!dp || dp.fill > 0)) {
         const fa = dp ? alpha * dp.fill : alpha;
-        ctx.globalAlpha = fa;
-        if (tex) texFill(ctx, model, pose, el, g, path);
-        else if (SP) { glowOnly(ctx, SP, (x) => { x.fillStyle = sinfo.fillStyle; x.fill(path); }); SP.fill(ctx, sinfo); }
-        else if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
-        else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
-        glowOff(ctx);
-        // cartão virando de lado (3D): mais escuro
-        const d3 = tex ? null : el3(model, pose, el);
-        if (d3 && d3.dark > 0.004) {
-          ctx.save();
-          ctx.globalAlpha = fa * d3.dark;
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.fillStyle = '#000000';
-          ctx.fill(path);
-          ctx.restore();
+        // o que vai por cima do preenchimento: o escuro do cartão de lado, a luz e a faixa do toon
+        const over = (c) => {
+          // cartão virando de lado (3D): mais escuro
+          const d3 = tex ? null : el3(model, pose, el);
+          if (d3 && d3.dark > 0.004) {
+            c.save();
+            c.globalAlpha = fa * d3.dark;
+            c.globalCompositeOperation = 'source-over';
+            c.fillStyle = '#000000';
+            c.fill(path);
+            c.restore();
+          }
+          if (L) {
+            shadeShape(c, L, path, bb, layer, fa);
+            lightRaster(c, L, path, bb, fa);
+            const rim = layer.rim || L.lighting.rim;
+            if (rim) rimShape(c, L, el, g, path, bb, rim, fa);
+          }
+          if (PASS && PASS.toon && !layer.unlit && !layer.guide) toonBand(c, model, g, path, fa, PASS.toon);
+        };
+        if (ISO && L && !tex && !SP && fill.kind !== 'pat' && fa >= 0.999) {
+          // Numa tela à parte transparente (ISO: a forma, a cópia ou a camada inteira), a luz (multiply, overlay)
+          // vazaria para os pixels meio transparentes da borda e faria um fio em volta da forma. Aí o preenchimento
+          // vai para uma tela só dele, um pouco mais largo (a borda toda da cor dele), recebe a luz e é cortado no
+          // formato da forma (por uma máscara: no canvas da linha de comando, um destination-in com fill(path) na
+          // escala 0.5 apaga a tela inteira).
+          paintApart(ctx, 'lit', (m) => (FILM ? paintBox(model, pose, [{ el, part: 'fill' }], m) : null), 1, (c) => {
+            c.fillStyle = c.strokeStyle = paint(c, model, pose, el, fill);
+            c.fill(path);
+            c.lineWidth = 2 / scaleOf(matOf(c));
+            c.lineJoin = 'round';
+            c.stroke(path);
+            over(c);
+            const K = scratch('litmask', c.canvas.width, c.canvas.height);
+            setMat(K.ctx, matOf(c));
+            K.ctx.fill(path);
+            c.save();
+            c.setTransform(1, 0, 0, 1, 0, 0);
+            c.globalCompositeOperation = 'destination-in';
+            c.globalAlpha = 1;
+            c.drawImage(K.canvas, 0, 0);
+            c.restore();
+          });
+        } else {
+          ctx.globalAlpha = fa;
+          if (tex) texFill(ctx, model, pose, el, g, path);
+          else if (SP) { glowOnly(ctx, SP, (x) => { x.fillStyle = sinfo.fillStyle; x.fill(path); }); SP.fill(ctx, sinfo); }
+          else if (fill.kind === 'pat') drawPattern(ctx, model, pose, el, g, fill);
+          else { ctx.fillStyle = paint(ctx, model, pose, el, fill); ctx.fill(path); }
+          glowOff(ctx);
+          over(ctx);
         }
-        if (L) {
-          shadeShape(ctx, L, path, bb, layer, fa);
-          lightRaster(ctx, L, path, bb, fa);
-          const rim = layer.rim || L.lighting.rim;
-          if (rim) rimShape(ctx, L, el, g, path, bb, rim, fa);
-        }
-        if (PASS && PASS.toon && !layer.unlit && !layer.guide) toonBand(ctx, model, g, path, fa, PASS.toon);
       }
       glowOff(ctx);
       if (dp) {
@@ -3544,7 +3670,7 @@
   W.scene = {
     makePose, spinPose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
-    el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin,
+    el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin, groupUnder, inGroup,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,
     filmFrame, plateBox, boxArea, placeCanvas,
   };

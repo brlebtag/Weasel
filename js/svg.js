@@ -134,6 +134,26 @@
       return out;
     }
 
+    // A transparência com que a forma é pintada: numa cópia transparente (use … opacity=), só a da linha dela; a da
+    // cópia vai no <g opacity> do grupo (grouped). opaque: dentro do <g opacity> do bloco (thick=), as partes sem a
+    // transparência da forma.
+    const ownOp = (el) => (el.grp ? el.own : el.opacity);
+    let opaque = false;
+    // as formas seguidas de uma mesma cópia transparente (el.grp) num <g opacity> só, como no canvas (scene.js,
+    // drawRun): as formas da cópia não aparecem umas através das outras. list: em ordem; elOf(x): a forma; one(x): o SVG
+    function grouped(list, elOf, one, top) {
+      let out = '';
+      for (let k = 0; k < list.length;) {
+        const g = S.groupUnder(elOf(list[k]).grp, top || null);
+        if (!g) { out += one(list[k]); k++; continue; }
+        let j = k + 1;
+        while (j < list.length && S.inGroup(elOf(list[j]).grp, g)) j++;
+        const body = grouped(list.slice(k, j), elOf, one, g);
+        k = j;
+        if (g.op > 0.001 && body) out += `<g opacity="${n2(g.op)}">${body}</g>`;
+      }
+      return out;
+    }
     // um elemento da camada; P = pose (o rastro usa poses de quadros anteriores). Com 3D: some atrás da bola,
     // mostra o verso (back=) quando vira de costas e monta o bloco (thick=), como no canvas.
     function item(el, part, layer, base, P, lit, flat) {
@@ -142,20 +162,27 @@
       if (d3.fade <= 0.001) return '';
       base *= d3.fade;
       if (el.thick > 0 && el.closed && !el._src && !el.billboard) {
-        const sp = S.solidParts(model, P, el, d3);
+        // o bloco inteiro num <g opacity> só (como no canvas): as faces e os lados não aparecem uns através dos outros
+        const pr = S.propsOf(P, el), a = opaque ? 1 : base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
+        if (a <= 0.001 || pr.show === 0) return '';
+        const sp = S.solidParts(model, P, el, d3), was = opaque;
+        opaque = true;
         let out = '';
-        if (part !== 'ink') {
-          if (sp.far) out += item0(sp.far, part, layer, base, P, lit, flat);
-          out += sidesSvg(el, sp.quads, base, P, lit && !el.emit);
-        }
-        return out + item0(sp.near, part, layer, base, P, lit, flat);
+        try {
+          if (part !== 'ink') {
+            if (sp.far) out += item0(sp.far, part, layer, base, P, lit, flat);
+            out += sidesSvg(el, sp.quads, base, P, lit && !el.emit);
+          }
+          out += item0(sp.near, part, layer, base, P, lit, flat);
+        } finally { opaque = was; }
+        return a < 0.999 && out ? `<g opacity="${n2(a)}">${out}</g>` : out;
       }
       return item0(d3.nz < 0 && el.back ? S.proxy3(el, 'bk') : el, part, layer, base, P, lit, flat);
     }
     // os lados do bloco: o contorno de todos (fica só por fora) e depois cada lado com a sua luz
     function sidesSvg(el, quads, base, P, lit) {
       const pr = S.propsOf(P, el);
-      const alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+      const alpha = opaque ? 1 : base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
       if (alpha <= 0.001 || pr.show === 0 || !quads.length) return '';
       let col = S.sideColor(el, pr);
       const ink = pr.ink !== undefined ? pr.ink : el.ink;
@@ -178,7 +205,7 @@
       if (el.hidden) return '';
       const pr = S.propsOf(P, el);
       if (pr.show === 0) return '';
-      let alpha = base * el.opacity * (pr.opacity !== undefined ? pr.opacity : 1);
+      let alpha = opaque ? 1 : base * ownOp(el) * (pr.opacity !== undefined ? pr.opacity : 1);
       if (alpha <= 0.001) return '';
       const dr = pr.draw !== undefined ? Math.max(0, Math.min(1, pr.draw)) : 1;
       if (dr <= 0.001) return '';
@@ -314,7 +341,7 @@
       let attrs = '';
       if (layer.clip) attrs += ` clip-path="url(#${clipDef(S.clipEls(model, layer.clip), P)})"`;
       if (layer.cut) attrs += ` mask="url(#${maskOut(S.clipEls(model, layer.cut).filter((e) => e.closed).map((e) => elPath(e, P)), S.moldHoles(model, layer.cut).map((h) => elPath(h, P)))})"`;
-      let inner = items.map((it) => item(it.el, it.part, layer, 1, P, lit)).join('');
+      let inner = grouped(items, (it) => it.el, (it) => item(it.el, it.part, layer, 1, P, lit));
       // os buracos do molde do clip= continuam buracos
       const holes = layer.clip ? S.moldHoles(model, layer.clip) : [];
       if (inner && holes.length) inner = `<g mask="url(#${maskOut(holes.map((h) => elPath(h, P)))})">${inner}</g>`;
@@ -354,7 +381,7 @@
           }
         }
       }
-      const body = draws ? draws.map((d) => layerBody(layer, [d.it], d.sp, lit)).join('') : layerBody(layer, layer.items, pose, lit);
+      const body = draws ? grouped(draws, (d) => d.it.el, (d) => layerBody(layer, [d.it], d.sp, lit)) : layerBody(layer, layer.items, pose, lit);
       if (!body) continue;
       const lid = id('L');
       defs.push(`<g id="${lid}">${body}</g>`);

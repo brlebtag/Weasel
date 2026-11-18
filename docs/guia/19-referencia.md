@@ -1564,7 +1564,7 @@ ellipse vidro 250,60 24 c=#ffffff opacity=0.4
 |---|---|---|---|---|
 | o nome | identifica a forma para `key`, `at`, `cut=`, `clip=`, `back=` e `mirror=`. Vale em: todas. | letras, números, `_` e `-`, começando com letra ou `_` (sem acento). Pode repetir: tudo o que usa o nome vale para todas as formas com ele | sem nome (a forma não pode ser animada nem recortar outra) | não |
 | `c=` | a cor: o preenchimento das formas fechadas, a cor do traço, da linha e das letras. Vale em: todas (no `emitter`, veja a ficha dele). | uma cor; `none` deixa sem cor. Um `pattern` só preenche as formas fechadas: no `stroke`, na `line` e no `text`, avisa e usa a cor das linhas dele | a cor `ink` da [`palette`](#palette) (se você não a mudou, `#14141c`, quase preto); numa forma fechada com `ink=`, nenhuma (a forma fica vazia) | `key` |
-| `opacity=` | a transparência da forma. Vale em: todas. | de 0 (invisível) a 1 (inteira) | 1 | `key` e `at` |
+| `opacity=` | a transparência da forma inteira: o preenchimento e o contorno ficam transparentes juntos, como uma peça só. Vale em: todas. | de 0 (invisível) a 1 (inteira) | 1 | `key` e `at` |
 | `ink=` | a grossura do contorno: metade para dentro, metade para fora da borda (no `text`, só por fora). Vale em: `shape`, `ellipse`, `rect`, `text`. | uma espessura, em pixels | 0 (sem contorno) | `key` |
 | `inkc=` | a cor do contorno. Vale em: `shape`, `ellipse`, `rect`, `text`. | uma cor (um `pattern` avisa e vira a cor das linhas dele) | a cor `ink` da `palette` | `key` |
 | `weight=` | engrossa o contorno do lado oposto à luz e afina do lado dela; a luz vem do `light=` do [`canvas`](#canvas). Vale em: `shape`, `ellipse`, `rect`. | de 0 a 3 | 0 (contorno igual em volta) | não |
@@ -1590,6 +1590,7 @@ A [`key`](#key) muda as formas numa animação; o [`at`](#at) só muda as formas
 
 **Cuidado:**
 - `hidden`, `lock`, `bold`, `italic` e `billboard` são palavras soltas: uma forma não pode ter um desses nomes.
+- O `opacity=` deixa a forma transparente de uma vez: por baixo do contorno não aparece o preenchimento. No `emitter` é diferente: cada partícula fica transparente sozinha, e onde elas se juntam a cor fica mais forte. Até a versão 1.67.9, a metade de dentro do contorno de uma forma transparente deixava ver o preenchimento.
 - Numa animação, uma forma `hidden` nunca aparece: uma `key` com `show=1` não muda isso (aviso). Num filme, `at forma.show=1` mostra.
 - `z=`, `thick=`, `back=` e `billboard` só mudam a imagem quando alguma coisa gira em 3D (o `yaw=` ou o `pitch=` da forma, de um osso ou da camada, o `floor` ou o `iso` da camada). O `z=` também decide a ordem do `zsort`.
 - O `thick=` não vale numa forma `billboard`.
@@ -1949,7 +1950,7 @@ use seta 350,60 flip=x opacity=0.5
 | `scale=` | o tamanho, em volta do ponto `x,y`. O contorno engrossa junto | um número (`scale=2`) ou dois (`scale=largura,altura`); qualquer número (negativo espelha, 0 some) | 1 | não |
 | `rot=` | gira a cópia em volta do ponto `x,y` | qualquer número, em graus (positivo: sentido do relógio) | 0 | não |
 | `flip=` | espelha a cópia | `x` (vira para o outro lado), `y` (de cabeça para baixo) ou `xy` (os dois) | sem espelho | não |
-| `opacity=` | a transparência da cópia inteira; multiplica a `opacity=` de cada forma de dentro | de 0 a 1 | 1 | não |
+| `opacity=` | a transparência da cópia inteira, como uma imagem só; multiplica a `opacity=` de cada forma de dentro | de 0 a 1 | 1 | não |
 | `bone=` | a cópia inteira segue o osso. Uma forma de dentro com `bone=` própria segue o osso dela | o nome de um osso | nenhum | não |
 | `cloth=` | a cópia inteira balança com o tecido | o nome de um `cloth` | nenhum | não |
 | `z=` | a profundidade 2.5D: soma ao `z=` de cada forma de dentro | qualquer número, em pixels (positivo: mais perto) | 0 | não |
@@ -1969,6 +1970,7 @@ Um nome que não é nada disso dá um aviso com a lista dos parâmetros do `def`
 
 **Cuidado:**
 - `scale=-1,1` é o mesmo que `flip=x`, mas o `flip=` fica mais fácil de ler.
+- O `opacity=` trata a cópia como uma imagem só: onde uma forma do componente cobre outra, a de baixo não aparece através dela. Para as formas se verem umas através das outras, ponha o `opacity=` em cada forma dentro do `def`. Até a versão 1.67.9, cada forma da cópia ficava transparente sozinha.
 - Um `pattern` não pode ser o valor de um parâmetro: no `def` ou no `use`, dá erro (`cor desconhecida`). E um `use` que troca um `pattern` por outro (`listras=bolinhas`) não muda nada, sem aviso.
 - Um componente dentro do outro vai até 8 níveis. Um componente que usa a si mesmo dá erro.
 - O `use` não tem nome: uma `key` não muda a cópia inteira. Para animar a cópia, prenda num osso (`bone=`) e anime o osso.
