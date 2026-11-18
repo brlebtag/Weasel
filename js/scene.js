@@ -3217,11 +3217,33 @@
     noiseCache.set(k, c);
     return c;
   }
+  // as cores da palette que o posterize=palette usa: as #hex e as com nome do CSS (pintadas num ponto, para saber o
+  // RGB). Uma cor com transparência fica de fora: ela nunca aparece sozinha na imagem, só misturada com o que está
+  // embaixo (antes, os nomes ficavam de fora e a transparência era ignorada)
+  function paletteRGB(model) {
+    const out = [];
+    let dot = null;
+    for (const v of model.palette.values()) {
+      if (typeof v !== 'string') continue;
+      let c = G.parseHex(v);
+      if (!c && /^[a-z]+$/i.test(v)) {
+        if (!dot) dot = scratch('palcor', 1, 1).ctx;
+        dot.clearRect(0, 0, 1, 1);
+        dot.fillStyle = 'rgba(0,0,0,0)';
+        dot.fillStyle = v;
+        dot.fillRect(0, 0, 1, 1);
+        const q = dot.getImageData(0, 0, 1, 1).data;
+        c = [q[0], q[1], q[2], q[3] / 255];
+      }
+      if (c && c[3] >= 1) out.push(c);
+    }
+    return out;
+  }
   function posterize(x, W, H, model) {
     const p = model.finish.posterize;
     const img = x.getImageData(0, 0, W, H), d = img.data;
     if (p === 'palette') {
-      const pal = [...model.palette.values()].filter((v) => typeof v === 'string').map(G.parseHex).filter(Boolean);
+      const pal = paletteRGB(model);
       if (!pal.length) return;
       const cache = new Map();
       for (let i = 0; i < d.length; i += 4) {

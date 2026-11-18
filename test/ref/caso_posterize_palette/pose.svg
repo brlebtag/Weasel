@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="150" height="60" viewBox="0 0 300 120">
+<defs><linearGradient id="g1" gradientUnits="userSpaceOnUse" x1="0" y1="20" x2="0" y2="100"><stop offset="0" stop-color="#f2d4a8"/><stop offset="1" stop-color="#a0522d"/></linearGradient>
+<linearGradient id="g2" gradientUnits="userSpaceOnUse" x1="0" y1="14" x2="0" y2="114"><stop offset="0" stop-color="#f4fff2"/><stop offset="1" stop-color="#3f7d5a"/></linearGradient>
+<g id="L3"><g><path d="M110 60C110 82.09 92.09 100 70 100C47.91 100 30 82.09 30 60C30 37.91 47.91 20 70 20C92.09 20 110 37.91 110 60Z" fill="url(#g1)"/><path d="M110 60C110 82.09 92.09 100 70 100C47.91 100 30 82.09 30 60C30 37.91 47.91 20 70 20C92.09 20 110 37.91 110 60Z" fill="none" stroke="#22303d" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M260 64C260 91.61 237.61 114 210 114C182.39 114 160 91.61 160 64C160 36.39 182.39 14 210 14C237.61 14 260 36.39 260 64Z" fill="url(#g2)"/><path d="M260 64C260 91.61 237.61 114 210 114C182.39 114 160 91.61 160 64C160 36.39 182.39 14 210 14C237.61 14 260 36.39 260 64Z" fill="none" stroke="#22303d" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M208 40C208 47.73 201.73 54 194 54C186.27 54 180 47.73 180 40C180 32.27 186.27 26 194 26C201.73 26 208 32.27 208 40Z" fill="#ffffff" fill-opacity="0.4"/></g></g></defs>
+<rect x="0" y="0" width="300" height="120" fill="#203040"/>
+<g data-layer="base"><use href="#L3" xlink:href="#L3"/></g>
+</svg>

@@ -4196,8 +4196,9 @@
       st.pin.box = { a: p, b: p.slice(), add: e.shiftKey, sub: e.altKey, x: e.clientX, y: e.clientY, moved: false };
       return;
     }
-    // Ctrl+clique escreve a coordenada no cursor do código (no Design o código não aparece: não escreve)
-    if (e.button === 0 && (e.ctrlKey || e.metaKey) && st.layout !== 'design') {
+    // Ctrl+clique escreve a coordenada no cursor do código (no Design o código não aparece: não escreve). No Mac,
+    // Cmd+clique: lá o Ctrl+clique é o botão direito, que abre o menu
+    if (e.button === 0 && (MAC ? e.metaKey : e.ctrlKey || e.metaKey) && st.layout !== 'design') {
       const [x, y] = toWorld(e);
       const ta = editor.ta, s = ta.selectionStart;
       const before = ta.value[s - 1];
@@ -5784,6 +5785,14 @@
   // teclado. Com o foco no desenho, valem os atalhos do Illustrator (docs/planos/interface-illustrator.md, 7.2);
   // no código, os do editor de código. As letras das ferramentas ficam na casca (js/ui-shell.js).
   const inField = (t) => !!(t && t.closest && t.closest('textarea, input, select, dialog'));
+  // o botão ou link que ganhou o foco pelo Tab, e não por um clique (o :focus-visible não serve: o Chrome liga ele
+  // em qualquer tecla apertada, também depois de um clique)
+  let tabbed = null, viaTab = false;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Tab') viaTab = true; }, true);
+  document.addEventListener('pointerdown', () => { viaTab = false; tabbed = null; }, true);
+  document.addEventListener('focusin', (e) => { tabbed = viaTab ? e.target : null; viaTab = false; });
+  const keyFocused = (t) => !!(t && t === tabbed && t.closest && t.closest('button, a'));
+  const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
   const inDialog = (t) => !!(t && t.closest && t.closest('dialog'));
   document.addEventListener('keydown', (e) => {
     const mod = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k, t = e.target;
@@ -5820,7 +5829,10 @@
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey && pinOn()) { e.preventDefault(); hint('No Prender, o Delete não apaga pontos: para tirar o @, use o botão direito → Soltar.', 2800); return; }
     // Delete: na Seleção direta, o ponto escolhido; com formas escolhidas (a caixa), as formas (js/ui-select.js)
     if ((k === 'Delete' || k === 'Backspace') && !mod && !e.altKey) { if (deletePoint()) { e.preventDefault(); return; } if (groupOn() && W.sel) { e.preventDefault(); W.sel.del(); } return; }
-    // Espaço: tocado (sem arrastar), toca e pausa; segurado, arrastar no desenho move a vista
+    // Espaço: tocado (sem arrastar), toca e pausa; segurado, arrastar no desenho move a vista. Num botão que recebeu
+    // o foco pelo teclado (Tab), o Espaço aperta o botão, como no resto da página; depois de um clique com o mouse,
+    // continua tocando e movendo a vista
+    if (k === ' ' && keyFocused(t)) return;
     if (k === ' ') { e.preventDefault(); if (!st.space && !e.repeat) { st.space = { panned: false }; stage.classList.add('space'); } return; }
     // Enter também toca e pausa (num botão, o Enter é do botão)
     if (k === 'Enter' && !mod && !e.altKey && !(t.closest && t.closest('button, a'))) { e.preventDefault(); play(!st.playing); return; }
@@ -5830,7 +5842,7 @@
     if (!mod && !e.altKey && k.startsWith('Arrow')) {
       e.preventDefault();
       const d = e.shiftKey ? 10 : 1, v = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[k];
-      if (v && !nudge(v[0], v[1])) hint('As setas empurram a forma escolhida (clique numa com a Seleção, V). Para trocar de quadro: , e .', 3200);
+      if (v && !nudge(v[0], v[1])) hint(isFilm() ? 'No filme, as setas empurram os at escolhidos na linha do tempo (clique num losango; Ctrl+A escolhe todos). Para trocar de quadro: , e .' : 'As setas empurram a forma escolhida (clique numa com a Seleção, V). Para trocar de quadro: , e .', 3200);
     }
   });
   document.addEventListener('keyup', (e) => {

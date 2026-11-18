@@ -475,7 +475,8 @@
   }
 
   // ---------- teclado e área de transferência (com o foco no desenho) ----------
-  const here = (t) => !inField(t) && !!model() && !st.view3d;
+  // também na vista Camadas em 3D, onde os mesmos itens do menu valem (antes, lá as teclas não faziam nada)
+  const here = (t) => !inField(t) && !!model();
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented) return;
     const mod = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k;

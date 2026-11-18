@@ -140,15 +140,16 @@
     const segs = [];
     const line = (x0, y0, x1, y1) => segs.push([x0, y0, x0 + (x1 - x0) / 3, y0 + (y1 - y0) / 3, x1 - (x1 - x0) / 3, y1 - (y1 - y0) / 3, x1, y1]);
     const arc = (x0, y0, x1, y1, cxp, cyp) => segs.push([x0, y0, x0 + (cxp - x0) * KAPPA, y0 + (cyp - y0) * KAPPA, x1 + (cxp - x1) * KAPPA, y1 + (cyp - y1) * KAPPA, x1, y1]);
-    const x2 = x + w, y2 = y + h;
-    line(x + r, y, x2 - r, y);
-    if (r) arc(x2 - r, y, x2, y + r, x2, y);
-    line(x2, y + r, x2, y2 - r);
-    if (r) arc(x2, y2 - r, x2 - r, y2, x2, y2);
-    line(x2 - r, y2, x + r, y2);
-    if (r) arc(x + r, y2, x, y2 - r, x, y2);
-    line(x, y2 - r, x, y + r);
-    if (r) arc(x, y + r, x + r, y, x, y);
+    // com largura ou altura negativa, o canto anda para o outro lado (antes os cantos saíam para dentro)
+    const x2 = x + w, y2 = y + h, rx = w < 0 ? -r : r, ry = h < 0 ? -r : r;
+    line(x + rx, y, x2 - rx, y);
+    if (r) arc(x2 - rx, y, x2, y + ry, x2, y);
+    line(x2, y + ry, x2, y2 - ry);
+    if (r) arc(x2, y2 - ry, x2 - rx, y2, x2, y2);
+    line(x2 - rx, y2, x + rx, y2);
+    if (r) arc(x + rx, y2, x, y2 - ry, x, y2);
+    line(x, y2 - ry, x, y + ry);
+    if (r) arc(x, y + ry, x + rx, y, x, y);
     if (!rot) return segs;
     const m = M.mul(M.translate(x + w / 2, y + h / 2), M.mul(M.rotate(rot), M.translate(-(x + w / 2), -(y + h / 2))));
     return segs.map((s) => mapSeg(s, (px, py) => M.apply(m, px, py)));

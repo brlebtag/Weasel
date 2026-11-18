@@ -25,13 +25,13 @@ Antes de cada tarefa, a proposta é explicada de novo, e o trabalho só começa 
 
 | # | O quê | Onde | O que muda ao corrigir |
 |---|---|---|---|
-| E | Um `rect` com largura ou altura negativa e `r=` desenha os cantos para dentro. | `geom.js:139` | só a imagem desse caso, que hoje sai errada |
-| 1 | `finish posterize=palette` usa só as cores `#hex` da `palette`. Uma cor com nome (`pele=wheat`) fica de fora, sem aviso, e a transparência das cores é ignorada. | `scene.js:3094`, `:3109` | a imagem de quem usa `posterize=palette` com nomes de cor |
-| 2 | **Godot sem `root=`:** a origem fica no meio da base do recorte, 8 px abaixo do desenho (a margem do `--trim`). Um personagem sem `root=` flutua 8 px acima do chão. | `godot.js:53`, `:697` | **muda os jogos já exportados**: precisa de decisão (talvez só explicar no guia) |
-| 3 | **Vista 3D das camadas:** Agrupar, Travar, Organizar, Recortar, Copiar, Colar, Tudo e Nada ficam ativos no menu, mas as teclas deles não fazem nada. | `ui-select.js:478` | só o editor |
-| 4 | **Espaço num botão com foco** toca o player, em vez de apertar o botão. | `app.js:5812` | só o editor |
-| 5 | **← e → na linha do tempo do filme**, sem nada escolhido, mostram o aviso do desenho ("As setas empurram a forma escolhida…"), que não serve ali. | `app.js:5821` | só o editor |
-| 6 | **No Mac**, Ctrl+clique no desenho escreve a coordenada e também abre o menu do botão direito. Lá, o certo seria Cmd+clique. | `app.js:4200` | só o editor |
+| E | Um `rect` com largura ou altura negativa e `r=` desenha os cantos para dentro. | `geom.js:139` | **feito na 1.67.12** (17/11/2026). Só a imagem desse caso, que saía errada |
+| 1 | `finish posterize=palette` usa só as cores `#hex` da `palette`. Uma cor com nome (`pele=wheat`) fica de fora, sem aviso, e a transparência das cores é ignorada. | `scene.js:3094`, `:3109` | **feito na 1.67.12** (17/11/2026). Os nomes do CSS contam; uma cor com transparência fica de fora (ela só aparece misturada). Muda a imagem de quem usa `posterize=palette` com nomes de cor ou com cores transparentes |
+| 2 | **Godot sem `root=`:** a origem fica no meio da base do recorte, 8 px abaixo do desenho (a margem do `--trim`). Um personagem sem `root=` flutua 8 px acima do chão. | `godot.js:53`, `:697` | **muda os jogos já exportados**. Decisão de 17/11/2026: não mudar, e explicar no guia (vai na 1.67.13) |
+| 3 | **Vista 3D das camadas:** Agrupar, Travar, Organizar, Recortar, Copiar, Colar, Tudo e Nada ficam ativos no menu, mas as teclas deles não fazem nada. | `ui-select.js:478` | **feito na 1.67.12** (17/11/2026). Só o editor |
+| 4 | **Espaço num botão com foco** toca o player, em vez de apertar o botão. | `app.js:5812` | **feito na 1.67.12** (17/11/2026). Só o editor: num botão escolhido com Tab, o Espaço aperta o botão; depois de um clique, continua tocando |
+| 5 | **← e → na linha do tempo do filme**, sem nada escolhido, mostram o aviso do desenho ("As setas empurram a forma escolhida…"), que não serve ali. | `app.js:5821` | **feito na 1.67.12** (17/11/2026). Só o editor: no filme, o aviso fala dos `at` da linha do tempo |
+| 6 | **No Mac**, Ctrl+clique no desenho escreve a coordenada e também abre o menu do botão direito. Lá, o certo seria Cmd+clique. | `app.js:4200` | **feito na 1.67.12** (17/11/2026). Só o editor: no Mac, Cmd+clique |
 
 ## 3. Aceito sem fazer nada, ou cortado sem aviso
 
@@ -90,6 +90,6 @@ Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avi
 ## 5. Recomendação
 
 1. **F, G e H** primeiro: feitos na 1.67.11 (a J saiu antes, na 1.67.10).
-2. **Consertos pequenos:** E, 1, 3, 4, 5 e 6, numa versão só. E e 1 mudam a imagem só nos casos que hoje saem errados, com as imagens antes e depois.
+2. **Consertos pequenos:** E, 1, 3, 4, 5 e 6, numa versão só (feitos na 1.67.12). E e 1 mudam a imagem só nos casos que hoje saem errados, com as imagens antes e depois.
 3. **Avisos que faltam:** as seções 3 e 4 juntas. A imagem não muda. Rodar o `--check` nos jogos antes.
 4. **O 2 (Godot sem `root=`)** pede uma decisão sua, porque mexe nos jogos. A recomendação é não mudar o padrão e explicar no capítulo do jogo.

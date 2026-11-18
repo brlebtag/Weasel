@@ -1,0 +1,4 @@
+ellipse rosto @0.000 +0.721
+ellipse gosma @0.721 +0.806
+ellipse luz @1.526 +0.426
+total 1.952

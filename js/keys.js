@@ -190,7 +190,7 @@
       { k: 'clique numa peça', d: 'escolhe a linha dela (no filme, o ator); com Shift, soma ou tira', w: 'na vista 3D' },
       { k: 'Ctrl+0', d: 'volta a olhar de frente (no filme, da câmera)', w: 'na vista 3D' },
       { k: ['Ctrl+1', 'Ctrl+=', 'Ctrl+-'], d: 'tamanho real, aproxima, afasta', w: 'na vista 3D' },
-      { k: ['setas', 'Ctrl+3', 'Ctrl+D', 'Ctrl+Z', 'Delete'], d: 'fazem o mesmo que no desenho', w: 'na vista 3D' },
+      { k: ['setas', 'Ctrl+3', 'Ctrl+D', 'Ctrl+Z', 'Delete', 'Ctrl+A', 'Ctrl+C', 'Ctrl+V', 'Ctrl+G', 'Ctrl+2'], d: 'fazem o mesmo que no desenho', w: 'na vista 3D' },
     ] },
     { id: 'paineis', title: 'Menus e painéis', items: [
       { k: ['↑', '↓'], d: 'andam nos itens', w: 'num menu aberto' },

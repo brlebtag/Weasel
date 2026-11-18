@@ -361,12 +361,11 @@ O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amost
 **Exibir › Camadas em 3D** (ou o botão de camadas na ponta direita da barra de baixo) mostra a [ordem de pintura](04-camadas.md#a-ordem-de-pintura) do desenho inteiro. As camadas se afastam no espaço, a de baixo no fundo e a de cima mais perto de você, e cada linha do painel Camadas vira uma peça.
 
 - Arraste para girar. **Espaço**, a **Mão** ou o botão do meio movem a vista, e a roda aproxima.
-- Clique numa peça para escolher a linha dela (**Shift** soma ou tira). As setas, **Ctrl+3**, **Ctrl+D** e **Ctrl+Z** valem como no desenho.
+- Clique numa peça para escolher a linha dela (**Shift** soma ou tira). As setas, **Ctrl+3**, **Ctrl+D**, **Ctrl+Z** e as teclas de Agrupar, Travar, Organizar, Recortar, Copiar, Colar, Tudo e Nada valem como no desenho.
 - A barra de cima tem os botões **Explodir**, **De frente**, **De lado** e **Juntar**, um controle de quanto as camadas (e as formas de uma mesma camada) se afastam, e outro para as molduras com os nomes.
 - O olho de cada nome esconde a camada só nessa vista.
 - Passe o mouse numa linha do painel Camadas, e as outras peças se apagam.
 - A vista mostra o mesmo quadro do player, sem o estilo de arte e sem o halo das luzes.
-- Agrupar, Travar, Organizar, Copiar e Colar ficam no menu, mas as teclas deles não valem nessa vista.
 - Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Palco em 3D](#palco-em-3d)).
 
 ## Efeitos da camada
@@ -473,7 +472,7 @@ O editor chama o `def` de **símbolo**, e cada `use` de **instância**. O painel
 O player fica embaixo do desenho e mostra as animações ([capítulo 7](07-movimento.md#ver-a-animação)).
 
 - O menu escolhe a animação. A primeira opção é a **pose parada**, sem animação (a mesma que se chama `pose` no `only=`).
-- Com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e **,** e **.** vão para o quadro anterior e o seguinte. As setas, no desenho, empurram a forma escolhida; para trocar de quadro com elas, clique antes na [linha do tempo](#linha-do-tempo).
+- Com o foco no desenho, **Espaço** ou **Enter** toca e pausa, e **,** e **.** vão para o quadro anterior e o seguinte. Num botão que você escolheu com **Tab**, o Espaço e o Enter apertam o botão. As setas, no desenho, empurram a forma escolhida; para trocar de quadro com elas, clique antes na [linha do tempo](#linha-do-tempo).
 - Com o cursor numa linha `key` ou `event`, o player vai para aquele quadro.
 - Uma animação com `once` toca uma vez e para no último quadro; as outras repetem. O botão ao lado de ▶ troca entre **repetir** e **tocar uma vez**, só no player: o código não muda.
 - Os quadros com `event` aparecem com ⚑.

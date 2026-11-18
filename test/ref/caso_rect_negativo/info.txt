@@ -1,0 +1,5 @@
+canvas   240 × 120, fundo #f4f1ea
+camadas  1
+  base             4 item(ns)
+formas   4
+animações nenhuma

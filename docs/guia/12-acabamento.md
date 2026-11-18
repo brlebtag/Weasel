@@ -115,7 +115,7 @@ Repare:
 
 **Experimente:** acrescente `meio=#6dbe6a` na linha `palette`. O degradê ganha uma terceira faixa, verde média.
 
-**Cuidado:** só contam as cores escritas em `#hex`. Uma cor da `palette` com nome do CSS (`pele=wheat`) fica de fora, sem aviso. A transparência das cores da `palette` não conta, e o que é transparente na imagem continua transparente.
+Valem as cores escritas em `#hex` e as com nome do CSS (`pele=wheat`). Uma cor com transparência (`brilho=#ffffff66`) fica de fora: ela só aparece misturada com o que está embaixo, e é essa mistura que vira a cor mais parecida. Para um brilho continuar aparecendo, ponha na `palette` também a cor que ele dá, opaca. O que é transparente na imagem continua transparente.
 
 ## Acabamentos de cinema: `bloom=`, `vignette=` e `grain=`
 

@@ -417,7 +417,7 @@ ellipse lua 150,75 40 c=#fff6c0 ink=4
 | `flat` | tira os contornos (`ink=`) das formas e dos textos; o `stroke` e a `line` ficam | — | — | não |
 | `inner=` | o quanto aparecem os `stroke` que estão numa camada com `clip=` | de 0 (somem) a 1 (inteiros) | 1 | não |
 | `pixel=` | pixela a imagem em blocos quadrados | de 1 a 32, em pixels da imagem exportada (o Weasel arredonda) | 1 (sem pixelar) | não |
-| `posterize=` | reduz as cores. Um número deixa só esse tanto de tons em cada canal (vermelho, verde e azul). `palette` troca cada cor pela cor `#hex` mais parecida da `palette` | de 2 a 64 (o Weasel arredonda), ou `palette` | desligado | não |
+| `posterize=` | reduz as cores. Um número deixa só esse tanto de tons em cada canal (vermelho, verde e azul). `palette` troca cada cor pela cor opaca mais parecida da `palette` | de 2 a 64 (o Weasel arredonda), ou `palette` | desligado | não |
 | `bloom=` | as partes claras vazam num brilho em volta; cada 1 a mais junta mais um brilho | de 0 a 3 | 0 | não |
 | `vignette=` | escurece as bordas | 0 ou mais; acima de 1, avisa e não escurece mais | 0 | não |
 | `grain=` | granulado, como numa foto de filme | 0 ou mais; acima de 0.33, avisa e não aumenta mais | 0 | não |
@@ -433,7 +433,8 @@ ellipse lua 150,75 40 c=#fff6c0 ink=4
 - O `inner=` não vale para a `line`, o texto, o preenchimento, o contorno nem para os braços e as pernas (`stroke` com `limb=`, `hip=`, `foot=` ou `target=`).
 - O `pixel=` fica de fora quando o arquivo tem `art` (aviso). Para pixel art de verdade, use `art pixel`.
 - O bloco do `pixel=` é medido na imagem exportada: com `-s 2`, `pixel=4` dá blocos de 4 pixels da imagem, que são 2 do desenho.
-- O `posterize=palette` só usa as cores `#hex` da `palette`: os nomes do CSS e os números ficam de fora. A transparência das cores da `palette` não conta, e o que é transparente continua transparente.
+- O `posterize=palette` usa as cores opacas da `palette`, em `#hex` ou com nome do CSS (`pele=wheat`). Os números e as cores com transparência (`brilho=#ffffff66`) ficam de fora: uma cor transparente só aparece misturada com o que está embaixo, e é a mistura que vira a cor mais parecida. O que é transparente na imagem continua transparente.
+- Até a versão 1.67.11, o `posterize=palette` deixava de fora os nomes do CSS e usava as cores com transparência como se fossem opacas.
 - Os efeitos de tela (`oldfilm=`, `vhs=`, `crt=`, `glitch=`) mudam a cada quadro. Eles saem no PNG, no JPG, no GIF, no WebP, no vídeo e no filme. Na folha de sprites, no Godot, no SVG e nas folhas de conferência (`--contact`, `--trajectory`), ficam de fora.
 - No SVG, o `pixel=` e o `posterize=` também ficam de fora.
 
@@ -1143,7 +1144,7 @@ palette ink=#2b2a33
 - Não valem como valor: `none`, um `gradient` e um `pattern` (erro `valor inválido`). Uma palavra sem `=` (`palette pele`) também é erro.
 - Um nome que guarda número no lugar de uma cor, ou que guarda cor no lugar de uma espessura, é erro: `"grosso" na palette é número, não cor`.
 - Os nomes da `palette` não entram nas contas: `{grosso*2}` é erro. Para contas, use `let`.
-- Um nome do CSS (`pele=wheat`) não vale onde só cabe cor `#hex` (luzes, efeitos de camada, `pattern`, `art`…) e fica de fora do `posterize=palette`.
+- Um nome do CSS (`pele=wheat`) não vale onde só cabe cor `#hex` (luzes, efeitos de camada, `pattern`, `art`…).
 - As cores da `palette` usadas no `art` (`paper=`, `c=`, `inks=`) precisam estar numa linha `palette` acima do `art`.
 - Um `gradient` com o nome de uma cor da `palette` dá aviso, e vale a cor. Um `pattern` com esse nome não avisa, e também vale a cor.
 - Num componente, um parâmetro com o mesmo nome troca o valor só dentro dele: `use boneco 100,80 pele=#c08060` ([`use`](#use)).
@@ -1768,7 +1769,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 
 **Cuidado:**
 - Sem `c=` e sem `ink=`, o retângulo sai pintado na cor `ink` da `palette`. Com `ink=` e sem `c=`, ele fica vazio: só o contorno aparece.
-- Com a largura ou a altura negativa e `r=`, os cantos saem curvados para dentro. Use um tamanho positivo e mude o `x,y`.
+- Até a versão 1.67.11, com a largura ou a altura negativa e `r=`, os cantos saíam curvados para dentro.
 
 **Para aprender:** [Retângulo](02-formas.md#retângulo-rect) e [cantos redondos](02-formas.md#cantos-redondos-r).
 

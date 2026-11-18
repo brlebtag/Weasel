@@ -232,7 +232,7 @@ Para entrar e sair: Exibir › Camadas em 3D (no filme, Palco em 3D) ou o botão
 | `clique numa peça` | escolhe a linha dela (no filme, o ator); com Shift, soma ou tira | na vista 3D |
 | `Ctrl+0` | volta a olhar de frente (no filme, da câmera) | na vista 3D |
 | `Ctrl+1` ou `Ctrl+=` ou `Ctrl+-` | tamanho real, aproxima, afasta | na vista 3D |
-| `setas` ou `Ctrl+3` ou `Ctrl+D` ou `Ctrl+Z` ou `Delete` | fazem o mesmo que no desenho | na vista 3D |
+| `setas` ou `Ctrl+3` ou `Ctrl+D` ou `Ctrl+Z` ou `Delete` ou `Ctrl+A` ou `Ctrl+C` ou `Ctrl+V` ou `Ctrl+G` ou `Ctrl+2` | fazem o mesmo que no desenho | na vista 3D |
 
 ## Menus e painéis
 

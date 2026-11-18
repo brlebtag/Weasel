@@ -121,7 +121,7 @@ Da esquerda para a direita:
 
 A lista completa está na [referência do `rect`](19-referencia.md#rect). No editor, a ferramenta **Retângulo** (M) escreve esta linha ([capítulo 22](22-editor.md#elipse-e-retângulo)).
 
-**Cuidado:** um tamanho negativo desenha o retângulo para o outro lado do canto (para a esquerda ou para cima). Com `r=`, porém, os cantos saem curvados para dentro. Prefira sempre um tamanho positivo e mude o `x,y`.
+Um tamanho negativo desenha o retângulo para o outro lado do canto (para a esquerda ou para cima), com os mesmos cantos redondos do `r=`.
 
 ## Linha reta: `line`
 

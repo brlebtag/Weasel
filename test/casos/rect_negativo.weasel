@@ -1,0 +1,7 @@
+# teste: rect com largura ou altura negativa e r=: o mesmo retângulo arredondado, desenhado de cada canto (até a
+# 1.67.11, os cantos saíam curvados para dentro)
+canvas 240 120 bg=#f4f1ea
+rect a 10,10 60,40 r=14 c=#4a90d9 ink=2
+rect b 160,50 -60,-40 r=14 c=#e8553a ink=2
+rect c 10,110 60,-40 r=14 c=#5bb04a ink=2
+rect d 230,70 -60,40 r=14 c=#f2ad5e ink=2

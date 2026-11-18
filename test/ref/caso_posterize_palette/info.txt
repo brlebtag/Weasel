@@ -1,0 +1,7 @@
+canvas   300 × 120, fundo #203040
+gradientes rostoG (linear), gosmaG (linear)
+acabamento posterize=palette
+camadas  1
+  base             3 item(ns)
+formas   3
+animações nenhuma

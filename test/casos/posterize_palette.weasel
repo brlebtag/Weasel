@@ -1,0 +1,10 @@
+# teste: posterize=palette usa as cores opacas da palette, também as com nome do CSS (pele=wheat), e deixa de fora
+# as com transparência (brilho=#ffffff66): o rosto fica em wheat e saddlebrown, e o brilho some no verde
+canvas 300 120 bg=fundo
+palette fundo=#203040 pele=wheat cabelo=saddlebrown claro=#8fd18a escuro=#3f7d5a brilho=#ffffff66 ink=#22303d
+gradient rostoG linear 0,20 0,100 : #f2d4a8@0 #a0522d@1
+gradient gosmaG linear 0,14 0,114 : #f4fff2@0 escuro@1
+finish posterize=palette
+ellipse rosto 70,60 40 c=rostoG ink=2
+ellipse gosma 210,64 50 c=gosmaG ink=2
+ellipse luz 194,40 14 c=brilho

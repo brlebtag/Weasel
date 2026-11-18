@@ -16,7 +16,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 |---|---|---|
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
-| [Problemas achados no código](problemas-achados.md) | os defeitos e os casos sem aviso que as outras sessões e o diagnóstico do guia acharam de passagem | lista de 17/11/2026, sendo resolvida (pedido de 17/11): J na 1.67.10, F, G e H na 1.67.11; depois os consertos pequenos e os avisos |
+| [Problemas achados no código](problemas-achados.md) | os defeitos e os casos sem aviso que as outras sessões e o diagnóstico do guia acharam de passagem | lista de 17/11/2026, sendo resolvida (pedido de 17/11): J na 1.67.10, F, G e H na 1.67.11, os consertos pequenos na 1.67.12; depois os avisos |
 | [Desempenho](desempenho.md) | imagens, vídeos e sons mais rápidos: o que a análise de 15/11/2026 achou, o que já foi feito e o que falta | itens 1 a 4 na 1.48.1, item 6 na 1.48.2, item 5b na 1.48.3, item 7a na 1.48.4, item 8 na 1.48.5, item 5a na 1.48.6, itens 7d e 7e na 1.48.7 e item 7b na 1.48.8; item 9 (o editor, 9a a 9e) na 1.65.1; 8b não ajuda, 2b e 7c ficaram de lado; nada aberto |
 
 ### Ordem sugerida para o editor (editor visual e ferramentas de desenho)
