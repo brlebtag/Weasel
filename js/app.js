@@ -4048,6 +4048,14 @@
     emit('layout');
     draw();
   }
+  // Ctrl+': a vista seguinte, Código → Dividido → Design → Código (back: a de antes). No Código o desenho some, e o
+  // cursor vai para o código (senão as letras trocariam de ferramenta sem ninguém ver)
+  const LAYOUTS = ['code', 'split', 'design'];
+  function cycleLayout(back) {
+    const v = LAYOUTS[(LAYOUTS.indexOf(st.layout) + (back ? 2 : 1)) % 3];
+    setLayout(v);
+    if (v === 'code' && document.activeElement !== editor.ta) editor.ta.focus();
+  }
   // desfazer e refazer pelo desenho (ou pelo menu): a escolha continua a mesma. O desfazer do código põe o cursor
   // onde ele estava na edição de antes, e isso soltaria a escolha (com o número de linhas mudando, ela se perde).
   function undoRedo(redo) {
@@ -5822,6 +5830,11 @@
     }
     // Ctrl+R: as réguas, em qualquer lugar (no navegador, recarregaria a página)
     if (mod && !e.shiftKey && !e.altKey && low === 'r' && !inDialog(t)) { e.preventDefault(); if (!isFilm()) toggleRulers(); return; }
+    // Ctrl+' (a tecla à esquerda do 1; no teclado americano, a do acento grave): troca de vista, em qualquer lugar; com
+    // Shift, volta uma. No Mac também é o Ctrl, porque lá o ⌘ com essa tecla troca de janela. Vale a posição da tecla
+    // (Backquote) ou a letra dela (' e " no teclado brasileiro, o acento grave no americano)
+    const quoteKey = e.code === 'Backquote' || k === "'" || k === '"' || k === '`';
+    if (e.ctrlKey && !e.metaKey && !e.altKey && quoteKey && !inDialog(t)) { e.preventDefault(); cycleLayout(e.shiftKey); return; }
     // Ctrl+3: liga e desliga o hidden das linhas escolhidas (ou da linha do cursor); no código, o Ctrl+H também
     if (mod && !e.shiftKey && !e.altKey && (k === '3' || (low === 'h' && t === editor.ta)) && (t === editor.ta || !inField(t))) { e.preventDefault(); toggleHidden(hiddenTargets(), low === 'h' ? 'Ctrl+H' : 'Ctrl+3'); return; }
     // Esc com a folha de atalhos aberta só fecha a folha (não solta a escolha do desenho)
@@ -5893,7 +5906,7 @@
     st, editor, draw, reparse, parseFor, hint,
     on: (k, f) => { (listeners[k] = listeners[k] || []).push(f); },
     isFilm, defPreview: () => !!pvModel(),
-    setTool, setLayout, toggleRulers, toggleHelp, toggleKeys,
+    setTool, setLayout, cycleLayout, toggleRulers, toggleHelp, toggleKeys,
     newFile, openDialog, saveFile, openExport, openExample, openFile: (n) => openFile(n), files: () => [...st.files.keys()].sort(),
     undo: () => undoRedo(false), redo: () => undoRedo(true),
     hide: () => toggleHidden(hiddenTargets(), 'Ctrl+3'),

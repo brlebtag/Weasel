@@ -61,6 +61,7 @@ No Mac, use ⌘ no lugar de Ctrl e ⌥ (Option) no lugar de Alt, menos onde a li
 
 | Tecla | O que faz | Onde vale |
 |---|---|---|
+| `Ctrl+'` ou `Ctrl+Shift+'` (no Mac, `Ctrl+'` ou `Ctrl+Shift+'`) | passa para a vista seguinte (Código → Dividido → Design → Código) / volta uma. É a tecla à esquerda do 1 (no teclado americano, a do acento grave) | em qualquer lugar |
 | `Ctrl+=` ou `Ctrl++` | aproxima | no desenho e no código |
 | `Ctrl+-` | afasta | no desenho e no código |
 | `Ctrl+0` | ajusta o desenho à tela | no desenho e no código |

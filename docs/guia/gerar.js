@@ -66,7 +66,8 @@ function keysProblems() {
     else if (it.k !== label) probs.push(`a ferramenta "${m[1]}" é ${label}, e js/keys.js diz ${it.k}`);
   }
   for (const f of ['ui-shell.js', 'ui-symbols.js']) {
-    for (const m of src(f).matchAll(/label: '([^']*)', key: '([^']+)'/g)) if (!all.has(m[2])) probs.push(`a tecla ${m[2]} do menu "${m[1]}" (${f}) não está em js/keys.js`);
+    // a tecla entre aspas simples ou duplas (a do Ctrl+' tem uma aspa simples dentro)
+    for (const m of src(f).matchAll(/label: '([^']*)', key: (?:'([^']+)'|"([^"]+)")/g)) { const key = m[2] || m[3]; if (!all.has(key)) probs.push(`a tecla ${key} do menu "${m[1]}" (${f}) não está em js/keys.js`); }
   }
   for (const f of ['ui-anim.js', 'ui-film.js']) {
     for (const m of src(f).matchAll(/<kbd>([^<]+)<\/kbd>/g)) if (m[1] !== 'clique' && !all.has(m[1])) probs.push(`a tecla ${m[1]} (${f}) não está em js/keys.js`);

@@ -52,6 +52,7 @@
       { k: 'F8', d: 'faz das formas escolhidas um símbolo novo (def e use)' },
     ] },
     { id: 'exibir', title: 'Exibir', items: [
+      { k: ["Ctrl+'", "Ctrl+Shift+'"], d: 'passa para a vista seguinte (Código → Dividido → Design → Código) / volta uma. É a tecla à esquerda do 1 (no teclado americano, a do acento grave)', w: ANY, mac: ["Ctrl+'", "Ctrl+Shift+'"] },
       { k: ['Ctrl+=', 'Ctrl++'], d: 'aproxima', w: BOTH },
       { k: 'Ctrl+-', d: 'afasta', w: BOTH },
       { k: 'Ctrl+0', d: 'ajusta o desenho à tela', w: BOTH },

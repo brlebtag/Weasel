@@ -13,6 +13,16 @@ O editor escreve o código por você: cada ferramenta, painel e ponto de arrasta
 - Uma linha com erro ganha uma marca na margem, e a barra de baixo mostra a mensagem.
 - Os desenhos com `anim` tocam no player.
 
+## Vistas
+
+Os três botões no alto, à direita (ou o menu **Exibir**), escolhem o que aparece na tela:
+
+- **Código**: só o código.
+- **Dividido** (o padrão): o código à esquerda e o desenho à direita.
+- **Design**: só o desenho, para quem desenha sem programar. O código continua lá, escondido: um clique num erro ou no nome de um painel abre o Dividido na linha dele.
+
+**Ctrl+'** passa para a vista seguinte: Código → Dividido → Design → Código. Com **Shift**, volta uma. É a tecla à esquerda do 1 (no teclado americano, a do acento grave), e vale também com o cursor no código. Ao chegar no Código, o cursor vai para o código. A vista escolhida fica guardada **neste navegador**.
+
 ## Tema
 
 **Exibir › Tema** escolhe as cores do editor:

@@ -252,6 +252,7 @@
       { label: 'Código', radio: true, on: () => st.layout === 'code', run: () => A.setLayout('code') },
       { label: 'Dividido', radio: true, on: () => st.layout === 'split', run: () => A.setLayout('split') },
       { label: 'Design', radio: true, on: () => st.layout === 'design', run: () => A.setLayout('design') },
+      { label: 'Trocar de vista', key: "Ctrl+'", run: () => A.cycleLayout() },
       '-',
       { label: 'Aproximar', key: 'Ctrl+=', run: A.zoomIn },
       { label: 'Afastar', key: 'Ctrl+-', run: A.zoomOut },
