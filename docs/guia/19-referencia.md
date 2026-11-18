@@ -164,7 +164,7 @@ Os pontos vêm depois do `:`, separados por espaço, no `shape`, no `stroke` e n
 - Sem peso, o `@osso` vale 1. Um peso fora de 0 a 1 dá aviso, e o Weasel usa o limite.
 - O `@osso` só vale nos pontos do `shape`, do `stroke` e da `line`. No centro de uma `ellipse` ele é erro: para a forma inteira seguir um osso, use `bone=`.
 - O `@osso` não vale junto com `bones=` na mesma forma (aviso).
-- Na `line`, o `!` e as alças `~` são aceitos, mas não mudam nada: a linha é sempre reta de ponto a ponto.
+- Na `line`, o `!` e as alças `~` não mudam nada, e o Weasel avisa: a linha é sempre reta de ponto a ponto.
 - Os números do ponto aceitam contas: `{cx+10},{cy}`.
 
 ### Cores
@@ -205,7 +205,7 @@ Uma **cor** pode ser escrita assim:
 
 Uma **espessura** pode ser:
 
-- um número 0 ou mais, em pixels (um número negativo vira 0, sem aviso);
+- um número 0 ou mais, em pixels (um número negativo vira 0, com um aviso);
 - `none`, que vale 0;
 - um nome da `palette` que guarde um número (já existem `line=8`, `inner=5` e `edge=3`);
 - num componente, um parâmetro com número.
@@ -427,7 +427,7 @@ ellipse lua 150,75 40 c=#fff6c0 ink=4
 | `glitch=` | falha digital: em alguns quadros, faixas da imagem pulam de lado e as cores se separam | de 0 a 1 | 0 | não |
 
 **Cuidado:**
-- Só a primeira palavra vale: em `finish game flat`, o `flat` fica de fora, sem aviso.
+- Só a primeira palavra vale: em `finish game flat`, o `flat` fica de fora, com um aviso. Duas linhas `finish` no mesmo arquivo se somam, e vale o estilo da última (com aviso); um `finish` depois de um `include`, para trocar o do outro arquivo, não avisa.
 - Várias linhas `finish` se somam. Cada opção fica com o último valor escrito.
 - Com `flat`, uma forma com `ink=` e sem `c=` some inteira: ela não tem cor de dentro, só o contorno.
 - O `inner=` não vale para a `line`, o texto, o preenchimento, o contorno nem para os braços e as pernas (`stroke` com `limb=`, `hip=`, `foot=` ou `target=`).
@@ -660,7 +660,7 @@ ellipse bola 90,62 30 c=#e8553a ink=line
 | Opção | O que faz | Valores | Padrão | Anima? |
 |---|---|---|---|---|
 | `size=` | O tamanho da célula de cada ponto. | de 2 a 64 pixels | 6 | não |
-| `angle=` | O giro da grade. Com `color`, não vale: cada cor tem o seu ângulo (15°, 75°, 0° e 45°), e o Weasel não avisa. | de −360 a 360 graus | 45 | não |
+| `angle=` | O giro da grade. Com `color`, não vale: cada cor tem o seu ângulo (15°, 75°, 0° e 45°), e o Weasel avisa. | de −360 a 360 graus | 45 | não |
 | `color` | Quatro grades de cor (ciano, magenta, amarelo e preto), em vez de só preto. | — | desligado | não |
 | `levels=` | Como em todos ([veja acima](#art)). | dois números de 0 a 1 | `0,1` | não |
 | `paper=` | O papel: onde não há ponto. | uma cor `#hex` | `#f6f2ea` | não |
@@ -1146,7 +1146,7 @@ palette ink=#2b2a33
 - Os nomes da `palette` não entram nas contas: `{grosso*2}` é erro. Para contas, use `let`.
 - Um nome do CSS (`pele=wheat`) não vale onde só cabe cor `#hex` (luzes, efeitos de camada, `pattern`, `art`…).
 - As cores da `palette` usadas no `art` (`paper=`, `c=`, `inks=`) precisam estar numa linha `palette` acima do `art`.
-- Um `gradient` com o nome de uma cor da `palette` dá aviso, e vale a cor. Um `pattern` com esse nome não avisa, e também vale a cor.
+- Um `gradient` com o nome de uma cor da `palette` dá aviso, e vale a cor. Um `pattern` com esse nome também avisa, e também vale a cor.
 - Num componente, um parâmetro com o mesmo nome troca o valor só dentro dele: `use boneco 100,80 pele=#c08060` ([`use`](#use)).
 
 **Para aprender:** [A palette](03-cores.md#cores-com-nome-palette) e [um nome que copia outro](03-cores.md#um-nome-que-copia-outro-sombracabelo).
@@ -1175,10 +1175,10 @@ ellipse brilho {cx - r/3},{75 - r/3} {r/4} c=#fff6c0
 
 **Cuidado:**
 - O `let` é lido antes de tudo: uma variável vale no arquivo inteiro, até nas linhas de cima. Um `let` pode usar outro, de cima ou de baixo.
-- Dois `let` com o mesmo nome: vale o último, sem aviso. Evite: um `let` que usa esse nome pode ficar com o valor antigo.
+- Dois `let` com o mesmo nome no mesmo arquivo: vale o último, com um aviso. Evite: um `let` que usa esse nome pode ficar com o valor antigo.
 - Um `let` que depende de outro que depende dele (`let a=b` e `let b=a`) é erro: `variável desconhecida`.
-- `pi` não muda: `let pi=3` não dá aviso, e as contas continuam usando 3,14159…
-- Um nome com `-` é aceito, mas não dá para usar: numa conta, `{a-b}` é "a menos b".
+- `pi` não muda: `let pi=3` dá aviso, e as contas continuam usando 3,14159…
+- Um nome com `-` dá aviso: ele não dá para usar, porque numa conta `{a-b}` é "a menos b".
 - O `let` só guarda números. As cores com nome vão na [`palette`](#palette).
 - O `let` não pode ficar dentro de um `def` (erro). As variáveis do arquivo já valem dentro do componente.
 
@@ -1211,12 +1211,12 @@ ellipse astro 150,75 40 c=sol
 | `radial` | as cores mudam do centro `cx,cy` até um círculo com esse raio; o foco `fx,fy` é onde fica a primeira cor | o centro `x,y`, um raio maior que 0 e, se quiser, o foco `x,y` | o foco fica no centro | não |
 | `box` | as medidas passam a ir de 0 a 1 dentro de cada forma: `0,0` é o canto de cima à esquerda da forma, `1,1` o de baixo à direita; no `radial`, o raio 1 é a média da largura e da altura da forma | — | sem `box`, as medidas são em pixels, no lugar da forma | não |
 | as cores, depois do `:` | as cores do degradê, em ordem | uma cor ou mais; `none` é transparente; outro `gradient` é erro | obrigatório | não |
-| `@posição`, em cada cor | onde a cor fica no caminho | de 0 a 1, crescendo (fora disso, corta sem avisar) | a primeira em 0, a última em 1, as do meio espalhadas por igual | não |
+| `@posição`, em cada cor | onde a cor fica no caminho | de 0 a 1, crescendo (fora disso, corta, com um aviso) | a primeira em 0, a última em 1, as do meio espalhadas por igual | não |
 
 **Cuidado:**
 - O tipo vem logo depois do nome: `gradient g box linear …` é erro.
 - Um ponto a mais (`linear 0,0 100,0 50,50`) ou uma palavra a mais não dá aviso: o Weasel não liga para eles.
-- Posições fora de 0 a 1, ou fora de ordem, são corrigidas sem aviso: `#fff@1.5` vale 1.
+- Posições fora de 0 a 1, ou fora de ordem, são corrigidas, com um aviso: `#fff@1.5` vale 1.
 - Sem `box`, as medidas são as do lugar da forma: as do `canvas` ou, numa forma de um componente, as do `def`. Uma forma presa a um osso leva o degradê junto.
 - O gradiente vale no `c=` das formas, do `stroke`, da `line` e do `text`, no `inkc=` e no `bg=` do `canvas`. Onde só cabe cor `#hex`, ele é erro.
 - O nome de outro `gradient` ou `pattern` é erro. O nome de uma cor da `palette` dá aviso, e vale a cor.
@@ -1247,7 +1247,7 @@ ellipse bola 220,75 50 c=bolinhas ink=3
 | o nome | o nome do padrão | as regras de [Nomes](#nomes) | obrigatório | não |
 | `hatch` | linhas paralelas | — | vale quando você não escreve `dots` | não |
 | `dots` | pontos, em fileiras desencontradas | — | — | não |
-| `cross` | cruza as linhas do `hatch` com outras, a 90 graus (no `dots`, não muda nada) | — | — | não |
+| `cross` | cruza as linhas do `hatch` com outras, a 90 graus (no `dots`, não muda nada, e avisa) | — | — | não |
 | `c=` | a cor das linhas ou dos pontos | uma cor `#hex` | a `ink` da `palette` | não |
 | `bg=` | uma cor de fundo por baixo das linhas | uma cor `#hex` | sem fundo (aparece o que está atrás) | não |
 | `gap=` | a distância entre as linhas, ou entre os pontos | de 1.5 a 500, em pixels | 6 | não |
@@ -1260,7 +1260,7 @@ ellipse bola 220,75 50 c=bolinhas ink=3
 - Com `hatch` e `dots` juntos, vale o `dots`, sem aviso.
 - O `c=` e o `bg=` só aceitam cor `#hex`: um nome do CSS dá aviso e fica de fora.
 - As linhas e os pontos seguem a forma: andam com o osso e o tecido e crescem com o `scale=` do `use`.
-- O nome de outro `pattern` ou `gradient` é erro. Com o nome de uma cor da `palette`, vale a cor, sem aviso.
+- O nome de outro `pattern` ou `gradient` é erro. Com o nome de uma cor da `palette`, vale a cor, com um aviso.
 
 **Para aprender:** [Hachura e pontos](03-cores.md#textura-pattern).
 
@@ -1291,7 +1291,7 @@ ellipse estrela 240,40 4 c=#ffffff hidden
 
 **Cuidado:**
 - Sem escolher a versão, nenhuma vale. Na linha de comando, `--variant all` exporta todas.
-- Um nome que não está na `palette` vira um nome novo, sem aviso: um erro de digitação (`variant noite cue=#000`) passa calado.
+- Um nome que não está na `palette` dá aviso e vira um nome novo: um erro de digitação (`variant noite cue=#000`) aparece no `--check`.
 - Linhas `variant` com o mesmo nome se somam.
 - A variante troca a `palette` antes de qualquer cor ser usada: chega aos gradientes, aos padrões, ao fundo, às luzes e às formas. Mas não chega às cores do `art` (`paper=`, `c=`, `inks=`).
 - Uma cópia (`variant noite sombra=ceu`) pega o valor final de `ceu`, com todas as linhas `palette`.
@@ -1474,14 +1474,14 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 | Opção | O que faz | Valores | Padrão | Anima? |
 |---|---|---|---|---|
 | `blur=` | desfoca a camada | de 0 a 500, em pixels | 0 | `key` e `at` |
-| `glow=cor,raio,força` | um brilho da cor em volta das formas | cor: uma cor `#hex`; raio: em pixels (0 ou menos, sem brilho); força: de 0.1 a 5 (fora disso, corta sem avisar) | raio 12, força 1 | `key` e `at` (o raio) |
+| `glow=cor,raio,força` | um brilho da cor em volta das formas | cor: uma cor `#hex`; raio: em pixels (0 ou menos, sem brilho); força: de 0.1 a 5 (fora disso, corta, com um aviso) | raio 12, força 1 | `key` e `at` (o raio) |
 | `shadow=cor,dx,dy,desfoque` | uma sombra da cor, deslocada | cor: uma cor `#hex`; dx (para a direita), dy (para baixo) e desfoque: qualquer número, em pixels | dx 4, dy 6, desfoque 8 | não |
-| `tint=cor,quanto` | tinge as formas com a cor | cor: uma cor `#hex`; quanto: de 0 a 1, e 1 é a cor chapada (fora disso, corta sem avisar) | quanto 0.5 | `key` e `at` (o quanto) |
+| `tint=cor,quanto` | tinge as formas com a cor | cor: uma cor `#hex`; quanto: de 0 a 1, e 1 é a cor chapada (fora disso, corta, com um aviso) | quanto 0.5 | `key` e `at` (o quanto) |
 | `brightness=` | clareia (acima de 1) ou escurece (abaixo de 1) | de 0 a 10 | 1 | `key` e `at` |
 | `saturate=` | cores mais vivas (acima de 1) ou mais cinzentas (0 é cinza) | de 0 a 10 | 1 | `key` e `at` |
 | `contrast=` | mais contraste (acima de 1) ou menos (abaixo de 1) | de 0 a 10 | 1 | `key` e `at` |
 | `hue=` | gira as cores no círculo das cores | qualquer número, em graus | 0 | `key` e `at` |
-| `trail=quadros,queda,cor` | rastro: as poses anteriores da animação ficam pintadas atrás, cada uma mais fraca | quadros: de 1 a 30 (arredonda; fora disso, erro); queda: de 0.05 a 0.95; quanto maior, mais fortes as cópias (fora disso, corta sem avisar); cor: uma cor `#hex`, opcional, que tinge as cópias | queda 0.5, sem cor | não |
+| `trail=quadros,queda,cor` | rastro: as poses anteriores da animação ficam pintadas atrás, cada uma mais fraca | quadros: de 1 a 30 (arredonda; fora disso, erro); queda: de 0.05 a 0.95; quanto maior, mais fortes as cópias (fora disso, corta, com um aviso); cor: uma cor `#hex`, opcional, que tinge as cópias | queda 0.5, sem cor | não |
 
 **Cuidado:**
 - O `trail=` só aparece com uma animação tocando: na pose parada, não há quadros anteriores.
@@ -1493,15 +1493,15 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 
 | Opção | O que faz | Valores | Padrão | Anima? |
 |---|---|---|---|---|
-| `lit` | não muda nada: as camadas já recebem luz | — | — | não |
+| `lit` | não muda nada: as camadas já recebem luz (o Weasel avisa) | — | — | não |
 | `unlit` | a camada não recebe luz (nem das [`light`](#light), nem do [`ambient`](#ambient)) | — | desligada | não |
 | `shade=` | quanto a luz clareia e escurece cada forma; também quanto uma forma escurece ao virar de lado em 3D | de 0 a 2 | 0.5 | não |
 | `rim=cor,largura` | um fio de luz da cor na borda das formas fechadas, do lado de onde a luz vem | cor: uma cor `#hex`; largura: em pixels | largura 4 | não |
-| `cast=chão,opacidade,desfoque` | uma sombra preta da camada cai deitada no chão, para longe da luz | chão: o nome de uma `line`; opacidade: de 0 a 1 (fora disso, corta sem avisar); desfoque: 0 ou mais, em pixels (abaixo de 0, vira 0 sem avisar) | opacidade 0.45, desfoque 6 | não |
+| `cast=chão,opacidade,desfoque` | uma sombra preta da camada cai deitada no chão, para longe da luz | chão: o nome de uma `line`; opacidade: de 0 a 1 (fora disso, corta, com um aviso); desfoque: 0 ou mais, em pixels (abaixo de 0, vira 0, com um aviso) | opacidade 0.45, desfoque 6 | não |
 | `from=` | a sombra do `cast=` sai com a silhueta destas camadas, e não com a desta | nomes de camadas, separados por vírgula | a própria camada | não |
 
 **Cuidado:**
-- `rim=` e `cast=` só aparecem com uma `light` na cena: o `ambient` sozinho não tem direção. A sombra do `cast=` precisa de uma luz acima do chão.
+- `rim=` e `cast=` só aparecem com uma `light` na cena: o `ambient` sozinho não tem direção (um `rim=` sem `light` dá aviso). A sombra do `cast=` precisa de uma luz acima do chão.
 - `from=` sem `cast=` avisa e não faz nada.
 - O chão do `cast=` precisa ser uma `line`; outra forma dá erro.
 
@@ -1526,7 +1526,7 @@ rect tabua 190,15 90,40 r=4 c=#a0522d
 
 **Cuidado:**
 - Fora de um filme, `depth=`, `screen` e `front` não fazem nada.
-- Com `floor` e sem `pitch=` nem `persp=`, o chão deita 45 graus. Sem `pitch=`, se o `horizon=` ficar na altura do `pivot=` ou abaixo dele, o chão não deita (sem aviso).
+- Com `floor` e sem `pitch=` nem `persp=`, o chão deita 45 graus. Sem `pitch=`, se o `horizon=` ficar na altura do `pivot=` ou abaixo dele, o chão não deita (o Weasel avisa).
 - `horizon=` sem `floor` avisa. Com `floor`, `persp=` e `pitch=` juntos, o `horizon=` não muda nada (aviso): use só dois dos três.
 - `iso` não junta com `yaw=`, `pitch=` nem `floor`: vale o `iso` (aviso).
 - `zsort` só muda a ordem quando o desenho tem 3D (`z=`, `yaw=`, `pitch=`, `floor`, `iso`…).
@@ -1568,10 +1568,10 @@ ellipse vidro 250,60 24 c=#ffffff opacity=0.4
 | `inkon=` | pinta o contorno em outra camada: numa camada pintada antes, só a metade de fora aparece; numa pintada depois, o contorno fica por cima. Vale em: `shape`, `ellipse`, `rect`. | o nome de uma camada (pode vir antes ou depois no arquivo); só com `ink=` maior que 0 | a camada da forma | não |
 | `bone=` | a forma inteira segue o osso. Vale em: todas. | o nome de um [`bone`](#bone) | nenhum | não |
 | `bones=a,b,…` | a forma dobra: cada ponto segue os ossos mais perto dele. Vale em: `shape`, `stroke`, `line`, `ellipse`, `rect` (no `text`, avisa e não vale). | dois ou mais nomes de ossos, separados por vírgula | nenhum | não |
-| `cloth=` | a forma balança como um tecido. Vale em: `shape`, `stroke`, `line`, `ellipse`, `rect` (o `text` aceita, mas não muda nada). | o nome de um [`cloth`](#cloth) | nenhum | não |
+| `cloth=` | a forma balança como um tecido. Vale em: `shape`, `stroke`, `line`, `ellipse`, `rect` (no `text`, não muda nada, e avisa). | o nome de um [`cloth`](#cloth) | nenhum | não |
 | `cut=a,b,…` | abre buracos com o formato de outras formas; o contorno também passa pela borda dos buracos. Vale em: `shape`, `ellipse`, `rect` (o `stroke`, a `line` e o `text` aceitam, mas não recortam). | nomes de formas fechadas, separados por vírgula | nenhum | não |
 | `mirror=forma@x` | esta linha vira uma cópia de outra forma, refletida num espelho. Vale em: todas, menos `emitter`. | o nome de uma forma do mesmo comando, mais `@` e um número (espelho em pé nesse x), `@y` e um número (espelho deitado nesse y, como `@y300`) ou nada (espelho em pé no meio do `canvas`) | — | não |
-| `emit=cor,força` | a forma brilha: um halo da cor em volta, e ela deixa de receber luz. Vale em: todas. | cor: uma cor `#hex`; força: de 0 a 10 (fora disso, corta sem avisar) | força 1 | não |
+| `emit=cor,força` | a forma brilha: um halo da cor em volta, e ela deixa de receber luz. Vale em: todas. | cor: uma cor `#hex`; força: de 0 a 10 (fora disso, corta, com um aviso) | força 1 | não |
 | `z=` | a distância da tela: positivo é mais perto, negativo mais longe. Vale em: todas. | qualquer número, em pixels | 0 | `key` e `at` |
 | `yaw=` | gira a forma em 3D em volta de um eixo em pé que passa pelo meio dela. Vale em: todas, menos `emitter`. | qualquer número, em graus | 0 | `key` e `at` |
 | `pitch=` | gira a forma em 3D em volta de um eixo deitado que passa pelo meio dela. Vale em: todas, menos `emitter`. | qualquer número, em graus | 0 | `key` e `at` |
@@ -1654,7 +1654,7 @@ stroke raio c=#ff6b4a w=6 cap=square : 180,20 230,60! 200,60! 260,100
 |---|---|---|---|---|
 | os pontos (depois do `:`) | o caminho do traço | 2 ou mais pontos, como no `shape` (`!`, `~` e `@osso` valem), em pixels | obrigatório (menos num membro) | não |
 | `w=` | a grossura do traço | uma espessura, em pixels | 4 | `key` |
-| `taper=início,fim` | afina as pontas: 0 não afina, 1 afina até sumir | exatamente dois números, de 0 a 1 (fora disso, corta sem avisar) | 0,0 | não |
+| `taper=início,fim` | afina as pontas: 0 não afina, 1 afina até sumir | exatamente dois números, de 0 a 1 (fora disso, corta, com um aviso) | 0,0 | não |
 | `cap=` | o formato das pontas | `round` (redonda), `butt` (reta, no ponto) ou `square` (reta, passando do ponto) | `round` | não |
 | `smooth=` | quanto os pontos lisos arredondam a curva | de 0 a 2 | 1 | não |
 | `limb=grossura1,grossura2` | faz do traço um membro: a grossura na raiz e na ponta | um ou dois números, em pixels (um só vale para as duas) | o `w=` | não |
@@ -1670,7 +1670,7 @@ Também aceita as [opções de todas as formas](#opções-de-todas-as-formas): `
 - Sem `c=`, o traço sai na cor `ink` da `palette`.
 - `cap=` não vale junto com `taper=`: o traço afinado tem sempre as pontas redondas (aviso).
 - O `taper=` precisa dos dois números: `taper=0.5` dá erro.
-- Um traço vira membro com `limb=`, `hip=`, `foot=` ou `target=`. O membro precisa de `hip=` e de `foot=` ou `target=` (sem eles, erro). Os pontos depois do `:` não valem no membro, e o `taper=` também não.
+- Um traço vira membro com `limb=`, `hip=`, `foot=` ou `target=`. O membro precisa de `hip=` e de `foot=` ou `target=` (sem eles, erro). Os pontos depois do `:` não valem no membro, e o `taper=` também não. O `bone=` não vale no membro (dá aviso): para a raiz andar com um osso, use `on=`.
 - `on=` e `bend=` num traço que não é membro não fazem nada (sem aviso).
 - O `stroke` não tem contorno: `ink=` avisa.
 
@@ -1913,7 +1913,7 @@ Qualquer outra linha (`layer`, `bone`, `anim`, `light`, `palette`, `let`, outro 
 - O `def` sozinho não desenha nada: só o `use` põe o componente no desenho. Mesmo sem `use`, os erros de dentro dele aparecem.
 - O `def` pode ficar antes ou depois do `use`.
 - Um `let` dentro do `def` dá erro. Escreva o `let` fora: as variáveis dele valem lá dentro.
-- Um parâmetro sem `=` (`def flor tam`) é ignorado, sem aviso.
+- Um parâmetro sem `=` (`def flor tam`) é ignorado, com um aviso.
 - Uma forma de dentro tem o mesmo nome em todas as cópias: `key 6 miolo.c=#ffffff` muda o miolo de todas as flores. Para animar uma cópia só, prenda essa cópia num osso (`use … bone=`).
 
 **Para aprender:** [Componentes](06-componentes.md#componentes-def-e-use) e [`repeat` dentro do componente](06-componentes.md#repeat-dentro-do-componente).
@@ -1964,7 +1964,7 @@ use seta 350,60 flip=x opacity=0.5
 - um `pattern`, por uma cor;
 - uma variável do `let` (`alto=80`).
 
-Um nome que não é nada disso dá um aviso com a lista dos parâmetros do `def`.
+Um nome que não é nada disso dá um aviso com a lista dos parâmetros do `def`. Um valor do tipo errado também avisa: um número para uma cor da `palette` (`line=9` com `line=#000000`) ou uma cor para uma variável do `let` quase sempre era um parâmetro que o `def` não tem.
 
 **Cuidado:**
 - `scale=-1,1` é o mesmo que `flip=x`, mas o `flip=` fica mais fácil de ler.
@@ -2106,7 +2106,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 | `jitter=` | treme: a cada quadro, anda um pouco para um lado qualquer, em x e em y | de 0 a 200, em pixels | 0 | não |
 | `spring=` | mola: o osso gira atrasado quando o pivô dele acelera, e balança até parar | de 0 a 1 (perto de 1: mola dura, volta rápido; `0` vale como uma mola muito mole) | sem mola | não |
 | `path=` | o osso anda por uma linha; quanto ele andou vem da `key` com `osso.along=` | o nome de um `line`, `stroke`, `shape`, `ellipse` ou `rect` | nenhum | não |
-| `turn=` | com `path=`, o osso vira junto com a curva | `0` não vira; qualquer outro valor vira | vira (com `path=`) | não |
+| `turn=` | com `path=`, o osso vira junto com a curva | `1` vira, `0` não vira (outro valor também vira, com um aviso; sem `path=`, aviso) | vira (com `path=`) | não |
 | `yaw=` | giro 3D de lado, em volta do pivô (com `round=`, do centro da bola) | qualquer número, em graus | 0 | `key` |
 | `pitch=` | giro 3D para cima e para baixo, em volta do pivô (com `round=`, do centro da bola) | qualquer número, em graus | 0 | `key` |
 | `persp=` | a distância do olho no giro 3D do osso: menor deforma mais; `0` tira a perspectiva | de 0 a 100000, em pixels | 2 × o lado maior do `canvas` | não |
@@ -2356,8 +2356,8 @@ Escreva o nome da forma, um ponto, a propriedade e o valor: `key 6 olho.opacity=
 | `show=` | a forma aparece ou some | `1`, `on`, `true` ou `sim` (aparece); `0`, `off`, `false`, `nao` ou `não` (some) | aparece | troca de uma vez |
 | `c=` | a cor do preenchimento (num traço, numa linha ou num texto, a cor dele) | uma cor | o `c=` da linha | aos poucos entre duas cores `#hex`; as outras (gradiente, `pattern`, nome do CSS) trocam de uma vez na `key` seguinte |
 | `inkc=` | a cor do contorno | uma cor | o `inkc=` da linha (ou a `ink` da `palette`) | como no `c=` |
-| `w=` | a grossura de um traço ou de uma linha | uma espessura (negativo vale 0, sem aviso) | o `w=` da linha | aos poucos |
-| `ink=` | a grossura do contorno de uma forma fechada ou de um texto | uma espessura (negativo vale 0, sem aviso) | o `ink=` da linha | aos poucos |
+| `w=` | a grossura de um traço ou de uma linha | uma espessura (negativo vale 0, com um aviso) | o `w=` da linha | aos poucos |
+| `ink=` | a grossura do contorno de uma forma fechada ou de um texto | uma espessura (negativo vale 0, com um aviso) | o `ink=` da linha | aos poucos |
 | `shape=` | morph: a forma vira outra, com o formato e o lugar da outra | o nome de outra forma: fechada (`shape`, `ellipse`, `rect`) com fechada, aberta (`stroke`, `line`) com aberta. Texto, partículas e pernas ou braços (`stroke` com `hip=`) não fazem morph | a própria forma | aos poucos |
 | `draw=` | quanto da forma já foi desenhado: 0 = nada, 1 = tudo | de 0 a 1 | 1 | aos poucos |
 | `above=` | pinta a forma logo na frente de outra | o nome de outra forma da mesma camada, ou `none` (volta à ordem do arquivo) | a ordem do arquivo | troca de uma vez |
@@ -2380,7 +2380,7 @@ Escreva o nome da camada: `key 6 fundo.blur=4`.
 | `show=` | a camada aparece ou some | como o `show=` da forma | aparece | troca de uma vez |
 | `blur=` | o desfoque | qualquer número, em pixels (0 ou menos: sem desfoque) | o `blur=` da linha | aos poucos |
 | `glow=` | o raio do brilho em volta. A cor e a força vêm do `glow=` da linha `layer`; sem ele, o brilho sai branco | qualquer número, em pixels (0 ou menos: sem brilho) | o raio do `glow=` da linha, ou 0 | aos poucos |
-| `tint=` | quanto a camada é tingida. A cor vem do `tint=cor,quanto` da linha `layer`; sem ele, nada muda (dá aviso) | de 0 a 1 (acima de 1 vale 1, sem aviso) | o quanto do `tint=` da linha, ou 0 | aos poucos |
+| `tint=` | quanto a camada é tingida. A cor vem do `tint=cor,quanto` da linha `layer`; sem ele, nada muda (dá aviso) | de 0 a 1 (acima de 1 vale 1, com um aviso) | o quanto do `tint=` da linha, ou 0 | aos poucos |
 | `brightness=` | o brilho: 1 = normal, 2 = o dobro | 0 ou mais | o `brightness=` da linha, ou 1 | aos poucos |
 | `saturate=` | a saturação: 1 = normal, 0 = cinza | 0 ou mais | o `saturate=` da linha, ou 1 | aos poucos |
 | `contrast=` | o contraste: 1 = normal, menos de 1 = mais apagado | 0 ou mais | o `contrast=` da linha, ou 1 | aos poucos |
@@ -2390,7 +2390,7 @@ Escreva o nome da camada: `key 6 fundo.blur=4`.
 | `yaw=` | o giro 3D de lado da camada inteira | qualquer número, em graus | o `yaw=` da linha | aos poucos |
 | `pitch=` | o giro 3D para cima e para baixo da camada inteira | qualquer número, em graus | o `pitch=` da linha | aos poucos |
 
-Na `key`, os efeitos da camada não têm as faixas da linha [`layer`](#layer) e não dão aviso. Não use números negativos em `brightness=`, `saturate=` e `contrast=`: a `key` aceita, mas o resultado não é garantido.
+Na `key`, os efeitos da camada não têm as faixas da linha [`layer`](#layer): o número passa, com um aviso. Não use números negativos em `brightness=`, `saturate=` e `contrast=`: a `key` aceita, mas o resultado não é garantido.
 
 **Para aprender:** [Efeitos de camada](11-efeitos.md#efeitos-de-camada).
 
@@ -2549,7 +2549,7 @@ rect p 120,40 60,30 c=#ffd34d ink=2
 - O `flicker=` só aparece numa animação ou num filme; no desenho parado, a luz fica firme.
 
 **Cuidado:**
-- Na `dir`, `radius=`, `glow=`, `aim=`, `cone=` e `bone=` não fazem nada, e não dão aviso. Na `point`, `aim=` e `cone=` também não.
+- Na `dir`, `radius=`, `glow=`, `aim=`, `cone=` e `bone=` não fazem nada, e dão aviso. Na `point`, `aim=` e `cone=` também não (também com aviso).
 - Uma cor que não é `#hex` (um nome do CSS, como `red`) dá aviso, e a luz fica branca.
 - A luz não tem `show`. Para apagar numa animação, use `key … nome.power=0`.
 - O `light=` do [`canvas`](#canvas) é outra coisa: a direção que engrossa os contornos.
@@ -2581,7 +2581,7 @@ text t 110,70 "ABERTO" size=28 align=center c=#ff5050
 | `power=` | a força. Com `c=#ffffff`, `power=1` deixa as cores como foram escritas; menos que 1 escurece | de 0 a 5 | 0.6 | não |
 
 **Cuidado:**
-- Dois `ambient`: vale só o de baixo, sem aviso. Se o de baixo não tem `power=`, vale 0.6, e não o `power=` do de cima.
+- Dois `ambient` no mesmo arquivo: vale só o de baixo, com um aviso. Se o de baixo não tem `power=`, vale 0.6, e não o `power=` do de cima.
 - O `ambient` não tem nome: não muda com a `key` nem com o `at`.
 - Uma cor que não é `#hex` dá aviso, e a luz geral fica branca.
 
@@ -2779,7 +2779,7 @@ ellipse nuvem 16,48 12,8 c=#ffffff
 
 | Opção | O que faz | Valores | Padrão | Anima? |
 |---|---|---|---|---|
-| `size=` | o tamanho de cada bloco; com um número, quadrado | um ou dois números, em pixels, arredondados; o mínimo é 2 (abaixo disso, vira 2 sem avisar) | 32 (32×32) | não |
+| `size=` | o tamanho de cada bloco; com um número, quadrado | um ou dois números, em pixels, arredondados; o mínimo é 2 (abaixo disso, vira 2, com um aviso) | 32 (32×32) | não |
 | `auto` | toda célula desenhada que não tem `tile` vira um bloco sem colisão, com o nome `bloco_coluna_linha` | palavra solta | desligado | não |
 | `iso` | blocos em losango, para mapa isométrico: o losango tem a largura do bloco e metade dela de altura, na parte de baixo da célula | palavra solta | desligado | não |
 
@@ -2875,7 +2875,7 @@ No filme, a troca de uma expressão para outra é aos poucos, do `at` anterior a
 **Cuidado:**
 - A expressão manda nos ossos e nas formas que ela cita: enquanto ela vale, a animação deixa de mexer neles. Os outros continuam com a animação.
 - `ease=` não existe numa `expr` (o Weasel procura um osso chamado `ease` e dá erro).
-- A expressão aceita, mas não usa no filme: camadas (`camada.opacity=`…), luzes (`luz.power=`…), caixas (`caixa.show=`), `osso.along=` e a ordem (`above=`, `below=`). Nenhuma delas muda o ator, e o Weasel não avisa.
+- A expressão aceita, mas não usa no filme: camadas (`camada.opacity=`…), luzes (`luz.power=`…), caixas (`caixa.show=`), `osso.along=` e a ordem (`above=`, `below=`). Nenhuma delas muda o ator, e o Weasel avisa.
 - A boca do lip sync ([`mouth`](#mouth)) vale por cima da expressão.
 
 **Para aprender:** [Expressões: `expr`](18-filme-atuacao.md#expressões-expr).
@@ -3077,7 +3077,7 @@ shot corrida dur=2s
 - Um ator escrito antes do primeiro `shot` vale em todos os planos. Um ator escrito dentro de um `shot` só existe nele. O mesmo nome não pode aparecer de novo num plano.
 - Em cada plano, a animação recomeça do primeiro quadro e repete até o fim do plano. Uma animação com `once` toca uma vez e para no último quadro.
 - O `depth=` do ator multiplica o `depth=` das camadas do arquivo dele: uma camada `depth=2` num ator `depth=3` fica a 6.
-- `turn=` e `along=` sem `path=` não fazem nada, e o Weasel não avisa. Num caminho aberto, `along=` vai de 0 a 1; num caminho fechado (elipse, retângulo, `shape`), `along=2` dá duas voltas.
+- `turn=` e `along=` sem `path=` não fazem nada: o `turn=` dá aviso, e o `along=`, erro. Num caminho aberto, `along=` vai de 0 a 1; num caminho fechado (elipse, retângulo, `shape`), `along=2` dá duas voltas.
 - Se o filme tem `light` ou `ambient`, o `ambient` do arquivo do ator é trocado pelo do filme (sem `ambient` no filme, uma luz branca de força 0.6). Use `unlit` para o ator ficar com a luz dele.
 
 **Para aprender:** [Atores: `actor`](17-filme.md#atores-actor) e [Andar por um caminho: `path=`](18-filme-atuacao.md#andar-por-um-caminho-path).
@@ -3118,7 +3118,7 @@ at 3s heroi.x=600
 
 **Cuidado:**
 - A linha `camera` antes do primeiro `shot` vale para todos os planos. Dentro de um `shot`, ela parte da câmera do filme e muda só o que a linha diz.
-- No [`at`](#at), as faixas são outras: `zoom=` e `lens=` vão até 1000, `lag=` vai até 100 e `haze=` aceita a partir de 0.01 (no desenho, abaixo de 1.05 vale 1.05, sem avisar).
+- No [`at`](#at), as faixas são outras: `zoom=` e `lens=` vão até 1000, `lag=` vai até 100 (acima da faixa da linha `camera`, o Weasel avisa) e `haze=` aceita a partir de 0.01 (no desenho, abaixo de 1.05 vale 1.05, sem avisar).
 - `lag=` não é um atraso fixo: em `lag` segundos, a câmera faz uns dois terços do caminho até o alvo. Ele vale para seguir um ator e também para os `at` que mudam o `pos=`.
 - O `follow=` leva em conta a distância do ator: um ator longe (com `depth=`) também fica no meio do quadro.
 
@@ -3230,7 +3230,7 @@ As tabelas abaixo dizem o que o `at` muda em cada alvo. A coluna "No começo" é
 | `fade=` | quanto o quadro fica coberto pela cor | de 0 a 1 | o `fade=` da linha | aos poucos |
 | `fadec=` | a cor do `fade=` | uma cor `#hex` | o `fadec=` da linha | aos poucos |
 | `lens=` | a lente | de 0.01 a 1000 (na linha `camera`, só até 100) | o `lens=` da linha | aos poucos |
-| `fog=` | a cor da névoa | uma cor `#hex`; `none` não faz nada (sem aviso) | o `fog=` da linha | aos poucos; sem névoa antes, ela liga de uma vez no tempo do `at` |
+| `fog=` | a cor da névoa | uma cor `#hex`; `none` não faz nada (dá aviso) | o `fog=` da linha | aos poucos; sem névoa antes, ela liga de uma vez no tempo do `at` |
 | `haze=` | a distância da meia névoa | de 0.01 a 1000; no desenho, abaixo de 1.05 vale 1.05 (sem avisar); na linha `camera`, de 1.05 a 1000 | o `haze=` da linha | aos poucos |
 
 #### `at` numa luz
@@ -3325,7 +3325,7 @@ audio grilos "som/grilos.wav" vol=0.3 loop
 | `loop` | repete o som até o fim do plano (fora de um `shot`, até o fim do filme) | palavra solta | desligado | não |
 
 **Cuidado:**
-- O `at=` aceita um `+` na frente, mas não faz nada com ele: `at=+1s` é o mesmo que `at=1s`.
+- O `at=` aceita um `+` na frente, mas não faz nada com ele (o Weasel avisa): `at=+1s` é o mesmo que `at=1s`.
 - Sem `dur=`, o som toca até o fim do arquivo, mesmo depois do fim do plano.
 - No GIF, o som não vai.
 
@@ -3363,7 +3363,7 @@ sub 0.5s "Who's there?" lang=en
 - O `+` conta do fim da legenda anterior do mesmo plano, de qualquer língua.
 - Cada língua vai para um `.srt` próprio: `filme.srt` para a do `film lang=`, `filme.en.srt` para o inglês, e assim por diante.
 - O vídeo desenha só as legendas de uma língua: a do `film lang=` (ou a do `--lang`).
-- O `dur=` aceita um `+` na frente, mas não faz nada com ele.
+- O `dur=` aceita um `+` na frente, mas não faz nada com ele (o Weasel avisa).
 
 **Para aprender:** [Som, legendas e lip sync](18-filme-atuacao.md#som-legendas-e-lip-sync).
 

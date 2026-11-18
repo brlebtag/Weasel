@@ -79,7 +79,7 @@ Repare:
 **Experimente:** no código do `pixel=4`, mude para `pixel=8`. Os blocos dobram de tamanho, e os olhos viram poucos quadradinhos.
 
 **Cuidado:**
-- Só a primeira palavra vale: em `finish game flat`, o `flat` fica de fora, sem aviso.
+- Só a primeira palavra vale: em `finish game flat`, o `flat` fica de fora, e o Weasel avisa. Com duas linhas `finish` no mesmo arquivo, as opções se somam e vale o estilo da última (também com aviso).
 - Várias linhas `finish` se somam, e cada opção fica com o último valor escrito.
 - Com `flat`, uma forma com `ink=` e sem `c=` some inteira: ela não tem cor de dentro, só o contorno.
 - O bloco do `pixel=` é medido na imagem exportada: com `-s 2`, `pixel=4` dá blocos de 4 pixels da imagem, que são 2 do desenho.

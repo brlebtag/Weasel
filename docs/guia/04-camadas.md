@@ -527,7 +527,7 @@ layer contorno
 **Cuidado:**
 - Numa forma, o `cut=` só aceita nomes de **formas**. O nome de uma camada é erro: `cut: forma "m" não existe`.
 - A forma que recorta precisa ser fechada (`ellipse`, `rect` ou `shape`). Com um `stroke`, é erro: `cut: "b" precisa ser uma forma fechada`.
-- O `cut=` abre buracos só no `ellipse`, no `rect` e no `shape`. No `stroke`, na `line` e no `text`, ele é aceito, mas não faz nada.
+- O `cut=` abre buracos só no `ellipse`, no `rect` e no `shape`. No `stroke`, na `line` e no `text`, ele não faz nada, e o Weasel avisa.
 
 ## Camadas que não saem na imagem: `hidden` e `guide`
 
@@ -716,7 +716,7 @@ rect tampa 314,96 32,22 r=4 c=#c08a55 ink=line
 
 ## Resumo
 
-- `layer nome` abre uma camada; as formas antes do primeiro `layer` ficam na camada `base`. Uma camada não pode ser aberta de novo.
+- `layer nome` abre uma camada; as formas antes do primeiro `layer` ficam na camada `base`. Uma camada não pode ser aberta de novo (um `layer base` depois dessas formas dá aviso).
 - O Weasel pinta as camadas na ordem do arquivo e, dentro de cada uma, as formas na ordem das linhas: o que vem depois fica por cima.
 - `opacity=` e `blend=` valem para a camada inteira de uma vez.
 - `clip=` mostra a camada só dentro de outra forma; `cut=` abre um buraco nela. Numa forma, `cut=` abre buracos com contorno.

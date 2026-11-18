@@ -360,12 +360,9 @@ erros.weasel:3:1: erro: instrução desconhecida "elipse"
 erros.weasel:4:25: erro: cor desconhecida "amarelo"
   4 | ellipse nuvem 100,60 30 c=amarelo
     |                         ^^^^^^^^^
-erros.weasel:5:6: erro: esperado o canto no formato x,y
+erros.weasel:5:6: erro: o nome "chaminé" tem acento ou letra de fora do a-z: um nome usa só letras sem acento, números, _ e -
   5 | rect chaminé 40,150 30,60 c=#a14a37
     |      ^^^^^^^
-erros.weasel:5:21: aviso: valor solto "30,60" (atributos usam nome=valor)
-  5 | rect chaminé 40,150 30,60 c=#a14a37
-    |                     ^^^^^
 weasel: 4 erro(s); nada foi exportado (use --force para exportar ignorando as linhas com erro).
 ```
 
@@ -380,7 +377,7 @@ Os quatro erros mais comuns estão aí:
 - **Um espaço no meio do ponto** (`200, 120`). O Weasel não acha o centro. Ele lê o `120` como o raio, e o `60` sobra (o aviso "valor solto" logo abaixo).
 - **Um comando escrito errado** (`elipse`). Os comandos são em inglês: `ellipse`.
 - **Uma cor que não existe** (`amarelo`). Os nomes de cor são em inglês (`gold`, `tomato`), como no [capítulo 3](03-cores.md).
-- **Um nome com acento** (`chaminé`). O Weasel não o reconhece como nome e procura o canto do retângulo ali. Escreva `chamine`.
+- **Um nome com acento** (`chaminé`). Um nome usa só letras sem acento. Escreva `chamine`.
 
 Com um erro, a linha de comando não salva nada. Com `--force`, ela salva o que deu para entender. Neste exemplo, sai só o sol, grande e no canto: o centro dele não foi entendido.
 

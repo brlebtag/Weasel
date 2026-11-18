@@ -1098,6 +1098,72 @@ async function speedCase() {
   await check('_velocidade', 'velocidade.txt', 'text', lines.join('\n') + '\n');
 }
 
+// Os avisos da 1.67.13 (docs/planos/problemas-achados.md, seções 3 e 4): o que cada caso diz, e que o aviso não
+// muda a imagem (com a opção avisada e sem ela, todos os quadros da primeira animação saem iguais, byte a byte).
+// Os de include não avisam: trocar o finish, o let ou o ambient do outro arquivo é de propósito.
+async function warnCase() {
+  console.log(paint('1', '_avisos'));
+  const C = 'canvas 200 120 bg=#406080\n', F = 'film fps=12 dur=2s\n';
+  const base = 'palette pele=#f0c090 line=#000000\nambient c=#ffffff power=0.6\nlight l point 30,30 power=2\n';
+  const inc = { 'base.weasel': 'finish game\nlet r=10\nambient c=#ff0000 power=0.2\npalette pele=#f0c090\n' };
+  const cases = [
+    ['cut no stroke', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 cut=furo : 10,10 90,90', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 : 10,10 90,90'],
+    ['bold na ellipse', C + 'ellipse e 50,50 10 bold', C + 'ellipse e 50,50 10'],
+    ['cloth no text', C + 'bone b pivot=50,50\ncloth pano pivot=50,50 bone=b\ntext t 50,50 "oi" cloth=pano', C + 'bone b pivot=50,50\ncloth pano pivot=50,50 bone=b\ntext t 50,50 "oi"'],
+    ['~ na line', C + 'line l w=2 : 10,10 50,80~10,0 90,10', C + 'line l w=2 : 10,10 50,80 90,10'],
+    ['ink negativo', C + 'ellipse e 50,50 10 ink=-2', C + 'ellipse e 50,50 10 ink=0'],
+    ['taper 2', C + 'stroke s w=4 taper=0,2 : 10,10 90,90', C + 'stroke s w=4 taper=0,1 : 10,10 90,90'],
+    ['variant com nome novo', C + 'palette pele=#f0c090\nvariant noite pela=#806040\nellipse e 50,50 10 c=pele'],
+    ['pattern com nome da palette', C + 'palette grade=#ff0000\npattern grade hatch c=#000000\nrect r 10,10 30,30 c=grade'],
+    ['gradient fora de 0 a 1', C + 'gradient g linear 0,0 0,100 : #ff0000@-0.2 #0000ff@1.5\nrect r 10,10 30,30 c=g', C + 'gradient g linear 0,0 0,100 : #ff0000@0 #0000ff@1\nrect r 10,10 30,30 c=g'],
+    ['gradient fora de ordem', C + 'gradient g linear 0,0 0,100 : #ff0000@0.8 #0000ff@0.2\nrect r 10,10 30,30 c=g', C + 'gradient g linear 0,0 0,100 : #ff0000@0.8 #0000ff@0.8\nrect r 10,10 30,30 c=g'],
+    ['dots com cross e w', C + 'pattern p dots cross w=3 c=#000000\nrect r 10,10 60,60 c=p', C + 'pattern p dots c=#000000\nrect r 10,10 60,60 c=p'],
+    ['hatch com r', C + 'pattern p hatch r=3 c=#000000\nrect r 10,10 60,60 c=p', C + 'pattern p hatch c=#000000\nrect r 10,10 60,60 c=p'],
+    ['layer base depois das formas', C + 'ellipse e 50,50 10\nlayer base\nellipse f 80,50 10'],
+    ['finish com duas palavras', C + 'finish game flat\nellipse e 50,50 10', C + 'finish game\nellipse e 50,50 10'],
+    ['dois finish', C + 'finish game pixel=2\nfinish flat bloom=1\nellipse e 50,50 10'],
+    ['finish depois do include', 'include "base.weasel"\n' + C + 'finish flat\nellipse e 50,50 10 c=pele'],
+    ['glow, tint e trail fora da faixa', C + 'layer l glow=#ffffff,12,9 tint=#ff0000,3 trail=4,0.99\nellipse e 50,50 10'],
+    ['cast fora da faixa', C + base + 'line chao w=1 : 0,100 200,100\nlayer l cast=chao,3,-2\nellipse e 50,50 10', C + base + 'line chao w=1 : 0,100 200,100\nlayer l cast=chao,1,0\nellipse e 50,50 10'],
+    ['emit 99', C + 'ellipse e 50,50 10 emit=#ffffff,99', C + 'ellipse e 50,50 10 emit=#ffffff,10'],
+    ['let repetido', C + 'let r=10\nellipse e 50,50 {r}\nlet r=30'],
+    ['let depois do include', 'include "base.weasel"\n' + C + 'let r=30\nellipse e 50,50 {r}'],
+    ['let pi e a-b', C + 'let pi=3 a-b=5\nellipse e 50,50 {pi}'],
+    ['rand(x,a) e número a mais', C + 'ellipse e 50,50 {rand(10,20)}\nellipse f 80,50 {sin(1,2)*10+10}'],
+    ['def sem =', C + 'def x semvalor\nellipse e 0,0 10\nend\nuse x 50,50'],
+    ['use com o tipo errado', C + 'palette line=#000000\nlet alto=10\ndef arvore\nellipse e 0,0 10\nend\nuse arvore 60,60 line=9 alto=#ff0000'],
+    ['use com o tipo certo', C + 'palette line=3\ndef arvore\nellipse e 0,0 10 ink=line\nend\nuse arvore 60,60 line=9'],
+    ['turn=nao e turn sem path', C + 'stroke caminho w=1 hidden : 10,10 90,90\nbone b pivot=50,50 path=caminho turn=nao\nbone c pivot=50,50 turn=1'],
+    ['membro com target e foot, e bone', C + 'line chao w=1 : 0,100 200,100\nbone a pivot=150,20\nstroke perna w=4 limb=4 hip=50,20 foot=chao,50 target=a bone=a : 50,20 50,50 50,80'],
+    ['luz dir com radius, glow, aim, cone e bone', C + 'bone b pivot=50,50\nlight sol dir 0.5,1 radius=50 glow=30 aim=40 cone=20 bone=b power=1.5\nellipse e 100,60 30 c=#e0c080', C + 'bone b pivot=50,50\nlight sol dir 0.5,1 power=1.5\nellipse e 100,60 30 c=#e0c080'],
+    ['dois ambient e lit', C + 'ambient c=#ff0000 power=0.2\nambient c=#ffffff power=0.8\nlayer l lit\nellipse e 100,60 30 c=#e0c080', C + 'ambient c=#ffffff power=0.8\nlayer l\nellipse e 100,60 30 c=#e0c080'],
+    ['ambient depois do include', 'include "base.weasel"\n' + C + 'ambient c=#ffffff power=0.8\nellipse e 100,60 30 c=pele'],
+    ['rim só com ambient', C + 'ambient c=#ffffff power=0.5\nlayer l rim=#ffffff,6\nellipse e 100,60 30 c=#e0c080', C + 'ambient c=#ffffff power=0.5\nlayer l\nellipse e 100,60 30 c=#e0c080'],
+    ['key de luz e de camada fora da faixa', C + 'light l point 50,50 power=1\nlayer k\nellipse e 50,50 10\nanim a frames=4\nkey 0\nkey 3 l.power=30 l.cone=999 k.brightness=-5'],
+    ['key c no emitter', C + 'emitter fx 100,60 rate=40 life=1 speed=40 size=4 c=#ffffff\nanim a frames=6\nkey 0\nkey 5 fx.c=#ff0000', C + 'emitter fx 100,60 rate=40 life=1 speed=40 size=4 c=#ffffff\nanim a frames=6\nkey 0\nkey 5'],
+    ['expr com camada e ordem', C + 'layer l\nellipse e 50,50 10\nellipse f 60,50 10\nexpr feliz l.opacity=0.5 e.above=f'],
+    ['tileset size=1', C + 'tileset size=1\nrect r 0,0 10,10'],
+    ['horizon abaixo do pivô', C + 'layer chao floor pivot=100,40 horizon=60\nrect r 0,60 200,60 c=#40a040', C + 'layer chao\nrect r 0,60 200,60 c=#40a040'],
+    ['halftone color com angle', C + 'art halftone color angle=30\nellipse e 50,50 30 c=#c04040', C + 'art halftone color\nellipse e 50,50 30 c=#c04040'],
+    ['at camera.zoom, lag e fog=none', F + 'at 0.5s camera.zoom=500 camera.lag=50 camera.fog=none'],
+    ['audio e sub com +', F + 'audio som "x.wav" at=+1s\nsub 0.5s "oi" dur=+1s'],
+    ['nome com acento', C + 'ellipse chaminé 50,50 20\nlayer céu'],
+    ['layer dentro de def', C + 'def x\nlayer l\nellipse e 0,0 10\nend'],
+  ];
+  const lines = [];
+  for (const [id, src, clean] of cases) {
+    const parse = (s) => W.lang.parse(s, { file: 't.weasel', resolve: (n) => (n in inc ? inc[n] : null), media: () => true });
+    const m = parse(src);
+    lines.push(`${id}: ${m.errors.map((e) => `[${e.level === 'warn' ? 'aviso' : 'erro'} l${e.line + 1}] ${e.msg}`).join(' | ') || '—'}`);
+    if (!clean) continue;
+    const c = parse(clean), anim = m.anims.length ? m.anims[0].name : null, n = anim ? m.animMap.get(anim).frames : 1;
+    let same = !c.errors.length;
+    for (let f = 0; f < n && same; f++) same = Buffer.compare(X.imageCanvas(m, anim, f, {}).toBuffer('image/png'), X.imageCanvas(c, anim, f, {}).toBuffer('image/png')) === 0;
+    lines.push(`  imagem sem a opção avisada: ${same ? 'igual' : 'DIFERENTE'} (${n} quadro${n > 1 ? 's' : ''})`);
+  }
+  await check('_avisos', 'avisos.txt', 'text', lines.join('\n') + '\n');
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -1130,6 +1196,7 @@ async function main() {
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   if (!only.length || only.some((o) => '_simplificar'.includes(o))) await simplifyCase();
   if (!only.length || only.some((o) => '_caminhos'.includes(o))) await pathsCase();
+  if (!only.length || only.some((o) => '_avisos'.includes(o))) await warnCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

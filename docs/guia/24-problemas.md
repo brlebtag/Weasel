@@ -159,7 +159,7 @@ O começo muda com o que a linha esperava: `esperado o centro`, `esperado o tama
 
 **Por quê:** um ponto é **uma palavra só**: `200,120`. O espaço depois da vírgula quebra o ponto em dois pedaços. Há dois outros casos:
 
-- os `^^^^` apontam para o **nome** da forma (`ellipse coração 150,100 40`): o nome tem acento ou começa com um número, e o Weasel não o leu como nome (veja [nome inválido](#nome-inválido));
+- os `^^^^` apontam para o **nome** da forma (`ellipse 2sol 150,100 40`): o nome começa com um número, e o Weasel não o leu como nome (veja [nome inválido](#nome-inválido)). Com acento (`ellipse coração 150,100 40`), a mensagem já diz que o problema é o nome;
 - o ponto tem uma conta (`10,{alto}`) e a conta deu outro erro na mesma linha: corrija a conta primeiro.
 
 **Como resolver:** tire o espaço: `ellipse sol 200,120 40 c=#ffd34d`.
@@ -169,12 +169,16 @@ O começo muda com o que a linha esperava: `esperado o centro`, `esperado o tama
 **O que você vê:**
 
 ```
-erro: nome inválido "céu"
+erro: o nome "céu" tem acento ou letra de fora do a-z: um nome usa só letras sem acento, números, _ e -
   2 | layer céu
     |       ^^^
 ```
 
-**Por quê:** um nome usa só letras **sem acento**, números, `_` e `-`, e começa com uma letra ou `_`. Numa forma, o mesmo erro aparece como [no formato x,y](#no-formato-xy), apontando o nome.
+Um nome que começa com um número (`layer 2ceu`) dá `nome inválido "2ceu"`.
+
+**Por quê:** um nome usa só letras **sem acento**, números, `_` e `-`, e começa com uma letra ou `_`. Numa forma, o nome que começa com um número aparece como [no formato x,y](#no-formato-xy), apontando o nome.
+
+Até a versão 1.67.12, o nome com acento também dava `nome inválido` (e, numa forma, `esperado o centro no formato x,y`).
 
 **Como resolver:** tire o acento (`ceu`, `cabeca`, `coracao`), ou troque o número do começo de lugar (`sol2`, e não `2sol`).
 
@@ -465,7 +469,7 @@ aviso: clip: "risco" é um traço aberto; o molde precisa ser uma forma fechada 
 
 **O que você vê:** você criou a variante `noite`, mas o telhado continua igual nela.
 
-**Por quê:** a variante troca **nomes da `palette`**. Uma cor escrita direto (`c=#c4512b`) não tem nome, então a variante não tem o que trocar.
+**Por quê:** a variante troca **nomes da `palette`**. Uma cor escrita direto (`c=#c4512b`) não tem nome, então a variante não tem o que trocar. O nome da forma também não serve: com `telhado=#5a2a20` na variante, o Weasel avisa `"telhado" não está na palette`.
 
 <!-- gerar: img/13_variante_errada.png --variant noite -->
 ```weasel
@@ -473,7 +477,7 @@ canvas 240 140 bg=ceu
 palette ceu=#bfe3f5 parede=#f1d9b5
 rect casa 70,60 100,70 c=parede ink=4
 shape telhado c=#c4512b ink=4 : 60,62! 120,20! 180,62!
-variant noite ceu=#1b2140 parede=#8a7d70 telhado=#5a2a20
+variant noite ceu=#1b2140 parede=#8a7d70
 ```
 
 <!-- gerar: img/13_variante_certa.png --variant noite -->
@@ -1432,6 +1436,14 @@ node cli/weasel.js bola.weasel -a quica -o quica.gif -s 0.5
 **Por quê:** o `.tres` aponta para o `.png` pelo nome do arquivo.
 
 **Como resolver:** deixe os dois na mesma pasta do projeto do Godot.
+
+### No Godot, o personagem flutua acima do chão
+
+**O que você vê:** no jogo, os pés do personagem ficam uns 8 pixels acima do chão, mesmo com a colisão no lugar.
+
+**Por quê:** a origem do nó (o ponto que fica na posição que o jogo dá ao personagem) é o `root=` do `godot`. Sem `root=`, ela fica no meio da base do **recorte**: o desenho mais 8 pixels de folga. Assim, a origem fica 8 pixels **abaixo** dos pés.
+
+**Como resolver:** escreva o `root=` no ponto em que o personagem pisa, como `godot root=200,388`, e exporte de novo ([capítulo 15](15-jogo-personagem.md#a-origem-e-o-nome-root-e-name)).
 
 ### No Godot, a cabeça não vira
 

@@ -660,7 +660,7 @@ Quando o pé deve ficar num lugar que não é uma linha (um degrau, uma pedra, u
 | `limb=` | a largura no quadril e no pé | um número ou dois | a largura do `w=` (4) |
 | `bend=` | para que lado e quanto dobra | de −3 a 3 (acima de 1, igual a 1) | 1 |
 
-Com `foot=` e `target=` juntos, vale o `target=`. A ficha completa está na [referência do `stroke`](19-referencia.md#stroke).
+Com `foot=` e `target=` juntos, vale o `target=`, e o Weasel avisa. A ficha completa está na [referência do `stroke`](19-referencia.md#stroke).
 
 ## IK nos ossos: `ik`
 

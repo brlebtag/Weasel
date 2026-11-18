@@ -65,14 +65,14 @@ end
 As regras:
 
 - A ordem dos `let` não importa: `let a=b*2` pode vir antes de `let b=10`. O `a` vale 20 do mesmo jeito.
-- Se o mesmo nome aparece em dois `let`, vale o último do arquivo, em todo lugar. O Weasel não avisa.
+- Se o mesmo nome aparece em dois `let` do mesmo arquivo, vale o último, em todo lugar, e o Weasel avisa.
 - Dentro de um `def`, um parâmetro ganha de um `let` com o mesmo nome. Dentro de um `repeat`, a variável dele também ganha.
 - Um parâmetro de cor (`def bola cor=#ff6b4a`) não é variável das contas: ele só vale onde vai uma cor.
 - O `let` não enxerga a variável do `repeat`. Um `let x=i*2` dentro de um `repeat` não muda a cada volta: ele procura um `i` de outro `let` e, se não houver, dá erro. Escreva a conta direto na linha: `{i*2}`.
 - O nome de uma variável começa com letra ou `_`. Depois, vêm letras sem acento, números ou `_`: `r`, `olho`, `altura_porta`.
 - Maiúsculas contam: `R` e `r` são variáveis diferentes.
 - O `let` aceita um `-` no nome (`let a-b=5`), mas numa conta o `-` é o sinal de menos: `{a-b}` procura uma variável `a` e outra `b`. Não use `-` em nome de variável.
-- O nome `pi` é do Weasel: um `let pi=3` não muda o `pi` das contas.
+- O nome `pi` é do Weasel: um `let pi=3` não muda o `pi` das contas (o Weasel avisa).
 
 ## Quando a conta dá errado
 
@@ -115,7 +115,7 @@ As mensagens possíveis:
 
 - Num `let`, a mensagem diz o nome da variável: `let r: variável desconhecida "raio"`.
 - Nos limites de um `repeat`, a mensagem não diz qual conta falhou. Ela mostra só como escrever: `use: repeat i 0..9  (as linhas até o end se repetem, com i = 0, 1, … 9)`.
-- Só o `dist`, o `smoothstep` e o `mod` conferem quantos números receberam. Nas outras funções, um número a menos dá `o resultado não é um número`, e um número a mais é ignorado sem aviso: `{sin(30,99)}` é o mesmo que `{sin(30)}`.
+- Só o `dist`, o `smoothstep` e o `mod` conferem quantos números receberam. Nas outras funções, um número a menos dá `o resultado não é um número`, e um número a mais é ignorado, com um aviso: `{sin(30,99)}` é o mesmo que `{sin(30)}`.
 
 ## As operações
 
@@ -519,7 +519,7 @@ end
 Troque os dois `i+300` por `i+400`. As flores ficam nos mesmos lugares, mas algumas trocam de cor.
 
 **Cuidado:**
-- Com dois números, `rand(x,a)`, o `a` é ignorado sem aviso, e o resultado fica de 0 a 1. Escreva os três: `rand(x,a,b)`.
+- Com dois números, `rand(x,a)`, o `a` é ignorado (o Weasel avisa), e o resultado fica de 0 a 1. Escreva os três: `rand(x,a,b)`.
 - Com `a` maior que `b`, o sorteio vai de `b` a `a`, ao contrário: `{rand(1,20,10)}` dá `18.21411361452192`.
 - Números muito perto uns dos outros dão o mesmo sorteio: o `x` é arredondado para 3 casas depois do ponto. `rand(0.0001)` é o mesmo que `rand(0)`. Use números inteiros: `rand(i)`, `rand(i+100)`.
 - `rand()`, sem nenhum número, não dá erro: é o mesmo que `rand(0)`.

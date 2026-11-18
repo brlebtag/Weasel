@@ -1,0 +1,61 @@
+cut no stroke: [aviso l3] cut= vale só nas formas fechadas (shape, ellipse e rect); no stroke, não faz nada
+  imagem sem a opção avisada: igual (1 quadro)
+bold na ellipse: [aviso l2] bold vale só no text
+  imagem sem a opção avisada: igual (1 quadro)
+cloth no text: [aviso l4] cloth= não vale no text: as letras não balançam (use bone=)
+  imagem sem a opção avisada: igual (1 quadro)
+~ na line: [aviso l2] na line, os pontos são ligados por retas: o ~ não muda nada (para curvas, use stroke)
+  imagem sem a opção avisada: igual (1 quadro)
+ink negativo: [aviso l2] ink= não aceita número negativo; vale 0
+  imagem sem a opção avisada: igual (1 quadro)
+taper 2: [aviso l2] os dois números do taper= devem ficar entre 0 e 1
+  imagem sem a opção avisada: igual (1 quadro)
+variant com nome novo: [aviso l3] "pela" não está na palette: a variante só troca cores que a palette já tem
+pattern com nome da palette: [aviso l3] "grade" já é um nome da palette, e vale a cor
+gradient fora de 0 a 1: [aviso l2] a posição em "#ff0000@-0.2" fica fora de 0 a 1: vale 0 | [aviso l2] a posição em "#0000ff@1.5" fica fora de 0 a 1: vale 1
+  imagem sem a opção avisada: igual (1 quadro)
+gradient fora de ordem: [aviso l2] a posição em "#0000ff@0.2" vem antes da anterior (0.8): as posições vão em ordem, e vale 0.8
+  imagem sem a opção avisada: igual (1 quadro)
+dots com cross e w: [aviso l2] cross vale só na hachura (hatch): os pontos não se cruzam | [aviso l2] w= vale só na hachura (hatch); o tamanho dos pontos é o r=
+  imagem sem a opção avisada: igual (1 quadro)
+hatch com r: [aviso l2] r= vale só nos pontos (dots); a grossura da hachura é o w=
+  imagem sem a opção avisada: igual (1 quadro)
+layer base depois das formas: [aviso l3] já existe a camada "base", a das formas antes do primeiro layer: ficariam duas com o mesmo nome (use outro nome, ou escreva o layer base antes das formas)
+finish com duas palavras: [aviso l2] o finish leva um acabamento só: "flat" fica de fora
+  imagem sem a opção avisada: igual (1 quadro)
+dois finish: [aviso l3] o acabamento já foi escolhido na linha 2: vale este (flat), o último
+finish depois do include: —
+glow, tint e trail fora da faixa: [aviso l2] a força do glow= deve ficar entre 0.1 e 5 | [aviso l2] o quanto do tint= deve ficar entre 0 e 1 | [aviso l2] a queda do trail= deve ficar entre 0.05 e 0.95
+cast fora da faixa: [aviso l6] a opacidade do cast= deve ficar entre 0 e 1 | [aviso l6] o desfoque do cast= não aceita número negativo; vale 0
+  imagem sem a opção avisada: igual (1 quadro)
+emit 99: [aviso l2] a força do emit= deve ficar entre 0 e 10
+  imagem sem a opção avisada: igual (1 quadro)
+let repetido: [aviso l4] r já tem let na linha 2: vale este, o último, no arquivo inteiro (também nas linhas de cima)
+let depois do include: —
+let pi e a-b: [aviso l2] pi já é um nome das contas (3,14159…): o let pi não muda ele (use outro nome) | [aviso l2] o nome "a-b" tem "-": dentro das {contas}, ele vira uma conta de menos (use _ no lugar)
+rand(x,a) e número a mais: [aviso l2] {rand(10,20)}: rand(x,a) não usa o a: use rand(x), de 0 a 1, ou rand(x,a,b), de a até b | [aviso l3] {sin(1,2)*10+10}: sin usa um número só: o último fica de fora
+def sem =: [aviso l2] valor solto "semvalor": os parâmetros do def usam nome=valor (ex.: semvalor=10)
+use com o tipo errado: [aviso l7] "line" não é parâmetro do componente "arvore" (ele não tem parâmetros): aqui ele trocaria a cor line da palette, e um número não é cor | [aviso l7] "alto" não é parâmetro do componente "arvore" (ele não tem parâmetros): aqui ele trocaria a variável alto do let, e "#ff0000" não é número
+use com o tipo certo: —
+turn=nao e turn sem path: [aviso l3] turn= aceita 1 (vira para onde o caminho vai) ou 0 (não vira) | [aviso l4] turn= só vale junto com path= (o osso vira para onde o caminho vai)
+membro com target e foot, e bone: [aviso l4] foot= não vale junto com target=: a ponta vai até o osso do target= (use um dos dois) | [aviso l4] bone= não vale no membro: para a raiz andar com um osso, use on=osso
+luz dir com radius, glow, aim, cone e bone: [aviso l3] radius= não vale na luz dir: ela ilumina tudo, de uma direção | [aviso l3] glow= não vale na luz dir: ela ilumina tudo, de uma direção | [aviso l3] aim= vale só na luz spot | [aviso l3] cone= vale só na luz spot | [aviso l3] bone= não vale na luz dir: ela não tem lugar, só direção
+  imagem sem a opção avisada: igual (1 quadro)
+dois ambient e lit: [aviso l3] ambient repetido: vale este, e o da linha 2 fica de fora | [aviso l4] lit não muda nada: as camadas já recebem luz (para uma camada sem luz, use unlit)
+  imagem sem a opção avisada: igual (1 quadro)
+ambient depois do include: —
+rim só com ambient: [aviso l3] rim= precisa de uma light: o contorno vem do lado da luz (o ambient não tem lado)
+  imagem sem a opção avisada: igual (1 quadro)
+key de luz e de camada fora da faixa: [aviso l7] power= da luz vai de 0 a 20: a linha light corta nessa faixa, e a key não (aqui vale 30) | [aviso l7] cone= da luz vai de 1 a 180: a linha light corta nessa faixa, e a key não (aqui vale 999) | [aviso l7] brightness= da camada vai de 0 a 10: a linha layer corta nessa faixa, e a key não (aqui vale -5)
+key c no emitter: [aviso l5] o emitter não anima c=: as partículas ficam com o da linha (ele anima opacity, show, above e below)
+  imagem sem a opção avisada: igual (6 quadros)
+expr com camada e ordem: [aviso l5] a expr não usa camadas: ela muda só a pose dos ossos e as formas | [aviso l5] a expr não usa a ordem (above= e below=): ela muda só a pose dos ossos e as formas
+tileset size=1: [aviso l2] size= do tileset vai de 2 para cima: vale 2
+horizon abaixo do pivô: [aviso l2] horizon= na altura do pivô ou abaixo dele (40) não deita o chão: use um número menor, mais para cima
+  imagem sem a opção avisada: igual (1 quadro)
+halftone color com angle: [aviso l2] angle= não vale no halftone color: cada tinta tem o seu ângulo, fixo, como na gráfica
+  imagem sem a opção avisada: igual (1 quadro)
+at camera.zoom, lag e fog=none: [aviso l2] zoom= vai até 100 na linha camera; no at, passa (aqui vale 500) | [aviso l2] lag= vai até 10 na linha camera; no at, passa (aqui vale 50) | [aviso l2] fog=none vale só na linha camera: no at, a névoa troca de cor, mas não some
+audio e sub com +: [aviso l2] at=+… no audio conta do começo do filme, não de um tempo anterior: o + não muda nada | [aviso l3] dur= é quanto tempo a legenda fica (ex.: dur=2s): o + não muda nada
+nome com acento: [erro l2] o nome "chaminé" tem acento ou letra de fora do a-z: um nome usa só letras sem acento, números, _ e - | [erro l3] o nome "céu" tem acento ou letra de fora do a-z: um nome usa só letras sem acento, números, _ e -
+layer dentro de def: [erro l3] layer não pode ficar dentro de def (lá dentro valem as formas, o use, o repeat, o group e o include)

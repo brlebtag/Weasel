@@ -27,7 +27,7 @@ Antes de cada tarefa, a proposta é explicada de novo, e o trabalho só começa 
 |---|---|---|---|
 | E | Um `rect` com largura ou altura negativa e `r=` desenha os cantos para dentro. | `geom.js:139` | **feito na 1.67.12** (17/11/2026). Só a imagem desse caso, que saía errada |
 | 1 | `finish posterize=palette` usa só as cores `#hex` da `palette`. Uma cor com nome (`pele=wheat`) fica de fora, sem aviso, e a transparência das cores é ignorada. | `scene.js:3094`, `:3109` | **feito na 1.67.12** (17/11/2026). Os nomes do CSS contam; uma cor com transparência fica de fora (ela só aparece misturada). Muda a imagem de quem usa `posterize=palette` com nomes de cor ou com cores transparentes |
-| 2 | **Godot sem `root=`:** a origem fica no meio da base do recorte, 8 px abaixo do desenho (a margem do `--trim`). Um personagem sem `root=` flutua 8 px acima do chão. | `godot.js:53`, `:697` | **muda os jogos já exportados**. Decisão de 17/11/2026: não mudar, e explicar no guia (vai na 1.67.13) |
+| 2 | **Godot sem `root=`:** a origem fica no meio da base do recorte, 8 px abaixo do desenho (a margem do `--trim`). Um personagem sem `root=` flutua 8 px acima do chão. | `godot.js:53`, `:697` | **muda os jogos já exportados**. Decisão de 17/11/2026: não mudar, e explicar no guia. **Feito na 1.67.13**: o capítulo 24 ganhou "No Godot, o personagem flutua acima do chão" |
 | 3 | **Vista 3D das camadas:** Agrupar, Travar, Organizar, Recortar, Copiar, Colar, Tudo e Nada ficam ativos no menu, mas as teclas deles não fazem nada. | `ui-select.js:478` | **feito na 1.67.12** (17/11/2026). Só o editor |
 | 4 | **Espaço num botão com foco** toca o player, em vez de apertar o botão. | `app.js:5812` | **feito na 1.67.12** (17/11/2026). Só o editor: num botão escolhido com Tab, o Espaço aperta o botão; depois de um clique, continua tocando |
 | 5 | **← e → na linha do tempo do filme**, sem nada escolhido, mostram o aviso do desenho ("As setas empurram a forma escolhida…"), que não serve ali. | `app.js:5821` | **feito na 1.67.12** (17/11/2026). Só o editor: no filme, o aviso fala dos `at` da linha do tempo |
@@ -36,6 +36,12 @@ Antes de cada tarefa, a proposta é explicada de novo, e o trabalho só começa 
 ## 3. Aceito sem fazer nada, ou cortado sem aviso
 
 Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avisar e a imagem não muda. **Cuidado:** um aviso novo pode aparecer num jogo que hoje passa limpo. Antes, é preciso rodar o `--check` nos jogos.
+
+**Feito na 1.67.13** (17/11/2026): todos avisam, e a imagem não muda (o `regress --strict` saiu igual, e o teste novo `_avisos` confere cada mensagem e que a imagem com a opção avisada é igual à sem ela). O `--check` dos 138 arquivos (ForestPatrol, exemplos, casos de teste) saiu igual ao de antes. Pelo caminho:
+- os avisos de repetido (`finish`, `let`, `ambient`) valem só dentro do mesmo arquivo: o `noite.weasel` troca o `finish` do `cavaleiro.weasel` de propósito, depois do `include`;
+- a `variant` não avisa quando falta um `include` (sem ele, a `palette` fica pela metade, e todos os nomes avisariam);
+- o `along` sem `path=` já dava erro;
+- além da lista: `aim=` e `cone=` na luz `point`, `r=` no `hatch` e o `dur=+` do `sub` também avisam. O `cast=` sem `light` ficou sem aviso: uma base sem luz, com o `cast=` pronto para quem a inclui, é um uso de verdade (a pracinha do capítulo 10).
 
 **Formas** (C, do diagnóstico dos capítulos 1 e 2):
 - `cut=` em `stroke`, `line` e `text`: aceito, sem efeito.
@@ -84,6 +90,8 @@ Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avi
 
 ## 4. Mensagens que enganam
 
+**Feito na 1.67.13** (17/11/2026). O nome com acento dá só uma mensagem, a do nome (numa forma, os outros erros da linha ficam de fora até ele ser corrigido).
+
 - 23. **Um nome com acento** (`ellipse chaminé 50,50 20`) dá "esperado o centro no formato x,y" e mais um "valor solto". O certo seria dizer que o nome só aceita letras sem acento, números, `_` e `-`.
 - I. "não pode ficar dentro de def (só formas e use)" esquece o `repeat`, o `group` e o `include`, que também podem.
 
@@ -91,5 +99,5 @@ Uma tarefa de "avisos que faltam" resolve todos de uma vez: o Weasel passa a avi
 
 1. **F, G e H** primeiro: feitos na 1.67.11 (a J saiu antes, na 1.67.10).
 2. **Consertos pequenos:** E, 1, 3, 4, 5 e 6, numa versão só (feitos na 1.67.12). E e 1 mudam a imagem só nos casos que hoje saem errados, com as imagens antes e depois.
-3. **Avisos que faltam:** as seções 3 e 4 juntas. A imagem não muda. Rodar o `--check` nos jogos antes.
-4. **O 2 (Godot sem `root=`)** pede uma decisão sua, porque mexe nos jogos. A recomendação é não mudar o padrão e explicar no capítulo do jogo.
+3. **Avisos que faltam:** as seções 3 e 4 juntas. A imagem não muda. Rodar o `--check` nos jogos antes (feito na 1.67.13).
+4. **O 2 (Godot sem `root=`)** pede uma decisão sua, porque mexe nos jogos. A recomendação é não mudar o padrão e explicar no capítulo do jogo (decidido assim; feito na 1.67.13).

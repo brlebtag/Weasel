@@ -179,7 +179,7 @@ Repare:
 
 **Cuidado:**
 - Sem nenhuma luz (nem `ambient`, nem `light`), o desenho sai com as cores escritas. Com uma `light` e sem `ambient`, vale um `ambient` branco com 0.6.
-- Com dois `ambient`, vale só o de baixo, sem aviso.
+- Com dois `ambient` no mesmo arquivo, vale só o de baixo, e o Weasel avisa.
 - O `ambient` não tem nome: ele não muda com a `key`. Para a cena escurecer aos poucos, anime uma `light dir` (o sol se pondo) ou o `brightness=` da camada ([capítulo 11](11-efeitos.md#animar-os-efeitos-com-key)).
 
 ## Lâmpada: `light point`
@@ -471,7 +471,7 @@ Repare:
 
 **Experimente:** troque a direção para `-0.2,-1` (o sol quase em cima). As sombras ficam curtas, quase embaixo das coisas. Com `0,1` (o sol embaixo do chão), não há sombra nenhuma: só a luz que vem de cima faz sombra.
 
-**Cuidado:** na `dir`, `radius=`, `glow=`, `aim=`, `cone=` e `bone=` não fazem nada, e o Weasel não avisa: o sol não tem um ponto de onde a luz sai. O `flicker=` e o `rim=` (abaixo) valem nela.
+**Cuidado:** na `dir`, `radius=`, `glow=`, `aim=`, `cone=` e `bone=` não fazem nada, e o Weasel avisa: o sol não tem um ponto de onde a luz sai. O `flicker=` e o `rim=` (abaixo) valem nela.
 
 ## Luz que muda com o tempo
 
@@ -571,7 +571,7 @@ A `key` muda, aos poucos, o `power`, o `radius`, a cor `c`, o `glow`, o `aim` e 
 
 **Cuidado:**
 - A luz não tem `show`: para apagar, use `power=0`.
-- Na `key`, o Weasel não corta os números: `power=30` e `cone=999` passam sem aviso, mas a linha `light` corta em 20 e em 180. Fique nas mesmas faixas da linha.
+- Na `key`, o Weasel não corta os números: `power=30` e `cone=999` passam, com um aviso, mas a linha `light` corta em 20 e em 180. Fique nas mesmas faixas da linha.
 - O `flicker=`, o `rim=` e o `bone=` não mudam com a `key`.
 
 ## O que recebe luz
@@ -582,14 +582,14 @@ A luz é 2D: uma forma não faz sombra em outra. A sombra no chão é com `cast=
 
 ### `lit` e `unlit`
 
-`unlit` numa camada quer dizer "esta camada **não recebe luz**": ela aparece com as cores do desenho, mesmo no escuro. A palavra `lit` ("iluminada") também existe, mas ela é o padrão: escrever `lit` não muda nada, só deixa claro para quem lê.
+`unlit` numa camada quer dizer "esta camada **não recebe luz**": ela aparece com as cores do desenho, mesmo no escuro. A palavra `lit` ("iluminada") também existe, mas ela é o padrão: escrever `lit` não muda nada, e o Weasel avisa.
 
 <!-- gerar: img/08_unlit.png -->
 ```weasel
 canvas 320 150 bg=#101320
 palette ink=#14141c line=3
 
-layer placaA lit
+layer placaA
 rect fundoA 30,40 110,60 r=8 c=#ffd34d ink=line
 text letraA 85,80 "LOJA" size=24 align=center c=#c0392b bold
 
@@ -606,7 +606,7 @@ ambient c=#404870 power=0.4
 
 ![Duas placas amarelas escritas LOJA numa noite escura: a da esquerda (lit) está quase preta; a da direita (unlit) continua amarela e vermelha](img/08_unlit.png)
 
-As duas placas são iguais. A da esquerda recebe a luz da noite e escurece; a da direita ignora a luz. Use `unlit` para o que tem que ser lido sempre (placar, legenda) e para o que **é** luz (fogo, lâmpada, tela acesa).
+As duas placas são iguais. A da esquerda, sem nada (o padrão), recebe a luz da noite e escurece; a da direita ignora a luz. Use `unlit` para o que tem que ser lido sempre (placar, legenda) e para o que **é** luz (fogo, lâmpada, tela acesa).
 
 ### Claro e escuro: `shade=`
 
@@ -729,7 +729,7 @@ Repare:
 - A cor do halo pode ser diferente da cor da forma: a última janela é amarela com halo vermelho.
 - Só há `ambient`, nenhuma `light`. Por isso nenhuma janela ilumina o que está em volta: o `emit` só desenha o brilho. Para a forma iluminar as vizinhas, ponha também uma `light` no mesmo lugar, como o `lampiao` dentro da lanterna da rua.
 
-**Cuidado:** uma força acima de 10 vale 10, sem aviso. O `emit=` não muda com a `key`: para uma janela acender, anime a `opacity` dela ([capítulo 9](09-animacao.md#animar-formas-formapropriedadevalor)).
+**Cuidado:** uma força acima de 10 vale 10, com um aviso. O `emit=` não muda com a `key`: para uma janela acender, anime a `opacity` dela ([capítulo 9](09-animacao.md#animar-formas-formapropriedadevalor)).
 
 ## Sombra projetada no chão: `cast=`
 
@@ -788,7 +788,7 @@ Repare:
 - O `cast=` precisa de uma `light`: só com `ambient`, não há sombra.
 - Uma lâmpada precisa estar mais de 10 pixels acima do chão para fazer sombra.
 - O `chão` tem que ser o nome de uma `line`. Outro nome dá erro.
-- Uma opacidade fora de 0 a 1 é cortada, sem aviso.
+- Uma opacidade fora de 0 a 1 é cortada, com um aviso.
 
 ### Uma sombra para várias camadas: `from=`
 

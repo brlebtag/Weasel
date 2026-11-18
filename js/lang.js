@@ -95,6 +95,13 @@
   const FILM_W = 1920, FILM_H = 1080;
   // jogo: caixas (colisão do corpo, golpe, dano) e o tipo do nó raiz da cena do Godot
   const BOX_PROPS = { show: 'step' };
+  // as faixas que a linha light e a linha layer usam (numa key, o número passa como está; o --check avisa)
+  const KEY_RANGE = {
+    light: { power: [0, 20], radius: [1, 100000], glow: [0, 100000], cone: [1, 180] },
+    layer: { blur: [0, 500], tint: [0, 1], brightness: [0, 10], saturate: [0, 10], contrast: [0, 10] },
+  };
+  // o que numa key não muda nada no emitter (as partículas usam o c= e o size= da linha)
+  const EMIT_STILL = new Set(['c', 'inkc', 'w', 'ink', 'shape']);
   const BOX_KINDS = ['body', 'hit', 'hurt'], BOX_SHAPES = ['rect', 'circle', 'capsule'];
   const GODOT_BODIES = ['character', 'static', 'area', 'rigid', 'node'];
   const FINISHES = ['game', 'flat'];
@@ -148,6 +155,10 @@
   const NUM = /^[-+]?(\d+\.?\d*|\.\d+)$/;
   const HEX = /^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
   const IDENT = /^[A-Za-z_][\w-]*$/;
+  // parece um nome, mas tem acento ou letra de fora do a-z (chaminé): a mensagem diz o que um nome aceita
+  const NAMEISH = /^[\p{L}_][\p{L}\p{N}_-]*$/u;
+  const nameMsg = (t) => `o nome "${t}" tem acento ou letra de fora do a-z: um nome usa só letras sem acento, números, _ e -`;
+  const badName = (t) => (NAMEISH.test(t) ? nameMsg(t) : `nome inválido "${t}"`);
 
   // ---------- expressões: {cx+20}, {olho*1.6}, {sin(30)*r} ----------
   const FN = {
@@ -177,6 +188,14 @@
   };
   // as funções que precisam de um número certo de valores (com menos, a conta daria NaN sem dizer por quê)
   const FN_ARGS = { dist: 'dist(x1,y1,x2,y2)', smoothstep: 'smoothstep(a,b,x)', mod: 'mod(x,n)' };
+  // quantos números cada função usa (min e max usam todos): os que sobram ficam de fora, e o --check avisa
+  const FN_MAX = { sin: 1, cos: 1, tan: 1, atan2: 2, sqrt: 1, abs: 1, floor: 1, ceil: 1, round: 1, pow: 2, lerp: 3, clamp: 3, rand: 3 };
+  // avisos das contas (não mudam o valor): só quem pede, com withNotes, fica sabendo
+  let exprNotes = null;
+  function withNotes(fn, note) {
+    const keep = exprNotes, notes = (exprNotes = []);
+    try { return fn(); } finally { exprNotes = keep; for (const n of notes) note(n); }
+  }
   // Do que vale menos para o que vale mais: c ? a : b; == e !=; < <= > >=; + e -; * / e %; o sinal; ^.
   // As comparações dão 1 (verdade) ou 0 (falso); no ? :, qualquer número que não seja 0 vale como verdade.
   function evalExpr(s, vars) {
@@ -213,6 +232,10 @@
           if (!FN[name]) fail(`função desconhecida "${name}"`);
           const need = FN_ARGS[name];
           if (need && args.length !== need.split(',').length) fail(`${name} precisa de ${need.split(',').length} números: ${need}`);
+          if (exprNotes) {
+            if (name === 'rand' && args.length === 2) exprNotes.push('rand(x,a) não usa o a: use rand(x), de 0 a 1, ou rand(x,a,b), de a até b');
+            else if (FN_MAX[name] && args.length > FN_MAX[name]) exprNotes.push(`${name} usa ${FN_MAX[name] === 1 ? 'um número só' : `${FN_MAX[name]} números`}: ${args.length - FN_MAX[name] === 1 ? 'o último fica' : `os ${args.length - FN_MAX[name]} últimos ficam`} de fora`);
+          }
           return FN[name](...args);
         }
         if (name === 'pi') return Math.PI;
@@ -400,7 +423,8 @@
     let depth = 0, start = -1;
     for (let i = 0; i < t.length; i++) {
       if (t[i] === '{') { if (depth++ === 0) start = i; } else if (t[i] === '}' && depth > 0 && --depth === 0) {
-        try { evalExpr(t.slice(start + 1, i), scope); } catch (e) { err(li, `{${t.slice(start + 1, i)}}: ${e.message}`, tok.from + start, tok.from + i + 1); }
+        const src = t.slice(start + 1, i), from = tok.from + start, to = tok.from + i + 1;
+        try { withNotes(() => evalExpr(src, scope), (n) => err(li, `{${src}}: ${n}`, from, to, 'warn')); } catch (e) { err(li, `{${src}}: ${e.message}`, from, to); }
       }
     }
     if (depth > 0) err(li, 'falta fechar "}"', tok.from, tok.to);
@@ -623,10 +647,10 @@
 
   function parse(src, opts) {
     opts = opts || {};
-    const errors = [], seen = new Set();
+    const errors = [], seen = new Set(), muted = new Set();
     let quiet = false;
     const err = (line, msg, from, to, level, force) => {
-      if (quiet && !force) return;
+      if ((quiet || muted.has(line)) && !force) return;
       const k = `${line}:${from || 0}:${msg}`;
       if (seen.has(k)) return;
       seen.add(k);
@@ -660,20 +684,32 @@
     // pararem de mudar (o que veio antes no arquivo vale; o de baixo, só se ainda não há outro).
     const globals = new Map();
     m.vars = globals;
-    const readLets = (report) => L.forEach((ln, i) => {
-      const sp = splitLine(ln.text);
-      if (!sp.words.length || sp.words[0].text !== 'let') return;
-      const e = report ? err : () => {};
-      if (sp.words.length < 2) e(i, 'use: let nome=valor', sp.words[0].from, sp.words[0].to);
-      for (const w of sp.words.slice(1)) {
-        const eq = w.text.indexOf('=');
-        const key = eq > 0 ? w.text.slice(0, eq) : '';
-        if (!IDENT.test(key)) { e(i, `use let nome=valor ("${w.text}")`, w.from, w.to); continue; }
-        let v = w.text.slice(eq + 1);
-        if (v[0] === '{' && v[v.length - 1] === '}') v = v.slice(1, -1);
-        try { globals.set(key, evalExpr(v, globals)); } catch (x) { e(i, `let ${key}: ${x.message}`, w.from + eq + 1, w.to); }
-      }
-    });
+    const readLets = (report) => {
+      const where = new Map();
+      L.forEach((ln, i) => {
+        const sp = splitLine(ln.text);
+        if (!sp.words.length || sp.words[0].text !== 'let') return;
+        const e = report ? err : () => {};
+        if (sp.words.length < 2) e(i, 'use: let nome=valor', sp.words[0].from, sp.words[0].to);
+        for (const w of sp.words.slice(1)) {
+          const eq = w.text.indexOf('=');
+          const key = eq > 0 ? w.text.slice(0, eq) : '';
+          if (!IDENT.test(key)) { e(i, `use let nome=valor ("${w.text}")`, w.from, w.to); continue; }
+          if (report) {
+            const kTo = w.from + eq;
+            if (key === 'pi') e(i, 'pi já é um nome das contas (3,14159…): o let pi não muda ele (use outro nome)', w.from, kTo, 'warn');
+            else if (key.includes('-')) e(i, `o nome "${key}" tem "-": dentro das {contas}, ele vira uma conta de menos (use _ no lugar)`, w.from, kTo, 'warn');
+            // só no mesmo arquivo: um let depois do include, para trocar o valor do outro arquivo, é de propósito
+            const prev = where.get(key);
+            if (prev && prev.file === ln.file && prev.line !== ln.line) e(i, `${key} já tem let na linha ${prev.line + 1}: vale este, o último, no arquivo inteiro (também nas linhas de cima)`, w.from, kTo, 'warn');
+            where.set(key, { file: ln.file, line: ln.line });
+          }
+          let v = w.text.slice(eq + 1);
+          if (v[0] === '{' && v[v.length - 1] === '}') v = v.slice(1, -1);
+          try { globals.set(key, report ? withNotes(() => evalExpr(v, globals), (n) => e(i, `let ${key}: ${n}`, w.from + eq + 1, w.to, 'warn')) : evalExpr(v, globals)); } catch (x) { e(i, `let ${key}: ${x.message}`, w.from + eq + 1, w.to); }
+        }
+      });
+    };
     const settleLets = () => {
       const n = L.reduce((k, ln) => k + (/^\s*let(\s|$)/.test(ln.text) ? 1 : 0), 0);
       for (let pass = 0; pass < Math.min(n, 50); pass++) {
@@ -753,6 +789,7 @@
     }
     function width(st, a, ctx) {
       const n = num(a.text);
+      if (n < 0) bad(st, a, `${a.key}= não aceita número negativo; vale 0`, 'warn');
       if (!isNaN(n)) return Math.max(0, n);
       if (a.text === 'none') return 0;
       const p = pal(a.text, ctx);
@@ -797,7 +834,7 @@
     };
     const ident = (st, tok, what) => {
       if (!tok) { err(st.line, `falta o nome ${what}`, st.cmdTok.from, st.cmdTok.to); return null; }
-      if (!IDENT.test(tok.text)) { err(st.line, `nome inválido "${tok.text}"`, tok.from, tok.to); return null; }
+      if (!IDENT.test(tok.text)) { err(st.line, badName(tok.text), tok.from, tok.to); return null; }
       return tok.text;
     };
     function checkAttrs(st) {
@@ -855,7 +892,7 @@
         st.pos.forEach((t, i) => {
           if (t.text === 'lock') return;
           if (i === 0 && IDENT.test(t.text)) return;
-          err(st.line, i === 0 ? `nome inválido "${t.text}"` : `valor solto "${t.text}" (use: group nome, e lock para travar)`, t.from, t.to, 'warn');
+          err(st.line, i === 0 ? badName(t.text) : `valor solto "${t.text}" (use: group nome, e lock para travar)`, t.from, t.to, 'warn');
         });
         for (const a of st.attrs.values()) err(st.line, `${a.key}= não vale no group (ele só junta as linhas)`, a.from, a.to, 'warn');
         groups.push({ st, def: open });
@@ -868,6 +905,7 @@
         if (groups.length) err(st.line, 'def dentro de group: o def fica fora (o use dele pode ficar no group)', st.cmdTok.from, st.cmdTok.to);
         if (open) { err(st.line, `def dentro de def (falta o end de "${open.name}")`, st.cmdTok.from, st.cmdTok.to); continue; }
         const name = ident(st, st.pos[0], 'do componente');
+        for (const t of st.pos.slice(1)) err(st.line, `valor solto "${t.text}": os parâmetros do def usam nome=valor (ex.: ${IDENT.test(t.text) ? t.text : 'tam'}=10)`, t.from, t.to, 'warn');
         open = { name: name || '?', line: st.line, st, body: [], uses: 0 };
         if (name) {
           if (defs.has(name)) err(st.line, `componente "${name}" já existe`, st.pos[0].from, st.pos[0].to);
@@ -884,7 +922,7 @@
       if (open) {
         st.inDef = open;
         if (DRAWABLE.has(st.cmd) || st.cmd === 'use') open.body.push(st);
-        else if (st.cmd !== 'include') err(st.line, `${st.cmd} não pode ficar dentro de def (só formas e use)`, st.cmdTok.from, st.cmdTok.to);
+        else if (st.cmd !== 'include') err(st.line, `${st.cmd} não pode ficar dentro de def (lá dentro valem as formas, o use, o repeat, o group e o include)`, st.cmdTok.from, st.cmdTok.to);
       }
     }
     if (open) err(open.line, `def "${open.name}" sem end`, open.st.cmdTok.from, open.st.cmdTok.to);
@@ -968,6 +1006,7 @@
       } else if (style === 'halftone') {
         a.size = A.has('size') ? number(st, A.get('size'), 6, 2, 64) : 6;
         a.angle = A.has('angle') ? number(st, A.get('angle'), 45, -360, 360) : 45;
+        if (a.color && A.has('angle')) bad(st, A.get('angle'), 'angle= não vale no halftone color: cada tinta tem o seu ângulo, fixo, como na gráfica', 'warn');
       } else if (style === 'comic' || style === 'manga') {
         // shadow=: a faixa de sombra do toon (0 = sem faixa); size=: o espaço entre os pontos (e entre as linhas)
         const sz0 = style === 'manga' ? 4 : 5;
@@ -1033,8 +1072,11 @@
 
     // ---- passo 1: configuração, palette, camadas, ossos, tecidos ----
     const variantStmts = [], gradientStmts = [], lateStmts = [], layerFx = [];
-    let bgTok = null, artSt = null;
+    let bgTok = null, artSt = null, finishLine = null;
     const isFilm = top.some((s) => s.cmd === 'film');
+    // há formas soltas antes do primeiro layer (elas vão para a camada "base" que o Weasel cria)?
+    const firstLayer = top.findIndex((s) => s.cmd === 'layer');
+    const looseBefore = top.slice(0, firstLayer < 0 ? top.length : firstLayer).some((s) => DRAWABLE.has(s.cmd) || s.cmd === 'use');
     for (const st of top) {
       const A = st.attrs;
       checkAttrs(st);
@@ -1055,7 +1097,13 @@
         case 'finish': {
           const s = st.pos[0] && st.pos[0].text;
           if (s && !FINISHES.includes(s)) err(st.line, `acabamento desconhecido "${s}" (use ${FINISHES.join(' ou ')})`, st.pos[0].from, st.pos[0].to);
-          else if (s) m.finish.style = s;
+          else if (s) {
+            // só no mesmo arquivo: um finish depois do include, para trocar o do outro arquivo, é de propósito
+            if (finishLine !== null && L[finishLine].file === L[st.line].file) err(st.line, `o acabamento já foi escolhido na linha ${L[finishLine].line + 1}: vale este (${s}), o último`, st.pos[0].from, st.pos[0].to, 'warn');
+            m.finish.style = s;
+            finishLine = st.line;
+          }
+          for (const t of st.pos.slice(1)) err(st.line, `o finish leva um acabamento só: "${t.text}" fica de fora`, t.from, t.to, 'warn');
           if (A.has('inner')) m.finish.inner = number(st, A.get('inner'), 1, 0, 1);
           if (A.has('pixel')) m.finish.pixel = Math.round(number(st, A.get('pixel'), 1, 1, 32));
           if (A.has('bloom')) m.finish.bloom = number(st, A.get('bloom'), 0, 0, 3);
@@ -1120,10 +1168,14 @@
           const name = ident(st, st.pos[0], 'da camada');
           if (!name) break;
           if (m.layerMap.has(name)) { err(st.line, `camada "${name}" já existe`, st.pos[0].from, st.pos[0].to); break; }
+          // as formas antes do primeiro layer vão para uma camada "base" que o Weasel cria: um layer base escrito
+          // depois delas fazia uma segunda camada com o mesmo nome
+          if (name === 'base' && looseBefore) err(st.line, 'já existe a camada "base", a das formas antes do primeiro layer: ficariam duas com o mesmo nome (use outro nome, ou escreva o layer base antes das formas)', st.pos[0].from, st.pos[0].to, 'warn');
           const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false, yaw: 0, pitch: 0, persp: null, pivot: null, horizon: null, iso: null, floor: false, zsort: false };
           for (const f of st.pos.slice(1)) {
             if (FLAGS.layer.includes(f.text)) Ly[f.text] = true;
             else err(st.line, `opção desconhecida "${f.text}" (use ${FLAGS.layer.join(', ')})`, f.from, f.to, 'warn');
+            if (f.text === 'lit') err(st.line, 'lit não muda nada: as camadas já recebem luz (para uma camada sem luz, use unlit)', f.from, f.to, 'warn');
           }
           layerFx.push({ st, Ly });
           if (A.has('clip')) Ly.clip = A.get('clip').text;
@@ -1140,6 +1192,8 @@
             if (!Ly.floor) bad(st, A.get('horizon'), 'horizon= só vale junto com floor', 'warn');
             // o chão se decide por dois dos três: com persp= e pitch=, o horizonte já está dado
             else if (Ly.persp !== null && Ly.pitch) bad(st, A.get('horizon'), 'horizon= não muda nada com persp= e pitch= juntos: o chão já fica decidido pelos dois (use só dois dos três)', 'warn');
+            // sem pitch=, o chão só deita com o horizonte acima do pivô (o padrão do pivô é o pé do desenho)
+            else if (!Ly.pitch && Ly.horizon >= (Ly.pivot ? Ly.pivot[1] : m.canvas.h)) bad(st, A.get('horizon'), `horizon= na altura do pivô ou abaixo dele (${Ly.pivot ? Ly.pivot[1] : m.canvas.h}) não deita o chão: use um número menor, mais para cima`, 'warn');
           }
           if (A.has('iso')) Ly.iso = pair(st, A.get('iso'), null) || true;
           if (Ly.iso && (Ly.yaw || Ly.pitch || Ly.floor)) err(st.line, 'iso não junta com yaw=, pitch= nem floor (vale o iso)', st.cmdTok.from, st.cmdTok.to, 'warn');
@@ -1176,7 +1230,13 @@
           if (A.has('jitter')) b.jitter = number(st, A.get('jitter'), 0, 0, 200);
           if (A.has('spring')) b.spring = number(st, A.get('spring'), 0.5, 0, 1) || 0.001;
           if (A.has('path')) { b.pathAt = { st, a: A.get('path') }; b.turn = true; }
-          if (A.has('turn')) b.turn = A.get('turn').text !== '0';
+          if (A.has('turn')) {
+            const a = A.get('turn');
+            b.turn = a.text !== '0';
+            // turn=nao e turn=off ligavam a virada calados (só o 0 desliga); sem path=, o turn= não faz nada
+            if (a.text !== '0' && a.text !== '1') bad(st, a, 'turn= aceita 1 (vira para onde o caminho vai) ou 0 (não vira)', 'warn');
+            else if (!A.has('path')) bad(st, a, 'turn= só vale junto com path= (o osso vira para onde o caminho vai)', 'warn');
+          }
           // 2.5D: o osso gira em 3D (yaw/pitch) em volta do pivô; round= faz das peças dele uma bola (cabeça que vira)
           for (const k of ['yaw', 'pitch']) if (A.has(k)) b[k] = number(st, A.get(k), 0);
           if (A.has('persp')) b.persp = number(st, A.get('persp'), 0, 0, 100000);
@@ -1279,6 +1339,13 @@
       }
     }
 
+    // a variante troca cores que a palette já tem: um nome novo é quase sempre erro de digitação
+    // (sem um include, a palette dele falta, e o aviso seria de todos os nomes)
+    for (const v of L.some((r) => r.incErr) ? [] : variantStmts) {
+      for (const a of v.st.attrs.values()) {
+        if (a.key !== 'show' && a.key !== 'hide' && !m.palette.has(a.key)) bad(v.st, a, `"${a.key}" não está na palette: a variante só troca cores que a palette já tem`, 'warn');
+      }
+    }
     // variante escolhida: troca valores da palette antes de qualquer cor ser usada
     for (const v of variantStmts) {
       if (v.name !== opts.variant) continue;
@@ -1316,6 +1383,7 @@
       }
       if (!p) continue;
       const stops = [];
+      let lastAt = 0;
       for (const t of st.raw) {
         const at = t.text.lastIndexOf('@');
         const ctext = at > 0 ? t.text.slice(0, at) : t.text;
@@ -1325,6 +1393,9 @@
         if (at > 0) {
           pos = num(t.text.slice(at + 1));
           if (isNaN(pos)) { err(st.line, `posição inválida em "${t.text}" (use cor@0.5)`, t.from, t.to); pos = null; }
+          else if (pos < 0 || pos > 1) err(st.line, `a posição em "${t.text}" fica fora de 0 a 1: vale ${Math.min(1, Math.max(lastAt, pos))}`, t.from, t.to, 'warn');
+          else if (pos < lastAt) err(st.line, `a posição em "${t.text}" vem antes da anterior (${lastAt}): as posições vão em ordem, e vale ${lastAt}`, t.from, t.to, 'warn');
+          if (pos !== null) lastAt = Math.min(1, Math.max(lastAt, pos));
         }
         stops.push({ c: c || 'rgba(0,0,0,0)', at: pos });
       }
@@ -1370,7 +1441,13 @@
       if (A.has('w')) p.w = number(st, A.get('w'), 1.2, 0.1, 50);
       if (A.has('r')) p.r = number(st, A.get('r'), 1.4, 0.1, 50);
       if (A.has('angle')) p.angle = number(st, A.get('angle'), 45);
+      if (p.type === 'dots') {
+        const ct = st.pos.slice(1).find((t) => t.text === 'cross');
+        if (ct) err(st.line, 'cross vale só na hachura (hatch): os pontos não se cruzam', ct.from, ct.to, 'warn');
+        if (A.has('w')) bad(st, A.get('w'), 'w= vale só na hachura (hatch); o tamanho dos pontos é o r=', 'warn');
+      } else if (A.has('r')) bad(st, A.get('r'), 'r= vale só nos pontos (dots); a grossura da hachura é o w=', 'warn');
       if (m.patterns.has(name) || m.gradients.has(name)) err(st.line, `"${name}" já existe`, st.pos[0].from, st.pos[0].to);
+      else if (m.palette.has(name)) err(st.line, `"${name}" já é um nome da palette, e vale a cor`, st.pos[0].from, st.pos[0].to, 'warn');
       m.patterns.set(name, p);
       info(st, { pat: p });
     }
@@ -1386,11 +1463,14 @@
       const A = st.attrs, fx = {};
       const parts = (a) => splitTop(a.text, ',');
       const nAt = (p, i, def) => (p[i] === undefined || p[i] === '' ? def : num(p[i]));
+      // um número fora da faixa vale o limite, como antes, mas agora avisa
+      const outside = (a, v, lo, hi, what) => { if (v < lo || v > hi) bad(st, a, `${what} deve ficar entre ${lo} e ${hi}`, 'warn'); };
       if (A.has('blur')) fx.blur = number(st, A.get('blur'), 0, 0, 500);
       if (A.has('glow')) {
         const a = A.get('glow'), p = parts(a), c = plainColor(st, a, p[0]), r = nAt(p, 1, 12), s = nAt(p, 2, 1);
         if (isNaN(r) || isNaN(s)) bad(st, a, 'use glow=cor,raio[,força]');
-        else if (c) { fx.glowc = c; fx.glow = r; fx.glows = Math.max(0.1, Math.min(5, s)); }
+        else outside(a, s, 0.1, 5, 'a força do glow=');
+        if (!isNaN(r) && !isNaN(s) && c) { fx.glowc = c; fx.glow = r; fx.glows = Math.max(0.1, Math.min(5, s)); }
       }
       if (A.has('shadow')) {
         const a = A.get('shadow'), p = parts(a), c = plainColor(st, a, p[0]);
@@ -1401,7 +1481,8 @@
       if (A.has('tint')) {
         const a = A.get('tint'), p = parts(a), c = plainColor(st, a, p[0]), t = nAt(p, 1, 0.5);
         if (isNaN(t)) bad(st, a, 'use tint=cor,quanto (0 a 1)');
-        else if (c) { fx.tintc = c; fx.tint = Math.min(1, Math.max(0, t)); }
+        else outside(a, t, 0, 1, 'o quanto do tint=');
+        if (!isNaN(t) && c) { fx.tintc = c; fx.tint = Math.min(1, Math.max(0, t)); }
       }
       for (const k of ['brightness', 'saturate', 'contrast']) if (A.has(k)) fx[k] = number(st, A.get(k), 1, 0, 10);
       if (A.has('hue')) fx.hue = number(st, A.get('hue'), 0);
@@ -1410,12 +1491,17 @@
         const a = A.get('trail'), p = parts(a), n = Math.round(nAt(p, 0, NaN)), d = nAt(p, 1, 0.5);
         const c = p[2] ? plainColor(st, a, p[2]) : null;
         if (isNaN(n) || n < 1 || n > 30 || isNaN(d)) bad(st, a, 'use trail=quadros,queda[,cor] (ex.: trail=4,0.5)');
-        else Ly.trail = { n, decay: Math.min(0.95, Math.max(0.05, d)), c };
+        else outside(a, d, 0.05, 0.95, 'a queda do trail=');
+        if (!(isNaN(n) || n < 1 || n > 30 || isNaN(d))) Ly.trail = { n, decay: Math.min(0.95, Math.max(0.05, d)), c };
       }
       if (A.has('cast')) {
         const a = A.get('cast'), p = parts(a), op = nAt(p, 1, 0.45), b = nAt(p, 2, 6);
         if (!IDENT.test(p[0]) || isNaN(op) || isNaN(b)) bad(st, a, 'use cast=chão[,opacidade[,desfoque]] (chão = nome de uma line)');
-        else Ly.castSpec = { line: p[0], opacity: Math.min(1, Math.max(0, op)), blur: Math.max(0, b), a };
+        else {
+          outside(a, op, 0, 1, 'a opacidade do cast=');
+          if (b < 0) bad(st, a, 'o desfoque do cast= não aceita número negativo; vale 0', 'warn');
+        }
+        if (IDENT.test(p[0]) && !isNaN(op) && !isNaN(b)) Ly.castSpec = { line: p[0], opacity: Math.min(1, Math.max(0, op)), blur: Math.max(0, b), a };
       }
       if (A.has('from')) {
         if (!A.has('cast')) bad(st, A.get('from'), 'from= só vale junto com cast=', 'warn');
@@ -1433,6 +1519,7 @@
     for (const st of lateStmts.filter((s) => s.cmd !== 'pattern')) {
       const A = st.attrs;
       if (st.cmd === 'ambient') {
+        if (m.ambient && L[m.ambient.line].file === L[st.line].file) err(st.line, `ambient repetido: vale este, e o da linha ${L[m.ambient.line].line + 1} fica de fora`, st.cmdTok.from, st.cmdTok.to, 'warn');
         m.ambient = { c: '#ffffff', power: 0.6, line: st.line };
         if (A.has('c')) m.ambient.c = plainColor(st, A.get('c')) || '#ffffff';
         if (A.has('power')) m.ambient.power = number(st, A.get('power'), 0.6, 0, 5);
@@ -1457,10 +1544,18 @@
       if (A.has('aim')) Lt.aim = number(st, A.get('aim'), 90);
       if (A.has('cone')) Lt.cone = number(st, A.get('cone'), 30, 1, 180);
       Lt.rim = A.has('rim') ? number(st, A.get('rim'), 0, 0, 100) : 0;
-      if (A.has('bone')) { const a = A.get('bone'); if (m.bones.has(a.text)) Lt.bone = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
+      for (const k of type === 'dir' ? ['radius', 'glow'] : []) if (A.has(k)) bad(st, A.get(k), `${k}= não vale na luz dir: ela ilumina tudo, de uma direção`, 'warn');
+      for (const k of type === 'spot' ? [] : ['aim', 'cone']) if (A.has(k)) bad(st, A.get(k), `${k}= vale só na luz spot`, 'warn');
+      if (A.has('bone')) {
+        const a = A.get('bone');
+        if (!m.bones.has(a.text)) bad(st, a, `osso "${a.text}" não existe`);
+        else { Lt.bone = a.text; if (type === 'dir') bad(st, a, 'bone= não vale na luz dir: ela não tem lugar, só direção', 'warn'); }
+      }
       if (m.lights.has(name)) err(st.line, `luz "${name}" já existe`, st.pos[0].from, st.pos[0].to);
       m.lights.set(name, Lt);
     }
+    // o contorno de luz da camada vem do lado de cada light; o ambient não tem lado
+    if (!m.lights.size) for (const { st, Ly } of layerFx) if (Ly.rim) bad(st, st.attrs.get('rim'), 'rim= precisa de uma light: o contorno vem do lado da luz (o ambient não tem lado)', 'warn');
 
     // ---- passo 2: desenhos, componentes, animações ----
     let cur = null, curAnim = null, base = null, instCount = 0;
@@ -1498,12 +1593,22 @@
       o = o || {};
       const A = st.attrs;
       const flags = new Set();
-      let pos = st.pos.filter((t) => { if (DRAW_FLAGS.has(t.text)) { flags.add(t.text); return false; } return true; });
+      let pos = st.pos.filter((t) => {
+        if (!DRAW_FLAGS.has(t.text)) return true;
+        flags.add(t.text);
+        if ((t.text === 'bold' || t.text === 'italic') && st.cmd !== 'text') bad(st, t, `${t.text} vale só no text`, 'warn');
+        return false;
+      });
       const el = {
         id: -1, type: st.cmd, line: st.line, name: null, layer, bone: ctx.bone, cloth: ctx.cloth, opacity: ctx.opacity,
         pts: st.pts, closed: CLOSED.has(st.cmd), xf: ctx.xf, inst: ctx.inst, hidden: flags.has('hidden'), ws: 1,
       };
       if (pos[0] && IDENT.test(pos[0].text)) { el.name = pos[0].text; pos = pos.slice(1); }
+      else if (pos[0] && NAMEISH.test(pos[0].text)) {
+        // o resto da linha daria erros que confundem ("esperado o centro"): fica só o do nome
+        err(st.line, nameMsg(pos[0].text), pos[0].from, pos[0].to);
+        muted.add(st.line);
+      }
       el.ws = ctx.xf ? Math.sqrt(Math.abs(M.det(ctx.xf))) : 1;
       // numa cópia de um def: a linha do use de fora (clicar na forma do desenho leva até ela)
       if (ctx.use !== undefined) el.use = ctx.use;
@@ -1544,11 +1649,14 @@
       // leva a transparência dela, e a forma pinta só com a da própria linha (el.own)
       if (ctx.grp) { el.grp = ctx.grp; el.own = own; }
       if (A.has('cut')) { el.cutNames = A.get('cut').text.split(',').filter(Boolean); el.cutAt = { st, a: A.get('cut') }; }
+      // o furo (cut=) só vale nas formas fechadas; no traço, na linha e no texto, não fazia nada calado
+      if (A.has('cut') && (st.cmd === 'stroke' || st.cmd === 'line' || st.cmd === 'text')) bad(st, A.get('cut'), `cut= vale só nas formas fechadas (shape, ellipse e rect); ${st.cmd === 'line' ? 'na' : 'no'} ${st.cmd}, não faz nada`, 'warn');
       if (A.has('emit')) {
         const a = A.get('emit'), p = splitTop(a.text, ','), c = plainColor(st, a, p[0], ctx);
         const s = p[1] === undefined ? 1 : num(p[1]);
         if (isNaN(s)) bad(st, a, 'use emit=cor[,força]');
-        else if (c) el.emit = { c, s: Math.max(0, Math.min(10, s)) };
+        else if (s < 0 || s > 10) bad(st, a, 'a força do emit= deve ficar entre 0 e 10', 'warn');
+        if (!isNaN(s) && c) el.emit = { c, s: Math.max(0, Math.min(10, s)) };
       }
       // 2.5D: profundidade (z, mais o z= do use), giro 3D, perspectiva, espessura, verso e "sempre de frente"
       if (A.has('z')) el.z = number(st, A.get('z'), 0) * ws;
@@ -1628,6 +1736,7 @@
         if (A.has('inkc')) patOnLine(st, A.get('inkc'), el.inkc, 'o contorno');
         el.bold = flags.has('bold');
         el.italic = flags.has('italic');
+        if (A.has('cloth')) bad(st, A.get('cloth'), 'cloth= não vale no text: as letras não balançam (use bone=)', 'warn');
         el.cloth = null;
         if (pos[0] && !o.noHandles) {
           rec.handles.push({ kind: 'center', x: el.at[0], y: el.at[1], from: pos[0].from, to: pos[0].to, fixed: pos[0].text.includes('{') });
@@ -1642,7 +1751,9 @@
         el.color = A.has('c') ? color(st, A.get('c'), ctx) : defInk;
         if (A.has('c')) patOnLine(st, A.get('c'), el.color, 'o traço');
         el.w = (A.has('w') ? width(st, A.get('w'), ctx) : 4) * ws;
-        el.taper = A.has('taper') ? pair(st, A.get('taper'), [0, 0]).map((v) => Math.min(1, Math.max(0, v))) : [0, 0];
+        el.taper = A.has('taper') ? pair(st, A.get('taper'), [0, 0]) : [0, 0];
+        if (el.taper.some((v) => v < 0 || v > 1)) bad(st, A.get('taper'), 'os dois números do taper= devem ficar entre 0 e 1', 'warn');
+        el.taper = el.taper.map((v) => Math.min(1, Math.max(0, v)));
         el.cap = A.has('cap') ? A.get('cap').text : 'round';
         if (!['round', 'butt', 'square'].includes(el.cap)) { bad(st, A.get('cap'), 'cap= aceita round, butt ou square', 'warn'); el.cap = 'round'; } else if (A.has('cap') && (el.taper[0] > 0 || el.taper[1] > 0)) bad(st, A.get('cap'), 'cap= não vale junto com taper=: o traço afinado sai sempre com as pontas redondas', 'warn');
         el.smooth = A.has('smooth') ? number(st, A.get('smooth'), 1, 0, 2) : 1;
@@ -1660,6 +1771,9 @@
           el.footSpec = A.has('foot') ? A.get('foot') : null;
           if (A.has('target')) { const a = A.get('target'); if (m.bones.has(a.text)) el.target = a.text; else bad(st, a, `osso "${a.text}" não existe`); }
           if (!el.footSpec && !el.target && !A.has('target')) err(st.line, 'membro precisa de foot=chão,x, foot=x,y ou target=osso', st.cmdTok.from, st.cmdTok.to);
+          // com os dois, vale o target=; o bone= do membro não faz nada (ele nasce no hip=, levado pelo on=)
+          if (el.footSpec && A.has('target')) bad(st, el.footSpec, 'foot= não vale junto com target=: a ponta vai até o osso do target= (use um dos dois)', 'warn');
+          if (A.has('bone')) bad(st, A.get('bone'), 'bone= não vale no membro: para a raiz andar com um osso, use on=osso', 'warn');
         } else if (st.pts.length < 2) err(st.line, 'stroke precisa de pelo menos 2 pontos depois do ":"', st.cmdTok.from, st.cmdTok.to);
       } else if (st.cmd === 'emitter') {
         el.at = posPair(st, pos[0], 'a origem', [0, 0]);
@@ -1700,6 +1814,9 @@
         if (el.dash) el.dash = el.dash.map((v) => v * ws);
         if (el.dash && !el.dash.some((v) => v > 0)) el.dash = null;
         if (st.pts.length < 2) err(st.line, 'line precisa de pelo menos 2 pontos depois do ":"', st.cmdTok.from, st.cmdTok.to);
+        // a line liga os pontos com retas: o ! (canto) e o ~ (alça) não mudam nada
+        const odd = st.pts.find((p) => p.corner || p.tan);
+        if (odd) err(st.line, `na line, os pontos são ligados por retas: o ${odd.tan ? '~' : '!'} não muda nada (para curvas, use stroke)`, odd.from, odd.tokTo || odd.to, 'warn');
       }
       // As alças dos pontos só são montadas quando alguém lê rec.handles: o editor só mostra as da linha do
       // cursor, e um arquivo grande tem milhares de formas (as bolinhas de ponto novo ainda calculam a curva).
@@ -1847,9 +1964,14 @@
         if (ATTRS.use.includes(a.key)) continue;
         // além dos parâmetros do def, o use pode trocar um nome da palette, uma variável ou um parâmetro de fora
         const k = a.key, known = def.st.attrs.has(k) || m.palette.has(k) || m.gradients.has(k) || m.patterns.has(k) || (parent.vars && parent.vars.has(k)) || (parent.over && parent.over.has(k));
+        const ps = [...def.st.attrs.keys()], has = () => (ps.length ? `ele tem ${ps.join(', ')}` : 'ele não tem parâmetros');
         if (!known && IDENT.test(k)) {
-          const ps = [...def.st.attrs.keys()];
           bad(st, a, `parâmetro desconhecido "${k}": ${ps.length ? `o componente "${def.name}" tem ${ps.join(', ')}` : `o componente "${def.name}" não tem parâmetros`} (e o use aceita ${ATTRS.use.join(', ')})`, 'warn');
+        } else if (known && !def.st.attrs.has(k)) {
+          // um nome de fora (cor da palette, variável do let) com um valor do outro tipo: quase sempre era um parâmetro
+          const isNum = !isNaN(num(a.text)), pv = m.palette.get(k);
+          if (typeof pv === 'string' && isNum) bad(st, a, `"${k}" não é parâmetro do componente "${def.name}" (${has()}): aqui ele trocaria a cor ${k} da palette, e um número não é cor`, 'warn');
+          else if (pv === undefined && parent.vars && parent.vars.has(k) && !isNum) bad(st, a, `"${k}" não é parâmetro do componente "${def.name}" (${has()}): aqui ele trocaria a variável ${k} do let, e "${a.text}" não é número`, 'warn');
         }
         applyParam(st, a, ctx, parent);
       }
@@ -2225,7 +2347,7 @@
       } else if (st.cmd === 'tileset') {
         if (m.tileset) { err(st.line, 'tileset repetido (só um por arquivo)', st.cmdTok.from, st.cmdTok.to); continue; }
         const T = { size: [32, 32], auto: false, tiles: [], line: st.line, cols: 0, rows: 0 };
-        if (A.has('size')) { const v = list(st, A.get('size'), 1, 2, [32]); T.size = [Math.max(2, Math.round(v[0])), Math.max(2, Math.round(v.length > 1 ? v[1] : v[0]))]; }
+        if (A.has('size')) { const v = list(st, A.get('size'), 1, 2, [32]); if (v.some((x) => Math.round(x) < 2)) bad(st, A.get('size'), 'size= do tileset vai de 2 para cima: vale 2', 'warn'); T.size = [Math.max(2, Math.round(v[0])), Math.max(2, Math.round(v.length > 1 ? v[1] : v[0]))]; }
         for (const f of st.pos) { if (f.text === 'auto' || f.text === 'iso') T[f.text] = true; else err(st.line, `opção desconhecida "${f.text}" (use auto ou iso)`, f.from, f.to, 'warn'); }
         if (T.iso && T.size[1] * 2 < T.size[0]) err(st.line, `no iso, o bloco é um losango ${T.size[0]}×${Math.round(T.size[0] / 2)}: use size=${T.size[0]},${Math.round(T.size[0] / 2)} (ou mais alto, para caixas e paredes)`, st.cmdTok.from, st.cmdTok.to, 'warn');
         T.cols = Math.floor(m.canvas.w / T.size[0]);
@@ -2426,6 +2548,13 @@
         v = a.text;
       }
       if (tgt.kind === 'light' && type === 'color' && !v) continue;
+      // a linha light e a linha layer cortam esses números numa faixa; a key não corta, mas avisa
+      const rg = (KEY_RANGE[tgt.kind] || {})[prop];
+      if (rg && typeof v === 'number' && (v < rg[0] || v > rg[1])) bad(st, a, `${prop}= ${tgt.kind === 'light' ? 'da luz' : 'da camada'} vai de ${rg[0]} a ${rg[1]}: a linha ${tgt.kind} corta nessa faixa, e a key não (aqui vale ${v})`, 'warn');
+      if (anim.expr && (tgt.kind === 'layer' || tgt.kind === 'light' || tgt.kind === 'box' || prop === 'along' || type === 'order')) {
+        bad(st, a, `a expr não usa ${type === 'order' ? 'a ordem (above= e below=)' : prop === 'along' ? 'o along do osso' : { layer: 'camadas', light: 'luzes', box: 'caixas' }[tgt.kind]}: ela muda só a pose dos ossos e as formas`, 'warn');
+      }
+      if (els && EMIT_STILL.has(prop) && els.every((e) => e.type === 'emitter')) bad(st, a, `o emitter não anima ${prop}=: as partículas ficam com o da linha (ele anima opacity, show, above e below)`, 'warn');
       if (tgt.kind === 'layer' && prop === 'tint') tintKey(st, a, m.layerMap.get(name));
       if (tgt.kind === 'el' && type === 'color' && (prop === 'inkc' || els.some((e) => !e.closed))) patOnLine(st, a, v, prop === 'inkc' ? 'o contorno' : 'o traço');
       // numa animação, o hidden ganha de tudo (num filme, at forma.show=1 mostra)
@@ -3066,6 +3195,11 @@
     }
 
     // audio fala1 "voz/fala01.wav" at=1.2s from= dur= vol= lips=ator cues="fala01.json" text="legenda" lang= [loop]
+    // a linha camera corta o zoom e a lente em 100, e o lag em 10; o at deixa passar mais, mas avisa
+    function camTop(st, a, kind, prop, v) {
+      const top = kind === 'camera' && { zoom: 100, lens: 100, lag: 10 }[prop];
+      if (top && typeof v === 'number' && v > top) bad(st, a, `${prop}= vai até ${top} na linha camera; no at, passa (aqui vale ${v})`, 'warn');
+    }
     function readAudio(st, F) {
       const A = st.attrs;
       const name = ident(st, st.pos[0], 'do som');
@@ -3077,6 +3211,7 @@
       for (const k of ['at', 'from', 'dur']) {
         if (!A.has(k)) continue;
         const t = timeOf(st, A.get(k), F.fps, k);
+        if (t && t.rel) bad(st, A.get(k), `${k}=+… no audio conta do começo ${k === 'at' ? 'do filme' : 'do som'}, não de um tempo anterior: o + não muda nada`, 'warn');
         if (t) a[k] = t.v;
       }
       if (A.has('vol')) a.vol = number(st, A.get('vol'), 1, 0, 4);
@@ -3116,7 +3251,11 @@
       const text = unq(tx.text).replace(/\\n/g, '\n');
       const prev = block.subs[block.subs.length - 1];
       const s = { t: t.rel ? (prev ? prev.t + prev.dur : 0) + t.v : t.v, dur: Math.min(7, Math.max(1.2, 0.5 + text.length / 15)), text, lang: null, line: st.line };
-      if (A.has('dur')) { const d = timeOf(st, A.get('dur'), F.fps, 'a duração'); if (d) s.dur = Math.max(1 / F.fps, d.v); }
+      if (A.has('dur')) {
+        const d = timeOf(st, A.get('dur'), F.fps, 'a duração');
+        if (d && d.rel) bad(st, A.get('dur'), 'dur= é quanto tempo a legenda fica (ex.: dur=2s): o + não muda nada', 'warn');
+        if (d) s.dur = Math.max(1 / F.fps, d.v);
+      }
       if (A.has('lang')) s.lang = A.get('lang').text;
       block.subs.push(s);
       info(st, { sub: s, block });
@@ -3207,8 +3346,13 @@
           }
           case 'free': key(kind, name, prop, 'lerp', number(st, a, 0)); break;
           case 'num': key(kind, name, prop, 'lerp', number(st, a, 1, 0, 1)); break;
-          case 'pos': key(kind, name, prop, 'lerp', number(st, a, 1, 0.01, 1000)); break;
-          case 'stepnum': key(kind, name, prop, 'step', kind !== 'actor' || prop !== 'speed' ? number(st, a, 1, 0, 100) : a.text === 'auto' ? 'auto' : speedNum(st, a), a); break;
+          case 'pos': { const v = number(st, a, 1, 0.01, 1000); camTop(st, a, kind, prop, v); key(kind, name, prop, 'lerp', v); break; }
+          case 'stepnum': {
+            const v = kind !== 'actor' || prop !== 'speed' ? number(st, a, 1, 0, 100) : a.text === 'auto' ? 'auto' : speedNum(st, a);
+            camTop(st, a, kind, prop, v);
+            key(kind, name, prop, 'step', v, a);
+            break;
+          }
           case 'px': key(kind, name, prop, 'lerp', number(st, a, 0, 0, 1000)); break;
           case 'step': {
             const s = a.text.toLowerCase();
@@ -3217,7 +3361,12 @@
             else key(kind, name, prop, 'step', v);
             break;
           }
-          case 'color': { const c = plainColor(st, a); if (c) key(kind, name, prop, 'color', c); break; }
+          case 'color': {
+            if (prop === 'fog' && a.text === 'none') { bad(st, a, 'fog=none vale só na linha camera: no at, a névoa troca de cor, mas não some', 'warn'); break; }
+            const c = plainColor(st, a);
+            if (c) key(kind, name, prop, 'color', c);
+            break;
+          }
           case 'flip': { const f = flipOf(st, a); if (f) key(kind, name, prop, 'step', f); break; }
           case 'anim': { const v = animOf(st, a, ac); if (v !== undefined) key(kind, name, prop, 'step', v); break; }
           case 'variant': { const v = variantOf(st, a, ac); if (v !== null) key(kind, name, prop, 'step', v); break; }

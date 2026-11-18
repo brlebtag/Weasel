@@ -77,11 +77,11 @@ A ficha completa está na [referência](19-referencia.md#let).
 
 **Cuidado:**
 - O Weasel lê todos os `let` antes do resto. Uma variável vale no arquivo inteiro, até nas linhas acima do `let`. A ordem dos `let` também não importa: `let a=b*2` pode vir antes de `let b=10`.
-- Se o mesmo nome aparece em dois `let`, vale o último, no arquivo todo. O Weasel não avisa.
+- Se o mesmo nome aparece em dois `let` do mesmo arquivo, vale o último, no arquivo todo, e o Weasel avisa. Um `let` depois de um `include`, para trocar um valor do outro arquivo, não avisa.
 - Maiúsculas contam: `Cx` e `cx` são variáveis diferentes.
 - Não use `-` no nome. Numa conta, `{a-b}` quer dizer "`a` menos `b`".
 - O `let` só guarda números. As cores com nome ficam na `palette` ([capítulo 3](03-cores.md#cores-com-nome-palette)), e os nomes da `palette` não entram nas contas: com `palette line=5`, a conta `{line*2}` dá erro.
-- O nome `pi` já é do Weasel (3,14159…). Um `let pi=3` não muda o `pi` das contas.
+- O nome `pi` já é do Weasel (3,14159…). Um `let pi=3` não muda o `pi` das contas, e o Weasel avisa.
 
 ## O que cabe nas chaves
 
@@ -339,7 +339,7 @@ rect chao 0,170 400,30 c=#2c3a2e
 
 **Cuidado:**
 - O sorteio depende só do número de dentro. Números muito próximos, como `rand(0)` e `rand(0.0001)`, dão o mesmo sorteio. Use números que mudam de 1 em 1, como a variável do `repeat`.
-- `rand(x,a)`, sem o `b`, ignora o `a` e dá de 0 a 1, sem aviso. Escreva sempre os dois limites.
+- `rand(x,a)`, sem o `b`, ignora o `a` e dá de 0 a 1 (o Weasel avisa). Escreva sempre os dois limites.
 
 ## Comparar e escolher: `<`, `==` e `? :`
 

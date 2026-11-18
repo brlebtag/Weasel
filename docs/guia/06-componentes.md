@@ -116,7 +116,7 @@ Um nome que o componente não tem não muda nada, e o Weasel avisa, com a lista 
 desenho.weasel:10:19: aviso: parâmetro desconhecido "alot": o componente "arvore" tem copa, alto (e o use aceita scale, rot, flip, bone, cloth, opacity, z)
 ```
 
-O `use` também troca, só naquela cópia, uma cor ou um número da `palette` e uma variável do `let`: `use arvore 60,186 line=8` engrossa o contorno de uma árvore só.
+O `use` também troca, só naquela cópia, uma cor ou um número da `palette` e uma variável do `let`: `use arvore 60,186 line=8` engrossa o contorno de uma árvore só. Um valor do tipo errado (um número para uma cor da `palette`, uma cor para uma variável) dá aviso: quase sempre era um parâmetro que o componente não tem.
 
 ### Tamanho e giro: `scale=` e `rot=`
 
@@ -318,7 +318,7 @@ use flor 290,95 cor=#4a9eff giro=25
 O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](14-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
 
 **Cuidado:**
-- Dentro de um `def` valem as formas, o `use`, o `repeat`, o `group`, o `mirror=` e o `include`. Uma `layer`, um `let`, uma `palette` ou outro `def` lá dentro dão erro: `layer não pode ficar dentro de def (só formas e use)`.
+- Dentro de um `def` valem as formas, o `use`, o `repeat`, o `group`, o `mirror=` e o `include`. Uma `layer`, um `let`, uma `palette` ou outro `def` lá dentro dão erro: `layer não pode ficar dentro de def (lá dentro valem as formas, o use, o repeat, o group e o include)`.
 - O `def` pode ficar antes ou depois do `use`. Mesmo sem nenhum `use`, os erros de dentro dele aparecem.
 - Um `use` com um nome que não existe dá erro: `componente "nada" não existe`.
 - Um componente pode ter outro dentro, até 8 um dentro do outro. Um componente que usa a si mesmo dá erro: `componentes demais um dentro do outro`.
@@ -588,7 +588,7 @@ variant sem_elmo hide=elmo
 A ficha completa está na [referência](19-referencia.md#variant).
 
 **Cuidado:**
-- Um nome que não está na `palette` vira um nome novo, sem aviso. Um erro de digitação (`variant noite cue=#000`) passa calado.
+- Um nome que não está na `palette` dá aviso e vira um nome novo: um erro de digitação (`variant noite cue=#000`) aparece no `--check`.
 - Uma cor que copia outra (`sombra=cabelo`, do [capítulo 3](03-cores.md#um-nome-que-copia-outro-sombracabelo)) copiou a cor antes da variante. Então `variant ruivo cabelo=#c4512b` muda o cabelo e não muda a sombra. Para trocar as duas, cite as duas.
 - No `show=` e no `hide=`, um nome que não existe dá aviso.
 - O que some continua valendo para recortar com `clip=` e `cut=`, como qualquer forma `hidden`.

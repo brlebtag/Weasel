@@ -253,7 +253,7 @@ O `ink=`, o `inkc=` e o `weight=` valem no `ellipse`, no `rect` e no `shape`; o 
 **Cuidado:**
 - O `stroke` e a `line` não têm contorno: neles, a grossura é o `w=` e a cor é o `c=`. Um `ink=` num `stroke` dá o aviso `atributo desconhecido "ink" em stroke`.
 - O `weight=` não vale no `text` (aviso `atributo desconhecido`).
-- Um `weight=` fora de 0 a 3 dá o aviso `weight= deve ficar entre 0 e 3`, e o Weasel usa o limite. Um `ink=` negativo vira 0, sem aviso.
+- Um `weight=` fora de 0 a 3 dá o aviso `weight= deve ficar entre 0 e 3`, e o Weasel usa o limite. Um `ink=` negativo vira 0, com um aviso.
 
 ## A transparência da forma: `opacity=`
 
@@ -678,7 +678,7 @@ A ficha completa está na [referência do `gradient`](19-referencia.md#gradient)
 No editor, a ferramenta **Degradê** (G) cria um gradiente quando você arrasta por cima de uma forma, e um painel muda as cores e as posições com o mouse ([capítulo 22](22-editor.md#degradê)).
 
 **Cuidado:**
-- Posições fora de 0 a 1, ou fora de ordem, são corrigidas sem aviso: `#fff@1.5` vale 1.
+- Posições fora de 0 a 1, ou fora de ordem, são corrigidas, com um aviso: `#fff@1.5` vale 1.
 - Um gradiente não vale onde só cabe o código `#` (a textura, as luzes, os efeitos das camadas): dá o erro `aqui só vale cor simples`.
 - Um gradiente com o mesmo nome de uma cor da `palette` dá aviso, e vale a cor.
 - Num componente ([capítulo 6](06-componentes.md)), os pontos sem `box` são medidos no componente, e o gradiente anda junto com cada cópia.

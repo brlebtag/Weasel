@@ -105,7 +105,7 @@ E na de baixo (`shadow=cor,dx,dy,desfoque`):
 - O **desfoque** é em pixels (se não escrever, 8): 0 dá uma sombra recortada, de borda nítida; 10 dá uma sombra macia.
 - A cor com transparência (`b0` no fim, ou `80`, mais clara) deixa ver o fundo através da sombra.
 
-**Cuidado:** uma força do `glow=` fora de 0.1 a 5 é cortada, sem aviso. A `shadow=` desta seção é uma sombra **deslocada**, que não depende da luz; a sombra no chão é o `cast=` do [capítulo 10](10-luz.md#sombra-projetada-no-chão-cast).
+**Cuidado:** uma força do `glow=` fora de 0.1 a 5 é cortada, com um aviso. A `shadow=` desta seção é uma sombra **deslocada**, que não depende da luz; a sombra no chão é o `cast=` do [capítulo 10](10-luz.md#sombra-projetada-no-chão-cast).
 
 ### Os ajustes de cor
 
@@ -158,7 +158,7 @@ Repare:
 
 **Experimente:** troque `saturate=0` por `saturate=0 brightness=1.4`. O bichinho cinza fica claro, como uma foto antiga desbotada.
 
-**Cuidado:** um `tint=` com o quanto fora de 0 a 1 é cortado, sem aviso.
+**Cuidado:** um `tint=` com o quanto fora de 0 a 1 é cortado, com um aviso.
 
 ## Animar os efeitos com `key`
 
@@ -328,7 +328,7 @@ Repare:
 - O **terceiro**, opcional, é a cor do rastro: a bola continua azul, só as cópias ficam rosa.
 - `key 12 vaiA=240`, com um número só, move o osso 240 pixels para a direita ([capítulo 7](07-movimento.md#quantos-números-escrever)).
 
-**Cuidado:** o rastro só aparece com uma animação tocando: na pose parada, não há quadros anteriores. Uma queda fora de 0.05 a 0.95 é cortada, sem aviso; um número de quadros fora de 1 a 30 dá erro.
+**Cuidado:** o rastro só aparece com uma animação tocando: na pose parada, não há quadros anteriores. Uma queda fora de 0.05 a 0.95 é cortada, com um aviso; um número de quadros fora de 1 a 30 dá erro.
 
 ## Partículas
 

@@ -392,7 +392,7 @@ Repare:
 
 **Cuidado:**
 - O `horizon=` só vale com `floor` (sem ele, aviso).
-- Se o horizonte ficar abaixo do pivô, o chão não deita, e o Weasel não avisa.
+- Se o horizonte ficar abaixo do pivô, o chão não deita, e o Weasel avisa.
 
 ## Mapa isométrico: `iso`
 
