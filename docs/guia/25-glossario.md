@@ -1,6 +1,6 @@
 # 25. Glossário
 
-[← Atalhos do teclado](23-atalhos.md) · [Índice](README.md)
+[← Problemas comuns](24-problemas.md) · [Índice](README.md)
 
 As palavras que o guia usa, em ordem alfabética. Cada uma tem **um sentido só** em todo o guia. Quando a palavra é também um comando do Weasel, o comando aparece entre parênteses, com o link para a ficha dele na [referência](19-referencia.md).
 
@@ -178,4 +178,4 @@ As palavras que o guia usa, em ordem alfabética. Cada uma tem **um sentido só*
 
 **2.5D:** dar profundidade a um desenho 2D: girar formas como cartões no espaço (`yaw=`, `pitch=`), pôr umas mais perto e outras mais longe (`z=`, `depth=`), um chão em perspectiva. Ver o [capítulo de profundidade](14-profundidade.md).
 
-[← Atalhos do teclado](23-atalhos.md) · [Índice](README.md)
+[← Problemas comuns](24-problemas.md) · [Índice](README.md)

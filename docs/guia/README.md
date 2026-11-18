@@ -2,11 +2,9 @@
 
 # Guia da linguagem Weasel
 
-Este guia ensina a linguagem do Weasel desde o começo, para quem nunca escreveu um desenho em código. Cada passo tem um exemplo e, logo abaixo, a imagem que ele gera. O [README](../../README.md) é a lista de tudo o que existe; este guia explica o que cada coisa faz, em que ordem aprender e onde estão as armadilhas.
+Este guia ensina a linguagem do Weasel desde o começo, para quem nunca escreveu um desenho em código. Cada passo tem um exemplo e, logo abaixo, a imagem que ele gera. Ele explica o que cada coisa faz, em que ordem aprender e onde estão as armadilhas. Para conferir uma opção, a [referência completa](19-referencia.md) tem todos os comandos, com todas as opções; quando algo dá errado, veja os [problemas comuns](24-problemas.md).
 
 ![O Pingo, o personagem do capítulo de animação, respirando, falando e piscando](img/07_pingo.gif)
-
-> **O guia está sendo reescrito.** Os capítulos novos entram aos poucos. Enquanto um capítulo novo não fica pronto, o link dele leva ao capítulo antigo que tem o mesmo assunto; esses estão marcados com "(antigo)" e ainda têm o número velho no título.
 
 ## Os capítulos
 
@@ -62,21 +60,23 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 | 19 | [Referência completa](19-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
 | 20 | [Funções das contas](20-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
 | 21 | [Linha de comando](21-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
-| 22 | [O editor](22-editor.md) | as ferramentas e os painéis do editor (por enquanto, os dos capítulos 1 a 14) |
+| 22 | [O editor](22-editor.md) | as ferramentas, os painéis e os menus do editor, do primeiro desenho ao filme |
 | 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
-| 24 | [Problemas comuns](13-problemas.md) (antigo) | o que costuma dar errado e como resolver |
+| 24 | [Problemas comuns](24-problemas.md) | o que costuma dar errado e como resolver, e o que quer dizer cada mensagem de erro |
 | 25 | [Glossário](25-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |
 
 ## Como testar os exemplos
 
 Os exemplos grandes do guia são desenhos completos: copie, cole e rode. Alguns blocos são só pedaços de um desenho, para mostrar uma linha; o texto em volta diz quando é assim.
 
-- **No editor web:** abra o `index.html`, crie um arquivo com **Arquivo › Novo** e cole o exemplo no lugar do desenho que vem nele. O desenho aparece à direita, e as animações tocam no player.
-- **Na linha de comando:** salve como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 21](21-linha-de-comando.md) tem todas as opções.
+- **No editor:** abra o site <https://brlebtag.github.io/Weasel/> ou o arquivo `index.html` do projeto, com dois cliques; não precisa instalar nada. Crie um arquivo com **Arquivo › Novo** e cole o exemplo no lugar do desenho que vem nele. O desenho aparece à direita, e as animações tocam no player.
+- **Na linha de comando:** ela precisa do [Node.js](https://nodejs.org) 18 ou mais novo e de um `npm install` na pasta do projeto, uma vez só. Depois, salve o exemplo como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 21](21-linha-de-comando.md) tem todas as opções.
 
 Os exemplos que usam outros arquivos (`include "cavaleiro.weasel"`, `actor … "fantasma.weasel"`) esperam estar na pasta [`exemplos/`](../../exemplos/), junto com os personagens de exemplo.
 
-## Como este guia é feito
+Se aparecer um erro, ou se o desenho não sair como a imagem do guia, veja os [problemas comuns](24-problemas.md): eles estão separados pela mensagem e pelo assunto.
+
+## Para quem mantém o guia
 
 As imagens não são desenhadas à mão: cada uma é a saída do exemplo que está logo acima dela, feita pela linha de comando. Um comentário invisível antes do bloco de código diz o nome da imagem e as opções:
 

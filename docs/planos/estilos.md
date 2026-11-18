@@ -131,7 +131,7 @@ art cutout boil=0
 
 ## Como a fase 1 ficou (1.30.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas feitas no caminho:
+O que está no [capítulo 13 do guia](../guia/13-estilos.md), mais as escolhas feitas no caminho:
 
 - **O acabamento vem depois do estilo:** `bloom=`, `vignette=`, `grain=` e `posterize=` entram por cima da imagem pronta. Com um `art`, o `finish pixel=` não entra (o Weasel avisa).
 - **`boil=` e `seed=`** já são lidos em todos os estilos, mas o `pixel` e o `ascii` não têm textura: neles, os dois só dão aviso. Servem para as fases seguintes.
@@ -147,7 +147,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md), mais as escolhas f
 
 ## Como as bases de tom ficaram (1.31.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-engraving-halftone-stencil-e-silhouette), mais as escolhas feitas no caminho. Elas são a base da 1.32.0 (`woodcut`, `comic`, `manga` e `riso`).
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#impressão-engraving-woodcut-halftone-e-stencil), mais as escolhas feitas no caminho. Elas são a base da 1.32.0 (`woodcut`, `comic`, `manga` e `riso`).
 
 - **Passes:** o estilo pede o mesmo desenho de outro jeito, e o Weasel desenha de novo: sem luz (`unlit`), sem o contorno (`noInk`), com a faixa de sombra do toon (`toon`) ou com a textura presa à forma (`tex`). Sem estilo, nada disso roda: os desenhos de antes saem iguais.
 - **Resolução:** os estilos de tom pintam na resolução da imagem final, de 1 a 4 pontos por unidade do desenho. Numa escala menor que 1, eles pintam a 1 ponto por unidade e reduzem com suavização (a hachura não vira borrão).
@@ -161,7 +161,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#estilos-de-tom-toon-
 
 ## Como as combinações de tom ficaram (1.32.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#as-combinações-de-tom-woodcut-comic-manga-e-riso), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#quadrinhos-comic-manga-e-riso), mais as escolhas feitas no caminho.
 
 - **Os nomes:** `old` e `bw` são opções do `comic`. `comic bw` sem o `old` avisa e vale como `comic old bw` (a única HQ preto e branco). O `boil=` padrão é `screen` na `comic`, na `comic old`, no `manga` e na `riso` (impressão) e 0 na `comic old bw` e na `woodcut` (o traço do desenhista e o corte da madeira).
 - **`woodcut`:** um sulco branco deitado na forma por `gap=` (8), entortado por um ruído largo (um valor a cada 16 unidades) e com a borda engrossada e afinada por um fino (a cada 4). A largura do sulco cresce com a luz; no escuro, o ruído some aos poucos, para o preto ficar chapado.
@@ -175,7 +175,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#as-combinações-de-
 
 ## Como os estilos de traço ficaram (1.33.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#à-mão-sketch-marker-pencil-crayon-chalk-e-watercolor), mais as escolhas feitas no caminho.
 
 - **O passe `stroke`:** o estilo recebe cada forma fechada (o preenchimento, o contorno e o contorno de cada buraco) e cada traço aberto, na ordem do desenho, com os recortes das camadas, e pinta do jeito dele. Ele recebe o caminho, os pontos, a caixa, as cores prontas, o osso (para a textura andar com a forma) e um número da forma (para o sorteio). As guias e as formas desenhando aos poucos (`draw=`) saem como sempre.
 - **O brilho do `emit=`** é feito como uma sombra colorida; no passe `stroke`, ele sai uma vez só, antes do estilo (senão cada passada do estilo somaria o brilho). No `lines`, sai sem ele.
@@ -191,7 +191,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#os-estilos-de-traço
 
 ## Como o giz e a aquarela ficaram (1.34.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#giz-de-cera-giz-e-aquarela-art-crayon-art-chalk-e-art-watercolor), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#à-mão-sketch-marker-pencil-crayon-chalk-e-watercolor), mais as escolhas feitas no caminho.
 
 - **Como o `pencil`:** os três pintam em dois passes. No primeiro, a cor lisa (e a faixa de sombra); depois, ponto a ponto, ela vira a textura do estilo; no segundo passe, por cima, os contornos e os traços finos.
 - **As passadas** (`crayon` e `chalk`) usam o azulejo de hachura do `pencil`, com traços mais largos e mais compridos, em duas famílias quase na mesma direção (a ida e a volta). O azulejo ganhou um terceiro canal: os riscos secos, um ruído comprido ao longo de cada traço (onde o giz pulou). A direção de cada forma vem de um giro novo no passe `tex` (`turn`), sorteado pelo número da forma.
@@ -203,7 +203,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#giz-de-cera-giz-e-aq
 
 ## Como o recorte e a massinha ficaram (1.35.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#recorte-e-massinha-art-cutout-e-art-clay), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#peças-cutout-clay-glass-mosaic-e-embroidery), mais as escolhas feitas no caminho.
 
 - **Como o `pencil`:** os dois pintam forma por forma, no passe `stroke`, e depois ponto a ponto. As sombras das peças são a sombra do próprio canvas (`shadowBlur`), para o lado longe do `light=` do `canvas`.
 - **`cutout`, a peça:** o contorno da forma refeito em cortes retos (de 1,5 a 5 unidades, conforme o tamanho da forma), com um tremido pequeno; os cantos ficam no lugar. Por baixo, com sombra, o papel escuro do contorno: a peça com um traço em volta, da largura do contorno (de 0,8 a 6 unidades para fora). Por cima, a beirada clara: a peça menos ela mesma empurrada para o lado da luz, em branco a 22%.
@@ -216,7 +216,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#recorte-e-massinha-a
 
 ## Como o vitral e o bordado ficaram (1.36.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#vitral-e-bordado-art-glass-e-art-embroidery), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#peças-cutout-clay-glass-mosaic-e-embroidery), mais as escolhas feitas no caminho.
 
 - **Como o `clay`:** os dois pintam forma por forma, no passe `stroke`, e depois ponto a ponto, com um passe de peças: cada forma com uma cor sorteada (24 bits), para saber onde uma acaba e a outra começa. A mistura de duas, na borda, fica com a de um vizinho.
 - **`glass`, o corte:** um azulejo de Voronoi (pontos sorteados numa grade de 8 por 8 pedaços, emendando nas beiradas), preso a cada forma pelo passe `tex`. Por isso o corte anda e gira com o osso sem ser calculado de novo (o problema do protótipo). Cada ponto lê do azulejo o pedaço, a distância até a divisa (o chumbo fino) e as manchas do vidro (um ruído esticado, como o do vidro soprado).
@@ -234,7 +234,7 @@ O que está no [capítulo 14 do guia](../guia/14-estilos.md#vitral-e-bordado-art
 
 ## Como o ponto-cruz, o mosaico, o tricô e os efeitos de tela ficaram (1.37.0)
 
-O que está no [capítulo 14 do guia](../guia/14-estilos.md#ponto-cruz-mosaico-e-tricô) e no [capítulo 12](../guia/12-acabamento.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch), mais as escolhas feitas no caminho.
+O que está no [capítulo 13 do guia](../guia/13-estilos.md#pano-stitch-e-knit) e no [capítulo 12](../guia/12-acabamento.md#efeitos-de-tela-oldfilm-vhs-crt-e-glitch), mais as escolhas feitas no caminho.
 
 - **A grade do ponto-cruz e do tricô:** presa ao canto do canvas (no filme, ao quadro), com casas de `size=` unidades (no tricô, 0,78 `size=` de altura). Cada casa fica com a cor mais votada entre os seus pontos (em 4 bits por canal, e depois a média dos que votaram nela). No ponto-cruz, a casa vale quando o desenho cobre a metade dela; no tricô, o contorno ganha a casa com um terço.
 - **`stitch`, o X:** duas pernas, a de baixo (/) e a de cima (\\), cada uma um fio torcido, com as listras dos fios, um brilho de cilindro (do lado da luz do canvas) e as pontas afinando. A de cima faz sombra na de baixo e no pano.

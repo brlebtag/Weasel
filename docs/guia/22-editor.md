@@ -4,14 +4,12 @@
 
 O editor escreve o código por você: cada ferramenta, painel e ponto de arrastar muda as linhas do arquivo. Este capítulo é para consultar, por assunto. As teclas, todas juntas, estão nos [atalhos do teclado](23-atalhos.md).
 
-> **Este capítulo ainda está sendo montado.** Por enquanto, ele tem as dicas dos capítulos 1 a 18.
-
 ## Abrir e rodar
 
 - Abra o `index.html` no navegador. O código fica à esquerda, o desenho à direita, e o player, embaixo do desenho.
 - **Arquivo › Novo** cria um arquivo, que já vem com um desenho de exemplo. Cole o seu código no lugar dele.
 - O desenho muda enquanto você digita.
-- O botão no canto de baixo, à esquerda, diz "sem erros" ou conta os erros e os avisos. Clique nele para ver a lista; um clique numa mensagem leva à linha dela.
+- O botão no canto de baixo, à esquerda, diz "sem erros" ou conta os erros e os avisos. Clique nele para ver a lista; um clique numa mensagem leva à linha dela. O que cada mensagem quer dizer está nos [problemas comuns](24-problemas.md#achar-pela-mensagem).
 - Uma linha com erro ganha uma marca na margem, e a barra de baixo mostra a mensagem.
 - Os desenhos com `anim` tocam no player.
 

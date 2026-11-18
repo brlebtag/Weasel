@@ -1,6 +1,6 @@
 # Guia novo e folha de atalhos
 
-**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4; etapa 6 (luz e aparência: capítulos 10 a 12) feita na 1.67.5; etapa 7 (estilos e profundidade: capítulos 13 e 14) feita na 1.67.6; etapa 8 (jogo: capítulos 15 e 16) feita na 1.67.7; etapa 9 (filme: capítulos 17 e 18) feita na 1.67.8. Próximo: a etapa 10.
+**Situação:** aprovada em 17/11/2026 ("pode fazer", com as cinco recomendações da seção 7). Etapa 1 (a folha de atalhos) feita na 1.66.0; a tarefa B na 1.66.1; etapa 2 (a consulta: capítulos 19, 20, 21 e 25) feita na 1.67.0; a tarefa A (seção 2) na 1.67.1; etapa 3 (o básico: capítulos 1 a 4, e o 22 começado) feita na 1.67.2; etapa 4 (organizar: capítulos 5 e 6) feita na 1.67.3; etapa 5 (o movimento: capítulos 7 a 9) feita na 1.67.4; etapa 6 (luz e aparência: capítulos 10 a 12) feita na 1.67.5; etapa 7 (estilos e profundidade: capítulos 13 e 14) feita na 1.67.6; etapa 8 (jogo: capítulos 15 e 16) feita na 1.67.7; etapa 9 (filme: capítulos 17 e 18) feita na 1.67.8; etapa 10 (os problemas comuns, o editor terminado e a revisão dos links) feita na 1.67.9. Todas as etapas estão feitas.
 
 ## O pedido
 
@@ -560,3 +560,29 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
   - `scene`: precisa de `film`; até 8 níveis, sem chamar a si mesma; vale o `fps=` do filme principal; depois de um `scene`, `actor`, `camera`, `audio`, `sub` e `art` precisam de um `shot` antes; os atores, as luzes e as camadas do principal não entram nas cenas; uma cena de outro tamanho é ajustada ao quadro, no meio dele.
 - **As imagens:** 1 nova, `18_aviso` (GIF). As outras continuam com os nomes `10_`: o código dos exemplos ficou igual, letra por letra (só um comentário novo, no `10_ator_origin`); os PNG saem iguais, byte a byte, menos o `10_ator_jeitos`, que sai diferente em 53 pixels, por até 5 níveis de cor (a imagem guardada é de uma versão anterior; ficou a guardada); e os GIFs antigos ficaram. O `10_marcas` saiu.
 - **Os links:** os capítulos 4, 6, 8, 9, 13 (estilos e problemas), 14, 15, 16, 19 (os **Para aprender**), 21 e 22 e o índice levam aos capítulos novos; o `depth=` do 4 leva agora ao 14. Navegação: o 16 leva ao 17, o 17 ao 18, e o 18 à referência (19).
+
+### Etapa 10 (1.67.9): problemas comuns, o editor e a revisão
+
+- **O capítulo 24, Problemas comuns (`24-problemas.md`),** sai do antigo `13-problemas.md`, que saiu. Cada problema tem as três partes da seção 3.3 (o que você vê, por quê, como resolver). As mensagens do capítulo são as de verdade: cada uma foi rodada na linha de comando e copiada com a linha, a coluna e os `^^^^`.
+- **Achar pela mensagem:** uma tabela no começo, em ordem alfabética, leva do começo de cada mensagem ao problema que a explica (38 linhas). É o "organizado pela mensagem de erro" da seção 5. Quem não tem mensagem (a forma sumiu, o braço não mexe) procura pelo assunto, nos links logo abaixo do título.
+- **Um título novo, Escrever as linhas:** os erros de quem está começando, juntos: instrução desconhecida, atributo desconhecido (e o atributo repetido), valor solto (com o comentário `#cafe`), o ponto com espaço (`200, 120`) e o nome com acento, nome inválido, ponto inválido e pelo menos 3 pontos, cor desconhecida, use uma cor #hex aqui, deve ficar entre, já existe e sem end. O formato x,y, a cor desconhecida e o `#cafe` já estavam no antigo; os outros são novos.
+- **Problemas novos nos outros títulos:** falta pivot, quadro passa do fim, componente que não existe, o `at` fora de um filme ou de um plano, e o `horizon=` sem `floor`. São 83 problemas; o antigo tinha 73.
+- **Mudanças de lugar:** "Quero que uma forma passe para a frente" entrou em "não está na mesma camada", com o exemplo das camadas inteiras; os pés que escorregam no jogo foram para "Jogo e exportação", e os do filme e a troca de jeito de andar, para "Filme"; "Arquivos" virou "Componentes e arquivos", com a variável e o parâmetro desconhecidos.
+- **Correções (do diagnóstico e da conferência com o código):**
+  - "Uma transição (`once`) começa torta" virou "Uma animação `once`": a palavra transição é das peças do capítulo 16;
+  - "O ator ficou parado e depois pulou" virou "O ator começa a andar antes da hora", que é o que acontece, e o exemplo ganhou a linha `actor`;
+  - a pose estranha ganhou um exemplo (`key 4` e `key 8`, sem `key 0`): os quadros antes da primeira `key` fazem a passagem da última para a primeira;
+  - o balanço parado diz que, num filme, o `sway=`, o `bob=` e o `jitter=` andam sem `anim`;
+  - o `cloth=` com `bones=` explica que cada ponto segue uma média dos ossos, com mais peso para os mais perto;
+  - a troca de jeito de andar usa a capivara (`run` para `run4`), a mesma do 18;
+  - o marcador fora do plano mostra o código que dá o aviso, conferido;
+  - o `include` diz que o nome vai com o `.weasel`, e que no editor o arquivo fica aberto numa aba (como o 22);
+  - o vídeo sem ffmpeg diz do `--ffmpeg` e do botão **Vídeo** do editor;
+  - "use uma cor #hex aqui" lista os lugares que só aceitam `#`, conferidos no `lang.js` (luzes, efeitos de camada, padrões, partículas, `thickc=`, `art`, câmera, legendas e `at`).
+- **O tamanho:** 1.488 linhas (o antigo tinha 1.118). Passa das 700, como o 19: é um capítulo de consulta, e cada problema precisa da mensagem, do porquê e do código certo. Ninguém lê de uma vez: a tabela do começo leva direto ao problema.
+- **As imagens:** nenhuma nova, e nenhuma mudou. Os 27 exemplos com imagem ficaram iguais, letra por letra, com os nomes `13_` de antes.
+- **O editor (22):** o aviso "ainda está sendo montado" saiu. O 22 já tinha as dicas de todos os capítulos de aula (1 a 18); os de consulta (19 a 25) não trazem dicas que faltassem. A lista de erros leva aos problemas comuns.
+- **O índice:** saíram o aviso do guia em reescrita e o "(antigo)"; o começo leva à referência (19) e aos problemas comuns (24), em vez de dizer que o README é a lista de tudo; "Como testar" diz o que instalar (nada para o editor; Node.js 18 e `npm install`, uma vez, para a linha de comando) e aonde ir quando algo dá errado; "Como este guia é feito" virou "Para quem mantém o guia", no fim.
+- **Os links e a navegação:** o 1, o 21 e o índice levam ao 24. O 23 (escrito pelo `gerar.js`) leva ao 24, e o 25 volta para o 24. Nos planos, os links para capítulos que mudaram de número (`ajudante-godot`, `bocas-por-texto`, `estilos` e `metamorfose`) levam aos capítulos novos; só o link mudou, e o `bocas-por-texto` continua parado.
+- **O README da raiz:** a linha do guia cita também o editor, os atalhos e os problemas comuns; o parágrafo dos testes diz o que o `npm test` confere no guia (antes dizia que ele lê todos os exemplos; ele roda os que geram imagem ou estão marcados para conferir, e confere a referência, os atalhos e os links).
+- **O plano terminou:** a linha dele, no README dos planos, passou para "Já implementados".

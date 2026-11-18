@@ -424,7 +424,7 @@ Para só procurar problemas, sem salvar a imagem, use `--check`:
 node cli/weasel.js avisos.weasel --check
 ```
 
-A resposta termina com `sem erros.`, `sem erros (só avisos).` ou o número de erros. Os problemas mais comuns, com a solução de cada um, estão no [capítulo 24](13-problemas.md).
+A resposta termina com `sem erros.`, `sem erros (só avisos).` ou o número de erros. Os problemas mais comuns, com a solução de cada um, estão no [capítulo 24](24-problemas.md).
 
 ## Juntando tudo
 

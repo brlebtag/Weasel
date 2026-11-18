@@ -23,7 +23,7 @@
 - **`--info`:** as linhas `vira:`, `nascem:` e `somem:`, na escrita do `pairs=` e do `born=`.
 - **Godot com `rig=bones`:** a peça `virada` (um `Sprite2D` quadro a quadro) aparece só nas peças da virada; as outras peças se escondem nelas. A exportação avisa.
 - **Uma correção que veio junto:** uma peça tocada de trás para a frente (a volta do `trocar()`) não aplicava no começo as pistas que trocam de uma vez. Na cena por quadros, o sprite ficava na peça errada (desde a 1.43.0); com esqueleto, a virada não aparecia. Cada pista dessas ganhou uma key logo antes do fim da peça.
-- **O que ficou como defeito conhecido** (no [capítulo 13](../guia/13-problemas.md)):
+- **O que ficou como defeito conhecido** (no [capítulo 24](../guia/24-problemas.md)):
   - o meio da virada "derrete" quando as formas são muito diferentes; poucos quadros e bons pares ajudam;
   - a virada pela esquerda é a da direita espelhada: termina na frente espelhada. Com uma frente assimétrica (a espada do furão), há um pulo no último quadro. Desenhar a virada da esquerda à parte fica para depois, se fizer falta.
 
@@ -65,7 +65,7 @@ A virada é mais útil para o jogo, e a metamorfose, para o filme.
 
 - **O morph aceita formas com qualquer número de pontos:** `key 12 bolha.shape=estrela` transforma um círculo numa estrela de 10 pontas ([capítulo 9](../guia/09-animacao.md#morph-uma-forma-vira-outra)). O Weasel espalha 72 pontos pelos dois contornos e casa cada um com o mais perto. Só o contorno muda: a cor fica a da forma.
 - **Várias vistas no mesmo arquivo:** cada vista numa camada com `only=`, como o [furao.weasel](../../exemplos/furao.weasel) (frente, costas e lado, com os mesmos ossos).
-- **Giro 2.5D:** `round=` no osso faz o rosto correr por uma bola, e `yaw=` gira ossos e camadas ([capítulo 11](../guia/11-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)).
+- **Giro 2.5D:** `round=` no osso faz o rosto correr por uma bola, e `yaw=` gira ossos e camadas ([capítulo 14](../guia/14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)).
 - **No filme:** `opacity`, `scale` e `show` dos atores no `at`.
 
 ## A virada (lado → frente)

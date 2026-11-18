@@ -108,7 +108,7 @@ node cli/weasel.js ceu.weasel --force
 
 As mesmas mensagens aparecem, e no fim vem `salvo ceu.png  300×200 · 1 KB`. O sol não aparece: sem a cor, ele ficou sem preenchimento. A lua sai com opacidade 1.
 
-O [capítulo 13](13-problemas.md) explica as mensagens mais comuns e como resolver cada uma.
+O [capítulo 24](24-problemas.md) explica as mensagens mais comuns e como resolver cada uma.
 
 ### Erros no comando
 

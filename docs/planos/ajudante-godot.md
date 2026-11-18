@@ -1,12 +1,12 @@
 # Ajudante do Godot: quadros, fps e troca na mesma fase
 
-**Situação:** feito na 1.42.0 (15/11/2026). Item 1 da fila combinada em 10/11/2026. O que ficou está no [capítulo 9 do guia](../guia/09-jogo-godot.md#trocar-de-animação-sem-perder-o-passo), no [capítulo 10](../guia/10-filme.md#trocar-sem-perder-o-passo-phase) e em [Como ficou](#como-ficou-1420), no fim deste arquivo.
+**Situação:** feito na 1.42.0 (15/11/2026). Item 1 da fila combinada em 10/11/2026. O que ficou está no [capítulo 15 do guia](../guia/15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés), no [capítulo 10](../guia/18-filme-atuacao.md#trocar-sem-perder-o-passo-phase) e em [Como ficou](#como-ficou-1420), no fim deste arquivo.
 
 **Origem:** sugestões das sessões do ForestPatrol (a capivara e o Chefe/pardal).
 
 ## O ajudante hoje
 
-A exportação para o Godot escreve o `weasel_anim.gd`, o script do AnimationPlayer ([capítulo 9](../guia/09-jogo-godot.md#exportando-para-o-godot)). Ele já tem:
+A exportação para o Godot escreve o `weasel_anim.gd`, o script do AnimationPlayer ([capítulo 15](../guia/15-jogo-personagem.md#do-weasel-para-o-godot)). Ele já tem:
 - `tocar(acao, dir)`: escolhe `_right`, `_left` (e as outras direções) e só recomeça quando a animação muda;
 - `velocidade(nome)`: quantos px/s o personagem anda sem os pés escorregarem (com `feet=`);
 - o sinal `evento`, para os `event` das animações.
