@@ -209,7 +209,7 @@
       { k: 'duplo clique num nome', d: 'renomeia (Enter grava, Esc desiste)', w: 'Camadas e Símbolos' },
       { k: 'duplo clique na miniatura', d: 'entra no símbolo', w: 'Símbolos' },
       { k: 'Esc durante um arraste', d: 'desiste do arraste', w: 'Camadas e Símbolos' },
-      { k: ['Enter', 'Esc'], d: 'aplica / desiste', w: 'painel Simplificar' },
+      { k: ['Enter', 'Esc'], d: 'aplica / desiste', w: 'painéis Simplificar e Traçado de imagem' },
       { k: 'Shift ao arrastar uma marca', d: 'muda a posição de 0.05 em 0.05', w: 'painel do gradiente' },
       { k: 'botão direito numa marca', d: 'tira a cor', w: 'painel do gradiente' },
       { k: 'Esc', d: 'fecha a janela', w: 'janela Exportar' },

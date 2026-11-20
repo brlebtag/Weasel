@@ -361,6 +361,26 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .simp-panel .sp-num { width: 52px; font: 12px var(--mono); text-align: right; }
 .simp-panel .sp-note { color: var(--warn); line-height: 1.45; padding: 0 0 8px; }
 .simp-panel .rp-foot small { flex: 1; text-align: right; line-height: 1.3; }
+/* o Traçado de imagem (js/ui-trace.js): embaixo, no meio, como o Simplificar; a imagem e o traçado lado a lado */
+.trace-panel { top: auto; bottom: 8px; right: auto; left: 50%; transform: translateX(-50%); width: 440px; padding: 8px 12px 9px; }
+.trace-panel .rp-head b { white-space: nowrap; }
+.trace-panel .tr-src { margin-left: auto; min-width: 0; color: var(--dim); font: 11px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trace-panel .tr-pics { display: flex; gap: 10px; justify-content: center; align-items: flex-end; padding: 2px 0 8px; }
+.trace-panel figure { margin: 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stage .trace-panel canvas { position: static; inset: auto; display: block; width: auto; max-width: 100%; height: auto; touch-action: auto; border: 1px solid var(--line); border-radius: 4px; background: repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0 / 10px 10px; transition: opacity .15s; }
+.stage .trace-panel canvas.old { opacity: .4; }
+.trace-panel figcaption { color: var(--dim); font-size: 11px; }
+.trace-panel .tr-row { display: flex; align-items: center; gap: 8px; padding: 2px 0 6px; }
+.trace-panel .tr-row > span { width: 50px; }
+.trace-panel .tr-row input[type=range] { flex: 1; min-width: 0; }
+.trace-panel .tr-row output { width: 54px; text-align: right; color: var(--dim); font: 12px var(--mono); }
+.trace-panel .tr-state { display: flex; align-items: center; gap: 8px; min-height: 18px; padding: 0 0 6px; }
+.trace-panel .tr-prog { flex: none; width: 120px; height: 8px; accent-color: var(--accent); }
+.trace-panel .tr-prog[hidden] { display: none; }
+.trace-panel .tr-msg { min-width: 0; color: var(--dim); font: 11px var(--mono); }
+.trace-panel .tr-note { color: var(--warn); line-height: 1.45; padding: 0 0 8px; }
+.trace-panel .tr-note[hidden] { display: none; }
+.trace-panel .rp-foot small { flex: 1; text-align: right; line-height: 1.3; }
 .stage.ruled .def-panel { top: auto; }
 .pv-tog { color: var(--pink); }
 .dp-name { border: none; background: none; padding: 0 2px; font: 600 12px var(--mono); color: var(--kw); }
@@ -385,7 +405,7 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .stage.lp-open .grad-panel { left: 266px; max-width: calc(100% - 274px); }
 /* com as réguas ligadas, os painéis abrem depois delas */
 .stage.ruled .ref-panel { top: 28px; max-height: calc(100% - 36px); }
-.stage.ruled .simp-panel { top: auto; }
+.stage.ruled .simp-panel, .stage.ruled .trace-panel { top: auto; }
 .stage.ruled .layer-panel, .stage.ruled .grad-panel { left: 28px; }
 .stage.ruled.lp-open .grad-panel { left: 286px; max-width: calc(100% - 294px); }
 .lp-count { color: var(--dim); }

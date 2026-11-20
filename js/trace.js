@@ -1006,6 +1006,8 @@
   }
 
   // ---------------------------------------------------------------- saída
+  // onde cada passo termina, na barra de progresso (a parte do tempo de cada um, medida em 1 Mpx)
+  const STEP = { lab: 0.04, km1: 0.08, km2: 0.15, merge: 0.45, split: 0.77, grad: 0.8, models: 0.84 };
   const f2 = (v) => v.toFixed(2).replace(/\.00$/, '');
   const fmt = (pts) => pts.map((p) => `${f2(p[0])},${f2(p[1])}${p[2] ? '!' : ''}`).join(' ');
   const hex2 = (v) => rint(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0');
@@ -1017,6 +1019,10 @@
     const o = Object.assign({}, DEFAULTS, opts || {});
     const w = img.width, h = img.height, N = w * h, data = img.data;
     const t0 = Date.now();
+    // o progresso (de 0 a 1), para a barra do editor: no máximo um aviso a cada 1%
+    let told = -1;
+    const tell = (f, what) => { if (o.progress && (f - told >= 0.01 || f >= 1)) { told = f; o.progress(f, what); } };
+    tell(0, 'cores');
     // ---- os pixels: Lab, alfa, o que conta
     const lab = new Float64Array(N * 3), alpha = new Float64Array(N);
     for (let p = 0; p < N; p++) {
@@ -1059,6 +1065,7 @@
       const X = new Float64Array(m * D);
       let q = 0;
       for (let p = 0; p < N; p++) if (valid[p] && soft[p] === isSoft && (!useCore || jump[p] < 6)) { for (let c = 0; c < D; c++) X[q * D + c] = F[p * D + c]; q++; }
+      tell(isSoft ? STEP.km1 : STEP.lab, 'cores');
       const km = kmeans(X, m, k, 25);
       for (let l = 0; l < km.k; l++) centers.push(Array.from(km.C.subarray(l * D, l * D + D)));
     }
@@ -1066,6 +1073,7 @@
     const cls = nearestInto(F, N, Float64Array.from(centers.flat()), centers.length, new Int32Array(N));
     for (let p = 0; p < N; p++) if (!valid[p]) cls[p] = -1;
     // ---- as regiões
+    tell(STEP.km2, 'regiões');
     let { L, n } = labelCC(cls, valid, w, h);
     ({ L, n } = mergeRegions(L, n, F, w, h, o.merge, o.minArea));
     if (o.mass > 0) {
@@ -1073,9 +1081,13 @@
       ({ L, n } = compact(L));
       ({ L, n } = dropFaint(L, n, F, w, h, o.mass));
     }
+    tell(STEP.merge, 'regiões');
     if (o.split > 0) ({ L, n } = splitRegions(L, n, F, w, h, o));
+    tell(STEP.split, 'degradês');
     if (o.grad > 0) ({ L, n } = gradientMerge(L, n, F, w, h, o));
+    tell(STEP.grad, 'degradês');
     const models = makeModels(L, n, img, F, w, h, o);
+    tell(STEP.models, 'contornos');
     const { flat, grad } = models;
     // ---- a ordem: as semitransparentes primeiro, depois a maior caixa primeiro (e o mais pixels)
     const bx0 = new Int32Array(n).fill(w), by0 = new Int32Array(n).fill(h), bx1 = new Int32Array(n), by1 = new Int32Array(n), cnt = new Int32Array(n);
@@ -1106,14 +1118,17 @@
       if (j < 0) { j = palette.length; palette.push(hx); palKey.push({ lab: [c3[0], c3[1], c3[2]], al }); }
       colorOf[i] = j;
     }
-    // ---- o traçado, região por região
+    // ---- o traçado, região por região. items: na ordem das linhas, { t: 'g', n, p1, p2, stops } (um degradê),
+    // { t: 'h', hole, pts } (um buraco) e { t: 's', c (o índice na palette) ou g (o número do degradê), hole, pts }
     const ctx = { L, w, h, rank, img, models, o };
-    const body = [];
+    const items = [];
     let npts = 0, nshapes = 0, ngrad = 0, nhole = 0;
-    for (const i of order) {
+    for (let r = 0; r < order.length; r++) {
+      const i = order[r];
+      tell(STEP.models + (1 - STEP.models) * (r / order.length), 'contornos');
       const { shapes, holes } = traceRegion(i, ctx, [bx0[i], by0[i], bx1[i], by1[i]]);
       if (!shapes.length) continue;
-      let cname;
+      let paint;
       if (grad[i]) {
         const g = models.spec.get(i);
         let sx = 0, sy = 0, sn = 0;
@@ -1122,21 +1137,40 @@
         const p1 = [cx + g.u[0] * (g.lo - base) + 0.5, cy + g.u[1] * (g.lo - base) + 0.5];
         const p2 = [cx + g.u[0] * (g.hi - base) + 0.5, cy + g.u[1] * (g.hi - base) + 0.5];
         ngrad++;
-        cname = `gradient${ngrad}`;
         const stops = g.pos.map((pp, b) => `${hexa(g.cols[0][b], g.cols[1][b], g.cols[2][b], g.cols[3][b])}@${pp.toFixed(3)}`);
-        body.push(`gradient ${cname} linear ${p1[0].toFixed(1)},${p1[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)} : ${stops.join(' ')}`);
-      } else cname = `color${colorOf[i] + 1}`;
-      let cut = '';
+        items.push({ t: 'g', n: ngrad, p1, p2, stops });
+        paint = { g: ngrad };
+      } else paint = { c: colorOf[i] };
+      let hole = 0;
       if (holes.length) {
-        nhole++;
-        cut = ` cut=_hole${nhole}`;
-        for (const pts of holes) { body.push(`shape _hole${nhole} hidden : ${fmt(pts)}`); npts += pts.length; }
+        hole = ++nhole;
+        for (const pts of holes) { items.push({ t: 'h', hole, pts }); npts += pts.length; }
       }
-      for (const pts of shapes) { body.push(`shape c=${cname}${cut} : ${fmt(pts)}`); npts += pts.length; nshapes++; }
+      for (const pts of shapes) { items.push(Object.assign({ t: 's', hole, pts }, paint)); npts += pts.length; nshapes++; }
     }
+    tell(1, 'pronto');
     let ntrans = 0;
     for (let i = 0; i < n; i++) if (translucent(i)) ntrans++;
-    return { width: w, height: h, palette, body, stats: { regions: n, gradients: ngrad, translucent: ntrans, shapes: nshapes, points: npts, colors: palette.length, ms: Date.now() - t0 } };
+    const res = { width: w, height: h, palette, items, stats: { regions: n, gradients: ngrad, translucent: ntrans, shapes: nshapes, points: npts, colors: palette.length, ms: Date.now() - t0 } };
+    // o.body false: sem as linhas (o editor monta as dele com lines(), no lugar e com os nomes do desenho)
+    if (o.body !== false) res.body = lines(res);
+    return res;
+  }
+
+  // As linhas do traçado. how: { map(x, y) → [x, y] (da imagem para o desenho), color(j) (o nome da cor j da
+  // palette), gradient(n), hole(n) }; sem how, color1…, gradient1…, _hole1… nas coordenadas da imagem.
+  function lines(res, how) {
+    how = how || {};
+    const map = how.map || null, cn = how.color || ((j) => `color${j + 1}`), gn = how.gradient || ((k) => `gradient${k}`), hn = how.hole || ((k) => `_hole${k}`);
+    const at = map ? (p) => { const q = map(p[0], p[1]); return [q[0], q[1], p[2]]; } : (p) => p;
+    const xy = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+    const out = [];
+    for (const it of res.items) {
+      if (it.t === 'g') out.push(`gradient ${gn(it.n)} linear ${xy(at(it.p1))} ${xy(at(it.p2))} : ${it.stops.join(' ')}`);
+      else if (it.t === 'h') out.push(`shape ${hn(it.hole)} hidden : ${fmt(it.pts.map(at))}`);
+      else out.push(`shape c=${it.g ? gn(it.g) : cn(it.c)}${it.hole ? ` cut=${hn(it.hole)}` : ''} : ${fmt(it.pts.map(at))}`);
+    }
+    return out;
   }
 
   // O arquivo .weasel inteiro. info: { header: [linhas de comentário], ref: 'linha ref' ou null, blur }.
@@ -1154,5 +1188,5 @@
     return out.concat(res.body).join('\n') + '\n';
   }
 
-  W.trace = { trace, file, DEFAULTS };
+  W.trace = { trace, lines, file, DEFAULTS };
 })(window.Weasel = window.Weasel || {});

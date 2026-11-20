@@ -254,7 +254,7 @@ Para entrar e sair: Exibir › Camadas em 3D (no filme, Palco em 3D) ou o botão
 | `duplo clique num nome` | renomeia (Enter grava, Esc desiste) | Camadas e Símbolos |
 | `duplo clique na miniatura` | entra no símbolo | Símbolos |
 | `Esc durante um arraste` | desiste do arraste | Camadas e Símbolos |
-| `Enter` ou `Esc` | aplica / desiste | painel Simplificar |
+| `Enter` ou `Esc` | aplica / desiste | painéis Simplificar e Traçado de imagem |
 | `Shift ao arrastar uma marca` | muda a posição de 0.05 em 0.05 | painel do gradiente |
 | `botão direito numa marca` | tira a cor | painel do gradiente |
 | `Esc` | fecha a janela | janela Exportar |

@@ -271,6 +271,33 @@ O menu **Janela › Referências** abre o painel das imagens guia (o `ref`, do [
 - No desenho, uma imagem sem `lock` tem uma moldura tracejada: arraste por dentro para mover, e pelo quadradinho do canto para mudar o tamanho. O Weasel reescreve o `x,y` e o `scale=`. Uma imagem travada não se mexe: arrastar por cima dela move a vista.
 - Se o código tem um `ref` com uma imagem que este navegador ainda não guardou, o painel mostra **abrir …** ao lado dele.
 
+## Traçado de imagem
+
+**Objeto › Traçado de imagem…** transforma a imagem de um `ref` em formas, como a [linha de comando](02-formas.md#traçar-uma-imagem) faz com um arquivo. A imagem é a do `ref` da linha do cursor (ou do escolhido); se só uma imagem guia está aberta, é ela. No desenho, o botão direito também mostra o item quando há uma imagem para traçar.
+
+O painel mostra a imagem e o traçado lado a lado:
+
+- **Cores** é quantas cores o traçado procura na imagem (o `--colors`): menos cores, menos formas.
+- **Detalhe** é quanto a curva segue a borda da imagem. O número é quanto ela pode se afastar, em pixels (o `--tol`): mais detalhe, mais pontos.
+- A conta roda **em segundo plano**, com uma barra de progresso, e o desenho continua respondendo. Mexer num controle começa de novo. Uma imagem de 1 Mpx leva de 1 a 3 segundos.
+- Embaixo aparece o que saiu: formas, pontos, cores na `palette` e degradês. Acima de 2.000 formas, o painel avisa que o código fica grande e o editor, mais lento.
+- **Enter** (ou **Traçar**) aplica; **Esc** desiste.
+
+O traçado vira uma **camada nova**, com o nome do `ref` e `_trace`. Ela entra logo antes da primeira `layer` do arquivo (sem nenhuma, no fim): é a mais de trás que uma camada pode ficar, logo na frente da [automática](04-camadas.md).
+
+```
+# traçado da imagem do ref raposa (Objeto › Traçado de imagem: Cores 48, Detalhe 0,5 px)
+palette color1=#501b06f5 color2=#7e210df3 color3=#6b1e0cf4 …
+layer raposa_trace
+shape c=color5 : 436.15,150.65 442.49,159.34 …
+```
+
+- As formas já ficam **no lugar da imagem**: na posição, no tamanho (`scale=`) e no giro (`rot=`) do `ref`.
+- A imagem é traçada no tamanho em que aparece no desenho: com `scale=0.5`, na metade (até o tamanho dela e até 4 Mpx).
+- Uma cor igual (o mesmo `#hex`) a uma que a `palette` já tem usa o nome de lá. As outras ganham nomes livres (`color1`…), e os degradês e os buracos também (`gradient1`…, `_hole1`…).
+- A linha `ref` fica como estava. Um **Ctrl+Z** desfaz o traçado inteiro.
+- Os limites são os da linha de comando ([capítulo 2](02-formas.md#traçar-uma-imagem)): uma figura parada, numa camada só, sem ossos.
+
 ## Réguas, linhas guia e Medir
 
 Para alinhar formas (os olhos na mesma altura, o pé em cima do chão), o editor tem réguas e linhas guia. Nada disso entra no código nem na exportação: são só ajudas na tela.
@@ -386,6 +413,7 @@ O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amost
 - O olho de cada nome esconde a camada só nessa vista.
 - Passe o mouse numa linha do painel Camadas, e as outras peças se apagam.
 - A vista mostra o mesmo quadro do player, sem o estilo de arte e sem o halo das luzes.
+- Com mais de 1.500 peças (um [traçado de imagem](#traçado-de-imagem) grande, por exemplo), as camadas com mais linhas viram **uma peça só**, a camada inteira: peças demais travam o navegador. O clique nela ainda escolhe a forma que está embaixo do mouse.
 - Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Palco em 3D](#palco-em-3d)).
 
 ## Efeitos da camada

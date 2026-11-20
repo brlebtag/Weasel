@@ -584,6 +584,8 @@ A resposta conta o que saiu:
 salvo exemplos/logo_tracado.weasel  traçado de imagem · 8 KB
 ```
 
+No editor, o menu **Objeto › Traçado de imagem…** faz o mesmo com uma imagem guia: o traçado entra no desenho, numa camada nova, em cima da imagem ([capítulo 22](22-editor.md#traçado-de-imagem)).
+
 O arquivo que sai é um desenho como outro qualquer: abre no editor, exporta em qualquer formato e pode entrar em outro desenho com `include` ([capítulo 19](19-referencia.md#include)):
 
 <!-- gerar: img/02_tracado.png -->

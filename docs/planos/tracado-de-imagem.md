@@ -1,8 +1,8 @@
 # Traçado de imagem
 
 **Situação:** plano aprovado em 20/11/2026 (JavaScript, "Traçado de imagem", a imagem como entrada na linha de
-comando, no editor sobre uma `ref`). **Etapa 1 feita na 1.70.0** (20/11/2026; os números estão no fim da etapa). A
-etapa 2 (o editor) espera o seu "pode fazer".
+comando, no editor sobre uma `ref`). **Etapa 1 feita na 1.70.0** e **etapa 2 feita na 1.71.0** (20/11/2026; os
+números estão no fim de cada etapa). O plano está completo; fica de fora o que diz "O que fica de fora".
 
 ## A ideia
 
@@ -160,6 +160,75 @@ node cli/weasel.js imagem.png -o desenho.weasel
 - **Guia:** a seção no capítulo 22 (editor) e, se houver atalho, a folha de atalhos.
 - Versão **1.71.0**.
 
+### Como ficou (1.71.0)
+
+**A medida do começo** (Chrome, painel do navegador à vista, o gato da etapa 1: 5.420 formas, 1,3 MB):
+
+| | 1.70.0 | 1.71.0 |
+|---|---|---|
+| abrir o arquivo | 13 s | 0,4 s |
+| uma tecla (num comentário) | 8,6 s | 0,25 s |
+| uma tecla dentro de uma forma | (não medida) | 0,25–0,5 s |
+| desfazer | 8,8 s | 0,36 s |
+| o cursor para outra linha | 1,3 s | 0,16 s |
+| escolher uma forma | 2,4 s | 0,14 s |
+| o painel Camadas inteiro de novo | 2,0 s | 0,5 s |
+| a vista 3D: abrir | 5,7 s | 0,65 s |
+| a vista 3D: girar (quadros em 1,5 s, de 180) | 2 | 138 |
+
+- **O editor não aguentava, e isso virou a primeira parte da etapa.** A causa: ler o `value` da caixa de texto
+  copia o texto inteiro (0,14 ms com 1,3 MB), e o `lineStart` andava pelo texto do começo até a linha. O painel
+  Camadas pede três linhas por forma a cada pintura (o olho, o cadeado e o que dá para arrastar), então o custo
+  crescia com o quadrado do arquivo. Agora o editor (`js/editor.js`) guarda o texto e uma tabela com o começo de
+  cada linha, refeitas quando o texto muda (toda mudança passa pelo `_take`: a digitação, `setValue`, desfazer,
+  `replaceRange`, Tab, comentar, duplicar); o `caret()` acha a linha por busca binária. Não mexe em nada que se vê.
+- **A vista 3D** fazia uma tela por linha do painel Camadas, e o navegador trava com milhares de telas em 3D
+  (medido: 1.100 e 1.500 giram lisas, 2.200 ainda dá, 3.666 trava em 1 quadro). Acima de **1.500 peças**, as
+  camadas com mais linhas viram uma peça só, a camada inteira, até a conta caber; o clique nela acha a forma de
+  cima no ponto (pelo contorno, como o clique no desenho), e passar o mouse numa linha do painel acende a peça. Os
+  traçados comuns (60 a 1.100 formas) continuam com uma peça por linha.
+- **O que ficou como está:** rolar o código do gato custa uns 40–100 ms quando entram linhas novas na faixa pintada
+  (as linhas têm, em média, 234 caracteres, e a maior, 5.493); com o painel Camadas, uma tecla numa forma refaz as
+  5.420 linhas dele (~0,25 s a mais). Num traçado comum, 5 a 10 vezes menor, isso some.
+
+**O painel** (`js/ui-trace.js`, Objeto › Traçado de imagem…; no botão direito, só quando há um ref para traçar):
+
+- **O ref:** o da linha do cursor, um escolhido, ou o único com a imagem aberta. Sem nenhum, a dica diz como abrir
+  uma imagem; com a imagem não guardada no navegador, diz qual abrir. Na prévia de um `def`, o Traçar pede para
+  sair dela (como as outras edições de camada).
+- **O worker é outro**, `js/trace-worker.js`, só com o `js/trace.js` (o plano dizia `js/worker.js`, que carrega 16
+  módulos): mexer num controle encerra o worker e abre outro, então abrir rápido importa. Arrastando um controle, a
+  conta espera 250 ms parado. Sem worker (a página aberta como arquivo), a conta roda na página.
+- **O tamanho traçado** é o tamanho em que a imagem aparece no desenho: o `scale=` do ref, até 1:1 e até 4 Mpx (o
+  mesmo teto do aviso da linha de comando). Com `scale=0.5`, a raposa de 1024² é traçada em 512².
+- **Os controles:** Cores de 2 a 256 e Detalhe com a tolerância de 3 px a 0,1 px, os dois numa escala que anda
+  devagar no começo; o painel lembra os últimos valores enquanto a página está aberta.
+- **A miniatura do traçado** é o desenho de verdade, pelo motor do Weasel (o mesmo `file()` da linha de comando).
+  Embaixo, as formas, os pontos, as cores da `palette` (são mais que as Cores: cada região tem a cor média dela) e os
+  degradês. Acima de 2.000 formas, um aviso de que o editor fica mais lento.
+- **O bloco que entra:** um comentário com o ref e os valores dos controles, as linhas `palette` (8 cores por linha),
+  a `layer` e as formas. Vai antes da primeira `layer` do arquivo (com os comentários de cima dela) ou, sem camadas,
+  no fim: nos dois casos, logo na frente da camada automática, o lugar mais de trás que uma camada pode ter. O
+  cursor vai para a linha da camada (ela passa a ser onde se desenha).
+- **Os nomes:** os que o código já usa são todas as palavras dele; os novos são os primeiros livres (`color…`,
+  `gradient…`, `_hole…`, e `raposa_trace`, depois `raposa_trace2`). Uma cor da `palette` com o mesmo `#hex` (em
+  qualquer grafia: `#abc`, `#aabbcc`, `#aabbccff`) dá o nome dela.
+- **No desenho,** o contorno tracejado da imagem que está sendo traçada.
+- **`js/trace.js`:** o `trace()` passou a guardar o traçado como lista (degradês, buracos, formas com os pontos) e
+  avisa o progresso (as frações medidas em 3 imagens); as linhas saem do `lines()`, que aceita a conta das
+  coordenadas e os nomes. Sem eles, as linhas são as de antes: o CLI deu o mesmo arquivo na raposa e no mago, e o
+  `_tracado` ficou igual.
+
+**Conferido no editor** (Chrome, porta de teste):
+
+- A raposa num ref com `100,80 scale=0.5 rot=10`: o traçado cai em cima da imagem (silhuetas 99,8% iguais,
+  diferença média de 2 níveis de cor). Um Ctrl+Z volta ao texto de antes, igual.
+- Com `palette color1=#123456 pelo=#320f04`: a cor `#320f04` do traçado usou `pelo`, e os nomes novos começaram em
+  `color2`.
+- O gato pelo painel: 5,9 s de conta (o CLI leva 6,3 s), 1,1 s para entrar no código; durante a conta, a página
+  pintou 711 quadros, todos até 16 ms (só a miniatura, no fim, levou 112 ms).
+- Mexer depressa nas Cores (5 valores em 300 ms) abriu só 2 workers: o primeiro foi encerrado.
+
 ## O que fica de fora (por enquanto)
 
 - **Abrir uma imagem como desenho novo pelo editor.** A linha de comando já faz o arquivo novo; no editor, o
@@ -188,4 +257,4 @@ node cli/weasel.js imagem.png -o desenho.weasel
   mais pesado é o k-means; a amostra resolve.
 - **Memória no navegador.** Uma imagem de 3 Mpx com várias camadas de dados (Lab, rótulos, campos por região) passa
   de 100 MB. No worker, isso não trava a página, mas pode faltar memória em máquinas fracas (de novo, o teto).
-- **O editor com milhares de formas** (a medição do começo da etapa 2).
+- **O editor com milhares de formas** (a medição do começo da etapa 2): resolvido na 1.71.0, ver "Como ficou".

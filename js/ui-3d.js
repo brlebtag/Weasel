@@ -26,6 +26,7 @@
   const BG = '\u0000fundo';
   const MARGIN = 0.25; // a placa do filme passa do quadro um quarto de cada lado: o que a câmera não pega
   const TOP = 46; // a altura da barrinha de cima, com as margens
+  const MAX_PIECES = 1500; // acima disso, as camadas com mais linhas viram uma peça só (ver build)
   // o blend= da camada (o modo do canvas) no mix-blend-mode da peça
   const CSS_BLEND = new Set(['multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity']);
   const blendOf = (b) => (CSS_BLEND.has(b) ? b : b === 'lighter' ? 'plus-lighter' : '');
@@ -151,7 +152,7 @@
       for (const kd of t.kids) for (const el of kd.els) lineOf.set(el, kd);
     }
     const old = new Map(pieces.map((p) => [p.id, p]));
-    const next = [], nextLays = [];
+    const next = [], nextLays = [], todo = [];
     for (const L of S.orderLayers(m, pose)) {
       if (!S.layerVisible(L, pose, { guides: st.show.guides })) continue;
       const lp = pose.lprops.get(L.name) || {};
@@ -172,14 +173,29 @@
         g.items.push(it);
         if (!g.els.includes(el)) g.els.push(el);
       }
+      todo.push({ L, lp, lay, groups: [...groups.values()] });
+    }
+    // Peças demais travam o navegador (cada uma é uma tela em 3D: 1.500 giram lisas, 3.600 não). Passando de
+    // MAX_PIECES, as camadas com mais linhas (um traçado de imagem, por exemplo) viram uma peça só, a camada inteira.
+    let total = todo.reduce((s, t) => s + t.groups.length, 0);
+    for (const t of [...todo].sort((a, b) => b.groups.length - a.groups.length)) {
+      if (total <= MAX_PIECES || t.groups.length < 2) break;
+      total -= t.groups.length - 1;
+      // a linha de cada forma, para o clique achar a forma de cima (e o painel Camadas acender a peça)
+      const owner = new Map();
+      for (const g of t.groups) if (g.kid) for (const el of g.els) owner.set(el, g.kid.line);
+      t.lay.whole = t.groups.length;
+      t.groups = [{ id: `${t.L.name}|*`, kid: null, whole: new Set(owner.values()), owner, items: t.groups.flatMap((g) => g.items), els: t.groups.flatMap((g) => g.els) }];
+    }
+    for (const { L, lp, lay, groups } of todo) {
       const wide = !!(S.layerFx(L, lp) || L.trail || (L.cast && lighting));
-      for (const g of groups.values()) {
+      for (const g of groups) {
         const box = boxOf(m, pose, g.els, wide, limit);
         if (!box) continue;
         let p = old.get(g.id);
         if (p) old.delete(g.id);
         else p = { id: g.id, cv: newCanvas() };
-        Object.assign(p, { layer: L, lay, kid: g.kid, line: g.kid ? g.kid.line : -1, items: g.items, els: g.els, box });
+        Object.assign(p, { layer: L, lay, kid: g.kid, line: g.kid ? g.kid.line : -1, items: g.items, els: g.els, box, whole: g.whole || null, owner: g.owner || null });
         paint(p, m, pose, lighting, k, limit);
         const bl = blendOf(L.blend);
         if (p.cv.style.mixBlendMode !== bl) p.cv.style.mixBlendMode = bl;
@@ -296,7 +312,7 @@
       lay.label = l;
     };
     add(bg, 'fundo', null, BG);
-    for (const lay of lays) add(lay, lay.name, film ? null : lay.eye ? lay.pieces.length : '—', lay.key);
+    for (const lay of lays) add(lay, lay.name, film ? null : !lay.eye ? '—' : lay.whole ? `${lay.whole} numa peça` : lay.pieces.length, lay.key);
   }
   labelBox.addEventListener('click', (e) => {
     const b = e.target.closest('.v3-eye');
@@ -608,7 +624,7 @@
       if (Math.abs(det) < 1e-12) continue;
       const u = (c1 * b2 - c2 * b1) / det, v = (a1 * c2 - a2 * c1) / det;
       if (u < 0 || v < 0 || u >= p.cw || v >= p.ch || M[6] * u + M[7] * v + M[8] <= 0) continue;
-      if (alphaAt(p, u, v) > 16) return p;
+      if (alphaAt(p, u, v) > 16) { p.uv = [u, v]; return p; }
     }
     return null;
   }
@@ -621,7 +637,8 @@
       if (film) info.textContent = p.info;
       else {
         const kd = p.kid, what = kd ? `${kd.type}${kd.name ? ' ' + kd.name : ''}` : p.els[0].type;
-        info.textContent = `${what} · camada ${p.layer.name}${p.line >= 0 ? ` · linha ${p.line + 1}` : ''}`;
+        if (p.whole) info.textContent = `camada ${p.layer.name} · ${p.whole.size} linhas numa peça só (são peças demais para separar) · clique escolhe a forma`;
+        else info.textContent = `${what} · camada ${p.layer.name}${p.line >= 0 ? ` · linha ${p.line + 1}` : ''}`;
       }
       info.hidden = false;
     } else info.hidden = true;
@@ -667,9 +684,25 @@
     if (d.mode !== 'orbit') return;
     const p = hitAt(q[0], q[1]);
     if (film) { if (p) pickPlate(p); return; }
-    if (p && p.line >= 0) A.pickLine(p.line, e.shiftKey);
+    const line = p ? (p.whole ? lineIn(p) : p.line) : -1;
+    if (line >= 0) A.pickLine(line, e.shiftKey);
     else if (!e.shiftKey) A.selectNone();
   };
+  // na peça que é a camada inteira, a linha da forma de cima no ponto do clique (como o clique no desenho)
+  let pickCtx = null;
+  function lineIn(p) {
+    const m = cur(), pose = A.pose(), x = p.box.x + p.uv[0], y = p.box.y + p.uv[1];
+    const ctx = pickCtx || (pickCtx = document.createElement('canvas').getContext('2d'));
+    ctx.lineJoin = ctx.lineCap = 'round';
+    for (let i = p.items.length - 1; i >= 0; i--) {
+      const it = p.items[i], el = it.el, g = S.geometry(m, pose, el);
+      if (!g || !g.segs || !g.segs.length || !p.owner.has(el)) continue;
+      const path = S.pathOf(g), open = el.type === 'stroke' || el.type === 'line';
+      ctx.lineWidth = (open ? el.w || 1 : el.ink || 0) + 2;
+      if ((!open && it.part !== 'ink' && ctx.isPointInPath(path, x, y)) || ctx.isPointInStroke(path, x, y)) return p.owner.get(el);
+    }
+    return -1;
+  }
   space.addEventListener('pointerup', endDrag);
   space.addEventListener('pointercancel', endDrag);
   space.addEventListener('pointerleave', () => { if (!drag) setHot(null); });
@@ -697,7 +730,7 @@
       return;
     }
     const sel = new Set(A.selected());
-    for (const p of pieces) p.cv.classList.toggle('sel', sel.has(p.line) || (p.lay.line >= 0 && sel.has(p.lay.line)));
+    for (const p of pieces) p.cv.classList.toggle('sel', sel.has(p.line) || (p.lay.line >= 0 && sel.has(p.lay.line)) || (!!p.whole && [...sel].some((l) => p.whole.has(l))));
   }
   function applyDim() {
     for (const p of pieces) p.cv.classList.toggle('dim', !!dimFn && !dimFn(p));
@@ -708,7 +741,7 @@
     lpanel.addEventListener('mouseover', (e) => {
       if (!open) return;
       const el = e.target.closest('.lp-el[data-line]'), ly = e.target.closest('.lp-layer[data-name]');
-      if (el) { const line = +el.dataset.line; dimFn = (p) => p.line === line; } else if (ly) { const name = ly.dataset.name; dimFn = (p) => (p.layer ? p.layer.name === name : !!p.layerNames && p.layerNames.includes(name)); } else dimFn = null;
+      if (el) { const line = +el.dataset.line; dimFn = (p) => p.line === line || (!!p.whole && p.whole.has(line)); } else if (ly) { const name = ly.dataset.name; dimFn = (p) => (p.layer ? p.layer.name === name : !!p.layerNames && p.layerNames.includes(name)); } else dimFn = null;
       applyDim();
     });
     lpanel.addEventListener('mouseleave', () => { if (!dimFn) return; dimFn = null; applyDim(); });

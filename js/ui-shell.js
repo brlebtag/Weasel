@@ -215,6 +215,8 @@
         { label: 'Interseção', run: () => (W.paths || NOP).pathfinder('inter') },
         { label: 'Excluir sobreposição', run: () => (W.paths || NOP).pathfinder('xor') },
       ] },
+      // a imagem de um ref vira formas (js/ui-trace.js); no botão direito, só quando há um ref para traçar
+      { label: 'Traçado de imagem…', enabled: drawing, run: () => (W.traceUi || NOP).open() },
       '-',
       { label: 'Inserir', enabled: drawing, sub: () => A.shapes().map((s, i) => ({ label: `${s.label} (${s.cmd})`, run: () => A.insert(i) })) },
       '-',
@@ -306,6 +308,7 @@
       ...pickItems('Editar', ['Desfazer', 'Refazer', '-', 'Recortar', 'Copiar', 'Colar', 'Apagar']).map((it) => (it === '-' || it.label.startsWith('Desfazer') || it.label.startsWith('Refazer') || it.label === 'Colar' ? it : onlyOn(it))),
       '-',
       ...pickItems('Objeto', ['Transformar', 'Organizar', 'Mandar para a camada', 'Alinhar', '-', 'Agrupar', 'Desagrupar', 'Sair do grupo', 'Símbolo', '-', 'Travar a escolha', 'Destravar tudo', '-', 'Caminho', 'Esconder / mostrar (hidden)']).map((it) => (it === '-' ? it : onlyOn(it))),
+      ...(W.traceUi && W.traceUi.can() ? [findItem('Objeto', 'Traçado de imagem…')] : []),
       '-',
       { label: 'Selecionar', sub: () => MENUS.find((m) => m.label === 'Selecionar').items },
       { label: 'Inserir forma', sub: () => A.shapes().map((x, i) => ({ label: `${x.label} (${x.cmd})`, run: () => A.insertAt(i, at) })) },

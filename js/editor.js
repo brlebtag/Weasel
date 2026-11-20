@@ -143,7 +143,7 @@
     _altDown(e) {
       if (!e.altKey || e.button !== 0) return;
       const { line, col } = this._posFromMouse(e);
-      const text = this.ta.value.split('\n')[line];
+      const text = this.lines[line];
       if (text === undefined) return;
       let mm;
       const hexRx = /#[0-9a-fA-F]{3,8}(?![0-9a-zA-Z])/g;
@@ -206,7 +206,7 @@
       const ta = this.ta;
       if (!this.opts.complete || ta.selectionStart !== ta.selectionEnd) return this._closePop();
       const c = this.caret();
-      const lineText = ta.value.split('\n')[c.line] || '';
+      const lineText = this.lines[c.line] || '';
       const before = lineText.slice(0, c.col);
       const word = /[\w.-]*$/.exec(before)[0];
       if (!force && !word && !before.endsWith('=') && !before.endsWith('@')) return this._closePop();
@@ -245,10 +245,19 @@
 
     get popOpen() { return !this.pop.hidden && this.items.length > 0; }
 
-    get value() { return this.ta.value; }
+    // O texto fica guardado: ler ta.value copia o texto inteiro a cada vez (num arquivo de 1 MB, ~0,15 ms), e o app
+    // lê o código muitas vezes por tecla. Toda mudança passa pelo _take (o input do navegador, setValue, _restore,
+    // replaceRange, Tab, comentar, duplicar), que guarda o texto novo.
+    get value() { return this._v !== undefined ? this._v : this.ta.value; }
+
+    _take() {
+      this._v = this.ta.value;
+      this._st = null;
+    }
 
     setValue(v, fresh) {
       this.ta.value = v;
+      this._take();
       this.ta.setSelectionRange(0, 0);
       if (fresh) this.hist.reset(this._snap());
       else this.hist.push(this._snap(), null);
@@ -257,24 +266,26 @@
       this._emit();
     }
 
-    _snap() { return { v: this.ta.value, s: this.ta.selectionStart, e: this.ta.selectionEnd }; }
+    _snap() { return { v: this.value, s: this.ta.selectionStart, e: this.ta.selectionEnd }; }
 
     _restore(s) {
       if (!s) return;
       this.ta.value = s.v;
+      this._take();
       this.ta.setSelectionRange(s.s, s.e);
       this._render();
       this._emit();
     }
 
     _changed(key) {
+      this._take();
       this.hist.push(this._snap(), key);
       this._render();
       this._emit();
     }
 
     _emit() {
-      if (this.opts.onChange) this.opts.onChange(this.ta.value);
+      if (this.opts.onChange) this.opts.onChange(this.value);
       this._caret(true);
     }
 
@@ -286,19 +297,25 @@
       this._changed(o.key || null);
     }
 
+    // onde começa cada linha (refeita quando o texto muda): o painel Camadas pede milhares de linhas por pintura
+    _starts() {
+      if (this._st) return this._st;
+      const v = this.value, st = [0];
+      for (let i = v.indexOf('\n'); i >= 0; i = v.indexOf('\n', i + 1)) st.push(i + 1);
+      return (this._st = st);
+    }
+
     lineStart(line) {
-      const v = this.ta.value;
-      let off = 0;
-      for (let i = 0; i < line; i++) { const n = v.indexOf('\n', off); if (n < 0) return v.length; off = n + 1; }
-      return off;
+      const st = this._starts();
+      return line <= 0 ? 0 : line < st.length ? st[line] : this.value.length;
     }
 
     caret() {
-      const v = this.ta.value, off = this.ta.selectionStart;
-      const before = v.lastIndexOf('\n', off - 1);
-      let line = 0;
-      for (let i = v.indexOf('\n'); i >= 0 && i < off; i = v.indexOf('\n', i + 1)) line++;
-      return { line, col: off - (before + 1), offset: off };
+      const st = this._starts(), off = this.ta.selectionStart;
+      // a última linha que começa em off ou antes
+      let a = 0, b = st.length - 1;
+      while (a < b) { const m = (a + b + 1) >> 1; if (st[m] <= off) a = m; else b = m - 1; }
+      return { line: a, col: off - st[a], offset: off };
     }
 
     goto(line, col) {
@@ -352,7 +369,7 @@
     // outras. Num arquivo de milhares de linhas, cada mudança (e cada texto novo na página) não obriga o
     // navegador a refazer o layout de todas elas.
     _render() {
-      this.lines = this.ta.value.split('\n');
+      this.lines = this.value.split('\n');
       this.curLine = this.caret().line;
       this._paint(true);
       this._sync();
@@ -444,7 +461,7 @@
     }
 
     _lineRange() {
-      const v = this.ta.value, s = this.ta.selectionStart, e = this.ta.selectionEnd;
+      const v = this.value, s = this.ta.selectionStart, e = this.ta.selectionEnd;
       const a = v.lastIndexOf('\n', s - 1) + 1;
       let b = v.indexOf('\n', e > s && v[e - 1] === '\n' ? e - 1 : e);
       if (b < 0) b = v.length;
@@ -453,7 +470,7 @@
 
     _toggleComment() {
       const [a, b] = this._lineRange();
-      const block = this.ta.value.slice(a, b).split('\n');
+      const block = this.value.slice(a, b).split('\n');
       const all = block.filter((l) => l.trim()).every((l) => /^\s*#/.test(l));
       const out = block.map((l) => (!l.trim() ? l : all ? l.replace(/^(\s*)# ?/, '$1') : '# ' + l)).join('\n');
       this.ta.setRangeText(out, a, b, 'select');
@@ -462,7 +479,7 @@
 
     _duplicate() {
       const [a, b] = this._lineRange();
-      const text = this.ta.value.slice(a, b);
+      const text = this.value.slice(a, b);
       const s = this.ta.selectionStart - a, e = this.ta.selectionEnd - a;
       // opts.duplicate pode mudar a cópia (o app dá nomes novos): { text, at(posição na original) → posição na cópia }
       const copy = (this.opts.duplicate && this.opts.duplicate(text)) || { text, at: (i) => i };

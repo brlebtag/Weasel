@@ -5938,6 +5938,8 @@
     gotoCode,
     setVariant: (v) => { const sel = $('variantSel'); if (sel && [...sel.options].some((o) => o.value === v)) { sel.value = v; sel.dispatchEvent(new Event('change')); } },
     insertLine: (at, text, key) => { const off = editor.lineStart(at); editor.replaceRange(off, off, text + '\n', { key: key || 'props' + Date.now() }); },
+    // o Traçado de imagem (js/ui-trace.js): a imagem de um ref, se foi aberta, e a matriz da imagem para o desenho
+    refInfo: (r) => { const i = imageInfo(r.file); return i ? { img: i.img, w: i.w, h: i.h, m: S.refMatrix(r, i.w, i.h) } : null; },
     // para a seleção completa (js/ui-select.js)
     sigs: () => nodeSigs(),
     setSel: (lines, caret) => { const l = [...new Set(lines)].sort((a, b) => a - b); if (!l.length) deselect(); else setSel(l, caret !== undefined ? caret : l.includes(st.caret.line) ? st.caret.line : l[0]); },
