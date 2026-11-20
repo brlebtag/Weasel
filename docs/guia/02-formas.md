@@ -569,6 +569,71 @@ Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítu
 
 Quando terminar de copiar, apague a linha `ref` ou ponha `hidden` nela.
 
+## Traçar uma imagem
+
+Em vez de copiar a imagem à mão, a linha de comando pode **traçá-la**: a imagem vira um arquivo `.weasel` com as formas, as cores e os degradês dela. Funciona melhor com *vector art*: cores chapadas, contornos, ícones, personagens, cenários desenhados.
+
+```bash
+node cli/weasel.js docs/logo.png -o exemplos/logo_tracado.weasel
+```
+
+A resposta conta o que saiu:
+
+```
+24 regiões (3 degradês, 0 semitransparentes), 25 formas, 532 pontos, 14 cores · 0,7 s
+salvo exemplos/logo_tracado.weasel  traçado de imagem · 8 KB
+```
+
+O arquivo que sai é um desenho como outro qualquer: abre no editor, exporta em qualquer formato e pode entrar em outro desenho com `include` ([capítulo 19](19-referencia.md#include)):
+
+<!-- gerar: img/02_tracado.png -->
+```weasel
+include "logo_tracado.weasel"
+```
+
+| A imagem (`docs/logo.png`) | O traçado (`exemplos/logo_tracado.weasel`) |
+|---|---|
+| ![O logo do Weasel, a doninha marrom num quadrado azul-escuro de cantos redondos, como imagem PNG](../logo.png) | ![O mesmo logo desenhado pelo Weasel a partir das formas traçadas: a doninha, o quadrado com o degradê e os detalhes iguais](img/02_tracado.png) |
+
+O começo do arquivo:
+
+```
+# logo.png: traçado de imagem do Weasel 1.70.0.
+# 24 regiões, da maior para a menor; 1 unidade = 1 px da imagem (512×512).
+# opções: as padrão
+# a imagem original está na linha ref: tire o hidden para comparar.
+
+canvas 512 512 bg=none
+ref original "../docs/logo.png" hidden
+palette color1=#1c1f2b color2=#fbeedd color3=#b8733a color4=#3a2024 …
+
+gradient gradient1 linear 258.1,19.5 258.3,492.5 : #283b4f@0.064 #26374a@0.179 …
+shape c=gradient1 : 116.78,16.50 384.50,16 400.50,17.11 408.50,18.79 …
+```
+
+- O **comentário** no topo diz de que imagem veio, o tamanho e as opções, para dar para traçar de novo.
+- O `canvas` tem o tamanho da imagem, com fundo transparente. Uma unidade é um pixel da imagem.
+- A imagem fica numa **`ref` escondida**. Tire o `hidden` para ver a imagem por baixo do traçado e comparar.
+- As **cores** ficam na `palette`: `color1`, `color2`… Trocar uma cor ali troca em todo o desenho ([capítulo 3](03-cores.md#cores-com-nome-palette)). Os degradês são `gradient1`, `gradient2`… ([capítulo 3](03-cores.md#gradientes-gradient)).
+- Os **buracos** (o meio de um anel) são formas escondidas, `_hole1`, `_hole2`…, usadas com `cut=` ([capítulo 4](04-camadas.md#recortar-por-fora-cut)).
+- As partes **semitransparentes** (uma sombra, um brilho) saem com a cor `#rrggbbaa` ([capítulo 3](03-cores.md)).
+
+A ordem das linhas é a **ordem de pintura**: as partes semitransparentes primeiro, depois da maior para a menor. Cada forma continua uns pixels **por baixo** das que vêm depois. É isso que evita uma fresta entre duas cores; não "limpe" essas sobras.
+
+| Opção | O que faz | Valores | Padrão |
+|---|---|---|---|
+| `-o` | o arquivo novo | um nome terminado em `.weasel` | `imagem.weasel`, ao lado da imagem |
+| `--colors` | quantas cores procurar na imagem; menos cores, menos formas | de 2 a 256 | 48 |
+| `--tol` | quanto a curva pode se afastar da borda da imagem; maior, menos pontos | de 0.05 a 20 pixels | 0.5 |
+
+As outras opções estão no [capítulo 21](21-linha-de-comando.md#traçar-uma-imagem).
+
+O traçado tem limites:
+
+- Sai **uma figura parada, numa camada só**, sem ossos. Para animar, o desenho precisa ser cortado em peças, uma por osso ([capítulo 8](08-ossos.md)), à mão.
+- Uma **foto**, um JPEG com muitos artefatos ou uma imagem cheia de detalhes vira milhares de formas e um arquivo grande (um retrato de 1633×2000 deu 3.665 formas e 833 KB). Reduza a imagem com `-s 0.5`, ou use `--colors` menor e `--tol` maior.
+- Um **traço mais fino que um pixel** sai um pouco mais claro e mais largo. E uma linha fina que cruza uma sombra semitransparente sai quebrada.
+
 ## O que vale em toda forma
 
 Algumas opções valem em todas as formas:

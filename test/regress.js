@@ -1164,6 +1164,83 @@ async function warnCase() {
   await check('_avisos', 'avisos.txt', 'text', lines.join('\n') + '\n');
 }
 
+// o Traçado de imagem (js/trace.js; weasel imagem.png): uma imagem feita aqui, pixel a pixel (sem canvas, então igual
+// em toda máquina), com um degradê, um anel (buraco), um triângulo (cantos), uma sombra semitransparente e uma linha
+// fina. O traçado tem de ser o mesmo sempre (k-means com semente fixa), sem erros, e ficar perto da imagem (ΔE médio 2,3
+// sobre cinza, hoje); o CLI tem de dar o mesmo traçado que o módulo. (Uma linha fina que cruza a sombra sai quebrada,
+// igual no protótipo em Python: por isso a linha daqui passa longe dela.)
+async function traceCase() {
+  console.log(paint('1', '_tracado'));
+  const Wd = 120, Hd = 90, SS = 4;
+  const hexc = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const inTri = (x, y, [a, b, c]) => {
+    const s = (p, q) => (q[0] - p[0]) * (y - p[1]) - (q[1] - p[1]) * (x - p[0]);
+    const d1 = s(a, b), d2 = s(b, c), d3 = s(c, a);
+    return (d1 >= 0 && d2 >= 0 && d3 >= 0) || (d1 <= 0 && d2 <= 0 && d3 <= 0);
+  };
+  const segDist = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy))); return Math.hypot(a[0] + t * dx - x, a[1] + t * dy - y); };
+  // as camadas, de baixo para cima: [cor RGB, alfa] num ponto (ou null)
+  const layers = [
+    (x, y) => ((x - 60) / 42) ** 2 + ((y - 81) / 6) ** 2 <= 1 ? [[0, 0, 0], 0.35] : null,
+    (x, y) => (x >= 10 && x <= 80 && y >= 10 && y <= 60 ? [hexc('#2f6fd0').map((v, i) => v + (hexc('#7fe0ff')[i] - v) * (x - 10) / 70), 1] : null),
+    (x, y) => { const r = Math.hypot(x - 88, y - 42); return r <= 22 && r >= 9 ? [hexc('#e63946'), 1] : null; },
+    (x, y) => (inTri(x, y, [[18, 52], [40, 18], [54, 52]]) ? [hexc('#ffd23f'), 1] : null),
+    (x, y) => (segDist(x, y, [6, 70], [114, 50]) <= 0.7 ? [hexc('#1d1d2b'), 1] : null),
+  ];
+  const data = new Uint8ClampedArray(Wd * Hd * 4);
+  for (let y = 0; y < Hd; y++) for (let x = 0; x < Wd; x++) {
+    const acc = [0, 0, 0, 0];
+    for (let j = 0; j < SS; j++) for (let i = 0; i < SS; i++) {
+      const sx = x + (i + 0.5) / SS, sy = y + (j + 0.5) / SS;
+      let r = 0, g = 0, b = 0, a = 0;                  // pré-multiplicado
+      for (const L of layers) { const v = L(sx, sy); if (!v) continue; const [c, al] = v; r = c[0] * al + r * (1 - al); g = c[1] * al + g * (1 - al); b = c[2] * al + b * (1 - al); a = al + a * (1 - al); }
+      acc[0] += r; acc[1] += g; acc[2] += b; acc[3] += a;
+    }
+    const a = acc[3] / (SS * SS), p = (y * Wd + x) * 4;
+    if (a > 0) for (let c = 0; c < 3; c++) data[p + c] = Math.round(acc[c] / (SS * SS) / a);
+    data[p + 3] = Math.round(a * 255);
+  }
+  const res = W.trace.trace({ width: Wd, height: Hd, data });
+  const text = W.trace.file(res, { header: ['imagem sintética do teste'] });
+  await check('_tracado', 'tracado.weasel', 'text', text);
+  const st = res.stats;
+  record(st.gradients >= 1 && st.translucent >= 1 && /cut=_hole1/.test(text) && /!/.test(text), '_tracado/partes', `faltou uma parte: ${JSON.stringify(st)}, cut=${/cut=/.test(text)}, cantos=${/!/.test(text)}`);
+  const m = W.lang.parse(text, { file: 'tracado.weasel' });
+  record(!m.errors.length, '_tracado/erros', m.errors.map((e) => e.msg || e.message).join('; '));
+  // o render contra a imagem, os dois sobre cinza 50%: ΔE (CIE76) médio na união das silhuetas
+  const rend = X.imageCanvas(m, null, 0, { transparent: true }).getContext('2d').getImageData(0, 0, Wd, Hd).data;
+  const lab = (r, g, b) => {
+    const f = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }, R = f(r), G = f(g), B = f(b);
+    const h = (t) => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116);
+    const X1 = h((0.4124564 * R + 0.3575761 * G + 0.1804375 * B) / 0.95047), Y1 = h(0.2126729 * R + 0.7151522 * G + 0.0721750 * B), Z1 = h((0.0193339 * R + 0.1191920 * G + 0.9503041 * B) / 1.08883);
+    return [116 * Y1 - 16, 500 * (X1 - Y1), 200 * (Y1 - Z1)];
+  };
+  const onGray = (d, p) => { const a = d[p + 3] / 255; return lab(...[0, 1, 2].map((c) => d[p + c] * a + 128 * (1 - a))); };
+  let sum = 0, cnt = 0, both = 0;
+  for (let p = 0; p < data.length; p += 4) {
+    const ao = data[p + 3] > 127, ar = rend[p + 3] > 127;
+    if (!ao && !ar) continue;
+    const A = onGray(data, p), B = onGray(rend, p);
+    sum += Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
+    cnt++;
+    if (ao && ar) both++;
+  }
+  const dE = sum / cnt, iou = both / cnt;
+  record(dE < 3 && iou > 0.97, '_tracado/fidelidade', `ΔE médio ${dE.toFixed(2)} (limite 3), IoU ${iou.toFixed(3)} (mínimo 0,97)`);
+  // o CLI: a imagem num PNG, traçada pelo comando, dá o mesmo desenho que o módulo sobre os mesmos pixels
+  const dir = path.join(OUT, '_tracado');
+  fs.mkdirSync(dir, { recursive: true });
+  const cv = createCanvas(Wd, Hd), cx = cv.getContext('2d'), id = cx.createImageData(Wd, Hd);
+  id.data.set(data);
+  cx.putImageData(id, 0, 0);
+  const png = path.join(dir, 'sintetica.png'), wsl = path.join(dir, 'sintetica.weasel');
+  fs.writeFileSync(png, cv.toBuffer('image/png'));
+  const r = spawnSync(process.execPath, [CLI, png, '-o', wsl, '--force', '--quiet'], { encoding: 'utf8' });
+  const body = (t) => t.slice(t.indexOf('\ncanvas ')).replace(/^ref .*\n/m, '');
+  const again = W.trace.file(W.trace.trace(await pixels(fs.readFileSync(png))), {});
+  record(r.status === 0 && fs.existsSync(wsl) && body(fs.readFileSync(wsl, 'utf8')) === body('\n' + again), '_tracado/cli', `o CLI deu outro traçado (saída ${r.status}): ${(r.stderr || '').trim().slice(0, 200)}`);
+}
+
 async function main() {
   const t0 = Date.now();
   const files = fs.readdirSync(EX).filter((f) => f.endsWith('.weasel')).sort().map((f) => path.join(EX, f));
@@ -1197,6 +1274,7 @@ async function main() {
   if (!only.length || only.some((o) => '_simplificar'.includes(o))) await simplifyCase();
   if (!only.length || only.some((o) => '_caminhos'.includes(o))) await pathsCase();
   if (!only.length || only.some((o) => '_avisos'.includes(o))) await warnCase();
+  if (!only.length || only.some((o) => '_tracado'.includes(o))) await traceCase();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log('');
   if (UPDATE) console.log(`referências regravadas (${results.updated} conferidas, ${results.new} novas) em ${secs}s`);

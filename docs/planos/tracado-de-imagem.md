@@ -1,8 +1,8 @@
 # Traçado de imagem
 
 **Situação:** plano aprovado em 20/11/2026 (JavaScript, "Traçado de imagem", a imagem como entrada na linha de
-comando, no editor sobre uma `ref`). Nada feito ainda. Antes de cada etapa, ela é explicada de novo e só começa com
-o seu "pode fazer".
+comando, no editor sobre uma `ref`). **Etapa 1 feita na 1.70.0** (20/11/2026; os números estão no fim da etapa). A
+etapa 2 (o editor) espera o seu "pode fazer".
 
 ## A ideia
 
@@ -118,6 +118,28 @@ node cli/weasel.js imagem.png -o desenho.weasel
   "Desenhar por cima de uma imagem") e a linha no README.
 - Versão **1.70.0**.
 
+### Como ficou (1.70.0)
+
+- `js/trace.js` é o porte do `vetorizar.py`, conta por conta, em arrays tipados; o k-means tem semente fixa (a
+  mesma imagem dá sempre o mesmo arquivo). Entra no `cli/runtime.js` e na página (para a etapa 2).
+- **Fidelidade:** ΔE médio 1,67 nas 12 imagens, igual ao protótipo; cada imagem a ±0,05 dele (o soldado sai 0,06
+  melhor). Formas e pontos na mesma faixa (a raposa: 197 formas, contra 182).
+- **Tempo:** 1,1 a 2,5 s nas imagens de 1 Mpx (o Python levava 8 a 24 s); o gato (2 Mpx) 6,3 s, contra 38 s; o
+  retrato (3,3 Mpx) 8,8 s, contra 72 s. Não precisou da amostra de 200 mil pixels para o k-means.
+- **Um tropeço achado na medição:** desenhar a imagem no canvas com tamanho e `imageSmoothingQuality = 'high'`
+  filtra os pixels mesmo em 1:1 (o ΔE do tigre subia 0,14 e as formas, 40%). Em 1:1 a imagem entra sem
+  reamostrar; o `-s` usa a suavização.
+- **As 3 decisões** ficaram como a recomendação: a `ref original "imagem.png" hidden` no arquivo (com `scale=` quando
+  há `-s`); acima de 4 Mpx, um aviso que sugere `-s 0.5`; o `--blur` só na linha de comando, desligado.
+- **Fora da etapa:** o `--sem-fundo` da skill (tirar o fundo chapado) não entrou na linha de comando; continua só no
+  script da skill.
+- **Um limite novo, igual no Python:** uma linha fina que cruza uma sombra semitransparente sai quebrada (a linha é
+  "semitransparente" pela média do alfa nas bordas, é pintada antes da sombra, e a sombra se divide em duas). Está
+  no guia; o teste passa a linha longe da sombra.
+- **Teste:** `_tracado` no `test/regress.js` (uma imagem feita pixel a pixel, o texto do traçado como referência, ΔE
+  2,3 sobre cinza, e o CLI dando o mesmo traçado que o módulo). O `exemplos/logo_tracado.weasel` (o logo traçado)
+  ilustra o capítulo 2 e entra nos testes dos exemplos.
+
 ## Etapa 2: o editor (Objeto › Traçado de imagem)
 
 - **Antes de tudo, medir:** abrir no editor o maior resultado (o gato: 5.402 formas, 1,3 MB) e ver digitar, rolar,
@@ -149,7 +171,7 @@ node cli/weasel.js imagem.png -o desenho.weasel
   `traca_soldado.py` depende da estrutura do `vetoriza.py` (a camada de contorno preto), então não troca sozinho.
   Usar o traçado do Weasel nos jogos é uma decisão sua, depois.
 
-## O que falta decidir
+## O que faltava decidir (decidido na etapa 1: as três recomendações)
 
 1. **Uma `ref` escondida no arquivo da linha de comando?** O `.weasel` sairia com
    `ref original "imagem.png" hidden` (o caminho a partir do `.weasel`). No editor, basta tirar o `hidden` para

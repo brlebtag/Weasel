@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const { W, loadImage } = require('./runtime');
+const { W, loadImage, createCanvas } = require('./runtime');
 const X = W.exporter;
 const V = require('./video');
 const { makeMediaResolver } = require('./media');
@@ -17,6 +17,7 @@ Uso:
   weasel <arquivo.weasel> [opções]
   weasel -e "<código>" [opções]
   weasel - [opções]                 (lê o código da entrada padrão)
+  weasel <imagem.png> [opções]      (traça a imagem: grava um .weasel com o desenho)
 
 Entrada:
   -e, --eval <código>     código direto no comando; ";" ou "\\n" separam as linhas
@@ -61,8 +62,16 @@ Saída:
                           eventos, os pés no chão (feet=) e o escorregão em vermelho; -s muda o
                           tamanho, --cols a quebra das linhas (padrão 12)
 
+Traçado de imagem (a entrada é uma imagem .png, .jpg ou .webp):
+  -o desenho.weasel       o arquivo novo (padrão: imagem.weasel, ao lado da imagem; não grava em
+                          cima de um que já existe, a não ser com --force)
+      --colors <n>        quantas cores procurar na imagem (padrão 48); menos cores, menos formas
+      --tol <px>          quanto a curva pode se afastar da borda (padrão 0.5); maior, menos pontos
+      --blur <px>         desfoca o desenho todo (layer blur=), como o serrilhado (padrão 0)
+  -s, --scale <n>         reduz (ou aumenta) a imagem antes de traçar
+
 Godot:
-  -o personagem.tscn      pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
+  -o personagem.tscn     pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
                           com colisão, hitbox/hurtbox por quadro e eventos, e weasel_anim.gd
   -f godot                só a folha e o SpriteFrames (.tres); num arquivo com tileset, o TileSet
       --normal            gera o normal map também no -f godot (no .tscn já vem)
@@ -134,6 +143,8 @@ Exemplos:
   weasel filme.weasel -o para_mandar.mp4 --small --burn-subs
   weasel filme.weasel -o render/filme.mov --shots --fcpxml --edl
   weasel vetorizado.weasel --simplify 1.5           -> vetorizado_simple.weasel
+  weasel rascunho.png                               -> rascunho.weasel
+  weasel foto.jpg -o arte.weasel --colors 24 -s 0.5
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -146,7 +157,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    simplify: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
+    simplify: null, colors: null, tol: null, blur: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -214,6 +225,9 @@ function parseArgs(argv) {
       case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '--contact': o.contact = inline || true; break;
       case '--simplify': o.simplify = num('--simplify', val(), 0.01, 1000); break;
+      case '--colors': o.colors = Math.round(num('--colors', val(), 2, 256)); break;
+      case '--tol': o.tol = num('--tol', val(), 0.05, 20); break;
+      case '--blur': o.blur = num('--blur', val(), 0, 50); break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -633,6 +647,8 @@ async function exportModel(model, o, format, base, sfx) {
 
 // Uma rodada completa: lê, confere e exporta. Devolve o código de saída e os arquivos lidos.
 async function run(o) {
+  if (o.input && TRACE_EXT.includes(path.extname(o.input).toLowerCase())) return traceImage(o);
+  for (const [k, flag] of [['colors', '--colors'], ['tol', '--tol'], ['blur', '--blur']]) if (o[k] !== null) usage(`${flag} vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)`);
   const watched = new Set();
   const source = readSource(o);
   if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
@@ -727,6 +743,51 @@ function simplifyFile(o, source, nErr, parseText, watched) {
   log(n ? `${n} forma${n > 1 ? 's' : ''}: ${before} → ${after} pontos (tolerância ${o.simplify} px)` : `nada para tirar com a tolerância ${o.simplify} px`);
   if (out) save(out, Buffer.from(text, 'utf8'), 'código simplificado', o.quiet);
   else process.stdout.write(text);
+  return { code: 0, watched };
+}
+
+// Traçado de imagem (docs/planos/tracado-de-imagem.md): a entrada é uma imagem, e sai um .weasel com o desenho
+// (js/trace.js). O arquivo leva a imagem como ref escondida, para comparar no editor.
+const TRACE_EXT = ['.png', '.jpg', '.jpeg', '.webp'];
+async function traceImage(o) {
+  const src = o.input, watched = new Set([path.resolve(src)]);
+  const base = path.basename(src, path.extname(src));
+  const out = o.out || path.join(path.dirname(src), base + '.weasel');
+  if (!/\.weasel$/i.test(out)) usage(`o traçado de uma imagem grava código: use -o ${path.basename(out, path.extname(out))}.weasel`);
+  // não grava em cima de um arquivo que já existe (pode ser um desenho feito à mão); no --watch, o seu mesmo pode
+  if (fs.existsSync(out) && !o.force && o.tracedOut !== path.resolve(out)) usage(`${out} já existe: use outro nome no -o (ou --force para gravar por cima)`);
+  if (!fs.existsSync(src)) throw new Fail(`não achei a imagem "${src}"`, 1);
+  let img;
+  try { img = await loadImage(fs.readFileSync(src)); } catch (e) { throw new Fail(`não consegui ler a imagem "${src}"`, 1); }
+  const w = Math.max(1, Math.round(img.width * o.scale)), h = Math.max(1, Math.round(img.height * o.scale));
+  const log = (s) => { if (!o.quiet) console.error(s); };
+  if (w * h > 4e6) log(paint('33', `imagem grande (${w}×${h}, ${(w * h / 1e6).toFixed(1)} Mpx): o traçado pode levar minutos e o arquivo passar de 1 MB; -s 0.5 reduz a imagem antes de traçar`));
+  const cv = createCanvas(w, h);
+  const cx = cv.getContext('2d');
+  // em 1:1 a imagem entra sem reamostrar (com tamanho e suavização, o canvas filtra os pixels mesmo sem mudar a escala)
+  if (w === img.width && h === img.height) cx.drawImage(img, 0, 0);
+  else { cx.imageSmoothingQuality = 'high'; cx.drawImage(img, 0, 0, w, h); }
+  const opts = {};
+  if (o.colors !== null) opts.colors = o.colors;
+  if (o.tol !== null) opts.tol = o.tol;
+  let res;
+  try { res = W.trace.trace(cx.getImageData(0, 0, w, h), opts); } catch (e) { throw new Fail(e.message, 1); }
+  const used = [o.colors !== null && `--colors ${o.colors}`, o.tol !== null && `--tol ${o.tol}`, o.blur && `--blur ${o.blur}`, o.scale !== 1 && `-s ${o.scale}`].filter(Boolean);
+  const rel = path.relative(path.dirname(path.resolve(out)), path.resolve(src)).split(path.sep).join('/');
+  const st = res.stats, pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const text = W.trace.file(res, {
+    header: [
+      `${path.basename(src)}: traçado de imagem do Weasel ${VERSION}.`,
+      `${pl(st.regions, 'região', 'regiões')}, da maior para a menor; 1 unidade = 1 px da imagem (${w}×${h}${o.scale === 1 ? '' : `, com -s ${o.scale}`}).`,
+      `opções: ${used.length ? used.join(' ') : 'as padrão'}`,
+      'a imagem original está na linha ref: tire o hidden para comparar.',
+    ],
+    ref: `ref original "${rel}"${o.scale !== 1 ? ` scale=${o.scale}` : ''} hidden`,
+    blur: o.blur || 0,
+  });
+  log(`${pl(st.regions, 'região', 'regiões')} (${pl(st.gradients, 'degradê', 'degradês')}, ${pl(st.translucent, 'semitransparente', 'semitransparentes')}), ${pl(st.shapes, 'forma', 'formas')}, ${pl(st.points, 'ponto', 'pontos')}, ${pl(st.colors, 'cor', 'cores')} · ${(st.ms / 1000).toFixed(1).replace('.', ',')} s`);
+  save(out, Buffer.from(text, 'utf8'), 'traçado de imagem', o.quiet);
+  o.tracedOut = path.resolve(out);
   return { code: 0, watched };
 }
 

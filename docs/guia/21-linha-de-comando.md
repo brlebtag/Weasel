@@ -176,6 +176,7 @@ Sem `-o`, o nome vem do arquivo de entrada, e o arquivo fica na pasta onde o ter
 | folha de conferência | `chefe_todas_conferencia.png`; num filme, `filme_conferencia.png` |
 | filme | `filme.mp4`; um quadro, `filme_00096.png` (o número do quadro); um plano, `filme_pulo.mp4` |
 | `--simplify` | `chefe_simple.weasel`, **na pasta do arquivo de entrada** |
+| o traçado de uma imagem | `raposa.weasel`, **na pasta da imagem** |
 
 Com `--variant all`, cada variante ganha o nome dela no fim: `coruja_neve.png`.
 
@@ -661,6 +662,38 @@ salvo chefe_menos.weasel  código simplificado · 11 KB
 - O `-o` precisa terminar em `.weasel` (`--simplify grava código: use -o arquivo.weasel`) e, sem `--force`, ser outro arquivo (`--simplify não grava em cima do arquivo de entrada: use outro nome no -o (ou --force)`).
 - O mesmo Simplificar existe no editor: [capítulo 22](22-editor.md#simplificar).
 
+## Traçar uma imagem
+
+Com uma imagem (`.png`, `.jpg`, `.jpeg` ou `.webp`) no lugar do `.weasel`, o Weasel **traça** a imagem e grava um `.weasel` novo, com as formas, as cores e os degradês dela. O [capítulo 2](02-formas.md#traçar-uma-imagem) mostra o que sai no arquivo.
+
+```bash
+node cli/weasel.js raposa.png --colors 32
+```
+
+```
+200 regiões (1 degradê, 42 semitransparentes), 213 formas, 6103 pontos, 145 cores · 1,8 s
+salvo raposa.weasel  traçado de imagem · 81 KB
+```
+
+| Opção | O que faz | Valores | Padrão |
+|---|---|---|---|
+| `-o`, `--out` | o arquivo novo | um nome terminado em `.weasel` | `raposa.weasel`, na pasta da imagem |
+| `--colors` | quantas cores procurar na imagem; menos cores, menos formas | de 2 a 256 | 48 |
+| `--tol` | quanto a curva pode se afastar da borda da imagem; maior, menos pontos | de 0.05 a 20 pixels | 0.5 |
+| `--blur` | desfoca o desenho todo (`layer arte blur=`), como o serrilhado da imagem: fica mais perto dela, e menos nítido | de 0 a 50 pixels | 0 (desligado) |
+| `-s`, `--scale` | muda o tamanho da imagem antes de traçar | de 0.05 a 16 | 1 |
+| `--force` | grava por cima de um arquivo que já existe | — | desligada |
+| `--quiet` | sem a linha do que saiu | — | desligada |
+| `-w`, `--watch` | traça de novo quando a imagem muda | — | desligada |
+
+- Sem `--force`, um arquivo que já existe fica como está (ele pode ser um desenho feito à mão): `raposa.weasel já existe: use outro nome no -o (ou --force para gravar por cima)`.
+- O `-o` precisa terminar em `.weasel`: `o traçado de uma imagem grava código: use -o raposa.weasel`.
+- As cores da `palette` são as da imagem; o `--colors` só diz quantas o traçado procura antes de juntar as parecidas e separar as regiões. Por isso o número de cores no fim é outro.
+- Uma imagem de 1 milhão de pixels (como a raposa, 1024×1024) traça em 1 a 3 segundos; uma de 3 milhões, em uns 10. Acima de 4 milhões, vem um aviso: `imagem grande (2400×2400, 5.8 Mpx): o traçado pode levar minutos e o arquivo passar de 1 MB; -s 0.5 reduz a imagem antes de traçar`.
+- Com `-s`, a `ref` do arquivo ganha o `scale=` que põe a imagem em cima do traçado.
+- A mesma imagem com as mesmas opções dá sempre o mesmo arquivo.
+- As opções de exportar (`-a`, `-f`, `-t`, `--trim`…) não valem aqui e são ignoradas.
+
 ## Ver enquanto edita
 
 ```bash
@@ -717,6 +750,7 @@ Algumas opções só fazem sentido com um formato ou com um tipo de arquivo. For
 | `--variant` | desenhos (num filme, a variante vai no `actor`, com `variant=`) | num filme, erro: `--variant vale para desenhos; num filme, escolha a variante no actor (variant=)`; com o nome de uma variante que o filme não tem, `variante "neve" não existe` |
 | `--watch` | um arquivo | com `-e` ou `-`, erro |
 | `--simplify` | um `-o` terminado em `.weasel` | erro: `--simplify grava código: use -o arquivo.weasel` |
+| `--colors`, `--tol`, `--blur` | uma imagem como entrada (`.png`, `.jpg`, `.jpeg`, `.webp`) | num `.weasel`, erro: `--colors vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)` |
 
 ## Resumo
 
@@ -726,5 +760,6 @@ Algumas opções só fazem sentido com um formato ou com um tipo de arquivo. For
 - `-a` escolhe a animação, `-s` a escala, `-t` o fundo transparente e `--trim` o recorte.
 - Vídeo precisa do ffmpeg; num filme, `--shot`, `--from` e `--to` escolhem o pedaço.
 - `--check` e `--info` conferem sem salvar, e `--watch` salva de novo a cada mudança.
+- Uma imagem no lugar do `.weasel` (`node cli/weasel.js raposa.png`) vira um `.weasel` traçado.
 
 [← Funções das contas](20-funcoes.md) · [Índice](README.md) · [Próximo: O editor →](22-editor.md)

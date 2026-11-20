@@ -103,6 +103,7 @@ O formato sai da extensão de `-o` (`.png`, `.jpg`, `.gif`, `.webp`, `.svg`, `.t
 | Só verificar o código | `node cli/weasel.js meu.weasel --check` |
 | Ver camadas, componentes, ossos, animações e eventos | `node cli/weasel.js meu.weasel --info` |
 | Menos pontos num desenho vetorizado (grava `vetorizado_simple.weasel`) | `node cli/weasel.js vetorizado.weasel --simplify 1.5` |
+| Traçar uma imagem: vira um desenho `.weasel` (formas, cores e degradês da imagem) | `node cli/weasel.js imagem.png -o desenho.weasel` |
 
 No `.tscn`, `--no-normal` tira o normal map, `--no-mirror` não gera o lado espelhado e `--rig` exporta com [esqueleto de verdade](#esqueleto-de-verdade-experimental) (`--no-rig` volta para os quadros); no `-f godot`, `--normal` acrescenta o normal map. Outras opções: `-q` (qualidade do JPG), `--layout grid|rows`, `--cols`, `--padding`, `--speed` (velocidade da pintura), `--dither` (GIF com pontilhado, menos faixas em brilhos e degradês), `--guides` (inclui camadas `guide`), `--refs` (desenha as imagens guia por baixo), `--trajectory[=pontos]` (o caminho dos pés de `feet=`, ou desses pontos, em todos os quadros, numerado), `--quiet`. A lista completa sai com `--help`. Com `--watch`, mudanças nos arquivos de `include` também disparam a exportação.
 

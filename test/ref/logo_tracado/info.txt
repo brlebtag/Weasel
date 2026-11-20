@@ -1,0 +1,7 @@
+canvas   512 × 512, fundo transparente
+gradientes gradient1 (linear), gradient2 (linear), gradient3 (linear)
+camadas  1
+  base            25 item(ns)
+formas   25
+animações nenhuma
+imagens guia original (../docs/logo.png, escondida)
