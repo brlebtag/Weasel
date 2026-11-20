@@ -2,7 +2,8 @@
 
 **Situação:** plano aprovado em 20/11/2026 (JavaScript, "Traçado de imagem", a imagem como entrada na linha de
 comando, no editor sobre uma `ref`). **Etapa 1 feita na 1.70.0** e **etapa 2 feita na 1.71.0** (20/11/2026; os
-números estão no fim de cada etapa). O plano está completo; fica de fora o que diz "O que fica de fora".
+números estão no fim de cada etapa). O plano está completo; fica de fora o que diz "O que fica de fora". Depois
+dele, na **1.72.0**, o "sem fundo" da skill entrou no Weasel (a seção "Depois do plano").
 
 ## A ideia
 
@@ -132,7 +133,7 @@ node cli/weasel.js imagem.png -o desenho.weasel
 - **As 3 decisões** ficaram como a recomendação: a `ref original "imagem.png" hidden` no arquivo (com `scale=` quando
   há `-s`); acima de 4 Mpx, um aviso que sugere `-s 0.5`; o `--blur` só na linha de comando, desligado.
 - **Fora da etapa:** o `--sem-fundo` da skill (tirar o fundo chapado) não entrou na linha de comando; continua só no
-  script da skill.
+  script da skill. (Entrou depois, na 1.72.0: ver "Depois do plano".)
 - **Um limite novo, igual no Python:** uma linha fina que cruza uma sombra semitransparente sai quebrada (a linha é
   "semitransparente" pela média do alfa nas bordas, é pintada antes da sombra, e a sombra se divide em duas). Está
   no guia; o teste passa a linha longe da sombra.
@@ -228,6 +229,53 @@ node cli/weasel.js imagem.png -o desenho.weasel
 - O gato pelo painel: 5,9 s de conta (o CLI leva 6,3 s), 1,1 s para entrar no código; durante a conta, a página
   pintou 711 quadros, todos até 16 ms (só a miniatura, no fim, levou 112 ms).
 - Mexer depressa nas Cores (5 valores em 300 ms) abriu só 2 workers: o primeiro foi encerrado.
+
+## Depois do plano: sem fundo (1.72.0)
+
+Pedido em 20/11/2026, depois da 1.71.0: a versão em JavaScript dá o mesmo resultado que a do Python e é 5 a 10 vezes
+mais rápida, mas a skill `imagem-para-weasel` ainda usava o Python para tirar um fundo chapado (o `--sem-fundo`), o
+caso comum das imagens geradas sem transparência. Escolha sua: "Texto + sem fundo" (o fundo no Weasel e o texto da
+skill atualizado).
+
+- **`js/trace.js`**, opção `noBg`: a conta do `vetorizar.py`, igual. A região com mais pixels na borda da imagem sai
+  do desenho se for chapada (sem degradê), opaca e tiver pelo menos metade da borda; saem também as da mesma cor (a
+  menos de 3 ΔE) com 10% da borda ou mais (um fundo que a figura divide em dois), mas não um pedaço de pelo branco
+  cortado pela beirada. As regiões de cima continuam desfazendo o serrilhado contra a cor dela, e os bolsões de fundo
+  fechados dentro da figura ficam. O resultado traz `bg` (a cor, ou `null`), e as regiões contadas são as que ficam.
+- **Linha de comando:** `--no-bg` (como os outros `--no-…`). O comentário do topo ganha `# sem fundo: #rrggbb`, a
+  mesma linha do script, então o `conferir.py` da skill põe o desenho sobre essa cor antes de comparar. A resposta diz
+  `fundo #rrggbb tirado`; sem um fundo chapado, um aviso diz que o traçado ficou com tudo.
+- **Editor:** a linha **Fundo** do painel, com a caixa *tirar o fundo chapado*; ao lado, a cor que saiu ou *nenhum*
+  (com o aviso embaixo). O comentário do bloco termina com `sem o fundo #rrggbb`. O painel lembra a caixa, como os
+  controles.
+- **Teste `_tracado`:** a imagem sintética sobre um fundo chapado: o fundo sai com a cor certa, o desenho sobre ela
+  fica a ΔE 1,1 da imagem, fora da figura nada é pintado, e o furo do anel (um bolsão) fica. Na imagem transparente,
+  `noBg` não muda nada. O CLI com `--no-bg` dá o mesmo traçado, com a linha do topo.
+
+**Conferido contra o Python** (`vetorizar.py --sem-fundo` e `--no-bg` nas mesmas imagens; 6 das 12 de teste postas
+sobre um fundo chapado, mais o tigre e o retrato, que já têm fundo branco, e a cachoeira e a paisagem, cenas sem
+fundo):
+
+| imagem | fundo (os dois) | ΔE Python | ΔE JS | Python | JS |
+|---|---|---|---|---|---|
+| raposa sobre branco | `#fffeff` | 0,76 | 0,73 | 13,1 s | 2,4 s |
+| mago sobre roxo | `#7a5292` | 0,74 | 0,78 | 12,3 s | 2,5 s |
+| baú sobre cinza | `#ecebec` | 0,73 | 0,74 | 14,8 s | 2,5 s |
+| soldado sobre branco | `#faf9fa` | 1,02 | 1,01 | 16,4 s | 2,8 s |
+| foguete sobre azul-escuro | `#1f223d` | 0,55 | 0,55 | 8,6 s | 1,9 s |
+| tigre | `#fefefe` | 3,13 | 3,14 | 4,8 s | 1,0 s |
+| retrato | `#ffffff` | 0,96 | 0,96 | 42,4 s | 9,0 s |
+| hambúrguer sobre creme | nenhum | 0,89 | 0,88 | 12,1 s | 2,8 s |
+| cachoeira | nenhum | 1,16 | 1,21 | 7,1 s | 1,7 s |
+| paisagem | nenhum | 0,82 | 0,82 | 8,5 s | 2,0 s |
+
+- O mesmo fundo nas 10 (a mesma cor nas 7 com fundo; nenhum nas 3 sem), o ΔE a ±0,05, e de 4,5 a 6 vezes mais
+  rápido (os tempos contam abrir o Python e o Node).
+- **O hambúrguer não perde o fundo, nas duas versões:** uma mancha branca atrás dele encosta na borda de cima e corta
+  o fundo creme em dois pedaços, e nenhum chega à metade da borda. É a regra do script; mudar a regra seria outra
+  conversa. O guia conta esse limite e o de "branco com branco".
+- No editor (Chrome, porta de teste): a raposa sobre branco, com a caixa marcada, deu `#fffeff` ao lado da caixa, a
+  miniatura com os cantos transparentes, e o bloco sem o branco na `palette`.
 
 ## O que fica de fora (por enquanto)
 

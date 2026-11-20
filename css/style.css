@@ -374,6 +374,8 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .trace-panel .tr-row > span { width: 50px; }
 .trace-panel .tr-row input[type=range] { flex: 1; min-width: 0; }
 .trace-panel .tr-row output { width: 54px; text-align: right; color: var(--dim); font: 12px var(--mono); }
+.trace-panel .tr-bgw { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.trace-panel .tr-bgw input { margin: 0; accent-color: var(--accent); }
 .trace-panel .tr-state { display: flex; align-items: center; gap: 8px; min-height: 18px; padding: 0 0 6px; }
 .trace-panel .tr-prog { flex: none; width: 120px; height: 8px; accent-color: var(--accent); }
 .trace-panel .tr-prog[hidden] { display: none; }

@@ -3,7 +3,7 @@
    - O painel mostra a imagem e o traçado lado a lado, com dois controles: Cores (o --colors da linha de comando) e
      Detalhe (o --tol ao contrário: mais detalhe, a curva mais perto da borda). A conta roda num worker
      (js/trace-worker.js), com uma barra de progresso; mexer num controle abandona a conta de antes. Enter (ou o
-     botão Traçar) aplica e Esc cancela, como no Simplificar.
+     botão Traçar) aplica e Esc cancela, como no Simplificar. A caixa Sem fundo tira o fundo chapado (o --no-bg).
    - A imagem é traçada no tamanho em que aparece no desenho (o scale= do ref, até 1:1), no máximo 4 Mpx.
    - O resultado vira uma camada nova (rascunho_trace), logo antes da primeira camada do desenho (logo na frente da
      automática, a mais de trás que uma camada pode ficar), com os pontos já no lugar, no tamanho e no giro do ref.
@@ -28,7 +28,7 @@
   const tToS = (t) => Math.round((100 * Math.log(TMAX / t)) / Math.log(TMAX / TMIN));
   const sToT = (s) => { const t = TMAX * Math.pow(TMIN / TMAX, s / 100); return t < 1 ? Math.round(t * 100) / 100 : Math.round(t * 10) / 10; };
   const num = (v) => String(v).replace('.', ',');
-  const last = { colors: T.DEFAULTS.colors, tol: T.DEFAULTS.tol };
+  const last = { colors: T.DEFAULTS.colors, tol: T.DEFAULTS.tol, noBg: false };
 
   let tr = null, panel = null, worker = null, job = 0, later = 0, noWorker = !WORKER || typeof Worker === 'undefined';
 
@@ -70,6 +70,7 @@
       + '<div class="tr-pics"><figure><canvas class="tr-in"></canvas><figcaption>imagem</figcaption></figure><figure><canvas class="tr-out"></canvas><figcaption>traçado</figcaption></figure></div>'
       + '<label class="tr-row" title="Quantas cores o traçado procura na imagem: menos cores, menos formas (o --colors da linha de comando)"><span>Cores</span><input type="range" class="tr-c" min="0" max="100" step="1" aria-label="Cores"><output class="tr-cv"></output></label>'
       + '<label class="tr-row" title="Quanto a curva segue a borda da imagem: mais detalhe, mais pontos (o --tol da linha de comando, ao contrário: o valor é quanto a curva pode se afastar da borda)"><span>Detalhe</span><input type="range" class="tr-d" min="0" max="100" step="1" aria-label="Detalhe"><output class="tr-dv"></output></label>'
+      + '<label class="tr-row" title="Tira o fundo chapado: a cor que ocupa a maior parte da borda da imagem (o --no-bg da linha de comando). Um fundo fechado dentro da figura, entre o braço e o corpo, fica."><span>Fundo</span><span class="tr-bgw"><input type="checkbox" class="tr-b">tirar o fundo chapado</span><output class="tr-bv"></output></label>'
       + '<div class="tr-state"><progress class="tr-prog" max="1" value="0"></progress><span class="tr-msg"></span></div>'
       + '<div class="tr-note" hidden></div>'
       + '<div class="rp-foot"><button type="button" class="tr-ok">Traçar</button><button type="button" class="tr-no">Cancelar</button><small>vira uma camada nova, no lugar da imagem (Ctrl+Z desfaz)</small></div>';
@@ -77,6 +78,8 @@
     const rc = panel.querySelector('.tr-c'), rd = panel.querySelector('.tr-d');
     rc.addEventListener('input', () => set({ colors: sToC(Number(rc.value)) }, true));
     rd.addEventListener('input', () => set({ tol: sToT(Number(rd.value)) }, true));
+    const rb = panel.querySelector('.tr-b');
+    rb.addEventListener('change', () => set({ noBg: rb.checked }, false));
     panel.querySelector('.x').addEventListener('click', () => close(true));
     panel.querySelector('.tr-no').addEventListener('click', () => close(true));
     panel.querySelector('.tr-ok').addEventListener('click', apply);
@@ -86,16 +89,20 @@
     panel.querySelector('.tr-d').value = String(tToS(tr.tol));
     panel.querySelector('.tr-cv').textContent = String(tr.colors);
     panel.querySelector('.tr-dv').textContent = `${num(tr.tol)} px`;
+    panel.querySelector('.tr-b').checked = tr.noBg;
+    const bv = panel.querySelector('.tr-bv');
+    bv.textContent = tr.noBg && tr.res && !tr.busy ? tr.res.bg || 'nenhum' : '';
+    bv.title = tr.noBg && tr.res && tr.res.bg ? `A cor do fundo que ficou de fora: ${tr.res.bg}` : '';
   }
   // arrastando um controle, a conta espera o mouse parar um pouquinho
   function set(ch, soon) {
     if (!tr) return;
     Object.assign(tr, ch);
     Object.assign(last, ch);
+    tr.busy = true;
     showValues();
     clearTimeout(later);
     stop();
-    tr.busy = true;
     progress(0, 'esperando');
     if (soon) later = setTimeout(() => { if (tr) run(); }, 250); else run();
   }
@@ -127,7 +134,7 @@
   }
   function run() {
     stop();
-    const id = job, img = tr.img, opts = { colors: tr.colors, tol: tr.tol };
+    const id = job, img = tr.img, opts = { colors: tr.colors, tol: tr.tol, noBg: tr.noBg };
     tr.busy = true;
     tr.t0 = performance.now();
     progress(0, 'cores');
@@ -181,9 +188,12 @@
     panel.querySelector('.tr-prog').hidden = true;
     const pl = (n, one, many) => `${n.toLocaleString('pt-BR')} ${n === 1 ? one : many}`;
     panel.querySelector('.tr-msg').textContent = `${pl(s.shapes, 'forma', 'formas')} · ${pl(s.points, 'ponto', 'pontos')} · ${pl(s.colors, 'cor', 'cores')} na palette${s.gradients ? ` · ${pl(s.gradients, 'degradê', 'degradês')}` : ''} · ${num(tr.secs.toFixed(1))} s`;
-    const note = panel.querySelector('.tr-note');
-    note.hidden = s.shapes < MANY;
-    note.textContent = s.shapes >= MANY ? 'Muitas formas: o código fica grande e o editor, mais lento. Menos Cores (ou menos Detalhe) ajuda.' : '';
+    showValues();
+    const note = panel.querySelector('.tr-note'), notes = [];
+    if (tr.noBg && !res.bg) notes.push('Não achei um fundo chapado (uma cor só, opaca, em pelo menos metade da borda da imagem): o traçado ficou com tudo.');
+    if (s.shapes >= MANY) notes.push('Muitas formas: o código fica grande e o editor, mais lento. Menos Cores (ou menos Detalhe) ajuda.');
+    note.hidden = !notes.length;
+    note.textContent = notes.join(' ');
     panel.querySelector('.tr-ok').disabled = !s.shapes;
     const out = panel.querySelector('.tr-out');
     out.classList.remove('old');
@@ -203,7 +213,7 @@
     if (!panel) build();
     if (tr) close(false);
     const { r, info } = t;
-    tr = { name: r.name, file: r.file, colors: last.colors, tol: last.tol, img: pixels(info, r.scale), res: null, busy: false, go: false };
+    tr = { name: r.name, file: r.file, colors: last.colors, tol: last.tol, noBg: last.noBg, img: pixels(info, r.scale), res: null, busy: false, go: false };
     const src = panel.querySelector('.tr-src');
     src.textContent = `${r.name} · ${tr.img.width}×${tr.img.height}${tr.img.width !== info.w ? ` de ${info.w}×${info.h}` : ''}`;
     src.title = tr.img.width !== info.w ? `A imagem tem ${info.w}×${info.h} px e é traçada em ${tr.img.width}×${tr.img.height}: o tamanho em que ela aparece no desenho (scale=${r.scale})${info.w * info.h * r.scale * r.scale > MAX_PX ? `, até ${MAX_PX / 1e6} Mpx` : ''}.` : `A imagem é traçada no tamanho dela (${info.w}×${info.h} px).`;
@@ -273,7 +283,7 @@
       hole: named(hname, '_hole'),
     });
     const layer = free(`${tr.name}_trace`, true);
-    const block = [`# traçado da imagem do ref ${tr.name} (Objeto › Traçado de imagem: Cores ${tr.colors}, Detalhe ${num(tr.tol)} px)`];
+    const block = [`# traçado da imagem do ref ${tr.name} (Objeto › Traçado de imagem: Cores ${tr.colors}, Detalhe ${num(tr.tol)} px${res.bg ? `, sem o fundo ${res.bg}` : ''})`];
     for (let i = 0; i < pal.length; i += 8) block.push('palette ' + pal.slice(i, i + 8).join(' '));
     block.push(`layer ${layer}`, ...body);
     // logo antes da primeira camada (com os comentários de cima dela); sem camadas, no fim

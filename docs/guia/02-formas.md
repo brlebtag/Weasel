@@ -627,14 +627,27 @@ A ordem das linhas é a **ordem de pintura**: as partes semitransparentes primei
 | `-o` | o arquivo novo | um nome terminado em `.weasel` | `imagem.weasel`, ao lado da imagem |
 | `--colors` | quantas cores procurar na imagem; menos cores, menos formas | de 2 a 256 | 48 |
 | `--tol` | quanto a curva pode se afastar da borda da imagem; maior, menos pontos | de 0.05 a 20 pixels | 0.5 |
+| `--no-bg` | tira o fundo chapado da imagem | — | desligado |
 
 As outras opções estão no [capítulo 21](21-linha-de-comando.md#traçar-uma-imagem).
+
+Uma imagem com **fundo chapado** (branco, roxo…, sem transparência) traça o fundo também, como um retângulo atrás de tudo. Com `--no-bg`, ele sai:
+
+```bash
+node cli/weasel.js personagem.png --no-bg
+```
+
+- O fundo é a cor que ocupa a maior parte da **borda** da imagem. Ela não vira forma, e o desenho fica com fundo transparente. Se a figura divide o fundo em dois (o fundo dos dois lados de um personagem que encosta em cima e embaixo), os dois pedaços saem.
+- O comentário do topo ganha a linha `# sem fundo: #ffffff`, com a cor que saiu.
+- Um **bolsão** de fundo fechado dentro da figura (entre o braço e o corpo, o furo de um anel) fica. Apague a forma dele, se precisar.
+- Uma imagem que já tem fundo transparente não precisa do `--no-bg`: lá, o fundo já não vira forma.
 
 O traçado tem limites:
 
 - Sai **uma figura parada, numa camada só**, sem ossos. Para animar, o desenho precisa ser cortado em peças, uma por osso ([capítulo 8](08-ossos.md)), à mão.
 - Uma **foto**, um JPEG com muitos artefatos ou uma imagem cheia de detalhes vira milhares de formas e um arquivo grande (um retrato de 1633×2000 deu 3.665 formas e 833 KB). Reduza a imagem com `-s 0.5`, ou use `--colors` menor e `--tol` maior.
 - Um **traço mais fino que um pixel** sai um pouco mais claro e mais largo. E uma linha fina que cruza uma sombra semitransparente sai quebrada.
+- O `--no-bg` não separa **branco de branco**: uma parte da figura da mesma cor do fundo e encostada nele, sem uma linha entre os dois, sai junto com o fundo. E o fundo precisa ocupar, num pedaço só, pelo menos **metade da borda**: se a figura encosta na beirada e corta o fundo em pedaços menores, nada sai, e o comando avisa.
 
 ## O que vale em toda forma
 

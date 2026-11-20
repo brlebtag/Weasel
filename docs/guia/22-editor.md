@@ -279,6 +279,7 @@ O painel mostra a imagem e o traçado lado a lado:
 
 - **Cores** é quantas cores o traçado procura na imagem (o `--colors`): menos cores, menos formas.
 - **Detalhe** é quanto a curva segue a borda da imagem. O número é quanto ela pode se afastar, em pixels (o `--tol`): mais detalhe, mais pontos.
+- **Fundo**: a caixa *tirar o fundo chapado* (o `--no-bg`) deixa de fora a cor que ocupa a maior parte da borda da imagem. Ao lado aparece a cor que saiu; sem um fundo chapado na imagem, aparece *nenhum*, com um aviso, e o traçado fica com tudo.
 - A conta roda **em segundo plano**, com uma barra de progresso, e o desenho continua respondendo. Mexer num controle começa de novo. Uma imagem de 1 Mpx leva de 1 a 3 segundos.
 - Embaixo aparece o que saiu: formas, pontos, cores na `palette` e degradês. Acima de 2.000 formas, o painel avisa que o código fica grande e o editor, mais lento.
 - **Enter** (ou **Traçar**) aplica; **Esc** desiste.
@@ -295,6 +296,7 @@ shape c=color5 : 436.15,150.65 442.49,159.34 …
 - As formas já ficam **no lugar da imagem**: na posição, no tamanho (`scale=`) e no giro (`rot=`) do `ref`.
 - A imagem é traçada no tamanho em que aparece no desenho: com `scale=0.5`, na metade (até o tamanho dela e até 4 Mpx).
 - Uma cor igual (o mesmo `#hex`) a uma que a `palette` já tem usa o nome de lá. As outras ganham nomes livres (`color1`…), e os degradês e os buracos também (`gradient1`…, `_hole1`…).
+- Com a caixa **Fundo** marcada, o comentário termina com a cor que saiu (`…, Detalhe 0,5 px, sem o fundo #ffffff)`).
 - A linha `ref` fica como estava. Um **Ctrl+Z** desfaz o traçado inteiro.
 - Os limites são os da linha de comando ([capítulo 2](02-formas.md#traçar-uma-imagem)): uma figura parada, numa camada só, sem ossos.
 

@@ -15,7 +15,7 @@
 (function (W) {
   'use strict';
 
-  // Os padrões medidos no protótipo (varredura nas 12 imagens). Só colors, tol e blur saem na linha de comando.
+  // Os padrões medidos no protótipo (varredura nas 12 imagens). Só colors, tol, blur e noBg saem na linha de comando.
   const DEFAULTS = {
     colors: 48,       // cores do k-means na parte opaca
     softColors: 10,   // ... e na semitransparente
@@ -34,6 +34,7 @@
     start: 1.5,       // Douglas-Peucker dos primeiros pontos
     ext: 3,           // quantos px cada região continua por baixo das de depois
     blur: 0,          // layer ... blur= no desenho todo
+    noBg: false,      // tira o fundo chapado (o --sem-fundo do protótipo; o --no-bg da linha de comando)
   };
 
   // ---------------------------------------------------------------- cor
@@ -1107,10 +1108,34 @@
       (translucent(b) - translucent(a)) || (area(b) - area(a)) || (cnt[b] - cnt[a]) || (a - b));
     const rank = new Int32Array(n);
     order.forEach((i, r) => { rank[i] = r; });
+    // ---- sem fundo (o.noBg): a região com a maior parte da borda da imagem, se for chapada, opaca e ocupar pelo
+    // menos metade da borda, não é desenhada; nem as da mesma cor (a menos de 3 ΔE) com 10% da borda ou mais (um fundo
+    // que a figura divide em dois, mas não um pedaço de pelo branco cortado pela beirada). As outras regiões continuam
+    // desfazendo o serrilhado contra a cor dela. Bolsões de fundo fechados dentro da figura ficam.
+    const drop = new Uint8Array(n);
+    let bg = null, ndrop = 0;
+    if (o.noBg) {
+      const ec = new Int32Array(n);
+      let ne = 0;
+      const edge = (p) => { const l = L[p]; if (l >= 0) { ec[l]++; ne++; } };
+      for (let x = 0; x < w; x++) { edge(x); edge((h - 1) * w + x); }
+      for (let y = 0; y < h; y++) { edge(y * w); edge(y * w + w - 1); }
+      let j = 0;
+      for (let i = 1; i < n; i++) if (ec[i] > ec[j]) j = i;
+      if (ne && ec[j] >= 0.5 * 2 * (h + w) && flat[j * 4 + 3] > 0.97 * 255 && !grad[j]) {
+        const lj = new Float64Array(3), li = new Float64Array(3);
+        labOf(flat[j * 4], flat[j * 4 + 1], flat[j * 4 + 2], lj, 0);
+        for (let i = 0; i < n; i++) {
+          labOf(flat[i * 4], flat[i * 4 + 1], flat[i * 4 + 2], li, 0);
+          if (i === j || (Math.hypot(li[0] - lj[0], li[1] - lj[1], li[2] - lj[2]) < 3 && ec[i] >= 0.1 * ne && flat[i * 4 + 3] > 0.97 * 255)) { drop[i] = 1; ndrop++; }
+        }
+        bg = hexa(flat[j * 4], flat[j * 4 + 1], flat[j * 4 + 2], 255);
+      }
+    }
     // ---- a palette: cores chapadas a menos de 1 ΔE (com o mesmo alfa) dividem o nome
     const colorOf = new Int32Array(n).fill(-1), palette = [], palKey = [], c3 = new Float64Array(3);
     for (const i of order) {
-      if (grad[i]) continue;
+      if (grad[i] || drop[i]) continue;
       const hx = hexa(flat[i * 4], flat[i * 4 + 1], flat[i * 4 + 2], flat[i * 4 + 3]);
       labOf(flat[i * 4], flat[i * 4 + 1], flat[i * 4 + 2], c3, 0);
       const al = hx.slice(7);
@@ -1126,6 +1151,7 @@
     for (let r = 0; r < order.length; r++) {
       const i = order[r];
       tell(STEP.models + (1 - STEP.models) * (r / order.length), 'contornos');
+      if (drop[i]) continue;
       const { shapes, holes } = traceRegion(i, ctx, [bx0[i], by0[i], bx1[i], by1[i]]);
       if (!shapes.length) continue;
       let paint;
@@ -1151,7 +1177,8 @@
     tell(1, 'pronto');
     let ntrans = 0;
     for (let i = 0; i < n; i++) if (translucent(i)) ntrans++;
-    const res = { width: w, height: h, palette, items, stats: { regions: n, gradients: ngrad, translucent: ntrans, shapes: nshapes, points: npts, colors: palette.length, ms: Date.now() - t0 } };
+    // bg: a cor do fundo que ficou de fora ('#rrggbb'), ou null
+    const res = { width: w, height: h, palette, items, bg, stats: { regions: n - ndrop, gradients: ngrad, translucent: ntrans, shapes: nshapes, points: npts, colors: palette.length, ms: Date.now() - t0 } };
     // o.body false: sem as linhas (o editor monta as dele com lines(), no lugar e com os nomes do desenho)
     if (o.body !== false) res.body = lines(res);
     return res;

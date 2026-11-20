@@ -681,6 +681,7 @@ salvo raposa.weasel  traçado de imagem · 81 KB
 | `--colors` | quantas cores procurar na imagem; menos cores, menos formas | de 2 a 256 | 48 |
 | `--tol` | quanto a curva pode se afastar da borda da imagem; maior, menos pontos | de 0.05 a 20 pixels | 0.5 |
 | `--blur` | desfoca o desenho todo (`layer arte blur=`), como o serrilhado da imagem: fica mais perto dela, e menos nítido | de 0 a 50 pixels | 0 (desligado) |
+| `--no-bg` | tira o fundo chapado: a cor que ocupa a maior parte da borda da imagem não vira forma ([capítulo 2](02-formas.md#traçar-uma-imagem)) | — | desligado |
 | `-s`, `--scale` | muda o tamanho da imagem antes de traçar | de 0.05 a 16 | 1 |
 | `--force` | grava por cima de um arquivo que já existe | — | desligada |
 | `--quiet` | sem a linha do que saiu | — | desligada |
@@ -691,6 +692,7 @@ salvo raposa.weasel  traçado de imagem · 81 KB
 - As cores da `palette` são as da imagem; o `--colors` só diz quantas o traçado procura antes de juntar as parecidas e separar as regiões. Por isso o número de cores no fim é outro.
 - Uma imagem de 1 milhão de pixels (como a raposa, 1024×1024) traça em 1 a 3 segundos; uma de 3 milhões, em uns 10. Acima de 4 milhões, vem um aviso: `imagem grande (2400×2400, 5.8 Mpx): o traçado pode levar minutos e o arquivo passar de 1 MB; -s 0.5 reduz a imagem antes de traçar`.
 - Com `-s`, a `ref` do arquivo ganha o `scale=` que põe a imagem em cima do traçado.
+- Com `--no-bg`, a resposta diz a cor que saiu (`…, 183 cores, fundo #ffffff tirado · 2,1 s`), e o comentário do arquivo ganha a linha `# sem fundo: #ffffff`. Sem um fundo chapado na imagem, o traçado fica com tudo e vem um aviso: `--no-bg: não achei um fundo chapado (uma cor só, opaca, em pelo menos metade da borda da imagem): o traçado ficou com tudo`.
 - A mesma imagem com as mesmas opções dá sempre o mesmo arquivo.
 - As opções de exportar (`-a`, `-f`, `-t`, `--trim`…) não valem aqui e são ignoradas.
 

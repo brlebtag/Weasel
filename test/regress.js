@@ -1239,6 +1239,42 @@ async function traceCase() {
   const body = (t) => t.slice(t.indexOf('\ncanvas ')).replace(/^ref .*\n/m, '');
   const again = W.trace.file(W.trace.trace(await pixels(fs.readFileSync(png))), {});
   record(r.status === 0 && fs.existsSync(wsl) && body(fs.readFileSync(wsl, 'utf8')) === body('\n' + again), '_tracado/cli', `o CLI deu outro traçado (saída ${r.status}): ${(r.stderr || '').trim().slice(0, 200)}`);
+  // sem fundo (noBg; --no-bg): a mesma imagem sobre um fundo chapado e opaco. O fundo sai (com a cor dele), o desenho
+  // posto sobre essa cor fica perto da imagem, e fora da figura quase nada é pintado; o furo do anel é um bolsão de
+  // fundo fechado dentro da figura e fica pintado, de propósito. Na imagem transparente não há fundo para tirar: noBg
+  // não muda nada. O CLI dá o mesmo traçado, com "# sem fundo:" no topo.
+  const BG = [244, 239, 230];
+  const flat = new Uint8ClampedArray(data.length);
+  for (let p = 0; p < data.length; p += 4) {
+    const a = data[p + 3] / 255;
+    for (let c = 0; c < 3; c++) flat[p + c] = Math.round(data[p + c] * a + BG[c] * (1 - a));
+    flat[p + 3] = 255;
+  }
+  const nb = W.trace.trace({ width: Wd, height: Hd, data: flat }, { noBg: true });
+  const textNb = W.trace.file(nb, { header: ['imagem sintética do teste, sobre um fundo chapado, sem o fundo'] });
+  await check('_tracado', 'tracado_sem_fundo.weasel', 'text', textNb);
+  const mNb = W.lang.parse(textNb, { file: 'tracado_sem_fundo.weasel' });
+  const rNb = X.imageCanvas(mNb, null, 0, { transparent: true }).getContext('2d').getImageData(0, 0, Wd, Hd).data;
+  let sNb = 0, outside = 0, painted = 0, pocket = 0, kept = 0;
+  for (let p = 0; p < flat.length; p += 4) {
+    const a = rNb[p + 3] / 255, B = lab(...[0, 1, 2].map((c) => rNb[p + c] * a + BG[c] * (1 - a)));
+    const A2 = lab(flat[p], flat[p + 1], flat[p + 2]);
+    sNb += Math.hypot(A2[0] - B[0], A2[1] - B[1], A2[2] - B[2]);
+    const q = p / 4, ring = Math.hypot((q % Wd) + 0.5 - 88, Math.floor(q / Wd) + 0.5 - 42);
+    if (ring < 7.5) { pocket++; if (rNb[p + 3] > 127) kept++; } else if (data[p + 3] < 8 && ring > 9.5) { outside++; if (rNb[p + 3] > 127) painted++; }
+  }
+  const dNb = sNb / (Wd * Hd), bgOk = !!nb.bg && hexc(nb.bg).every((v, i) => Math.abs(v - BG[i]) <= 2);
+  record(bgOk && dNb < 2 && painted < 0.02 * outside && kept > 0.9 * pocket, '_tracado/sem-fundo', `fundo ${nb.bg} (era ${BG}), ΔE médio ${dNb.toFixed(2)} (limite 2), pintado fora da figura ${painted} de ${outside} px, o furo do anel ${kept} de ${pocket} px`);
+  const plain = W.trace.trace({ width: Wd, height: Hd, data }, { noBg: true });
+  record(plain.bg === null && W.trace.file(plain, { header: ['imagem sintética do teste'] }) === text, '_tracado/sem-fundo-transparente', `noBg mudou a imagem transparente (fundo ${plain.bg})`);
+  const pngNb = path.join(dir, 'sintetica_fundo.png'), wslNb = path.join(dir, 'sintetica_fundo.weasel');
+  id.data.set(flat);
+  cx.putImageData(id, 0, 0);
+  fs.writeFileSync(pngNb, cv.toBuffer('image/png'));
+  const rn = spawnSync(process.execPath, [CLI, pngNb, '-o', wslNb, '--no-bg', '--force', '--quiet'], { encoding: 'utf8' });
+  const outNb = fs.existsSync(wslNb) ? fs.readFileSync(wslNb, 'utf8') : '';
+  const againNb = W.trace.file(W.trace.trace(await pixels(fs.readFileSync(pngNb)), { noBg: true }), {});
+  record(rn.status === 0 && outNb.includes(`\n# sem fundo: ${nb.bg}\n`) && body(outNb) === body('\n' + againNb), '_tracado/cli-sem-fundo', `o CLI com --no-bg deu outro traçado (saída ${rn.status}): ${(rn.stderr || '').trim().slice(0, 200)}`);
 }
 
 async function main() {

@@ -68,6 +68,8 @@ Traçado de imagem (a entrada é uma imagem .png, .jpg ou .webp):
       --colors <n>        quantas cores procurar na imagem (padrão 48); menos cores, menos formas
       --tol <px>          quanto a curva pode se afastar da borda (padrão 0.5); maior, menos pontos
       --blur <px>         desfoca o desenho todo (layer blur=), como o serrilhado (padrão 0)
+      --no-bg             tira o fundo chapado: a cor que ocupa a maior parte da borda da imagem
+                          (um fundo dentro da figura, entre o braço e o corpo, fica)
   -s, --scale <n>         reduz (ou aumenta) a imagem antes de traçar
 
 Godot:
@@ -145,6 +147,7 @@ Exemplos:
   weasel vetorizado.weasel --simplify 1.5           -> vetorizado_simple.weasel
   weasel rascunho.png                               -> rascunho.weasel
   weasel foto.jpg -o arte.weasel --colors 24 -s 0.5
+  weasel personagem.png --no-bg                     -> personagem.weasel, sem o fundo branco
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -157,7 +160,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    simplify: null, colors: null, tol: null, blur: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
+    simplify: null, colors: null, tol: null, blur: null, noBg: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -228,6 +231,7 @@ function parseArgs(argv) {
       case '--colors': o.colors = Math.round(num('--colors', val(), 2, 256)); break;
       case '--tol': o.tol = num('--tol', val(), 0.05, 20); break;
       case '--blur': o.blur = num('--blur', val(), 0, 50); break;
+      case '--no-bg': o.noBg = true; break;
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -648,7 +652,7 @@ async function exportModel(model, o, format, base, sfx) {
 // Uma rodada completa: lê, confere e exporta. Devolve o código de saída e os arquivos lidos.
 async function run(o) {
   if (o.input && TRACE_EXT.includes(path.extname(o.input).toLowerCase())) return traceImage(o);
-  for (const [k, flag] of [['colors', '--colors'], ['tol', '--tol'], ['blur', '--blur']]) if (o[k] !== null) usage(`${flag} vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)`);
+  for (const [k, flag] of [['colors', '--colors'], ['tol', '--tol'], ['blur', '--blur'], ['noBg', '--no-bg']]) if (o[k] !== null) usage(`${flag} vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)`);
   const watched = new Set();
   const source = readSource(o);
   if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
@@ -770,9 +774,10 @@ async function traceImage(o) {
   const opts = {};
   if (o.colors !== null) opts.colors = o.colors;
   if (o.tol !== null) opts.tol = o.tol;
+  if (o.noBg) opts.noBg = true;
   let res;
   try { res = W.trace.trace(cx.getImageData(0, 0, w, h), opts); } catch (e) { throw new Fail(e.message, 1); }
-  const used = [o.colors !== null && `--colors ${o.colors}`, o.tol !== null && `--tol ${o.tol}`, o.blur && `--blur ${o.blur}`, o.scale !== 1 && `-s ${o.scale}`].filter(Boolean);
+  const used = [o.colors !== null && `--colors ${o.colors}`, o.tol !== null && `--tol ${o.tol}`, o.blur && `--blur ${o.blur}`, o.noBg && '--no-bg', o.scale !== 1 && `-s ${o.scale}`].filter(Boolean);
   const rel = path.relative(path.dirname(path.resolve(out)), path.resolve(src)).split(path.sep).join('/');
   const st = res.stats, pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const text = W.trace.file(res, {
@@ -780,12 +785,14 @@ async function traceImage(o) {
       `${path.basename(src)}: traçado de imagem do Weasel ${VERSION}.`,
       `${pl(st.regions, 'região', 'regiões')}, da maior para a menor; 1 unidade = 1 px da imagem (${w}×${h}${o.scale === 1 ? '' : `, com -s ${o.scale}`}).`,
       `opções: ${used.length ? used.join(' ') : 'as padrão'}`,
+      ...(res.bg ? [`sem fundo: ${res.bg}`] : []),
       'a imagem original está na linha ref: tire o hidden para comparar.',
     ],
     ref: `ref original "${rel}"${o.scale !== 1 ? ` scale=${o.scale}` : ''} hidden`,
     blur: o.blur || 0,
   });
-  log(`${pl(st.regions, 'região', 'regiões')} (${pl(st.gradients, 'degradê', 'degradês')}, ${pl(st.translucent, 'semitransparente', 'semitransparentes')}), ${pl(st.shapes, 'forma', 'formas')}, ${pl(st.points, 'ponto', 'pontos')}, ${pl(st.colors, 'cor', 'cores')} · ${(st.ms / 1000).toFixed(1).replace('.', ',')} s`);
+  log(`${pl(st.regions, 'região', 'regiões')} (${pl(st.gradients, 'degradê', 'degradês')}, ${pl(st.translucent, 'semitransparente', 'semitransparentes')}), ${pl(st.shapes, 'forma', 'formas')}, ${pl(st.points, 'ponto', 'pontos')}, ${pl(st.colors, 'cor', 'cores')}${res.bg ? `, fundo ${res.bg} tirado` : ''} · ${(st.ms / 1000).toFixed(1).replace('.', ',')} s`);
+  if (o.noBg && !res.bg) log(paint('33', '--no-bg: não achei um fundo chapado (uma cor só, opaca, em pelo menos metade da borda da imagem): o traçado ficou com tudo'));
   save(out, Buffer.from(text, 'utf8'), 'traçado de imagem', o.quiet);
   o.tracedOut = path.resolve(out);
   return { code: 0, watched };
