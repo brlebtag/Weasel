@@ -14,6 +14,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
+| [Traçado de imagem](tracado-de-imagem.md) | uma imagem em vector art vira um desenho do Weasel, o mais fiel possível (o protótipo erra ΔE 1,67 em média, contra 9,66 do `vetoriza.py` do ForestPatrol) | plano aprovado em 20/11/2026: etapa 1 (o módulo e a linha de comando, 1.70.0) e etapa 2 (o editor, 1.71.0) esperando o seu "pode fazer"; 3 pontos pequenos a decidir |
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
 | [Problemas achados no código](problemas-achados.md) | os defeitos e os casos sem aviso que as outras sessões e o diagnóstico do guia acharam de passagem | lista de 17/11/2026, sendo resolvida (pedido de 17/11): J na 1.67.10, F, G e H na 1.67.11, os consertos pequenos na 1.67.12, os avisos e o 2 na 1.67.13: **lista resolvida**; o tema claro (Exibir › Tema) na 1.68.0 |
