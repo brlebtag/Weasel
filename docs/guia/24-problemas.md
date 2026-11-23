@@ -1453,7 +1453,7 @@ node cli/weasel.js bola.weasel -a quica -o quica.gif -s 0.5
 aviso: o esqueleto do Godot não gira em 3D: yaw, pitch, z e iso ficam parados (use rig=frames)
 ```
 
-**Por quê:** o esqueleto de verdade (`rig=bones`) usa os ossos do Godot, que não giram em 3D.
+**Por quê:** o esqueleto de verdade (`rig=bones`) usa os ossos do Godot, que não giram em 3D. Nas [três vistas](16-jogo-avancado.md#girar-em-3d-pitch-yaw-tip-e-turns) é diferente: lá o giro em 3D já vem pronto para cada vista, e vira o giro, a escala e o `skew` dos ossos do Godot, sem aviso.
 
 **Como resolver:** exporte com `rig=frames` (o padrão), que leva cada quadro pronto.
 

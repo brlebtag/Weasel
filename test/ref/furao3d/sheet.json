@@ -4,20 +4,20 @@
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -54,22 +54,22 @@
     },
     "idle_down_01": {
       "frame": {
-        "x": 42,
+        "x": 43,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -106,22 +106,22 @@
     },
     "idle_down_02": {
       "frame": {
-        "x": 82,
+        "x": 84,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -158,22 +158,22 @@
     },
     "idle_down_03": {
       "frame": {
-        "x": 122,
+        "x": 125,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -210,22 +210,22 @@
     },
     "idle_down_04": {
       "frame": {
-        "x": 162,
+        "x": 166,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -262,22 +262,22 @@
     },
     "idle_down_05": {
       "frame": {
-        "x": 202,
+        "x": 207,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -314,22 +314,22 @@
     },
     "idle_down_06": {
       "frame": {
-        "x": 242,
+        "x": 248,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -366,22 +366,22 @@
     },
     "idle_down_07": {
       "frame": {
-        "x": 282,
+        "x": 289,
         "y": 2,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -419,21 +419,21 @@
     "idle_right_00": {
       "frame": {
         "x": 2,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -470,22 +470,22 @@
     },
     "idle_right_01": {
       "frame": {
-        "x": 42,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 43,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -522,22 +522,22 @@
     },
     "idle_right_02": {
       "frame": {
-        "x": 82,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 84,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -574,22 +574,22 @@
     },
     "idle_right_03": {
       "frame": {
-        "x": 122,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 125,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -626,22 +626,22 @@
     },
     "idle_right_04": {
       "frame": {
-        "x": 162,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 166,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -678,22 +678,22 @@
     },
     "idle_right_05": {
       "frame": {
-        "x": 202,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 207,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -730,22 +730,22 @@
     },
     "idle_right_06": {
       "frame": {
-        "x": 242,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 248,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -782,22 +782,22 @@
     },
     "idle_right_07": {
       "frame": {
-        "x": 282,
-        "y": 38,
-        "w": 38,
-        "h": 34
+        "x": 289,
+        "y": 43,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -835,21 +835,21 @@
     "idle_up_00": {
       "frame": {
         "x": 2,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -886,22 +886,22 @@
     },
     "idle_up_01": {
       "frame": {
-        "x": 42,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 43,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -938,22 +938,22 @@
     },
     "idle_up_02": {
       "frame": {
-        "x": 82,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 84,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -990,22 +990,22 @@
     },
     "idle_up_03": {
       "frame": {
-        "x": 122,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 125,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1042,22 +1042,22 @@
     },
     "idle_up_04": {
       "frame": {
-        "x": 162,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 166,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1094,22 +1094,22 @@
     },
     "idle_up_05": {
       "frame": {
-        "x": 202,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 207,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1146,22 +1146,22 @@
     },
     "idle_up_06": {
       "frame": {
-        "x": 242,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 248,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1198,22 +1198,22 @@
     },
     "idle_up_07": {
       "frame": {
-        "x": 282,
-        "y": 74,
-        "w": 38,
-        "h": 34
+        "x": 289,
+        "y": 84,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1251,21 +1251,21 @@
     "walk_down_00": {
       "frame": {
         "x": 2,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1305,22 +1305,22 @@
     },
     "walk_down_01": {
       "frame": {
-        "x": 42,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 43,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1357,22 +1357,22 @@
     },
     "walk_down_02": {
       "frame": {
-        "x": 82,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 84,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1409,22 +1409,22 @@
     },
     "walk_down_03": {
       "frame": {
-        "x": 122,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 125,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1461,22 +1461,22 @@
     },
     "walk_down_04": {
       "frame": {
-        "x": 162,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 166,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1516,22 +1516,22 @@
     },
     "walk_down_05": {
       "frame": {
-        "x": 202,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 207,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1568,22 +1568,22 @@
     },
     "walk_down_06": {
       "frame": {
-        "x": 242,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 248,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1620,22 +1620,22 @@
     },
     "walk_down_07": {
       "frame": {
-        "x": 282,
-        "y": 110,
-        "w": 38,
-        "h": 34
+        "x": 289,
+        "y": 125,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1673,21 +1673,21 @@
     "walk_right_00": {
       "frame": {
         "x": 2,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1727,22 +1727,22 @@
     },
     "walk_right_01": {
       "frame": {
-        "x": 42,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 43,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1779,22 +1779,22 @@
     },
     "walk_right_02": {
       "frame": {
-        "x": 82,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 84,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1831,22 +1831,22 @@
     },
     "walk_right_03": {
       "frame": {
-        "x": 122,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 125,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1883,22 +1883,22 @@
     },
     "walk_right_04": {
       "frame": {
-        "x": 162,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 166,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1938,22 +1938,22 @@
     },
     "walk_right_05": {
       "frame": {
-        "x": 202,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 207,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -1990,22 +1990,22 @@
     },
     "walk_right_06": {
       "frame": {
-        "x": 242,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 248,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2042,22 +2042,22 @@
     },
     "walk_right_07": {
       "frame": {
-        "x": 282,
-        "y": 146,
-        "w": 38,
-        "h": 34
+        "x": 289,
+        "y": 166,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2095,21 +2095,21 @@
     "walk_up_00": {
       "frame": {
         "x": 2,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2149,22 +2149,22 @@
     },
     "walk_up_01": {
       "frame": {
-        "x": 42,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 43,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2201,22 +2201,22 @@
     },
     "walk_up_02": {
       "frame": {
-        "x": 82,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 84,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2253,22 +2253,22 @@
     },
     "walk_up_03": {
       "frame": {
-        "x": 122,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 125,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2305,22 +2305,22 @@
     },
     "walk_up_04": {
       "frame": {
-        "x": 162,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 166,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2360,22 +2360,22 @@
     },
     "walk_up_05": {
       "frame": {
-        "x": 202,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 207,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2412,22 +2412,22 @@
     },
     "walk_up_06": {
       "frame": {
-        "x": 242,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 248,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2464,22 +2464,22 @@
     },
     "walk_up_07": {
       "frame": {
-        "x": 282,
-        "y": 182,
-        "w": 38,
-        "h": 34
+        "x": 289,
+        "y": 207,
+        "w": 39,
+        "h": 39
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "sourceSize": {
-        "w": 38,
-        "h": 34
+        "w": 39,
+        "h": 39
       },
       "pivot": {
         "x": 0.5,
@@ -2511,6 +2511,951 @@
           "name": "susto",
           "x": 22.2,
           "y": 1.5
+        }
+      ]
+    },
+    "attack_down_00": {
+      "frame": {
+        "x": 2,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.8
+        }
+      ]
+    },
+    "attack_down_01": {
+      "frame": {
+        "x": 43,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.5
+        }
+      ]
+    },
+    "attack_down_02": {
+      "frame": {
+        "x": 84,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.4
+        }
+      ]
+    },
+    "attack_down_03": {
+      "frame": {
+        "x": 125,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.175
+        }
+      ]
+    },
+    "attack_down_04": {
+      "frame": {
+        "x": 166,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.1
+        }
+      ]
+    },
+    "attack_down_05": {
+      "frame": {
+        "x": 207,
+        "y": 248,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.95
+        }
+      ]
+    },
+    "attack_right_00": {
+      "frame": {
+        "x": 2,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 1.8
+        }
+      ]
+    },
+    "attack_right_01": {
+      "frame": {
+        "x": 43,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 1.5
+        }
+      ]
+    },
+    "attack_right_02": {
+      "frame": {
+        "x": 84,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 2.4
+        }
+      ]
+    },
+    "attack_right_03": {
+      "frame": {
+        "x": 125,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 2.175
+        }
+      ]
+    },
+    "attack_right_04": {
+      "frame": {
+        "x": 166,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 2.1
+        }
+      ]
+    },
+    "attack_right_05": {
+      "frame": {
+        "x": 207,
+        "y": 289,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 23.4,
+          "y": 1.95
+        }
+      ]
+    },
+    "attack_up_00": {
+      "frame": {
+        "x": 2,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.8
+        }
+      ]
+    },
+    "attack_up_01": {
+      "frame": {
+        "x": 43,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.5
+        }
+      ]
+    },
+    "attack_up_02": {
+      "frame": {
+        "x": 84,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "events": [
+        "golpe"
+      ],
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.4
+        }
+      ]
+    },
+    "attack_up_03": {
+      "frame": {
+        "x": 125,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.175
+        }
+      ]
+    },
+    "attack_up_04": {
+      "frame": {
+        "x": 166,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 2.1
+        }
+      ]
+    },
+    "attack_up_05": {
+      "frame": {
+        "x": 207,
+        "y": 330,
+        "w": 39,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 39,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 39,
+        "h": 39
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "duration": 83,
+      "boxes": [
+        {
+          "name": "corpo_pes",
+          "kind": "body",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 27.9,
+          "w": 8.4,
+          "h": 4.2
+        },
+        {
+          "name": "dano",
+          "kind": "hurt",
+          "shape": "rect",
+          "x": 22.2,
+          "y": 17.1,
+          "w": 15.6,
+          "h": 27
+        }
+      ],
+      "points": [
+        {
+          "name": "susto",
+          "x": 22.2,
+          "y": 1.95
         }
       ]
     }
@@ -2575,6 +3520,30 @@
       "walk_up_05",
       "walk_up_06",
       "walk_up_07"
+    ],
+    "attack_down": [
+      "attack_down_00",
+      "attack_down_01",
+      "attack_down_02",
+      "attack_down_03",
+      "attack_down_04",
+      "attack_down_05"
+    ],
+    "attack_right": [
+      "attack_right_00",
+      "attack_right_01",
+      "attack_right_02",
+      "attack_right_03",
+      "attack_right_04",
+      "attack_right_05"
+    ],
+    "attack_up": [
+      "attack_up_00",
+      "attack_up_01",
+      "attack_up_02",
+      "attack_up_03",
+      "attack_up_04",
+      "attack_up_05"
     ]
   },
   "meta": {
@@ -2583,13 +3552,13 @@
     "image": "furao3d.png",
     "format": "RGBA8888",
     "size": {
-      "w": 322,
-      "h": 218
+      "w": 330,
+      "h": 371
     },
     "scale": "0.3",
     "frameSize": {
-      "w": 38,
-      "h": 34
+      "w": 39,
+      "h": 39
     },
     "padding": 2,
     "frameTags": [
@@ -2640,6 +3609,30 @@
         "direction": "forward",
         "fps": 12,
         "loop": true
+      },
+      {
+        "name": "attack_down",
+        "from": 48,
+        "to": 53,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      },
+      {
+        "name": "attack_right",
+        "from": 54,
+        "to": 59,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
+      },
+      {
+        "name": "attack_up",
+        "from": 60,
+        "to": 65,
+        "direction": "forward",
+        "fps": 12,
+        "loop": false
       }
     ],
     "events": [
@@ -2672,13 +3665,28 @@
         "animation": "walk_up",
         "frame": 4,
         "name": "passo"
+      },
+      {
+        "animation": "attack_down",
+        "frame": 2,
+        "name": "golpe"
+      },
+      {
+        "animation": "attack_right",
+        "frame": 2,
+        "name": "golpe"
+      },
+      {
+        "animation": "attack_up",
+        "frame": 2,
+        "name": "golpe"
       }
     ],
     "sourceRect": {
       "x": 6,
       "y": 30,
-      "w": 128,
-      "h": 112
+      "w": 129,
+      "h": 129
     }
   }
 }

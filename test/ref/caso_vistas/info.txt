@@ -11,7 +11,8 @@ ossos    corpo, cabeca←corpo, pernaD, pernaE, bracoD←corpo, bracoE←corpo, 
 vistas   down, down_right, right, up, left (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
   profundidade corpo 0 (os dois lados) · cabeca 2 (os dois lados) · pernaD 0 (os dois lados) · pernaE 0 (os dois lados) · bracoD 0 (os dois lados) · bracoE 0 (os dois lados) · espada 0 (side=) · escudo 0 (side=)
   down_right   34.5° da frente, medido (8 ossos, erro médio 0.4 px)
-  grossura     corpo 34/23 · cabeca 39.9/39.9 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · bracoE 11.7/11.6 · espada 3.9/3.4 · escudo 23.4/7  [de lado a lado / de frente para trás]
+  grossura     corpo 34/23 · cabeca 39.9/39.9 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · bracoE 11.7/11.6 · espada 3.9/3.3 · escudo 22.3/11.4  [de lado a lado / de frente para trás]
+  aponta       corpo (a maior peça, de frente e de lado) · cabeca (a maior peça, de frente e de lado) · pernaD (a maior peça, de frente e de lado) · pernaE (a maior peça, de frente e de lado) · bracoD (filho espada) · bracoE (filho escudo) · espada (a maior peça, de frente e de lado) · escudo (a maior peça, de frente e de lado)
   pé no chão   idle: 0 0 0 0 0 0 0 0
   pé no chão   walk: 0 0 0 0 0 0 0 0
   geradas      idle → idle_down, idle_down_right, idle_right, idle_up, idle_left

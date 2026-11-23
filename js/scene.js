@@ -18,15 +18,34 @@
   function viewPivot(anim, b, v, rot0) {
     const o = anim.voff && anim.voff.get(b.name);
     if (!o || v[2] === rot0) return;
-    const a0 = (rot0 * Math.PI) / 180, a1 = (v[2] * Math.PI) / 180, sx = v[3] * o[0], sy = v[4] * o[1];
+    const a0 = (rot0 * Math.PI) / 180, a1 = (v[2] * Math.PI) / 180, sx = v[3] * o[0] + (v[5] ? v[5] * o[1] : 0), sy = v[4] * o[1];
     const dc = Math.cos(a0) - Math.cos(a1), ds = Math.sin(a0) - Math.sin(a1);
     v[0] += dc * sx - ds * sy;
     v[1] += ds * sx + dc * sy;
   }
+  // a escala de um osso: [[sx, inclinação], [0, sy]]. A inclinação (o sexto número) só existe nas animações geradas
+  // pelas vistas (js/views.js), onde um pai encurtado deixa o filho torto.
+  const boneScale = (v) => (v[5] ? [v[3], 0, v[5], v[4], 0, 0] : M.scale(v[3], v[4]));
+  // os valores de um osso misturados (u de 0 a 1); o giro pelo lado mais curto. Sem a inclinação, ela vale 0. Com a
+  // inclinação (as keys geradas pelas vistas), a mesma matriz também se escreve com o giro + 180 e a escala negativa:
+  // y vai para a forma com a escala do mesmo sinal da de x, para a peça não sumir no meio da mistura.
+  function mixBone(x, y, u) {
+    const mix = (p, q, k) => { let d = q - p; if (k === 2) d = (((d % 360) + 540) % 360) - 180; return p + d * u; };
+    if (x.length === y.length && x.length < 6) return x.map((p, k) => mix(p, y[k], k));
+    const n = Math.max(x.length, y.length), out = [];
+    const at = (a, k) => (k < a.length ? a[k] : k === 3 || k === 4 ? 1 : 0);
+    let b = y;
+    if (n > 5 && at(x, 3) * at(y, 3) < 0) b = [at(y, 0), at(y, 1), at(y, 2) + 180, -at(y, 3), -at(y, 4), -at(y, 5)];
+    for (let k = 0; k < n; k++) out.push(mix(at(x, k), at(b, k), k));
+    return out;
+  }
   // a matriz de um osso para uma caixa, um ponto ou uma forma de camada sem view= (desenhados na vista principal):
-  // numa animação de outra vista, a peça vai antes para o lugar do osso nessa vista
+  // numa animação de outra vista, a peça vai antes para o lugar do osso nessa vista, girada para a direção que o osso
+  // tem ali (anim.vxf; sem ela, só o lugar, anim.voff)
   function viewShift(pose, bone, m) {
-    const a = pose.src ? pose.src.anim : pose.anim, o = m && a && a.voff && a.voff.get(bone);
+    const a = pose.src ? pose.src.anim : pose.anim, x = m && a && a.vxf && a.vxf.get(bone);
+    if (x) return M.mul(m, x);
+    const o = m && a && a.voff && a.voff.get(bone);
     return o ? M.mul(m, M.translate(o[0], o[1])) : m;
   }
 
@@ -114,7 +133,7 @@
       const [px, py] = b.pivot;
       let local = M.translate(px + v[0], py + v[1]);
       local = M.mul(local, M.rotate(v[2]));
-      local = M.mul(local, M.scale(v[3], v[4]));
+      local = M.mul(local, boneScale(v));
       local = M.mul(local, M.translate(-px, -py));
       const m = b.parent && depth < 64 ? M.mul(get(b.parent, depth + 1), local) : local;
       out.set(name, m);
@@ -266,7 +285,7 @@
       const b = model.bones.get(name);
       if (!b) return M.id();
       const v = vals.get(name) || REST, [px, py] = b.pivot;
-      let local = M.mul(M.translate(px + v[0], py + v[1]), M.mul(M.rotate(v[2]), M.mul(M.scale(v[3], v[4]), M.translate(-px, -py))));
+      let local = M.mul(M.translate(px + v[0], py + v[1]), M.mul(M.rotate(v[2]), M.mul(boneScale(v), M.translate(-px, -py))));
       const m = b.parent && depth < 64 ? M.mul(get(b.parent, depth + 1), local) : local;
       out.set(name, m);
       return m;
@@ -325,7 +344,7 @@
         let v = base ? base.get(b.name) : pose.time !== undefined ? freeValues(b, pose.time) : REST;
         if (touched.has(b.name)) {
           const va = A && A.tracks.has(b.name) ? A.tracks.get(b.name)[0].v : v, vb = B && B.tracks.has(b.name) ? B.tracks.get(b.name)[0].v : v;
-          v = va.map((x, k) => x + (vb[k] - x) * u);
+          v = va.length === vb.length ? va.map((x, k) => x + (vb[k] - x) * u) : mixBone(va, vb, u);
         }
         vals.set(b.name, v);
       }
@@ -430,7 +449,7 @@
     const vals = new Map();
     for (const b of model.bones.values()) {
       const x = va.get(b.name) || REST, y = vb.get(b.name) || REST;
-      vals.set(b.name, x.map((p, k) => { let d = y[k] - p; if (k === 2) d = (((d % 360) + 540) % 360) - 180; return p + d * u; }));
+      vals.set(b.name, mixBone(x, y, u));
     }
     return vals;
   }

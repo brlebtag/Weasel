@@ -1,5 +1,5 @@
 # Original do protótipo da etapa 0, na sintaxe do plano (docs/planos/tres-vistas.md): view=, views, side=,
-# tip=x,y,z, lat=, turns. O Weasel de hoje não lê este arquivo direto; o script do protótipo o transforma num .weasel comum.
+# tip=x,y,z, lat=, turns. Desde a 1.76.0 (etapa 1b), o Weasel lê este arquivo direto.
 # Furão — personagem de jogo top-down, para o Godot
 # Três vistas (frente, costas e lado direito), cada uma em camadas com only=. As animações
 # terminam em _down, _up e _right; na cena do Godot, o lado esquerdo sai espelhado do direito

@@ -61,7 +61,7 @@
         if (tr.kind === 'el') {
           for (const el of tr.targets) {
             if (SHAPE_PROPS.has(tr.prop)) shapeT.add(el);
-            else if (tr.prop === 'opacity' || tr.prop === 'show') fade.add(el);
+            else if (tr.prop === 'opacity' || tr.prop === 'show' || tr.prop === 'reveal') fade.add(el);
             else if (tr.prop === 'order') {
               order.add(el);
               for (const k of tr.keys) if (k.v) for (const o of model.named.get(k.v.target) || []) order.add(o);
@@ -71,6 +71,8 @@
           if (tr.prop === 'order') { orderLayers.add(tr.name); for (const k of tr.keys) if (k.v) orderLayers.add(k.v.target); } else dynLayers.add(tr.name);
         } else if (tr.kind === 'light') lightsMove = true;
       }
+      // três vistas: as peças das camadas em que a ordem troca (anim.zorder) ganham uma peça cada uma
+      if (an.zorder) for (const z of an.zorder) for (const id of z.keys()) order.add(model.elements[id]);
     }
     const lit = (el) => (model.lights.size || model.ambient) && !el.layer.unlit && !el.layer.guide && !el.emit;
     const motion = (el) => (el.limb ? `limb:${el.id}` : el.pins ? `pins:${el.id}` : el.cloth ? `cloth:${el.cloth}|${el.bone || ''}` : el.bones ? `bones:${el.bones.join(',')}` : `bone:${el.bone || ''}`);
@@ -97,7 +99,8 @@
     if (model.lights.size && !lightsMove) notes.add('a luz da cena fica desenhada nas peças como na pose parada (no Godot, use as luzes 2D com o normal map)');
     // art: cada peça é desenhada uma vez, parada, já no estilo
     if (model.art) notes.add(`com art ${model.art.style}, cada peça sai no estilo como na pose parada: a textura não ferve${model.art.style === 'pixel' ? ', e o pixel art perde a grade quando a peça gira (para pixel art que gira, use a folha de quadros: --no-rig)' : ''}`);
-    return { kind, motion, fade, order, orderLayers, notes };
+    const views = model.anims.some((a) => a.zorder);
+    return { kind, motion, fade, order, orderLayers, notes, views };
   }
 
   // Peças em ordem de pintura: itens seguidos que andam juntos (mesmo osso ou mesma pele, mesma visibilidade)
@@ -109,7 +112,7 @@
       if (L.hidden || L.guide) continue;
       for (const it of L.items) {
         const el = it.el;
-        if (el.hidden) continue;
+        if (el.hidden && !el.vclone) continue;
         const k = an.kind.get(el), only = L.only ? L.only.join(',') : '', lay = an.orderLayers.has(L.name) ? `|L${L.name}` : '';
         const bone = k === 'world' || k === 'skin' ? null : el.bone || null;
         let key;
@@ -246,12 +249,21 @@
     };
     const list = partsOf(model, an);
     if (turns.length) list.push({ key: 'turn', kind: 'frames', bone: null, el: null, items: null, layers: null, only: turns.map((a) => a.name), fade: null, name: 'virada', turn: true });
+    // a pose em que uma peça parada é desenhada: a de descanso (com opts.layers, o only= das camadas não esconde
+    // nada); as cópias do turns (js/views.js), escondidas até a animação mostrar, à mostra
+    const restFor = (part) => {
+      const cl = part.items ? [...part.items].filter((it) => it.el.vclone) : [];
+      if (!cl.length) return rest;
+      const props = new Map(rest.props || []);
+      for (const it of cl) props.set(it.el.id, Object.assign({}, props.get(it.el.id) || {}, { reveal: 1 }));
+      return Object.assign({}, rest, { props, geo: new Map() });
+    };
     const parts = list.filter((part) => {
       if (part.kind === 'rigid' || part.kind === 'skin') {
-        const c = render(model, rest, part, k, R), b = alphaBox(c);
+        const pose = restFor(part), c = render(model, pose, part, k, R), b = alphaBox(c);
         if (!b) return false;
         part.box = b;
-        part.img = addImg(crop(c, b), rest, part, b);
+        part.img = addImg(crop(c, b), pose, part, b);
         return true;
       }
       const shots = new Map();
@@ -391,8 +403,11 @@
     };
     const local = (g, ctx) => {
       if (g.sample) return g.sample(ctx);
-      const v = ctx.vals.get(g.name);
-      return { pos: [g.rest[0] + v[0], g.rest[1] + v[1]], rot: (v[2] * Math.PI) / 180, sc: [v[3], v[4]] };
+      const v = ctx.vals.get(g.name), pos = [g.rest[0] + v[0], g.rest[1] + v[1]], rot = (v[2] * Math.PI) / 180;
+      if (!v[5]) return { pos, rot, sc: [v[3], v[4]] };
+      // [[sx, h], [0, sy]] no Godot: scale.y = ±√(h² + sy²) e skew = o ângulo do eixo y (Transform2D)
+      const sg = v[4] < 0 ? -1 : 1;
+      return { pos, rot, sc: [v[3], sg * Math.hypot(v[5], v[4])], sk: Math.atan2(-v[5] * sg, v[4] * sg) };
     };
     const samples = new Map();
     for (const a of own) {
@@ -414,13 +429,14 @@
     }
     const E = 1e-6;
     for (const g of gbones) {
-      g.moves = { pos: false, rot: false, sc: false };
+      g.moves = { pos: false, rot: false, sc: false, sk: false };
       for (const rows of samples.values()) {
         for (const r of rows) {
           const v = r.row.get(g);
           if (Math.abs(v.pos[0] - g.rest[0]) > E || Math.abs(v.pos[1] - g.rest[1]) > E) g.moves.pos = true;
           if (Math.abs(v.rot) > E) g.moves.rot = true;
           if (Math.abs(v.sc[0] - 1) > E || Math.abs(v.sc[1] - 1) > E) g.moves.sc = true;
+          if (v.sk && Math.abs(v.sk) > E) g.moves.sk = true;
         }
       }
     }
@@ -466,7 +482,7 @@
     // troca de ordem (above/below): o z_index de cada peça em cada quadro, o menor que deixa a ordem certa
     const itemPart = new Map();
     parts.forEach((p, i) => { if (p.items) for (const it of p.items) itemPart.set(it, i); });
-    const reorder = an.order.size || an.orderLayers.size;
+    const reorder = an.order.size || an.orderLayers.size || an.views;
     const zOf = (pose) => {
       const seq = [];
       for (const L of S.orderLayers(model, pose)) for (const it of S.orderItems(L.items, pose)) { const i = itemPart.get(it); if (i !== undefined && seq[seq.length - 1] !== i) seq.push(i); }
@@ -509,7 +525,7 @@
       let alpha = 1;
       if (part.fade) {
         const pr = pose.props.get(part.fade.id) || {};
-        if (pr.show === 0) vis = false;
+        if (pr.show === 0 || (part.fade.hidden && !pr.reveal)) vis = false;
         if (pr.opacity !== undefined) alpha = pr.opacity;
       }
       return { vis: vis ? 'true' : 'false', alpha };
@@ -576,13 +592,14 @@
     };
     // ossos: posição, rotação e escala (só o que muda em alguma animação), interpolados pelo Godot
     const boneTracks = (add, g, rows) => {
-      const vals = rows.map((r) => { const v = r.row.get(g); return { pos: [v.pos[0] * k, v.pos[1] * k], rot: v.rot, sc: v.sc }; });
+      const vals = rows.map((r) => { const v = r.row.get(g); return { pos: [v.pos[0] * k, v.pos[1] * k], rot: v.rot, sc: v.sc, sk: v.sk || 0 }; });
       const keys = (str, nums, eps) => thin(vals.map((v, i) => [rows[i].t, str(v)]), vals.map(nums), eps);
       if (g.moves.pos) add((i) => track(i, `${bonePath(g)}:position`, keys((v) => vec(v.pos), (v) => v.pos, 0.01), true));
       if (g.moves.rot) add((i) => track(i, `${bonePath(g)}:rotation`, keys((v) => flo(v.rot), (v) => [v.rot], 0.0002), true));
       if (g.moves.sc) add((i) => track(i, `${bonePath(g)}:scale`, keys((v) => vec(v.sc), (v) => v.sc, 0.0002), true));
+      if (g.moves.sk) add((i) => track(i, `${bonePath(g)}:skew`, keys((v) => flo(v.sk), (v) => [v.sk], 0.0002), true));
     };
-    const restRow = [{ t: 0, row: new Map(gbones.map((g) => [g, { pos: g.rest, rot: 0, sc: [1, 1] }])) }];
+    const restRow = [{ t: 0, row: new Map(gbones.map((g) => [g, { pos: g.rest, rot: 0, sc: [1, 1], sk: 0 }])) }];
     // peças: a imagem das que mudam de forma, quando aparecem, a transparência e a ordem; o lado espelhado
     const partTracks = (add, n, a, flip) => {
       parts.forEach((part, j) => {
@@ -590,7 +607,9 @@
         if (part.kind === 'frames') add((i) => step(i, `${path}:region_rect`, a ? Gd.changes(Array.from({ length: a.frames }, (_, f) => rect(cellOf(part, a, f))), dt) : [[0, rect(part.img)]]));
         if (part.moveVis) add((i) => step(i, `${path}:visible`, a ? Gd.changes(rowsV[n].map((row) => row[j].vis), dt) : [[0, restV[j].vis]]));
         if (part.moveAlpha) add((i) => track(i, `${path}:self_modulate`, a ? rowsV[n].map((row, f) => [f * dt, `Color(1, 1, 1, ${num(row[j].alpha)})`]) : [[0, `Color(1, 1, 1, ${num(restV[j].alpha)})`]], true));
-        if (part.moveZ) add((i) => step(i, `${path}:z_index`, a ? Gd.changes(rowsZ[n].map((row) => String(row[j])), dt) : [[0, '0']]));
+        // com as vistas, a peça escondida a animação inteira (a de outra vista) fica sem z_index: quem a mostra o dá
+        const unseen = an.views && a && part.moveVis && rowsV[n].every((row) => row[j].vis === 'false');
+        if (part.moveZ && !unseen) add((i) => step(i, `${path}:z_index`, a ? Gd.changes(rowsZ[n].map((row) => String(row[j])), dt) : [[0, '0']]));
       });
       if (flips) add((i) => step(i, 'Visual:scale', [[0, flip ? 'Vector2(-1, 1)' : 'Vector2(1, 1)']]));
     };

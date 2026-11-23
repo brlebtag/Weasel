@@ -2129,6 +2129,8 @@ key 24 braco=0,0,0 antebraco=0,0,0
 | `round=raio[,x,y]` | as formas do osso (e dos filhos) ficam na superfície de uma bola: no giro 3D, viram como uma cabeça | raio maior que 0; o centro `x,y` é opcional | centro: o meio das formas presas ao osso | não |
 | `side=` | com as [vistas](#views), o x do osso na vista de lado (`view=right`): o quanto ele fica na frente da raiz | qualquer número, em pixels | o meio da maior peça do osso na vista de lado | não |
 | `lat=` | com as [vistas](#views), num jogo de plataforma (sem a frente), o x que o osso teria de frente: de que lado do corpo ele fica | qualquer número, em pixels | adivinhado pela ordem do desenho (8 pixels para um lado ou para o outro) | não |
+| `tip=x,y[,z]` | com as [vistas](#views), para onde o osso aponta: o ponto na vista principal e quantos pixels ele vai para a frente (positivo) ou para trás. É ao longo dessa direção que o giro em 3D (`osso.pitch=`, `osso.yaw=`) encurta as peças | dois ou três números, em pixels (o terceiro vale 0 sem ele) | o filho, se o osso tiver um só; senão, a maior peça do osso, de frente e de lado | não |
+| `turns` | com as [vistas](#views), as peças do osso trocam pelas de outra vista quando ele gira mais da metade do caminho até ela (a cabeça que olha para o lado aparece de perfil) | palavra solta | não troca | não |
 
 **Os movimentos automáticos** (`sway=`, `bob=`, `jitter=`) só aparecem numa animação ou num filme; no desenho parado, não. Numa animação em loop, o tempo do `sway=` e do `bob=` é ajustado para caber um número inteiro de vezes, e o loop fecha sem pulo. Num filme, eles andam mesmo sem `anim`, e o `jitter=` muda 12 vezes por segundo.
 
@@ -2137,7 +2139,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 - Os números da `key` são medidos a partir do desenho: `key 12 braco=0,0,-25` gira o braço 25 graus para cima, a partir de onde ele foi desenhado. O filho soma o giro do pai.
 - `spring=0` não desliga a mola. Para tirar a mola, apague o `spring=`.
 - O `ik` muda a pose também no desenho parado: veja o [`ik`](#ik).
-- `side=` e `lat=` sem camadas com `view=` não fazem nada.
+- `side=`, `lat=`, `tip=` e `turns` sem camadas com `view=` não fazem nada.
 
 **Para aprender:** [O primeiro osso](07-movimento.md#a-primeira-animação), [Pai e filho](08-ossos.md#pai-e-filho-parent), [Movimentos automáticos](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](08-ossos.md#molas-spring), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
@@ -2438,8 +2440,8 @@ A pose do osso vai direto, sem ponto: `key 6 braco=0,0,30`. As outras propriedad
 |---|---|---|---|---|
 | `osso=dx,dy,rot,sx,sy` | a pose: anda, gira e estica em volta do pivô | de 1 a 5 números (veja [`key`](#key)) | `0,0,0,1,1` (a pose do desenho) | aos poucos |
 | `along=` | quanto do caminho (`path=`) o osso já andou | de 0 (o começo) a 1 (o fim). Num caminho aberto, fora disso vale a ponta, sem aviso; num fechado, dá voltas (1.5 = uma volta e meia; negativo anda para trás) | o osso fica no pivô dele, fora do caminho | aos poucos |
-| `yaw=` | o giro 3D de lado, em volta do pivô (com `round=`, do centro da bola) | qualquer número, em graus | o `yaw=` da linha `bone` | aos poucos |
-| `pitch=` | o giro 3D para cima e para baixo, em volta do pivô (com `round=`, do centro da bola) | qualquer número, em graus | o `pitch=` da linha `bone` | aos poucos |
+| `yaw=` | o giro 3D de lado, em volta do pivô (com `round=`, do centro da bola). Com as [vistas](#views), o osso gira de um lado para o outro (em volta da vertical), e cada vista mostra o giro | qualquer número, em graus | o `yaw=` da linha `bone` | aos poucos |
+| `pitch=` | o giro 3D para cima e para baixo, em volta do pivô (com `round=`, do centro da bola). Com as [vistas](#views), o osso gira para a frente (negativo) ou para trás (positivo), e cada vista mostra o giro | qualquer número, em graus | o `pitch=` da linha `bone` | aos poucos |
 | `z=` | com as [vistas](#views), o osso anda para a frente (positivo) ou para trás (negativo), a partir do desenho | qualquer número, em pixels | 0 | aos poucos |
 
 Um `along=` num osso sem `path=` dá erro. Um `z=` num osso, num arquivo sem camadas com `view=`, avisa e não faz nada.
@@ -2808,29 +2810,32 @@ key 4 pe=0,-4 pe.z=12
 **O que vem junto com as vistas** (nas outras fichas):
 
 - [`layer`](#layer): `view=` diz a vista da camada, e `angle=` o ângulo de uma diagonal.
-- [`bone`](#bone): `side=` diz o x do osso de lado, e `lat=` o x de frente num jogo de plataforma.
-- [`key`](#key): `osso.z=` anda o osso para a frente ou para trás.
+- [`bone`](#bone): `side=` diz o x do osso de lado, `lat=` o x de frente num jogo de plataforma, `tip=` para onde o osso aponta, e `turns` troca as peças dele pelas de outra vista quando ele gira.
+- [`key`](#key): `osso.z=` anda o osso para a frente ou para trás, e `osso.pitch=` e `osso.yaw=` giram o osso em 3D.
 
 **Como o Weasel faz:**
 
 - A **vista principal** é a de frente (`view=down`); sem ela, o lado direito (`view=right`). Os `pivot=`, a pose parada e as animações escritas à mão nela são os de sempre.
 - A **profundidade** de cada osso vem do meio da maior peça dele na vista de lado (menos o x da raiz, o `root=` do `godot`), ou do `side=`. Com os dois lados desenhados, vale a média dos dois. Sem a peça de lado, vem de uma diagonal, do osso espelhado na frente (o braço esquerdo usa a do direito) ou do pai (com um aviso).
 - **O ângulo das diagonais** é medido pelo lugar das peças; o `angle=` da camada vale no lugar dele.
+- **O giro em 3D** (`osso.pitch=`, `osso.yaw=` e o `rot` da `key`): em cada vista, as peças do osso giram pelo quanto ele parece girar ali e encurtam ao longo dele (de 10% a 1,4 vez); a largura fica, e uma peça que encurta torta inclina. As caixas, os pontos e as formas das camadas sem `view=` presos ao osso giram junto.
+- **`turns`:** em cada quadro, o osso usa o desenho da vista para onde ele está mais virado (com o lado que falta espelhado). As peças das outras vistas entram escondidas na camada da vista e aparecem só nesses quadros.
 - **A ordem de pintura** troca sozinha em cada quadro, entre as peças da mesma camada, quando um osso passa na frente do outro mais do que a grossura medida no desenho.
 - **O pé no chão:** em cada quadro, o Weasel mede o ponto mais baixo das peças da vista principal; se ele afundar mais de 1 pixel abaixo do desenho parado, avisa.
 - Uma animação com direção no nome (`walk_up`) escrita à mão vale no lugar da gerada, e conta como a sem direção (`walk`) no `only=`.
 - Com os dois lados desenhados (`view=right` e `view=left`), nada sai espelhado no Godot.
-- O `--info` mostra a câmera, a profundidade de cada osso e de onde veio, o ângulo das diagonais, a grossura, o pé no chão em cada quadro, as animações geradas e onde a ordem troca.
+- Com `godot rig=bones`, o giro vira o giro, a escala e o `skew` de cada `Bone2D`, a ordem que troca vira o `z_index` das peças, e o `turns` mostra e esconde as peças.
+- O `--info` mostra a câmera, a profundidade de cada osso e de onde veio, o ângulo das diagonais, a grossura, de onde veio a direção de cada osso (`aponta`), o pé no chão em cada quadro, as animações geradas, onde a ordem troca e, com `turns`, o desenho de cada quadro (`vira`).
 
 **Cuidado:**
 - Sem nenhuma camada com `view=`, a linha `views` avisa e não faz nada.
 - Com duas linhas `views`, vale a primeira (aviso).
-- O giro dos ossos (o `rot` da `key`, `osso.yaw=` e `osso.pitch=`) ainda não vale nas animações geradas: os ossos só andam e esticam (aviso).
-- O `ik` não é resolvido nas outras vistas, e `godot rig=bones` não leva a ordem que troca (os dois avisam).
-- As caixas e os pontos andam com o osso em cada vista, mas não giram.
+- O `ik` não é resolvido nas outras vistas (aviso).
+- O `mix=` não sai em cada vista: escreva uma para cada vista, com os nomes gerados (`mix=walk_right,attack_right`).
+- Numa animação escrita à mão numa vista (`anim walk_up`), `osso.z=`, `osso.pitch=` e `osso.yaw=` não fazem nada (aviso): o 3D vale nas animações sem direção no nome.
 - Uma animação de uma vista sem camada (`walk_left` sem `view=left`) mostra só as camadas sem `view=` (aviso).
 
-**Para aprender:** [Três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view), [conferir as vistas](16-jogo-avancado.md#conferir-as-vistas---info) e [num jogo de plataforma](16-jogo-avancado.md#num-jogo-de-plataforma).
+**Para aprender:** [Três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view), [girar em 3D](16-jogo-avancado.md#girar-em-3d-pitch-yaw-tip-e-turns), [conferir as vistas](16-jogo-avancado.md#conferir-as-vistas---info) e [num jogo de plataforma](16-jogo-avancado.md#num-jogo-de-plataforma).
 
 ### `tileset`
 

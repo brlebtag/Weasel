@@ -521,7 +521,8 @@
       const kids = [], at = new Map();
       for (const it of layer.items) {
         const el = it.el, line = map(el.use !== undefined ? el.use : el.line);
-        if (line === undefined || line < 0) continue;
+        // as cópias do turns (js/views.js) são as formas das outras vistas: ficam na camada delas
+        if (line === undefined || line < 0 || el.vclone) continue;
         let k = at.get(line);
         if (!k) { k = { line, els: [] }; at.set(line, k); kids.push(k); }
         if (!k.els.includes(el)) k.els.push(el);
@@ -5996,7 +5997,7 @@
     let first = Infinity, last = start;
     for (const it of Ly.items) {
       const l = lineOfEl(it.el);
-      if (l === undefined || l < 0) continue;
+      if (l === undefined || l < 0 || it.el.vclone) continue;
       first = Math.min(first, l);
       last = Math.max(last, l);
     }

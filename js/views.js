@@ -11,10 +11,13 @@
    Por baixo, as animações geradas são animações comuns (uma key por quadro), e o resto do Weasel não muda. As keys
    ficam em volta do pivot= de sempre; anim.voff guarda, para cada osso, o quanto o lugar dele na vista está longe do
    pivot= (os giros que o Weasel soma, como o sway=, e as caixas, os pontos e as camadas sem view= usam isso).
-   Etapa 1a: os ossos andam e esticam (dx, dy, z, sx, sy); o giro (rot, pitch e yaw) fica para a etapa 1b. */
+   Os giros (etapa 1b): o osso gira em 3D (rot no plano da vista principal, osso.pitch= para a frente e para trás,
+   osso.yaw= em volta do eixo de pé). Em cada vista, as peças giram pelo quanto o osso parece ter girado ali e
+   encurtam ao longo dele (até 10%); a largura fica. As keys geradas têm um sexto número, a inclinação (o 2D de um
+   pai encurtado), que a cena e o Godot (skew) sabem desenhar. */
 (function (W) {
   'use strict';
-  const G = W.geom;
+  const G = W.geom, M = G.M;
   const ANG = { down: 0, down_right: 45, right: 90, up_right: 135, up: 180, up_left: 225, left: 270, down_left: 315 };
   const VIEWS = Object.keys(ANG);
   // os sufixos dos nomes, dos compridos para os curtos (walk_down_right não é walk_down + _right)
@@ -27,6 +30,19 @@
   const fmt = (v) => r1(v).replace('.', ',');
   // angle= (graus a partir da frente, nas diagonais de baixo, ou das costas, nas de cima) → o ângulo da vista
   const angOf = (v, a) => (v === 'down_right' ? a : v === 'down_left' ? 360 - a : v === 'up_right' ? 180 - a : 180 + a);
+  const R2D = 180 / Math.PI;
+  // o quanto uma peça comprida encurta, no máximo (ponto 6 do plano: 10%) e no mínimo (o que vem para o plano da tela)
+  const MINLEN = 0.1, MAXLEN = 1.4;
+
+  // ---------- 3D: matrizes 3x3 (X para o lado, Y para baixo, Z para a frente) ----------
+  const mm = (A, B) => A.map((r) => [0, 1, 2].map((j) => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+  const mv = (A, v) => [A[0][0] * v[0] + A[0][1] * v[1] + A[0][2] * v[2], A[1][0] * v[0] + A[1][1] * v[1] + A[1][2] * v[2], A[2][0] * v[0] + A[2][1] * v[1] + A[2][2] * v[2]];
+  const ID3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  const rotX = (d) => { if (!d) return ID3; const c = Math.cos(d * D2R), s = Math.sin(d * D2R); return [[1, 0, 0], [0, c, -s], [0, s, c]]; };
+  const rotY = (d) => { if (!d) return ID3; const c = Math.cos(d * D2R), s = Math.sin(d * D2R); return [[c, 0, s], [0, 1, 0], [-s, 0, c]]; };
+  const rotZ = (d) => { if (!d) return ID3; const c = Math.cos(d * D2R), s = Math.sin(d * D2R); return [[c, -s, 0], [s, c, 0], [0, 0, 1]]; };
+  // o ângulo a mais perto de ref (graus, somando voltas inteiras)
+  const near = (a, ref) => a + 360 * Math.round((ref - a) / 360);
 
   // ---------- as peças: o contorno de cada forma, parado ----------
   function piece(el) {
@@ -81,7 +97,7 @@
     const tilt = m.viewsSpec ? m.viewsSpec.tilt : 30, K = Math.sin(tilt * D2R);
     const rootX = m.godot && m.godot.root ? m.godot.root[0] : m.canvas.w / 2;
     const bones = [...m.bones.values()];
-    const V = { drawn, main, tilt, K, rootX, depth: new Map(), angles: {}, thick: new Map(), gens: [], ground: new Map(), swaps: [], off: new Map() };
+    const V = { drawn, main, tilt, K, rootX, depth: new Map(), angles: {}, thick: new Map(), gens: [], ground: new Map(), swaps: [], off: new Map(), xf: new Map(), aim: new Map(), turned: [] };
     m.views = V;
 
     // as peças de cada vista (as formas das camadas view=), na ordem do arquivo
@@ -206,14 +222,31 @@
       V.depth.set(b.name, main === 'down' ? { z: P[2], from: src.get(b.name) } : { lat: P[0], from: src.get(b.name) });
     }
 
-    // ---------- para onde cada osso aponta (o bastão da ordem e o pé no chão) ----------
+    // ---------- para onde cada osso aponta (o giro das peças, o bastão da ordem) ----------
+    // tip= no osso; sem ele, o osso filho, quando há um só; sem filho, a maior peça do osso na vista principal, com a
+    // profundidade da maior peça dele de lado (as duas sombras da mesma direção). tip=x,y,z: x,y desenhados na vista
+    // principal, z o quanto a ponta vai para a frente (num jogo de plataforma, para perto da câmera)
+    const sideView = drawn.includes('right') ? 'right' : drawn.includes('left') ? 'left' : null;
     const DIR = new Map();
     for (const b of bones) {
       const P = P3.get(b.name), kids = bones.filter((o) => o.parent === b.name);
       let v = null;
-      if (kids.length === 1) { const Q = P3.get(kids[0].name); v = [Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]]; }
-      else { const pc = biggest(main, b.name); if (pc) v = main === 'down' ? [pc.cx - b.pivot[0], pc.cy - b.pivot[1], 0] : [0, pc.cy - b.pivot[1], pc.cx - b.pivot[0]]; }
-      if (!v || Math.hypot(...v) < 2) v = [0, 10, 0];
+      let from = '';
+      if (b.vtip) {
+        const t = b.vtip, dx = t[0] - b.pivot[0], dy = t[1] - b.pivot[1], dz = t.length > 2 ? t[2] : 0;
+        v = main === 'down' ? [dx, dy, dz] : [-dz, dy, dx];
+        from = 'tip=';
+      } else if (kids.length === 1) { const Q = P3.get(kids[0].name); v = [Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]]; from = `filho ${kids[0].name}`; }
+      else {
+        const pc = biggest(main, b.name);
+        if (pc && main === 'down') {
+          const sd = sideView && biggest(sideView, b.name), dz = sd ? (sideView === 'left' ? rootX - sd.cx : sd.cx - rootX) - P[2] : 0;
+          v = [pc.cx - b.pivot[0], pc.cy - b.pivot[1], dz];
+          from = sd ? 'a maior peça, de frente e de lado' : 'a maior peça';
+        } else if (pc) { v = [0, pc.cy - b.pivot[1], pc.cx - b.pivot[0]]; from = 'a maior peça'; }
+      }
+      if (!v || Math.hypot(...v) < 2) { v = [0, 10, 0]; from = 'para baixo: curto demais para medir'; }
+      V.aim.set(b.name, from);
       const L = Math.hypot(...v), u = v.map((c) => c / L);
       // o bastão cobre as peças do osso: da parte que fica antes da junta até a que vai mais longe
       let s0 = 0, s1 = L;
@@ -232,7 +265,6 @@
     // ---------- a grossura de cada osso, medida no desenho ----------
     // a meia largura da peça na reta que corta o osso de través, em 5 lugares (da junta à ponta): de frente dá a de
     // lado a lado, de lado dá a de frente para trás
-    const sideView = drawn.includes('right') ? 'right' : drawn.includes('left') ? 'left' : null;
     const THK = new Map();
     for (const b of bones) {
       const P = P3.get(b.name), d = DIR.get(b.name);
@@ -292,11 +324,14 @@
     // ---------- projeção numa vista ----------
     function proj(v) {
       const phi = ang[v] * D2R, c = Math.cos(phi), s = Math.sin(phi);
-      const dep = (p) => -(p[0] - rootX) * s + p[2] * c;
+      const dep = (p) => -(p[0] - rootX) * s + p[2] * c, depV = (w) => -w[0] * s + w[2] * c;
       return {
         c, s, dep,
         pt: (p, depRest) => [rootX + (p[0] - rootX) * c + p[2] * s, p[1] + K * (dep(p) - depRest)],
         restXY: (P) => [rootX + (P[0] - rootX) * c + P[2] * s, P[1]],
+        // uma direção na tela: parada (como desenhada) e girada (w; o que ela andou para a frente desce na tela)
+        vec0: (u) => [u[0] * c + u[2] * s, u[1]],
+        vec: (w, u) => [w[0] * c + w[2] * s, w[1] + K * (depV(w) - depV(u))],
       };
     }
     const PR = new Map(drawn.map((v) => [v, proj(v)]));
@@ -313,21 +348,105 @@
       REST_DEP.set(v, dp);
       if (v !== main) V.off.set(v, off);
     }
+    // o que foi desenhado só na vista principal (as caixas, os pontos, as formas das camadas sem view=), preso a um
+    // osso, vai para o lugar dele em cada vista: x -> lugar + A·(x - pivot=), com A o giro e o encurtamento que levam
+    // a direção do osso desenhada na principal para a desenhada nesta vista (a ponta da espada continua na ponta)
+    const pm = PR.get(main);
+    for (const v of drawn) {
+      if (v === main) continue;
+      const pr = PR.get(v), xy = REST_XY.get(v), xf = new Map();
+      for (const b of bones) {
+        const q = xy.get(b.name), u = DIR.get(b.name).u, a = pm.vec0(u), c = pr.vec0(u), la = Math.hypot(a[0], a[1]), lc = Math.hypot(c[0], c[1]);
+        let R = [1, 0, 0, 1, 0, 0];
+        if (la > 0.25 && lc > 0.25) {
+          const g = (Math.atan2(c[1], c[0]) - Math.atan2(a[1], a[0])) * R2D, k = Math.max(MINLEN, Math.min(MAXLEN, lc / la)), n = [a[0] / la, a[1] / la], e = k - 1;
+          if (Math.abs(near(g, 0)) > 1e-9 || Math.abs(e) > 1e-9) R = M.mul(M.rotate(g), [1 + e * n[0] * n[0], e * n[0] * n[1], e * n[0] * n[1], 1 + e * n[1] * n[1], 0, 0]);
+        }
+        const [px, py] = b.pivot;
+        xf.set(b.name, [R[0], R[1], R[2], R[3], q[0] - (R[0] * px + R[2] * py), q[1] - (R[1] * px + R[3] * py)]);
+      }
+      V.xf.set(v, xf);
+    }
+
+    // ---------- turns: o osso que mostra o desenho de outra vista ----------
+    // As peças dele nas outras vistas (e nas que saem espelhadas delas) entram em cada vista como cópias escondidas,
+    // logo depois das peças dele, levadas para o lugar do osso nessa vista. Em cada quadro de uma animação gerada,
+    // aparece só o desenho da vista mais perto de para onde a frente do osso aponta (o resto, escondido).
+    const cands = drawn.map((v) => ({ name: v, src: v, ang: ang[v], mirror: false }));
+    for (const v of drawn) if (MIRROR[v] && !drawn.includes(MIRROR[v])) cands.push({ name: MIRROR[v], src: v, ang: (360 - ang[v]) % 360, mirror: true });
+    const angDist = (a, b) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);
+    const TURN = new Map(drawn.map((v) => [v, []]));
+    const rigid = (el) => el.bone && !el.vclone && !el.bones && !el.limb && !el.pins && !el.cloth;
+    for (const b of bones) {
+      if (!b.turns) continue;
+      const ownIn = (v) => vl.filter((L) => L.view === v).flatMap((L) => L.items.filter((it) => it.el.bone === b.name && rigid(it.el)).map((it) => ({ L, it })));
+      for (const v of drawn) {
+        const own = ownIn(v);
+        if (!own.length) continue;
+        const Lv = own[own.length - 1].L, Pv = REST_XY.get(v).get(b.name), alts = [];
+        let at = Lv.items.indexOf(own[own.length - 1].it) + 1;
+        for (const c of cands) {
+          if (c.name === v) continue;
+          const src = ownIn(c.src);
+          if (!src.length) continue;
+          const Ps = REST_XY.get(c.src).get(b.name);
+          const T = c.mirror ? [-1, 0, 0, 1, Ps[0] + Pv[0], Pv[1] - Ps[1]] : [1, 0, 0, 1, Pv[0] - Ps[0], Pv[1] - Ps[1]];
+          const made = new Map(), els = [];
+          for (const { it } of src) {
+            let cl = made.get(it.el);
+            if (!cl) {
+              cl = Object.assign({}, it.el);
+              for (const k of Object.keys(cl)) if (k[0] === '_') delete cl[k];
+              cl.id = m.elements.length;
+              cl.xf = it.el.xf ? M.mul(T, it.el.xf) : T;
+              cl.layer = Lv;
+              cl.hidden = true;
+              cl.vclone = { of: it.el, view: c.name };
+              m.elements.push(cl);
+              made.set(it.el, cl);
+              els.push(cl);
+            }
+            Lv.items.splice(at++, 0, { el: cl, part: it.part });
+          }
+          alts.push({ cand: c, els });
+        }
+        if (alts.length) TURN.get(v).push({ bone: b, own: own.map((o) => o.it.el).filter((el, i, a) => a.indexOf(el) === i), alts, ang: ang[v] });
+      }
+    }
+    // o desenho que aparece num quadro: a vista mais perto do ângulo para onde a frente do osso aponta
+    const turnPick = (t, w) => {
+      const fw = mv(w.Q, [0, 0, 1]), eff = t.ang + Math.atan2(fw[0], fw[2]) * R2D;
+      let best = null, bd = Infinity;
+      for (const c of [{ name: null, ang: t.ang }, ...t.alts.map((a) => a.cand)]) { const d = angDist(c.ang, eff); if (d < bd - 1e-9) { bd = d; best = c.name; } }
+      return best;
+    };
 
     // ---------- o mundo de cada osso num quadro, em 3D ----------
-    // p' = s·p + t (na etapa 1a, o osso só anda e estica: sx de lado a lado e de frente para trás, sy na altura)
-    const apply = (w, p) => [w.s[0] * p[0] + w.t[0], w.s[1] * p[1] + w.t[1], w.s[2] * p[2] + w.t[2]];
+    // p' = L·p + t, com L = o giro (Q) e a escala de cada osso até a raiz: rot no plano da vista principal, pitch para a
+    // frente e para trás, yaw em volta do eixo de pé (a ordem do protótipo); sx estica de lado a lado e de frente para
+    // trás, sy na altura. M2 é a matriz do 2D de sempre (o giro e a escala de cada osso, sem o 3D), S2 só a escala, e
+    // th a soma dos giros: a vista principal sem pitch e sem yaw sai igual ao 2D.
+    const apply = (w, p) => { const q = mv(w.L, p); return [q[0] + w.t[0], q[1] + w.t[1], q[2] + w.t[2]]; };
     const valOf = (an, b, f) => { const s = G.segment(an.tracks.get(b.name), f, an.frames, an.loop); return s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : REST.slice(); };
     const numOf = (an, key, f) => { const tr = an.ptracks.get(key), s = tr && G.segment(tr.keys, f, an.frames, an.loop); return s ? s.a.v + (s.b.v - s.a.v) * s.t : 0; };
     function world(an, f) {
       const out = new Map();
       const get = (b, depth) => {
         if (out.has(b.name)) return out.get(b.name);
-        const v = valOf(an, b, f), dz = numOf(an, `${b.name}.z`, f), P = P3.get(b.name);
-        const sc = [v[3], v[4], v[3]], mv = main === 'right' ? [-dz, v[1], v[0]] : [v[0], v[1], dz];
-        let w = { s: sc, t: [0, 1, 2].map((i) => P[i] + mv[i] - sc[i] * P[i]) };
+        const v = valOf(an, b, f), P = P3.get(b.name);
+        const dz = numOf(an, `${b.name}.z`, f), pitch = numOf(an, `${b.name}.pitch`, f), yaw = numOf(an, `${b.name}.yaw`, f);
+        let Q = main === 'right' ? rotX(pitch - v[2]) : pitch ? mm(rotX(pitch), rotZ(v[2])) : rotZ(v[2]);
+        if (yaw) Q = mm(rotY(yaw), Q);
+        const L = Q.map((r) => [r[0] * v[3], r[1] * v[4], r[2] * v[3]]);
+        const mvd = main === 'right' ? [-dz, v[1], v[0]] : [v[0], v[1], dz], LP = mv(L, P);
+        const t = [0, 1, 2].map((i) => P[i] + mvd[i] - LP[i]);
+        const M2 = M.mul(M.rotate(v[2]), M.scale(v[3], v[4]));
+        let w = { L, t, Q, M2, S2: [v[3], v[4]], th: v[2], rot: v[2] };
         const par = b.parent && m.bones.get(b.parent);
-        if (par && depth < 64) { const q = get(par, depth + 1); w = { s: [0, 1, 2].map((i) => q.s[i] * w.s[i]), t: [0, 1, 2].map((i) => q.s[i] * w.t[i] + q.t[i]) }; }
+        if (par && depth < 64) {
+          const q = get(par, depth + 1), qt = mv(q.L, t);
+          w = { L: mm(q.L, L), t: [0, 1, 2].map((i) => qt[i] + q.t[i]), Q: Q === ID3 ? q.Q : q.Q === ID3 ? Q : mm(q.Q, Q), M2: M.mul(q.M2, M2), S2: [q.S2[0] * v[3], q.S2[1] * v[4]], th: q.th + v[2], rot: v[2] };
+        }
         out.set(b.name, w);
         return w;
       };
@@ -335,22 +454,94 @@
       return out;
     }
     // a pose 2D de uma vista: para cada osso, a key (em volta do pivot= de sempre) que leva as peças da vista do lugar
-    // parado para onde o osso está agora
-    function keysOf(v, Wf) {
-      const pr = PR.get(v), xy = REST_XY.get(v), dp = REST_DEP.get(v), A = new Map(), out = new Map();
+    // parado para onde o osso está agora. Cada osso ganha uma matriz na tela: o pivô vai para onde ele está projetado,
+    // e as peças giram pelo quanto o osso parece ter girado nessa vista e encurtam ao longo dele (de 10% a 1,4 vez); a
+    // largura fica. A key é essa matriz vista do pai: [dx, dy, rot, sx, sy, inclinação]. last guarda, por osso, o giro
+    // do quadro anterior (sem saltos de uma volta). A mesma matriz tem duas keys (giro e escala positiva, ou giro + 180
+    // e escala negativa): Wmid é o 3D no meio do caminho desde o quadro anterior, e fica a key que, misturada com a
+    // anterior, chega mais perto dele. Assim, entre dois quadros (no Godot, numa transição), a peça que passa de
+    // frente para a câmera encurta e volta do outro lado, e a que dá a volta de lado gira.
+    function keysOf(v, Wf, last, Wmid) {
+      const H = Wmid ? localsOf(v, Wmid, new Map(last)) : null, L = localsOf(v, Wf, last), out = new Map();
+      for (const b of bones) {
+        const { U, q, rv } = L.get(b.name);
+        // U = giro · [[sx, inclinação], [0, sy]], com o giro perto do quadro anterior
+        const prev = last.get('r|' + b.name), ref = prev === undefined ? Wf.get(b.name).rot : prev;
+        const sx = Math.hypot(U[0], U[1]), rot = sx > 1e-9 ? Math.atan2(U[1], U[0]) * R2D : ref;
+        const dec = (r, s) => {
+          const cr = Math.cos(r * D2R), sr = Math.sin(r * D2R);
+          return [r, s, -sr * U[2] + cr * U[3], cr * U[2] + sr * U[3]];
+        };
+        const a = dec(near(rot, ref), sx), c = dec(near(rot + 180, ref), -sx), pv = last.get('v|' + b.name), hm = H && H.get(b.name);
+        let k;
+        if (pv && hm) {
+          const off = (x) => {
+            const r = ((pv[0] + x[0]) / 2) * D2R, s = (pv[1] + x[1]) / 2, sy = (pv[2] + x[2]) / 2, h = (pv[3] + x[3]) / 2, cr = Math.cos(r), sr = Math.sin(r);
+            const g = [cr * s, sr * s, cr * h - sr * sy, sr * h + cr * sy];
+            return g.reduce((n, y, i) => n + (y - hm.U[i]) ** 2, 0);
+          };
+          k = off(c) < off(a) - 1e-9 ? c : a;
+        } else k = Math.abs(c[0] - ref) < Math.abs(a[0] - ref) - 1e-9 ? c : a;
+        last.set('r|' + b.name, k[0]);
+        last.set('v|' + b.name, k);
+        const o = [b.pivot[0] - rv[0], b.pivot[1] - rv[1]];
+        const d = [q[0] - b.pivot[0] + U[0] * o[0] + U[2] * o[1], q[1] - b.pivot[1] + U[1] * o[0] + U[3] * o[1]];
+        out.set(b.name, [d[0], d[1], k[0], k[1], k[2], k[3]]);
+      }
+      return out;
+    }
+    // a matriz de cada osso numa vista, vista do pai (U), e onde o lugar do osso na vista vai parar (q)
+    function localsOf(v, Wf, last) {
+      const pr = PR.get(v), xy = REST_XY.get(v), dp = REST_DEP.get(v), isMain = v === main, A = new Map(), out = new Map();
       const scr = (b) => {
         if (A.has(b.name)) return A.get(b.name);
-        const w = Wf.get(b.name), cur = pr.pt(apply(w, P3.get(b.name)), dp.get(b.name)), rv = xy.get(b.name), S = [w.s[0], w.s[1]];
-        const a = { S, rv, a: [cur[0] - S[0] * rv[0], cur[1] - S[1] * rv[1]] };
+        const w = Wf.get(b.name), u = DIR.get(b.name).u;
+        const cur = pr.pt(apply(w, P3.get(b.name)), dp.get(b.name));
+        // antes do 3D: na vista principal, a matriz do 2D; nas outras, só a escala
+        const base = isMain ? w.M2 : [w.S2[0], 0, 0, w.S2[1], 0, 0];
+        let Mb = base;
+        const p0 = pr.vec0(u), l0 = Math.hypot(p0[0], p0[1]);
+        // um osso que aponta para a câmera nesta vista (parado) não gira nem encurta
+        if (l0 > 0.25) {
+          const p1 = pr.vec(mv(w.Q, u), u), l1 = Math.hypot(p1[0], p1[1]);
+          const th = isMain ? w.th * D2R : 0, d2 = [Math.cos(th) * p0[0] - Math.sin(th) * p0[1], Math.sin(th) * p0[0] + Math.cos(th) * p0[1]];
+          const prev = last.get('g|' + b.name);
+          let g = l1 > 0.15 ? (Math.atan2(p1[1], p1[0]) - Math.atan2(d2[1], d2[0])) * R2D : prev || 0;
+          g = near(g, prev === undefined ? 0 : prev);
+          last.set('g|' + b.name, g);
+          const k = Math.max(MINLEN, Math.min(MAXLEN, l1 / l0));
+          if (Math.abs(g) > 1e-9 || Math.abs(k - 1) > 1e-9) {
+            // encurta ao longo do osso como ele está desenhado agora, depois gira
+            const bp = [base[0] * p0[0] + base[2] * p0[1], base[1] * p0[0] + base[3] * p0[1]], bl = Math.hypot(bp[0], bp[1]);
+            const n = bl > 1e-9 ? [bp[0] / bl, bp[1] / bl] : [d2[0] / l0, d2[1] / l0], e = k - 1;
+            const N = [1 + e * n[0] * n[0], e * n[0] * n[1], e * n[0] * n[1], 1 + e * n[1] * n[1], 0, 0];
+            Mb = M.mul(M.rotate(g), M.mul(N, base));
+          }
+        }
+        const a = { cur, M: Mb, rv: xy.get(b.name) };
         A.set(b.name, a);
         return a;
       };
       for (const b of bones) {
-        const me = scr(b), par = b.parent && m.bones.get(b.parent), p = par ? scr(par) : { S: [1, 1], a: [0, 0] };
-        const Sp = p.S.map((x) => (Math.abs(x) < 1e-6 ? 1e-6 : x)), s = [me.S[0] / Sp[0], me.S[1] / Sp[1]], rv = me.rv;
-        // em volta do lugar do osso na vista (rv), e depois em volta do pivot=
-        const d = [0, 1].map((i) => (me.a[i] - p.a[i]) / Sp[i] - rv[i] + s[i] * rv[i] + (1 - s[i]) * (rv[i] - b.pivot[i]));
-        out.set(b.name, [d[0], d[1], 0, s[0], s[1]]);
+        const me = scr(b), par = b.parent && m.bones.get(b.parent), p = par ? scr(par) : null, Mb = me.M;
+        // U: a matriz do osso vista do pai; q: onde o lugar do osso na vista (rv) vai parar, visto do pai
+        let U, q;
+        if (!p) { U = Mb; q = me.cur; }
+        else {
+          const Pm = p.M, dc = [me.cur[0] - p.cur[0], me.cur[1] - p.cur[1]];
+          if (Pm[1] === 0 && Pm[2] === 0) {
+            const a = Math.abs(Pm[0]) < 1e-9 ? 1e-9 : Pm[0], d = Math.abs(Pm[3]) < 1e-9 ? 1e-9 : Pm[3];
+            U = [Mb[0] / a, Mb[1] / d, Mb[2] / a, Mb[3] / d];
+            q = [p.rv[0] + dc[0] / a, p.rv[1] + dc[1] / d];
+          } else {
+            let det = Pm[0] * Pm[3] - Pm[1] * Pm[2];
+            if (Math.abs(det) < 1e-12) det = det < 0 ? -1e-12 : 1e-12;
+            const I = [Pm[3] / det, -Pm[1] / det, -Pm[2] / det, Pm[0] / det];
+            U = [I[0] * Mb[0] + I[2] * Mb[1], I[1] * Mb[0] + I[3] * Mb[1], I[0] * Mb[2] + I[2] * Mb[3], I[1] * Mb[2] + I[3] * Mb[3]];
+            q = [p.rv[0] + I[0] * dc[0] + I[2] * dc[1], p.rv[1] + I[1] * dc[0] + I[3] * dc[1]];
+          }
+        }
+        out.set(b.name, { U, q, rv: me.rv });
       }
       return out;
     }
@@ -439,16 +630,22 @@
     }
 
     // ---------- o pé no chão: o ponto mais baixo das peças da vista principal ----------
-    // (a parte de baixo das peças de cada osso, que anda e estica com ele; um osso sem peça vale pela junta)
+    // (o contorno das peças de cada osso, em 3D, anda, gira e estica com ele; um osso sem peça vale pela junta). Só
+    // contam os ossos que tocam o chão parados (até 6 px acima dele): a espada que desce no golpe não é um pé.
     const LOW = new Map();
     for (const b of bones) {
-      let lo = -Infinity;
-      for (const pc of piecesOf(main)) if (pc.bone === b.name) lo = Math.max(lo, pc.box[3]);
-      LOW.set(b.name, lo > -Infinity ? lo : b.pivot[1]);
+      const P = P3.get(b.name), pts = [];
+      for (const pc of piecesOf(main)) if (pc.bone === b.name) for (const q of pc.poly) pts.push(main === 'down' ? [q[0], q[1], P[2]] : [P[0], q[1], q[0] - rootX]);
+      LOW.set(b.name, pts.length ? pts : [P.slice()]);
     }
+    const restLow = new Map(bones.map((b) => [b.name, Math.max(...LOW.get(b.name).map((p) => p[1]))]));
+    const floorY = Math.max(...restLow.values()), feet = bones.filter((b) => restLow.get(b.name) >= floorY - 6);
     const lowest = (Wf) => {
       let lo = -Infinity;
-      for (const b of bones) { const w = Wf && Wf.get(b.name), y = LOW.get(b.name); lo = Math.max(lo, w ? w.s[1] * y + w.t[1] : y); }
+      for (const b of feet) {
+        const w = Wf && Wf.get(b.name), r = w && w.L[1];
+        for (const p of LOW.get(b.name)) { const y = w ? r[0] * p[0] + r[1] * p[1] + r[2] * p[2] + w.t[1] : p[1]; if (y > lo) lo = y; }
+      }
       return lo;
     };
     const ground = lowest(null);
@@ -467,6 +664,9 @@
           // walk_up escrita à mão conta como walk (only=walk numa caixa ou numa camada sem view=)
           const base = an.name.slice(0, -d.length - 1);
           if (m.animMap.has(base) && isBase(m.animMap.get(base))) an.aliases = [base];
+          // o 3D (osso.z=, .pitch=, .yaw=) só existe nas animações sem direção no nome: numa escrita à mão, não faz nada
+          const in3d = [...new Set([...an.ptracks.values()].filter((tr) => tr.kind === 'bone' && (tr.prop === 'z' || tr.prop === 'pitch' || tr.prop === 'yaw')).map((tr) => `${tr.name}.${tr.prop}=`))];
+          if (in3d.length) warn(an.line, `${an.name} é escrita à mão numa vista: ${in3d.join(', ')} não ${in3d.length > 1 ? 'fazem' : 'faz'} nada aqui (o giro e a profundidade valem nas animações sem direção no nome, que o Weasel gera para cada vista)`);
           if (!drawn.includes(d)) {
             const other = MIRROR[d] && drawn.includes(MIRROR[d]) ? ` (o Godot já espelha ${an.name.slice(0, -d.length)}${MIRROR[d]})` : '';
             warn(an.line, `nenhuma camada view=${d}: ${an.name} mostra só as camadas sem view=${other}`);
@@ -475,11 +675,9 @@
         out.push(an);
         continue;
       }
-      // os giros chegam na etapa 1b: por enquanto, os ossos das animações geradas só andam e esticam
-      const turns = [...an.tracks.values()].some((tr) => tr.some((k) => Math.abs(k.v[2]) > 1e-9)) || [...an.ptracks.values()].some((tr) => tr.kind === 'bone' && (tr.prop === 'pitch' || tr.prop === 'yaw'));
-      if (turns) warn(an.line, `${an.name}: o giro dos ossos (rot, pitch e yaw) ainda não vale nas animações geradas pelas vistas; por enquanto, os ossos só andam (dx, dy e z) e esticam (sx e sy)`);
-      const N = an.frames, WF = [];
+      const N = an.frames, WF = [], WH = [null];
       for (let f = 0; f <= N; f++) WF.push(world(an, f));
+      for (let f = 1; f <= N; f++) WH.push(world(an, f - 0.5));
       const g = [];
       for (let f = 0; f < N; f++) g.push(ground - lowest(WF[f]));
       V.ground.set(an.name, g);
@@ -495,10 +693,21 @@
         const gen = { name, line: an.line, frames: N, fps: an.fps, loop: an.loop, tracks: new Map(), ptracks: new Map(), events: an.events.map((e) => Object.assign({}, e)), view: v, viewOf: an.name, baseAnim: an, aliases: [an.name] };
         if (an.feetSpec && (v === 'right' || v === 'left')) gen.feetSpec = an.feetSpec;
         if (both) gen.noMirror = true;
-        if (v !== main) gen.voff = V.off.get(v);
+        if (v !== main) { gen.voff = V.off.get(v); gen.vxf = V.xf.get(v); }
         for (const [k, tr] of an.ptracks) if (!(tr.kind === 'bone' && (tr.prop === 'z' || tr.prop === 'pitch' || tr.prop === 'yaw'))) gen.ptracks.set(k, tr);
         for (const b of bones) gen.tracks.set(b.name, []);
-        for (let f = 0; f <= N; f++) for (const [b, v5] of keysOf(v, WF[f])) gen.tracks.get(b).push({ frame: f, v: v5, ease: 'linear' });
+        const last = new Map();
+        for (let f = 0; f <= N; f++) for (const [b, v6] of keysOf(v, WF[f], last, WH[f])) gen.tracks.get(b).push({ frame: f, v: v6, ease: 'linear' });
+        // turns: o desenho de cada quadro (as peças da vista com show=, as cópias das outras vistas com reveal=)
+        for (const t of TURN.get(v)) {
+          const picks = [];
+          for (let f = 0; f < N; f++) picks.push(turnPick(t, WF[f].get(t.bone.name)));
+          if (picks.every((p) => p === null)) continue;
+          const track = (el, prop, val) => gen.ptracks.set(`#vira:${el.id}.${prop}`, { name: el.name || '', prop, kind: 'el', type: 'step', keys: picks.map((p, f) => ({ frame: f, v: val(p), ease: 'linear' })), targets: [el] });
+          for (const el of t.own) if (![...gen.ptracks.values()].some((tr) => tr.prop === 'show' && tr.targets.includes(el))) track(el, 'show', (p) => (p === null ? 1 : 0));
+          for (const a of t.alts) for (const el of a.els) track(el, 'reveal', (p) => (p === a.cand.name ? 1 : 0));
+          V.turned.push({ anim: name, bone: t.bone.name, picks });
+        }
         // a ordem de cada quadro: o lugar de cada peça na camada dela (só nas camadas em que algo troca)
         const per = [];
         const changed = new Set();
@@ -523,6 +732,7 @@
     function handWritten(an, v) {
       const off = V.off.get(v);
       an.voff = off;
+      an.vxf = V.xf.get(v);
       an.view = v;
       if (both) an.noMirror = true;
       for (const b of bones) {

@@ -1,5 +1,5 @@
 # Original do protótipo da etapa 0, na sintaxe do plano (docs/planos/tres-vistas.md): view=, views, side=,
-# tip=x,y,z, lat=, turns. O Weasel de hoje não lê este arquivo direto; o script do protótipo o transforma num .weasel comum.
+# tip=x,y,z, lat=, turns. Desde a 1.76.0 (etapa 1b), o Weasel lê este arquivo direto.
 # Guarda de capa e lança: a lança vai para a frente (na vista de frente, para a câmera), a capa fica
 # atrás do corpo de frente e por cima dele de costas, e a cabeça vira enquanto ele anda.
 canvas 160 240 bg=#eef0e6

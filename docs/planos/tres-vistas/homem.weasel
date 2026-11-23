@@ -1,5 +1,5 @@
 # Original do protótipo da etapa 0, na sintaxe do plano (docs/planos/tres-vistas.md): view=, views, side=,
-# tip=x,y,z, lat=, turns. O Weasel de hoje não lê este arquivo direto; o script do protótipo o transforma num .weasel comum.
+# tip=x,y,z, lat=, turns. Desde a 1.76.0 (etapa 1b), o Weasel lê este arquivo direto.
 # Homem de proporção realista (7 cabeças), com joelho, cotovelo e pé: andar e correr.
 # Três vistas (o lado esquerdo sai espelhado no jogo).
 canvas 160 285 bg=#eef0e6

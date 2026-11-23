@@ -29,7 +29,7 @@
     art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'grout', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'view', 'angle', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat', 'tip'],
     // três vistas (docs/planos/tres-vistas.md): tilt= é o ângulo da câmera do jogo, em graus
     views: ['tilt'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
@@ -66,6 +66,7 @@
     shape: ['hidden', 'lock', 'billboard'], stroke: ['hidden', 'lock', 'billboard'], line: ['hidden', 'lock', 'billboard'], ellipse: ['hidden', 'lock', 'billboard'], rect: ['hidden', 'lock', 'billboard'], text: ['hidden', 'lock', 'bold', 'italic', 'billboard'], emitter: ['hidden', 'lock'],
     use: ['lock', 'billboard'],
     group: ['lock'],
+    bone: ['turns'],
     actor: ['screen', 'bg', 'hidden', 'unlit', 'front'],
     audio: ['loop'],
     box: ['body', 'hit', 'hurt', 'rect', 'circle', 'capsule', 'off'],
@@ -1276,6 +1277,13 @@
           // três vistas: side= é o x do osso na vista de lado (a profundidade); lat=, num jogo de plataforma, o x que
           // ele teria de frente
           for (const k of ['side', 'lat']) if (A.has(k)) { b[k] = number(st, A.get(k), 0); b[k + 'At'] = A.get(k); }
+          // tip=x,y[,z]: para onde o osso aponta (a ponta, desenhada na vista principal; z, o quanto ela vai para a
+          // frente); turns: nas vistas, o osso mostra o desenho da vista para onde a frente dele aponta
+          if (A.has('tip')) { const v = list(st, A.get('tip'), 2, 3, null); if (v) b.vtip = v; }
+          for (const f of st.pos.slice(1)) {
+            if (FLAGS.bone.includes(f.text)) b[f.text] = true;
+            else err(st.line, `valor solto "${f.text}" (use turns, ou nome=valor)`, f.from, f.to, 'warn');
+          }
           m.bones.set(name, b);
           break;
         }
@@ -2377,7 +2385,6 @@
         // rig=bones: a cena sai com esqueleto de verdade (Bone2D); rig=frames (padrão): quadros prontos
         if (A.has('rig')) { const a = A.get('rig'); if (a.text === 'bones' || a.text === 'frames') g.rig = a.text; else bad(st, a, 'rig= aceita frames (quadros prontos) ou bones (esqueleto de verdade)'); }
         if (g.rig === 'bones' && m.has3d) bad(st, A.get('rig'), 'o esqueleto do Godot não gira em 3D: yaw, pitch, z e iso ficam parados (use rig=frames)', 'warn');
-        if (g.rig === 'bones' && viewsOn) bad(st, A.get('rig'), 'com vistas (layer … view=), o rig=bones ainda não leva a ordem que troca em cada quadro: use rig=frames (o padrão)', 'warn');
         if (A.has('name')) {
           const a = A.get('name'), v = unq(a.text);
           if (/^[A-Za-z_]\w*$/.test(v)) g.name = v; else bad(st, a, 'name= precisa ser um nome simples (letras, números e _)');

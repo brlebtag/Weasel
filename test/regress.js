@@ -1092,6 +1092,28 @@ async function viewsCase() {
   lines.push(`ponto mira: walk_down#2 ${pt('walk_down', 2)} · walk_right#2 ${pt('walk_right', 2)} · walk_up#2 ${pt('walk_up', 2)}`);
   lines.push(`a ordem em walk_down: ${[0, 1, 2, 3].map((f) => { const L = ms.layerMap.get('frente'); return W.scene.orderItems(L.items, W.scene.makePose(ms, 'walk_down', f)).map((it) => it.el.name).join('<'); }).join(' · ')}`);
   lines.push(`avisos: ${ms.errors.map((e) => `[l${e.line + 1}] ${e.msg}`).join(' | ') || '—'}`);
+  // etapa 1b: (5) o pitch da espada no attack do furão, em cada vista (a lâmina no quadro 2); (6) a escala das keys
+  // geradas fica positiva (entre os quadros a espada gira, e não some), também na transição para o idle; (7) o skew
+  // do Bone2D no Godot (rig=bones) refaz a matriz do Weasel
+  const S = W.scene;
+  const blade = (mm, n, f, el) => { const bb = S.segsBox(S.geometry(mm, S.makePose(mm, n, f), mm.elements.find((e) => e.name === el)).segs); return [bb.x, bb.y, bb.x + bb.w, bb.y + bb.h].map(Math.round).join(','); };
+  lines.push(`attack, quadro 2, a lâmina: down ${blade(m3, 'attack_down', 2, 'laminaF')} · right ${blade(m3, 'attack_right', 2, 'laminaL')} · up ${blade(m3, 'attack_up', 2, 'laminaC')}`);
+  const mt = W.lang.parse(furao + '\nanim para from=attack to=idle frames=2\n', { file: 'furao3d.weasel' });
+  const least = (mm, names, bone) => Math.min(...names.map((n) => { const a = mm.animMap.get(n); let lo = Infinity; for (let f = 0; f < a.frames * 4; f++) { const mx = S.makePose(mm, n, f / 4).bones.get(bone); lo = Math.min(lo, Math.hypot(mx[0], mx[1])); } return lo; }));
+  const minSx = (mm, n, bone) => Math.min(...mm.animMap.get(n).tracks.get(bone).map((k) => k.v[3])).toFixed(2);
+  lines.push(`attack, a menor escala x da espada nas keys: down ${minSx(m3, 'attack_down', 'espada')} · right ${minSx(m3, 'attack_right', 'espada')} · up ${minSx(m3, 'attack_up', 'espada')}`);
+  lines.push(`o comprimento da espada a cada 1/4 de quadro (attack e a transição para o idle): no mínimo ${least(mt, ['attack_down', 'attack_right', 'attack_up', ...mt.anims.filter((a) => a.name.startsWith('para_')).map((a) => a.name)], 'espada').toFixed(2)}`);
+  const gd = load(path.join(CASES, 'vistas_giro.weasel'));
+  let worst = 0, sheared = 0;
+  for (const a of gd.anims) for (const [, tr] of a.tracks) for (const k of tr) {
+    const v = k.v;
+    if (!v[5]) continue;
+    sheared++;
+    const r = (v[2] * Math.PI) / 180, sg = v[4] < 0 ? -1 : 1, sy = sg * Math.hypot(v[5], v[4]), sk = Math.atan2(-v[5] * sg, v[4] * sg);
+    const godot = [Math.cos(r) * v[3], Math.sin(r) * v[3], -Math.sin(r + sk) * sy, Math.cos(r + sk) * sy], weasel = W.geom.M.mul(W.geom.M.rotate(v[2]), [v[3], 0, v[5], v[4], 0, 0]);
+    for (let i = 0; i < 4; i++) worst = Math.max(worst, Math.abs(godot[i] - weasel[i]));
+  }
+  lines.push(`skew no Godot contra a matriz do Weasel (vistas_giro, ${sheared} keys inclinadas): erro máximo ${worst < 1e-9 ? 'menos de 1e-9' : worst.toExponential(2)}`);
   await check('_vistas', 'vistas.txt', 'text', lines.join('\n') + '\n');
 }
 
@@ -1183,6 +1205,7 @@ async function warnCase() {
     ['vistas: costas trocadas, alturas e pé afundando', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,95 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nellipse mc 78,80 5 bone=mao\nanim a frames=2\nkey 1 corpo=0,4'],
     ['vistas: sem a principal', 'canvas 120 120\nbone corpo pivot=60,100\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,20'],
     ['vistas: o giro e o ik', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nbone dedo parent=mao pivot=88,80\nbone unha parent=dedo pivot=94,80\nbone alvo pivot=92,70\nik dedo bones=mao,dedo,unha target=alvo\nanim a frames=2\nkey 1 mao=0,0,20'],
+    ['vistas: o 3D numa animação escrita à mão', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nanim a_right frames=2\nkey 1 mao.pitch=30 mao.z=4 corpo.yaw=10'],
     ['vistas: dois lados com uma diagonal só, walk_left sem vista e rig=bones', 'canvas 120 120\ngodot root=60,100 rig=bones\nbone corpo pivot=60,100\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nlayer r view=right\nellipse tr 62,80 10,20 bone=corpo\nlayer l view=left\nellipse tl 58,80 10,20 bone=corpo\nlayer d view=down_right\nellipse td 61,80 12,20 bone=corpo\nanim a frames=2\nanim b_up frames=2'],
     ['cut no stroke', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 cut=furo : 10,10 90,90', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 : 10,10 90,90'],
     ['bold na ellipse', C + 'ellipse e 50,50 10 bold', C + 'ellipse e 50,50 10'],

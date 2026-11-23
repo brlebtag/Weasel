@@ -726,7 +726,8 @@ event 2 golpe
 # ajudante tocar("walk", velocity) escolhe a vista pela direção.
 # Os ossos são desenhados na frente; a profundidade de cada um vem da vista de lado (a cabeça fica
 # 4 px para a frente, o pé esquerdo 10). osso.z= anda para a frente (positivo) ou para trás, e de
-# frente o que vai para a frente desce um pouco na tela (views tilt=30).
+# frente o que vai para a frente desce um pouco na tela (views tilt=30). osso.pitch= gira o osso para a
+# frente ou para trás, e osso.yaw= de um lado para o outro: em cada vista a peça gira, encurta e inclina.
 # Veja as vistas, as profundidades e o pé no chão com:  weasel furao3d.weasel --info
 # Exporte com:  weasel furao3d.weasel -o godot/furao3d.tscn
 
@@ -754,9 +755,10 @@ bone peD pivot=92,126
 # o braço esquerdo não aparece de lado: a profundidade vem do direito (o par espelhado)
 bone bracoE parent=corpo pivot=58,100
 bone bracoD parent=corpo pivot=102,100
-# side= diz o x do osso na vista de lado, quando a maior peça dele engana
-bone cauda parent=corpo pivot=80,118 side=58
-bone espada parent=bracoD pivot=104,108 side=94
+# side= diz o x do osso na vista de lado, quando a maior peça dele engana; tip= diz para onde ele aponta
+# (o x,y na frente e quantos px para a frente ou para trás): a cauda vai para trás, a espada para cima
+bone cauda parent=corpo pivot=80,118 side=58 tip=80,118,-30
+bone espada parent=bracoD pivot=104,108 side=94 tip=119,75,-21
 
 # ---------- frente (virado para baixo) ----------
 layer frente view=down
@@ -844,6 +846,16 @@ key 6 corpo=0,-2 peE=0,-4 peE.z=0 peD=0,0 peD.z=0 bracoD.z=0 bracoE.z=0
 key 8 corpo=0,0 peE=0,-3 peE.z=8 peD=0,0 peD.z=-8 bracoD.z=5 bracoE.z=-5
 event 0 passo
 event 4 passo
+
+# ataca: a espada vai um pouco para trás e desce para a frente (pitch negativo vem para a frente). De lado
+# ela faz o arco inteiro; de frente e de costas ela encurta e vira, como em 3D.
+anim attack frames=6 fps=12 once
+key 0 espada.pitch=0 corpo=0,0
+key 1 espada.pitch=35 corpo=0,-1 ease=out
+key 2 espada.pitch=-140 corpo=0,2 ease=out
+key 4 espada.pitch=-145 corpo=0,1
+key 6 espada.pitch=0 corpo=0,0
+event 2 golpe
 `;
 
   const tiles = `# Blocos — tileset de plataforma para o Godot

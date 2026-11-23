@@ -174,7 +174,7 @@ As palavras que o guia usa, em ordem alfabética. Cada uma tem **um sentido só*
 
 **Variante** (`variant`): uma versão do mesmo desenho com outras cores ou outras peças, como a armadura azul e a vermelha. Ver [`variant`](19-referencia.md#variant).
 
-**Vista** (`view=`): o desenho do personagem visto de um lado: de frente (`down`), de lado (`right`), de costas (`up`) ou numa diagonal. Cada vista fica numa camada, todas usam os mesmos ossos, e o Weasel gera as animações de cada vista a partir de uma só. A **vista principal** (a de frente; num jogo de plataforma, a de lado) é a dos `pivot=` e da pose parada. Ver [três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view).
+**Vista** (`view=`): o desenho do personagem visto de um lado: de frente (`down`), de lado (`right`), de costas (`up`) ou numa diagonal. Cada vista fica numa camada, todas usam os mesmos ossos, e o Weasel gera as animações de cada vista a partir de uma só. A **vista principal** (a de frente; num jogo de plataforma, a de lado) é a dos `pivot=` e da pose parada. Os ossos andam para a frente (`osso.z=`) e giram em 3D (`osso.pitch=`, `osso.yaw=`), e cada vista mostra o movimento como ele seria visto dali; com `turns`, um osso que gira troca as peças pelas de outra vista. Ver [três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view) e [girar em 3D](16-jogo-avancado.md#girar-em-3d-pitch-yaw-tip-e-turns).
 
 ## Números
 

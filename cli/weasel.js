@@ -315,9 +315,11 @@ function info(m, scale) {
     const fx = L.fx ? Object.keys(L.fx).filter((k) => !['glowc', 'glows', 'tintc'].includes(k)) : [];
     const flags = [L.guide && 'guide', L.hidden && 'hidden', L.unlit && 'unlit', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.view ? `view=${L.view}${L.angle ? ` angle=${L.angle}` : ''}` : L.only && `only=${L.only.join(',')}`,
       fx.length && `efeitos: ${fx.join(',')}`, L.trail && 'trail', L.cast && 'cast', L.rim && 'rim'].filter(Boolean).join(' ');
-    out.push(`  ${L.name.padEnd(14)} ${String(L.items.length).padStart(3)} item(ns)${flags ? '  ' + flags : ''}`);
+    out.push(`  ${L.name.padEnd(14)} ${String(L.items.filter((it) => !it.el.vclone).length).padStart(3)} item(ns)${flags ? '  ' + flags : ''}`);
   }
-  out.push(`formas   ${m.elements.length}${m.elements.some((e) => e.hidden) ? ` (${m.elements.filter((e) => e.hidden).length} ocultas)` : ''}`);
+  // as cópias do turns (js/views.js) não contam: são as mesmas formas, nas outras vistas
+  const own = m.elements.filter((e) => !e.vclone);
+  out.push(`formas   ${own.length}${own.some((e) => e.hidden) ? ` (${own.filter((e) => e.hidden).length} ocultas)` : ''}`);
   const em = m.elements.filter((e) => e.type === 'emitter');
   if (em.length) out.push(`partículas ${em.map((e) => `${e.name || '?'} (${e.pshape}${e.rate ? `, ${e.rate}/s` : ''}${e.burst ? `, rajada ${e.burst}` : ''})`).join(', ')}`);
   if (m.bones.size) {
@@ -332,7 +334,7 @@ function info(m, scale) {
     out.push(`animações ${m.anims.length}`);
     const turns = new Set();
     for (const a of m.anims) {
-      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.viewOf ? `, gerada de ${a.viewOf}` : ''}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, ${a.blendOf.turn ? 'virada' : 'transição'} ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
+      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.viewOf ? `, gerada de ${a.viewOf}` : ''}${[...a.ptracks.keys()].some((k) => k[0] !== '#') ? `, anima ${[...a.ptracks.keys()].filter((k) => k[0] !== '#').join(' ')}` : ''}${a.blendOf ? `, ${a.blendOf.turn ? 'virada' : 'transição'} ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
       // a virada: as partes que viram outras (de nome diferente), as que nascem e as que somem (uma vez por linha
       // anim … turn)
       const key = a.blendOf && a.blendOf.turn && `${a.trans}|${a.blendOf.from.name}|${a.blendOf.to.name}`;
@@ -382,9 +384,12 @@ function viewsInfo(V) {
   out.push(`${pad}profundidade ${[...V.depth].map(([b, d]) => `${b} ${n(d.z !== undefined ? d.z : d.lat - V.rootX)} (${d.from})`).join(' · ')}${V.main === 'right' ? '  [de lado a lado, pelo lat=]' : ''}`);
   for (const [v, a] of Object.entries(V.angles)) out.push(`${pad}${v.padEnd(12)} ${n(a.deg)}° ${v.startsWith('down') ? 'da frente' : 'das costas'}, ${a.from === 'medido' ? `medido (${a.n} ossos, erro médio ${n(a.err)} px)` : a.from === 'angle=' ? 'pelo angle=' : 'o padrão (não deu para medir)'}`);
   out.push(`${pad}grossura     ${[...V.thick].map(([b, t]) => `${b} ${n(2 * t[0])}/${n(2 * t[1])}`).join(' · ')}  [de lado a lado / de frente para trás]`);
+  if (V.aim) out.push(`${pad}aponta       ${[...V.aim].map(([b, f]) => `${b} (${f})`).join(' · ')}`);
   for (const [a, g] of V.ground) out.push(`${pad}pé no chão   ${a}: ${g.map(n).join(' ')}`);
   for (const g of V.gens) out.push(`${pad}geradas      ${g.base} → ${g.names.length ? g.names.join(', ') : 'nenhuma (todas escritas à mão)'}`);
   for (const s of V.swaps) out.push(`${pad}ordem troca  ${s.anim}: em ${s.frames} de ${s.total} quadros (${s.pieces.join(', ')})`);
+  // turns: o desenho que cada quadro mostra (- = o da própria vista)
+  for (const t of V.turned || []) out.push(`${pad}vira         ${t.anim}: ${t.bone} ${t.picks.map((p) => p || '-').join(' ')}`);
   return out;
 }
 

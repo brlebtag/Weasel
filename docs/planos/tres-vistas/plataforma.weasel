@@ -1,5 +1,6 @@
 # Original do protótipo da etapa 0, na sintaxe do plano (docs/planos/tres-vistas.md): view=, views, side=,
-# tip=x,y,z, lat=, turns. O Weasel de hoje não lê este arquivo direto; o script do protótipo o transforma num .weasel comum.
+# tip=x,y,z, lat=, turns. Desde a 1.76.0 (etapa 1b), o Weasel lê este arquivo direto (o main= do views sobra: a
+# vista principal é a frente, ou o lado direito sem ela).
 # O mesmo herói num jogo de plataforma: só os dois lados, desenhados (o escudo perto de um lado, a espada do outro).
 # Escrito na sintaxe do plano tres-vistas: cada vista desenhada uma vez, cada animação uma vez.
 canvas 160 160 bg=#eef0e6
