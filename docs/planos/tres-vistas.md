@@ -1,6 +1,6 @@
 # Três vistas, uma animação
 
-**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Nada implementado no Weasel. Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir): o 6 mudou com o teste, e o 11 e o 12 são novos.
+**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Nada implementado no Weasel. Depois do teste, entrou a proposta de uma vista no editor, [Vistas em 3D](#vistas-em-3d). Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir): o 6 mudou com o teste, o 11 e o 12 são novos, e o 13 é a vista.
 
 **Origem:** a sua pergunta de 23/11/2026. Num jogo 2D visto de cima, tipo Zelda, o personagem precisa de quatro direções (baixo, cima, direita e esquerda). Desenhar cada uma já é trabalho; animar cada uma (andar, atacar, parado) multiplica o trabalho por três. A ideia: você desenha o personagem de frente, de lado e de costas, e o Weasel monta com isso um boneco "em 3D", que você anima uma vez só.
 
@@ -375,6 +375,41 @@ O normal é a esquerda espelhada. Para um personagem assimétrico (a espada na m
 - **Testar ossos:** os campos `z`, `pitch` e `yaw` num arquivo com vistas. Na vista de lado, arrastar a bolinha do osso para a frente ou para trás muda a profundidade no teste; **Escrever como `key`** grava `osso.z=`.
 - **A profundidade de cada osso:** na vista de lado, com o Prender, arrastar a bolinha do osso na horizontal escreve o `side=` dele. Um duplo clique apaga o `side=` e volta à profundidade lida das peças.
 
+### Vistas em 3D
+
+Pedido de 23/11/2026, depois do protótipo: uma vista para ver o "3D" das vistas, como a [Camadas em 3D](interface-illustrator.md#44-camadas-em-3d-o-protótipo-do-seu-irmão) e o [Palco em 3D](interface-illustrator.md#13-palco-em-3d-a-vista-3d-no-filme-17112026). Você gira com o mouse; a vista é só para olhar.
+
+![Esboço com o herói, em quatro quadros. 1: visto de fora e parado, com o desenho de frente e o de lado de pé atrás dele, como duas paredes, e no meio o boneco cinza com os ossos vermelhos e as bolinhas. 2: o mesmo no quadro 2 do attack, com as placas mostrando o quadro gerado de cada vista e o caminho amarelo da ponta da espada. 3: visto de cima, com a espada indo da esquerda para a frente do corpo e depois para a direita. 4: girado até os 34,5° medidos, com as bolinhas caindo em cima do desenho da 3/4](img/tres-vistas_esboco3d.png)
+
+O esboço foi feito com os números do protótipo (o esqueleto em 3D do herói, a grossura medida e o `attack`), mas é uma imagem parada, montada à parte.
+
+**O que aparece:**
+
+- **As placas:** cada vista desenhada fica de pé em volta do personagem, como as imagens de referência num programa 3D. A de frente fica atrás dele para quem olha de frente, a de lado fica atrás para quem olha de lado, e assim por diante. Só aparece a placa virada para quem olha: no esboço, de costas e a esquerda não aparecem.
+- **O boneco:**
+  - o traço vermelho é o osso;
+  - a bolinha é o pivô, com a cor dizendo de onde veio a profundidade: verde se foi lida das vistas, azul se veio de `side=`, vermelho se veio do pai, por falta de peça;
+  - o cinza é a grossura medida no desenho, a mesma que decide [quem fica na frente](#quem-fica-na-frente);
+  - o chão é uma grade na altura da raiz.
+- **A animação:** a vista acompanha o player. O boneco se mexe, e cada placa mostra o quadro gerado daquela vista; parado, é o seu desenho.
+- **O caminho:** ao escolher um osso, aparece por onde a ponta dele passa na animação (o amarelo do esboço).
+
+**Para que serve:**
+
+- **Ver se o Weasel entendeu o personagem.** Girando até uma vista desenhada, as bolinhas têm que cair em cima das peças, como no quadro 4 do esboço, que confere os 34,5° medidos da 3/4. Uma profundidade errada ou uma peça do lado trocado (como as 5 do furão) aparece na hora.
+- **Animar.** De cima, dá para ver se a espada vai mesmo para a frente, o quanto a lança avança na estocada e se o pé passa do chão.
+- **Entender a ordem.** Quando uma peça pula para trás de outra, o boneco mostra quem está mais perto.
+
+As escolhas marcadas com **(R)** esperam a sua confirmação ([ponto 13](#o-que-falta-decidir)):
+
+- **Onde fica** **(R)**: o mesmo botão da barra de baixo e **Exibir › Vistas em 3D**, que aparece no lugar de **Camadas em 3D** quando o arquivo tem `view=`, como o Palco no filme. A outra saída é deixar os dois itens no menu.
+- **O que as placas mostram** **(R)**: o quadro gerado de cada vista, acompanhando o player. A outra saída é sempre o desenho parado.
+- **Os jeitos de olhar** **(R)**: **Por fora** e **De cima**, mais um botão para cada vista desenhada (de frente, 3/4, de lado, de costas, esquerda), que alinha a vista com ela para conferir. **Da câmera do jogo**, com a inclinação de `tilt=`, pode entrar junto.
+- **O clique** **(R)**: num osso, escolhe o osso, leva o código à linha dele e mostra o caminho da ponta.
+- **Mexer pela vista** **(R)**: fica de fora, por enquanto. Arrastar a bolinha para mudar o `side=` continua no Prender, na vista de lado; mudar a pose continua no Testar ossos.
+- **Por dentro** **(R)**: o mesmo jeito da Camadas em 3D (o `js/ui-3d.js`). Cada placa é um canvas pintado pelo Weasel e posto em 3D com CSS, e o boneco é desenhado num SVG por cima, com as contas da própria vista, como a pirâmide da câmera no Palco. Sem three.js.
+- **Quando entra** **(R)**: logo depois da etapa 1b, como o primeiro pedaço da etapa 2. Ela precisa do esqueleto em 3D (1a) e dos giros (1b), e ajuda a conferir as duas.
+
 ## O que fica de fora
 
 - **Diagonais sem desenho:** sem uma 3/4 desenhada, o desenho de cada peça a 45° teria que vir do morph entre a peça de frente e a de lado. Fica melhor que o morph do personagem inteiro, mas o rosto a 45° nunca fica tão bom quanto um desenhado. Fica para depois, se fizer falta. As diagonais **desenhadas** estão no plano ([vistas na diagonal](#vistas-na-diagonal-opcional)).
@@ -429,6 +464,10 @@ Em cada item, **(R)** é a minha recomendação.
     - **(R)** No `--info`, a altura do pé em cada quadro; um aviso só quando o pé afunda. Quem anima acerta a altura do quadril, como no protótipo.
     - O Weasel acerta a altura do quadril sozinho, para o pé mais baixo ficar no chão. Nada a fazer, mas o pulo e o quadro no ar da corrida precisariam de uma palavra para não serem puxados para baixo.
     - Nada: só o desenho mostra.
+13. **A vista Vistas em 3D** (novo, pedido depois do protótipo).
+    - **(R)** Entra no plano, com as escolhas marcadas em [Vistas em 3D](#vistas-em-3d): o botão de sempre, as placas com o quadro gerado, Por fora, De cima e um botão por vista, o clique no osso, só para olhar, e logo depois da etapa 1b.
+    - Entra, mas mais simples: só o boneco parado e as placas com o desenho, sem acompanhar a animação.
+    - Fica para depois do plano.
 
 ## Etapas
 
@@ -445,6 +484,6 @@ Cada etapa só começa com o seu "pode fazer", e as imagens vão junto com cada 
   Para cada um, o resultado é um mapa: o que sai bom, o que sai aceitável e o que quebra. O furão fica só como conferência: as 9 animações dele, feitas à mão, são a única referência pronta para comparar com as geradas. Os desenhos dos homens seriam meus, então eles medem o método, não a arte.
 - **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca (a regra que ficou no protótipo, com a grossura medida no desenho), caixas e pontos, `--info` e os avisos (com o pé no chão). Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também, assim como `view=left` (e as diagonais da esquerda) e a vista principal, que deixa o jogo de plataforma usar só os dois lados (com `lat=`). Sem essas vistas, nada disso aparece. Guia, exemplo e caso de teste.
 - **Etapa 1b, os giros:** `rot`, `pitch` e `yaw` em 3D, as peças que inclinam e encurtam, `tip=` (com o terceiro número), `turns`, e o Godot com `rig=bones` conferido no Godot. Dá conta do `attack`.
-- **Etapa 2, o editor:** os botões de direção no player (quatro, ou oito com diagonais), a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
+- **Etapa 2, o editor:** primeiro a vista [Vistas em 3D](#vistas-em-3d), que ajuda a conferir a 1a e a 1b; depois os botões de direção no player (quatro, ou oito com diagonais), a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
 
 **Para o que existe:** tudo depende de `view=`. Sem ele, nada muda, e os desenhos dos testes (`npm test`) ficam iguais, byte a byte.
