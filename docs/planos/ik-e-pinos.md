@@ -2,6 +2,8 @@
 
 **Situação:** feito na 1.47.0 (15/11/2026). Revisto em 15/11/2026: das sobras da 1.28.0 (pinos `@osso` e `ik`) e das ideias da pata da capivara (11/11/2026), ficaram só duas ideias pequenas, ambas no editor.
 
+**Depois (23/11/2026):** o "Testar giro" (item 1) saiu do Prender na 1.73.0. No lugar dele ficou a ferramenta Testar ossos (tecla O), que move, gira e estica os ossos só na tela: ver [Testar ossos](testar-ossos.md).
+
 ## O que ainda vale
 
 1. **"Testar giro" no Prender**

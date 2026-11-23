@@ -48,7 +48,11 @@
     mdrag: null,
     // prender: ligada, os pontos escolhidos ("linha:ponto" → a linha sem os @, para conferir depois de editar),
     // a caixa sendo arrastada, o último clique (para pegar o de baixo) e o peso usado da última vez
-    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1, spin: new Map() },
+    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1 },
+    // Testar ossos (a ferramenta, tecla O): os ossos mexidos só na tela (nome → { v, along, yaw, pitch }, como em
+    // scene.testPose), o osso na mão, de que quadro o teste partiu ("anim|quadro") e o último aperto (para pegar o
+    // osso de baixo quando as alças estão no mesmo lugar)
+    bt: { vals: new Map(), sel: null, at: '', pick: null },
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -2262,9 +2266,10 @@
     // a prévia é parada: o def como está escrito, sem animação
     const P = pvModel();
     if (P) return S.makePose(P, null, 0);
-    // Testar giro (Prender, pose parada): os ossos girados só na tela
-    if (spinOn() && st.pin.spin.size) return S.spinPose(st.model, st.pin.spin);
-    return S.makePose(st.model, st.build ? '' : st.anim, st.frame);
+    const base = S.makePose(st.model, st.build ? '' : st.anim, st.frame);
+    // Testar ossos: os ossos mexidos só na tela, por cima do quadro em que o teste começou
+    if (testOn()) { testBase(); if (st.bt.vals.size) return S.testPose(st.model, base, st.bt.vals); }
+    return base;
   }
 
   function fit() {
@@ -2389,13 +2394,14 @@
     if (m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
-    // na ferramenta Prender, os ossos aparecem mesmo com a chave Ossos desligada
-    const pinning = pinOn();
-    if ((st.show.bones || pinning) && !P) drawBones(ctx, m, pose, z);
+    // nas ferramentas Prender e Testar ossos, os ossos aparecem mesmo com a chave Ossos desligada
+    const pinning = pinOn(), testing = testOn();
+    if ((st.show.bones || pinning || testing) && !P) drawBones(ctx, m, pose, z);
     if (P) drawOrigin(ctx, z);
     const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (pinning) drawPins(ctx, m, pose, z);
+    else if (testing) { /* testando ossos, as formas não mostram alças nem caixa */ }
     else if (pointsOn()) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); } else if (groupOn()) drawGroup(ctx, m, pose, z);
     if (st.marq && st.marq.moved) drawMarq(ctx, z);
     const tk = toolHooks[st.tool];
@@ -2406,7 +2412,7 @@
     if (st.meas) drawMeasure(ctx, dpr);
     if (ro) drawRulers(ctx, dpr);
     if (gait) drawGaitNote(ctx, dpr, gait);
-    else if (pinning && spinOn() && st.pin.spin.size) drawSpinNote(ctx, dpr);
+    else if (testing) drawTestNote(ctx, dpr);
     else if (iso) drawNote(ctx, dpr, [`grupo ${iso.name || '(sem nome)'}${iso.lock ? ' (travado)' : ''}`, 'Esc ou duplo clique fora: sai']);
   }
   // no isolamento, o resto do desenho fica apagado: um véu claro por cima, e as formas do grupo pintadas de novo
@@ -2446,10 +2452,14 @@
     const t = S.gaitText(g, 1);
     drawNote(ctx, dpr, [`${g.anim.name}: ${t.head}`, ...t.slips]);
   }
-  // Testar giro: quais ossos estão girados (só na tela)
-  function drawSpinNote(ctx, dpr) {
-    const list = [...st.pin.spin].filter(([n]) => st.model.bones.has(n)).map(([n, a]) => `${n} ${Math.round(a)}°`);
-    if (list.length) drawNote(ctx, dpr, [`Testar giro: ${list.join(' · ')}`, 'só na tela, não escreve nada · Esc volta']);
+  // Testar ossos: o que está mexido (só na tela) e o osso na mão
+  function drawTestNote(ctx, dpr) {
+    const list = [];
+    for (const n of st.bt.vals.keys()) { const t = testText(n); if (t) list.push(`${n} ${t}`); }
+    const head = list.length ? list.slice(0, 4).join(' · ') + (list.length > 4 ? ` · +${list.length - 4}` : '') : 'nada mexido';
+    const lines = [`Testar ossos: ${head}`, list.length ? 'só na tela, não escreve nada · Esc zera tudo' : 'a bolinha move, a ponta da haste gira, o quadradinho estica'];
+    if (st.bt.sel && st.model.bones.has(st.bt.sel)) { const p = st.bt.pick; lines.push(`na mão: ${st.bt.sel}${p && p.list.length > 1 && p.list.includes(st.bt.sel) ? ` (${p.list.indexOf(st.bt.sel) + 1} de ${p.list.length} aqui: clique de novo para o próximo)` : ''}`); }
+    drawNote(ctx, dpr, lines);
   }
   // uma nota no canto de cima, à esquerda: a primeira linha clara, as outras em âmbar
   function drawNote(ctx, dpr, lines) {
@@ -2700,7 +2710,8 @@
   // Com Ossos ligado, uma animação escolhida e o player parado: arrastar a bolinha de um osso move o osso e
   // arrastar a alça (o traço que sai dele) gira. O Weasel escreve o osso na key daquele quadro (ou cria a key).
   // as peças de uma transição (anim … from= to=) são geradas: não têm key para escrever
-  const posing = () => !!((st.show.bones || pinOn()) && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim) && !st.model.animMap.get(st.anim).blendOf);
+  // (o Prender só prende, e o Testar ossos não escreve: nos dois, arrastar um osso não escreve key)
+  const posing = () => !!(st.show.bones && !pinOn() && !testOn() && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim) && !st.model.animMap.get(st.anim).blendOf);
   // para onde o osso aponta parado: o meio das formas presas a ele (ou dos ossos filhos); sem nada, para baixo
   function boneDir(m, b) {
     m._boneDir = m._boneDir || new Map();
@@ -2720,77 +2731,108 @@
     m._boneDir.set(b.name, a);
     return a;
   }
-  // a bolinha (mover) e a ponta da alça (girar) de cada osso, na pose do quadro
+  // a bolinha (mover), a ponta da alça (girar) e, no Testar ossos, o quadradinho no meio da alça (esticar) de cada
+  // osso, na pose do quadro; dir é para onde a alça aponta no desenho
   function boneGrips(m, pose, z) {
     return [...m.bones.values()].map((b) => {
       const wm = pose.bones.get(b.name), p = M.apply(wm, b.pivot[0], b.pivot[1]), a = boneDir(m, b);
       let dx = wm[0] * Math.cos(a) + wm[2] * Math.sin(a), dy = wm[1] * Math.cos(a) + wm[3] * Math.sin(a);
       const l = Math.hypot(dx, dy) || 1;
       dx /= l; dy /= l;
-      return { b, p, knob: [p[0] + (dx * 30) / z, p[1] + (dy * 30) / z] };
+      return { b, p, a, dir: [dx, dy], knob: [p[0] + (dx * 30) / z, p[1] + (dy * 30) / z], sq: [p[0] + (dx * 15) / z, p[1] + (dy * 15) / z] };
     });
   }
+  // a alça de osso sob o mouse: { bone, mode: 'rot' | 'move' | 'scale', here }. here são as alças no mesmo lugar
+  // que ela (dois ossos com o mesmo pivô, como o braço de perto e o de longe), na ordem do arquivo
   function hitBone(e) {
-    // testando giro, só as alças de girar valem (a bolinha do osso fica para escolher pontos)
-    const spin = !posing() && spinOn();
-    if (!posing() && !spin) return null;
-    const [x, y] = toCanvas(e), r = 8 / st.view.z;
-    let best = null, bd = r;
-    for (const g of boneGrips(st.model, currentPose(), st.view.z)) {
-      const dk = Math.hypot(g.knob[0] - x, g.knob[1] - y), dp = Math.hypot(g.p[0] - x, g.p[1] - y);
-      if (dk < bd) { bd = dk; best = { bone: g.b.name, mode: 'rot' }; }
-      if (dp < bd && !spin) { bd = dp; best = { bone: g.b.name, mode: 'move' }; }
+    const test = testOn();
+    if (!posing() && !test) return null;
+    const [x, y] = toCanvas(e), z = st.view.z, r = 8 / z, found = [];
+    boneGrips(st.model, currentPose(), z).forEach((g, i) => {
+      let bm = null;
+      for (const [mode, q] of [['rot', g.knob], ['move', g.p]].concat(test ? [['scale', g.sq]] : [])) {
+        const d = Math.hypot(q[0] - x, q[1] - y);
+        if (d < r && (!bm || d < bm.d)) bm = { bone: g.b.name, mode, d, q, i };
+      }
+      if (bm) found.push(bm);
+    });
+    if (!found.length) return null;
+    const best = found.reduce((a, b) => (b.d < a.d ? b : a));
+    const here = found.filter((f) => Math.hypot(f.q[0] - best.q[0], f.q[1] - best.q[1]) < 2 / z).sort((a, b) => a.i - b.i);
+    return { bone: best.bone, mode: best.mode, here };
+  }
+  // Testar ossos: com as alças de dois ossos no mesmo lugar, o aperto pega o osso que está na mão (ou o primeiro).
+  // Um clique sem arrastar, de novo no mesmo lugar, passa para o próximo; a troca é ao soltar, para que apertar e
+  // arrastar leve o osso que a nota mostra na mão
+  function pickTestBone(hb, e) {
+    const list = hb.here.map((h) => h.bone), p = st.bt.pick;
+    const again = !!(p && p.click && Math.hypot(p.x - e.clientX, p.y - e.clientY) < 6 && p.list.join() === list.join());
+    const name = list.length < 2 ? hb.bone : list.includes(st.bt.sel) ? st.bt.sel : list[0];
+    const h = hb.here.find((x) => x.bone === name) || hb;
+    st.bt.pick = { x: e.clientX, y: e.clientY, list, down: true, click: false, again, prev: null };
+    st.bt.sel = name;
+    if (list.length > 1 && !again) hint(`${list.length} ossos aqui (${list.join(', ')}): na mão, ${name}. Clique de novo, sem arrastar, para o próximo.`, 3200);
+    emit('bonetest');
+    return { bone: name, mode: h.mode };
+  }
+  // ao soltar um clique sem arrastar: se foi de novo no mesmo lugar, o próximo osso dali vai para a mão
+  // (prev guarda o de antes: o duplo clique volta para ele)
+  function testClickUp() {
+    const p = st.bt.pick;
+    if (p.again && p.list.length > 1) {
+      p.prev = st.bt.sel;
+      st.bt.sel = p.list[(p.list.indexOf(st.bt.sel) + 1) % p.list.length];
+      hint(`Na mão: ${st.bt.sel} (${p.list.indexOf(st.bt.sel) + 1} de ${p.list.length} aqui).`, 2000);
+      draw();
+      emit('bonetest');
     }
-    return best;
+    p.click = true;
   }
   function startPose(hb, e) {
-    // a raiz e o meio de um ik são girados por ele: a key de giro deles não aparece
-    const ik = st.model.iks.find((k) => { const i = k.bones.indexOf(hb.bone); return i === 1 || (i === 0 && hb.mode === 'rot'); });
-    if (ik && !posing()) {
-      const top = st.model.bones.get(ik.bones[0]).parent;
-      hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: ${top ? `gire ${top} e veja o ik acompanhar` : ik.target ? `ele segue o alvo (${ik.target})` : 'ele segue o pé'}.`, 3200);
-      return;
-    }
-    if (ik) { hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: mexa ${ik.target ? `no alvo (${ik.target})` : 'no corpo; o pé fica no chão'}.`, 3200); return; }
-    // Testar giro: gira só na tela, sem key
-    if (!posing()) {
-      const wm = currentPose().bones.get(hb.bone), b = st.model.bones.get(hb.bone);
-      st.pose = { spin: true, bone: hb.bone, v0: st.pin.spin.get(hb.bone) || 0, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e) };
-      return;
-    }
+    const test = testOn();
+    if (test) hb = pickTestBone(hb, e);
+    // a raiz e o meio de um ik são girados por ele: a key de giro deles não aparece (esticar vale)
+    const ik = hb.mode === 'scale' ? null : st.model.iks.find((k) => { const i = k.bones.indexOf(hb.bone); return i === 1 || (i === 0 && hb.mode === 'rot'); });
+    if (ik) { hint(`O osso ${hb.bone} é girado pelo ik ${ik.name}: mexa ${ik.target ? `no alvo (${ik.target})` : 'no corpo; o pé fica no chão'}.`, 3200); draw(); return; }
     // a ponta de um ik vai para onde o ik manda: arrastar a bolinha dela move o alvo (com foot=, o pé fica no chão)
     const tip = hb.mode === 'move' ? st.model.iks.find((k) => k.bones[2] === hb.bone) : null;
-    if (tip && !tip.target) { hint(`O pé do ik ${tip.name} fica no chão (foot=): para animar o pé, use target= com um osso de alvo.`, 3600); return; }
-    if (tip && st.model.bones.has(tip.target)) { hint(`A ponta do ik ${tip.name} segue o alvo: a key vai para ${tip.target}.`, 2400); hb = { bone: tip.target, mode: 'move' }; }
-    const m = st.model, an = m.animMap.get(st.anim), b = m.bones.get(hb.bone), f = st.frame;
-    const s = W.geom.segment(an.tracks.get(b.name), f, an.frames, an.loop);
-    const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
-    const pose = currentPose(), wm = pose.bones.get(b.name), parent = b.parent ? pose.bones.get(b.parent) : null;
-    st.pose = { bone: b.name, mode: hb.mode, v0, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null, anim: an.name, frame: f, key: 'pose' + Date.now() };
-  }
-  function movePose(e) {
-    const d = st.pose, [x, y] = toCanvas(e);
-    if (d.spin) {
-      let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
-      let a = d.v0 + (d.flip ? -da : da);
-      while (a > 180) a -= 360;
-      while (a <= -180) a += 360;
-      st.pin.spin.set(d.bone, a);
+    if (tip && !tip.target) { hint(`O pé do ik ${tip.name} fica no chão (foot=): ${test ? 'mexa no corpo e veja a perna dobrar' : 'para animar o pé, use target= com um osso de alvo'}.`, 3600); draw(); return; }
+    if (tip && st.model.bones.has(tip.target)) { hint(`A ponta do ik ${tip.name} segue o alvo: ${test ? `o teste move ${tip.target}` : `a key vai para ${tip.target}`}.`, 2400); hb = { bone: tip.target, mode: 'move' }; if (test) st.bt.sel = tip.target; }
+    const m = st.model, b = m.bones.get(hb.bone), pose = currentPose(), wm = pose.bones.get(b.name), parent = b.parent ? pose.bones.get(b.parent) : null;
+    const common = { bone: b.name, mode: hb.mode, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null };
+    // Testar ossos: só na tela. Esticar puxa ao longo da alça: estica no eixo do osso mais perto dela (sx ou sy)
+    if (test) {
+      const g = boneGrips(m, pose, st.view.z).find((q) => q.b === b);
+      st.pose = Object.assign(common, { test: true, v0: testVals(b.name).v, dir: g.dir, axis: Math.abs(Math.cos(g.a)) >= Math.abs(Math.sin(g.a)) ? 3 : 4, moved: false });
       draw();
       return;
     }
+    const an = m.animMap.get(st.anim), f = st.frame;
+    const s = W.geom.segment(an.tracks.get(b.name), f, an.frames, an.loop);
+    const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
+    st.pose = Object.assign(common, { v0, anim: an.name, frame: f, key: 'pose' + Date.now() });
+  }
+  function movePose(e) {
+    const d = st.pose, [x, y] = toCanvas(e);
     const v = d.v0.slice();
     if (d.mode === 'rot') {
       let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
       while (da > 180) da -= 360;
       while (da < -180) da += 360;
       v[2] = d.v0[2] + (d.flip ? -da : da);
+      if (d.test && e.shiftKey) v[2] = Math.round(v[2] / 15) * 15;
+    } else if (d.mode === 'scale') {
+      // quanto o mouse anda ao longo da alça, contado do pivô; passar do pivô espelha. Shift: os dois eixos por igual
+      const along = (q) => (q[0] - d.p[0]) * d.dir[0] + (q[1] - d.p[1]) * d.dir[1], a0 = along(d.start);
+      const k = Math.abs(a0) > 1e-6 ? along([x, y]) / a0 : 1;
+      if (e.shiftKey) { v[3] = d.v0[3] * k; v[4] = d.v0[4] * k; } else v[d.axis] = d.v0[d.axis] * k;
     } else {
       let dx = x - d.start[0], dy = y - d.start[1];
       if (d.parentInv) { const q = d.parentInv; [dx, dy] = [q[0] * dx + q[2] * dy, q[1] * dx + q[3] * dy]; }
       v[0] = d.v0[0] + dx;
       v[1] = d.v0[1] + dy;
     }
+    if (d.test) { d.moved = true; setTest(d.bone, { v }); return; }
     writeKey(d, v);
   }
   // escreve osso=dx,dy,rot[,sx,sy] na key do quadro (troca o valor, acrescenta o osso ou cria a linha)
@@ -2822,19 +2864,31 @@
 
   function drawBones(ctx, m, pose, z) {
     ctx.save();
-    // posando (ou testando giro no Prender): a alça de girar de cada osso
-    if (posing() || spinOn()) {
+    // posando (ou testando ossos): a alça de girar de cada osso; testando, também o quadradinho de esticar, e o osso
+    // na mão fica laranja
+    const test = testOn(), hand = test ? st.bt.sel : null;
+    if (posing() || test) {
       for (const g of boneGrips(m, pose, z)) {
-        ctx.strokeStyle = '#7fe0d0';
-        ctx.lineWidth = 1.5 / z;
+        const col = g.b.name === hand ? '#ff9f43' : '#7fe0d0';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = (g.b.name === hand ? 2.2 : 1.5) / z;
         ctx.beginPath();
         ctx.moveTo(g.p[0], g.p[1]);
         ctx.lineTo(g.knob[0], g.knob[1]);
         ctx.stroke();
-        ctx.fillStyle = '#7fe0d0';
+        ctx.fillStyle = col;
         ctx.beginPath();
         ctx.arc(g.knob[0], g.knob[1], 4 / z, 0, Math.PI * 2);
         ctx.fill();
+        if (test) {
+          const s = 3.2 / z;
+          ctx.beginPath();
+          ctx.rect(g.sq[0] - s, g.sq[1] - s, s * 2, s * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#14141c';
+          ctx.lineWidth = 1 / z;
+          ctx.stroke();
+        }
       }
     }
     for (const b of m.bones.values()) {
@@ -2850,8 +2904,8 @@
         ctx.stroke();
       }
       ctx.fillStyle = b.spring || b.sway || b.bob || b.jitter ? '#ffd166' : '#e391d6';
-      ctx.strokeStyle = '#2a1028';
-      ctx.lineWidth = 1.5 / z;
+      ctx.strokeStyle = b.name === hand ? '#ff9f43' : '#2a1028';
+      ctx.lineWidth = (b.name === hand ? 2.5 : 1.5) / z;
       ctx.beginPath();
       ctx.arc(p[0], p[1], 5 / z, 0, Math.PI * 2);
       ctx.fill();
@@ -3451,8 +3505,55 @@
   // depois de cada ponto escolhido, num Ctrl+Z só. Os presos ficam com a cor do osso; os soltos, cinza.
   const BONE_COLORS = ['#ff6b6b', '#4dabf7', '#8ce99a', '#ffd43b', '#da77f2', '#ff922b', '#3bc9db', '#f783ac', '#c0eb75', '#91a7ff'];
   function pinOn() { return !!(st.pin.on && st.model && !isFilm() && !pvModel() && !st.build); }
-  // Testar giro: no Prender com a pose parada, a alça de um osso gira só na tela (os pontos presos vão junto)
-  function spinOn() { return pinOn() && !st.anim; }
+  // ---------- Testar ossos (a ferramenta, tecla O; docs/planos/testar-ossos.md) ----------
+  // Mover, girar e esticar os ossos só na tela, a partir do quadro do player (ou da pose parada), para ver se tudo
+  // está conectado: nada vai para o código, o Esc zera e trocar de ferramenta volta tudo.
+  function testOn() { return st.tool === 'bonetest' && !!st.model && !isFilm() && !pvModel() && !st.build; }
+  // a pose de onde o teste parte; mudar de quadro ou de animação recomeça o teste
+  function testBase() {
+    const at = `${st.anim}|${st.frame}`;
+    if (st.bt.at !== at) { st.bt.at = at; st.bt.vals.clear(); }
+    return S.makePose(st.model, st.anim, st.frame);
+  }
+  // os valores do osso agora, como numa key: { v: [dx, dy, rot, sx, sy], along (null sem path=/key), yaw, pitch }
+  function testVals(name) {
+    const m = st.model, base = testBase(), t = st.bt.vals.get(name) || {};
+    const v = (t.v || S.poseVals(m, base).get(name) || [0, 0, 0, 1, 1]).slice();
+    const tn = S.turnOf(m, base, name), al = S.alongOf(m, base, name);
+    return { v, along: t.along !== undefined ? t.along : al, yaw: t.yaw !== undefined ? t.yaw : tn.yaw, pitch: t.pitch !== undefined ? t.pitch : tn.pitch, changed: st.bt.vals.has(name) };
+  }
+  function setTest(name, part) {
+    if (!testOn() || !st.model.bones.has(name)) return;
+    testBase();
+    st.bt.vals.set(name, Object.assign({}, st.bt.vals.get(name) || {}, part));
+    draw();
+    emit('bonetest');
+  }
+  // volta um osso (ou todos) para como estava na partida
+  function resetTest(name) {
+    if (name) st.bt.vals.delete(name); else st.bt.vals.clear();
+    draw();
+    emit('bonetest');
+  }
+  function clearTest() { st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; st.bt.at = ''; }
+  // o que mudou num osso desde a partida, curto (para a nota): o giro, quanto andou, quanto esticou, along, yaw, pitch
+  function testText(name) {
+    const t = st.bt.vals.get(name), m = st.model;
+    if (!t || !m.bones.has(name)) return '';
+    const base = testBase(), v0 = S.poseVals(m, base).get(name) || [0, 0, 0, 1, 1], out = [];
+    if (t.v) {
+      const v = t.v, dr = v[2] - v0[2], dx = v[0] - v0[0], dy = v[1] - v0[1];
+      if (Math.abs(dr) >= 0.05) out.push(`${fmtN(dr, 1)}°`);
+      if (Math.abs(dx) >= 0.05 || Math.abs(dy) >= 0.05) out.push(`${fmtN(dx, 1)},${fmtN(dy, 1)}`);
+      const kx = v0[3] ? v[3] / v0[3] : v[3], ky = v0[4] ? v[4] / v0[4] : v[4];
+      if (Math.abs(kx - 1) >= 0.005 || Math.abs(ky - 1) >= 0.005) out.push(Math.abs(kx - ky) < 0.005 ? `×${fmtN(kx, 2)}` : `×${fmtN(kx, 2)},${fmtN(ky, 2)}`);
+    }
+    const tn = S.turnOf(m, base, name), al = S.alongOf(m, base, name);
+    if (t.along !== undefined && t.along !== al) out.push(`along ${fmtN(t.along, 2)}`);
+    if (t.yaw !== undefined && Math.abs(t.yaw - tn.yaw) >= 0.05) out.push(`yaw ${fmtN(t.yaw, 1)}°`);
+    if (t.pitch !== undefined && Math.abs(t.pitch - tn.pitch) >= 0.05) out.push(`pitch ${fmtN(t.pitch, 1)}°`);
+    return out.join(' ');
+  }
   let boneCols = null;
   function boneColor(m, name) {
     if (!boneCols || boneCols.m !== m) boneCols = { m, map: new Map([...m.bones.keys()].map((n, i) => [n, BONE_COLORS[i % BONE_COLORS.length]])) };
@@ -3466,8 +3567,7 @@
   let pinCache = null;
   function pinSpots() {
     const m = st.model, only = !$('layerPanel').hidden && st.sel.size ? st.sel : null;
-    const spin = spinOn() ? [...st.pin.spin].map(([n, a]) => `${n}${a.toFixed(2)}`).join(',') : '';
-    const key = [st.anim, st.frame, st.show.guides, only ? [...only.keys()].join(',') : '', spin].join('|');
+    const key = [st.anim, st.frame, st.show.guides, only ? [...only.keys()].join(',') : ''].join('|');
     if (pinCache && pinCache.m === m && pinCache.key === key) return pinCache.list;
     const pose = currentPose(), list = [];
     let order = 0;
@@ -3536,8 +3636,28 @@
     const s = here[0];
     return `${s.name}, ponto ${s.idx + 1}: ${s.pin ? `@${s.pin}${s.w !== 1 ? `:${s.w}` : ''}` : 'solto'}`;
   }
+  // a bolinha de osso sob o mouse (o nome), na pose do quadro
+  function pinBoneAt(e) {
+    const m = st.model, pose = currentPose(), [x, y] = toCanvas(e);
+    let best = null, bd = 8 / st.view.z;
+    for (const b of m.bones.values()) {
+      const wm = pose.bones.get(b.name), p = wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot, d = Math.hypot(p[0] - x, p[1] - y);
+      if (d < bd) { bd = d; best = b.name; }
+    }
+    return best;
+  }
   function pinClick(e) {
     const here = pinsAt(e), how = e.altKey ? 'sub' : e.shiftKey ? 'toggle' : 'set';
+    // na bolinha de um osso (sem ponto em cima): os pontos presos a ele (@osso)
+    const bn = here.length ? null : pinBoneAt(e);
+    if (bn) {
+      const list = pinSpots().filter((q) => q.pin === bn);
+      st.pin.pick = null;
+      pinSelect(list, how);
+      draw();
+      hint(list.length ? `${plural(list.length, 'ponto preso', 'pontos presos')} a ${bn}: o botão direito troca o osso ou solta.` : `Nenhum ponto preso a ${bn} com @${bn}. (Uma forma com bone=${bn} vai inteira com ele.)`, 3000);
+      return;
+    }
     if (!here.length) {
       st.pin.pick = null;
       if (how === 'set' && st.pin.sel.size) { st.pin.sel.clear(); draw(); }
@@ -3654,10 +3774,10 @@
     if (on !== (st.tool === 'pin')) { st.tool = on ? 'pin' : 'select'; selMemo = null; stage.dataset.tool = st.tool; emit('tool'); }
     st.pin.box = null;
     st.pin.pick = null;
-    if (!on) { st.pin.sel.clear(); st.pin.spin.clear(); closePinMenu(false); }
+    if (!on) { st.pin.sel.clear(); closePinMenu(false); }
     if (on && st.measure) setMeasure(false);
     $('pinBtn').classList.toggle('on', on);
-    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : `Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.${!st.anim && st.model.bones.size ? ' A alça de um osso gira só na tela, para testar.' : ''}`, 4200);
+    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : `Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.${st.model.bones.size ? ' Um clique na bolinha de um osso escolhe os pontos presos a ele.' : ''}`, 4200);
     draw();
   }
   // o menu dos ossos (botão direito): o osso mais perto dos pontos primeiro, o peso, cada um no mais perto e soltar
@@ -3943,6 +4063,7 @@
     if (film && st.measure) setMeasure(false);
     $('pinBtn').hidden = film;
     if (film && st.pin.on) setPin(false);
+    if (film && st.tool === 'bonetest') setTool('select');
     // a chave Estilo só aparece quando o arquivo (ou o filme) tem art
     $('tArtWrap').hidden = !W.art.has(st.model);
     stage.classList.toggle('ruled', rulersOn());
@@ -3996,7 +4117,7 @@
   // ---------- ferramentas e vistas (a casca no jeito do Illustrator) ----------
   // A ferramenta da barra da esquerda. Medir e Prender continuam sendo os modos de antes (st.measure, st.pin.on):
   // ligar um deles pela barra, pelo teclado ou pelo menu escolhe a ferramenta, e desligar volta para a Seleção.
-  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'smooth', 'patherase', 'join', 'brush', 'blob', 'eraser', 'scissors', 'knife', 'builder', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'hand', 'zoom'];
+  const TOOLS = ['select', 'direct', 'pen', 'curve', 'anchor', 'pencil', 'smooth', 'patherase', 'join', 'brush', 'blob', 'eraser', 'scissors', 'knife', 'builder', 'wand', 'lasso', 'text', 'rect', 'ellipse', 'polygon', 'star', 'line', 'eyedrop', 'gradient', 'measure', 'pin', 'bonetest', 'hand', 'zoom'];
   const FILM_TOOLS = ['select', 'direct', 'hand', 'zoom'];
   // o Texto põe o texto pronto com um clique; as formas, o Conta-gotas e o Degradê moram em js/ui-draw.js
   const INSERT_TOOLS = { text: 'text' };
@@ -4011,7 +4132,14 @@
   function setTool(id) {
     if (!TOOLS.includes(id) || ((isFilm() || st.view3d) && !FILM_TOOLS.includes(id))) return;
     if (id === 'pin' && pvModel()) { hint('O Prender não funciona dentro da prévia do def: tire o cursor de dentro do def.', 3200); return; }
+    const wasTest = st.tool === 'bonetest';
     st.tool = id;
+    // sair do Testar ossos volta tudo como estava
+    if (wasTest && id !== 'bonetest') { clearTest(); st.pose = null; emit('bonetest'); }
+    if (id === 'bonetest' && !wasTest) {
+      clearTest();
+      hint(st.model && st.model.bones.size ? 'Testar ossos: a bolinha move, a ponta da haste gira e o quadradinho estica (Shift: por igual). Só na tela: o Esc zera, e trocar de ferramenta volta tudo.' : 'Testar ossos: este desenho não tem ossos (bone).', 4600);
+    }
     if (id !== 'measure' && st.measure) setMeasure(false);
     if (id !== 'pin' && st.pin.on) setPin(false);
     if (id === 'measure' && !st.measure) setMeasure(true);
@@ -4205,11 +4333,15 @@
     if (e.button === 0 && isFilm() && !st.playing) for (const f of filmHooks) if (f.down && f.down(e)) { st.tdrag = f; draw(); return; }
     // o Laço: arrastar desenha o contorno, em cima do que for (Shift soma, Alt tira)
     if (e.button === 0 && st.tool === 'lasso' && !isFilm() && !st.build) { const p = toCanvas(e); st.marq = { lasso: true, pts: [p], a: p, b: p, x: e.clientX, y: e.clientY, add: e.shiftKey, sub: e.altKey, moved: false }; return; }
-    // prender: o clique escolhe pontos e arrastar no fundo faz uma caixa (com uma animação escolhida, a bolinha
-    // de um osso ainda posa, para ver os pontos presos irem junto)
-    if (e.button === 0 && pinOn()) {
+    // prender: o clique escolhe pontos e arrastar no fundo faz uma caixa (só prende: os ossos não arrastam)
+    // Testar ossos: as alças dos ossos; no vazio, solta o osso da mão
+    if (e.button === 0 && testOn()) {
       const hb = hitBone(e);
       if (hb) { startPose(hb, e); return; }
+      if (st.bt.sel) { st.bt.sel = null; st.bt.pick = null; draw(); emit('bonetest'); }
+      return;
+    }
+    if (e.button === 0 && pinOn()) {
       const p = toCanvas(e);
       st.pin.box = { a: p, b: p.slice(), add: e.shiftKey, sub: e.altKey, x: e.clientX, y: e.clientY, moved: false };
       return;
@@ -4402,9 +4534,16 @@
     if (isFilm()) for (const f of filmHooks) { const c = f.cursor && f.cursor(e); if (c) { view.style.cursor = c; return; } }
     if (pinOn()) {
       // sob o mouse: de que forma é o ponto e a que osso está preso
-      const here = pinsAt(e), hb = here.length ? null : hitBone(e);
+      const here = pinsAt(e), hb = here.length ? null : pinBoneAt(e);
       if (here.length) $('coords').textContent += ` · ${pinLabel(here)}`;
-      view.style.cursor = here.length ? 'pointer' : hb ? (hb.mode === 'rot' ? 'alias' : 'move') : 'crosshair';
+      else if (hb) $('coords').textContent += ` · osso ${hb}: um clique escolhe os pontos presos a ele`;
+      view.style.cursor = here.length || hb ? 'pointer' : 'crosshair';
+      return;
+    }
+    if (testOn()) {
+      const hb = hitBone(e);
+      if (hb) $('coords').textContent += ` · ${hb.here.map((h) => h.bone).join(', ')}`;
+      view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : hb.mode === 'scale' ? 'nesw-resize' : 'move') : 'default';
       return;
     }
     if (st.measure && !isFilm()) { view.style.cursor = measureEnd(e) ? 'move' : 'crosshair'; return; }
@@ -4423,7 +4562,10 @@
 
   const endPointer = () => { st.tdrag = null; st.vpress = null; st.marq = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag, dg = st.drag;
+    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag, dg = st.drag, ps = st.pose;
+    // Testar ossos: um clique sem arrastar (também num osso que o ik não deixa mexer) conta para trocar de osso
+    const tp = st.bt.pick && st.bt.pick.down ? st.bt.pick : null;
+    if (tp) { tp.down = false; if (testOn() && !(ps && ps.moved) && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 4) testClickUp(); }
     if (st.guideDrag) endGuide(st.guideDrag);
     // a transformação que o Ctrl+D repete
     if (gd && gd.done) st.lastXf = Object.assign({ copy: gd.copy }, gd.done);
@@ -4921,6 +5063,17 @@
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
+    // Testar ossos: duplo clique numa alça volta o osso para como estava
+    if (testOn()) {
+      const hb = hitBone(e);
+      if (!hb) return;
+      // o osso da alça clicada: o da mão, se ele está ali; com alças uma em cima da outra, o do primeiro clique
+      const list = hb.here.map((h) => h.bone), p = st.bt.pick;
+      let n = list.includes(st.bt.sel) ? st.bt.sel : hb.bone;
+      if (p && p.prev && list.includes(p.prev)) { n = p.prev; st.bt.sel = n; p.prev = null; emit('bonetest'); }
+      if (st.bt.vals.has(n)) { resetTest(n); hint(`${n} voltou.`, 1200); } else draw();
+      return;
+    }
     // duplo clique no quadradinho do canto das réguas: apaga as linhas guia deste arquivo
     const ru = rulerAt(e);
     if (ru === 'corner') { clearGuides(); return; }
@@ -5409,7 +5562,7 @@
 
   $('animSel').addEventListener('change', (e) => {
     if (isFilm()) { stopSound(); st.playing = false; st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
-    st.anim = e.target.value; st.frame = 0; st.pin.spin.clear(); stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
+    st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
   });
   $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
@@ -5455,7 +5608,7 @@
     st.meas = null;
     st.pin.sel.clear();
     st.pin.pick = null;
-    st.pin.spin.clear();
+    clearTest();
     st.anim = '';
     st.shot = '';
     st.frame = 0;
@@ -5753,7 +5906,7 @@
   }
   view.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    if (st.build) return;
+    if (st.build || testOn()) return;
     if (pinOn()) {
       // botão direito num ponto que não estava escolhido: ele (com os do mesmo lugar) vira a escolha
       const here = pinsAt(e);
@@ -5839,8 +5992,9 @@
     if (mod && !e.shiftKey && !e.altKey && (k === '3' || (low === 'h' && t === editor.ta)) && (t === editor.ta || !inField(t))) { e.preventDefault(); toggleHidden(hiddenTargets(), low === 'h' ? 'Ctrl+H' : 'Ctrl+3'); return; }
     // Esc com a folha de atalhos aberta só fecha a folha (não solta a escolha do desenho)
     if (k === 'Escape' && W.keysPanel && W.keysPanel.isOpen() && !inDialog(t)) { toggleKeys(false); return; }
-    // Esc: na ferramenta Prender, volta primeiro os giros de teste e depois solta os pontos escolhidos
-    if (k === 'Escape' && st.pin.spin.size && spinOn() && !inDialog(t)) { st.pin.spin.clear(); st.pose = null; draw(); return; }
+    // Esc: no Testar ossos, zera o teste (e solta o osso da mão)
+    if (k === 'Escape' && testOn() && (st.bt.vals.size || st.bt.sel) && !inDialog(t) && !inField(t)) { const d = st.pose; st.pose = null; st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; if (d) hint('Teste zerado.', 1200); draw(); emit('bonetest'); return; }
+    // Esc: na ferramenta Prender, solta os pontos escolhidos
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
     if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else if (!exitDef() && !exitIso()) deselect(); if (st.meas) { st.meas = null; draw(); } return; }
     if (inField(t)) return;
@@ -5988,6 +6142,16 @@
       return (x, y, i) => S.handlePos(m, pose, rec, { kind: 'pt', idx: i === undefined ? -1 : i, x, y });
     },
     setCtxMenu: (f) => { ctxMenu = f; },
+    // o Testar ossos (js/ui-bones.js): ligado, os valores de um osso, mudar, voltar, o osso na mão
+    boneTest: {
+      on: () => testOn(),
+      vals: (name) => testVals(name),
+      set: (name, part) => setTest(name, part),
+      reset: (name) => resetTest(name),
+      sel: () => (testOn() && st.bt.sel && st.model.bones.has(st.bt.sel) ? st.bt.sel : null),
+      choose: (name) => { if (!testOn()) return; st.bt.sel = name && st.model.bones.has(name) ? name : null; st.bt.pick = null; draw(); emit('bonetest'); },
+      changed: () => [...st.bt.vals.keys()].filter((n) => testText(n)),
+    },
     toCanvas: (e) => toCanvas(e),
     snapPt: (e, x, y) => snapMouse({ self: true, ref: [x, y] }, x, y, e),
     hitsAt: (e) => hitsAt(e),

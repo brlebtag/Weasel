@@ -14,6 +14,7 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
+| [Testar ossos](testar-ossos.md) | o Prender só prende, e uma ferramenta nova (tecla O) move, gira e estica os ossos só na tela, para ver se tudo está conectado | escolhas de 23/11/2026; etapa 1 (o Prender e a ferramenta) feita na 1.73.0; etapa 2 (as ajudas e virar `key`) depois |
 | [Traçado de imagem](tracado-de-imagem.md) | uma imagem em vector art vira um desenho do Weasel, o mais fiel possível (o protótipo erra ΔE 1,67 em média, contra 9,66 do `vetoriza.py` do ForestPatrol) | feito: etapa 1 (o módulo e a linha de comando) na 1.70.0, ΔE 1,67, igual ao protótipo, 5 a 10 vezes mais rápido; etapa 2 (Objeto › Traçado de imagem no editor) na 1.71.0, com o editor e a vista 3D aguentando os traçados grandes (uma tecla no gato: 8,6 → 0,25 s); depois, sem fundo (`--no-bg` e a caixa Fundo) na 1.72.0, igual ao Python |
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
@@ -57,7 +58,7 @@ Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o
 | ✅ [Ajudante do Godot](ajudante-godot.md) | `quadros()`, `fps()`, `mostrar_quadro()` e trocar de animação na mesma fase da passada | 1.42.0 |
 | ✅ [Folha de conferência](folha-de-conferencia.md) | `--contact`: um PNG com o número de cada quadro | 1.44.0 |
 | ✅ [Virada e metamorfose](metamorfose.md) | o personagem de lado virando de frente (`anim … turn`, jogo) e a aranha virando jacaré (`morph=`, filme) | 1.45.0 e 1.46.0 |
-| ✅ [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender (gira os ossos só na tela) e a ponta do `ik` que move o alvo (o resto saiu na revisão de 15/11/2026) | 1.47.0 |
+| ✅ [IK e pinos: o que ficou de fora](ik-e-pinos.md) | "Testar giro" no Prender (gira os ossos só na tela) e a ponta do `ik` que move o alvo (o resto saiu na revisão de 15/11/2026) | 1.47.0; o Testar giro deu lugar ao [Testar ossos](testar-ossos.md) na 1.73.0 |
 | ✅ [Velocidade automática](velocidade-automatica.md) | `speed=auto` no filme: a animação acompanha o ator andando no palco, e os pés não escorregam | 1.48.0 |
 | ✅ [Interface no jeito do Illustrator](interface-illustrator.md) | vistas Código, Dividido e Design (como no Dreamweaver), barra de ferramentas, seleção, painéis e atalhos do Illustrator, e um modo só desenho para quem não programa | 1.50.0 a 1.64.0 (etapas 1 a 7c, todas em 16/11/2026; as escolhas marcadas **(R)** esperam a sua confirmação) e 1.65.0 (o Palco em 3D, seção 13, em 17/11/2026) |
 | ✅ [Editor visual](editor-visual.md) | menos código digitado: repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo), camadas arrastando, linha do tempo da animação e o filme pela tela | 1.49.0 e, pelas etapas da interface, 1.52.0 a 1.64.0; os itens 6, 10, 11 e 12 ficaram fora |

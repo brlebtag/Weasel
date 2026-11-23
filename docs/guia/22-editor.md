@@ -584,14 +584,9 @@ A ferramenta **Prender** (o botão da tachinha na barra de ferramentas, ou **Shi
 
 - **Cada um no osso mais perto** prende cada ponto ao osso mais próximo. É um palpite: confira as cores e troque o que não ficou bom.
 - Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso.
-- Para ver o resultado, escolha uma animação no player e arraste a bolinha de um osso: os pontos presos vão junto (isso escreve a `key` do quadro, como em [Ossos no desenho](#ossos-no-desenho)).
-
-**Testar giro, sem escrever nada:** na pose parada (sem animação no player), arraste a ponta da haste de um osso. Ele gira **só na tela**: os pontos presos vão junto, e dá para ver onde a forma abre ou sobra antes de escrever a animação.
-
-- Uma nota no canto diz quanto cada osso girou (`Testar giro: corpo 30° · pe -40°`).
-- Os giros ficam até o **Esc**, até escolher uma animação ou até desligar o Prender. O código não muda. Um segundo **Esc** tira a escolha dos pontos.
-- O `ik` continua valendo: girando o corpo, a perna dobra e o pé fica no chão. A raiz e o meio de um `ik` não giram pela haste: gire o osso de cima.
-- Com o giro, a bolinha do osso não arrasta: um clique nela escolhe os pontos, como no resto do Prender.
+- **Um clique na bolinha de um osso** escolhe todos os pontos presos a ele (com **Shift**, soma; com **Alt**, tira). Assim dá para ver de uma vez o que já está naquele osso, e trocar pelo botão direito.
+- **Esc** tira a escolha dos pontos.
+- O Prender só prende: nele, os ossos não mexem. Para ver o resultado, troque para o [Testar ossos](#testar-ossos) (**O**).
 
 **Formas uma por cima da outra:**
 
@@ -599,6 +594,41 @@ A ferramenta **Prender** (o botão da tachinha na barra de ferramentas, ou **Shi
 - A caixa pega os pontos de todas as formas dentro dela. Para mexer só em algumas, abra o painel **Camadas** e escolha as formas lá: enquanto ele está aberto, só os pontos delas aparecem.
 
 Não aparecem: as cópias de um `use` e as linhas de `repeat` e de `include` (escreva o `@` no código delas), as formas com `bones=` (os `@` não valem junto) e as pernas feitas com `stroke … hip=`.
+
+## Testar ossos
+
+A ferramenta **Testar ossos** (o botão dos dois ossos na barra de ferramentas, logo depois do Prender, ou **O**) mexe nos ossos **só na tela**, para ver se tudo está conectado: o que vai junto com cada osso, e onde a forma abre ou sobra. Nada vai para o código, e o **Ctrl+Z** não guarda o teste.
+
+Cada osso aparece com a bolinha no pivô e a haste, como em [Ossos no desenho](#ossos-no-desenho), e mais um quadradinho no meio da haste:
+
+- arrastar a **bolinha** move o osso (o `dx,dy`, na direção do pai, como numa `key`);
+- arrastar a **ponta da haste** gira o osso em volta do pivô; com **Shift**, de 15 em 15 graus;
+- arrastar o **quadradinho** estica o osso ao longo da haste (o `sx` ou o `sy`, o que estiver mais na direção dela); com **Shift**, os dois por igual. Puxando para o outro lado do pivô, espelha;
+- o **duplo clique** numa alça volta aquele osso.
+
+O osso na mão fica laranja, e uma nota no canto diz o que está mexido (`Testar ossos: canelaP 30° · corpo 4,-2`).
+
+**De onde o teste parte:** do quadro mostrado no player. Com uma animação pausada, os ossos começam na pose daquele quadro; sem animação, na pose parada. Mudar de quadro ou de animação recomeça o teste. O `sway`, o `bob`, o `jitter`, o `spring` e o `cloth` dependem do tempo: no teste, eles ficam como no quadro de partida.
+
+**O `ik` continua valendo** ([capítulo 8](08-ossos.md#ik-nos-ossos-ik)): girando o corpo, a perna dobra e o pé fica no chão. A raiz e o meio de um `ik` não giram pela haste, porque quem os gira é o `ik`: mexa no osso de cima (esticar, pode). A bolinha da ponta de um `ik` com `target=` move o alvo; com `foot=`, ela não arrasta, porque o pé fica no chão.
+
+**Alças uma em cima da outra:** dois ossos com o mesmo pivô (o braço de perto e o de longe, por exemplo) têm as alças no mesmo lugar. Clique de novo no mesmo lugar para pegar o osso de baixo. A nota diz qual está na mão, e o mouse parado em cima mostra, na barra do desenho, os ossos que estão ali.
+
+**O painel Testar ossos** aparece na coluna da direita junto com a ferramenta:
+
+- **osso:** o osso na mão (clique na bolinha dele, ou escolha na lista; os mexidos têm um •);
+- **x**, **y**, **giro**, **escala x** e **escala y:** os valores do osso, como numa `key`, para digitar (**Enter** grava). Arrastar o nome de um campo para os lados muda o valor (com **Shift**, 10 vezes mais);
+- **along**, num osso que anda num caminho (`path=`), e **yaw** e **pitch**, num desenho em 3D;
+- **Zerar este osso** e **Zerar tudo**.
+
+**Para sair**, escolha outra ferramenta: tudo volta como estava. O **Esc** zera o teste sem sair da ferramenta. Não aparece em filmes.
+
+Para treinar, use o boneco de [Ossos no desenho](#ossos-no-desenho), sem animação no player:
+
+1. Aperte **O**.
+2. Arraste a ponta da haste do `braco`: o braço gira em volta do ombro, e o código não muda.
+3. Arraste o quadradinho do `corpo` para longe do pivô: o tronco e o braço esticam juntos.
+4. Aperte **Esc**: tudo volta.
 
 ## Linha do tempo
 

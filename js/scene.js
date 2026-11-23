@@ -467,19 +467,57 @@
     if (anim.blendOf) return Object.assign({}, d.poses[f], { geo: new Map() });
     return { anim, frame: f, bones: d.mats[f], cloth: d.cloth[f], props: d.props[f], lprops: d.lprops[f], liprops: d.liprops[f], bprops: d.bprops[f], b3: d.b3s[f], geo: new Map() };
   }
-  // A pose parada com alguns ossos girados (spins: nome -> graus), sem escrever nada: o "Testar giro" do editor.
+  // A pose parada com alguns ossos girados (spins: nome -> graus), sem escrever nada (o antigo "Testar giro").
   // O ik continua valendo (a raiz e o meio acompanham, o pé fica onde está).
   function spinPose(model, spins) {
     const pose = makePose(model, null, 0);
     if (!spins || !spins.size) return pose;
     const vals = new Map();
+    for (const [n, a] of spins) vals.set(n, { v: [0, 0, a, 1, 1] });
+    return testPose(model, pose, vals);
+  }
+  // o along (path=) de um osso numa pose: o da key do quadro, ou null sem key (o pivô fica onde foi desenhado)
+  function alongOf(model, pose, name) {
+    const b = model.bones.get(name), anim = pose.anim;
+    if (!b || !b.path || !anim || !anim.ptracks) return null;
+    const tr = anim.ptracks.get(`${name}.along`), s = tr && segment(tr.keys, pose.frame, anim.frames, anim.loop);
+    return s ? s.a.v + (s.b.v - s.a.v) * s.t : null;
+  }
+  // o giro 3D (yaw, pitch) de um osso numa pose: o da key, ou o do bone
+  function turnOf(model, pose, name) {
+    const b = model.bones.get(name), bv = pose.b3 && pose.b3.get(name);
+    if (!b) return { yaw: 0, pitch: 0 };
+    return { yaw: bv && bv.yaw !== undefined ? bv.yaw : b.yaw || 0, pitch: bv && bv.pitch !== undefined ? bv.pitch : b.pitch || 0 };
+  }
+  // A pose de partida (a parada ou a de um quadro) com alguns ossos trocados, sem escrever nada: o "Testar ossos"
+  // do editor. vals: nome -> { v: [dx, dy, rot, sx, sy], along, yaw, pitch }, cada parte opcional; v vale como
+  // numa key (o lugar do osso antes do ik). O along anda pelo caminho do osso (path=) a partir de onde ele está na
+  // partida; yaw e pitch são o giro 3D. O ik é resolvido de novo.
+  function testPose(model, base, vals) {
+    if (!vals || !vals.size) return base;
+    const v0 = poseVals(model, base), out = new Map();
+    let b3 = base.b3 || NONE;
     for (const b of model.bones.values()) {
-      const v = REST.slice();
-      if (spins.has(b.name)) v[2] += spins.get(b.name);
-      vals.set(b.name, v);
+      const t = vals.get(b.name);
+      let v = (v0.get(b.name) || REST).slice();
+      if (t && t.v) v = t.v.slice();
+      if (t && t.along !== undefined && Number.isFinite(t.along) && b.path) {
+        const from = alongOf(model, base, b.name), P = pathAt(b.path, t.along);
+        const Q = from === null ? { x: b.pivot[0], y: b.pivot[1], angle: 0 } : pathAt(b.path, from);
+        v[0] += P.x - Q.x;
+        v[1] += P.y - Q.y;
+        if (b.turn) v[2] += P.angle - Q.angle;
+      }
+      if (t && (t.yaw !== undefined || t.pitch !== undefined)) {
+        if (b3 === base.b3 || b3 === NONE) b3 = new Map(base.b3 || []);
+        const o = Object.assign({}, b3.get(b.name) || {});
+        if (t.yaw !== undefined) o.yaw = t.yaw;
+        if (t.pitch !== undefined) o.pitch = t.pitch;
+        b3.set(b.name, o);
+      }
+      out.set(b.name, v);
     }
-    pose.bones = matsFrom(model, ikVals(model, vals));
-    return pose;
+    return Object.assign({}, base, { vals: out, bones: matsFrom(model, ikVals(model, out)), b3, geo: new Map() });
   }
   // Pose sem animação num instante (segundos) de um filme: partículas, balanços e tremulação andam com o relógio.
   function timePose(model, time) {
@@ -3690,7 +3728,7 @@
   }
 
   W.scene = {
-    makePose, spinPose, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
+    makePose, spinPose, testPose, poseVals, alongOf, turnOf, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
     el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin, groupUnder, inGroup,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,

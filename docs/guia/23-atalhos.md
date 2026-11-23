@@ -98,6 +98,7 @@ Com o foco no desenho. No filme e nas vistas em 3D, só V, A, H e Z. Polígono, 
 | `G` | Degradê | no desenho |
 | `I` | Conta-gotas | no desenho |
 | `Shift+P` | Prender | no desenho |
+| `O` | Testar ossos | no desenho |
 | `H` | Mão | no desenho |
 | `Z` | Zoom | no desenho |
 | `segurar o botão da ferramenta` | mostra as outras ferramentas da mesma casa (o botão direito também) | na barra de ferramentas |
@@ -155,7 +156,13 @@ As duas caixinhas no pé da barra de ferramentas: a cor de dentro (preenchimento
 | `clique` ou `Esc` | tira a medida | Medir |
 | `clique ou caixa (Shift soma, Alt tira)` | escolhe pontos | Prender |
 | `botão direito, depois 1 a 9` | prende os pontos escolhidos ao osso de número 1 a 9 | Prender |
-| `Esc` | desfaz os giros de teste; de novo, solta os pontos | Prender |
+| `clique na bolinha de um osso` | escolhe os pontos presos a ele (Shift soma, Alt tira) | Prender |
+| `Esc` | solta os pontos escolhidos | Prender |
+| `Shift ao girar` | gira de 15 em 15 graus | Testar ossos |
+| `Shift ao esticar` | estica por igual (mantém a proporção) | Testar ossos |
+| `clicar de novo no mesmo lugar` | pega o osso de baixo, quando as alças estão uma em cima da outra | Testar ossos |
+| `duplo clique numa alça` | volta o osso como estava | Testar ossos |
+| `Esc` | zera o teste (todos os ossos voltam) | Testar ossos |
 | `Ctrl+clique` | escreve no código, onde está o cursor, a coordenada do lugar clicado | vistas Código e Dividido |
 | `botão direito` | abre o menu da forma (copiar, organizar, agrupar, inserir forma…) | no desenho |
 

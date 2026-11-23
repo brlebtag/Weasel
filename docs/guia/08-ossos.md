@@ -550,7 +550,7 @@ key 24 corpo=0,0
 
 **Cuidado:** os `@osso` não valem junto com `bones=` na mesma forma (dá aviso, e os pontos presos ficam parados).
 
-Numa forma com muitos pontos, escrever `@osso` em cada um dá trabalho. No editor, a ferramenta **Prender** (Shift+P) escreve para você ([capítulo 22](22-editor.md#prender)).
+Numa forma com muitos pontos, escrever `@osso` em cada um dá trabalho. No editor, a ferramenta **Prender** (Shift+P) escreve para você ([capítulo 22](22-editor.md#prender)), e a **Testar ossos** (O) mexe nos ossos só na tela, para ver se cada ponto foi para o osso certo ([capítulo 22](22-editor.md#testar-ossos)).
 
 ## Pernas e braços com IK
 
