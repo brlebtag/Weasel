@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
 <!-- o tema (Exibir › Tema) antes de pintar, para não piscar; a troca fica em js/ui-theme.js -->
 <script>try{var p=localStorage.getItem('weasel.theme');document.documentElement.dataset.theme=p==='dark'||(p==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
-<link rel="stylesheet" href="css/style.css?v=1.73.0">
+<link rel="stylesheet" href="css/style.css?v=1.74.0">
 </head>
 <body>
 <header class="top">
@@ -315,7 +315,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li><b>Réguas</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>, ou <b>Exibir › Réguas</b>) mostra réguas em pixels em cima e à esquerda do desenho. Arraste de uma régua para dentro do desenho e sai uma <b>linha guia</b>: da régua de cima, deitada; da da esquerda, em pé. Arraste a linha para mudá-la de lugar e solte-a em cima de uma régua para apagá-la; duplo clique no quadradinho do canto apaga todas. Pontos, formas (também o lado que você estica) e a escolha do painel Camadas grudam nas linhas quando passam perto (segure <kbd>Ctrl</kbd> durante o arraste para não grudar). As linhas ficam neste navegador, por arquivo, e não entram no código nem na exportação (<b>Exibir › Guias</b> é outra coisa: mostra as camadas <code>guide</code>). Não aparece em filmes.</li>
       <li><b>Medir</b> (na barra de ferramentas): arraste no desenho de um ponto a outro para ver a distância, o ângulo (como no <code>rot=</code>) e quanto anda em x e em y. As pontas grudam nos pontos da forma do cursor e nas linhas guia; com <kbd>Shift</kbd>, de 45 em 45 graus. Arraste uma ponta para ajustar; um clique ou <kbd>Esc</kbd> tira a medida. Com o Medir ligado, arrastar no desenho mede em vez de mexer nos pontos.</li>
       <li><b>Prender</b> (<kbd>Shift</kbd>+<kbd>P</kbd>): mostra os pontos de todos os <code>shape</code>, <code>stroke</code> e <code>line</code>; os presos a um osso (<code>@osso</code>) ficam com a cor dele, e os soltos, cinza. Clique num ponto para escolhê-lo (<kbd>Shift</kbd> soma, <kbd>Alt</kbd> tira) ou arraste uma caixa em volta de vários. Pontos no mesmo lugar (formas coladas) vêm juntos; clique de novo no mesmo lugar para pegar só o de uma forma. O botão direito abre o menu: um osso (o mais perto primeiro) escreve <code>@osso</code> depois de cada ponto escolhido, com o peso do campo (<code>@osso:0.5</code>); <b>Cada um no osso mais perto</b> e <b>Soltar</b> (tira o <code>@</code>). Um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz tudo. Com o painel Camadas aberto e formas escolhidas nele, só aparecem os pontos delas. Ficam de fora as cópias de <code>use</code>, as linhas de <code>repeat</code> e de <code>include</code> e as formas com <code>bones=</code>. Um clique na bolinha de um osso escolhe os pontos presos a ele. O Prender só prende: para mexer nos ossos e ver o que vai junto, use o <b>Testar ossos</b>. Não aparece em filmes.</li>
-      <li><b>Testar ossos</b> (<kbd>O</kbd>): mexe nos ossos só na tela, para ver se tudo está conectado. Arraste a bolinha de um osso para movê-lo, a ponta da haste para girar (<kbd>Shift</kbd>: de 15 em 15 graus) e o quadradinho no meio da haste para esticar (<kbd>Shift</kbd>: por igual). O <code>ik</code> continua valendo: girar o corpo dobra a perna, e o pé fica no chão. Alças uma em cima da outra: clique de novo no mesmo lugar para pegar o osso de baixo. O duplo clique numa alça volta o osso. O teste começa no quadro do player (sem animação, na pose parada); o painel <b>Testar ossos</b>, na coluna da direita, mostra os valores do osso na mão para digitar. Nada vai para o código: o <kbd>Esc</kbd> zera, e trocar de ferramenta volta tudo. Não aparece em filmes.</li>
+      <li><b>Testar ossos</b> (<kbd>O</kbd>): mexe nos ossos só na tela, para ver se tudo está conectado. Arraste a bolinha de um osso para movê-lo, a ponta da haste para girar (<kbd>Shift</kbd>: de 15 em 15 graus) e o quadradinho no meio da haste para esticar (<kbd>Shift</kbd>: por igual). O <code>ik</code> continua valendo: girar o corpo dobra a perna, e o pé fica no chão. Alças uma em cima da outra: clique de novo no mesmo lugar para pegar o osso de baixo. O duplo clique numa alça volta o osso. O teste começa no quadro do player (sem animação, na pose parada); o painel <b>Testar ossos</b>, na coluna da direita, mostra os valores do osso na mão para digitar. Com o mouse numa alça (ou um osso na mão), o que vai junto com ele fica aceso, e o resto, apagado. Um clique numa forma diz a que osso ela segue. Nada vai para o código até <b>Escrever como key</b> (no quadro do player, ou numa <code>anim teste</code> nova; um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz): o <kbd>Esc</kbd> zera, e trocar de ferramenta volta tudo. Não aparece em filmes.</li>
       <li>Arraste uma imagem do computador para a janela: ela vira uma linha <code>ref</code> abaixo do <code>canvas</code>. Solta no desenho, fica no ponto onde caiu. Um <code>.weasel</code> ou um som solto abre como no <b>Arquivo › Abrir…</b>.</li>
       <li><kbd>Alt</kbd>+arrastar sobre um número muda o valor (com <kbd>Shift</kbd>, 10× mais rápido). <kbd>Alt</kbd>+clique numa cor <code>#hex</code> abre o seletor de cor.</li>
       <li>Sugestões aparecem enquanto você digita; <kbd>Ctrl</kbd>+<kbd>Espaço</kbd> abre na hora. <kbd>Enter</kbd> ou <kbd>Tab</kbd> aceitam.</li>
@@ -422,49 +422,49 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.73.0"></script>
-<script src="js/lang.js?v=1.73.0"></script>
-<script src="js/simplify.js?v=1.73.0"></script>
-<script src="js/trace.js?v=1.73.0"></script>
-<script src="js/pathops.js?v=1.73.0"></script>
-<script src="js/art.js?v=1.73.0"></script>
-<script src="js/scene.js?v=1.73.0"></script>
-<script src="js/film.js?v=1.73.0"></script>
-<script src="js/audio.js?v=1.73.0"></script>
-<script src="js/nle.js?v=1.73.0"></script>
-<script src="js/webm.js?v=1.73.0"></script>
-<script src="js/svg.js?v=1.73.0"></script>
-<script src="js/gif.js?v=1.73.0"></script>
-<script src="js/webp.js?v=1.73.0"></script>
-<script src="js/mp4.js?v=1.73.0"></script>
-<script src="js/zip.js?v=1.73.0"></script>
-<script src="js/normal.js?v=1.73.0"></script>
-<script src="js/export.js?v=1.73.0"></script>
-<script src="js/godot.js?v=1.73.0"></script>
-<script src="js/rig.js?v=1.73.0"></script>
-<script src="js/editor.js?v=1.73.0"></script>
-<script src="js/examples.js?v=1.73.0"></script>
-<script src="js/ui-theme.js?v=1.73.0"></script>
-<script src="js/timeline.js?v=1.73.0"></script>
-<script src="js/keys.js?v=1.73.0"></script>
-<script src="js/app.js?v=1.73.0"></script>
-<script src="js/ui-menu.js?v=1.73.0"></script>
-<script src="js/ui-shell.js?v=1.73.0"></script>
-<script src="js/ui-3d.js?v=1.73.0"></script>
-<script src="js/ui-props.js?v=1.73.0"></script>
-<script src="js/ui-select.js?v=1.73.0"></script>
-<script src="js/ui-draw.js?v=1.73.0"></script>
-<script src="js/ui-pen.js?v=1.73.0"></script>
-<script src="js/ui-pencil.js?v=1.73.0"></script>
-<script src="js/ui-trace.js?v=1.73.0"></script>
-<script src="js/ui-paths.js?v=1.73.0"></script>
-<script src="js/ui-cut.js?v=1.73.0"></script>
-<script src="js/ui-layers.js?v=1.73.0"></script>
-<script src="js/ui-symbols.js?v=1.73.0"></script>
-<script src="js/ui-bones.js?v=1.73.0"></script>
-<script src="js/ui-anim.js?v=1.73.0"></script>
-<script src="js/ui-film.js?v=1.73.0"></script>
-<script src="js/ui-style.js?v=1.73.0"></script>
-<script src="js/ui-keys.js?v=1.73.0"></script>
+<script src="js/geom.js?v=1.74.0"></script>
+<script src="js/lang.js?v=1.74.0"></script>
+<script src="js/simplify.js?v=1.74.0"></script>
+<script src="js/trace.js?v=1.74.0"></script>
+<script src="js/pathops.js?v=1.74.0"></script>
+<script src="js/art.js?v=1.74.0"></script>
+<script src="js/scene.js?v=1.74.0"></script>
+<script src="js/film.js?v=1.74.0"></script>
+<script src="js/audio.js?v=1.74.0"></script>
+<script src="js/nle.js?v=1.74.0"></script>
+<script src="js/webm.js?v=1.74.0"></script>
+<script src="js/svg.js?v=1.74.0"></script>
+<script src="js/gif.js?v=1.74.0"></script>
+<script src="js/webp.js?v=1.74.0"></script>
+<script src="js/mp4.js?v=1.74.0"></script>
+<script src="js/zip.js?v=1.74.0"></script>
+<script src="js/normal.js?v=1.74.0"></script>
+<script src="js/export.js?v=1.74.0"></script>
+<script src="js/godot.js?v=1.74.0"></script>
+<script src="js/rig.js?v=1.74.0"></script>
+<script src="js/editor.js?v=1.74.0"></script>
+<script src="js/examples.js?v=1.74.0"></script>
+<script src="js/ui-theme.js?v=1.74.0"></script>
+<script src="js/timeline.js?v=1.74.0"></script>
+<script src="js/keys.js?v=1.74.0"></script>
+<script src="js/app.js?v=1.74.0"></script>
+<script src="js/ui-menu.js?v=1.74.0"></script>
+<script src="js/ui-shell.js?v=1.74.0"></script>
+<script src="js/ui-3d.js?v=1.74.0"></script>
+<script src="js/ui-props.js?v=1.74.0"></script>
+<script src="js/ui-select.js?v=1.74.0"></script>
+<script src="js/ui-draw.js?v=1.74.0"></script>
+<script src="js/ui-pen.js?v=1.74.0"></script>
+<script src="js/ui-pencil.js?v=1.74.0"></script>
+<script src="js/ui-trace.js?v=1.74.0"></script>
+<script src="js/ui-paths.js?v=1.74.0"></script>
+<script src="js/ui-cut.js?v=1.74.0"></script>
+<script src="js/ui-layers.js?v=1.74.0"></script>
+<script src="js/ui-symbols.js?v=1.74.0"></script>
+<script src="js/ui-bones.js?v=1.74.0"></script>
+<script src="js/ui-anim.js?v=1.74.0"></script>
+<script src="js/ui-film.js?v=1.74.0"></script>
+<script src="js/ui-style.js?v=1.74.0"></script>
+<script src="js/ui-keys.js?v=1.74.0"></script>
 </body>
 </html>

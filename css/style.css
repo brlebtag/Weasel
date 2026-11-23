@@ -806,6 +806,9 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .bt-foot { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 0 2px; }
 .bt-foot button { padding: 1px 7px; font-size: 11px; }
 .bt-tip { display: block; font-size: 11px; line-height: 1.4; }
+.bt-glow { display: flex; padding: 4px 0 2px; font-size: 11px; }
+.bt-shape { font: 11px var(--mono); color: var(--text); overflow-wrap: anywhere; }
+.bt-shape[hidden] { display: none; }
 .sy-ghost { position: fixed; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px; font: 11px var(--mono); color: var(--text); background: var(--glass); border: 1px dashed var(--dim); border-radius: 4px; pointer-events: none; opacity: .75; }
 .sy-ghost.ok { border: 1px solid var(--accent); opacity: .95; }
 .sy-ghost canvas { width: 50px; height: 40px; }

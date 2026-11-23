@@ -51,8 +51,9 @@
     pin: { on: false, sel: new Map(), box: null, pick: null, w: 1 },
     // Testar ossos (a ferramenta, tecla O): os ossos mexidos só na tela (nome → { v, along, yaw, pitch }, como em
     // scene.testPose), o osso na mão, de que quadro o teste partiu ("anim|quadro") e o último aperto (para pegar o
-    // osso de baixo quando as alças estão no mesmo lugar)
-    bt: { vals: new Map(), sel: null, at: '', pick: null },
+    // osso de baixo quando as alças estão no mesmo lugar), o osso sob o mouse (hover), a forma clicada (shape: { el, m,
+    // text }: a que osso ela segue), o último clique numa forma (spick) e se o que segue o osso fica aceso (glow)
+    bt: { vals: new Map(), sel: null, at: '', pick: null, hover: null, shape: null, spick: null, glow: true },
     sound: true, // tocar o som do filme no player
     subs: true, // mostrar as legendas do filme na tela
     timeline: true, // mostrar a linha do tempo do filme
@@ -2385,6 +2386,9 @@
     }
     const iso = P || st.build ? null : isoGroup();
     if (iso) dimOutside(ctx, m, pose, iso, R);
+    // Testar ossos: o que segue o osso (o arrastado, o do mouse ou o da mão) fica aceso, e o resto, apagado
+    const glow = !iso && !P ? glowBone() : null;
+    if (glow) dimFollow(ctx, m, pose, glow, R);
     ctx.restore();
 
     T();
@@ -2401,7 +2405,7 @@
     const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (pinning) drawPins(ctx, m, pose, z);
-    else if (testing) { /* testando ossos, as formas não mostram alças nem caixa */ }
+    else if (testing) testOverlay(ctx, m, pose, z, glow); // testando ossos, as formas não mostram alças nem caixa
     else if (pointsOn()) { drawHandles(ctx, m, pose, z); if (groupOn()) drawGroup(ctx, m, pose, z); } else if (groupOn()) drawGroup(ctx, m, pose, z);
     if (st.marq && st.marq.moved) drawMarq(ctx, z);
     const tk = toolHooks[st.tool];
@@ -2459,6 +2463,7 @@
     const head = list.length ? list.slice(0, 4).join(' · ') + (list.length > 4 ? ` · +${list.length - 4}` : '') : 'nada mexido';
     const lines = [`Testar ossos: ${head}`, list.length ? 'só na tela, não escreve nada · Esc zera tudo' : 'a bolinha move, a ponta da haste gira, o quadradinho estica'];
     if (st.bt.sel && st.model.bones.has(st.bt.sel)) { const p = st.bt.pick; lines.push(`na mão: ${st.bt.sel}${p && p.list.length > 1 && p.list.includes(st.bt.sel) ? ` (${p.list.indexOf(st.bt.sel) + 1} de ${p.list.length} aqui: clique de novo para o próximo)` : ''}`); }
+    if (st.bt.shape && st.bt.shape.m === st.model) lines.push(`forma: ${st.bt.shape.text}`);
     drawNote(ctx, dpr, lines);
   }
   // uma nota no canto de cima, à esquerda: a primeira linha clara, as outras em âmbar
@@ -2838,7 +2843,13 @@
   // escreve osso=dx,dy,rot[,sx,sy] na key do quadro (troca o valor, acrescenta o osso ou cria a linha)
   function writeKey(d, v) {
     const f1 = (n) => String(Number(n.toFixed(1))), f3 = (n) => String(Number(n.toFixed(3)));
-    const text = `${d.bone}=${[f1(v[0]), f1(v[1]), f1(v[2])].concat(v[3] !== 1 || v[4] !== 1 ? [f3(v[3]), f3(v[4])] : []).join(',')}`;
+    writeKeyPart(d, d.bone, [f1(v[0]), f1(v[1]), f1(v[2])].concat(v[3] !== 1 || v[4] !== 1 ? [f3(v[3]), f3(v[4])] : []).join(','));
+  }
+  // escreve nome=valor na linha key do quadro d.frame da anim d.anim: troca o valor, se o nome já está nela; senão,
+  // põe no fim da linha; sem a linha, cria uma, na ordem dos quadros. nome é um osso (osso=dx,dy,giro) ou uma parte
+  // dele (osso.along, osso.yaw, osso.pitch)
+  function writeKeyPart(d, name, val) {
+    const text = `${name}=${val}`;
     const lineText = (line) => { const s = editor.lineStart(line), n = editor.value.indexOf('\n', s); return editor.value.slice(s, n < 0 ? editor.value.length : n).replace(/\r$/, ''); };
     let keyAt = -1, after = -1, best = -1;
     for (const [line, rec] of st.model.byLine) {
@@ -2855,7 +2866,7 @@
       return;
     }
     const off = editor.lineStart(keyAt), lt = lineText(keyAt);
-    const esc = d.bone.replace(/[-]/g, '\\$&');
+    const esc = name.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
     const mm = new RegExp(`(^|\\s)${esc}=\\S*`).exec(lt);
     if (mm) { const s0 = off + mm.index + mm[1].length; editor.replaceRange(s0, s0 + mm[0].length - mm[1].length, text, { key: d.key }); return; }
     const c = /(^|\s)#(?![0-9a-fA-F]{3,8}\b)/.exec(lt), end = (c ? lt.slice(0, c.index) : lt).replace(/\s+$/, '').length;
@@ -3535,7 +3546,158 @@
     draw();
     emit('bonetest');
   }
-  function clearTest() { st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; st.bt.at = ''; }
+  function clearTest() { st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; st.bt.at = ''; st.bt.hover = null; st.bt.shape = null; st.bt.spick = null; }
+  // O que vai junto com um osso: ele, os filhos (e os filhos deles) e, num ik com target= num deles, os ossos do ik
+  // (o ik os gira para alcançar o alvo)
+  let famMemo = null;
+  function boneFamily(m, name) {
+    if (famMemo && famMemo.m === m && famMemo.name === name) return famMemo.set;
+    const fam = new Set([name]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const b of m.bones.values()) if (!fam.has(b.name) && b.parent && fam.has(b.parent)) { fam.add(b.name); grew = true; }
+      for (const k of m.iks) if (k.target && fam.has(k.target)) for (const n of k.bones) if (!fam.has(n)) { fam.add(n); grew = true; }
+    }
+    famMemo = { m, name, set: fam };
+    return fam;
+  }
+  // a forma segue algum osso da família? Inteira (bone=, bones=, on= e target= de um membro) ou por alguns pontos (@osso)
+  function followsBone(el, fam) {
+    if (el.bones) return el.bones.some((n) => fam.has(n));
+    if (el.limb) return !!((el.on && fam.has(el.on)) || (el.target && fam.has(el.target)));
+    if (el.bone && fam.has(el.bone)) return true;
+    return !!(el.pins && el.pins.some((p) => p && fam.has(p.bone)));
+  }
+  // o osso cujo grupo fica aceso: o que está sendo arrastado, o que está sob o mouse ou o da mão
+  function glowBone() {
+    if (!testOn() || !st.bt.glow) return null;
+    const n = (st.pose && st.pose.test && st.pose.bone) || st.bt.hover || st.bt.sel;
+    return n && st.model.bones.has(n) ? n : null;
+  }
+  // o resto do desenho fica apagado (o véu do isolamento), e o que segue o osso é pintado de novo por cima
+  function dimFollow(ctx, m, pose, name, R) {
+    const fam = boneFamily(m, name);
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.62)';
+    ctx.fillRect(R.x, R.y, R.w, R.h);
+    ctx.restore();
+    S.drawScene(ctx, m, pose, { background: false, guides: st.show.guides, filter: (el) => followsBone(el, fam) });
+  }
+  // por cima dos ossos: os pontos presos (@) à família do osso aceso, na cor do osso, e o contorno da forma clicada
+  function testOverlay(ctx, m, pose, z, glow) {
+    ctx.save();
+    if (glow) {
+      const fam = boneFamily(m, glow), r = 3.2 / z;
+      ctx.lineWidth = 1.2 / z;
+      ctx.strokeStyle = '#0b0f14';
+      for (const el of m.elements) {
+        if (!el.pins || el.use !== undefined || !el.pins.some((p) => p && fam.has(p.bone))) continue;
+        const line = m.lineMap ? m.lineMap[el.line] : el.line, rec = line >= 0 ? m.byLine.get(line) : null;
+        if (!rec || rec.el !== el || rec.repeated) continue;
+        for (const h of rec.handles) {
+          if (h.kind !== 'pt' || !h.pin || !fam.has(h.pin)) continue;
+          const p = S.handlePos(m, pose, rec, h);
+          if (!p) continue;
+          ctx.fillStyle = boneColor(m, h.pin);
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+    }
+    const sh = st.bt.shape;
+    if (sh && sh.m === m) {
+      const g = S.geometry(m, pose, sh.el);
+      if (g.segs.length) {
+        ctx.lineWidth = 2 / z;
+        ctx.setLineDash([6 / z, 4 / z]);
+        ctx.strokeStyle = '#ff9f43';
+        ctx.stroke(S.pathOf(g));
+      }
+    }
+    ctx.restore();
+  }
+  // a que osso uma forma segue, em uma linha: "bota_perto_1: bone=peP · 8 pontos em canelaP"
+  function followText(m, el) {
+    const line = lineOfEl(el), parts = [];
+    let name = el.name || `linha ${line + 1}`;
+    if (el.use !== undefined) name += ` (no use da linha ${line + 1})`;
+    if (el.bones) parts.push(`bones=${el.bones.join(',')}`);
+    else if (el.limb) { if (el.on) parts.push(`on=${el.on}`); if (el.target) parts.push(`target=${el.target}`); }
+    else if (el.bone) parts.push(`bone=${el.bone}`);
+    if (el.pins) {
+      const c = new Map();
+      for (const p of el.pins) if (p) c.set(p.bone, (c.get(p.bone) || 0) + 1);
+      for (const [b, n] of c) parts.push(`${n} ponto${n > 1 ? 's' : ''} em ${b}`);
+    }
+    return `${name}: ${parts.length ? parts.join(' · ') : 'não segue nenhum osso (fica parada)'}`;
+  }
+  // Testar ossos: um clique numa forma (fora das alças) diz a que osso ela segue e põe esse osso na mão, com o que
+  // vai junto aceso; clicar de novo no mesmo lugar pega a forma de baixo. No vazio, solta o osso e a forma.
+  function testShapeClick(e) {
+    const m = st.model, hits = hitsAt(e).filter((el) => !el.hidden);
+    if (!hits.length) {
+      if (st.bt.sel || st.bt.shape) { st.bt.sel = null; st.bt.pick = null; st.bt.shape = null; st.bt.spick = null; draw(); emit('bonetest'); }
+      return;
+    }
+    const p = st.bt.spick, same = p && Math.hypot(p.x - e.clientX, p.y - e.clientY) < 6 && p.n === hits.length;
+    const k = same ? (p.k + 1) % hits.length : 0, el = hits[k];
+    st.bt.spick = { x: e.clientX, y: e.clientY, n: hits.length, k };
+    const text = followText(m, el);
+    st.bt.shape = { el, m, text };
+    const pin = el.pins && el.pins.find(Boolean);
+    const bone = (el.bones && el.bones[0]) || (el.limb ? el.on || el.target : el.bone) || (pin && pin.bone) || null;
+    st.bt.sel = bone && m.bones.has(bone) ? bone : null;
+    st.bt.pick = null;
+    const line = lineOfEl(el);
+    if (line !== undefined && line >= 0 && st.caret.line !== line) editor.reveal(line, 0);
+    hint(text + (hits.length > 1 ? ` (${k + 1} de ${hits.length} formas aqui: clique de novo para a de baixo)` : ''), 4200);
+    draw();
+    emit('bonetest');
+  }
+  // Testar ossos › Escrever como key: os ossos mexidos viram uma key. Com uma animação no player, no quadro dele;
+  // sem animação, numa anim nova (teste, teste2…) no fim do arquivo, na key 0. Um Ctrl+Z desfaz tudo. Depois, o
+  // player fica naquele quadro e o teste recomeça dali (os valores já estão no código).
+  function writeTest() {
+    if (!testOn()) return;
+    const m = st.model, an = st.anim ? m.animMap.get(st.anim) : null;
+    if (an && an.blendOf) { hint(`A animação ${an.name} é feita pelo Weasel (from= e to=): escolha outra no player, ou nenhuma.`, 3200); return; }
+    const base = testBase(), v0s = S.poseVals(m, base), parts = [];
+    for (const [n, t] of st.bt.vals) {
+      if (!testText(n)) continue;
+      const v0 = v0s.get(n) || [0, 0, 0, 1, 1], tn = S.turnOf(m, base, n), al = S.alongOf(m, base, n);
+      if (t.v && t.v.some((x, i) => Math.abs(x - v0[i]) > 1e-6)) parts.push([n, 'v', t.v]);
+      if (t.along !== undefined && t.along !== null && t.along !== al) parts.push([n, 'along', t.along]);
+      if (t.yaw !== undefined && Math.abs(t.yaw - tn.yaw) >= 0.05) parts.push([n, 'yaw', t.yaw]);
+      if (t.pitch !== undefined && Math.abs(t.pitch - tn.pitch) >= 0.05) parts.push([n, 'pitch', t.pitch]);
+    }
+    if (!parts.length) { hint('Nada mexido para escrever: mova, gire ou estique um osso primeiro.', 2400); return; }
+    const key = 'btkey' + Date.now(), frame = an ? st.frame : 0;
+    let anim = an ? an.name : '';
+    if (!anim) {
+      anim = 'teste';
+      for (let i = 2; m.animMap.has(anim); i++) anim = `teste${i}`;
+      const v = editor.value, end = v.length;
+      editor.replaceRange(end, end, `${v && !v.endsWith('\n') ? '\n' : ''}${v.trim() ? '\n' : ''}anim ${anim}\n`, { key });
+    }
+    const f1 = (n) => String(Number(n.toFixed(1))), f3 = (n) => String(Number(n.toFixed(3)));
+    for (const [n, kind, val] of parts) {
+      const d = { bone: n, anim, frame, key };
+      if (kind === 'v') writeKey(d, val);
+      else writeKeyPart(d, `${n}.${kind}`, kind === 'along' ? f3(val) : f1(val));
+    }
+    const names = [...new Set(parts.map((q) => q[0]))];
+    st.anim = anim;
+    st.frame = frame;
+    st.playing = false;
+    st.bt.vals.clear();
+    st.bt.at = `${anim}|${frame}`;
+    fillAnimSelect();
+    hint(`Escrito: key ${frame} em ${anim} (${names.join(', ')}). Um Ctrl+Z desfaz.`, 3600);
+    draw();
+    emit('bonetest');
+  }
   // o que mudou num osso desde a partida, curto (para a nota): o giro, quanto andou, quanto esticou, along, yaw, pitch
   function testText(name) {
     const t = st.bt.vals.get(name), m = st.model;
@@ -4338,7 +4500,7 @@
     if (e.button === 0 && testOn()) {
       const hb = hitBone(e);
       if (hb) { startPose(hb, e); return; }
-      if (st.bt.sel) { st.bt.sel = null; st.bt.pick = null; draw(); emit('bonetest'); }
+      testShapeClick(e);
       return;
     }
     if (e.button === 0 && pinOn()) {
@@ -4543,6 +4705,9 @@
     if (testOn()) {
       const hb = hitBone(e);
       if (hb) $('coords').textContent += ` · ${hb.here.map((h) => h.bone).join(', ')}`;
+      // o osso sob o mouse acende o que vai com ele (com alças no mesmo lugar, o da mão, se ele está ali)
+      const hv = hb ? (hb.here.some((h) => h.bone === st.bt.sel) ? st.bt.sel : hb.bone) : null;
+      if (hv !== st.bt.hover) { st.bt.hover = hv; if (st.bt.glow) draw(); }
       view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : hb.mode === 'scale' ? 'nesw-resize' : 'move') : 'default';
       return;
     }
@@ -4908,7 +5073,10 @@
     setSel(nodeSigs().has(line) ? pickUnit(line) : [], line);
     st.selAnchor = line;
   }
-  view.addEventListener('pointerleave', () => { if (!st.drag && !st.pan) $('coords').textContent = ''; });
+  view.addEventListener('pointerleave', () => {
+    if (!st.drag && !st.pan) $('coords').textContent = '';
+    if (st.bt.hover && !st.pose) { st.bt.hover = null; draw(); }
+  });
 
   // ---------- para o painel Propriedades (js/ui-props.js) ----------
   // as linhas que o painel mostra: as escolhidas ou, sem escolha, a forma (ou a camada) da linha do cursor
@@ -5993,7 +6161,7 @@
     // Esc com a folha de atalhos aberta só fecha a folha (não solta a escolha do desenho)
     if (k === 'Escape' && W.keysPanel && W.keysPanel.isOpen() && !inDialog(t)) { toggleKeys(false); return; }
     // Esc: no Testar ossos, zera o teste (e solta o osso da mão)
-    if (k === 'Escape' && testOn() && (st.bt.vals.size || st.bt.sel) && !inDialog(t) && !inField(t)) { const d = st.pose; st.pose = null; st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; if (d) hint('Teste zerado.', 1200); draw(); emit('bonetest'); return; }
+    if (k === 'Escape' && testOn() && (st.bt.vals.size || st.bt.sel || st.bt.shape) && !inDialog(t) && !inField(t)) { const d = st.pose; st.pose = null; st.bt.vals.clear(); st.bt.sel = null; st.bt.pick = null; st.bt.shape = null; st.bt.spick = null; if (d) hint('Teste zerado.', 1200); draw(); emit('bonetest'); return; }
     // Esc: na ferramenta Prender, solta os pontos escolhidos
     if (k === 'Escape' && pinOn() && st.pin.sel.size && !inDialog(t)) { st.pin.sel.clear(); st.pin.pick = null; draw(); return; }
     if (k === 'Escape') { if (!help.hidden) toggleHelp(false); $('errList').hidden = true; if (st.marq) { st.marq = null; draw(); } if (inField(t)) clearSel(); else if (!exitDef() && !exitIso()) deselect(); if (st.meas) { st.meas = null; draw(); } return; }
@@ -6151,6 +6319,11 @@
       sel: () => (testOn() && st.bt.sel && st.model.bones.has(st.bt.sel) ? st.bt.sel : null),
       choose: (name) => { if (!testOn()) return; st.bt.sel = name && st.model.bones.has(name) ? name : null; st.bt.pick = null; draw(); emit('bonetest'); },
       changed: () => [...st.bt.vals.keys()].filter((n) => testText(n)),
+      // acender o que segue o osso; escrever o teste como key (no quadro do player, ou numa anim nova teste)
+      glow: (on) => { if (on === undefined) return st.bt.glow; st.bt.glow = !!on; draw(); emit('bonetest'); return st.bt.glow; },
+      write: () => writeTest(),
+      shape: () => (testOn() && st.bt.shape && st.bt.shape.m === st.model ? st.bt.shape.text : ''),
+      anim: () => (st.anim && st.model.animMap.has(st.anim) ? { name: st.anim, frame: st.frame } : null),
     },
     toCanvas: (e) => toCanvas(e),
     snapPt: (e, x, y) => snapMouse({ self: true, ref: [x, y] }, x, y, e),

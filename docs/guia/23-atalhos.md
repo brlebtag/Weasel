@@ -162,6 +162,7 @@ As duas caixinhas no pé da barra de ferramentas: a cor de dentro (preenchimento
 | `Shift ao esticar` | estica por igual (mantém a proporção) | Testar ossos |
 | `clicar de novo no mesmo lugar` | pega o osso de baixo, quando as alças estão uma em cima da outra | Testar ossos |
 | `duplo clique numa alça` | volta o osso como estava | Testar ossos |
+| `clique numa forma` | diz a que osso ela segue e acende o que vai com ele; de novo no mesmo lugar, a forma de baixo | Testar ossos |
 | `Esc` | zera o teste (todos os ossos voltam) | Testar ossos |
 | `Ctrl+clique` | escreve no código, onde está o cursor, a coordenada do lugar clicado | vistas Código e Dividido |
 | `botão direito` | abre o menu da forma (copiar, organizar, agrupar, inserir forma…) | no desenho |

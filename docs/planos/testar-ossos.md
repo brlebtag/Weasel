@@ -1,6 +1,6 @@
 # Testar ossos
 
-**Situação:** proposta e escolhas de 23/11/2026. Etapa 1 (o Prender só prende e a ferramenta Testar ossos) feita na 1.73.0. Etapa 2 (as ajudas e virar `key`) depois.
+**Situação:** proposta e escolhas de 23/11/2026. Etapa 1 (o Prender só prende e a ferramenta Testar ossos) feita na 1.73.0. Etapa 2 (as ajudas e virar `key`) feita na 1.74.0: **plano feito**.
 
 ## O pedido
 
@@ -78,3 +78,19 @@ Feita como o plano diz, com estas diferenças e escolhas:
 - **A ponta de um `ik` com `target=`:** o alvo vai para a mão (a nota e o painel mostram o alvo).
 - **No Prender**, a bolinha de um osso aceita Shift (soma) e Alt (tira) também.
 - **Conferido no editor:** o cavaleiro (girar, esticar com Shift, mover, painel, Esc, duplo clique, sair da ferramenta); `test/casos/pinos.weasel` (girar o corpo dobra a perna e o pé fica parado; o meio do `ik` avisa; a bolinha da mão move o `alvo`); dois ossos com o mesmo pivô (troca e arraste). O código não mudou em nenhum teste.
+
+### Etapa 2 (1.74.0, 23/11/2026)
+
+- **O que vai junto acende.** O osso aceso é o arrastado; sem arraste, o que está sob o mouse (numa alça); sem mouse numa alça, o da mão. O resto do desenho fica sob o mesmo véu claro do grupo aberto (o isolamento), e o que vai junto é pintado de novo por cima. Vai junto:
+  - as formas com `bone=` no osso ou num descendente dele;
+  - as formas com algum ponto `@` num deles (a forma inteira acende, e os pontos presos ganham bolinhas na cor do osso);
+  - as formas com `bones=` que passam por um deles, e as pernas (`stroke … hip=`) com `on=` ou `target=` num deles;
+  - num `ik` com `target=` num deles, os ossos do `ik` (e os filhos).
+- **A caixa "Acender o que segue o osso"** no painel, ligada de começo, desliga o destaque. Não fica guardada.
+- **Clicar numa forma** (fora das alças) põe na nota, no painel e na barra de aviso o `bone=` dela e quantos pontos estão em cada osso, com o contorno tracejado em laranja. O osso dela vai para a mão (o `bone=`; sem ele, o primeiro de `bones=`, o `on=` ou `target=` da perna, ou o osso do primeiro ponto preso). O código vai até a linha dela, sem tirar o foco do desenho. Clicar de novo no mesmo lugar pega a forma de baixo; no vazio, solta o osso e a forma.
+- **Escrever como key** é um botão do painel, que diz onde vai escrever (`Escrever como key 6 em agacha`, ou `(anim nova teste)`):
+  - escreve só as partes mexidas de cada osso: `osso=dx,dy,giro` (mais `sx,sy` quando não é 1), e `osso.along=`, `osso.yaw=` e `osso.pitch=`, com o mesmo jeito do posar em Exibir › Ossos (troca o valor na linha do quadro, ou cria a linha na ordem dos quadros);
+  - sem animação, `anim teste` (ou `teste2`…) vai para o fim do arquivo, com uma linha em branco antes, e o player passa a mostrá-la;
+  - numa animação feita pelo Weasel (`from=`/`to=`), avisa e não escreve;
+  - tudo num Ctrl+Z só; depois, o teste recomeça do quadro, que já tem os valores.
+- **Conferido no editor** (`test/casos/pinos.weasel`): o mouse na coxa acende só o `bicho` (pelos pontos da canela e do pé) e apaga o braço e a corda; o clique no `bicho` diz `bicho: bone=corpo · 2 pontos em canela · 2 pontos em pe · 1 ponto em ombro`, e na corda, `corda: 1 ponto em alvo`; escrever sem animação cria `anim teste` com `key 0 corpo=0,0,20`; no quadro 6 de `agacha` troca `corpo` e `alvo` na `key 6`; no quadro 3 cria `key 3 corpo=0,12,-10` entre a 0 e a 6; um osso com `path=` escreve `key 0 carro.along=0.5`. Cada escrita saiu com um Ctrl+Z.

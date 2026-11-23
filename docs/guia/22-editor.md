@@ -597,7 +597,7 @@ Não aparecem: as cópias de um `use` e as linhas de `repeat` e de `include` (es
 
 ## Testar ossos
 
-A ferramenta **Testar ossos** (o botão dos dois ossos na barra de ferramentas, logo depois do Prender, ou **O**) mexe nos ossos **só na tela**, para ver se tudo está conectado: o que vai junto com cada osso, e onde a forma abre ou sobra. Nada vai para o código, e o **Ctrl+Z** não guarda o teste.
+A ferramenta **Testar ossos** (o botão dos dois ossos na barra de ferramentas, logo depois do Prender, ou **O**) mexe nos ossos **só na tela**, para ver se tudo está conectado: o que vai junto com cada osso, e onde a forma abre ou sobra. Nada vai para o código (só com **Escrever como key**, mais abaixo), e o **Ctrl+Z** não guarda o teste.
 
 Cada osso aparece com a bolinha no pivô e a haste, como em [Ossos no desenho](#ossos-no-desenho), e mais um quadradinho no meio da haste:
 
@@ -612,6 +612,17 @@ O osso na mão fica laranja, e uma nota no canto diz o que está mexido (`Testar
 
 **O `ik` continua valendo** ([capítulo 8](08-ossos.md#ik-nos-ossos-ik)): girando o corpo, a perna dobra e o pé fica no chão. A raiz e o meio de um `ik` não giram pela haste, porque quem os gira é o `ik`: mexa no osso de cima (esticar, pode). A bolinha da ponta de um `ik` com `target=` move o alvo; com `foot=`, ela não arrasta, porque o pé fica no chão.
 
+**O que vai junto acende.** Com o mouse numa alça, ou com um osso na mão, o que vai junto com ele fica aceso, e o resto do desenho fica apagado (como num grupo aberto). Vai junto:
+
+- as formas com `bone=` nele ou num osso filho dele (e nos filhos dos filhos);
+- as formas com algum ponto preso (`@osso`) a um desses ossos. Os pontos presos aparecem como bolinhas na cor do osso, para você ver quais são;
+- as formas com `bones=` que passam por um deles, e as pernas com `on=` ou `target=` num deles;
+- num `ik` com `target=` num desses ossos, os ossos do `ik` (eles giram para alcançar o alvo).
+
+Uma forma que fica apagada quando devia acender não está presa ao osso: confira o `bone=` ou os `@` dela. Para desligar o destaque, desmarque **Acender o que segue o osso** no painel.
+
+**Clicar numa forma diz a que osso ela segue.** Um clique numa forma, fora das alças, mostra na nota e na barra de aviso o `bone=` dela e quantos pontos estão presos a cada osso (`bicho: bone=corpo · 2 pontos em canela · 1 ponto em ombro`), com o contorno tracejado em laranja. O osso dela vai para a mão, com o que vai junto aceso, e o código vai até a linha dela. Clique de novo no mesmo lugar para a forma de baixo; no vazio, solta tudo. Uma forma sem nada diz `não segue nenhum osso (fica parada)`.
+
 **Alças uma em cima da outra:** dois ossos com o mesmo pivô (o braço de perto e o de longe, por exemplo) têm as alças no mesmo lugar. Clique de novo no mesmo lugar para pegar o osso de baixo. A nota diz qual está na mão, e o mouse parado em cima mostra, na barra do desenho, os ossos que estão ali.
 
 **O painel Testar ossos** aparece na coluna da direita junto com a ferramenta:
@@ -619,7 +630,17 @@ O osso na mão fica laranja, e uma nota no canto diz o que está mexido (`Testar
 - **osso:** o osso na mão (clique na bolinha dele, ou escolha na lista; os mexidos têm um •);
 - **x**, **y**, **giro**, **escala x** e **escala y:** os valores do osso, como numa `key`, para digitar (**Enter** grava). Arrastar o nome de um campo para os lados muda o valor (com **Shift**, 10 vezes mais);
 - **along**, num osso que anda num caminho (`path=`), e **yaw** e **pitch**, num desenho em 3D;
-- **Zerar este osso** e **Zerar tudo**.
+- **Zerar este osso** e **Zerar tudo**;
+- **Escrever como key**: grava o teste no código (veja abaixo);
+- **Acender o que segue o osso**, ligado de começo;
+- a forma clicada e a que osso ela segue.
+
+**Escrever como key.** Quando o teste ficou bom, o botão **Escrever como key** do painel grava os ossos mexidos numa `key`, com os valores do painel (`corpo=0,0,20`; `along`, `yaw` e `pitch` como `osso.along=…`):
+
+- com uma animação pausada no player, na `key` do quadro mostrado. Se o quadro já tem a linha `key`, o editor troca só os ossos mexidos nela; se não tem, cria a linha, na ordem dos quadros. O botão diz onde vai escrever (`Escrever como key 6 em agacha`);
+- sem animação, numa `anim teste` nova (ou `teste2`, `teste3`…) no fim do arquivo, na `key 0`, e o player passa a mostrar essa animação.
+
+Um **Ctrl+Z** desfaz tudo o que foi escrito. Depois de escrever, o teste recomeça do quadro, que agora já tem os valores.
 
 **Para sair**, escolha outra ferramenta: tudo volta como estava. O **Esc** zera o teste sem sair da ferramenta. Não aparece em filmes.
 
@@ -628,7 +649,10 @@ Para treinar, use o boneco de [Ossos no desenho](#ossos-no-desenho), sem animaç
 1. Aperte **O**.
 2. Arraste a ponta da haste do `braco`: o braço gira em volta do ombro, e o código não muda.
 3. Arraste o quadradinho do `corpo` para longe do pivô: o tronco e o braço esticam juntos.
-4. Aperte **Esc**: tudo volta.
+4. Pare o mouse na bolinha do `braco`: só o braço fica aceso.
+5. Clique no tronco: a nota diz `tronco: bone=corpo`.
+6. Aperte **Esc**: tudo volta.
+7. Gire o `braco` de novo e clique em **Escrever como key**: o código ganha `anim teste` e `key 0 braco=…`. Um **Ctrl+Z** tira.
 
 ## Linha do tempo
 

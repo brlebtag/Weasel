@@ -140,6 +140,7 @@
       { k: 'Shift ao esticar', d: 'estica por igual (mantém a proporção)', w: 'Testar ossos' },
       { k: 'clicar de novo no mesmo lugar', d: 'pega o osso de baixo, quando as alças estão uma em cima da outra', w: 'Testar ossos' },
       { k: 'duplo clique numa alça', d: 'volta o osso como estava', w: 'Testar ossos' },
+      { k: 'clique numa forma', d: 'diz a que osso ela segue e acende o que vai com ele; de novo no mesmo lugar, a forma de baixo', w: 'Testar ossos' },
       { k: 'Esc', d: 'zera o teste (todos os ossos voltam)', w: 'Testar ossos' },
       { k: 'Ctrl+clique', d: 'escreve no código, onde está o cursor, a coordenada do lugar clicado', w: 'vistas Código e Dividido' },
       { k: 'botão direito', d: 'abre o menu da forma (copiar, organizar, agrupar, inserir forma…)' },

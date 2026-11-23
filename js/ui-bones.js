@@ -2,7 +2,8 @@
    (tecla O), a coluna da direita ganha esta parte: o osso na mão (escolhido no desenho ou na lista), os valores
    dele para digitar como numa key (x, y, giro, escala x e escala y; along, yaw e pitch quando o osso usa) e os
    botões de zerar. Nada vai para o código: os valores vivem em js/app.js (A.boneTest) e somem ao trocar de
-   ferramenta. */
+   ferramenta. Etapa 2: a forma clicada (a que osso ela segue), acender o que segue o osso e Escrever como key, que
+   grava o teste numa key de verdade (um Ctrl+Z desfaz). */
 (function (W) {
   'use strict';
   const A = W.app;
@@ -36,11 +37,15 @@
       <div class="pp-row"><span class="pp-k" title="o osso na mão: clique na bolinha dele no desenho, ou escolha aqui">osso</span><select class="pp-sel bt-bone"></select></div>
       <div class="bt-vals"></div>
       <div class="bt-foot"><button type="button" data-act="one" title="Volta o osso na mão para como estava (o duplo clique numa alça faz o mesmo)">Zerar este osso</button><button type="button" data-act="all" title="Volta todos os ossos (o Esc faz o mesmo)">Zerar tudo</button></div>
+      <div class="bt-foot"><button type="button" data-act="write" class="bt-write"></button></div>
+      <label class="pp-chk bt-glow" title="Com o mouse numa alça, ou com um osso na mão, o que vai junto com ele fica aceso e o resto fica apagado"><input type="checkbox" checked> Acender o que segue o osso</label>
+      <div class="pp-note bt-shape" hidden></div>
       <small class="pp-note bt-tip"></small>
     </div>`;
   dock.insertBefore(sec, dock.firstChild);
   const what = sec.querySelector('.dk-what'), pick = sec.querySelector('.bt-bone'), vals = sec.querySelector('.bt-vals'), tip = sec.querySelector('.bt-tip');
-  const btnOne = sec.querySelector('[data-act=one]'), btnAll = sec.querySelector('[data-act=all]');
+  const btnOne = sec.querySelector('[data-act=one]'), btnAll = sec.querySelector('[data-act=all]'), btnWrite = sec.querySelector('[data-act=write]');
+  const glow = sec.querySelector('.bt-glow input'), shapeEl = sec.querySelector('.bt-shape');
 
   let shape = ''; // os campos mostrados agora (osso e quais campos): muda só quando é preciso refazer
   let names = '';  // os nomes da lista de ossos
@@ -62,9 +67,18 @@
     what.textContent = changed.size ? `${changed.size} mexido${changed.size > 1 ? 's' : ''}` : '';
     btnAll.disabled = !changed.size;
     btnOne.disabled = !sel || !changed.has(sel);
+    // Escrever como key: no quadro do player, ou numa anim nova
+    const an = T.anim();
+    btnWrite.textContent = an ? `Escrever como key ${an.frame} em ${an.name}` : 'Escrever como key (anim nova teste)';
+    btnWrite.title = an ? `Grava os ossos mexidos na key ${an.frame} da anim ${an.name} (o quadro do player). Um Ctrl+Z desfaz.` : 'Sem animação no player: grava os ossos mexidos numa anim nova, teste, na key 0, no fim do arquivo. Um Ctrl+Z desfaz.';
+    btnWrite.disabled = !changed.size;
+    glow.checked = !!T.glow();
+    const shp = T.shape();
+    shapeEl.hidden = !shp;
+    shapeEl.textContent = shp ? `forma: ${shp}` : '';
     if (!m.bones.size) { tip.textContent = 'Este desenho não tem ossos (bone).'; }
-    else if (!sel) tip.textContent = 'Clique na bolinha de um osso no desenho (ou escolha na lista) para digitar os valores dele. A bolinha move, a ponta da haste gira, o quadradinho estica. Nada vai para o código.';
-    else tip.textContent = 'Os valores são os de uma key deste osso. Arraste o nome de um campo para os lados (Shift: 10× mais). Nada vai para o código: o Esc zera, e trocar de ferramenta volta tudo.';
+    else if (!sel) tip.textContent = 'Clique na bolinha de um osso no desenho (ou escolha na lista) para digitar os valores dele. A bolinha move, a ponta da haste gira, o quadradinho estica. Um clique numa forma diz a que osso ela segue. Nada vai para o código até Escrever como key.';
+    else tip.textContent = 'Os valores são os de uma key deste osso. Arraste o nome de um campo para os lados (Shift: 10× mais). Nada vai para o código até Escrever como key: o Esc zera, e trocar de ferramenta volta tudo.';
     // os campos
     const b = sel && m.bones.get(sel), list = b ? FIELDS.filter((f) => !f.when || f.when(b, m)) : [];
     const sh = sel ? sel + '|' + list.map((f) => f.k).join(',') : '';
@@ -123,6 +137,8 @@
   pick.addEventListener('change', () => { T.choose(pick.value || null); });
   btnOne.addEventListener('click', () => { const sel = T.sel(); if (sel) T.reset(sel); });
   btnAll.addEventListener('click', () => T.reset());
+  btnWrite.addEventListener('click', () => T.write());
+  glow.addEventListener('change', () => T.glow(glow.checked));
 
   A.on('bonetest', fill);
   A.on('tool', fill);

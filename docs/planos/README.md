@@ -14,7 +14,6 @@ Antes de fazer qualquer item, a proposta é explicada de novo, e o trabalho só 
 
 | Plano | Em uma frase | Situação |
 |---|---|---|
-| [Testar ossos](testar-ossos.md) | o Prender só prende, e uma ferramenta nova (tecla O) move, gira e estica os ossos só na tela, para ver se tudo está conectado | escolhas de 23/11/2026; etapa 1 (o Prender e a ferramenta) feita na 1.73.0; etapa 2 (as ajudas e virar `key`) depois |
 | [Traçado de imagem](tracado-de-imagem.md) | uma imagem em vector art vira um desenho do Weasel, o mais fiel possível (o protótipo erra ΔE 1,67 em média, contra 9,66 do `vetoriza.py` do ForestPatrol) | feito: etapa 1 (o módulo e a linha de comando) na 1.70.0, ΔE 1,67, igual ao protótipo, 5 a 10 vezes mais rápido; etapa 2 (Objeto › Traçado de imagem no editor) na 1.71.0, com o editor e a vista 3D aguentando os traçados grandes (uma tecla no gato: 8,6 → 0,25 s); depois, sem fundo (`--no-bg` e a caixa Fundo) na 1.72.0, igual ao Python |
 | [Bocas por texto](bocas-por-texto.md) | você digita uma frase, em português ou inglês, e o personagem fala (pedido do seu irmão, para o storyboard) | proposta de 12/11/2026, ampliada para inglês em 13/11; esperando você ler o capítulo de filme |
 | [Limpeza da linguagem](limpeza-da-linguagem.md) | tirar o `finish inner=`, trocar nomes que confundem, componentes isolados | esperando você |
@@ -64,6 +63,7 @@ Riscados em 16/11/2026 (2, 5, 8 e 12). No mesmo dia, com a interface decidida, o
 | ✅ [Editor visual](editor-visual.md) | menos código digitado: repetir ou tocar uma vez no player, painéis (propriedades, paleta, efeitos, acabamento, estilo), camadas arrastando, linha do tempo da animação e o filme pela tela | 1.49.0 e, pelas etapas da interface, 1.52.0 a 1.64.0; os itens 6, 10, 11 e 12 ficaram fora |
 | ✅ [Ferramentas de desenho](proposta-melhorias-weasel-lucas.md) | pincel de bolha, borracha, Bézier completo, simplificar pontos e vista 3D das camadas (pedido de quem anima um livro) | 1.51.0, 1.56.0, 1.57.0 e 1.58.0 (etapas 1b, 4b, 4c e 5a da interface) |
 | ✅ [Guia novo e folha de atalhos](guia-e-atalhos.md) | o guia reescrito para quem está começando (todas as opções, faixas e padrões, com exemplos) e uma folha com todos os atalhos do editor | 1.66.0 a 1.67.9 (etapas 1 a 10, todas em 17/11/2026; tarefa B na 1.66.1 e tarefa A na 1.67.1); tarefa J (a `opacity=` da forma e do `use`) na 1.67.10 |
+| ✅ [Testar ossos](testar-ossos.md) | o Prender só prende, e a ferramenta Testar ossos (tecla O) move, gira e estica os ossos só na tela, acende o que vai junto com cada um, diz a que osso uma forma segue e escreve o teste como `key` | 1.73.0 e 1.74.0 (etapas 1 e 2, em 23/11/2026) |
 
 A fila combinada de 10/11/2026 (ajudante do Godot, contas novas, folha de conferência e transições) está toda feita.
 
