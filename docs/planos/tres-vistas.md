@@ -74,7 +74,39 @@ Feito em 23/11/2026, fora do projeto. Nada no Weasel mudou.
   3. mede o quanto o osso parece girar e encurtar na tela;
   4. decide a ordem das peças.
 - **Os personagens:** quatro homens desenhados para o teste (os desenhos são meus, então medem o método, não a arte) e o furão convertido. Cada animação foi escrita uma vez.
-- **Onde ficou:** o script e os personagens estão em `.claude/tres-vistas/`, fora do git.
+- **Onde ficou:** os originais estão em [`tres-vistas/`](tres-vistas/), ao lado deste plano. O script fica em `.claude/tres-vistas/`, fora do git.
+
+### Os originais
+
+Cada personagem tem só as vistas que o caso dele pedia, e **um esqueleto só**, e não um por vista:
+
+| Personagem | Vistas desenhadas | O `_left` | Ossos |
+|---|---|---|---|
+| [O herói](tres-vistas/heroi.weasel) | 5: frente, 3/4, lado, costas e esquerda | desenhado | 8 |
+| [O homem realista](tres-vistas/homem.weasel) | 3: frente, lado e costas | espelho do lado | 15 (com joelho, cotovelo e pé) |
+| [O guarda](tres-vistas/guarda.weasel) | 3: frente, lado e costas | espelho do lado | 8 |
+| [O herói de plataforma](tres-vistas/plataforma.weasel) | 2: direita e esquerda | desenhado | 8 |
+| [O furão](tres-vistas/furao3d.weasel) | 3: as do `exemplos/furao.weasel` | espelho do lado | 8 |
+
+![Os cinco personagens parados, em cada vista desenhada, com os ossos por cima: uma bolinha amarela no pivô de cada osso, um traço vermelho para onde ele aponta e uma linha azul até o pai. O mesmo esqueleto aparece em todas as vistas de cada personagem](img/tres-vistas_originais.png)
+
+Os ossos são escritos uma vez, no alto do arquivo, com o lugar tirado do desenho de frente (no de plataforma, do lado direito). Cada vista é uma camada com as peças dela, e cada peça diz a que osso pertence. No guarda:
+
+```
+bone corpo pivot=80,128
+bone cabeca parent=corpo pivot=80,72 turns
+bone lanca parent=bracoD pivot=61,119 tip=61,8 side=80
+
+layer frente view=down
+rect pernaDf 67,128 12,62 c=calca ink=thin bone=pernaD
+
+layer lado view=right
+rect pernaDl 74,128 12,62 c=calca ink=thin bone=pernaD
+```
+
+O lugar de cada osso nas outras vistas (as bolinhas na de lado, na de costas e na 3/4) não é escrito: sai da altura da frente e da profundidade lida da vista de lado. No furão, as três vistas são as do exemplo; o teste criou os 8 ossos, ligou as peças a eles e trocou de lado as 5 peças das costas que estavam trocadas.
+
+O Weasel de hoje não lê esses arquivos direto, porque não conhece `view=`: o script os transforma num `.weasel` comum, e as imagens abaixo vêm dele.
 
 ### O herói
 
@@ -377,7 +409,7 @@ Em cada item, **(R)** é a minha recomendação.
 7. **O exemplo.**
    - **(R)** Um furão novo (`exemplos/furao3d.weasel`), com as mesmas vistas e 3 animações. O `furao.weasel` de hoje fica como está: o guia e os testes usam ele.
    - Converter o `furao.weasel`.
-   - O herói do protótipo (`exemplos/heroi.weasel`): um homem com espada e escudo, que mostra também a esquerda desenhada e a diagonal. Ele já existe em `.claude/tres-vistas/`, na sintaxe do plano.
+   - O herói do protótipo (`exemplos/heroi.weasel`): um homem com espada e escudo, que mostra também a esquerda desenhada e a diagonal. Ele já existe, na sintaxe do plano: [`tres-vistas/heroi.weasel`](tres-vistas/heroi.weasel).
 8. **O ângulo de uma vista diagonal** (só quando houver uma).
    - **(R)** Medido do desenho, com `angle=` para corrigir.
    - Sempre 45°. Mais simples, mas uma 3/4 desenhada mais fechada (30–35°) faz as peças girarem em volta do ponto errado.

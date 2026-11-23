@@ -1,0 +1,125 @@
+# Original do protótipo da etapa 0, na sintaxe do plano (docs/planos/tres-vistas.md): view=, views, side=,
+# tip=x,y,z, lat=, turns. O Weasel de hoje não lê este arquivo direto; o script do protótipo o transforma num .weasel comum.
+# Furão — personagem de jogo top-down, para o Godot
+# Três vistas (frente, costas e lado direito), cada uma em camadas com only=. As animações
+# terminam em _down, _up e _right; na cena do Godot, o lado esquerdo sai espelhado do direito
+# e o ajudante tocar("walk", velocity) escolhe a animação pela direção.
+# box: colisão do corpo (body), área que leva dano (hurt) e o golpe (hit), que só liga
+# nos quadros do ataque. Exporte com:  weasel furao.weasel -o godot/furao.tscn
+
+canvas 160 160 bg=#eef0e6 light=-0.6,-0.8
+palette ink=#2a1d16 line=4 thin=2
+palette pelo=#c98f5a pelod=#a8703f barriga=#f6e7cf mascara=#5b3a28 rosa=#e9a0a8
+palette olho=#1a1414 metal=#d9dee6 cabo=#7a5232
+
+# a raiz fica entre os pés: é a origem do nó no Godot
+godot body=character root=80,128
+
+# Construção: o chão e o centro (só aparecem no editor)
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,128 140,128
+line meio c=#b9bba8 w=1 dash=4,4 : 80,20 80,140
+
+# a espada é desenhada em volta da mão (0,0), com a lâmina para cima
+def espada
+rect lamina -3,-36 6,32 r=2 c=metal ink=thin
+rect guarda -8,-6 16,4 c=cabo ink=thin
+rect punho -2,-2 4,9 c=cabo ink=thin
+end
+
+views tilt=30
+
+# ---------- ossos (um esqueleto só para as três vistas) ----------
+bone corpo pivot=80,128
+bone cabeca parent=corpo pivot=80,92
+bone peE pivot=68,126
+bone peD pivot=92,126
+bone bracoE parent=corpo pivot=58,100
+bone bracoD parent=corpo pivot=102,100
+bone cauda parent=corpo pivot=80,118 side=58 tip=80,118,-30
+bone espada parent=bracoD pivot=104,108 tip=119,75,-21 side=94
+
+# ---------- frente (virado para baixo) ----------
+layer frente view=down
+ellipse peE 68,126 9,6 c=pelod ink=line bone=peE
+ellipse peD 92,126 9,6 c=pelod ink=line bone=peD
+ellipse corpo 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse barriga 80,111 14,13 c=barriga bone=corpo
+ellipse bracoE 57,106 7,9 c=pelod ink=line bone=bracoE
+ellipse orelhaE 58,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaD 102,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaEi 58,49 5 c=rosa bone=cabeca
+ellipse orelhaDi 102,49 5 c=rosa bone=cabeca
+ellipse cabeca 80,72 30,26 c=pelo ink=line bone=cabeca
+shape mascara c=mascara bone=cabeca : 54,70 64,62 80,67 96,62 106,70 96,77 80,73 64,77
+ellipse focinho 80,84 13,9 c=barriga bone=cabeca
+ellipse olhoE 68,69 4,5 c=olho bone=cabeca
+ellipse olhoD 92,69 4,5 c=olho bone=cabeca
+ellipse brilhoE 69,67 1.5 c=#ffffff bone=cabeca
+ellipse brilhoD 93,67 1.5 c=#ffffff bone=cabeca
+ellipse nariz 80,80 4,3 c=rosa ink=thin bone=cabeca
+stroke boca w=thin c=ink bone=cabeca : 75,86 80,89 85,86
+shape laminaF c=metal ink=thin bone=espada : 116.5,74.1! 121.9,76.6! 108.4,105.6! 103.0,103.1!
+shape guardaF c=cabo ink=thin bone=espada : 99.3,99.2! 113.8,105.9! 112.1,109.6! 97.6,102.8!
+shape punhoF c=cabo ink=thin bone=espada : 103.0,105.3! 106.7,107.0! 102.9,115.2! 99.2,113.5!
+ellipse bracoD 103,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- costas (virado para cima) ----------
+layer costas view=up
+ellipse peEc 92,126 9,6 c=pelod ink=line bone=peE
+ellipse peDc 68,126 9,6 c=pelod ink=line bone=peD
+ellipse corpoC 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse bracoEc 103,104 7,9 c=pelod ink=line bone=bracoE
+ellipse bracoDc 57,104 7,9 c=pelod ink=line bone=bracoD
+shape caudaC c=pelod ink=line bone=cauda : 80,116 92,124 110,120 124,104 126,92 120,92 114,106 98,114 84,110
+ellipse orelhaEc 58,48 10 c=pelod ink=line bone=cabeca
+ellipse orelhaDc 102,48 10 c=pelod ink=line bone=cabeca
+ellipse cabecaC 80,72 30,26 c=pelo ink=line bone=cabeca
+shape nuca c=pelod bone=cabeca : 70,52 80,49 90,52 86,76 80,80 74,76
+shape laminaC c=metal ink=thin bone=espada : 38.1,76.6! 43.5,74.1! 57.0,103.1! 51.6,105.6!
+shape guardaC c=cabo ink=thin bone=espada : 46.2,105.9! 60.7,99.2! 62.4,102.8! 47.9,109.6!
+shape punhoC c=cabo ink=thin bone=espada : 53.3,107.0! 57.0,105.3! 60.8,113.5! 57.1,115.2!
+
+# ---------- lado (virado para a direita; o esquerdo é espelhado) ----------
+layer lado view=right
+shape caudaL c=pelod ink=line bone=cauda : 60,112 42,116 24,110 14,96 18,90 26,98 40,104 58,104
+ellipse peDl 72,126 9,6 c=pelod ink=line bone=peD
+ellipse corpoL 78,106 26,20 c=pelo ink=line bone=corpo
+ellipse barrigaL 88,112 12,9 c=barriga bone=corpo
+ellipse peEl 90,126 10,6 c=pelod ink=line bone=peE
+ellipse orelhaL 72,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaLi 72,49 5 c=rosa bone=cabeca
+ellipse focinhoL 106,78 14,10 c=barriga ink=line bone=cabeca
+ellipse cabecaL 84,70 26,24 c=pelo ink=line bone=cabeca
+shape mascaraL c=mascara bone=cabeca : 86,64 98,61 106,68 99,76 88,74
+ellipse olhoL 97,67 4,5 c=olho bone=cabeca
+ellipse brilhoL 98,65 1.5 c=#ffffff bone=cabeca
+ellipse narizL 119,76 4,3 c=rosa ink=thin bone=cabeca
+shape laminaL c=metal ink=thin bone=espada : 70.9,80.2! 75.8,76.8! 94.2,103.0! 89.2,106.4!
+shape guardaL c=cabo ink=thin bone=espada : 84.0,107.7! 97.1,98.5! 99.4,101.8! 86.3,111.0!
+shape punhoL c=cabo ink=thin bone=espada : 91.2,107.5! 94.5,105.2! 99.7,112.6! 96.4,114.9!
+ellipse bracoL 94,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- animações: cada uma uma vez ----------
+anim idle frames=8 fps=8
+key 0 corpo=0,0,0,1,1 cabeca=0,0
+key 4 corpo=0,1.5,0,1.03,0.97 cabeca=0,1
+key 8 corpo=0,0,0,1,1 cabeca=0,0
+
+anim walk frames=8 fps=12
+key 0 corpo=0,0 corpo.pitch=-4 peE.z=8 peE=0,-3 peD.z=-8 peD=0,0 bracoD.pitch=-20 bracoE.pitch=20
+key 2 corpo=0,-2 corpo.pitch=-4 peE.z=0 peE=0,0 peD.z=0 peD=0,-4 bracoD.pitch=0 bracoE.pitch=0
+key 4 corpo=0,0 corpo.pitch=-4 peE.z=-8 peE=0,0 peD.z=8 peD=0,-3 bracoD.pitch=20 bracoE.pitch=-20
+key 6 corpo=0,-2 corpo.pitch=-4 peE.z=0 peE=0,-4 peD.z=0 peD=0,0 bracoD.pitch=0 bracoE.pitch=0
+key 8 corpo=0,0 corpo.pitch=-4 peE.z=8 peE=0,-3 peD.z=-8 peD=0,0 bracoD.pitch=-20 bracoE.pitch=20
+event 0 passo
+event 4 passo
+
+# ataque: a espada vai para trás e desce na frente (um golpe de cima para baixo)
+anim attack frames=6 fps=12 once
+key 0 espada.pitch=0 corpo=0,0
+key 1 espada.pitch=35 corpo=0,-1 ease=out
+key 2 espada.pitch=-140 corpo=0,2 ease=out
+key 4 espada.pitch=-145 corpo=0,1
+key 6 espada.pitch=0 corpo=0,0
+event 2 golpe
