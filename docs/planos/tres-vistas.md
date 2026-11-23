@@ -1,8 +1,10 @@
 # Três vistas, uma animação
 
-**Situação:** proposta de 23/11/2026. Nada implementado. Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir).
+**Situação:** proposta de 23/11/2026; no mesmo dia, as diagonais entraram como possibilidade. Nada implementado. Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir).
 
 **Origem:** a sua pergunta de 23/11/2026. Num jogo 2D visto de cima, tipo Zelda, o personagem precisa de quatro direções (baixo, cima, direita e esquerda). Desenhar cada uma já é trabalho; animar cada uma (andar, atacar, parado) multiplica o trabalho por três. A ideia: você desenha o personagem de frente, de lado e de costas, e o Weasel monta com isso um boneco "em 3D", que você anima uma vez só.
+
+Na maior parte do tempo, são as quatro direções. As diagonais ficam como **possibilidade**, para quando você desenhar uma vista de 3/4 ([vistas na diagonal](#vistas-na-diagonal-opcional)); sem ela, nada muda.
 
 **Weasel:** a linguagem, a exportação e o editor. **Jogo:** nada muda. Saem as mesmas animações de hoje (`walk_down`, `walk_right`, `walk_up` e o `_left` espelhado), e o `tocar("walk", velocity)` escolhe a direção.
 
@@ -21,7 +23,8 @@ Com este plano, o furão teria **3 animações**, **um osso de espada** e **uma 
 ## O que o Weasel já tem
 
 - **Vistas no mesmo arquivo:** camadas com `only=`, como no furão. O `pose` mostra a frente no desenho parado.
-- **Direções no nome da animação:** `_down`, `_up`, `_right`, `_left` e as diagonais. As transições, o `trocar()` e o `tocar()` já entendem esses nomes; a exportação para o Godot cria o `_left` espelhado (`--no-mirror` desliga).
+- **Direções no nome da animação:** `_down`, `_up`, `_right`, `_left` e as diagonais. As transições, o `trocar()` e o `tocar()` já entendem esses nomes; a exportação para o Godot cria o `_left` espelhado (`--no-mirror` desliga), e também as diagonais da esquerda.
+- **As diagonais no `tocar()`** ([godot.js](../../js/godot.js), `nome_com_direcao`): com as duas (`_down_right` e `_up_right`), ele divide o círculo em 8 fatias. Com só a de baixo, andando para cima na diagonal ele cai na direção reta mais perto: 6 direções, sem mudar nada no Godot.
 - **Caixas e pontos presos a ossos:** `box … bone=` e `point … bone=` seguem o osso, inclusive girando junto.
 - **Casar peças de duas vistas pelo nome, pelo osso, pela cor e pela distância:** é o que a virada (`anim … turn`, 1.45.0) faz para achar o par de cada peça (`corpo` e `corpoL`). Este plano reaproveita esse casamento.
 - **2.5D:** `z=`, `yaw=` e `pitch=` em ossos e formas, `round=`, `billboard` e `zsort` ([capítulo 14](../guia/14-profundidade.md)).
@@ -68,6 +71,7 @@ layer lado view=right
 - `view=down` mostra a camada em todas as animações viradas para baixo, e no `pose` (o desenho parado).
 - Uma camada sem `view=` aparece em todas as vistas, como hoje uma camada sem `only=`.
 - `view=left` é opcional: sem ela, a esquerda sai espelhada, como hoje.
+- `view=down_right` e `view=up_right` (3/4 de frente e de costas) também são opcionais: veja [vistas na diagonal](#vistas-na-diagonal-opcional).
 
 ### Um esqueleto em 3D
 
@@ -154,28 +158,49 @@ Num jogo tipo Zelda, a tela é quase o chão visto de cima, e os personagens est
 - Os pontos (`point … bone=`) também: a saída do tiro fica na ponta da arma em cada direção.
 - Caixas e pontos sem osso ficam onde foram desenhados, em todas as vistas.
 
+### Vistas na diagonal (opcional)
+
+O normal são as quatro direções. Uma vista de 3/4 é uma possibilidade: sem uma camada `view=down_right` ou `view=up_right`, nada desta seção acontece.
+
+```
+up_left (esp.)     up     up_right
+left (esp.)         ●     right
+down_left (esp.)  down    down_right
+```
+
+- **As camadas:** `view=down_right` (3/4 de frente) e `view=up_right` (3/4 de costas). As da esquerda saem espelhadas, como o `_left`. Dá para desenhar só a 3/4 de frente: o `tocar()` usa ela andando para baixo na diagonal e, para cima na diagonal, a direção reta mais perto (6 direções).
+- **As animações geradas:** com as duas diagonais, `walk` gera 5 (`walk_down`, `walk_down_right`, `walk_right`, `walk_up_right` e `walk_up`), e o Godot completa as 8 com os espelhos. Hoje, um personagem de 8 direções precisa de 5 animações escritas para cada movimento.
+- **A conta:** nas vistas retas, é só trocar os eixos (de lado, o "para a frente" vira o x da tela). Na diagonal, o esqueleto gira até o ângulo da vista, e o x da tela mistura o lado e a profundidade. As peças que inclinam, a ordem que troca, as caixas e os pontos já funcionam em qualquer ângulo: nada muda neles.
+- **O ângulo que você desenhou:** uma 3/4 feita à mão quase nunca tem 45° exatos; muita gente desenha uns 30–35°. Se o Weasel supuser 45°, os ossos não caem onde as peças estão, e as peças giram em volta do ponto errado (o defeito do braço do furão). Por isso:
+  - o lugar de cada osso parado na diagonal é lido do desenho, pelas peças casadas, como a profundidade é lida do lado;
+  - o ângulo é **medido**: o que melhor encaixa os ossos (o x da frente e a profundidade do lado) no que a 3/4 mostra;
+  - `angle=` na camada corrige: `layer tres_quartos view=down_right angle=35`.
+- **A diagonal também dá profundidade:** o braço de longe, que some de lado, aparece na 3/4. Como o x dele vem da frente, a 3/4 dá a profundidade dele sem precisar do par espelhado. Quando o lado e a diagonal discordam, o Weasel avisa: `peE: 10 no lado, 3 na diagonal`.
+- **O custo:** a 3/4 é a vista mais difícil de desenhar e a que mais precisa ter as alturas batendo com as outras. São um ou dois desenhos a mais; por animação, nada a mais.
+
 ### Em todo lugar
 
 - **Editor, PNG, SVG, GIF, sprite sheet, normal map, estilos de arte:** as animações geradas são animações comuns.
 - **Godot por quadros:** as folhas de sempre; `tocar()`, `trocar()` e as transições, sem mudança.
 - **Godot com `rig=bones`:** cada quadro sai como a pose 2D daquela vista, assada, como o `ik`. A ordem que troca vira uma pista de `z_index`. A conferir no Godot (o 4.7.2 está instalado).
-- **`--info`:** as vistas e as camadas de cada uma; a profundidade de cada osso e de onde ela veio (`corpo -2 (lado) · peE 10 (lado) · bracoE 14 (par de bracoD) · espada 14 (side=)`); as animações geradas.
+- **`--info`:** as vistas e as camadas de cada uma; a profundidade de cada osso e de onde ela veio (`corpo -2 (lado) · peE 10 (lado) · bracoE 14 (par de bracoD) · espada 14 (side=)`); o ângulo de cada diagonal (`down_right: 34°, medido`); as animações geradas.
 - **Avisos:**
   - um osso com a peça em alturas muito diferentes na frente e no lado (vistas desalinhadas);
   - nas costas, uma peça do lado trocado (perto do osso espelhado);
   - `view=` e `only=` na mesma camada;
-  - um osso sem peça casada no lado e sem par espelhado (a profundidade foi a do pai).
+  - um osso sem peça casada no lado e sem par espelhado (a profundidade foi a do pai);
+  - o lado e uma diagonal dando profundidades diferentes para o mesmo osso.
 
 ### No editor
 
-- **Ao lado da lista de animações, quatro botões de direção** (↓ → ↑ ←). A lista mostra `walk`; os botões escolhem a vista mostrada. A linha do tempo edita as `key` do `walk`.
+- **Ao lado da lista de animações, quatro botões de direção** (↓ → ↑ ←), ou oito num arquivo com diagonais. A lista mostra `walk`; os botões escolhem a vista mostrada. A linha do tempo edita as `key` do `walk`.
 - **Testar ossos:** os campos `z`, `pitch` e `yaw` num arquivo com vistas. Na vista de lado, arrastar a bolinha do osso para a frente ou para trás muda a profundidade no teste; **Escrever como `key`** grava `osso.z=`.
 - **A profundidade de cada osso:** na vista de lado, com o Prender, arrastar a bolinha do osso na horizontal escreve o `side=` dele. Um duplo clique apaga o `side=` e volta à profundidade lida das peças.
 
 ## O que fica de fora
 
-- **Diagonais:** precisariam de uma vista de 3/4 desenhada ou da virada por morph peça por peça. Fica para depois, se fizer falta.
-- **Virar de uma direção para outra** com o 3D (girar o esqueleto em vez do morph da virada): a virada de hoje continua; fica para depois.
+- **Diagonais sem desenho:** sem uma 3/4 desenhada, o desenho de cada peça a 45° teria que vir do morph entre a peça de frente e a de lado. Fica melhor que o morph do personagem inteiro, mas o rosto a 45° nunca fica tão bom quanto um desenhado. Fica para depois, se fizer falta. As diagonais **desenhadas** estão no plano ([vistas na diagonal](#vistas-na-diagonal-opcional)).
+- **Virar de uma direção para outra** com o 3D (girar o esqueleto em vez do morph da virada): a virada de hoje continua; fica para depois. Com uma 3/4 desenhada, a virada de frente para o lado poderia passar por ela, em vez de derreter as formas no meio.
 - **Gerar uma vista que você não desenhou:** as três vistas continuam suas. O que vem de graça é a animação.
 - **Personagens de proporção realista:** funcionam, mas dependem muito das peças que inclinam. O alvo é o tamanho de Zelda: cabeça grande, braços e pernas curtos.
 - **Uma peça que muda de desenho no meio da animação** (a mão abrindo) continua precisando de um desenho por vista, com `.shape=` ou `show`, como hoje.
@@ -205,14 +230,18 @@ Em cada item, **(R)** é a minha recomendação.
 7. **O exemplo.**
    - **(R)** Um furão novo (`exemplos/furao3d.weasel`), com as mesmas vistas e 3 animações. O `furao.weasel` de hoje fica como está: o guia e os testes usam ele.
    - Converter o `furao.weasel`.
+8. **O ângulo de uma vista diagonal** (só quando houver uma).
+   - **(R)** Medido do desenho, com `angle=` para corrigir.
+   - Sempre 45°. Mais simples, mas uma 3/4 desenhada mais fechada (30–35°) faz as peças girarem em volta do ponto errado.
+   - Sempre escrito à mão (`angle=` obrigatório). Nada adivinhado, mas você precisa saber o ângulo do seu desenho.
 
 ## Etapas
 
 Cada etapa só começa com o seu "pode fazer", e as imagens vão junto com cada decisão que muda o desenho.
 
-- **Etapa 0, o protótipo (fora do projeto):** o furão das três vistas, com `walk` e `attack` escritos uma vez, montado por um script no scratchpad. Ele confere a profundidade lida do lado, o avanço da câmera, a ordem e a espada inclinando. Você vê as folhas das três direções lado a lado com as de hoje antes de a sintaxe ficar fixa.
-- **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca, caixas e pontos, `--info` e os avisos. Dá conta do `idle` e do `walk`. Guia, exemplo e caso de teste.
+- **Etapa 0, o protótipo (fora do projeto):** o furão das três vistas, com `walk` e `attack` escritos uma vez, montado por um script no scratchpad. Ele confere a profundidade lida do lado, o avanço da câmera, a ordem e a espada inclinando. Você vê as folhas das três direções lado a lado com as de hoje antes de a sintaxe ficar fixa. A diagonal entra só para conferir a conta: uma 3/4 do bichinho do teste, gerada a 35°, tem que sair medida como 35°.
+- **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca, caixas e pontos, `--info` e os avisos. Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também; sem uma vista diagonal, nada disso aparece. Guia, exemplo e caso de teste.
 - **Etapa 1b, os giros:** `rot`, `pitch` e `yaw` em 3D, as peças que inclinam e encurtam, `tip=`, e o Godot com `rig=bones` conferido no Godot. Dá conta do `attack`.
-- **Etapa 2, o editor:** os botões de direção no player, a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
+- **Etapa 2, o editor:** os botões de direção no player (quatro, ou oito com diagonais), a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
 
 **Para o que existe:** tudo depende de `view=`. Sem ele, nada muda, e os desenhos dos testes (`npm test`) ficam iguais, byte a byte.
