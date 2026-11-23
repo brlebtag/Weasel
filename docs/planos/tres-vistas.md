@@ -1,6 +1,6 @@
 # Três vistas, uma animação
 
-**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Depois do teste, entrou a vista [Vistas em 3D](#vistas-em-3d), e você aceitou todas as recomendações: veja [o que foi decidido](#o-que-foi-decidido-23112026). Nada implementado no Weasel. A próxima é a [etapa 1a](#etapas), esperando o seu "pode fazer".
+**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Depois do teste, entrou a vista [Vistas em 3D](#vistas-em-3d), e você aceitou todas as recomendações: veja [o que foi decidido](#o-que-foi-decidido-23112026). A etapa 1a (as vistas e os movimentos) foi feita na 1.75.0, no mesmo dia: veja [como ficou](#como-ficou-a-etapa-1a-1750). A próxima é a [etapa 1b](#etapas) (os giros), esperando o seu "pode fazer".
 
 **Origem:** a sua pergunta de 23/11/2026. Num jogo 2D visto de cima, tipo Zelda, o personagem precisa de quatro direções (baixo, cima, direita e esquerda). Desenhar cada uma já é trabalho; animar cada uma (andar, atacar, parado) multiplica o trabalho por três. A ideia: você desenha o personagem de frente, de lado e de costas, e o Weasel monta com isso um boneco "em 3D", que você anima uma vez só.
 
@@ -436,6 +436,30 @@ Você aceitou todas as recomendações:
 12. **O pé no chão:** a altura do pé em cada quadro no `--info`, e um aviso só quando o pé afunda. Quem anima acerta a altura do quadril.
 13. **A vista Vistas em 3D:** entra como está em [Vistas em 3D](#vistas-em-3d), como o primeiro pedaço da etapa 2.
 
+## Como ficou a etapa 1a (1.75.0)
+
+- **A linguagem:** `layer … view=down|down_right|right|up_right|up|up_left|left|down_left` e `angle=` (só nas diagonais, de 1 a 89); a linha `views tilt=` (de 0 a 80, padrão 30); `side=` e `lat=` no `bone`; `osso.z=` na `key`. Sem nenhuma camada com `view=`, nada muda: `views` sozinho avisa, e `osso.z=` avisa e não faz nada. Os desenhos dos testes ficaram iguais, byte a byte.
+- **O código:** um módulo novo, `js/views.js` (a conta do protótipo, agora dentro do Weasel), chamado no fim da leitura do arquivo. Ele troca cada animação sem direção no nome pelas geradas (`walk` sai `walk_down`, `walk_right`…), com `key` lineares em cada quadro. Uma linha `key` da `walk` continua apontando para a `walk` no editor.
+- **A profundidade:** o meio da maior peça do osso na vista de lado (com os dois lados, a média; se eles discordam mais de 4 px, aviso), ou `side=`; sem peça de lado, uma diagonal (com o ângulo medido), o osso espelhado na frente ou o pai (com um aviso). O `--info` diz de onde veio cada uma.
+- **As diagonais:** o ângulo medido pelo lugar das peças, de 5 a 85 graus (o herói de 3/4 sai 34,5°, erro médio 0,4 px); `angle=` vale no lugar dele.
+- **A ordem:** a regra do protótipo, com a grossura medida no desenho, quadro a quadro, entre as peças da mesma camada. Ela é guardada em cada animação gerada e vale em todo lugar que pinta (a imagem, o SVG, o normal map, o editor).
+- **O pé no chão:** o ponto mais baixo das peças da vista principal, em cada quadro das animações base (no `--info`, em pixels acima do chão). O aviso sai quando o pé afunda mais de 1 px. Primeiro foi medido pela ponta dos ossos, como no protótipo, mas a espada pendurada contava como pé e o `idle` avisava à toa.
+- **As caixas e os pontos** andam com o osso em cada vista. O `sway=` (e as molas) giram em volta do lugar do osso na vista, não em volta do `pivot=` da frente.
+- **As animações escritas à mão numa vista** (`anim walk_up`) valem no lugar da gerada e contam como a base no `only=`. Uma animação de uma vista sem camada (`walk_left` sem `view=left`) avisa.
+- **O Godot:** as geradas saem como as outras. Com os dois lados desenhados, nada sai espelhado, nem as transições feitas das geradas. Com só o direito, a esquerda sai espelhada como sempre.
+- **O editor:** o player mostra as geradas, e a linha do tempo de uma gerada mostra as `key` da animação base. Com o cursor numa `key` da `walk`, o player fica na vista que está tocando, e a barra de baixo diz `key walk`. Numa gerada, arrastar os ossos não escreve `key` (a pose vale para todas as vistas: escreva na base), e o "Escrever como key" do Testar ossos avisa. O resto do editor das vistas é a etapa 2.
+- **O exemplo** `exemplos/furao3d.weasel` saiu com `idle` e `walk`; o `attack` (a decisão 7 pedia três animações) precisa do giro, e fica para a 1b. Os casos de teste são o herói do protótipo com cinco vistas (`test/casos/vistas.weasel`) e o herói de plataforma (`test/casos/vistas_plataforma.weasel`); o `_vistas` do `npm test` confere a frente gerada contra o 2D, o espelho no Godot, o `sway=`, as caixas, os pontos e a ordem.
+
+### Os limites que ficaram (até a 1b)
+
+- O giro dos ossos (o `rot` da `key`, `osso.yaw=`, `osso.pitch=`) não vale nas geradas: um aviso por animação, e os ossos só andam e esticam.
+- O `ik` e o `godot rig=bones` avisam: o `ik` não é resolvido nas outras vistas, e o esqueleto do Godot não leva a ordem que troca.
+- As caixas e os pontos não giram com o osso nas vistas (só andam).
+- A ordem só troca dentro de uma camada.
+- O `feet=` só vale nas geradas de lado (`_right` e `_left`).
+- O `sx,sy` de um osso estica também a profundidade dos filhos (a escala é a mesma de lado a lado e de frente para trás). Por isso, na frente gerada, um filho longe da raiz anda uma fração de pixel em relação ao 2D: no `idle` do furão, a cauda (22 px atrás) sobe até 0,3 px quando o corpo respira. Sem escala, a frente gerada é igual ao 2D, pixel a pixel.
+- No jogo de plataforma, sem `lat=`, o lado de cada osso é adivinhado pela ordem do desenho (8 px para perto ou para longe); o `--info` mostra a adivinhação. Ela erra a cabeça (desenhada depois do corpo, sai 8 px para perto), o que só importa se uma frente for desenhada depois.
+
 ## Etapas
 
 Cada etapa só começa com o seu "pode fazer", e as imagens vão junto com cada decisão que muda o desenho.
@@ -449,7 +473,7 @@ Cada etapa só começa com o seu "pode fazer", e as imagens vão junto com cada 
   - **o herói num jogo de plataforma:** só os dois lados, sem inclinação de câmera.
 
   Para cada um, o resultado é um mapa: o que sai bom, o que sai aceitável e o que quebra. O furão fica só como conferência: as 9 animações dele, feitas à mão, são a única referência pronta para comparar com as geradas. Os desenhos dos homens seriam meus, então eles medem o método, não a arte.
-- **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca (a regra que ficou no protótipo, com a grossura medida no desenho), caixas e pontos, `--info` e os avisos (com o pé no chão). Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também, assim como `view=left` (e as diagonais da esquerda) e a vista principal, que deixa o jogo de plataforma usar só os dois lados (com `lat=`). Sem essas vistas, nada disso aparece. Guia, exemplo e caso de teste.
+- **Etapa 1a, as vistas e os movimentos: feita na 1.75.0 (23/11/2026),** veja [como ficou](#como-ficou-a-etapa-1a-1750). O pedido era este: `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca (a regra que ficou no protótipo, com a grossura medida no desenho), caixas e pontos, `--info` e os avisos (com o pé no chão). Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também, assim como `view=left` (e as diagonais da esquerda) e a vista principal, que deixa o jogo de plataforma usar só os dois lados (com `lat=`). Sem essas vistas, nada disso aparece. Guia, exemplo e caso de teste.
 - **Etapa 1b, os giros:** `rot`, `pitch` e `yaw` em 3D, as peças que inclinam e encurtam, `tip=` (com o terceiro número), `turns`, e o Godot com `rig=bones` conferido no Godot. Dá conta do `attack`.
 - **Etapa 2, o editor:** primeiro a vista [Vistas em 3D](#vistas-em-3d), que ajuda a conferir a 1a e a 1b; depois os botões de direção no player (quatro, ou oito com diagonais), a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
 

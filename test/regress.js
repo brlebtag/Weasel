@@ -1026,6 +1026,75 @@ async function turnCase() {
   await check('_virada', 'virada.txt', 'text', lines.join('\n') + '\n');
 }
 
+// Três vistas (js/views.js, etapa 1a de docs/planos/tres-vistas.md): (1) a vista principal de uma animação sem
+// osso.z= é a animação 2D de sempre, pixel a pixel (exemplos/furao3d.weasel contra o mesmo furão só com a frente e
+// only=); (2) com os dois lados desenhados, o Godot não espelha nada (test/casos/vistas.weasel), e com só o direito,
+// o _left sai espelhado; (3) o sway= gira em volta do lugar do osso em cada vista (a mão não sai do lugar); (4) uma
+// animação escrita à mão numa vista (walk_up) gira em volta do lugar do osso nessa vista e conta como walk (only=).
+async function viewsCase() {
+  console.log(paint('1', '_vistas'));
+  const lines = [];
+  const furao = fs.readFileSync(path.join(EX, 'furao3d.weasel'), 'utf8').replace(/\r\n/g, '\n');
+  const m3 = W.lang.parse(furao, { file: 'furao3d.weasel' });
+  // o mesmo furão em 2D: só a camada da frente (only=idle,pose), sem views, sem as outras vistas e sem o walk (osso.z=)
+  const cut = (src, from, to) => src.slice(0, src.indexOf(from)) + src.slice(src.indexOf(to));
+  const flatOf = (src) => { const s = cut(src, 'layer costas view=up', '# ---------- o jogo'); return s.slice(0, s.indexOf('# anda:')).replace('views tilt=30\n', '').replace('layer frente view=down', 'layer frente only=idle,pose').replace(/ side=\d+/g, ''); };
+  // sem escala, a vista principal é a animação 2D pixel a pixel
+  const noScale = (src) => src.replace('corpo=0,1.5,0,1.03,0.97', 'corpo=0,1.5');
+  const m3s = W.lang.parse(noScale(furao), { file: 'furao3d.weasel' }), m2s = W.lang.parse(flatOf(noScale(furao)), { file: 'furao2d.weasel' });
+  let diff = 0;
+  for (let f = 0; f < 8; f++) {
+    const a = X.imageCanvas(m3s, 'idle_down', f, {}).getContext('2d').getImageData(0, 0, 160, 160).data, b = X.imageCanvas(m2s, 'idle', f, {}).getContext('2d').getImageData(0, 0, 160, 160).data;
+    for (let i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1) { diff++; break; }
+  }
+  lines.push(`idle_down sem escala contra o 2D: ${diff ? `${diff} quadro(s) diferente(s)` : 'iguais nos 8 quadros'}; avisos do 2D: ${m2s.errors.length}`);
+  // com a escala do corpo, a profundidade estica junto (a cauda, 22 px atrás, sobe um pouco de frente)
+  const m2 = W.lang.parse(flatOf(furao), { file: 'furao2d.weasel' });
+  let most = 0, who = '';
+  for (let f = 0; f < 8; f++) {
+    const a = W.scene.makePose(m3, 'idle_down', f).bones, b = W.scene.makePose(m2, 'idle', f).bones;
+    for (const [n, bn] of m2.bones) {
+      const p = W.geom.M.apply(a.get(n), bn.pivot[0], bn.pivot[1]), q = W.geom.M.apply(b.get(n), bn.pivot[0], bn.pivot[1]), d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (d > most + 1e-9) { most = d; who = `${n}, quadro ${f}`; }
+    }
+  }
+  lines.push(`idle_down com escala contra o 2D: no máximo ${most.toFixed(2)} px (${who})`);
+  // o Godot: o que sai espelhado
+  const two = load(path.join(CASES, 'vistas.weasel'));
+  const flips = (m) => W.godot.playerAnims(m, true).filter((p) => p.flip).map((p) => p.name);
+  lines.push(`Godot com os dois lados: ${W.godot.playerAnims(two, true).map((p) => p.name).filter((n) => !n.startsWith('para_')).join(' ')} · espelhadas: ${flips(two).join(' ') || 'nenhuma'}`);
+  lines.push(`Godot só com o direito: espelhadas ${flips(m3).join(' ') || 'nenhuma'}`);
+  // o sway= e a animação escrita à mão
+  const src = (sway) => [
+    'canvas 120 120', 'godot root=60,100', 'bone corpo pivot=60,100', `bone mao parent=corpo pivot=80,80${sway ? ' sway=10,1' : ''}`,
+    'layer frente view=down', 'ellipse tronco 60,80 14,20 bone=corpo', 'ellipse maoF 80,80 5 bone=mao',
+    'layer lado view=right', 'ellipse troncoL 60,80 10,20 bone=corpo', 'ellipse maoL 66,80 5 bone=mao',
+    'layer costas view=up', 'ellipse troncoC 60,80 14,20 bone=corpo', 'ellipse maoC 40,80 5 bone=mao',
+    'box golpe hit rect 76,76 8,8 bone=mao only=walk', 'point mira 84,80 bone=mao',
+    'anim walk frames=4 fps=8', 'key 0 mao=0,0 mao.z=8', 'key 2 mao=0,-4 mao.z=-8', 'key 4 mao=0,0 mao.z=8',
+    'anim walk_up frames=4 fps=8', 'key 0 mao=0,0,0', 'key 2 mao=0,0,40', 'key 4 mao=0,0,0',
+  ].join('\n');
+  const hand = (m) => {
+    const out = [];
+    for (const n of ['walk_down', 'walk_right', 'walk_up']) for (let f = 0; f < 4; f++) {
+      const P = W.scene.makePose(m, n, f), a = m.animMap.get(n), b = m.bones.get('mao'), o = a.voff ? a.voff.get('mao') : [0, 0];
+      out.push(W.geom.M.apply(P.bones.get('mao'), b.pivot[0] + o[0], b.pivot[1] + o[1]).map((x) => (Math.round(x * 100) / 100).toString()).join(','));
+    }
+    return out;
+  };
+  const ms = W.lang.parse(src(true), { file: 's.weasel' }), mn = W.lang.parse(src(false), { file: 's.weasel' });
+  const hs = hand(ms), hn = hand(mn);
+  lines.push(`a mão (walk_down, walk_right, walk_up): ${hs.join(' ')}`);
+  lines.push(`com sway= e sem: ${hs.every((x, i) => x === hn[i]) ? 'no mesmo lugar' : 'DIFERENTE'}`);
+  const box = (n, f) => { const q = W.scene.boxState(ms, W.scene.makePose(ms, n, f), ms.boxes.get('golpe')); return `${q.on ? 'ligada' : 'desligada'} em ${Math.round(q.cx)},${Math.round(q.cy)}`; };
+  const pt = (n, f) => { const q = W.scene.pointState(ms, W.scene.makePose(ms, n, f), ms.points.get('mira')); return `${Math.round(q.x)},${Math.round(q.y)}`; };
+  lines.push(`caixa golpe (only=walk): walk_down#2 ${box('walk_down', 2)} · walk_right#2 ${box('walk_right', 2)} · walk_up#2 ${box('walk_up', 2)}`);
+  lines.push(`ponto mira: walk_down#2 ${pt('walk_down', 2)} · walk_right#2 ${pt('walk_right', 2)} · walk_up#2 ${pt('walk_up', 2)}`);
+  lines.push(`a ordem em walk_down: ${[0, 1, 2, 3].map((f) => { const L = ms.layerMap.get('frente'); return W.scene.orderItems(L.items, W.scene.makePose(ms, 'walk_down', f)).map((it) => it.el.name).join('<'); }).join(' · ')}`);
+  lines.push(`avisos: ${ms.errors.map((e) => `[l${e.line + 1}] ${e.msg}`).join(' | ') || '—'}`);
+  await check('_vistas', 'vistas.txt', 'text', lines.join('\n') + '\n');
+}
+
 // Testar giro do editor: scene.spinPose() gira ossos na pose parada, só na tela (test/casos/pinos.weasel, com um ik
 // de pé no chão e um de braço com alvo). Sem giro, é a pose parada; girando o corpo, o pé fica no chão e o braço vai
 // atrás do alvo (girando para cima, o quadril sobe além do alcance e o pé sai do chão); na raiz e no meio de um ik, a
@@ -1106,7 +1175,15 @@ async function warnCase() {
   const C = 'canvas 200 120 bg=#406080\n', F = 'film fps=12 dur=2s\n';
   const base = 'palette pele=#f0c090 line=#000000\nambient c=#ffffff power=0.6\nlight l point 30,30 power=2\n';
   const inc = { 'base.weasel': 'finish game\nlet r=10\nambient c=#ff0000 power=0.2\npalette pele=#f0c090\n' };
+  const V3 = 'canvas 120 120\ngodot root=60,100\nbone corpo pivot=60,100\nbone mao parent=corpo pivot=80,80\n';
   const cases = [
+    ['osso.z sem vistas', C + 'bone b pivot=50,50\nanim a frames=2\nkey 0 b.z=4'],
+    ['views sem view=', C + 'views tilt=20\nellipse e 50,50 5'],
+    ['view= com only=, angle= fora da diagonal e vista desconhecida', V3 + 'layer f view=down only=a\nellipse t 60,80 14,20 bone=corpo\nlayer c view=up angle=30\nellipse tc 60,80 14,20 bone=corpo\nlayer x view=frente\nellipse tx 60,80 4\nanim a frames=2'],
+    ['vistas: costas trocadas, alturas e pé afundando', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,95 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nellipse mc 78,80 5 bone=mao\nanim a frames=2\nkey 1 corpo=0,4'],
+    ['vistas: sem a principal', 'canvas 120 120\nbone corpo pivot=60,100\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,20'],
+    ['vistas: o giro e o ik', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nbone dedo parent=mao pivot=88,80\nbone unha parent=dedo pivot=94,80\nbone alvo pivot=92,70\nik dedo bones=mao,dedo,unha target=alvo\nanim a frames=2\nkey 1 mao=0,0,20'],
+    ['vistas: dois lados com uma diagonal só, walk_left sem vista e rig=bones', 'canvas 120 120\ngodot root=60,100 rig=bones\nbone corpo pivot=60,100\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nlayer r view=right\nellipse tr 62,80 10,20 bone=corpo\nlayer l view=left\nellipse tl 58,80 10,20 bone=corpo\nlayer d view=down_right\nellipse td 61,80 12,20 bone=corpo\nanim a frames=2\nanim b_up frames=2'],
     ['cut no stroke', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 cut=furo : 10,10 90,90', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 : 10,10 90,90'],
     ['bold na ellipse', C + 'ellipse e 50,50 10 bold', C + 'ellipse e 50,50 10'],
     ['cloth no text', C + 'bone b pivot=50,50\ncloth pano pivot=50,50 bone=b\ntext t 50,50 "oi" cloth=pano', C + 'bone b pivot=50,50\ncloth pano pivot=50,50 bone=b\ntext t 50,50 "oi"'],
@@ -1305,6 +1382,7 @@ async function main() {
   if (!only.length || only.some((o) => '_virada'.includes(o))) await turnCase();
   if (!only.length || only.some((o) => '_metamorfose'.includes(o))) await morphCase();
   if (!only.length || only.some((o) => '_giro'.includes(o))) await spinCase();
+  if (!only.length || only.some((o) => '_vistas'.includes(o))) await viewsCase();
   if (!only.length || only.some((o) => '_velocidade'.includes(o))) await speedCase();
   if (!only.length || only.some((o) => '_conferencia'.includes(o))) await contactCase();
   if (!only.length || only.some((o) => '_simplificar'.includes(o))) await simplifyCase();

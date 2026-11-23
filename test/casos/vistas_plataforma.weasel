@@ -1,0 +1,92 @@
+# Caso de teste das três vistas (etapa 1a de docs/planos/tres-vistas.md): o herói num jogo de plataforma,
+# com os dois lados desenhados e sem frente. A vista principal é a direita (a do pose e dos pivot=); lat= diz o
+# x que cada osso teria de frente. tilt=0: a câmera de lado não inclina.
+canvas 160 160 bg=#eef0e6
+palette ink=#2a1d16 line=3 thin=1.5
+palette pele=#f2c9a0 tunica=#2f7f8f tunicad=#24626e cabelo=#6b4a2e cabelod=#553a22 couro=#8a5a32 faixa=#c8433a
+palette bota=#5b3a22 calca=#efe6d0 calcad=#cfc4aa metal=#d9dee6 cabo=#7a5232 ouro=#e0b84a madeira=#a8763f madeirad=#86592c olho=#1a1414
+
+godot body=character root=80,146
+views tilt=0
+
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,146 140,146
+
+# ---------- ossos (no lado direito: x para a frente; lat= diz quem fica perto no lado direito) ----------
+bone corpo pivot=80,116
+bone cabeca parent=corpo pivot=80,86
+bone pernaD pivot=80,116 lat=73
+bone pernaE pivot=80,116 lat=87
+bone bracoD parent=corpo pivot=80,92 lat=66
+bone espada parent=bracoD pivot=81,112 lat=66
+bone bracoE parent=corpo pivot=80,92 lat=94
+bone escudo parent=bracoE pivot=80,111 lat=94
+
+# ---------- de lado (virado para a direita: o braço da espada fica perto) ----------
+layer lado view=right
+ellipse mangaEl 80,101 6,10 c=tunicad ink=line bone=bracoE
+ellipse escudoL 93,113 3.5,12 c=madeira ink=line bone=escudo
+rect calcaEl 75,114 10,24 c=calcad ink=thin bone=pernaE
+rect botaEl 74,134 15,12 r=3 c=bota ink=thin bone=pernaE
+rect calcaDl 75,114 10,24 c=calca ink=thin bone=pernaD
+rect botaDl 74,134 15,12 r=3 c=bota ink=thin bone=pernaD
+shape tunicaL c=tunica ink=line bone=corpo : 72,88! 88,88! 91,106 96,124! 64,124! 68,106
+rect cintoL 67,105 26,5 c=couro bone=corpo
+shape pontasL c=faixa ink=thin bone=cabeca : 64,52 46,60 48,66 64,58
+ellipse rostoL 82,65 20,20 c=pele ink=line bone=cabeca
+ellipse narizL 101,69 3 c=pele ink=thin bone=cabeca
+shape cabeloL c=cabelo ink=line bone=cabeca : 62,66 63,50 72,43 84,42 96,47 100,55 90,52 80,53 74,58 70,72
+stroke faixaL w=5 c=faixa bone=cabeca : 63,55 82,50 99,55
+ellipse orelhaL 75,66 4,6 c=pele ink=thin bone=cabeca
+ellipse olhoL 93,67 2.5,4 c=olho bone=cabeca
+shape laminaL c=metal ink=thin bone=espada : 79,116! 82,115! 89,139! 86,141!
+rect guardaL 75,112 11,3 r=1 c=cabo ink=thin bone=espada
+ellipse mangaDl 80,101 6,10 c=tunicad ink=line bone=bracoD
+ellipse maoDl 81,112 4.5 c=pele ink=thin bone=bracoD
+
+# ---------- do outro lado (virado para a esquerda: o escudo fica perto) ----------
+layer esquerda view=left
+shape laminaLe c=metal ink=thin bone=espada : 81,116! 78,115! 71,139! 74,141!
+ellipse mangaDle 80,101 6,10 c=tunicad ink=line bone=bracoD
+rect calcaDle 75,114 10,24 c=calcad ink=thin bone=pernaD
+rect botaDle 71,134 15,12 r=3 c=bota ink=thin bone=pernaD
+rect calcaEle 75,114 10,24 c=calca ink=thin bone=pernaE
+rect botaEle 71,134 15,12 r=3 c=bota ink=thin bone=pernaE
+shape tunicaLe c=tunica ink=line bone=corpo : 72,88! 88,88! 92,106 96,124! 64,124! 69,106
+rect cintoLe 67,105 26,5 c=couro bone=corpo
+shape pontasLe c=faixa ink=thin bone=cabeca : 96,52 114,60 112,66 96,58
+ellipse rostoLe 78,65 20,20 c=pele ink=line bone=cabeca
+ellipse narizLe 59,69 3 c=pele ink=thin bone=cabeca
+shape cabeloLe c=cabelo ink=line bone=cabeca : 98,66 97,50 88,43 76,42 64,47 60,55 70,52 80,53 86,58 90,72
+stroke faixaLe w=5 c=faixa bone=cabeca : 97,55 78,50 61,55
+ellipse orelhaLe 85,66 4,6 c=pele ink=thin bone=cabeca
+ellipse olhoLe 67,67 2.5,4 c=olho bone=cabeca
+ellipse mangaEle 80,101 6,10 c=tunicad ink=line bone=bracoE
+ellipse maoEle 80,111 4.5 c=pele ink=thin bone=bracoE
+ellipse escudoLe 69,113 6,12 c=madeira ink=line bone=escudo
+ellipse bossaLe 68,113 2.2,3.5 c=metal ink=thin bone=escudo
+
+# ---------- animações (escritas no lado direito) ----------
+anim idle frames=8 fps=8
+key 0 corpo=0,0,0,1,1
+key 4 corpo=0,1.5,0,1.03,0.97
+key 8 corpo=0,0,0,1,1
+
+anim walk frames=8 fps=12
+key 0 corpo=0,2 pernaD=5,0 pernaE=-5,0 bracoD=-3,0 bracoE=3,0
+key 2 corpo=0,-1 pernaD=0,0 pernaE=0,-4 bracoD=0,0 bracoE=0,0
+key 4 corpo=0,2 pernaD=-5,0 pernaE=5,0 bracoD=3,0 bracoE=-3,0
+key 6 corpo=0,-1 pernaD=0,-4 pernaE=0,0 bracoD=0,0 bracoE=0,0
+key 8 corpo=0,2 pernaD=5,0 pernaE=-5,0 bracoD=-3,0 bracoE=3,0
+event 0 passo
+event 4 passo
+
+# pulo: agacha, sobe, no ar com as pernas dobradas, cai
+anim jump frames=8 fps=12 once
+key 0 corpo=0,0 pernaD=0,0,0 pernaE=0,0,0
+key 1 corpo=0,6,0,1.04,0.94 pernaD=0,0,0 pernaE=0,0,0 bracoD=0,0,0 bracoE=0,0,0
+key 2 corpo=0,-18 pernaD=0,-20,0 pernaE=0,-20,0 bracoD=0,-18,0 bracoE=0,-18,0 ease=out
+key 4 corpo=0,-30 pernaD=0,-32,0 pernaE=0,-30,0 bracoD=0,-30,0 bracoE=0,-30,0
+key 6 corpo=0,-10 pernaD=0,-12,0 pernaE=0,-10,0 bracoD=0,-10,0 bracoE=0,-10,0 ease=in
+key 7 corpo=0,5,0,1.04,0.95 pernaD=0,0,0 pernaE=0,0,0 bracoD=0,0,0 bracoE=0,0,0
+key 8 corpo=0,0 pernaD=0,0,0 pernaE=0,0,0 bracoD=0,0,0 bracoE=0,0,0

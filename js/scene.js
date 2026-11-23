@@ -12,6 +12,23 @@
   const segment = G.segment;
   // only= de camadas e caixas: a animação pelo nome, ou pelos nomes das que ela junta (mix=)
   const animIn = (list, anim) => list.includes(anim.name) || !!(anim.aliases && anim.aliases.some((n) => list.includes(n)));
+  // três vistas (js/views.js): numa animação de outra vista, anim.voff diz o quanto o lugar de cada osso nessa vista
+  // está longe do pivot= (desenhado na vista principal). O giro que o Weasel soma por cima das keys (sway=, mola,
+  // turn) gira em volta desse lugar: dx,dy compensa a diferença.
+  function viewPivot(anim, b, v, rot0) {
+    const o = anim.voff && anim.voff.get(b.name);
+    if (!o || v[2] === rot0) return;
+    const a0 = (rot0 * Math.PI) / 180, a1 = (v[2] * Math.PI) / 180, sx = v[3] * o[0], sy = v[4] * o[1];
+    const dc = Math.cos(a0) - Math.cos(a1), ds = Math.sin(a0) - Math.sin(a1);
+    v[0] += dc * sx - ds * sy;
+    v[1] += ds * sx + dc * sy;
+  }
+  // a matriz de um osso para uma caixa, um ponto ou uma forma de camada sem view= (desenhados na vista principal):
+  // numa animação de outra vista, a peça vai antes para o lugar do osso nessa vista
+  function viewShift(pose, bone, m) {
+    const a = pose.src ? pose.src.anim : pose.anim, o = m && a && a.voff && a.voff.get(bone);
+    return o ? M.mul(m, M.translate(o[0], o[1])) : m;
+  }
 
   // Ponto do caminho (path=) na fração t do comprimento (0 = começo, 1 = fim), com a direção dele em graus.
   // Num caminho fechado, t dá voltas (1.5 = uma volta e meia).
@@ -46,6 +63,7 @@
     if (!anim) return time === undefined ? REST : freeValues(b, time);
     const s = segment(anim.tracks.get(b.name), f, anim.frames, anim.loop);
     const v = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : REST.slice();
+    const rot0 = v[2];
     const dur = anim.frames / anim.fps, t = f / anim.fps;
     // ondas: o período é ajustado para caber um número inteiro de vezes na animação (o loop fecha)
     const wave = (w) => {
@@ -66,6 +84,7 @@
       }
     }
     if (springs && springs.has(b.name)) v[2] += springs.get(b.name)[f];
+    if (anim.voff) viewPivot(anim, b, v, rot0);
     return v;
   }
   // Sem animação mas com relógio (filme): balanço, sobe-e-desce e tremor continuam, sem precisar fechar loop.
@@ -233,7 +252,7 @@
     for (const b of model.bones.values()) {
       const v = boneValues(anim, b, f, null);
       const sp = d.springs.get(b.name);
-      if (sp) { const i = Math.floor(f), t = f - i; v[2] += sp[at(i)] + (sp[at(i + 1)] - sp[at(i)]) * t; }
+      if (sp) { const i = Math.floor(f), t = f - i, r0 = v[2]; v[2] += sp[at(i)] + (sp[at(i + 1)] - sp[at(i)]) * t; if (anim.voff) viewPivot(anim, b, v, r0); }
       out.set(b.name, v);
     }
     return out;
@@ -532,7 +551,7 @@
     let on = bp.show !== undefined ? bp.show !== 0 : b.on;
     if (b.only && !(srcAnim(pose) ? animIn(b.only, srcAnim(pose)) : b.only.includes('pose'))) on = false;
     const cx = b.shape === 'rect' ? b.x + b.w / 2 : b.x, cy = b.shape === 'rect' ? b.y + b.h / 2 : b.y;
-    const m = b.bone ? pose.bones.get(b.bone) : null;
+    const m = b.bone ? viewShift(pose, b.bone, pose.bones.get(b.bone)) : null;
     const c = m ? M.apply(m, cx, cy) : [cx, cy];
     const rot = m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0;
     return { box: b, on, cx: c[0], cy: c[1], rot, shape: b.shape, w: b.w, h: b.h, r: b.r, kind: b.kind };
@@ -540,7 +559,7 @@
 
   // Ponto de encaixe (point) nesta pose: segue a posição e a rotação do osso (graus).
   function pointState(model, pose, p) {
-    const m = p.bone ? pose.bones.get(p.bone) : null;
+    const m = p.bone ? viewShift(pose, p.bone, pose.bones.get(p.bone)) : null;
     const c = m ? M.apply(m, p.x, p.y) : [p.x, p.y];
     return { point: p, x: c[0], y: c[1], rot: m ? (Math.atan2(m[1], m[0]) * 180) / Math.PI : 0 };
   }
@@ -815,7 +834,8 @@
       const sk = skinMap(model, pose, el), xf = el.xf;
       return xf ? (x, y) => { const q = M.apply(xf, x, y); return sk(q[0], q[1]); } : sk;
     }
-    const m = el.bone ? pose.bones.get(el.bone) : null;
+    let m = el.bone ? pose.bones.get(el.bone) : null;
+    if (el.vsh) m = viewShift(pose, el.bone, m);
     const c = el.cloth ? model.cloths.get(el.cloth) : null;
     const o = c ? pose.cloth.get(el.cloth) : null;
     const xf = el.xf;
@@ -961,7 +981,8 @@
   function textMatrix(pose, el) {
     let m = M.mul(M.translate(el.at[0], el.at[1]), M.rotate(el.rot));
     if (el.xf) m = M.mul(el.xf, m);
-    const b = el.bone ? pose.bones.get(el.bone) : null;
+    let b = el.bone ? pose.bones.get(el.bone) : null;
+    if (el.vsh) b = viewShift(pose, el.bone, b);
     return b ? M.mul(b, m) : m;
   }
 
@@ -2548,9 +2569,19 @@
   }
 
   // ---------- ordem de pintura ----------
+  // três vistas: a ordem das peças de uma vista em cada quadro (anim.zorder, calculada em js/views.js); as key
+  // above=/below= vêm depois e ganham dela
+  function viewOrder(items, pose) {
+    const a = srcAnim(pose), zo = a && a.zorder;
+    if (!zo || !items.length) return items;
+    const z = zo[Math.max(0, Math.min(zo.length - 1, Math.floor(srcFrame(pose) + 1e-6)))];
+    if (!z || !z.has(items[0].el.id)) return items;
+    return items.map((it, i) => ({ it, i, r: z.has(it.el.id) ? z.get(it.el.id) : i })).sort((p, q) => p.r - q.r || p.i - q.i).map((o) => o.it);
+  }
   // key forma.above=outra / below=outra: a forma é pintada logo depois (ou antes) da outra, na mesma camada.
   // Sem nenhuma mudança, devolve a própria lista (a ordem do arquivo).
   function orderItems(items, pose) {
+    items = viewOrder(items, pose);
     const pm = pose.props;
     if (!pm || !pm.size) return items;
     let moved = null;
@@ -3711,7 +3742,7 @@
   function handlePos(model, pose, rec, h) {
     if (rec.el && (h.kind === 'pt' || h.kind === 'tan') && rec.el.pins && rec.el.pins[h.idx]) return pointMap(model, pose, rec.el, h.idx)(h.x, h.y);
     if (rec.el && ELEMENT_HANDLES.has(h.kind)) return fullMap(model, pose, rec.el)(h.x, h.y);
-    if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? pose.bones.get(h.bone) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
+    if (h.kind === 'box' || h.kind === 'point') { const m = h.bone ? viewShift(pose, h.bone, pose.bones.get(h.bone)) : null; return m ? M.apply(m, h.x, h.y) : [h.x, h.y]; }
     if (h.kind === 'light') {
       const Lt = model.lights.get(h.light), m = Lt && Lt.bone ? pose.bones.get(Lt.bone) : null;
       return m ? M.apply(m, h.x, h.y) : [h.x, h.y];
@@ -3730,7 +3761,7 @@
   W.scene = {
     makePose, spinPose, testPose, poseVals, alongOf, turnOf, timePose, blendPose, boneMatrices, boneLocal, matsFrom, ikVals, pinWeights, pointMap, drawRefs, refOn, refMatrix, exprPose, skinWeights, pathAt, animIn, boxState, pointState, pointPath, gait, gaitText, slipFrames, turnPlan, turnDraws, partName, morphPlan, drawMorph, feetPhase, phaseFrame, trajectories, drawTrajectory, orderItems, orderLayers, drawParts, geometry, drawScene, renderImage, buildPlan, buildState, buildFilter, drawTrace, drawPen, handlePos, ELEMENT_HANDLES,
     flatOf, pathOf, layerVisible, mapper, textBox, textMatrix, textFont, localBox, gradGeom, textGradGeom, clipEls, crossing, moldHoles, findNamed, limbPoints, fillBg,
-    el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, propsOf, isoOrigin, groupUnder, inGroup,
+    el3, info3, fullMap, textMat, proxy3, solidParts, sideColor, zSort, viewOrder, viewShift, propsOf, isoOrigin, groupUnder, inGroup,
     sceneLights, lightAt, lightWeight, litColor, layerFx, castShadows, castSources, particles, patternLines, segsBox, hasPost, postFx, hasScreen, screenNote, canFilter,
     filmFrame, plateBox, boxArea, placeCanvas,
   };

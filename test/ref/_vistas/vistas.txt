@@ -1,0 +1,10 @@
+idle_down sem escala contra o 2D: iguais nos 8 quadros; avisos do 2D: 0
+idle_down com escala contra o 2D: no máximo 0.30 px (cauda, quadro 4)
+Godot com os dois lados: idle_down idle_down_right idle_right idle_up idle_left walk_down walk_down_right walk_right walk_up walk_left · espelhadas: nenhuma
+Godot só com o direito: espelhadas idle_left walk_left
+a mão (walk_down, walk_right, walk_up): 80,84 80,78 80,72 80,78 74,80 66,78 58,76 66,78 40,80 40,80 40,80 40,80
+com sway= e sem: no mesmo lugar
+caixa golpe (only=walk): walk_down#2 ligada em 80,72 · walk_right#2 ligada em 58,76 · walk_up#2 ligada em 40,80
+ponto mira: walk_down#2 84,72 · walk_right#2 62,76 · walk_up#2 43,83
+a ordem em walk_down: tronco<maoF · tronco<maoF · maoF<tronco · tronco<maoF
+avisos: —

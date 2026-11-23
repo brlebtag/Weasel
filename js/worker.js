@@ -24,7 +24,7 @@ if (typeof CSS === 'undefined') {
   };
 }
 // a mesma lista do cli/runtime.js, com o ?v= da página (o js/export.js abre este arquivo com ele)
-importScripts(...['geom', 'lang', 'art', 'scene', 'film', 'audio', 'nle', 'normal', 'svg', 'gif', 'webp', 'mp4', 'zip', 'export', 'godot', 'rig'].map((f) => `${f}.js${self.location.search}`));
+importScripts(...['geom', 'lang', 'views', 'art', 'scene', 'film', 'audio', 'nle', 'normal', 'svg', 'gif', 'webp', 'mp4', 'zip', 'export', 'godot', 'rig'].map((f) => `${f}.js${self.location.search}`));
 
 // as miniaturas: uma por estilo, cada uma devolvida assim que fica pronta (um ImageBitmap, sem cópia). Entre uma e
 // outra, uma pausa para um pedido novo chegar: ele abandona este.

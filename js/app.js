@@ -1616,7 +1616,7 @@
     let s = `linha <b>${st.caret.line + 1}</b>`;
     if (rec) {
       const what = rec.el ? rec.el.type : rec.st.cmd;
-      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.point ? rec.point.name : rec.tile ? rec.tile.name : rec.audio ? rec.audio.name : rec.mouth ? rec.mouth.name : rec.use || rec.scene || '';
+      const name = rec.el ? rec.el.name : rec.layer ? rec.layer.name : rec.bone ? rec.bone.name : rec.cloth ? rec.cloth.name : rec.anim ? rec.viewBase || rec.anim.name : rec.def ? rec.def.name : rec.grad ? rec.grad.name : rec.light ? rec.light.name : rec.pat ? rec.pat.name : rec.actor ? rec.actor.name : rec.shot ? rec.shot.name : rec.box ? rec.box.name : rec.point ? rec.point.name : rec.tile ? rec.tile.name : rec.audio ? rec.audio.name : rec.mouth ? rec.mouth.name : rec.use || rec.scene || '';
       s += ` · ${what}${name ? ` <b>${esc(name)}</b>` : ''}`;
       if (rec.actor) s += ` · ${esc(rec.actor.file)}${rec.actor.model ? '' : ' <span style="color:var(--err)">(não carregou)</span>'}`;
       if (rec.shot) s += ` · ${Math.round(rec.shot.dur * 1000) / 1000}s${rec.shot.trans ? ` · entra com ${rec.shot.trans.type} (${Math.round(rec.shot.trans.dur * 1000) / 1000}s)` : ''}`;
@@ -1658,7 +1658,9 @@
     }
     // Cursor numa key ou event: mostra aquele quadro
     if (rec && (rec.st.cmd === 'key' || rec.st.cmd === 'event') && rec.anim && !st.playing && (st.anim !== rec.anim.name || st.frame !== rec.frame % rec.anim.frames)) {
-      st.anim = rec.anim.name;
+      // três vistas: numa key da animação base (walk), a vista que está no player (walk_right) fica
+      const cur = st.anim && st.model.animMap.get(st.anim);
+      if (!(rec.viewBase && cur && cur.viewOf === rec.viewBase)) st.anim = rec.anim.name;
       st.frame = rec.frame % rec.anim.frames;
       fillAnimSelect();
     }
@@ -2716,7 +2718,7 @@
   // arrastar a alça (o traço que sai dele) gira. O Weasel escreve o osso na key daquele quadro (ou cria a key).
   // as peças de uma transição (anim … from= to=) são geradas: não têm key para escrever
   // (o Prender só prende, e o Testar ossos não escreve: nos dois, arrastar um osso não escreve key)
-  const posing = () => !!(st.show.bones && !pinOn() && !testOn() && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim) && !st.model.animMap.get(st.anim).blendOf);
+  const posing = () => !!(st.show.bones && !pinOn() && !testOn() && !isFilm() && st.anim && !st.playing && !st.build && st.model && st.model.animMap.has(st.anim) && !st.model.animMap.get(st.anim).blendOf && !st.model.animMap.get(st.anim).viewOf);
   // para onde o osso aponta parado: o meio das formas presas a ele (ou dos ossos filhos); sem nada, para baixo
   function boneDir(m, b) {
     m._boneDir = m._boneDir || new Map();
@@ -3663,6 +3665,7 @@
     if (!testOn()) return;
     const m = st.model, an = st.anim ? m.animMap.get(st.anim) : null;
     if (an && an.blendOf) { hint(`A animação ${an.name} é feita pelo Weasel (from= e to=): escolha outra no player, ou nenhuma.`, 3200); return; }
+    if (an && an.viewOf) { hint(`A animação ${an.name} é gerada pelas vistas, a partir de anim ${an.viewOf}: escreva as key em ${an.viewOf} (osso=dx,dy e osso.z=), ou escolha nenhuma no player.`, 3600); return; }
     const base = testBase(), v0s = S.poseVals(m, base), parts = [];
     for (const [n, t] of st.bt.vals) {
       if (!testText(n)) continue;

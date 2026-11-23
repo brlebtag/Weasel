@@ -1,0 +1,31 @@
+canvas   160 × 160, fundo #eef0e6
+camadas  4
+  guia             2 item(ns)  guide
+  frente          22 item(ns)  view=down
+  costas          13 item(ns)  view=up
+  lado            17 item(ns)  view=right
+formas   54
+ossos    corpo, cabeca←corpo, peE, peD, bracoE←corpo, bracoD←corpo, cauda←corpo, espada←bracoD
+vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
+  profundidade corpo -2 (lado) · cabeca 4 (lado) · peE 10 (lado) · peD -8 (lado) · bracoE 14 (par de bracoD) · bracoD 14 (lado) · cauda -22 (side=) · espada 14 (side=)
+  grossura     corpo 48/52 · cabeca 59.3/51.8 · peE 16.9/18.8 · peD 16.9/16.9 · bracoE 14/14 · bracoD 14.1/14 · cauda 47.3/47.3 · espada 6/7.3  [de lado a lado / de frente para trás]
+  pé no chão   idle: 0 0 0 0 0 0 0 0
+  pé no chão   walk: 0 1.5 0 0 0 1.5 0 0
+  geradas      idle → idle_down, idle_right, idle_up
+  geradas      walk → walk_down, walk_right, walk_up
+animações 6
+  idle_down      8 quadros, 8 fps, gerada de idle
+  idle_right     8 quadros, 8 fps, gerada de idle
+  idle_up        8 quadros, 8 fps, gerada de idle
+  walk_down      8 quadros, 12 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  walk_right     8 quadros, 12 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  walk_up        8 quadros, 12 fps, gerada de walk
+                 eventos: passo@0, passo@4
+godot    character, raiz 80,128
+caixas   2
+  corpo_pes      body rect
+  dano           hurt rect
+pontos   1
+  susto          80,36 osso cabeca

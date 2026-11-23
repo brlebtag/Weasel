@@ -1,0 +1,125 @@
+# Furão em três vistas — personagem de jogo top-down, para o Godot
+# O furão é desenhado de frente (view=down), de costas (view=up) e de lado (view=right), cada vista na
+# sua camada. Cada animação é escrita uma vez só, sem direção no nome: o Weasel gera uma por vista
+# (idle_down, idle_right, idle_up…). Na cena do Godot, o lado esquerdo sai espelhado do direito, e o
+# ajudante tocar("walk", velocity) escolhe a vista pela direção.
+# Os ossos são desenhados na frente; a profundidade de cada um vem da vista de lado (a cabeça fica
+# 4 px para a frente, o pé esquerdo 10). osso.z= anda para a frente (positivo) ou para trás, e de
+# frente o que vai para a frente desce um pouco na tela (views tilt=30).
+# Veja as vistas, as profundidades e o pé no chão com:  weasel furao3d.weasel --info
+# Exporte com:  weasel furao3d.weasel -o godot/furao3d.tscn
+
+canvas 160 160 bg=#eef0e6 light=-0.6,-0.8
+palette ink=#2a1d16 line=4 thin=2
+palette pelo=#c98f5a pelod=#a8703f barriga=#f6e7cf mascara=#5b3a28 rosa=#e9a0a8
+palette olho=#1a1414 metal=#d9dee6 cabo=#7a5232
+
+# a raiz fica entre os pés: é a origem do nó no Godot e o meio das vistas
+godot body=character root=80,128
+
+# a câmera do jogo: 30 graus (o pé que vai 8 px para a frente desce 4 px na tela de frente)
+views tilt=30
+
+# Construção: o chão e o centro (só aparecem no editor)
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,128 140,128
+line meio c=#b9bba8 w=1 dash=4,4 : 80,20 80,140
+
+# ---------- ossos (um esqueleto só para as três vistas) ----------
+bone corpo pivot=80,128
+bone cabeca parent=corpo pivot=80,92
+bone peE pivot=68,126
+bone peD pivot=92,126
+# o braço esquerdo não aparece de lado: a profundidade vem do direito (o par espelhado)
+bone bracoE parent=corpo pivot=58,100
+bone bracoD parent=corpo pivot=102,100
+# side= diz o x do osso na vista de lado, quando a maior peça dele engana
+bone cauda parent=corpo pivot=80,118 side=58
+bone espada parent=bracoD pivot=104,108 side=94
+
+# ---------- frente (virado para baixo) ----------
+layer frente view=down
+ellipse peE 68,126 9,6 c=pelod ink=line bone=peE
+ellipse peD 92,126 9,6 c=pelod ink=line bone=peD
+ellipse corpo 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse barriga 80,111 14,13 c=barriga bone=corpo
+ellipse bracoE 57,106 7,9 c=pelod ink=line bone=bracoE
+ellipse orelhaE 58,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaD 102,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaEi 58,49 5 c=rosa bone=cabeca
+ellipse orelhaDi 102,49 5 c=rosa bone=cabeca
+ellipse cabeca 80,72 30,26 c=pelo ink=line bone=cabeca
+shape mascara c=mascara bone=cabeca : 54,70 64,62 80,67 96,62 106,70 96,77 80,73 64,77
+ellipse focinho 80,84 13,9 c=barriga bone=cabeca
+ellipse olhoE 68,69 4,5 c=olho bone=cabeca
+ellipse olhoD 92,69 4,5 c=olho bone=cabeca
+ellipse brilhoE 69,67 1.5 c=#ffffff bone=cabeca
+ellipse brilhoD 93,67 1.5 c=#ffffff bone=cabeca
+ellipse nariz 80,80 4,3 c=rosa ink=thin bone=cabeca
+stroke boca w=thin c=ink bone=cabeca : 75,86 80,89 85,86
+shape laminaF c=metal ink=thin bone=espada : 116.5,74.1! 121.9,76.6! 108.4,105.6! 103.0,103.1!
+shape guardaF c=cabo ink=thin bone=espada : 99.3,99.2! 113.8,105.9! 112.1,109.6! 97.6,102.8!
+shape punhoF c=cabo ink=thin bone=espada : 103.0,105.3! 106.7,107.0! 102.9,115.2! 99.2,113.5!
+ellipse bracoD 103,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- costas (virado para cima) ----------
+# de costas, a esquerda e a direita trocam de lado: o pé esquerdo (peE) fica em x=92
+layer costas view=up
+ellipse peEc 92,126 9,6 c=pelod ink=line bone=peE
+ellipse peDc 68,126 9,6 c=pelod ink=line bone=peD
+ellipse corpoC 80,106 24,22 c=pelo ink=line bone=corpo
+ellipse bracoEc 103,104 7,9 c=pelod ink=line bone=bracoE
+ellipse bracoDc 57,104 7,9 c=pelod ink=line bone=bracoD
+shape caudaC c=pelod ink=line bone=cauda : 80,116 92,124 110,120 124,104 126,92 120,92 114,106 98,114 84,110
+ellipse orelhaEc 58,48 10 c=pelod ink=line bone=cabeca
+ellipse orelhaDc 102,48 10 c=pelod ink=line bone=cabeca
+ellipse cabecaC 80,72 30,26 c=pelo ink=line bone=cabeca
+shape nuca c=pelod bone=cabeca : 70,52 80,49 90,52 86,76 80,80 74,76
+shape laminaC c=metal ink=thin bone=espada : 38.1,76.6! 43.5,74.1! 57.0,103.1! 51.6,105.6!
+shape guardaC c=cabo ink=thin bone=espada : 46.2,105.9! 60.7,99.2! 62.4,102.8! 47.9,109.6!
+shape punhoC c=cabo ink=thin bone=espada : 53.3,107.0! 57.0,105.3! 60.8,113.5! 57.1,115.2!
+
+# ---------- lado (virado para a direita; o esquerdo é espelhado) ----------
+# o x de cada peça aqui é a profundidade do osso: a cabeça em x=84 está 4 px na frente da raiz
+layer lado view=right
+shape caudaL c=pelod ink=line bone=cauda : 60,112 42,116 24,110 14,96 18,90 26,98 40,104 58,104
+ellipse peDl 72,126 9,6 c=pelod ink=line bone=peD
+ellipse corpoL 78,106 26,20 c=pelo ink=line bone=corpo
+ellipse barrigaL 88,112 12,9 c=barriga bone=corpo
+ellipse peEl 90,126 10,6 c=pelod ink=line bone=peE
+ellipse orelhaL 72,48 10 c=pelo ink=line bone=cabeca
+ellipse orelhaLi 72,49 5 c=rosa bone=cabeca
+ellipse focinhoL 106,78 14,10 c=barriga ink=line bone=cabeca
+ellipse cabecaL 84,70 26,24 c=pelo ink=line bone=cabeca
+shape mascaraL c=mascara bone=cabeca : 86,64 98,61 106,68 99,76 88,74
+ellipse olhoL 97,67 4,5 c=olho bone=cabeca
+ellipse brilhoL 98,65 1.5 c=#ffffff bone=cabeca
+ellipse narizL 119,76 4,3 c=rosa ink=thin bone=cabeca
+shape laminaL c=metal ink=thin bone=espada : 70.9,80.2! 75.8,76.8! 94.2,103.0! 89.2,106.4!
+shape guardaL c=cabo ink=thin bone=espada : 84.0,107.7! 97.1,98.5! 99.4,101.8! 86.3,111.0!
+shape punhoL c=cabo ink=thin bone=espada : 91.2,107.5! 94.5,105.2! 99.7,112.6! 96.4,114.9!
+ellipse bracoL 94,106 7,9 c=pelod ink=line bone=bracoD
+
+# ---------- o jogo: colisão, dano e um ponto em cima da cabeça ----------
+box corpo_pes body rect 66,116 28,14
+box dano hurt rect 54,42 52,90
+# o ponto segue a cabeça em cada vista (ali aparece o "!" de susto)
+point susto 80,36 bone=cabeca
+
+# ---------- animações: cada uma escrita uma vez ----------
+# respira: o corpo desce e achata um pouco (a cabeça e os braços vão junto)
+anim idle frames=8 fps=8
+key 0 corpo=0,0,0,1,1 cabeca=0,0
+key 4 corpo=0,1.5,0,1.03,0.97 cabeca=0,1
+key 8 corpo=0,0,0,1,1 cabeca=0,0
+
+# anda: o pé que vai para a frente (z positivo) sobe, e os braços vão ao contrário dos pés.
+# De frente, o pé da frente desce na tela; de lado, ele vai para a direita; de costas, sobe.
+anim walk frames=8 fps=12
+key 0 corpo=0,0 peE=0,-3 peE.z=8 peD=0,0 peD.z=-8 bracoD.z=5 bracoE.z=-5
+key 2 corpo=0,-2 peE=0,0 peE.z=0 peD=0,-4 peD.z=0 bracoD.z=0 bracoE.z=0
+key 4 corpo=0,0 peE=0,0 peE.z=-8 peD=0,-3 peD.z=8 bracoD.z=-5 bracoE.z=5
+key 6 corpo=0,-2 peE=0,-4 peE.z=0 peD=0,0 peD.z=0 bracoD.z=0 bracoE.z=0
+key 8 corpo=0,0 peE=0,-3 peE.z=8 peD=0,0 peD.z=-8 bracoD.z=5 bracoE.z=-5
+event 0 passo
+event 4 passo

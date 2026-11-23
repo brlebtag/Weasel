@@ -56,7 +56,8 @@
     const m = st.model, keys = [], events = [];
     let animLine = -1;
     for (const [line, rec] of m.byLine) {
-      if (!rec || !rec.anim || rec.anim.name !== an.name || !rec.st) continue;
+      // três vistas: as key de walk aparecem em walk_down, walk_right… (as animações geradas a partir dela)
+      if (!rec || !rec.anim || !rec.st || (rec.anim.name !== an.name && !(an.viewOf && rec.viewBase === an.viewOf))) continue;
       const cmd = rec.st.cmd;
       if (cmd === 'anim') animLine = line;
       else if (cmd === 'key') {
@@ -229,7 +230,8 @@
   // a key nova herda o ease do trecho onde caiu (parada, sem trecho: o smooth de sempre)
   const easeOf = (s) => (s.a === s.b ? 'smooth' : s.a.ease || 'smooth');
   function valueAt(D, row, f) {
-    const an = D.an;
+    // numa animação gerada pelas vistas, o valor é o da animação base (o que está escrito nas key)
+    const an = D.an.baseAnim || D.an;
     if (!row.includes('.')) {
       const s = G.segment(an.tracks.get(row), f, an.frames, an.loop);
       if (!s) return null;

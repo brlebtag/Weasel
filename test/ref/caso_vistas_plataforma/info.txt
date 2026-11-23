@@ -1,0 +1,26 @@
+canvas   160 × 160, fundo #eef0e6
+camadas  3
+  guia             1 item(ns)  guide
+  lado            19 item(ns)  view=right
+  esquerda        19 item(ns)  view=left
+formas   39
+ossos    corpo, cabeca←corpo, pernaD, pernaE, bracoD←corpo, espada←bracoD, bracoE←corpo, escudo←bracoE
+vistas   right, left (principal: right), câmera tilt=0 (o que vai para a frente desce 0 px por px)
+  profundidade corpo 0 (meio) · cabeca -8 (perto: desenhado na frente do corpo) · pernaD -7 (lat=) · pernaE 7 (lat=) · bracoD -14 (lat=) · espada -14 (lat=) · bracoE 14 (lat=) · escudo 14 (lat=)  [de lado a lado, pelo lat=]
+  grossura     corpo 23/23 · cabeca 39.9/39.9 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · espada 3.3/3.3 · bracoE 12/12 · escudo 21.4/21.4  [de lado a lado / de frente para trás]
+  pé no chão   idle: 0 0 0 0 0 0 0 0
+  pé no chão   walk: 0 0 0 0 0 0 0 0
+  pé no chão   jump: 0 0 20 27.5 30 20 10 0
+  geradas      idle → idle_right, idle_left
+  geradas      walk → walk_right, walk_left
+  geradas      jump → jump_right, jump_left
+animações 6
+  idle_right     8 quadros, 8 fps, gerada de idle
+  idle_left      8 quadros, 8 fps, gerada de idle
+  walk_right     8 quadros, 12 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  walk_left      8 quadros, 12 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  jump_right     8 quadros, 12 fps, once, gerada de jump
+  jump_left      8 quadros, 12 fps, once, gerada de jump
+godot    character, raiz 80,146

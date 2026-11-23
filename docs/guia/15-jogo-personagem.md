@@ -489,6 +489,8 @@ func _physics_process(_delta: float) -> void:
 
 **Experimente:** apague as duas linhas `anim` das diagonais. A bolinha passa a ter quatro direções, e na diagonal o `tocar()` escolhe a reta mais perto. `--no-mirror` na linha de comando exporta sem os lados espelhados.
 
+Com ossos, dá para escrever cada animação uma vez só: as vistas usam o mesmo esqueleto, e o Weasel gera a `walk_down`, a `walk_right` e a `walk_up` a partir da `walk` ([três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)).
+
 ## Andar sem escorregar: `feet=`
 
 ```

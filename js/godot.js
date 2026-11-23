@@ -38,8 +38,9 @@
     if (!mirror) return out;
     const have = new Set(out.map((p) => p.name));
     for (const a of model.anims) {
+      // com os dois lados desenhados (três vistas), nada sai espelhado: a espada trocaria de mão
       const d = dirOf(a.name), m = d && MIRROR[d];
-      if (!m) continue;
+      if (!m || a.noMirror || (model.views && model.views.noMirror)) continue;
       const other = a.name.slice(0, -d.length) + m;
       if (have.has(other)) continue;
       have.add(other);

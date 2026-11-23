@@ -11,6 +11,7 @@
     light: 'fx', ambient: 'fx',
     film: 'film', scene: 'film', shot: 'film', actor: 'film', camera: 'film', at: 'film', audio: 'film', sub: 'film', mark: 'film', mouth: 'rig',
     box: 'game', godot: 'game', tileset: 'game', tile: 'game', point: 'game',
+    views: 'rig',
   };
   const FILM_CMDS = new Set(['scene', 'shot', 'actor', 'camera', 'at', 'audio', 'sub', 'mark']);
   // bocas do lip sync (padrão do Rhubarb Lip Sync): A fechada … F biquinho, G F/V, H L, X descanso
@@ -27,8 +28,10 @@
     finish: ['inner', 'pixel', 'bloom', 'vignette', 'grain', 'posterize', 'oldfilm', 'vhs', 'crt', 'glitch'],
     art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'grout', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
-    layer: ['clip', 'cut', 'only', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round'],
+    layer: ['clip', 'cut', 'only', 'view', 'angle', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat'],
+    // três vistas (docs/planos/tres-vistas.md): tilt= é o ângulo da câmera do jogo, em graus
+    views: ['tilt'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
     ik: ['bones', 'foot', 'target', 'bend'],
     anim: ['frames', 'fps', 'mix', 'bones', 'feet', 'from', 'to', 'every', 'pairs', 'born'],
@@ -80,8 +83,9 @@
   const LIGHT_PROPS = { power: 'free', radius: 'free', c: 'color', glow: 'free', aim: 'free', cone: 'free' };
   // o que o "at" muda num filme (xy = par x,y; step = troca de uma vez, sem transição)
   const ACTOR_PROPS = { pos: 'xy', x: 'free', y: 'free', scale: 'scale', rot: 'free', opacity: 'num', depth: 'pos', speed: 'stepnum', anim: 'anim', flip: 'flip', show: 'step', variant: 'variant', along: 'free', expr: 'expr', morph: 'morph' };
-  // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1; osso.yaw / osso.pitch: o giro 3D
-  const BONE_PROPS = { along: 'free', yaw: 'free', pitch: 'free' };
+  // osso.along: quanto do caminho (path=) o osso já andou, de 0 a 1; osso.yaw / osso.pitch: o giro 3D;
+  // osso.z: num arquivo com vistas (layer … view=), o quanto o osso anda para a frente (positivo) ou para trás
+  const BONE_PROPS = { along: 'free', yaw: 'free', pitch: 'free', z: 'free' };
   // lens = zoom de verdade (aproxima tudo igual); fog = cor da névoa da distância; haze = profundidade com metade de névoa
   const CAMERA_PROPS = { pos: 'xy', x: 'free', y: 'free', zoom: 'pos', rot: 'free', shake: 'px', follow: 'actor', offset: 'xy', lag: 'stepnum', fade: 'num', fadec: 'color', lens: 'pos', fog: 'color', haze: 'pos' };
   // formas do próprio arquivo do filme (mapas, setas, títulos)
@@ -674,7 +678,7 @@
       elements: [], named: new Map(),
       defs: new Map(), variants: [], variant: null, vars: null, files: X.files,
       film: null,
-      boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null, has3d: false,
+      boxes: new Map(), points: new Map(), exprs: new Map(), refs: [], godot: null, tileset: null, mouth: null, has3d: false, viewsSpec: null, views: null,
       byLine: new Map(), lineMap: null,
       errors,
     };
@@ -1139,6 +1143,14 @@
           if (a.style !== 'none') m.art = a;
           break;
         }
+        case 'views': {
+          // views tilt=30: a câmera do jogo (o que vai para a frente desce sin(tilt) px na tela por px)
+          if (m.viewsSpec) { err(st.line, 'já existe uma linha views (vale a primeira)', st.cmdTok.from, st.cmdTok.to, 'warn'); break; }
+          m.viewsSpec = { tilt: A.has('tilt') ? number(st, A.get('tilt'), 30, 0, 80) : 30, line: st.line };
+          for (const f of st.pos) err(st.line, `opção desconhecida "${f.text}" (use views tilt=graus)`, f.from, f.to, 'warn');
+          info(st);
+          break;
+        }
         case 'unity': {
           const u = { unit: 100, root: [m.canvas.w / 2, m.canvas.h], collider: null };
           if (A.has('unit')) u.unit = number(st, A.get('unit'), 100, 1, 100000);
@@ -1171,7 +1183,7 @@
           // as formas antes do primeiro layer vão para uma camada "base" que o Weasel cria: um layer base escrito
           // depois delas fazia uma segunda camada com o mesmo nome
           if (name === 'base' && looseBefore) err(st.line, 'já existe a camada "base", a das formas antes do primeiro layer: ficariam duas com o mesmo nome (use outro nome, ou escreva o layer base antes das formas)', st.pos[0].from, st.pos[0].to, 'warn');
-          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false, yaw: 0, pitch: 0, persp: null, pivot: null, horizon: null, iso: null, floor: false, zsort: false };
+          const Ly = { name, line: st.line, items: [], guide: false, hidden: false, lit: false, unlit: false, clip: null, cut: null, only: null, opacity: 1, blend: 'source-over', fx: null, trail: null, cast: null, rim: null, shade: 0.5, depth: 1, screen: false, front: false, yaw: 0, pitch: 0, persp: null, pivot: null, horizon: null, iso: null, floor: false, zsort: false, view: null, angle: null };
           for (const f of st.pos.slice(1)) {
             if (FLAGS.layer.includes(f.text)) Ly[f.text] = true;
             else err(st.line, `opção desconhecida "${f.text}" (use ${FLAGS.layer.join(', ')})`, f.from, f.to, 'warn');
@@ -1181,6 +1193,21 @@
           if (A.has('clip')) Ly.clip = A.get('clip').text;
           if (A.has('cut')) Ly.cut = A.get('cut').text;
           if (A.has('only')) Ly.only = A.get('only').text.split(',').filter(Boolean);
+          // três vistas: view= diz de que vista a camada é (ela aparece nas animações dessa vista); angle= corrige o
+          // ângulo medido de uma diagonal (graus a partir da frente, ou das costas)
+          if (A.has('view')) {
+            const a = A.get('view');
+            if (!W.views.VIEWS.includes(a.text)) bad(st, a, `vista desconhecida "${a.text}" (use ${W.views.VIEWS.join(', ')})`);
+            else {
+              Ly.view = a.text;
+              if (Ly.only) { bad(st, A.get('only'), 'only= não vale junto com view=: a vista já diz em que animações a camada aparece (vale o view=)', 'warn'); Ly.only = null; }
+            }
+          }
+          if (A.has('angle')) {
+            const a = A.get('angle');
+            if (!Ly.view || !Ly.view.includes('_')) bad(st, a, 'angle= só vale numa diagonal (view=down_right, up_right, down_left ou up_left)', 'warn');
+            else Ly.angle = number(st, a, 45, 1, 89);
+          }
           if (A.has('opacity')) Ly.opacity = number(st, A.get('opacity'), 1, 0, 1);
           if (A.has('depth')) Ly.depth = number(st, A.get('depth'), 1, 0.05, 1000);
           // 2.5D: a camada inteira gira em 3D (yaw/pitch), deita como chão (floor + horizon=) ou vira mapa isométrico (iso)
@@ -1246,6 +1273,9 @@
             else if (v) b.round = { r: v[0], c: v.length === 3 ? [v[1], v[2]] : null };
           }
           if (b.yaw || b.pitch || b.round) m.has3d = true;
+          // três vistas: side= é o x do osso na vista de lado (a profundidade); lat=, num jogo de plataforma, o x que
+          // ele teria de frente
+          for (const k of ['side', 'lat']) if (A.has(k)) { b[k] = number(st, A.get(k), 0); b[k + 'At'] = A.get(k); }
           m.bones.set(name, b);
           break;
         }
@@ -1556,6 +1586,16 @@
     }
     // o contorno de luz da camada vem do lado de cada light; o ambient não tem lado
     if (!m.lights.size) for (const { st, Ly } of layerFx) if (Ly.rim) bad(st, st.attrs.get('rim'), 'rim= precisa de uma light: o contorno vem do lado da luz (o ambient não tem lado)', 'warn');
+
+    // três vistas: um arquivo com camadas view= gera as animações de cada vista (js/views.js)
+    const viewsOn = m.layers.some((L) => L.view);
+    // only= aceita as animações que as vistas vão gerar (walk_down sai de anim walk)
+    const knownAnim = (n) => {
+      if (n === 'pose' || m.animMap.has(n)) return true;
+      const d = viewsOn && W.views.dirOf(n);
+      return !!d && m.layers.some((L) => L.view === d) && m.animMap.has(n.slice(0, -d.length - 1));
+    };
+    if (viewsOn) for (const k of m.iks) err(k.line, 'ik num arquivo com vistas: as animações geradas ainda não resolvem o ik nas outras vistas (os ossos andam, e o ik gira em volta do pivô da vista principal)', k.st.cmdTok.from, k.st.cmdTok.to, 'warn');
 
     // ---- passo 2: desenhos, componentes, animações ----
     let cur = null, curAnim = null, base = null, instCount = 0;
@@ -2157,7 +2197,7 @@
       }
       if (Ly.only && st) {
         for (const n of Ly.only) {
-          if (n === 'pose' || m.animMap.has(n) || top.some((s) => s.cmd === 'shot' && s.pos[0] && s.pos[0].text === n)) continue;
+          if (knownAnim(n) || top.some((s) => s.cmd === 'shot' && s.pos[0] && s.pos[0].text === n)) continue;
           bad(st, st.attrs.get('only'), `animação "${n}" não existe`, 'warn');
         }
       }
@@ -2337,6 +2377,7 @@
         // rig=bones: a cena sai com esqueleto de verdade (Bone2D); rig=frames (padrão): quadros prontos
         if (A.has('rig')) { const a = A.get('rig'); if (a.text === 'bones' || a.text === 'frames') g.rig = a.text; else bad(st, a, 'rig= aceita frames (quadros prontos) ou bones (esqueleto de verdade)'); }
         if (g.rig === 'bones' && m.has3d) bad(st, A.get('rig'), 'o esqueleto do Godot não gira em 3D: yaw, pitch, z e iso ficam parados (use rig=frames)', 'warn');
+        if (g.rig === 'bones' && viewsOn) bad(st, A.get('rig'), 'com vistas (layer … view=), o rig=bones ainda não leva a ordem que troca em cada quadro: use rig=frames (o padrão)', 'warn');
         if (A.has('name')) {
           const a = A.get('name'), v = unq(a.text);
           if (/^[A-Za-z_]\w*$/.test(v)) g.name = v; else bad(st, a, 'name= precisa ser um nome simples (letras, números e _)');
@@ -2413,7 +2454,7 @@
       if (A.has('only')) {
         const a = A.get('only');
         b.only = a.text.split(',').filter(Boolean);
-        for (const n of b.only) if (n !== 'pose' && !m.animMap.has(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
+        for (const n of b.only) if (!knownAnim(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
       }
       rec.handles.push({ kind: 'box', box: name, bone: b.bone, x: b.x, y: b.y, from: vals[0].from, to: vals[0].to, fixed: vals[0].text.includes('{') });
       if (m.named.has(name)) err(st.line, `"${name}" também é o nome de uma forma; nas keys, vale a caixa`, st.pos[0].from, st.pos[0].to, 'warn');
@@ -2461,7 +2502,7 @@
       if (A.has('only')) {
         const a = A.get('only');
         r.only = a.text.split(',').filter(Boolean);
-        for (const n of r.only) if (n !== 'pose' && !m.animMap.has(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
+        for (const n of r.only) if (!knownAnim(n)) bad(st, a, `animação "${n}" não existe`, 'warn');
       }
       if (A.has('frames')) {
         const a = A.get('frames'), mm = /^(\d+)\.\.(\d+)$/.exec(a.text);
@@ -2526,7 +2567,9 @@
       const tgt = cands.find((c) => c.table[prop]);
       if (!tgt) { bad(st, a, `"${prop}" não anima aqui (${cands.map((c) => `${{ el: 'forma', light: 'luz', layer: 'camada', box: 'caixa', bone: 'osso' }[c.kind]}: ${Object.keys(c.table).join(', ')}`).join(' · ')})`); continue; }
       if (tgt.kind === 'bone' && prop === 'along' && !m.bones.get(name).pathAt) { bad(st, a, `o osso "${name}" não tem caminho: use bone ${name} … path=nome_de_uma_linha`); continue; }
-      if (prop === 'yaw' || prop === 'pitch' || prop === 'z') m.has3d = true;
+      if (tgt.kind === 'bone' && prop === 'z' && !viewsOn) { bad(st, a, `${a.key}= só vale num arquivo com vistas (layer … view=down): é o quanto o osso anda para a frente`, 'warn'); continue; }
+      // num arquivo com vistas, z, pitch e yaw do osso são do esqueleto em 3D (não giram as peças em 2.5D)
+      if ((prop === 'yaw' || prop === 'pitch' || prop === 'z') && !(viewsOn && tgt.kind === 'bone')) m.has3d = true;
       const els = tgt.kind === 'el' ? tgt.targets : null;
       const type = tgt.table[prop];
       let v;
@@ -2755,6 +2798,9 @@
       for (const tr of an.tracks.values()) tr.sort((p, q) => p.frame - q.frame);
       for (const tr of an.ptracks.values()) tr.keys.sort((p, q) => p.frame - q.frame);
     }
+    // três vistas: cada animação sem direção vira uma por vista (walk → walk_down, walk_right…)
+    if (viewsOn && !isFilm) W.views.build(m, { warn: (line, msg) => { const r = m.byLine.get(line), t = r && r.st && r.st.cmdTok; err(line, msg, t ? t.from : 0, t ? t.to : 0, 'warn'); } });
+    else if (m.viewsSpec) err(m.viewsSpec.line, 'views não muda nada sem camadas com view= (layer frente view=down)', 0, 0, 'warn');
     for (const an of m.anims) if (an.mixSpec) mixAnim(an);
     if (m.anims.some((an) => an.transSpec)) transAnims();
     for (const an of m.anims) {

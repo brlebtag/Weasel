@@ -313,7 +313,7 @@ function info(m, scale) {
   out.push(`camadas  ${m.layers.length}`);
   for (const L of m.layers) {
     const fx = L.fx ? Object.keys(L.fx).filter((k) => !['glowc', 'glows', 'tintc'].includes(k)) : [];
-    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.unlit && 'unlit', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.only && `only=${L.only.join(',')}`,
+    const flags = [L.guide && 'guide', L.hidden && 'hidden', L.unlit && 'unlit', L.clip && `clip=${L.clip}`, L.cut && `cut=${L.cut}`, L.view ? `view=${L.view}${L.angle ? ` angle=${L.angle}` : ''}` : L.only && `only=${L.only.join(',')}`,
       fx.length && `efeitos: ${fx.join(',')}`, L.trail && 'trail', L.cast && 'cast', L.rim && 'rim'].filter(Boolean).join(' ');
     out.push(`  ${L.name.padEnd(14)} ${String(L.items.length).padStart(3)} item(ns)${flags ? '  ' + flags : ''}`);
   }
@@ -327,11 +327,12 @@ function info(m, scale) {
     }).join(', ')}`);
   }
   if (m.cloths.size) out.push(`tecidos  ${[...m.cloths.keys()].join(', ')}`);
+  if (m.views) out.push(...viewsInfo(m.views));
   if (m.anims.length) {
     out.push(`animações ${m.anims.length}`);
     const turns = new Set();
     for (const a of m.anims) {
-      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, ${a.blendOf.turn ? 'virada' : 'transição'} ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
+      out.push(`  ${a.name.padEnd(14)} ${a.frames} quadros, ${a.fps} fps${a.loop ? '' : ', once'}${a.viewOf ? `, gerada de ${a.viewOf}` : ''}${a.ptracks.size ? `, anima ${[...a.ptracks.keys()].join(' ')}` : ''}${a.blendOf ? `, ${a.blendOf.turn ? 'virada' : 'transição'} ${a.trans}: de ${a.blendOf.from.name} (depois do quadro ${a.blendOf.start}) para ${a.blendOf.to.name}` : ''}`);
       // a virada: as partes que viram outras (de nome diferente), as que nascem e as que somem (uma vez por linha
       // anim … turn)
       const key = a.blendOf && a.blendOf.turn && `${a.trans}|${a.blendOf.from.name}|${a.blendOf.to.name}`;
@@ -371,6 +372,20 @@ function info(m, scale) {
     for (const t of T.tiles) out.push(`  ${t.name.padEnd(14)} ${t.col},${t.row}${t.collision ? ` colisão ${t.collision.name}` : t.solid ? ' sólido' : ''}${t.oneway ? ' só por cima' : ''}`);
   }
   console.log(out.join('\n'));
+}
+
+// três vistas (layer … view=): a câmera, a profundidade de cada osso e de onde ela veio, as diagonais, a grossura, o pé
+// no chão em cada quadro (px acima do chão; negativo é afundando), as animações geradas e onde a ordem troca
+function viewsInfo(V) {
+  const n = (v) => { const s = String(Math.round(v * 10) / 10); return s === '-0' ? '0' : s; }, pad = ''.padEnd(2);
+  const out = [`vistas   ${V.drawn.join(', ')} (principal: ${V.main}), câmera tilt=${V.tilt} (o que vai para a frente desce ${n(V.K)} px por px)`];
+  out.push(`${pad}profundidade ${[...V.depth].map(([b, d]) => `${b} ${n(d.z !== undefined ? d.z : d.lat - V.rootX)} (${d.from})`).join(' · ')}${V.main === 'right' ? '  [de lado a lado, pelo lat=]' : ''}`);
+  for (const [v, a] of Object.entries(V.angles)) out.push(`${pad}${v.padEnd(12)} ${n(a.deg)}° ${v.startsWith('down') ? 'da frente' : 'das costas'}, ${a.from === 'medido' ? `medido (${a.n} ossos, erro médio ${n(a.err)} px)` : a.from === 'angle=' ? 'pelo angle=' : 'o padrão (não deu para medir)'}`);
+  out.push(`${pad}grossura     ${[...V.thick].map(([b, t]) => `${b} ${n(2 * t[0])}/${n(2 * t[1])}`).join(' · ')}  [de lado a lado / de frente para trás]`);
+  for (const [a, g] of V.ground) out.push(`${pad}pé no chão   ${a}: ${g.map(n).join(' ')}`);
+  for (const g of V.gens) out.push(`${pad}geradas      ${g.base} → ${g.names.length ? g.names.join(', ') : 'nenhuma (todas escritas à mão)'}`);
+  for (const s of V.swaps) out.push(`${pad}ordem troca  ${s.anim}: em ${s.frames} de ${s.total} quadros (${s.pieces.join(', ')})`);
+  return out;
 }
 
 function formatFromOut(out) {

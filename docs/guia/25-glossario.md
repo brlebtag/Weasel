@@ -174,6 +174,8 @@ As palavras que o guia usa, em ordem alfabética. Cada uma tem **um sentido só*
 
 **Variante** (`variant`): uma versão do mesmo desenho com outras cores ou outras peças, como a armadura azul e a vermelha. Ver [`variant`](19-referencia.md#variant).
 
+**Vista** (`view=`): o desenho do personagem visto de um lado: de frente (`down`), de lado (`right`), de costas (`up`) ou numa diagonal. Cada vista fica numa camada, todas usam os mesmos ossos, e o Weasel gera as animações de cada vista a partir de uma só. A **vista principal** (a de frente; num jogo de plataforma, a de lado) é a dos `pivot=` e da pose parada. Ver [três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view).
+
 ## Números
 
 **2.5D:** dar profundidade a um desenho 2D: girar formas como cartões no espaço (`yaw=`, `pitch=`), pôr umas mais perto e outras mais longe (`z=`, `depth=`), um chão em perspectiva. Ver o [capítulo de profundidade](14-profundidade.md).
