@@ -50,7 +50,7 @@ Repare:
 - `hue=150` gira as cores no círculo das cores, em graus: o amarelo vira azul-claro. Com 180, cada cor vira a do lado oposto.
 - Uma camada pode ter vários efeitos juntos: a última tem `hue=` e `saturate=`.
 
-No editor, o menu **Efeito** e a parte **Camada** do painel **Propriedades** escrevem esses números por você ([capítulo 22](22-editor.md#efeitos-da-camada)).
+No editor, o menu **Efeito** e a parte **Camada** do painel **Propriedades** escrevem esses números por você ([capítulo 23](23-editor.md#efeitos-da-camada)).
 
 **Cuidado:**
 - As formas que vêm antes da primeira `layer` ficam na camada automática `base`, que não tem efeitos. Para pôr um efeito nelas, escreva uma linha `layer nome` antes.
@@ -618,7 +618,7 @@ Repare:
 | `bone=` | o emissor anda com o osso | o nome de um osso | parado |
 | `emit=cor,força` | as partículas brilham e ignoram a luz | como nas formas | — |
 
-A ficha completa está na [referência do `emitter`](19-referencia.md#emitter).
+A ficha completa está na [referência do `emitter`](20-referencia.md#emitter).
 
 ## Juntando tudo
 

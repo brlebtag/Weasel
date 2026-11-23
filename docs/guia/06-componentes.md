@@ -43,7 +43,7 @@ Linha por linha:
 
 **Experimente:** acrescente `use arvore 135,150` no fim. Uma quarta árvore aparece entre as duas primeiras, um pouco mais para trás. Ela fica por cima das outras, porque vem depois.
 
-> No editor, o painel **Símbolos** mostra cada componente do arquivo ([capítulo 22](22-editor.md#painel-símbolos)), e a **prévia** mostra um componente sozinho enquanto o cursor está nele ([capítulo 22](22-editor.md#prévia-do-componente)).
+> No editor, o painel **Símbolos** mostra cada componente do arquivo ([capítulo 23](23-editor.md#painel-símbolos)), e a **prévia** mostra um componente sozinho enquanto o cursor está nele ([capítulo 23](23-editor.md#prévia-do-componente)).
 
 ### Parâmetros: números e cores
 
@@ -315,7 +315,7 @@ use flor 290,95 cor=#4a9eff giro=25
 | `opacity=` | a transparência da cópia | de 0 a 1 | 1 |
 | `parâmetro=valor` (no `use`) | troca um parâmetro nesta cópia | como no `def`; aceita conta `{…}` | o padrão do `def` |
 
-O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](14-profundidade.md)). As fichas completas estão na referência: [`def`](19-referencia.md#def-e-end) e [`use`](19-referencia.md#use).
+O `use` tem mais opções, ensinadas em outros capítulos: `lock` ([capítulo 4](04-camadas.md#travar-no-editor-lock)), `bone=` e `cloth=` ([capítulo 8](08-ossos.md)), `z=` e `billboard` ([capítulo 14](14-profundidade.md)). As fichas completas estão na referência: [`def`](20-referencia.md#def-e-end) e [`use`](20-referencia.md#use).
 
 **Cuidado:**
 - Dentro de um `def` valem as formas, o `use`, o `repeat`, o `group`, o `mirror=` e o `include`. Uma `layer`, um `let`, uma `palette` ou outro `def` lá dentro dão erro: `layer não pode ficar dentro de def (lá dentro valem as formas, o use, o repeat, o group e o include)`.
@@ -394,7 +394,7 @@ ellipse solR mirror=sol@y180 opacity=0.35
 | `@x` ou `@xN` | o espelho é a linha em pé nesse `x` | um número ou uma conta (`@{cx}`) | sem `@`: a linha em pé no meio do canvas |
 | `@yN` | o espelho é a linha deitada nesse `y` | um número ou uma conta | — |
 
-A ficha completa está nas [opções de todas as formas](19-referencia.md#opções-de-todas-as-formas).
+A ficha completa está nas [opções de todas as formas](20-referencia.md#opções-de-todas-as-formas).
 
 **Cuidado:**
 - A forma original precisa ter nome e ser do mesmo comando. Um `ellipse` não espelha um `shape`: `um ellipse não pode espelhar um shape`.
@@ -447,7 +447,7 @@ Linha por linha:
 
 **Experimente:** em `pecas.weasel`, troque `telhado=#c4512b` por `telhado=#4a6fb5`. As três casinhas ficam com o telhado azul, e todo outro desenho que inclui `pecas.weasel` também muda.
 
-> No editor, o arquivo incluído precisa estar aberto numa aba ([capítulo 22](22-editor.md#vários-arquivos)).
+> No editor, o arquivo incluído precisa estar aberto numa aba ([capítulo 23](23-editor.md#vários-arquivos)).
 
 **Cuidado:**
 - O arquivo entra no lugar da linha. O que ele desenha fica por cima do que vem antes e por baixo do que vem depois.
@@ -455,7 +455,7 @@ Linha por linha:
 - Um erro no outro arquivo aparece na linha do `include`, com o nome e a linha de lá: `pecas.weasel:6: …`.
 - Escreva o nome com o `.weasel`: `include "pecas"` não acha o arquivo.
 - Um arquivo pode incluir outro, até 8 um dentro do outro. Um arquivo que inclui a si mesmo, direto ou por outro, dá erro: `include em ciclo`.
-- O exemplo [`noite.weasel`](../../exemplos/noite.weasel) põe o Cavaleiro de `cavaleiro.weasel` numa rua com chuva e uma lanterna, sem mudar nada no arquivo dele. Para pôr personagens de outros arquivos num **filme**, o caminho é outro: o `actor` ([capítulo 17](17-filme.md)).
+- O exemplo [`noite.weasel`](../../exemplos/noite.weasel) põe o Cavaleiro de `cavaleiro.weasel` numa rua com chuva e uma lanterna, sem mudar nada no arquivo dele. Para pôr personagens de outros arquivos num **filme**, o caminho é outro: o `actor` ([capítulo 18](18-filme.md)).
 
 ## Grupos: `group`
 
@@ -498,7 +498,7 @@ rect bracoB 240,140 20,60 c=#3a6ea5 ink=line
 - Um grupo pode ficar dentro de um `def`. Um `def` dentro de um grupo dá erro.
 - Uma opção como `opacity=` no `group` dá aviso e não faz nada. Para mudar várias formas de uma vez na imagem, use uma camada.
 
-> No editor, **Ctrl+G** escreve o `group` e o `end` em volta das formas escolhidas ([capítulo 22](22-editor.md#travar-e-agrupar)).
+> No editor, **Ctrl+G** escreve o `group` e o `end` em volta das formas escolhidas ([capítulo 23](23-editor.md#travar-e-agrupar)).
 
 ## Variantes: `variant`
 
@@ -531,11 +531,11 @@ variant noite ceu=#1b2140 grama=#2f5a3a parede=#a99a8a janela=#ffd56b
 
 - A linha `variant noite …` não muda nada sozinha. Ela diz: "na versão `noite`, troque estas cores da `palette`".
 - A variante só alcança o que usa o nome. Uma cor escrita direto, como `c=#c4512b`, não muda. Por isso, dê nome a toda cor que você talvez queira trocar.
-- Na linha de comando, `--variant noite` exporta essa versão, e `--variant all` exporta todas de uma vez, com o nome da variante no fim do arquivo (`casa_noite.png`) ([capítulo 21](21-linha-de-comando.md)).
+- Na linha de comando, `--variant noite` exporta essa versão, e `--variant all` exporta todas de uma vez, com o nome da variante no fim do arquivo (`casa_noite.png`) ([capítulo 22](22-linha-de-comando.md)).
 
 **Experimente:** acrescente `telhado=#4a4f6a` no fim da linha `variant`. Na versão `noite`, o telhado fica cinza-azulado; sem variante, ele continua vermelho.
 
-> No editor, o seletor de variante fica na barra da vista do desenho ([capítulo 22](22-editor.md#variantes)).
+> No editor, o seletor de variante fica na barra da vista do desenho ([capítulo 23](23-editor.md#variantes)).
 
 ### Trocar peças: `show=` e `hide=`
 
@@ -585,7 +585,7 @@ variant sem_elmo hide=elmo
 | `hide=` | esconde peças | nomes de formas ou de camadas, separados por vírgula | — |
 | `show=` | mostra peças que têm `hidden` | nomes de formas ou de camadas, separados por vírgula | — |
 
-A ficha completa está na [referência](19-referencia.md#variant).
+A ficha completa está na [referência](20-referencia.md#variant).
 
 **Cuidado:**
 - Um nome que não está na `palette` dá aviso e vira um nome novo: um erro de digitação (`variant noite cue=#000`) aparece no `--check`.

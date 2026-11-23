@@ -24,7 +24,7 @@ key quadro forma.propriedade=valor …
 | `shape` | o formato: a forma vira outra ([abaixo](#morph-uma-forma-vira-outra)) | aos poucos |
 | `above` e `below` | quem fica na frente ([abaixo](#trocar-quem-fica-na-frente-above-e-below)) | de uma vez |
 
-A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](11-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](10-luz.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](14-profundidade.md)). As tabelas completas estão na [referência da `key`](19-referencia.md#key-numa-forma).
+A `key` também muda camadas inteiras e os efeitos delas ([capítulo 11](11-efeitos.md#efeitos-de-camada)), as luzes ([capítulo 10](10-luz.md#luz-de-verdade)) e o giro 3D e a profundidade das formas (`yaw`, `pitch` e `z`, [capítulo 14](14-profundidade.md)). As tabelas completas estão na [referência da `key`](20-referencia.md#key-numa-forma).
 
 <!-- gerar: img/07_lampada.gif -a acende -->
 ```weasel
@@ -138,7 +138,7 @@ Repare:
 - As `key` de cada forma são independentes: o sol começa no quadro 6, enquanto o título ainda está sendo digitado.
 - A animação é `once` para o mapa ficar pronto no fim, em vez de se apagar ao voltar para o começo.
 - Na pose parada, tudo aparece inteiro.
-- Num filme, use `at` no lugar de `key`: `at 1s rota.draw=0` ([capítulo 17](17-filme.md#mudanças-no-tempo-at)).
+- Num filme, use `at` no lugar de `key`: `at 1s rota.draw=0` ([capítulo 18](18-filme.md#mudanças-no-tempo-at)).
 
 **Experimente:** troque os pontos do `caminho` pela ordem contrária (`318,124 252,150 176,186 104,150 48,198`). A rota passa a ser traçada a partir do X.
 
@@ -331,7 +331,7 @@ Repare:
 - As outras `key` do osso continuam valendo por cima: `carro=0,-10` levanta o carro 10 pixels acima da estrada.
 - Sem nenhuma `key` de `along`, o osso fica no pivô dele, fora do caminho. Um `along` num osso sem `path=` dá erro.
 - O caminho é a forma como ela está desenhada: se ela tiver osso, o carro não acompanha esse osso.
-- Num filme, um ator também anda por um caminho ([capítulo 18](18-filme-atuacao.md#andar-por-um-caminho-path)).
+- Num filme, um ator também anda por um caminho ([capítulo 19](19-filme-atuacao.md#andar-por-um-caminho-path)).
 
 **Experimente:** troque `key 36 carro.along=1` por `key 36 carro.along=0.5`. O carro para no meio da estrada e volta para o começo quando a animação recomeça.
 
@@ -535,7 +535,7 @@ ref pulo "rascunhos/pulo.png" 0,0 only=jump opacity=0.3
 
 ## Ver e exportar
 
-No editor, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro, e a linha do tempo mostra e muda as `key` ([capítulo 22](22-editor.md#player)). Na linha de comando:
+No editor, o player embaixo do desenho escolhe a animação, toca, pausa e anda quadro a quadro, e a linha do tempo mostra e muda as `key` ([capítulo 23](23-editor.md#player)). Na linha de comando:
 
 ```bash
 node cli/weasel.js pingo.weasel -a parado -o pingo.gif
@@ -556,7 +556,7 @@ O primeiro faz um GIF; o segundo, o PNG de um quadro (o mesmo número das `key`)
 - `-a "idle walk*3 jump"`: várias animações em seguida, na ordem; `*3` repete três vezes;
 - `--sticker` com `.webp`: uma figurinha do WhatsApp.
 
-Os detalhes estão no [capítulo 21](21-linha-de-comando.md#uma-animação). A cena do Godot está no [capítulo 15](15-jogo-personagem.md#do-weasel-para-o-godot), e a sprite sheet, no [capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity). Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info`.
+Os detalhes estão no [capítulo 22](22-linha-de-comando.md#uma-animação). A cena do Godot está no [capítulo 15](15-jogo-personagem.md#do-weasel-para-o-godot), e a sprite sheet, no [capítulo 16](16-jogo-avancado.md#para-outros-motores-sprite-sheet-e-unity). Para ver, sem desenhar nada, quais animações, ossos e eventos um arquivo tem, use `--info`.
 
 ## Juntando tudo
 

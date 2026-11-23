@@ -1,8 +1,8 @@
 # 16. Jogo: fases e recursos avançados
 
-[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](17-filme.md)
+[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Jogo: três vistas →](17-jogo-tres-vistas.md)
 
-Este capítulo continua o [capítulo 15](15-jogo-personagem.md). Ele mostra os blocos para montar as fases (`tileset`), as transições entre animações, a virada de lado para a frente, as três vistas com uma animação só, o esqueleto de verdade no Godot e a sprite sheet para outros motores de jogo, como a Unity. Cada parte vale sozinha: leia a que o seu jogo precisa.
+Este capítulo continua o [capítulo 15](15-jogo-personagem.md). Ele mostra os blocos para montar as fases (`tileset`), as transições entre animações, a virada de lado para a frente, o esqueleto de verdade no Godot e a sprite sheet para outros motores de jogo, como a Unity. Cada parte vale sozinha: leia a que o seu jogo precisa. As três vistas, com uma animação só para a frente, o lado e as costas, estão no [capítulo 17](17-jogo-tres-vistas.md).
 
 ## Tileset: blocos para montar fases
 
@@ -159,7 +159,7 @@ tile caixa 1,0 solid
 | `tile` | `oneway` | colide só por cima; sozinho, no bloco inteiro | palavra | desligado |
 | `tile` | `collision=` | colide no formato de uma forma | o nome de uma forma fechada | sem colisão |
 
-As fichas completas estão na referência: [`tileset`](19-referencia.md#tileset) e [`tile`](19-referencia.md#tile).
+As fichas completas estão na referência: [`tileset`](20-referencia.md#tileset) e [`tile`](20-referencia.md#tile).
 
 **Cuidado:**
 - Um arquivo tem um `tileset` só (o segundo é erro), e o `canvas` precisa caber pelo menos um bloco.
@@ -327,210 +327,11 @@ O `--info` mostra o que o Weasel decidiu:
 
 ### A virada no Godot
 
-As peças da virada são quadros como os outros, e o `trocar()` toca a virada de lado para a frente, e de trás para a frente na volta. Com esqueleto (`rig=bones`), os ossos do Godot não sabem trocar uma forma por outra: a virada sai quadro a quadro, numa imagem só, e a exportação avisa. No filme, um ator inteiro também pode virar outro, com as mesmas regras ([capítulo 18](18-filme-atuacao.md#um-ator-vira-outro-morph)).
+As peças da virada são quadros como os outros, e o `trocar()` toca a virada de lado para a frente, e de trás para a frente na volta. Com esqueleto (`rig=bones`), os ossos do Godot não sabem trocar uma forma por outra: a virada sai quadro a quadro, numa imagem só, e a exportação avisa. No filme, um ator inteiro também pode virar outro, com as mesmas regras ([capítulo 19](19-filme-atuacao.md#um-ator-vira-outro-morph)).
 
-## Três vistas, uma animação: `views` e `view=`
+## Três vistas, uma animação
 
-```
-layer nome view=vista [angle=graus]
-views [tilt=graus]
-bone nome pivot=x,y [tip=x,y[,z]] [turns]
-key quadro osso.z=pixels osso.pitch=graus osso.yaw=graus
-```
-
-Num jogo visto de cima, o personagem tem um desenho para cada lado: de frente, de lado e de costas. Com `only=`, cada vista tem as suas animações (`walk_down`, `walk_right`, `walk_up`), e cada uma é escrita à mão. Com as **vistas**, os três desenhos usam **um esqueleto só**, a animação é escrita **uma vez**, e o Weasel gera uma para cada vista.
-
-<!-- gerar: img/16_vistas.png --contact -a walk_down,walk_right,walk_up -->
-```weasel
-canvas 120 120 bg=none
-palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 escuro=#b07a3a
-
-godot root=60,110
-# a câmera do jogo: 30 graus
-views tilt=30
-
-# os ossos são desenhados na frente
-bone corpo pivot=60,110
-bone cabeca parent=corpo pivot=60,72
-bone peE pivot=50,106
-bone peD pivot=70,106
-bone bracoE parent=corpo pivot=42,82
-bone bracoD parent=corpo pivot=78,82
-
-# de frente (virado para baixo)
-layer frente view=down
-ellipse peE 50,106 8,5 c=escuro ink=2 bone=peE
-ellipse peD 70,106 8,5 c=escuro ink=2 bone=peD
-ellipse corpo 60,88 20,18 c=pelo ink=3 bone=corpo
-ellipse barriga 60,92 11,10 c=claro bone=corpo
-ellipse bracoE 42,88 5,8 c=escuro ink=2 bone=bracoE
-ellipse bracoD 78,88 5,8 c=escuro ink=2 bone=bracoD
-ellipse cabeca 60,56 17,15 c=pelo ink=3 bone=cabeca
-ellipse olhoE 54,53 3,3 c=ink bone=cabeca
-ellipse olhoD 66,53 3,3 c=ink bone=cabeca
-
-# de lado (virado para a direita): o x de cada peça é a profundidade do osso
-layer lado view=right
-ellipse bracoDl 60,88 5,8 c=escuro ink=2 bone=bracoD
-ellipse peDl 60,106 8,5 c=escuro ink=2 bone=peD
-ellipse corpoL 60,88 17,18 c=pelo ink=3 bone=corpo
-ellipse peEl 60,106 8,5 c=escuro ink=2 bone=peE
-ellipse cabecaL 64,56 15,15 c=pelo ink=3 bone=cabeca
-ellipse focinhoL 78,60 6,4 c=claro ink=2 bone=cabeca
-ellipse olhoL 70,52 3,3 c=ink bone=cabeca
-ellipse bracoEl 60,88 5,8 c=escuro ink=2 bone=bracoE
-
-# de costas (virado para cima): a esquerda e a direita trocam de lado
-layer costas view=up
-ellipse peEc 70,106 8,5 c=escuro ink=2 bone=peE
-ellipse peDc 50,106 8,5 c=escuro ink=2 bone=peD
-ellipse corpoC 60,88 20,18 c=pelo ink=3 bone=corpo
-ellipse bracoEc 78,88 5,8 c=escuro ink=2 bone=bracoE
-ellipse bracoDc 42,88 5,8 c=escuro ink=2 bone=bracoD
-ellipse cabecaC 60,56 17,15 c=pelo ink=3 bone=cabeca
-
-# anda: escrita uma vez só, sem direção no nome
-anim walk frames=8 fps=12
-key 0 corpo=0,0 peE=0,-3 peE.z=8 peD=0,0 peD.z=-8 bracoD.z=5 bracoE.z=-5
-key 2 corpo=0,-2 peE=0,0 peE.z=0 peD=0,-4 peD.z=0 bracoD.z=0 bracoE.z=0
-key 4 corpo=0,0 peE=0,0 peE.z=-8 peD=0,-3 peD.z=8 bracoD.z=-5 bracoE.z=5
-key 6 corpo=0,-2 peE=0,-4 peE.z=0 peD=0,0 peD.z=0 bracoD.z=0 bracoE.z=0
-key 8 corpo=0,0 peE=0,-3 peE.z=8 peD=0,0 peD.z=-8 bracoD.z=5 bracoE.z=-5
-```
-
-![Folha de conferência com três linhas: o bicho andando de frente, de lado e de costas; os pés e os braços vão para a frente e para trás, e o pé que vem para a frente passa por cima do outro](img/16_vistas.png)
-
-Repare:
-
-- **Cada vista é uma camada** com `view=`: `down` (de frente, virado para baixo na tela), `right` (de lado, virado para a direita) e `up` (de costas). As peças de todas as vistas usam os mesmos ossos.
-- **A frente é a vista principal.** Os `pivot=` dos ossos são medidos nela, e a pose parada (`pose`) mostra a frente.
-- **A vista de lado dá a profundidade.** O x da maior peça de um osso na vista de lado diz o quanto ele fica na frente da raiz (o `root=` do `godot`): a cabeça de lado está em x=64, então fica 4 pixels na frente. Quando a maior peça de um osso engana (uma cauda comprida, uma espada), `side=x` no `bone` diz o x do osso de lado.
-- **`osso.z=` anda para a frente** (positivo) ou para trás (negativo), em pixels, a partir do desenho. O pé que vai para a frente desce na tela de frente, vai para a direita de lado e sobe de costas.
-- **A animação não tem direção no nome:** a `walk` vira `walk_down`, `walk_right` e `walk_up`. No Godot, a `walk_left` sai espelhada, como sempre, e o `tocar("walk", velocity)` escolhe a vista.
-- **Quem fica na frente troca sozinho.** De frente, o pé que vem para a frente passa por cima do outro. De lado, o pé do lado da câmera cobre o do outro lado.
-- **`views tilt=` é a câmera:** quantos graus ela olha de cima. Com 30 (o padrão), o que anda 8 pixels para a frente desce 4 na tela de frente. Com `tilt=0`, nada desce.
-- O resto funciona nas geradas como nas outras animações: as caixas e os pontos seguem os ossos em cada vista, os `event` vão junto, e uma transição (`from=` e `to=`) sai em cada vista.
-
-**Experimente:** troque `views tilt=30` por `views tilt=60`. De frente, o pé que vai para a frente desce mais.
-
-### Girar em 3D: `pitch=`, `yaw=`, `tip=` e `turns`
-
-O `osso.z=` só anda. Para **girar** um osso como em 3D (a espada que desce para a frente, a cabeça que olha para o lado), a `key` tem `osso.pitch=` e `osso.yaw=`, em graus. Cada vista mostra o giro como ele seria visto dali:
-
-<!-- gerar: img/16_giro.png --contact -a attack_down,attack_right,attack_up,look_down -->
-```weasel
-canvas 120 120 bg=none
-palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 escuro=#b07a3a metal=#d9dee6
-
-godot root=60,110
-views tilt=30
-
-bone corpo pivot=60,110
-# turns: quando a cabeça gira para outra vista, ela troca de desenho
-bone cabeca parent=corpo pivot=60,72 turns
-bone bracoD parent=corpo pivot=78,82
-# tip=: a espada aponta para cima e 8 pixels para trás
-bone espada parent=bracoD pivot=84,96 tip=84,70,-8 side=66
-
-# de frente
-layer frente view=down
-ellipse corpo 60,90 20,18 c=pelo ink=3 bone=corpo
-ellipse cabeca 60,56 17,15 c=pelo ink=3 bone=cabeca
-ellipse olhoE 54,53 3,3 c=ink bone=cabeca
-ellipse olhoD 66,53 3,3 c=ink bone=cabeca
-rect lamina 82,70 4,26 c=metal ink=2 bone=espada
-ellipse bracoD 83,96 5,6 c=escuro ink=2 bone=bracoD
-
-# de lado
-layer lado view=right
-ellipse corpoL 60,90 17,18 c=pelo ink=3 bone=corpo
-ellipse cabecaL 64,56 15,15 c=pelo ink=3 bone=cabeca
-ellipse focinhoL 78,60 6,4 c=claro ink=2 bone=cabeca
-ellipse olhoL 70,52 3,3 c=ink bone=cabeca
-shape laminaL c=metal ink=2 bone=espada : 64,96 68,96 60,70 56,70
-ellipse bracoDl 66,96 5,6 c=escuro ink=2 bone=bracoD
-
-# de costas
-layer costas view=up
-rect laminaC 34,70 4,26 c=metal ink=2 bone=espada
-ellipse bracoDc 37,96 5,6 c=escuro ink=2 bone=bracoD
-ellipse corpoC 60,90 20,18 c=pelo ink=3 bone=corpo
-ellipse cabecaC 60,56 17,15 c=pelo ink=3 bone=cabeca
-
-# golpe: a espada gira para a frente (pitch negativo) e volta
-anim attack frames=6 fps=12 once
-key 0 espada.pitch=0
-key 2 espada.pitch=-100 ease=out
-key 4 espada.pitch=-100
-key 6 espada.pitch=0
-
-# olha para o lado: a cabeça gira 90 graus (yaw) e volta
-anim look frames=8 fps=8
-key 0 cabeca.yaw=0
-key 3 cabeca.yaw=90
-key 5 cabeca.yaw=90
-key 8 cabeca.yaw=0
-```
-
-![Folha de conferência com quatro linhas: de frente, a espada vem para quem olha e fica curta; de lado, ela faz o arco para a frente; de costas, ela encurta, indo para longe de quem olha; e, olhando para o lado, a cabeça de frente troca pelo desenho de perfil](img/16_giro.png)
-
-Repare:
-
-- **`osso.pitch=` gira para a frente ou para trás:** negativo leva a ponta para a frente, positivo para trás. **`osso.yaw=` gira de um lado para o outro**, como quem vira a cabeça. O `rot` da `key` (o terceiro número) continua girando na tela da vista principal.
-- **Cada vista mostra o giro de um jeito.** De lado, a espada faz o arco inteiro. De frente, ela vem na direção de quem olha e **encurta** (até 10% do tamanho, quando aponta para a câmera). De costas, ela também encurta, indo para longe de quem olha. Uma peça que encurta torta **inclina** em vez de afinar: a largura fica.
-- **`tip=x,y,z` no `bone` diz para onde o osso aponta:** o x,y na frente e, com o terceiro número, quantos pixels ele vai para a frente (positivo) ou para trás. A espada aponta para cima e 8 pixels para trás; é em volta dessa direção que ela encurta. Sem `tip=`, o Weasel usa o filho (se o osso tiver um só) ou a maior peça do osso, de frente e de lado.
-- **`turns` no `bone` troca o desenho:** quando o osso gira mais da metade do caminho até outra vista, as peças dele saem e entram as dessa vista. A cabeça que vira 90 graus aparece de perfil na frente, de costas no lado e de perfil para o outro lado nas costas (a vista que falta sai espelhada). Sem `turns`, a cabeça não muda nada: ela gira em volta do próprio comprimento, e um desenho chapado não mostra esse giro.
-- **Quem fica na frente continua trocando sozinho**, agora também com o giro: um osso que gira para a frente pode passar na frente de outro (o `--info` mostra em que quadros).
-- As caixas e os pontos presos ao osso giram junto, em cada vista. Uma transição (`from=` e `to=`) mistura o giro pelo caminho mais curto.
-
-**Experimente:** apague o `turns` da linha `bone cabeca`. No `look_down`, a cabeça fica de frente o tempo todo. Depois troque `espada.pitch=-100` por `espada.yaw=-100`: o `yaw` gira em volta da vertical, e a espada quase em pé só leva a ponta para o lado.
-
-### Conferir as vistas: `--info`
-
-O `--info` mostra o que o Weasel mediu no desenho:
-
-```
-vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
-  profundidade corpo 0 (lado) · cabeca 4 (lado) · peE 0 (lado) · peD 0 (lado) · bracoE 0 (lado) · bracoD 0 (lado)
-  grossura     corpo 39.7/33.8 · cabeca 33.9/29.9 · peE 13.8/13.8 · peD 13.8/13.8 · bracoE 10/10 · bracoD 10/10  [de lado a lado / de frente para trás]
-  aponta       corpo (a maior peça, de frente e de lado) · cabeca (a maior peça, de frente e de lado) · peE (para baixo: curto demais para medir) · peD (para baixo: curto demais para medir) · bracoE (a maior peça, de frente e de lado) · bracoD (a maior peça, de frente e de lado)
-  pé no chão   walk: 0 1.5 0 0 0 1.5 0 0
-  geradas      walk → walk_down, walk_right, walk_up
-  ordem troca  walk_down: em 3 de 8 quadros (peD, peE)
-  ordem troca  walk_up: em 1 de 8 quadros (peDc, peEc)
-```
-
-- `profundidade` diz de onde veio cada uma: do lado, do `side=`, de uma diagonal, do osso espelhado (o braço esquerdo que não aparece de lado usa a do direito) ou do pai.
-- `grossura` é a largura de cada osso, de lado a lado e de frente para trás, medida nas peças. Dois ossos só trocam de ordem quando um passa do outro mais do que essa grossura.
-- `aponta` diz de onde veio a direção de cada osso, a que o `pitch=` e o `yaw=` encurtam: do `tip=`, do filho, da maior peça ou, num osso curto demais (um pé redondo), para baixo. Quando um osso encurta errado, um `tip=` resolve.
-- `pé no chão` diz, em cada quadro, quantos pixels o pé mais baixo fica acima do chão. Um número negativo é o pé afundando: abaixo de −1, o Weasel avisa.
-- `ordem troca` diz em quantos quadros a ordem muda, e entre que peças.
-- Com `turns`, `vira` diz, para cada quadro, o desenho que o osso usa: `-` é o da própria vista, e `right`, `up`… o de outra. No exemplo do giro: `look_down: cabeca - - right right right right right -`.
-
-### No editor
-
-- No player, o menu mostra `walk` uma vez, e os botões de direção (**↓ → ↑ ←**) escolhem a vista ([capítulo 22](22-editor.md#player)). A linha do tempo de `walk_right` mostra e muda as `key` da `walk`.
-- **Exibir › Vistas em 3D** mostra o boneco que o Weasel montou em 3D, com as vistas desenhadas em volta, a profundidade de cada osso e o caminho da ponta de cada um ([capítulo 22](22-editor.md#vistas-em-3d)).
-- O **Testar ossos** (**O**) tem os campos `z`, `pitch` e `yaw`, e na vista de lado a bolinha anda para a frente e para trás; **Escrever como key** grava na `walk` ([capítulo 22](22-editor.md#testar-ossos)).
-- No **Prender** (**Shift+P**), na vista de lado, arrastar a bolinha de um osso escreve o `side=` dele, e o duplo clique apaga ([capítulo 22](22-editor.md#prender)).
-
-### As diagonais e o lado esquerdo
-
-- **As diagonais** são `view=down_right` (três quartos de frente) e `view=up_right` (três quartos de costas). O ângulo de cada uma é medido no desenho, pelo lugar das peças; `angle=` na `layer` diz o ângulo à mão, de 1 a 89 graus a partir da frente (ou das costas). Sem diagonais, o `tocar()` escolhe a reta mais perto.
-- **O lado esquerdo desenhado** (`view=left`, e as diagonais `down_left` e `up_left`) vale no lugar do espelhado. Com os dois lados desenhados, nada sai espelhado: a espada continua na mesma mão. Aí cada diagonal precisa também da diagonal do outro lado (sem ela, o Weasel avisa e não gera a que falta).
-- **Uma animação escrita à mão numa vista** (`anim walk_up`) vale no lugar da gerada, e conta como `walk` para o `only=` das caixas e das camadas.
-
-### Num jogo de plataforma
-
-Sem a frente, a vista principal é o lado direito (`view=right`): os `pivot=` e a pose são os dele, e as outras vistas (o lado esquerdo, a frente, as costas) usam os mesmos ossos. `lat=x` no `bone` diz o x que o osso teria de frente, de que lado do corpo ele fica; sem ele, o Weasel adivinha pela ordem do desenho (o que vem antes fica do outro lado). Com `view=left` desenhado, o personagem vira sem espelhar. Num jogo de plataforma, a câmera fica de lado: use `views tilt=0`.
-
-**Cuidado:**
-- O `ik` não é resolvido nas outras vistas (aviso).
-- A ordem troca entre as peças da mesma camada.
-- O `mix=` não sai em cada vista: escreva uma para cada vista, com os nomes gerados (`anim walk_atk_right mix=walk_right,attack_right bones=espada`).
-- Numa animação escrita à mão numa vista (`anim walk_up`), `osso.z=`, `osso.pitch=` e `osso.yaw=` não fazem nada (aviso): o 3D vale nas animações sem direção no nome.
-- Uma animação `_left` sem a camada `view=left` mostra só as camadas sem `view=` (aviso).
-- Sem nenhuma `layer` com `view=`, nada muda: `views` sozinho avisa, e `osso.z=` avisa e não faz nada.
+Num jogo visto de cima, com as **vistas** (`layer … view=`), os desenhos de frente, de lado e de costas usam **um esqueleto só**, cada animação é escrita **uma vez**, e o Weasel gera uma para cada vista: `osso.z=` anda para a frente, `osso.pitch=` e `osso.yaw=` giram em 3D, e a ordem das peças troca sozinha. Elas ganharam um capítulo só delas, com cinco personagens, a conta que o Weasel faz, o editor e os limites: [Jogo: três vistas](17-jogo-tres-vistas.md).
 
 ## Esqueleto de verdade: `rig=bones` (experimental)
 
@@ -589,7 +390,7 @@ Atirador (CharacterBody2D)
 - Um osso que nenhuma animação mexe fica livre para o código do jogo: `$Visual/Esqueleto/corpo/cabeca.rotation = …` faz a cabeça olhar para o mouse.
 - Caixas, pontos, eventos, `tocar()` e as animações espelhadas funcionam como na cena por quadros.
 
-**Cuidado:** os giros em 3D do [capítulo 14](14-profundidade.md) (`yaw=`, `pitch=`, `z=` e `iso`) não cabem nos ossos do Godot. Com eles, `rig=bones` dá aviso: exporte por quadros. Nas [três vistas](#três-vistas-uma-animação-views-e-view), sim: o giro em 3D vira o giro, a escala e o `skew` de cada `Bone2D`, a ordem que troca vira o `z_index` das peças, e o `turns` mostra e esconde as peças de cada vista.
+**Cuidado:** os giros em 3D do [capítulo 14](14-profundidade.md) (`yaw=`, `pitch=`, `z=` e `iso`) não cabem nos ossos do Godot. Com eles, `rig=bones` dá aviso: exporte por quadros. Nas [três vistas](17-jogo-tres-vistas.md), sim: o giro em 3D vira o giro, a escala e o `skew` de cada `Bone2D`, a ordem que troca vira o `z_index` das peças, e o `turns` mostra e esconde as peças de cada vista.
 
 ## Para outros motores: sprite sheet e `unity`
 
@@ -665,7 +466,7 @@ A folha sai em PNG, mais um JSON no formato do TexturePacker e do Phaser: a posi
 | `--padding n` | o espaço entre os quadros, de 0 a 1000 pixels | 2 |
 | `--variant all` | uma folha para cada variante de cor | a cor normal |
 
-`-f godot` num personagem (sem o `.tscn`) salva só a folha e o `.tres` das animações, sem a cena; `--normal` acrescenta o normal map. A lista completa está na [linha de comando](21-linha-de-comando.md).
+`-f godot` num personagem (sem o `.tscn`) salva só a folha e o `.tres` das animações, sem a cena; `--normal` acrescenta o normal map. A lista completa está na [linha de comando](22-linha-de-comando.md).
 
 **Pixel art:** com `art pixel` ([capítulo 13](13-estilos.md#pixel-art-art-pixel)), a cena do Godot já vem sem suavizar a imagem (`texture_filter` em *nearest*). Com `small`, a folha e a cena saem com 1 pixel por quadrado do pixel art.
 
@@ -720,16 +521,12 @@ Repare:
 | `anim` | `from=`, `to=` | uma transição | nomes de `anim` | — |
 | `anim` | `frames=`, `fps=`, `every=` | os quadros, o fps e o espaço entre as peças | 1 a 600; 1 a 60; 1 a 600 | 4; o do `from=`; 2 |
 | `anim` | `turn`, `pairs=`, `born=` | a virada e o casamento das partes | palavra; pares `parte->parte` | casamento automático |
-| `layer` | `view=`, `angle=` | a vista da camada e o ângulo da diagonal | `down`, `down_right`, `right`, `up_right`, `up`, `up_left`, `left`, `down_left`; 1 a 89 | sem vista; o ângulo medido |
-| `views` | `tilt=` | quantos graus a câmera olha de cima | 0 a 80 | 30 |
-| `bone` | `side=`, `lat=` | o x do osso de lado; o x do osso de frente (jogo de plataforma) | números, em pixels | medidos no desenho |
-| `key` | `osso.z=` | o osso anda para a frente ou para trás | qualquer número, em pixels | 0 |
 | `godot` | `rig=` | por quadros ou com esqueleto | `frames` ou `bones` | `frames` |
 | `unity` | `unit=`, `root=`, `collider=` | os dados da Unity | 1 a 100000; dois números; 2 a 4 números | 100; o meio da base; nenhum |
 
-As fichas completas estão na referência: [`tileset`](19-referencia.md#tileset), [`tile`](19-referencia.md#tile), [`anim`](19-referencia.md#anim), [`layer`](19-referencia.md#layer), [`views`](19-referencia.md#views), [`bone`](19-referencia.md#bone), [`key`](19-referencia.md#key), [`godot`](19-referencia.md#godot) e [`unity`](19-referencia.md#unity).
+As fichas completas estão na referência: [`tileset`](20-referencia.md#tileset), [`tile`](20-referencia.md#tile), [`anim`](20-referencia.md#anim), [`godot`](20-referencia.md#godot) e [`unity`](20-referencia.md#unity). As opções das três vistas estão no [capítulo 17](17-jogo-tres-vistas.md#opções-das-três-vistas).
 
-**No editor:** com **Exibir › Guias**, o tileset mostra a grade, o nome de cada bloco e a colisão ([capítulo 22](22-editor.md#jogo)).
+**No editor:** com **Exibir › Guias**, o tileset mostra a grade, o nome de cada bloco e a colisão ([capítulo 23](23-editor.md#jogo)).
 
 ## Juntando tudo
 
@@ -864,8 +661,8 @@ use flor 448,160
 
 - `tileset` faz do `canvas` uma folha de blocos; cada `tile` dá o nome e a colisão (`solid`, `oneway`, `collision=`). `auto` faz os enfeites, e `iso` faz blocos em losango.
 - `from=` e `to=` geram as peças de transição entre animações, e `trocar()` as toca no Godot. Com `turn`, a peça é uma virada entre duas vistas.
-- Com as vistas (`layer … view=`), os desenhos de frente, de lado e de costas usam um esqueleto só: cada animação é escrita uma vez, `osso.z=` anda para a frente, e o Weasel gera uma animação por vista, com a ordem que troca sozinha.
+- Com as vistas (`layer … view=`), os desenhos de frente, de lado e de costas usam um esqueleto só: cada animação é escrita uma vez, `osso.z=` anda para a frente, e o Weasel gera uma animação por vista, com a ordem que troca sozinha ([capítulo 17](17-jogo-tres-vistas.md)).
 - `rig=bones` exporta os ossos e as peças, para um movimento liso e uma folha menor.
 - `-f sheet` faz a sprite sheet com o JSON de quadros, eventos, caixas e pontos, para qualquer motor; `unity` acrescenta os dados da Unity.
 
-[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](17-filme.md)
+[← Jogo: o personagem no Godot](15-jogo-personagem.md) · [Índice](README.md) · [Próximo: Jogo: três vistas →](17-jogo-tres-vistas.md)

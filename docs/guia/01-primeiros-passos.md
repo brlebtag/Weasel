@@ -33,7 +33,7 @@ Os arquivos ficam guardados no próprio navegador. Você não perde nada ao fech
 
 ### Na linha de comando
 
-A linha de comando faz a mesma coisa sem abrir o editor: lê um arquivo `.weasel` e salva a imagem. Ela precisa do [Node.js](https://nodejs.org) 18 ou mais novo e de um `npm install` na pasta do projeto, uma vez só. Se você nunca usou um terminal, o [capítulo 21](21-linha-de-comando.md#o-terminal) explica tudo desde o começo.
+A linha de comando faz a mesma coisa sem abrir o editor: lê um arquivo `.weasel` e salva a imagem. Ela precisa do [Node.js](https://nodejs.org) 18 ou mais novo e de um `npm install` na pasta do projeto, uma vez só. Se você nunca usou um terminal, o [capítulo 22](22-linha-de-comando.md#o-terminal) explica tudo desde o começo.
 
 Salve o exemplo como `teste.weasel` e rode:
 
@@ -47,7 +47,7 @@ A resposta diz o nome da imagem, o tamanho em pixels e o peso do arquivo:
 salvo teste.png  400×240 · 9 KB
 ```
 
-Para escolher o nome da imagem, use `-o`: `node cli/weasel.js teste.weasel -o sol.png`. O capítulo 21 tem todas as opções.
+Para escolher o nome da imagem, use `-o`: `node cli/weasel.js teste.weasel -o sol.png`. O capítulo 22 tem todas as opções.
 
 ## O primeiro desenho
 
@@ -133,7 +133,7 @@ text tp 312,232 "300,200" size=20 c=#2f6fb5 bold
 
 Escreva um ponto sempre **sem espaço**: `300,200` é um ponto; `300, 200` são duas palavras, e dá erro.
 
-No editor, **Ctrl+clique** num lugar do desenho escreve a coordenada dele no código, onde está o cursor. É o jeito mais fácil de descobrir o número de um lugar ([capítulo 22](22-editor.md#coordenadas-e-pontos)).
+No editor, **Ctrl+clique** num lugar do desenho escreve a coordenada dele no código, onde está o cursor. É o jeito mais fácil de descobrir o número de um lugar ([capítulo 23](23-editor.md#coordenadas-e-pontos)).
 
 ### O tamanho da folha: `canvas`
 
@@ -163,9 +163,9 @@ ellipse estrela3 200,30 3 c=#ffffff
 | a largura e a altura | o tamanho da folha | de 1 a 4096 cada, em pixels | sem a linha `canvas`, 800 por 600 |
 | `bg=` | a cor do fundo | uma cor; `none` deixa sem fundo | branco |
 
-A ficha completa, com o `light=` (a direção da luz, do capítulo 3), está na [referência do `canvas`](19-referencia.md#canvas).
+A ficha completa, com o `light=` (a direção da luz, do capítulo 3), está na [referência do `canvas`](20-referencia.md#canvas).
 
-**Cuidado:** com `bg=none`, o editor mostra um xadrez no lugar do fundo, mas a imagem exportada sai com fundo branco. Para o fundo sair transparente na linha de comando, use `-t` ([capítulo 21](21-linha-de-comando.md)).
+**Cuidado:** com `bg=none`, o editor mostra um xadrez no lugar do fundo, mas a imagem exportada sai com fundo branco. Para o fundo sair transparente na linha de comando, use `-t` ([capítulo 22](22-linha-de-comando.md)).
 
 ## Os ângulos: `rot=`
 
@@ -264,7 +264,7 @@ ellipse janela 200,70 18 c=#9fd3e6 hidden
 - Maiúsculas e minúsculas são diferentes: `olho` e `Olho` são dois nomes.
 - Duas formas podem ter o mesmo nome. Tudo o que usa o nome vale para as duas.
 
-A lista completa das regras está em [Nomes](19-referencia.md#nomes), na referência.
+A lista completa das regras está em [Nomes](20-referencia.md#nomes), na referência.
 
 ### As opções
 
@@ -320,7 +320,7 @@ ellipse cabeca 150,{190-50-32-32-20} 20 c=#ffffff
 
 **Experimente:** troque o raio de `baixo` por 60 e o `50` das outras duas linhas por `60`. As bolas de cima sobem juntas.
 
-As contas têm muito mais: nomes para números (`let`), repetições e sorteios, no [capítulo 5](05-contas.md). As funções que cabem nas chaves estão no [capítulo 20](20-funcoes.md).
+As contas têm muito mais: nomes para números (`let`), repetições e sorteios, no [capítulo 5](05-contas.md). As funções que cabem nas chaves estão no [capítulo 21](21-funcoes.md).
 
 ## Quando algo dá errado
 
@@ -421,7 +421,7 @@ Para só procurar problemas, sem salvar a imagem, use `--check`:
 node cli/weasel.js avisos.weasel --check
 ```
 
-A resposta termina com `sem erros.`, `sem erros (só avisos).` ou o número de erros. Os problemas mais comuns, com a solução de cada um, estão no [capítulo 24](24-problemas.md).
+A resposta termina com `sem erros.`, `sem erros (só avisos).` ou o número de erros. Os problemas mais comuns, com a solução de cada um, estão no [capítulo 25](25-problemas.md).
 
 ## Juntando tudo
 

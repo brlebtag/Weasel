@@ -30,7 +30,7 @@ Todos valem no `c=` das formas, no `bg=` do `canvas` e no `inkc=`, a cor do cont
 | `#000000` | nada | nada | nada | preto |
 | `#ffffff` | máximo | máximo | máximo | branco |
 
-Não precisa decorar: no editor, um seletor de cores escreve o código para você ([capítulo 22](22-editor.md#seletor-de-cor)).
+Não precisa decorar: no editor, um seletor de cores escreve o código para você ([capítulo 23](23-editor.md#seletor-de-cor)).
 
 Os mesmos tons, escritos de cada jeito:
 
@@ -123,7 +123,7 @@ text t4 360,135 "c= ink= inkc=" size=14 align=center
 
 **Experimente:** no `so_ink`, acrescente `c=#ffffff`. O círculo ganha um preenchimento branco.
 
-No editor, as duas caixinhas de cor no pé da barra de ferramentas escrevem o `c=`, o `inkc=` e o `ink=` das formas que você desenha ([capítulo 22](22-editor.md#caixinhas-de-cor)).
+No editor, as duas caixinhas de cor no pé da barra de ferramentas escrevem o `c=`, o `inkc=` e o `ink=` das formas que você desenha ([capítulo 23](23-editor.md#caixinhas-de-cor)).
 
 ### Metade para dentro, metade para fora
 
@@ -248,7 +248,7 @@ O `light=` não muda as cores: a luz que ilumina o desenho é a do [capítulo 10
 | `weight=` | engrossa o contorno do lado oposto à luz | de 0 a 3 | 0 (igual em toda a volta) |
 | `light=` (no `canvas`) | para onde a luz está, para o `weight=` | dois números, `x,y`; só a direção conta | `-0.6,-0.8` (em cima, à esquerda) |
 
-O `ink=`, o `inkc=` e o `weight=` valem no `ellipse`, no `rect` e no `shape`; o `text` aceita o `ink=` e o `inkc=`. A lista completa está nas [opções de todas as formas](19-referencia.md#opções-de-todas-as-formas) e no [`canvas`](19-referencia.md#canvas).
+O `ink=`, o `inkc=` e o `weight=` valem no `ellipse`, no `rect` e no `shape`; o `text` aceita o `ink=` e o `inkc=`. A lista completa está nas [opções de todas as formas](20-referencia.md#opções-de-todas-as-formas) e no [`canvas`](20-referencia.md#canvas).
 
 **Cuidado:**
 - O `stroke` e a `line` não têm contorno: neles, a grossura é o `w=` e a cor é o `c=`. Um `ink=` num `stroke` dá o aviso `atributo desconhecido "ink" em stroke`.
@@ -339,7 +339,7 @@ rect janela2 238,140 36,36 c=janela ink=fino
 
 **Experimente:** na `palette`, troque `janela=#e8f4fb` por `janela=#ffd56b`. As duas janelas ficam amarelas de uma vez, como se a luz da casa acendesse. Depois troque `grosso=5` por `grosso=8`: a parede, o telhado e a porta ganham um contorno mais grosso.
 
-No editor, o painel **Amostras** mostra as cores e os números da `palette` e pinta a forma escolhida com um clique ([capítulo 22](22-editor.md#amostras)).
+No editor, o painel **Amostras** mostra as cores e os números da `palette` e pinta a forma escolhida com um clique ([capítulo 23](23-editor.md#amostras)).
 
 ### A cor da tinta e os nomes prontos
 
@@ -449,7 +449,7 @@ palette cabelo=#5e4030
 teste.weasel:2:9: erro: valor inválido "cabelo" (use #cor, número ou outro nome da palette)
 ```
 
-Só a cópia dentro da `palette` depende da ordem. Usar o nome numa forma (`c=sobrancelha`) vale em qualquer lugar do arquivo. As outras regras de ordem estão em [a ordem das linhas](19-referencia.md#a-ordem-das-linhas).
+Só a cópia dentro da `palette` depende da ordem. Usar o nome numa forma (`c=sobrancelha`) vale em qualquer lugar do arquivo. As outras regras de ordem estão em [a ordem das linhas](20-referencia.md#a-ordem-das-linhas).
 
 ### Opções da `palette`
 
@@ -459,7 +459,7 @@ Só a cópia dentro da `palette` depende da ordem. Usar o nome numa forma (`c=so
 | `ink=` | a cor da tinta | uma cor | `#14141c` (quase preto) |
 | `line=` `inner=` `edge=` | grossuras prontas | números | 8, 5 e 3 |
 
-A ficha completa está na [referência da `palette`](19-referencia.md#palette).
+A ficha completa está na [referência da `palette`](20-referencia.md#palette).
 
 **Cuidado:**
 - A `palette` não aceita `none`, um gradiente nem uma textura: dá o erro `valor inválido`.
@@ -673,9 +673,9 @@ ellipse olho 75,80 7 c=ink
 | as cores, depois do `:` | as cores, em ordem | uma cor ou mais | obrigatório |
 | `@posição` (em cada cor) | onde a cor fica na linha | de 0 a 1 | espalhadas por igual |
 
-A ficha completa está na [referência do `gradient`](19-referencia.md#gradient).
+A ficha completa está na [referência do `gradient`](20-referencia.md#gradient).
 
-No editor, a ferramenta **Degradê** (G) cria um gradiente quando você arrasta por cima de uma forma, e um painel muda as cores e as posições com o mouse ([capítulo 22](22-editor.md#degradê)).
+No editor, a ferramenta **Degradê** (G) cria um gradiente quando você arrasta por cima de uma forma, e um painel muda as cores e as posições com o mouse ([capítulo 23](23-editor.md#degradê)).
 
 **Cuidado:**
 - Posições fora de 0 a 1, ou fora de ordem, são corrigidas, com um aviso: `#fff@1.5` vale 1.
@@ -836,7 +836,7 @@ text tf 275,269 "gap=16" size=14 align=center
 | `c=` | a cor das linhas ou dos pontos | uma cor `#` | a cor da tinta |
 | `bg=` | um fundo por baixo | uma cor `#` | sem fundo |
 
-A ficha completa está na [referência do `pattern`](19-referencia.md#pattern).
+A ficha completa está na [referência do `pattern`](20-referencia.md#pattern).
 
 **Cuidado:**
 - A textura só preenche formas fechadas (`ellipse`, `rect`, `shape`), no `c=`. No `stroke`, na `line`, no `text` e no `inkc=`, o Weasel avisa e pinta só a cor das linhas. No `bg=` do `canvas`, é erro.

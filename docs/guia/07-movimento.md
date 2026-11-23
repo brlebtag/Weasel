@@ -52,7 +52,7 @@ Fora da animação, na **pose parada**, o osso não muda nada: a bola fica onde 
 
 ## Ver a animação
 
-- **No editor**, o player embaixo do desenho escolhe a animação e toca ([capítulo 22](22-editor.md#player)). A primeira opção dele é a pose parada.
+- **No editor**, o player embaixo do desenho escolhe a animação e toca ([capítulo 23](23-editor.md#player)). A primeira opção dele é a pose parada.
 - **Na linha de comando**, `-a` escolhe a animação, e um nome terminado em `.gif` faz um GIF:
 
 ```bash
@@ -419,7 +419,7 @@ Repare:
 | `osso=dx,dy,rot,sx,sy` | a pose do osso: anda, gira e estica em volta do pivô | de 1 a 5 números | `0,0,0,1,1` (a pose do desenho) |
 | `ease=` | como o valor muda desta `key` até a próxima | `smooth`, `linear`, `in`, `out`, `back` ou `step` | `smooth` |
 
-A `key` também muda cores, transparência e formas, e o `anim` ainda junta animações: isso é o [capítulo 9](09-animacao.md). As fichas completas estão na referência: [`bone`](19-referencia.md#bone), [`anim`](19-referencia.md#anim) e [`key`](19-referencia.md#key).
+A `key` também muda cores, transparência e formas, e o `anim` ainda junta animações: isso é o [capítulo 9](09-animacao.md). As fichas completas estão na referência: [`bone`](20-referencia.md#bone), [`anim`](20-referencia.md#anim) e [`key`](20-referencia.md#key).
 
 ## Juntando tudo
 

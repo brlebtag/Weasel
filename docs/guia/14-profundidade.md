@@ -2,7 +2,7 @@
 
 [← Estilos de arte](13-estilos.md) · [Índice](README.md) · [Próximo: Jogo: o personagem no Godot →](15-jogo-personagem.md)
 
-O Weasel continua desenhando no plano, mas cada forma pode ter profundidade: ir para perto ou para longe, girar como uma carta, ter espessura, deitar como um chão. É o truque do **2.5D**: peças chatas, arrumadas em 3D. Dá para fazer uma carta que vira, uma cabeça que olha para os lados, uma estrada que some no horizonte e um mapa isométrico. Se você não usa estas opções, o desenho fica igual. Você precisa dos capítulos 1 a 9. A parte do fim, sobre o filme, usa o capítulo 17.
+O Weasel continua desenhando no plano, mas cada forma pode ter profundidade: ir para perto ou para longe, girar como uma carta, ter espessura, deitar como um chão. É o truque do **2.5D**: peças chatas, arrumadas em 3D. Dá para fazer uma carta que vira, uma cabeça que olha para os lados, uma estrada que some no horizonte e um mapa isométrico. Se você não usa estas opções, o desenho fica igual. Você precisa dos capítulos 1 a 9. A parte do fim, sobre o filme, usa o capítulo 18.
 
 ## Os três eixos e os dois giros
 
@@ -73,7 +73,7 @@ text t3 600,290 "yaw=50" size=22 align=center c=ink
 
 **Experimente:** troque `yaw=50` por `yaw=-50`. A carta vira para o outro lado: agora é a esquerda que fica menor.
 
-No editor, as alças de uma forma girada ficam onde ela aparece na tela, e arrastar muda o número certo no código ([capítulo 22](22-editor.md#formas-em-3d)).
+No editor, as alças de uma forma girada ficam onde ela aparece na tela, e arrastar muda o número certo no código ([capítulo 23](23-editor.md#formas-em-3d)).
 
 ### Perto ou longe do olho: `persp=`
 
@@ -470,7 +470,7 @@ Os blocos de um mapa isométrico também podem ir para o Godot: `tileset … iso
 
 ## Profundidade no filme
 
-Esta parte usa o filme ([capítulo 17](17-filme.md)). Se ainda não chegou lá, pule para o [Juntando tudo](#juntando-tudo) e volte aqui depois.
+Esta parte usa o filme ([capítulo 18](18-filme.md)). Se ainda não chegou lá, pule para o [Juntando tudo](#juntando-tudo) e volte aqui depois.
 
 ### Paralaxe: `depth=` e `screen`
 
@@ -741,7 +741,7 @@ at 2.5s mapa.pitch=60 carta.yaw=180
 | `fog=` | `camera` (filme) | a cor da névoa | uma cor (`#hex` ou nome da `palette`), ou `none` | sem névoa |
 | `haze=` | `camera` (filme) | a distância da meia névoa | de 1.05 a 1000 | 6 |
 
-Na `key`, mudam aos poucos o `z=`, o `yaw=` e o `pitch=` das formas e o `yaw=` e o `pitch=` das camadas e dos ossos. As fichas completas estão na referência: [opções de todas as formas](19-referencia.md#opções-de-todas-as-formas), [`layer`](19-referencia.md#layer), [`bone`](19-referencia.md#bone) e [`camera`](19-referencia.md#camera).
+Na `key`, mudam aos poucos o `z=`, o `yaw=` e o `pitch=` das formas e o `yaw=` e o `pitch=` das camadas e dos ossos. As fichas completas estão na referência: [opções de todas as formas](20-referencia.md#opções-de-todas-as-formas), [`layer`](20-referencia.md#layer), [`bone`](20-referencia.md#bone) e [`camera`](20-referencia.md#camera).
 
 **Cuidado:**
 - É ilusão de peças chatas. Uma forma girada continua chata; o volume vem da espessura, da bola e da ordem. Para um objeto que muda de forma quando gira, desenhe as vistas e troque com `.show=` ([capítulo 9](09-animacao.md#animar-formas-formapropriedadevalor)).

@@ -62,7 +62,7 @@ ellipse girada 360,100 64,30 rot=30 c=#6cbb3c
 | `rot=` | gira em volta do centro | qualquer número, em graus | 0 |
 | `c=` | a cor de dentro | uma cor | quase preto |
 
-A lista completa está na [referência do `ellipse`](19-referencia.md#ellipse). No editor, a ferramenta **Elipse** (L) escreve esta linha para você ([capítulo 22](22-editor.md#elipse-e-retângulo)).
+A lista completa está na [referência do `ellipse`](20-referencia.md#ellipse). No editor, a ferramenta **Elipse** (L) escreve esta linha para você ([capítulo 23](23-editor.md#elipse-e-retângulo)).
 
 ## Retângulo: `rect`
 
@@ -119,7 +119,7 @@ Da esquerda para a direita:
 | `r=` | o raio dos cantos redondos | 0 ou mais, em pixels (no máximo, a metade do lado menor) | 0, cantos vivos |
 | `rot=` | gira em volta do meio | qualquer número, em graus | 0 |
 
-A lista completa está na [referência do `rect`](19-referencia.md#rect). No editor, a ferramenta **Retângulo** (M) escreve esta linha ([capítulo 22](22-editor.md#elipse-e-retângulo)).
+A lista completa está na [referência do `rect`](20-referencia.md#rect). No editor, a ferramenta **Retângulo** (M) escreve esta linha ([capítulo 23](23-editor.md#elipse-e-retângulo)).
 
 Um tamanho negativo desenha o retângulo para o outro lado do canto (para a esquerda ou para cima), com os mesmos cantos redondos do `r=`.
 
@@ -181,7 +181,7 @@ De cima para baixo:
 | `dash=` | o tracejado: traço, vão, traço, vão… | de 1 a 8 números, em pixels; `dash=0` desliga | contínua |
 | `c=` | a cor da linha | uma cor | quase preto |
 
-A lista completa está na [referência da `line`](19-referencia.md#line). No editor, a ferramenta **Linha** (`\`) escreve esta linha ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
+A lista completa está na [referência da `line`](20-referencia.md#line). No editor, a ferramenta **Linha** (`\`) escreve esta linha ([capítulo 23](23-editor.md#linha-caneta-e-lápis)).
 
 ## Formas livres com pontos: `shape`
 
@@ -255,7 +255,7 @@ shape s2 smooth=2 c=#6cbb3c : 360,30 410,80 390,150 330,150 310,80
 | `smooth=` | quanto os pontos lisos arredondam | de 0 a 2 | 1 |
 | `c=` | a cor de dentro | uma cor | quase preto |
 
-A lista completa está na [referência do `shape`](19-referencia.md#shape). No editor, a **Caneta** (P) e a **Curvatura** escrevem um `shape` ponto a ponto ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
+A lista completa está na [referência do `shape`](20-referencia.md#shape). No editor, a **Caneta** (P) e a **Curvatura** escrevem um `shape` ponto a ponto ([capítulo 23](23-editor.md#linha-caneta-e-lápis)).
 
 **Cuidado:** o `shape` não tem `rot=` (aviso). Para girar, mude os pontos; no editor, a alça de giro faz essa conta por você.
 
@@ -337,7 +337,7 @@ De cima para baixo:
 | `smooth=` | quanto os pontos lisos arredondam | de 0 a 2 | 1 |
 | `c=` | a cor do traço | uma cor | quase preto |
 
-O `stroke` também vira um braço ou uma perna que dobra sozinho, com `hip=` e `limb=` ([capítulo 8](08-ossos.md#pernas-e-braços-com-ik)). A lista completa está na [referência do `stroke`](19-referencia.md#stroke). No editor, o **Lápis** (N) e o **Pincel** (B) escrevem um `stroke` à mão livre ([capítulo 22](22-editor.md#linha-caneta-e-lápis)).
+O `stroke` também vira um braço ou uma perna que dobra sozinho, com `hip=` e `limb=` ([capítulo 8](08-ossos.md#pernas-e-braços-com-ik)). A lista completa está na [referência do `stroke`](20-referencia.md#stroke). No editor, o **Lápis** (N) e o **Pincel** (B) escrevem um `stroke` à mão livre ([capítulo 23](23-editor.md#linha-caneta-e-lápis)).
 
 **Cuidado:**
 - O `taper=` precisa dos dois números: `taper=0.5` dá erro.
@@ -426,7 +426,7 @@ line l2 c=#c44536 w=2 : 305,40 320,80 335,40
 - Um ponto não pode ter alça e `!` ao mesmo tempo (erro).
 - O `smooth=` não muda os pontos com alça: com `smooth=0`, eles continuam curvos.
 
-No editor, as alças se puxam com o mouse ([capítulo 22](22-editor.md#pontos-e-alças)).
+No editor, as alças se puxam com o mouse ([capítulo 23](23-editor.md#pontos-e-alças)).
 
 ## Texto: `text`
 
@@ -506,7 +506,7 @@ Como em toda forma, o número positivo gira no sentido do relógio. Com `align=l
 | `italic` | itálico | — | desligado |
 | `c=` | a cor das letras | uma cor | quase preto |
 
-O texto também pode ter contorno, como as formas fechadas ([capítulo 3](03-cores.md)). A lista completa está na [referência do `text`](19-referencia.md#text). No editor, a ferramenta **Texto** (T) escreve esta linha, e um duplo clique nas letras troca o texto ([capítulo 22](22-editor.md#texto)).
+O texto também pode ter contorno, como as formas fechadas ([capítulo 3](03-cores.md)). A lista completa está na [referência do `text`](20-referencia.md#text). No editor, a ferramenta **Texto** (T) escreve esta linha, e um duplo clique nas letras troca o texto ([capítulo 23](23-editor.md#texto)).
 
 ## Desenhar por cima de uma imagem: `ref`
 
@@ -530,7 +530,7 @@ ellipse olhoD 300,222 18,23 rot=12 c=#1c1f2b
 - A doninha clarinha é a **imagem guia**: o logo do Weasel, com `opacity=0.35` (35% visível). A cabeça e os olhos por cima são as formas que copiam o contorno dela.
 - A imagem guia **nunca sai na exportação**. Ela aparece no editor e, na linha de comando, só com `--refs`.
 - O caminho da imagem conta a partir da pasta do arquivo `.weasel`. Este exemplo está na pasta `exemplos/`, e o logo, em `docs/`.
-- No editor, a imagem precisa ser aberta antes: **Janela › Referências › Adicionar imagem…**, ou arraste o arquivo para a janela ([capítulo 22](22-editor.md#referências)).
+- No editor, a imagem precisa ser aberta antes: **Janela › Referências › Adicionar imagem…**, ou arraste o arquivo para a janela ([capítulo 23](23-editor.md#referências)).
 
 ### Por baixo ou por cima: `front`
 
@@ -565,7 +565,7 @@ text t2 330,212 "front (por cima)" size=14 align=center
 | `lock` | no editor, a imagem não se arrasta | — | solta |
 | `hidden` | esconde a imagem, que continua no arquivo | — | aparece |
 
-Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítulo 9](09-animacao.md#uma-imagem-guia-para-cada-movimento)). A lista completa está na [referência do `ref`](19-referencia.md#ref).
+Uma imagem guia diferente para cada animação usa `only=` e `frames=` ([capítulo 9](09-animacao.md#uma-imagem-guia-para-cada-movimento)). A lista completa está na [referência do `ref`](20-referencia.md#ref).
 
 Quando terminar de copiar, apague a linha `ref` ou ponha `hidden` nela.
 
@@ -584,9 +584,9 @@ A resposta conta o que saiu:
 salvo exemplos/logo_tracado.weasel  traçado de imagem · 8 KB
 ```
 
-No editor, o menu **Objeto › Traçado de imagem…** faz o mesmo com uma imagem guia: o traçado entra no desenho, numa camada nova, em cima da imagem ([capítulo 22](22-editor.md#traçado-de-imagem)).
+No editor, o menu **Objeto › Traçado de imagem…** faz o mesmo com uma imagem guia: o traçado entra no desenho, numa camada nova, em cima da imagem ([capítulo 23](23-editor.md#traçado-de-imagem)).
 
-O arquivo que sai é um desenho como outro qualquer: abre no editor, exporta em qualquer formato e pode entrar em outro desenho com `include` ([capítulo 19](19-referencia.md#include)):
+O arquivo que sai é um desenho como outro qualquer: abre no editor, exporta em qualquer formato e pode entrar em outro desenho com `include` ([capítulo 20](20-referencia.md#include)):
 
 <!-- gerar: img/02_tracado.png -->
 ```weasel
@@ -629,7 +629,7 @@ A ordem das linhas é a **ordem de pintura**: as partes semitransparentes primei
 | `--tol` | quanto a curva pode se afastar da borda da imagem; maior, menos pontos | de 0.05 a 20 pixels | 0.5 |
 | `--no-bg` | tira o fundo chapado da imagem | — | desligado |
 
-As outras opções estão no [capítulo 21](21-linha-de-comando.md#traçar-uma-imagem).
+As outras opções estão no [capítulo 22](22-linha-de-comando.md#traçar-uma-imagem).
 
 Uma imagem com **fundo chapado** (branco, roxo…, sem transparência) traça o fundo também, como um retângulo atrás de tudo. Com `--no-bg`, ele sai:
 
@@ -670,7 +670,7 @@ As outras opções das formas aparecem nos próximos capítulos:
 | `emit=` | a forma brilha | [capítulo 11](10-luz.md#coisas-que-brilham-emit) |
 | `z=`, `yaw=`, `pitch=`, `thick=`, `back=`, `billboard` | profundidade e giro em 3D | [capítulo 14](14-profundidade.md) |
 
-Todas, com as faixas e os padrões, estão em [Opções de todas as formas](19-referencia.md#opções-de-todas-as-formas), na referência.
+Todas, com as faixas e os padrões, estão em [Opções de todas as formas](20-referencia.md#opções-de-todas-as-formas), na referência.
 
 ## Juntando tudo
 

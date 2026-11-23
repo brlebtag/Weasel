@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /* Weasel — as conferências do guia que não desenham nada (o gerar.js as roda no npm test):
 
-   - a referência (19-referencia.md) tem uma ficha para cada comando do Weasel, e cada ficha cita toda opção
+   - a referência (20-referencia.md) tem uma ficha para cada comando do Weasel, e cada ficha cita toda opção
      (nome=) e toda palavra solta que o comando aceita; o mesmo para os estilos do art, o que a key e o at mudam
      e as palavras soltas do at;
-   - as funções das contas (20-funcoes.md) citam toda função e o pi;
-   - a linha de comando (21-linha-de-comando.md) cita toda opção que o weasel.js aceita;
-   - todo link de um capítulo para outro leva a um arquivo que existe e a um título (ou âncora) que existe nele.
+   - as funções das contas (21-funcoes.md) citam toda função e o pi;
+   - a linha de comando (22-linha-de-comando.md) cita toda opção que o weasel.js aceita;
+   - todo link de um capítulo para outro leva a um arquivo que existe e a um título (ou âncora) que existe nele;
+   - um exemplo mostrado inteiro (<summary> com exemplos/nome.weasel) é igual ao arquivo em exemplos/.
 
    Uma opção nova no Weasel faz o npm test falhar até ganhar a sua linha no guia.
 
@@ -158,19 +159,32 @@ function linkProblems(file, text, dir) {
   return probs;
 }
 
+// o código de um exemplo mostrado inteiro (<summary> … exemplos/nome.weasel …</summary> e o bloco logo depois)
+// tem que ser igual ao arquivo em exemplos/
+function exampleProblems(file, text, root = ROOT) {
+  const probs = [];
+  const re = /<summary>[^\n]*?exemplos\/([\w.-]+\.weasel)[^\n]*<\/summary>\s*\n(?:\s*<!--[^>]*-->\s*\n)*```weasel\n([\s\S]*?)\n```/g;
+  for (const m of text.matchAll(re)) {
+    let src;
+    try { src = fs.readFileSync(path.join(root, 'exemplos', m[1]), 'utf8').replace(/\r\n/g, '\n'); } catch (e) { probs.push(`${file}: exemplos/${m[1]} não existe`); continue; }
+    if (src.replace(/\n+$/, '') !== m[2].replace(/\n+$/, '')) probs.push(`${file}: o código de exemplos/${m[1]} no guia é diferente do arquivo`);
+  }
+  return probs;
+}
+
 // todas as conferências do guia; files = os capítulos (nomes dentro de docs/guia)
 function all(W, files) {
   const read = (f) => fs.readFileSync(path.join(GUIA, f), 'utf8').replace(/\r\n/g, '\n');
   const probs = [];
   const has = (f) => files.includes(f);
-  if (has('19-referencia.md')) probs.push(...refProblems(read('19-referencia.md'), W.lang).map((p) => `19-referencia.md: ${p}`));
-  if (has('20-funcoes.md')) probs.push(...fnProblems(read('20-funcoes.md'), fnNames()).map((p) => `20-funcoes.md: ${p}`));
-  if (has('21-linha-de-comando.md')) probs.push(...cliProblems(read('21-linha-de-comando.md')).map((p) => `21-linha-de-comando.md: ${p}`));
-  for (const f of files) probs.push(...linkProblems(f, read(f), GUIA));
+  if (has('20-referencia.md')) probs.push(...refProblems(read('20-referencia.md'), W.lang).map((p) => `20-referencia.md: ${p}`));
+  if (has('21-funcoes.md')) probs.push(...fnProblems(read('21-funcoes.md'), fnNames()).map((p) => `21-funcoes.md: ${p}`));
+  if (has('22-linha-de-comando.md')) probs.push(...cliProblems(read('22-linha-de-comando.md')).map((p) => `22-linha-de-comando.md: ${p}`));
+  for (const f of files) probs.push(...linkProblems(f, read(f), GUIA), ...exampleProblems(f, read(f)));
   return probs;
 }
 
-module.exports = { all, refProblems, fnProblems, fnNames, cliProblems, cliOptions, linkProblems, headings, slug, prose };
+module.exports = { all, refProblems, fnProblems, fnNames, cliProblems, cliOptions, linkProblems, exampleProblems, headings, slug, prose };
 
 // rascunho: node docs/guia/conferir.js parte.md [comandos…] (os links valem como se o arquivo estivesse em docs/guia)
 if (require.main === module) {
@@ -186,7 +200,7 @@ if (require.main === module) {
     if (cmds.includes('--funcoes')) probs.push(...fnProblems(text, fnNames()));
     else if (cmds.includes('--cli')) probs.push(...cliProblems(text));
     else if (cmds.length) probs.push(...refProblems(text, W.lang, cmds));
-    probs.push(...linkProblems(base, text, GUIA));
+    probs.push(...linkProblems(base, text, GUIA), ...exampleProblems(base, text));
     // os exemplos com <!-- conferir --> ou <!-- gerar: --> precisam rodar sem erro nem aviso
     const { makeMediaResolver } = require('../../cli/media');
     const EX = path.join(ROOT, 'exemplos');

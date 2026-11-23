@@ -1,6 +1,6 @@
 /* Weasel — a lista de todos os atalhos do editor (teclado e mouse com tecla). Só dados, sem tela: o painel
    Ajuda › Atalhos do teclado (js/ui-keys.js) lê esta lista, e o docs/guia/gerar.js escreve com ela o capítulo
-   23 do guia (docs/guia/23-atalhos.md). O npm test confere que toda tecla dos menus e toda letra de ferramenta
+   24 do guia (docs/guia/24-atalhos.md). O npm test confere que toda tecla dos menus e toda letra de ferramenta
    estão aqui: um atalho novo no editor precisa de uma linha nova nesta lista.
 
    Cada linha: k = a tecla (ou uma lista de teclas que fazem o mesmo), d = o que faz, w = onde vale (sem w: com o

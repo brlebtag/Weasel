@@ -85,7 +85,7 @@ Repare:
 - O bloco do `pixel=` é medido na imagem exportada: com `-s 2`, `pixel=4` dá blocos de 4 pixels da imagem, que são 2 do desenho.
 - O `pixel=` faz a média das cores de cada bloco, então as bordas ficam com tons misturados. Para pixel art nítida, com as cores do desenho e o contorno de um bloco, use a linha `art pixel` do [capítulo 13](13-estilos.md#pixel-art-art-pixel). Num arquivo com `art`, o `pixel=` do `finish` fica de fora (aviso).
 
-No editor, **Janela › Acabamento e estilo** escreve a linha `finish` por você ([capítulo 22](22-editor.md#acabamento-e-estilo)).
+No editor, **Janela › Acabamento e estilo** escreve a linha `finish` por você ([capítulo 23](23-editor.md#acabamento-e-estilo)).
 
 ## Só as cores da palette: `posterize=palette`
 
@@ -418,7 +418,7 @@ A transparência do `finish` se multiplica com a do próprio traço: um `stroke`
 | `grain=` | granulado de filme | de 0 a 0.33 | 0 |
 | `oldfilm=` `vhs=` `crt=` `glitch=` | efeitos de tela, que mudam a cada quadro | de 0 a 1 | 0 |
 
-Nenhuma delas muda com a `key`. A ficha completa está na [referência do `finish`](19-referencia.md#finish).
+Nenhuma delas muda com a `key`. A ficha completa está na [referência do `finish`](20-referencia.md#finish).
 
 ## Juntando tudo
 

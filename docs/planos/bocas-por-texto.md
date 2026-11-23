@@ -9,9 +9,9 @@
 ## Antes de ler
 
 A proposta usa coisas do capítulo 10 do guia (filme):
-- [Um filme curto](../guia/17-filme.md#juntando-tudo) e [Atores: `actor`](../guia/17-filme.md#atores-actor): como um personagem entra num filme.
-- [Expressões: `expr`](../guia/18-filme-atuacao.md#expressões-expr): o rosto troca uma forma por outra (`boca.shape=sorriso`).
-- [Som, legendas e lip sync](../guia/18-filme-atuacao.md#som-legendas-e-lip-sync): o `mouth`, o `sub` (com a língua de cada legenda, `lang=`) e o `audio … lips=`. A proposta aproveita os três.
+- [Um filme curto](../guia/18-filme.md#juntando-tudo) e [Atores: `actor`](../guia/18-filme.md#atores-actor): como um personagem entra num filme.
+- [Expressões: `expr`](../guia/19-filme-atuacao.md#expressões-expr): o rosto troca uma forma por outra (`boca.shape=sorriso`).
+- [Som, legendas e lip sync](../guia/19-filme-atuacao.md#som-legendas-e-lip-sync): o `mouth`, o `sub` (com a língua de cada legenda, `lang=`) e o `audio … lips=`. A proposta aproveita os três.
 
 ## O que já existe
 
@@ -36,7 +36,7 @@ mouth bico A=bico B=bicoAberto@0.3 D=bicoAberto
 ```
 
 - **Limite 1:** cada boca é um morph da forma da boca: muda só o contorno. O número de pontos pode ser diferente; só o tipo precisa combinar (forma fechada com forma fechada, traço com traço). Mas a cor continua a da boca, então não dá para ter dentes ou língua, que são outras formas, com outras cores.
-  - *Correção de 13/11/2026:* a primeira versão deste plano dizia que precisava do mesmo número de pontos. O código não exige. A linha do [capítulo 18](../guia/18-filme-atuacao.md#som-legendas-e-lip-sync) que fala da boca e o comentário de `readMouth` em js/lang.js dizem o mesmo engano e devem ser corrigidos junto.
+  - *Correção de 13/11/2026:* a primeira versão deste plano dizia que precisava do mesmo número de pontos. O código não exige. A linha do [capítulo 19](../guia/19-filme-atuacao.md#som-legendas-e-lip-sync) que fala da boca e o comentário de `readMouth` em js/lang.js dizem o mesmo engano e devem ser corrigidos junto.
 - **Limite 2:** a boca só se mexe num filme, a partir de um som (`audio … lips=coruja`) ou das deixas do Rhubarb (`cues=`). Num jogo, `mouth` não faz nada.
 - **Limite 3:** um `mouth` por arquivo.
 
@@ -104,7 +104,7 @@ São as bocas clássicas da animação, as mesmas do Rhubarb. Elas foram pensada
 
 #### Qual língua: `lang=` e `--lang`
 
-Não precisa de nada novo: a língua de cada legenda já existe ([capítulo 19](../guia/19-referencia.md#audio)).
+Não precisa de nada novo: a língua de cada legenda já existe ([capítulo 20](../guia/20-referencia.md#audio)).
 - `film lang=pt` diz a língua das legendas sem `lang=` (o padrão é português), e `sub … lang=en` marca uma legenda em inglês.
 - A boca lê cada legenda com o leitor da língua dela.
 - Quando o filme tem as mesmas falas nas duas línguas, a boca segue a língua exportada. O `--lang en` já escolhe as legendas desenhadas no vídeo, e passaria a escolher também a boca:

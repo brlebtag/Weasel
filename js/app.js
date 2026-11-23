@@ -2404,6 +2404,8 @@
 
   function draw() {
     if (!st.model) return;
+    // o teste que recomeça (outro quadro, outra animação) zera antes de o painel Testar ossos se atualizar
+    if (testOn()) syncTest();
     // quem acompanha o desenho (o painel Propriedades, a vista 3D) fica sabendo
     emit('draw');
     // com a vista Camadas em 3D aberta, ela pinta (o desenho de baixo fica parado, escondido)
@@ -3664,10 +3666,18 @@
   // Mover, girar e esticar os ossos só na tela, a partir do quadro do player (ou da pose parada), para ver se tudo
   // está conectado: nada vai para o código, o Esc zera e trocar de ferramenta volta tudo.
   function testOn() { return st.tool === 'bonetest' && !!st.model && !isFilm() && !pvModel() && !st.build; }
-  // a pose de onde o teste parte; mudar de quadro ou de animação recomeça o teste
-  function testBase() {
-    const at = `${st.anim}|${st.frame}`;
+  // a pose de onde o teste parte; mudar de quadro ou de animação recomeça o teste. Nas três vistas, o teste é da
+  // animação base (walk): trocar a direção (walk_right → walk_down) mostra o mesmo teste de outro lado
+  function testKey() {
+    const an = st.anim && st.model.animMap.get(st.anim);
+    return `${(an && an.viewOf) || st.anim}|${st.frame}`;
+  }
+  function syncTest() {
+    const at = testKey();
     if (st.bt.at !== at) { st.bt.at = at; st.bt.vals.clear(); }
+  }
+  function testBase() {
+    syncTest();
     return S.makePose(st.model, st.anim, st.frame);
   }
   // três vistas: o teste mexe nos valores da animação base (anim walk, ou a pose parada), em 3D (osso.z=, .pitch=,
@@ -3875,7 +3885,7 @@
     st.frame = frame;
     st.playing = false;
     st.bt.vals.clear();
-    st.bt.at = `${st.anim}|${frame}`;
+    st.bt.at = testKey();
     fillAnimSelect();
     hint(`Escrito: key ${frame} em ${anim} (${names.join(', ')}). Um Ctrl+Z desfaz.`, 3600);
     draw();

@@ -59,7 +59,7 @@ animações nenhuma
 
 As camadas aparecem na ordem em que são pintadas, com o número de formas de cada uma. A `base` está lá, com o chão, mesmo sem nenhuma linha `layer base`.
 
-No editor, o painel **Camadas** mostra esta mesma lista, em árvore, e deixa criar, renomear, esconder e arrastar camadas ([capítulo 22](22-editor.md#painel-camadas)).
+No editor, o painel **Camadas** mostra esta mesma lista, em árvore, e deixa criar, renomear, esconder e arrastar camadas ([capítulo 23](23-editor.md#painel-camadas)).
 
 **Experimente:** troque a linha `layer ceu` por `layer fundo`. Nada muda na imagem, e o `--info` passa a mostrar a camada `fundo` com o sol e a nuvem.
 
@@ -121,7 +121,7 @@ Os números mostram a ordem em que cada forma foi pintada:
 
 Só as linhas que desenham entram nessa ordem: `ellipse`, `rect`, `shape`, `stroke`, `line` e `text`. As outras (`canvas`, `palette`, `gradient`, `pattern`) não pintam nada, e o lugar delas não muda quem fica na frente.
 
-No editor, **Ctrl+]** e **Ctrl+[** levam a forma escolhida para cima ou para baixo: o editor muda a linha de lugar por você ([capítulo 22](22-editor.md#organizar)).
+No editor, **Ctrl+]** e **Ctrl+[** levam a forma escolhida para cima ou para baixo: o editor muda a linha de lugar por você ([capítulo 23](23-editor.md#organizar)).
 
 **Experimente:** leve a linha `ellipse selo 410,50 34 …` (e o texto `n5` logo abaixo dela) para logo depois do `text n3`, antes do `layer mesa`. O selo passa para a camada `base`, é pintado antes do cartão, e o cartão cobre quase todo ele: só a parte que passa da borda do cartão continua aparecendo.
 
@@ -605,7 +605,7 @@ text nota 156,206 "meio: x=150" size=13 c=#c44536
   node cli/weasel.js teste.weasel --guides
   ```
 
-- No editor, quem decide é o menu **Exibir › Guias** ([capítulo 22](22-editor.md#guias)).
+- No editor, quem decide é o menu **Exibir › Guias** ([capítulo 23](23-editor.md#guias)).
 - Uma camada `guide` nunca recebe luz, mesmo numa cena iluminada (a luz é do [capítulo 10](10-luz.md)).
 
 **Experimente:** troque `guide` por `hidden`. As linhas somem também com `--guides`: a camada `hidden` nunca é pintada.
@@ -621,7 +621,7 @@ O `lock` **trava**: no editor, o desenho não deixa escolher nem arrastar as for
 
 - Numa camada (`layer fundo lock`), trava todas as formas dela. É bom para o cenário, que você não quer arrastar sem querer.
 - Numa forma, trava só ela.
-- No editor, **Ctrl+2** trava a escolha e **Ctrl+Alt+2** destrava tudo, menos as camadas. O cadeado do painel Camadas põe e tira o `lock` ([capítulo 22](22-editor.md#travar-e-agrupar)).
+- No editor, **Ctrl+2** trava a escolha e **Ctrl+Alt+2** destrava tudo, menos as camadas. O cadeado do painel Camadas põe e tira o `lock` ([capítulo 23](23-editor.md#travar-e-agrupar)).
 
 Para juntar formas e mexer nelas de uma vez, existe o `group` ([capítulo 6](06-componentes.md#grupos-group)).
 
@@ -644,7 +644,7 @@ A camada tem outras opções, que aparecem mais adiante:
 - `yaw=`, `pitch=`, `persp=`, `pivot=`, `floor`, `horizon=`, `iso`, `zsort`: a profundidade 2.5D ([capítulo 14](14-profundidade.md));
 - `depth=`, `screen`, `front`: a distância num filme ([capítulo 14](14-profundidade.md#paralaxe-depth-e-screen)).
 
-A lista completa está na [referência do `layer`](19-referencia.md#layer).
+A lista completa está na [referência do `layer`](20-referencia.md#layer).
 
 ## Juntando tudo
 

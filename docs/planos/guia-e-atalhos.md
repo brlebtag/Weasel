@@ -173,7 +173,7 @@ Hoje o guia mistura três coisas. Na nova estrutura, cada uma tem o seu lugar:
 
 1. **A aula** (capítulos 1 a 18): ensina em ordem. Cada exemplo só usa o que já foi ensinado.
 2. **A consulta** (capítulos 19 a 25): a referência completa, as funções, a linha de comando, o editor, os atalhos, os problemas e o glossário.
-3. **O editor** sai da aula. No texto da linguagem fica uma linha só, com o link: "No editor, a ferramenta Elipse (L) escreve esta linha para você ([capítulo 22](…))".
+3. **O editor** sai da aula. No texto da linguagem fica uma linha só, com o link: "No editor, a ferramenta Elipse (L) escreve esta linha para você ([capítulo 23](…))".
 
 ### 3.2 Os capítulos
 
@@ -205,7 +205,7 @@ Hoje o guia mistura três coisas. Na nova estrutura, cada uma tem o seu lugar:
 | | 24 | Problemas comuns | 13, organizado pela mensagem de erro |
 | | 25 | Glossário | **novo** |
 
-- Os arquivos ganham os números novos (`02-formas.md` continua; `12-referencia.md` vira `19-referencia.md`…). Os links de fora do guia são poucos: o README e alguns planos. As imagens antigas mantêm o nome.
+- Os arquivos ganham os números novos (`02-formas.md` continua; `12-referencia.md` vira `20-referencia.md`…). Os links de fora do guia são poucos: o README e alguns planos. As imagens antigas mantêm o nome.
 - Os capítulos ficam menores. O maior deve ter umas 700 linhas.
 
 ### 3.3 Como cada comando aparece (a "ficha")
@@ -310,7 +310,7 @@ O que falta: a cor (`c=`), que todos os exemplos usam e não é explicada; o con
 > | `opacity=` | a transparência | de 0 (invisível) a 1 (inteira) | 1 |
 > | `hidden` | não pinta a forma, mas ela continua existindo | — | a forma aparece |
 >
-> As outras opções aparecem nos próximos capítulos: `weight=` e `inkon=` (contorno), `cut=` (recorte), `bone=` (osso)… A lista completa, com todas as faixas, está na [referência do `ellipse`](19-referencia.md#ellipse).
+> As outras opções aparecem nos próximos capítulos: `weight=` e `inkon=` (contorno), `cut=` (recorte), `bone=` (osso)… A lista completa, com todas as faixas, está na [referência do `ellipse`](20-referencia.md#ellipse).
 >
 > > **Cuidado:** com `ink=` e sem `c=`, a forma fica **vazia**: só o contorno aparece. Para ter as duas coisas, escreva as duas.
 > >
@@ -320,7 +320,7 @@ O que falta: a cor (`c=`), que todos os exemplos usam e não é explicada; o con
 > > ellipse as_duas 220,80 50 c=#ffb000 ink=6 inkc=#2f6fb5
 > > ```
 >
-> No editor, a ferramenta **Elipse** (L) escreve esta linha para você, e a elipse ganha pontos de arrastar para o tamanho e o giro ([capítulo 22](22-editor.md#elipse)).
+> No editor, a ferramenta **Elipse** (L) escreve esta linha para você, e a elipse ganha pontos de arrastar para o tamanho e o giro ([capítulo 23](23-editor.md#elipse)).
 
 Os três exemplos da amostra já foram rodados: sem erros e sem avisos.
 
@@ -421,7 +421,7 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 ### Etapa 2 (1.67.0): a consulta
 
 - **Capítulo 19, Referência completa** (no lugar do 12): 48 fichas, uma por comando, com a tabela `Opção | O que faz | Valores | Padrão | Anima?`, um exemplo que roda e o link **Para aprender**. Antes das fichas, "Como ler", "A escrita" (nomes, pontos, cores, tempos, curvas, misturas…) e "A ordem das linhas". O `art` tem um título por estilo; a `key` e o `at` têm uma tabela por alvo (forma, camada, luz, osso, caixa; ator, câmera, luz, camada, forma), com as colunas "sem `key`/antes do primeiro `at`" e "aos poucos/de uma vez".
-- **Ficou maior que as 700 linhas** da seção 3.2 (cerca de 3.400; só o `art` tem 670). É consulta, não aula: uma página só deixa a busca do navegador achar tudo, e as âncoras ficam simples (`19-referencia.md#ellipse`).
+- **Ficou maior que as 700 linhas** da seção 3.2 (cerca de 3.400; só o `art` tem 670). É consulta, não aula: uma página só deixa a busca do navegador achar tudo, e as âncoras ficam simples (`20-referencia.md#ellipse`).
 - **Capítulo 20, Funções das contas** (com 3 imagens novas, `20_*.png`), **21, Linha de comando** (as 62 grafias de opção, todos os comandos rodados, inclusive os de vídeo) e **25, Glossário**.
 - **O índice novo** (`docs/guia/README.md`) mostra as seis partes e os 25 números. Os capítulos que ainda não foram reescritos levam ao antigo, marcados "(antigo)".
 - **A conferência** (`docs/guia/conferir.js`, no `npm test` pelo `gerar.js`): a referência precisa ter uma ficha para cada comando de `KEYWORDS`, com toda opção de `ATTRS` e toda palavra de `FLAGS`; cada estilo do `art` com as opções de `ART_OPTS`; cada alvo da `key` e do `at` com as suas propriedades. O 20 precisa ter toda função de `FN` e o `pi`; o 21, toda opção do `parseArgs`. E todo link entre os capítulos precisa levar a um arquivo e a um título que existem (um link do capítulo 1 estava quebrado e foi corrigido).
@@ -436,7 +436,7 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
   - o `finish` foi para um capítulo 12 provisório (`12-acabamento.md`), com o texto antigo, até a etapa 6;
   - a `variant` (do 3) e o `group` (do 4) foram para o fim do capítulo 6 (`05-componentes.md`), ainda no texto antigo;
   - o `above=`/`below=` foi para o capítulo 9 (`07-animacao.md`), que já tinha o `only=`;
-  - as dicas do editor viraram o **capítulo 22** (`22-editor.md`), com as dicas dos capítulos 1 a 4 e os três exemplos com imagem do 2 antigo (Simplificar, Pathfinder e Borracha, Tesoura e Faca);
+  - as dicas do editor viraram o **capítulo 22** (`23-editor.md`), com as dicas dos capítulos 1 a 4 e os três exemplos com imagem do 2 antigo (Simplificar, Pathfinder e Borracha, Tesoura e Faca);
   - os dois casos de borda do `inkon=` (a camada recortada que encosta na borda toda e a forma maior que cobre o contorno inteiro) viraram uma linha de **Cuidado** no `clip=`.
 - **Escolhas minhas:**
   - "molde" saiu do texto: no lugar, "a forma que recorta";
@@ -560,7 +560,7 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 
 ### Etapa 9 (1.67.8): filme
 
-- **Os dois capítulos novos, no formato da seção 3.3:** o 17, Filme: atores, planos e câmera (`17-filme.md`), e o 18, Filme: atuação, som e legendas (`18-filme-atuacao.md`), saem do antigo `10-filme.md` (1.547 linhas), que saiu.
+- **Os dois capítulos novos, no formato da seção 3.3:** o 17, Filme: atores, planos e câmera (`18-filme.md`), e o 18, Filme: atuação, som e legendas (`19-filme-atuacao.md`), saem do antigo `10-filme.md` (1.547 linhas), que saiu.
 - **A divisão:** o 17 tem o que todo filme usa: `film` e `canvas` (começando pelo menor filme, sem planos, como a tabela da seção 1 pedia), os atores, as mudanças no tempo (`at`), a câmera, os planos e as transições, a luz e os comandos para ver e exportar. O 18 tem a atuação: as expressões (`expr`), os marcadores (`mark`), os caminhos (`path=`), trocar de animação sem tranco (`blend=` e `phase`), o `speed=auto`, a metamorfose (`morph=`), o `front`, o som, as legendas e o lip sync, os filmes longos (`scene`) e a exportação para o editor de vídeo. A profundidade no filme já estava no 14; no 17 ficou só um parágrafo que leva até lá.
 - **O tamanho:** o 17 tem 904 linhas, das quais 31 ficam fechadas em `<details>` (o código da vila); à vista, umas 873. Passou das 700, como o 3, o 8 e o 10: cada parte do filme (o ator, o `at`, a câmera, o plano, a transição) precisa de um exemplo que mexe, e cada um tem a sua imagem. O 18 tem 754, das quais 86 em `<details>` (o Andador e as duas cenas); à vista, umas 668.
 - **As vitrines:** no 17, o filme curto que abria o capítulo antigo (3 atores, luzes, 2 planos e 12 `at`) agora fecha o capítulo, quando tudo já foi ensinado, com um Experimente que troca a câmera parada por `follow=`. No 18, uma cena nova (`18_aviso`): a carinha sai de trás de uma moita `front` por uma trilha `guide` (`path=`), a coruja fala com lip sync e legenda desenhada, e a carinha se assusta num marcador. A vitrine antiga do `path=` (`10_marcas`) saiu.
@@ -581,7 +581,7 @@ Durante as etapas 3 a 9, o índice mostra os capítulos novos e, no lugar dos qu
 
 ### Etapa 10 (1.67.9): problemas comuns, o editor e a revisão
 
-- **O capítulo 24, Problemas comuns (`24-problemas.md`),** sai do antigo `13-problemas.md`, que saiu. Cada problema tem as três partes da seção 3.3 (o que você vê, por quê, como resolver). As mensagens do capítulo são as de verdade: cada uma foi rodada na linha de comando e copiada com a linha, a coluna e os `^^^^`.
+- **O capítulo 24, Problemas comuns (`25-problemas.md`),** sai do antigo `13-problemas.md`, que saiu. Cada problema tem as três partes da seção 3.3 (o que você vê, por quê, como resolver). As mensagens do capítulo são as de verdade: cada uma foi rodada na linha de comando e copiada com a linha, a coluna e os `^^^^`.
 - **Achar pela mensagem:** uma tabela no começo, em ordem alfabética, leva do começo de cada mensagem ao problema que a explica (38 linhas). É o "organizado pela mensagem de erro" da seção 5. Quem não tem mensagem (a forma sumiu, o braço não mexe) procura pelo assunto, nos links logo abaixo do título.
 - **Um título novo, Escrever as linhas:** os erros de quem está começando, juntos: instrução desconhecida, atributo desconhecido (e o atributo repetido), valor solto (com o comentário `#cafe`), o ponto com espaço (`200, 120`) e o nome com acento, nome inválido, ponto inválido e pelo menos 3 pontos, cor desconhecida, use uma cor #hex aqui, deve ficar entre, já existe e sem end. O formato x,y, a cor desconhecida e o `#cafe` já estavam no antigo; os outros são novos.
 - **Problemas novos nos outros títulos:** falta pivot, quadro passa do fim, componente que não existe, o `at` fora de um filme ou de um plano, e o `horizon=` sem `floor`. São 83 problemas; o antigo tinha 73.

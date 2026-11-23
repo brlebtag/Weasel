@@ -1,6 +1,6 @@
 # Ajudante do Godot: quadros, fps e troca na mesma fase
 
-**Situação:** feito na 1.42.0 (15/11/2026). Item 1 da fila combinada em 10/11/2026. O que ficou está no [capítulo 15 do guia](../guia/15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés), no [capítulo 10](../guia/18-filme-atuacao.md#trocar-sem-perder-o-passo-phase) e em [Como ficou](#como-ficou-1420), no fim deste arquivo.
+**Situação:** feito na 1.42.0 (15/11/2026). Item 1 da fila combinada em 10/11/2026. O que ficou está no [capítulo 15 do guia](../guia/15-jogo-personagem.md#no-jogo-a-velocidade-dos-pés), no [capítulo 10](../guia/19-filme-atuacao.md#trocar-sem-perder-o-passo-phase) e em [Como ficou](#como-ficou-1420), no fim deste arquivo.
 
 **Origem:** sugestões das sessões do ForestPatrol (a capivara e o Chefe/pardal).
 

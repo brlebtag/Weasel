@@ -36,7 +36,7 @@ Linha por linha:
 
 **Experimente:** troque `r1=50` por `r1=65`. A bola de baixo cresce, e as de cima sobem juntas, encostadas. Você mudou um número só.
 
-> No editor, segure **Alt** e arraste um número do código para os lados: ele muda, e o desenho acompanha ([capítulo 22](22-editor.md#números-no-código)).
+> No editor, segure **Alt** e arraste um número do código para os lados: ele muda, e o desenho acompanha ([capítulo 23](23-editor.md#números-no-código)).
 
 ### Uma variável feita de outras
 
@@ -73,7 +73,7 @@ Tudo na carinha depende de `cx`, `cy` e `r`. Por isso, ela muda inteira de uma v
 | o nome | o nome da variável | começa com letra ou `_`; depois, letras sem acento, números e `_` | obrigatório |
 | o valor | o número que ela guarda | um número ou uma conta; aqui as chaves podem faltar (`let d=r*2` é o mesmo que `let d={r*2}`) | obrigatório |
 
-A ficha completa está na [referência](19-referencia.md#let).
+A ficha completa está na [referência](20-referencia.md#let).
 
 **Cuidado:**
 - O Weasel lê todos os `let` antes do resto. Uma variável vale no arquivo inteiro, até nas linhas acima do `let`. A ordem dos `let` também não importa: `let a=b*2` pode vir antes de `let b=10`.
@@ -123,7 +123,7 @@ boneco.weasel:3:23: erro: use: ellipse nome cx,cy rx,ry (ou um raio só)
 2 erro(s).
 ```
 
-O primeiro erro diz qual conta falhou e por quê. O segundo é consequência dele: sem o número, a elipse ficou sem raio. Dividir por zero e tirar a raiz de um número negativo também dão erro: `o resultado não é um número`. Todas as mensagens estão no [capítulo 20](20-funcoes.md#quando-a-conta-dá-errado).
+O primeiro erro diz qual conta falhou e por quê. O segundo é consequência dele: sem o número, a elipse ficou sem raio. Dividir por zero e tirar a raiz de um número negativo também dão erro: `o resultado não é um número`. Todas as mensagens estão no [capítulo 21](21-funcoes.md#quando-a-conta-dá-errado).
 
 ## Repetir: `repeat`
 
@@ -159,7 +159,7 @@ Linha por linha:
 
 **Experimente:** troque `0..7` por `0..3`. Só quatro tábuas aparecem, na metade esquerda. A trave continua inteira, porque está fora do `repeat`.
 
-> No editor, os pontos de uma linha repetida ficam cinza e não se movem com o mouse: mexer num mudaria todas as cópias ([capítulo 22](22-editor.md#números-no-código)).
+> No editor, os pontos de uma linha repetida ficam cinza e não se movem com o mouse: mexer num mudaria todas as cópias ([capítulo 23](23-editor.md#números-no-código)).
 
 ### A variável em várias contas
 
@@ -268,7 +268,7 @@ text t2 440,178 "4..0" size=20 align=right bold
 | a variável | o nome que muda a cada volta | um nome, como no `let` | obrigatório |
 | `início..fim` | o primeiro e o último valor, de 1 em 1 | dois números ou contas (`0..9`, `1..{n}`, `0..n-1`); de 1 a 1000 voltas | obrigatório |
 
-A ficha completa está na [referência](19-referencia.md#repeat).
+A ficha completa está na [referência](20-referencia.md#repeat).
 
 **Cuidado:**
 - Cada `repeat` precisa do seu `end`. Sem ele, o Weasel mostra `repeat sem end`.
@@ -379,7 +379,7 @@ Linha por linha:
 - Uma comparação também serve sozinha, como número: o `opacity={(lin+col)%2}` do xadrez mostra ou esconde uma forma.
 - O Weasel faz primeiro as contas e só depois compara: `{i+1<5}` é o mesmo que `{(i+1)<5}`.
 - Uma escolha pode ficar dentro de outra: `{i<4 ? 10 : i<8 ? 20 : 30}` dá 10, 20 ou 30.
-- Para juntar duas perguntas ("e", "ou", "não"), veja o [capítulo 20](20-funcoes.md#as-operações).
+- Para juntar duas perguntas ("e", "ou", "não"), veja o [capítulo 21](21-funcoes.md#as-operações).
 
 **Experimente:** troque `i%5==0` por `i%2==0`. A régua alterna: um traço comprido, um curto.
 
@@ -430,7 +430,7 @@ Algumas funções que você vai usar bastante:
 | `lerp(a,b,t)` | um valor entre `a` e `b`: com `t=0` dá `a`, com `t=1` dá `b`, com `t=0.5`, o meio | `{lerp(100,300,0.5)}` | 200 |
 | `dist(x1,y1,x2,y2)` | a distância entre dois pontos | `{dist(0,0,30,40)}` | 50 |
 
-Todas as funções, cada uma com exemplos, estão no [capítulo 20](20-funcoes.md).
+Todas as funções, cada uma com exemplos, estão no [capítulo 21](21-funcoes.md).
 
 ## Juntando tudo
 

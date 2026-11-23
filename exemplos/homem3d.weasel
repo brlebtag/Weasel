@@ -1,0 +1,132 @@
+# Homem em três vistas — proporção realista, com joelho, cotovelo e pé, para o Godot
+# Desenhado de frente (view=down), de lado (view=right) e de costas (view=up); o lado esquerdo sai
+# espelhado no Godot. Cada perna tem três ossos (coxa, canela e pé) e cada braço três (braço,
+# antebraço e mão): o pitch de cada um dobra o joelho, o tornozelo e o cotovelo, e o yaw do quadril e
+# do tronco faz o corpo torcer a cada passo. tip=x,y,z no pé diz que ele aponta 16 px para a frente.
+# As animações foram calculadas por um programa (um quadro por key, ease=linear): andar e correr.
+# Veja as profundidades e as trocas de ordem com:  weasel homem3d.weasel --info
+
+canvas 160 285 bg=#eef0e6
+palette ink=#2a1d16 line=2.5 thin=1.2
+palette pele=#e8b48c peled=#cf9a72 camisa=#e9e4d8 camisad=#c9c2b2 calca=#34466b calcad=#26344f sapato=#2b2420 cabelo=#3b2a1e olho=#1a1414
+
+godot body=character root=80,250
+views tilt=30
+
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,250 140,250
+
+# ---------- ossos ----------
+bone quadril pivot=80,135 tip=80,146
+bone tronco parent=quadril pivot=80,135
+bone cabeca parent=tronco pivot=80,64
+bone coxaD parent=quadril pivot=69,135
+bone canelaD parent=coxaD pivot=69,193
+bone peD parent=canelaD pivot=69,244 tip=69,250,16 side=80
+bone coxaE parent=quadril pivot=91,135
+bone canelaE parent=coxaE pivot=91,193
+bone peE parent=canelaE pivot=91,244 tip=91,250,16 side=80
+bone bracoD parent=tronco pivot=52,74
+bone antebracoD parent=bracoD pivot=50,120
+bone maoD parent=antebracoD pivot=49,152
+bone bracoE parent=tronco pivot=108,74
+bone antebracoE parent=bracoE pivot=110,120
+bone maoE parent=antebracoE pivot=111,152
+
+# ---------- de frente ----------
+layer frente view=down
+shape coxaDf c=calca ink=line bone=coxaD : 60,134 79,134 76,196 63,196
+shape canelaDf c=calca ink=line bone=canelaD : 63,190 76,190 74,244 65,244
+shape peDf c=sapato ink=thin bone=peD : 62,241! 76,241! 78,250! 60,250!
+shape coxaEf c=calca ink=line bone=coxaE : 81,134 100,134 97,196 84,196
+shape canelaEf c=calca ink=line bone=canelaE : 84,190 97,190 95,244 86,244
+shape peEf c=sapato ink=thin bone=peE : 84,241! 98,241! 100,250! 82,250!
+shape bacia c=calca ink=line bone=quadril : 62,126! 98,126! 101,146! 80,150 59,146!
+shape camisaF c=camisa ink=line bone=tronco : 56,69! 104,69! 110,77 105,112 99,136! 61,136! 55,112 50,77
+stroke golaF w=thin c=camisad bone=tronco : 72,70 80,78 88,70
+rect pescocoF 74,57 12,14 c=peled ink=thin bone=cabeca
+ellipse cabecaF 80,46 13,16 c=pele ink=line bone=cabeca
+shape cabeloF c=cabelo bone=cabeca : 67,44 67,34 74,29 86,29 93,34 93,44 89,36 80,35 71,37
+ellipse olhoDf 75,46 1.6,2 c=olho bone=cabeca
+ellipse olhoEf 85,46 1.6,2 c=olho bone=cabeca
+stroke narizF w=thin c=peled bone=cabeca : 80,47 79,53 81,54
+stroke bocaF w=thin c=ink bone=cabeca : 76,57 80,58 84,57
+shape bracoDf c=camisa ink=line bone=bracoD : 46,74 58,72 57,122 46,122
+shape antebracoDf c=pele ink=line bone=antebracoD : 45,118 56,118 53,154 46,154
+ellipse maoDf 49,159 5,8 c=pele ink=thin bone=maoD
+shape bracoEf c=camisa ink=line bone=bracoE : 102,72 114,74 114,122 103,122
+shape antebracoEf c=pele ink=line bone=antebracoE : 104,118 115,118 114,154 107,154
+ellipse maoEf 111,159 5,8 c=pele ink=thin bone=maoE
+
+# ---------- de lado (virado para a direita: o lado direito do homem fica perto) ----------
+layer lado view=right
+shape bracoEl c=camisad ink=line bone=bracoE : 75,72 86,72 85,122 76,122
+shape antebracoEl c=peled ink=line bone=antebracoE : 76,118 85,118 84,154 77,154
+ellipse maoEl 80,159 5,8 c=peled ink=thin bone=maoE
+shape coxaEl c=calcad ink=line bone=coxaE : 71,134 90,134 86,196 74,196
+shape canelaEl c=calcad ink=line bone=canelaE : 74,190 86,190 84,244 76,244
+shape peEl c=sapato ink=thin bone=peE : 74,240! 84,240 97,245 98,250! 72,250!
+shape coxaDl c=calca ink=line bone=coxaD : 71,134 90,134 86,196 74,196
+shape canelaDl c=calca ink=line bone=canelaD : 74,190 86,190 84,244 76,244
+shape peDl c=sapato ink=thin bone=peD : 74,240! 84,240 97,245 98,250! 72,250!
+shape baciaL c=calca ink=line bone=quadril : 67,126! 92,126! 94,146! 66,146!
+shape camisaL c=camisa ink=line bone=tronco : 70,69! 90,69! 95,88 93,112 91,136! 68,136! 66,112 67,88
+rect pescocoL 75,57 10,14 c=peled ink=thin bone=cabeca
+ellipse cabecaL 81,46 13,16 c=pele ink=line bone=cabeca
+shape narizL c=pele ink=thin bone=cabeca : 93,41! 97,50! 92,51!
+shape cabeloL c=cabelo bone=cabeca : 68,52 67,36 74,29 86,29 93,34 88,37 78,36 76,46 71,56
+ellipse orelhaL 78,47 2.5,4 c=peled ink=thin bone=cabeca
+ellipse olhoL 89,45 1.4,2 c=olho bone=cabeca
+stroke bocaL w=thin c=ink bone=cabeca : 89,57 92,57
+shape bracoDl c=camisa ink=line bone=bracoD : 75,72 86,72 85,122 76,122
+shape antebracoDl c=pele ink=line bone=antebracoD : 76,118 85,118 84,154 77,154
+ellipse maoDl 80,159 5,8 c=pele ink=thin bone=maoD
+
+# ---------- de costas ----------
+layer costas view=up
+shape coxaDc c=calca ink=line bone=coxaD : 81,134 100,134 97,196 84,196
+shape canelaDc c=calca ink=line bone=canelaD : 84,190 97,190 95,244 86,244
+shape peDc c=sapato ink=thin bone=peD : 84,240! 98,240! 98,250! 84,250!
+shape coxaEc c=calca ink=line bone=coxaE : 60,134 79,134 76,196 63,196
+shape canelaEc c=calca ink=line bone=canelaE : 63,190 76,190 74,244 65,244
+shape peEc c=sapato ink=thin bone=peE : 62,240! 76,240! 76,250! 62,250!
+shape baciaC c=calca ink=line bone=quadril : 62,126! 98,126! 101,146! 80,150 59,146!
+shape camisaC c=camisa ink=line bone=tronco : 56,69! 104,69! 110,77 105,112 99,136! 61,136! 55,112 50,77
+stroke costuraC w=thin c=camisad bone=tronco : 80,72 80,132
+rect pescocoC 74,57 12,14 c=peled ink=thin bone=cabeca
+ellipse cabecaC 80,46 13,16 c=cabelo ink=line bone=cabeca
+ellipse orelhaDc 93,47 2.5,4 c=peled ink=thin bone=cabeca
+ellipse orelhaEc 67,47 2.5,4 c=peled ink=thin bone=cabeca
+shape bracoDc c=camisa ink=line bone=bracoD : 102,74 114,72 114,122 103,122
+shape antebracoDc c=pele ink=line bone=antebracoD : 104,118 115,118 114,154 107,154
+ellipse maoDc 111,159 5,8 c=pele ink=thin bone=maoD
+shape bracoEc c=camisa ink=line bone=bracoE : 46,72 58,74 57,122 46,122
+shape antebracoEc c=pele ink=line bone=antebracoE : 45,118 56,118 53,154 46,154
+ellipse maoEc 49,159 5,8 c=pele ink=thin bone=maoE
+
+# ---------- animações: cada uma escrita uma vez (uma key por quadro) ----------
+anim walk frames=8 fps=10
+key 0 quadril=0,7.77 quadril.yaw=5.0 tronco.yaw=-9.0 tronco.pitch=0 coxaD.pitch=22 canelaD.pitch=-4 peD.pitch=18 coxaE.pitch=-18 canelaE.pitch=-12 peE.pitch=-15 bracoD.pitch=-19.8 antebracoD.pitch=8.0 bracoE.pitch=16.2 antebracoE.pitch=17.7 ease=linear
+key 1 quadril=0,1.24 quadril.yaw=3.0 tronco.yaw=-5.4 tronco.pitch=0 coxaD.pitch=12 canelaD.pitch=-14 peD.pitch=0 coxaE.pitch=-12 canelaE.pitch=-40 peE.pitch=-20 bracoD.pitch=-10.8 antebracoD.pitch=8.0 bracoE.pitch=10.8 antebracoE.pitch=14.5 ease=linear
+key 2 quadril=0,0.12 quadril.yaw=-2.5 tronco.yaw=4.5 tronco.pitch=0 coxaD.pitch=0 canelaD.pitch=-4 peD.pitch=0 coxaE.pitch=20 canelaE.pitch=-55 peE.pitch=5 bracoD.pitch=0.0 antebracoD.pitch=8.0 bracoE.pitch=-18.0 antebracoE.pitch=8.0 ease=linear
+key 3 quadril=0,2.27 quadril.yaw=-4.8 tronco.yaw=8.6 tronco.pitch=0 coxaD.pitch=-10 canelaD.pitch=-2 peD.pitch=-5 coxaE.pitch=28 canelaE.pitch=-25 peE.pitch=12 bracoD.pitch=9.0 antebracoD.pitch=13.4 bracoE.pitch=-25.2 antebracoE.pitch=8.0 ease=linear
+key 4 quadril=0,7.77 quadril.yaw=-5.0 tronco.yaw=9.0 tronco.pitch=0 coxaD.pitch=-18 canelaD.pitch=-12 peD.pitch=-15 coxaE.pitch=22 canelaE.pitch=-4 peE.pitch=18 bracoD.pitch=16.2 antebracoD.pitch=17.7 bracoE.pitch=-19.8 antebracoE.pitch=8.0 ease=linear
+key 5 quadril=0,1.24 quadril.yaw=-3.0 tronco.yaw=5.4 tronco.pitch=0 coxaD.pitch=-12 canelaD.pitch=-40 peD.pitch=-20 coxaE.pitch=12 canelaE.pitch=-14 peE.pitch=0 bracoD.pitch=10.8 antebracoD.pitch=14.5 bracoE.pitch=-10.8 antebracoE.pitch=8.0 ease=linear
+key 6 quadril=0,0.12 quadril.yaw=2.5 tronco.yaw=-4.5 tronco.pitch=0 coxaD.pitch=20 canelaD.pitch=-55 peD.pitch=5 coxaE.pitch=0 canelaE.pitch=-4 peE.pitch=0 bracoD.pitch=-18.0 antebracoD.pitch=8.0 bracoE.pitch=0.0 antebracoE.pitch=8.0 ease=linear
+key 7 quadril=0,2.27 quadril.yaw=4.8 tronco.yaw=-8.6 tronco.pitch=0 coxaD.pitch=28 canelaD.pitch=-25 peD.pitch=12 coxaE.pitch=-10 canelaE.pitch=-2 peE.pitch=-5 bracoD.pitch=-25.2 antebracoD.pitch=8.0 bracoE.pitch=9.0 antebracoE.pitch=13.4 ease=linear
+key 8 quadril=0,7.77 quadril.yaw=5.0 tronco.yaw=-9.0 tronco.pitch=0 coxaD.pitch=22 canelaD.pitch=-4 peD.pitch=18 coxaE.pitch=-18 canelaE.pitch=-12 peE.pitch=-15 bracoD.pitch=-19.8 antebracoD.pitch=8.0 bracoE.pitch=16.2 antebracoE.pitch=17.7 ease=linear
+event 0 passo
+event 4 passo
+
+anim run frames=8 fps=12
+key 0 quadril=0,2.80 quadril.yaw=7.2 tronco.yaw=-13.0 tronco.pitch=-10 coxaD.pitch=18 canelaD.pitch=-20 peD.pitch=10 coxaE.pitch=-30 canelaE.pitch=-40 peE.pitch=-25 bracoD.pitch=-21.6 antebracoD.pitch=82.0 bracoE.pitch=36.0 antebracoE.pitch=82.0 ease=linear
+key 1 quadril=0,1.48 quadril.yaw=2.2 tronco.yaw=-4.0 tronco.pitch=-10 coxaD.pitch=15 canelaD.pitch=-45 peD.pitch=0 coxaE.pitch=0 canelaE.pitch=-100 peE.pitch=-10 bracoD.pitch=-18.0 antebracoD.pitch=82.0 bracoE.pitch=0.0 antebracoE.pitch=82.0 ease=linear
+key 2 quadril=0,-2.76 quadril.yaw=-9.0 tronco.yaw=16.2 tronco.pitch=-10 coxaD.pitch=-15 canelaD.pitch=-20 peD.pitch=-35 coxaE.pitch=45 canelaE.pitch=-80 peE.pitch=0 bracoD.pitch=18.0 antebracoD.pitch=82.0 bracoE.pitch=-40.0 antebracoE.pitch=82.0 ease=linear
+key 3 quadril=0,4.64 quadril.yaw=-7.8 tronco.yaw=14.0 tronco.pitch=-10 coxaD.pitch=-22 canelaD.pitch=-60 peD.pitch=-15 coxaE.pitch=30 canelaE.pitch=-20 peE.pitch=5 bracoD.pitch=26.4 antebracoD.pitch=82.0 bracoE.pitch=-36.0 antebracoE.pitch=82.0 ease=linear
+key 4 quadril=0,2.80 quadril.yaw=-7.2 tronco.yaw=13.0 tronco.pitch=-10 coxaD.pitch=-30 canelaD.pitch=-40 peD.pitch=-25 coxaE.pitch=18 canelaE.pitch=-20 peE.pitch=10 bracoD.pitch=36.0 antebracoD.pitch=82.0 bracoE.pitch=-21.6 antebracoE.pitch=82.0 ease=linear
+key 5 quadril=0,1.48 quadril.yaw=-2.2 tronco.yaw=4.0 tronco.pitch=-10 coxaD.pitch=0 canelaD.pitch=-100 peD.pitch=-10 coxaE.pitch=15 canelaE.pitch=-45 peE.pitch=0 bracoD.pitch=0.0 antebracoD.pitch=82.0 bracoE.pitch=-18.0 antebracoE.pitch=82.0 ease=linear
+key 6 quadril=0,-2.76 quadril.yaw=9.0 tronco.yaw=-16.2 tronco.pitch=-10 coxaD.pitch=45 canelaD.pitch=-80 peD.pitch=0 coxaE.pitch=-15 canelaE.pitch=-20 peE.pitch=-35 bracoD.pitch=-40.0 antebracoD.pitch=82.0 bracoE.pitch=18.0 antebracoE.pitch=82.0 ease=linear
+key 7 quadril=0,4.64 quadril.yaw=7.8 tronco.yaw=-14.0 tronco.pitch=-10 coxaD.pitch=30 canelaD.pitch=-20 peD.pitch=5 coxaE.pitch=-22 canelaE.pitch=-60 peE.pitch=-15 bracoD.pitch=-36.0 antebracoD.pitch=82.0 bracoE.pitch=26.4 antebracoE.pitch=82.0 ease=linear
+key 8 quadril=0,2.80 quadril.yaw=7.2 tronco.yaw=-13.0 tronco.pitch=-10 coxaD.pitch=18 canelaD.pitch=-20 peD.pitch=10 coxaE.pitch=-30 canelaE.pitch=-40 peE.pitch=-25 bracoD.pitch=-21.6 antebracoD.pitch=82.0 bracoE.pitch=36.0 antebracoE.pitch=82.0 ease=linear
+event 0 passo
+event 4 passo

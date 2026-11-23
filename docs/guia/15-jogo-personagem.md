@@ -76,7 +76,7 @@ Gosma (CharacterBody2D)            ← o nó raiz; a origem é o root=
 └── AnimationPlayer                ← o tocador de animações, com o weasel_anim.gd
 ```
 
-Na linha de comando, o `.tscn` sai sempre com todas as animações, com o fundo transparente e recortado em volta do desenho, com 8 pixels de folga. No editor, a mesma pasta sai pela janela **Exportar** ([capítulo 22](22-editor.md#jogo)).
+Na linha de comando, o `.tscn` sai sempre com todas as animações, com o fundo transparente e recortado em volta do desenho, com 8 pixels de folga. No editor, a mesma pasta sai pela janela **Exportar** ([capítulo 23](23-editor.md#jogo)).
 
 ### Abrir no Godot
 
@@ -181,7 +181,7 @@ O **normal map** é uma segunda imagem, em tons de azul e roxo, que diz para ond
 | `normal=` | a força do relevo do normal map | de 0 a 10 | 1 |
 | `rig=` | por quadros ou com esqueleto ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)) | `frames` ou `bones` | `frames` |
 
-A ficha completa está na [referência do `godot`](19-referencia.md#godot). Duas linhas `godot` no mesmo arquivo dão aviso, e vale a última.
+A ficha completa está na [referência do `godot`](20-referencia.md#godot). Duas linhas `godot` no mesmo arquivo dão aviso, e vale a última.
 
 ## Caixas de colisão: `box`
 
@@ -328,7 +328,7 @@ tracks/6/path = NodePath("Hitbox/lamina:disabled")
 | `only=` | as animações em que a caixa existe | nomes de `anim`, separados por vírgula; `pose` é o desenho parado | em todas |
 | `off` | começa desligada (ligue com `key nome.show=1`) | palavra | ligada |
 
-A ficha completa está na [referência do `box`](19-referencia.md#box).
+A ficha completa está na [referência do `box`](20-referencia.md#box).
 
 **Cuidado:**
 - Evite dar à caixa o nome de uma forma. Se der, o Weasel avisa, e numa `key` vale a caixa.
@@ -489,7 +489,7 @@ func _physics_process(_delta: float) -> void:
 
 **Experimente:** apague as duas linhas `anim` das diagonais. A bolinha passa a ter quatro direções, e na diagonal o `tocar()` escolhe a reta mais perto. `--no-mirror` na linha de comando exporta sem os lados espelhados.
 
-Com ossos, dá para escrever cada animação uma vez só: as vistas usam o mesmo esqueleto, e o Weasel gera a `walk_down`, a `walk_right` e a `walk_up` a partir da `walk` ([três vistas, uma animação](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)).
+Com ossos, dá para escrever cada animação uma vez só: as vistas usam o mesmo esqueleto, e o Weasel gera a `walk_down`, a `walk_right` e a `walk_up` a partir da `walk` ([capítulo 17](17-jogo-tres-vistas.md)).
 
 ## Andar sem escorregar: `feet=`
 
@@ -610,7 +610,7 @@ A cena do Godot guarda a medida de cada animação (já na escala da exportaçã
 ```
 
 - `tocar()` recomeça a animação do quadro 0 quando ela muda. Entre dois jeitos de andar (de `anda` para `trote`), isso faz o pé que estava no chão aparecer de repente no ar. `tocar("trote", velocity, true)` continua no mesmo ponto da passada: com `feet=` nas duas, o pé que está no chão continua no chão. Só vale entre animações em loop.
-- No filme, `speed=auto` usa a mesma medida ([capítulo 18](18-filme-atuacao.md#andar-sem-escorregar-speedauto)).
+- No filme, `speed=auto` usa a mesma medida ([capítulo 19](19-filme-atuacao.md#andar-sem-escorregar-speedauto)).
 
 ## Opções do personagem de jogo
 
@@ -625,9 +625,9 @@ A cena do Godot guarda a medida de cada animação (já na escala da exportaçã
 | `point` | `bone=` | o osso que o ponto segue | o nome de um osso | parado |
 | `anim` | `feet=` | os pontos que são os pés | um ou mais nomes de `point` | sem medida |
 
-As fichas completas estão na referência: [`godot`](19-referencia.md#godot), [`box`](19-referencia.md#box), [`point`](19-referencia.md#point) e [`anim`](19-referencia.md#anim). As opções de exportar estão na [linha de comando](21-linha-de-comando.md).
+As fichas completas estão na referência: [`godot`](20-referencia.md#godot), [`box`](20-referencia.md#box), [`point`](20-referencia.md#point) e [`anim`](20-referencia.md#anim). As opções de exportar estão na [linha de comando](22-linha-de-comando.md).
 
-**No editor:** as caixas aparecem por cima do desenho (**Exibir › Hitboxes**), os pontos aparecem com **Exibir › Guias**, e **Exibir › Trajetória** mostra o caminho dos pés. A janela **Exportar** tem a aba **Godot** ([capítulo 22](22-editor.md#jogo)).
+**No editor:** as caixas aparecem por cima do desenho (**Exibir › Hitboxes**), os pontos aparecem com **Exibir › Guias**, e **Exibir › Trajetória** mostra o caminho dos pés. A janela **Exportar** tem a aba **Godot** ([capítulo 23](23-editor.md#jogo)).
 
 ## Juntando tudo
 

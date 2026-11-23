@@ -1,0 +1,147 @@
+# Guarda em três vistas — lança, capa e cabeça que vira, para o Godot
+# Desenhado de frente (view=down), de lado (view=right) e de costas (view=up); o lado esquerdo sai
+# espelhado no Godot. Mostra os giros em 3D:
+# - lanca.pitch= deita a lança para a frente na estocada (de frente, ela vem para quem olha e encurta);
+# - capa.pitch= leva a capa para trás quando ele anda (de costas, ela fica por cima do corpo);
+# - cabeca.yaw= vira a cabeça, e o turns no bone cabeca troca o desenho: virada 80°, a cabeça de
+#   frente mostra o perfil.
+# tip=x,y no bone diz para onde o osso aponta; side=x, o x dele na vista de lado.
+# Veja as profundidades e as trocas de ordem com:  weasel guarda3d.weasel --info
+
+canvas 160 240 bg=#eef0e6
+palette ink=#2a1d16 line=2.5 thin=1.2
+palette pele=#e8b48c metal=#b9c1cc metald=#8d96a3 capa=#7d1f2a capad=#5e1620 tunica=#c9a23a tunicad=#a8852a
+palette calca=#4a4038 bota=#2b2420 haste=#8a5a32 crina=#c8433a olho=#1a1414 bigode=#5a3a22
+
+godot body=character root=80,205
+views tilt=30
+
+layer guia guide
+line chao c=#b9bba8 w=1 : 20,205 140,205
+
+# ---------- ossos ----------
+bone corpo pivot=80,128
+bone cabeca parent=corpo pivot=80,72 turns
+bone capa parent=corpo pivot=80,80 tip=80,172 side=72
+bone pernaD pivot=73,128 tip=73,205
+bone pernaE pivot=87,128 tip=87,205
+bone bracoD parent=corpo pivot=63,84
+bone lanca parent=bracoD pivot=61,119 tip=61,8 side=80
+bone bracoE parent=corpo pivot=97,84
+
+# ---------- de frente ----------
+layer frente view=down
+shape capaF c=capad ink=line bone=capa : 64,80 96,80 108,172! 52,172!
+rect pernaDf 67,128 12,62 c=calca ink=thin bone=pernaD
+rect botaDf 65,186 15,19 r=3 c=bota ink=thin bone=pernaD
+rect pernaEf 81,128 12,62 c=calca ink=thin bone=pernaE
+rect botaEf 80,186 15,19 r=3 c=bota ink=thin bone=pernaE
+shape tunicaF c=tunica ink=line bone=corpo : 65,84! 95,84! 102,142! 58,142!
+shape peitoF c=metal ink=line bone=corpo : 66,84 94,84 93,110 80,116 67,110
+rect cintoF 61,112 38,6 c=haste bone=corpo
+ellipse bracoEf 99,101 6,18 c=tunicad ink=line bone=bracoE
+ellipse maoEf 99,120 5 c=pele ink=thin bone=bracoE
+ellipse bracoDf 61,101 6,18 c=tunicad ink=line bone=bracoD
+rect hasteF 59.5,8 3,192 c=haste ink=thin bone=lanca
+shape pontaF c=metal ink=thin bone=lanca : 61,-6! 65,8! 61,12! 57,8!
+ellipse maoDf 61,120 5 c=pele ink=thin bone=bracoD
+ellipse rostoF 80,54 15,17 c=pele ink=line bone=cabeca
+shape elmoF c=metal ink=line bone=cabeca : 64,54! 65,41 72,34 80,32 88,34 95,41 96,54! 90,46 80,44 70,46
+rect protecaoF 78,44 4,14 c=metald ink=thin bone=cabeca
+shape crinaF c=crina ink=thin bone=cabeca : 77,34 79,16 81,16 83,34
+ellipse olhoDf 74,55 1.8,2.2 c=olho bone=cabeca
+ellipse olhoEf 86,55 1.8,2.2 c=olho bone=cabeca
+shape bigodeF c=bigode bone=cabeca : 72,62 80,60 88,62 86,65 80,63 74,65
+
+# ---------- de lado (virado para a direita: a lança fica perto) ----------
+layer lado view=right
+shape capaL c=capad ink=line bone=capa : 66,80 76,82 74,172! 50,174! 58,120
+ellipse bracoEl 81,101 6,18 c=tunicad ink=line bone=bracoE
+ellipse maoEl 82,120 5 c=pele ink=thin bone=bracoE
+rect pernaEl 74,128 12,62 c=calca ink=thin bone=pernaE
+rect botaEl 73,186 18,19 r=3 c=bota ink=thin bone=pernaE
+rect pernaDl 74,128 12,62 c=calca ink=thin bone=pernaD
+rect botaDl 73,186 18,19 r=3 c=bota ink=thin bone=pernaD
+shape tunicaL c=tunica ink=line bone=corpo : 69,84! 91,84! 96,142! 64,142!
+shape peitoL c=metal ink=line bone=corpo : 70,84 90,84 94,104 88,114 72,114
+rect cintoL 66,112 28,6 c=haste bone=corpo
+ellipse rostoL 81,54 15,17 c=pele ink=line bone=cabeca
+shape narizL c=pele ink=thin bone=cabeca : 94,50! 98,57! 93,58!
+shape elmoL c=metal ink=line bone=cabeca : 64,58! 64,42 72,34 84,32 93,38 97,47! 86,46 78,48 76,58
+rect protecaoL 93,44 4,10 c=metald ink=thin bone=cabeca
+shape crinaL c=crina ink=thin bone=cabeca : 66,40 70,28 80,22 92,24 90,30 80,30 72,36
+ellipse olhoL 90,54 1.6,2.2 c=olho bone=cabeca
+shape bigodeL c=bigode bone=cabeca : 88,61 95,60 95,63 89,64
+ellipse bracoDl 80,101 6,18 c=tunicad ink=line bone=bracoD
+rect hasteL 78.5,8 3,192 c=haste ink=thin bone=lanca
+shape pontaL c=metal ink=thin bone=lanca : 80,-6! 84,8! 80,12! 76,8!
+ellipse maoDl 80,120 5 c=pele ink=thin bone=bracoD
+
+# ---------- de costas (a capa cobre as costas) ----------
+layer costas view=up
+rect pernaDc 81,128 12,62 c=calca ink=thin bone=pernaD
+rect botaDc 80,186 15,19 r=3 c=bota ink=thin bone=pernaD
+rect pernaEc 67,128 12,62 c=calca ink=thin bone=pernaE
+rect botaEc 65,186 15,19 r=3 c=bota ink=thin bone=pernaE
+shape tunicaC c=tunica ink=line bone=corpo : 65,84! 95,84! 102,142! 58,142!
+shape capaC c=capa ink=line bone=capa : 66,80 94,80 106,174! 54,174!
+stroke dobraC1 w=thin c=capad bone=capa : 74,90 70,170
+stroke dobraC2 w=thin c=capad bone=capa : 86,90 90,170
+ellipse bracoEc 61,101 6,18 c=tunicad ink=line bone=bracoE
+ellipse maoEc 61,120 5 c=pele ink=thin bone=bracoE
+ellipse bracoDc 99,101 6,18 c=tunicad ink=line bone=bracoD
+rect hasteC 97.5,8 3,192 c=haste ink=thin bone=lanca
+shape pontaC c=metal ink=thin bone=lanca : 99,-6! 103,8! 99,12! 95,8!
+ellipse maoDc 99,120 5 c=pele ink=thin bone=bracoD
+ellipse nucaC 80,54 15,17 c=pele ink=line bone=cabeca
+shape elmoC c=metal ink=line bone=cabeca : 64,60! 65,41 72,34 80,32 88,34 95,41 96,60! 80,64
+shape crinaC c=crina ink=thin bone=cabeca : 77,34 79,16 81,16 83,34 82,52 78,52
+
+# ---------- animações: cada uma escrita uma vez ----------
+anim idle frames=8 fps=8
+key 0 corpo=0,0,0,1,1 capa.pitch=0
+key 4 corpo=0,1.5,0,1.02,0.98 capa.pitch=-3
+key 8 corpo=0,0,0,1,1 capa.pitch=0
+
+# andar: a lança fica de pé (o braço quase não balança), a capa vai para trás. Nos quadros
+# ímpares, a perna que está no chão desce 1,6 px: inclinada, ela fica mais curta na altura
+anim walk frames=8 fps=10
+key 0 corpo=0,2 pernaD.pitch=24 pernaE.pitch=-24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=20 bracoD.pitch=-4 capa.pitch=-14
+key 1 pernaD=0,1.6
+key 2 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,0 pernaE=0,-4 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20
+key 3 pernaD=0,1.6
+key 4 corpo=0,2 pernaD.pitch=-24 pernaE.pitch=24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=-20 bracoD.pitch=4 capa.pitch=-14
+key 5 pernaE=0,1.6
+key 6 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,-4 pernaE=0,0 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20
+key 7 pernaE=0,1.6
+key 8 corpo=0,2 pernaD.pitch=24 pernaE.pitch=-24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=20 bracoD.pitch=-4 capa.pitch=-14
+
+# andar olhando para o lado: o mesmo andar, duas vezes, e a cabeça vira 80° para a esquerda dele e volta
+anim look frames=16 fps=10
+key 0 corpo=0,2 pernaD.pitch=24 pernaE.pitch=-24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=20 bracoD.pitch=-4 capa.pitch=-14 cabeca.yaw=0
+key 1 pernaD=0,1.6
+key 2 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,0 pernaE=0,-4 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20
+key 3 pernaD=0,1.6
+key 4 corpo=0,2 pernaD.pitch=-24 pernaE.pitch=24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=-20 bracoD.pitch=4 capa.pitch=-14 cabeca.yaw=80
+key 5 pernaE=0,1.6
+key 6 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,-4 pernaE=0,0 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20
+key 7 pernaE=0,1.6
+key 8 corpo=0,2 pernaD.pitch=24 pernaE.pitch=-24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=20 bracoD.pitch=-4 capa.pitch=-14
+key 9 pernaD=0,1.6
+key 10 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,0 pernaE=0,-4 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20 cabeca.yaw=80
+key 11 pernaD=0,1.6
+key 12 corpo=0,2 pernaD.pitch=-24 pernaE.pitch=24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=-20 bracoD.pitch=4 capa.pitch=-14
+key 13 pernaE=0,1.6
+key 14 corpo=0,-1 pernaD.pitch=0 pernaE.pitch=0 pernaD=0,-4 pernaE=0,0 bracoE.pitch=0 bracoD.pitch=0 capa.pitch=-20
+key 15 pernaE=0,1.6
+key 16 corpo=0,2 pernaD.pitch=24 pernaE.pitch=-24 pernaD=0,6.5 pernaE=0,6.5 bracoE.pitch=20 bracoD.pitch=-4 capa.pitch=-14 cabeca.yaw=0
+
+# estocada: a lança deita para a frente, recua e vai
+anim attack frames=8 fps=12 once
+key 0 corpo.z=0 bracoD.pitch=0 lanca.pitch=0 pernaD.pitch=0 pernaD=0,0 capa.pitch=0
+key 1 corpo.z=-2 bracoD.pitch=20 lanca.pitch=-85 capa.pitch=-4 ease=out
+key 2 corpo.z=-4 bracoD.pitch=5 lanca.pitch=-95 pernaD.pitch=-6 pernaD=0,0.4 capa.pitch=-2
+key 3 corpo.z=8 bracoD.pitch=80 lanca.pitch=-170 pernaD.pitch=22 pernaD=0,3 capa.pitch=-22 ease=out
+key 5 corpo.z=8 bracoD.pitch=78 lanca.pitch=-168 pernaD.pitch=22 pernaD=0,3 capa.pitch=-18
+key 8 corpo.z=0 bracoD.pitch=0 lanca.pitch=0 pernaD.pitch=0 pernaD=0,0 capa.pitch=0
+event 3 golpe

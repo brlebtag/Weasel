@@ -30,17 +30,17 @@ const args = process.argv.slice(2);
 const CHECK = args.includes('--check');
 const only = args.filter((a) => !a.startsWith('--'));
 
-// ---------- a página dos atalhos (23-atalhos.md), escrita a partir de js/keys.js ----------
+// ---------- a página dos atalhos (24-atalhos.md), escrita a partir de js/keys.js ----------
 // A mesma lista mostra a folha do editor (Ajuda › Atalhos do teclado). Com --check, a página precisa estar igual à
 // que sairia agora; sem, ela é escrita de novo. Nos dois casos, toda tecla dos menus, das ações das linhas do tempo e
 // toda letra de ferramenta precisam estar na lista.
 require(path.join(ROOT, 'js', 'keys.js'));
-const KEYS_MD = '23-atalhos.md';
+const KEYS_MD = '24-atalhos.md';
 function keysPage() {
   const K = W.keys, out = [];
   const keyText = (it) => K.list(it.k).map((k) => '`' + k + '`').join(' ou ') + (it.mac ? ` (no Mac, ${K.list(it.mac).map((k) => '`' + k + '`').join(' ou ')})` : '');
-  const nav = '[← O editor](22-editor.md) · [Índice](README.md) · [Próximo: Problemas comuns →](24-problemas.md)';
-  out.push('# 23. Atalhos do teclado', '', nav, '');
+  const nav = '[← O editor](23-editor.md) · [Índice](README.md) · [Próximo: Problemas comuns →](25-problemas.md)';
+  out.push('# 24. Atalhos do teclado', '', nav, '');
   out.push('<!-- Esta página é escrita pelo npm run docs a partir de js/keys.js. Para mudar um atalho, mude a lista. -->', '');
   out.push('Esta é a lista de todos os atalhos do editor. No editor, a mesma lista fica em **Ajuda › Atalhos do teclado** (**Shift+F1** ou **Ctrl+?**), com uma busca em cima.', '');
   out.push(K.intro, '', K.macNote, '');

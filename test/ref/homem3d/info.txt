@@ -1,0 +1,34 @@
+canvas   160 × 285, fundo #eef0e6
+camadas  4
+  guia             1 item(ns)  guide
+  frente          22 item(ns)  view=down
+  lado            21 item(ns)  view=right
+  costas          19 item(ns)  view=up
+formas   63
+ossos    quadril, tronco←quadril, cabeca←tronco, coxaD←quadril, canelaD←coxaD, peD←canelaD, coxaE←quadril, canelaE←coxaE, peE←canelaE, bracoD←tronco, antebracoD←bracoD, maoD←antebracoD, bracoE←tronco, antebracoE←bracoE, maoE←antebracoE
+vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
+  profundidade quadril 0 (lado) · tronco 0.5 (lado) · cabeca 1 (lado) · coxaD 0.3 (lado) · canelaD 0 (lado) · peD 0 (side=) · coxaE 0.3 (lado) · canelaE 0 (lado) · peE 0 (side=) · bracoD 0.5 (lado) · antebracoD 0.5 (lado) · maoD 0 (lado) · bracoE 0.5 (lado) · antebracoE 0.5 (lado) · maoE 0 (lado)
+  grossura     quadril 39.6/26.8 · tronco 53.8/28.1 · cabeca 25.3/25.3 · coxaD 24.5/23.8 · canelaD 16.9/15.4 · peD 16.7/9 · coxaE 24.5/23.8 · canelaE 16.9/15.4 · peE 16.7/9 · bracoD 17.5/15.3 · antebracoD 13.8/12.3 · maoD 10/10 · bracoE 17.5/15.3 · antebracoE 13.8/12.3 · maoE 10/10  [de lado a lado / de frente para trás]
+  aponta       quadril (tip=) · tronco (a maior peça, de frente e de lado) · cabeca (a maior peça, de frente e de lado) · coxaD (filho canelaD) · canelaD (filho peD) · peD (tip=) · coxaE (filho canelaE) · canelaE (filho peE) · peE (tip=) · bracoD (filho antebracoD) · antebracoD (filho maoD) · maoD (a maior peça, de frente e de lado) · bracoE (filho antebracoE) · antebracoE (filho maoE) · maoE (a maior peça, de frente e de lado)
+  pé no chão   walk: 0 0 0 0 0 0 0 0
+  pé no chão   run: 0 8 18 3.9 0 8 18 3.9
+  geradas      walk → walk_down, walk_right, walk_up
+  geradas      run → run_down, run_right, run_up
+  ordem troca  walk_down: em 5 de 8 quadros (coxaEf, canelaEf, peEf, coxaDf, canelaDf, peDf, bracoEf, antebracoEf, camisaF, golaF, pescocoF, cabecaF, cabeloF, olhoDf, olhoEf, narizF, bocaF, bracoDf, antebracoDf, maoDf)
+  ordem troca  walk_up: em 2 de 8 quadros (coxaEc, canelaEc, coxaDc, peEc, canelaDc, peDc)
+  ordem troca  run_down: em 8 de 8 quadros (peEf, canelaEf, coxaEf, coxaDf, canelaDf, peDf, bracoDf, antebracoDf, camisaF, golaF, pescocoF, cabecaF, cabeloF, olhoDf, olhoEf, narizF, bocaF, antebracoEf, bracoEf, maoDf)
+  ordem troca  run_up: em 8 de 8 quadros (antebracoEc, maoEc, bracoEc, camisaC, costuraC, pescocoC, cabecaC, orelhaDc, orelhaEc, antebracoDc, maoDc, bracoDc, canelaEc, coxaEc, coxaDc, peEc, canelaDc, peDc)
+animações 6
+  walk_down      8 quadros, 10 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  walk_right     8 quadros, 10 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  walk_up        8 quadros, 10 fps, gerada de walk
+                 eventos: passo@0, passo@4
+  run_down       8 quadros, 12 fps, gerada de run
+                 eventos: passo@0, passo@4
+  run_right      8 quadros, 12 fps, gerada de run
+                 eventos: passo@0, passo@4
+  run_up         8 quadros, 12 fps, gerada de run
+                 eventos: passo@0, passo@4
+godot    character, raiz 80,250

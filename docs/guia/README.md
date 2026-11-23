@@ -2,7 +2,7 @@
 
 # Guia da linguagem Weasel
 
-Este guia ensina a linguagem do Weasel desde o começo, para quem nunca escreveu um desenho em código. Cada passo tem um exemplo e, logo abaixo, a imagem que ele gera. Ele explica o que cada coisa faz, em que ordem aprender e onde estão as armadilhas. Para conferir uma opção, a [referência completa](19-referencia.md) tem todos os comandos, com todas as opções; quando algo dá errado, veja os [problemas comuns](24-problemas.md).
+Este guia ensina a linguagem do Weasel desde o começo, para quem nunca escreveu um desenho em código. Cada passo tem um exemplo e, logo abaixo, a imagem que ele gera. Ele explica o que cada coisa faz, em que ordem aprender e onde estão as armadilhas. Para conferir uma opção, a [referência completa](20-referencia.md) tem todos os comandos, com todas as opções; quando algo dá errado, veja os [problemas comuns](25-problemas.md).
 
 ![O Pingo, o personagem do capítulo de animação, respirando, falando e piscando](img/07_pingo.gif)
 
@@ -50,31 +50,32 @@ O guia tem seis partes. As cinco primeiras são **aulas**: leia em ordem, porque
 |---|---|---|
 | 15 | [Jogo: o personagem no Godot](15-jogo-personagem.md) | exportar para o Godot, caixas de colisão, pontos de encaixe, o ajudante `tocar()`, direções e andar sem escorregar |
 | 16 | [Jogo: fases e recursos avançados](16-jogo-avancado.md) | o tileset, transições entre animações, a virada, o esqueleto de verdade, a sprite sheet e a Unity |
-| 17 | [Filme: atores, planos e câmera](17-filme.md) | atores, planos e transições, a câmera e as mudanças no tempo (`at`) |
-| 18 | [Filme: atuação, som e legendas](18-filme-atuacao.md) | expressões, marcadores, caminhos, trocar de animação sem tranco, um ator que vira outro, som, legendas, lip sync e filmes longos |
+| 17 | [Jogo: três vistas](17-jogo-tres-vistas.md) | um esqueleto para a frente, o lado e as costas, cada animação escrita uma vez, a conta do 3D, as diagonais, o jogo de plataforma, o editor e os limites |
+| 18 | [Filme: atores, planos e câmera](18-filme.md) | atores, planos e transições, a câmera e as mudanças no tempo (`at`) |
+| 19 | [Filme: atuação, som e legendas](19-filme-atuacao.md) | expressões, marcadores, caminhos, trocar de animação sem tranco, um ator que vira outro, som, legendas, lip sync e filmes longos |
 
 ### 6. Consulta
 
 | | Capítulo | O que tem |
 |---|---|---|
-| 19 | [Referência completa](19-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
-| 20 | [Funções das contas](20-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
-| 21 | [Linha de comando](21-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
-| 22 | [O editor](22-editor.md) | as ferramentas, os painéis e os menus do editor, do primeiro desenho ao filme |
-| 23 | [Atalhos do teclado](23-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
-| 24 | [Problemas comuns](24-problemas.md) | o que costuma dar errado e como resolver, e o que quer dizer cada mensagem de erro |
-| 25 | [Glossário](25-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |
+| 20 | [Referência completa](20-referencia.md) | todos os comandos, com **todas** as opções, as faixas de valores e os padrões |
+| 21 | [Funções das contas](21-funcoes.md) | o que vale dentro de `{…}`: as operações e cada função, com exemplos |
+| 22 | [Linha de comando](22-linha-de-comando.md) | todas as opções do `weasel`: imagens, animações, sprite sheets, Godot, vídeo e filme |
+| 23 | [O editor](23-editor.md) | as ferramentas, os painéis e os menus do editor, do primeiro desenho ao filme |
+| 24 | [Atalhos do teclado](24-atalhos.md) | todos os atalhos do editor, a mesma lista da folha **Ajuda › Atalhos do teclado** (Shift+F1) |
+| 25 | [Problemas comuns](25-problemas.md) | o que costuma dar errado e como resolver, e o que quer dizer cada mensagem de erro |
+| 26 | [Glossário](26-glossario.md) | as palavras que o guia usa, cada uma com um sentido só |
 
 ## Como testar os exemplos
 
 Os exemplos grandes do guia são desenhos completos: copie, cole e rode. Alguns blocos são só pedaços de um desenho, para mostrar uma linha; o texto em volta diz quando é assim.
 
 - **No editor:** abra o site <https://brlebtag.github.io/Weasel/> ou o arquivo `index.html` do projeto, com dois cliques; não precisa instalar nada. Crie um arquivo com **Arquivo › Novo** e cole o exemplo no lugar do desenho que vem nele. O desenho aparece à direita, e as animações tocam no player.
-- **Na linha de comando:** ela precisa do [Node.js](https://nodejs.org) 18 ou mais novo e de um `npm install` na pasta do projeto, uma vez só. Depois, salve o exemplo como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 21](21-linha-de-comando.md) tem todas as opções.
+- **Na linha de comando:** ela precisa do [Node.js](https://nodejs.org) 18 ou mais novo e de um `npm install` na pasta do projeto, uma vez só. Depois, salve o exemplo como `teste.weasel` e rode `node cli/weasel.js teste.weasel`. Para uma animação, `node cli/weasel.js teste.weasel -a nome_da_animacao -o teste.gif`. O [capítulo 22](22-linha-de-comando.md) tem todas as opções.
 
 Os exemplos que usam outros arquivos (`include "cavaleiro.weasel"`, `actor … "fantasma.weasel"`) esperam estar na pasta [`exemplos/`](../../exemplos/), junto com os personagens de exemplo.
 
-Se aparecer um erro, ou se o desenho não sair como a imagem do guia, veja os [problemas comuns](24-problemas.md): eles estão separados pela mensagem e pelo assunto.
+Se aparecer um erro, ou se o desenho não sair como a imagem do guia, veja os [problemas comuns](25-problemas.md): eles estão separados pela mensagem e pelo assunto.
 
 ## Para quem mantém o guia
 
@@ -92,8 +93,8 @@ npm run docs
 
 O `npm test` confere o guia:
 - os exemplos com o comentário `<!-- gerar: … -->` ou `<!-- conferir -->` precisam rodar sem erro e sem aviso;
-- a referência (capítulo 19) precisa ter todo comando e toda opção que o Weasel aceita; as funções (20) e a linha de comando (21) também;
-- os atalhos (capítulo 23) precisam estar iguais à lista do editor;
+- a referência (capítulo 20) precisa ter todo comando e toda opção que o Weasel aceita; as funções (20) e a linha de comando (21) também;
+- os atalhos (capítulo 24) precisam estar iguais à lista do editor;
 - todo link de um capítulo para outro precisa levar a um título que existe.
 
 Assim, uma opção nova no Weasel não fica de fora do guia.

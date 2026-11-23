@@ -23,7 +23,7 @@
 - **`--info`:** as linhas `vira:`, `nascem:` e `somem:`, na escrita do `pairs=` e do `born=`.
 - **Godot com `rig=bones`:** a peça `virada` (um `Sprite2D` quadro a quadro) aparece só nas peças da virada; as outras peças se escondem nelas. A exportação avisa.
 - **Uma correção que veio junto:** uma peça tocada de trás para a frente (a volta do `trocar()`) não aplicava no começo as pistas que trocam de uma vez. Na cena por quadros, o sprite ficava na peça errada (desde a 1.43.0); com esqueleto, a virada não aparecia. Cada pista dessas ganhou uma key logo antes do fim da peça.
-- **O que ficou como defeito conhecido** (no [capítulo 24](../guia/24-problemas.md)):
+- **O que ficou como defeito conhecido** (no [capítulo 25](../guia/25-problemas.md)):
   - o meio da virada "derrete" quando as formas são muito diferentes; poucos quadros e bons pares ajudam;
   - a virada pela esquerda é a da direita espelhada: termina na frente espelhada. Com uma frente assimétrica (a espada do furão), há um pulo no último quadro. Desenhar a virada da esquerda à parte fica para depois, se fizer falta.
 

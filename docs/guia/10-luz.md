@@ -93,7 +93,7 @@ Há quatro tipos de luz:
 | `light nome spot x,y` | um **holofote**: uma lâmpada que só ilumina dentro de um cone |
 | `light nome dir dx,dy` | o **sol** ou a **lua**: uma luz que vem de uma direção, igual em tudo |
 
-Cada `light` tem um nome, que a `key` usa para mudar a luz depois. Dois nomes iguais dão erro. No editor, com o cursor na linha de uma luz, ela aparece no desenho para você ajustar com o mouse ([capítulo 22](22-editor.md#luzes-no-desenho)).
+Cada `light` tem um nome, que a `key` usa para mudar a luz depois. Dois nomes iguais dão erro. No editor, com o cursor na linha de uma luz, ela aparece no desenho para você ajustar com o mouse ([capítulo 23](23-editor.md#luzes-no-desenho)).
 
 ## Uma cena para testar a luz
 
@@ -509,7 +509,7 @@ anim tremula frames=12 fps=12
 Repare:
 
 - `flicker=0.4` deixa a força variar até 40% para cima ou para baixo, sorteada a cada quadro. Vai de 0 (parado, se não escrever) a 1 (tremendo muito).
-- A animação `tremula` não tem nenhuma `key`: ela só existe para o tempo passar. No desenho parado, a luz fica firme. Num filme (capítulo 17), ela muda 12 vezes por segundo.
+- A animação `tremula` não tem nenhuma `key`: ela só existe para o tempo passar. No desenho parado, a luz fica firme. Num filme (capítulo 18), ela muda 12 vezes por segundo.
 - O sorteio é fixo: a mesma animação treme sempre igual, toda vez que você exportar.
 - O `flicker=` vale também no sol (`dir`): um relâmpago, a luz de uma televisão ligada.
 
@@ -868,7 +868,7 @@ Nas camadas e nas formas:
 | `from=` | `layer` com `cast=` | a sombra usa a silhueta destas camadas | nomes de camada | a própria camada |
 | `emit=cor,força` | forma | brilha e ignora a luz | cor `#hex`; de 0 a 10 | 1 |
 
-As fichas completas estão na referência: [`light`](19-referencia.md#light), [`ambient`](19-referencia.md#ambient) e [`layer`](19-referencia.md#layer).
+As fichas completas estão na referência: [`light`](20-referencia.md#light), [`ambient`](20-referencia.md#ambient) e [`layer`](20-referencia.md#layer).
 
 ## Juntando tudo
 

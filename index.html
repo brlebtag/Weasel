@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
 <!-- o tema (Exibir › Tema) antes de pintar, para não piscar; a troca fica em js/ui-theme.js -->
 <script>try{var p=localStorage.getItem('weasel.theme');document.documentElement.dataset.theme=p==='dark'||(p==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
-<link rel="stylesheet" href="css/style.css?v=1.77.1">
+<link rel="stylesheet" href="css/style.css?v=1.78.0">
 </head>
 <body>
 <header class="top">
@@ -229,7 +229,7 @@
       <tr><td><code>tile nome coluna,linha [solid] [oneway] collision=forma</code></td><td>Um bloco: <code>solid</code> colide no quadrado todo, <code>oneway</code> só por cima, <code>collision=</code> usa o formato de uma forma (rampa). O nome vai como dado do bloco.</td></tr>
       <tr><td><code>point nome x,y bone=</code></td><td>Ponto de encaixe que segue o osso (posição e rotação): de onde sai o tiro, onde a mão segura, onde nasce a poeira. No Godot vira um <code>Marker2D</code> que o AnimationPlayer move; na sprite sheet, vai no JSON de cada quadro.</td></tr>
     </table>
-    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). Com as <b>três vistas</b> (<code>views</code> e uma camada <code>layer … view=down</code>, <code>view=right</code> ou <code>view=up</code> para cada desenho; veja o capítulo 16 do guia), os desenhos usam um esqueleto só, e uma <code>anim walk</code> vira a <code>walk_down</code>, a <code>walk_right</code> e a <code>walk_up</code>. No player, a lista mostra <code>walk</code> uma vez, e os botões de direção ao lado dela escolhem a vista: <b>↓ → ↑ ←</b>, oito com as diagonais, ou <b>→ ←</b> num jogo de plataforma. A <b>←</b> sem <code>view=left</code> aparece como o Godot faz, a direita espelhada: só para ver (para mexer, use a <b>→</b>). Um botão apagado diz, com o mouse em cima, por que aquela vista não existe. No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). Com <code>feet=</code>, <code>velocidade()</code> diz quanto o personagem anda por segundo sem os pés escorregarem. <code>tocar("trote", velocity, true)</code> troca sem perder o passo; <code>trocar("idle", velocity)</code> usa as peças de <code>anim … from= to=</code>; <code>quadros("walk")</code> e <code>fps("walk")</code> dizem o tamanho e a velocidade da animação; <code>mostrar_quadro("walk", 3)</code> para num quadro. Para virar, use as animações <code>_left</code>, não <code>flip_h</code>. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Hitboxes</b> ligado, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas); desligado, só a da linha do cursor. Com <b>Guias</b>, os pontos de encaixe aparecem em roxo, com uma seta para onde o osso aponta.</p>
+    <p>Direções top-down: anime <code>walk_down</code>, <code>walk_up</code> e <code>walk_right</code>; na cena do Godot, <code>walk_left</code> sai espelhado (com as caixas). Com as <b>três vistas</b> (<code>views</code> e uma camada <code>layer … view=down</code>, <code>view=right</code> ou <code>view=up</code> para cada desenho; veja o capítulo 17 do guia), os desenhos usam um esqueleto só, e uma <code>anim walk</code> vira a <code>walk_down</code>, a <code>walk_right</code> e a <code>walk_up</code>. No player, a lista mostra <code>walk</code> uma vez, e os botões de direção ao lado dela escolhem a vista: <b>↓ → ↑ ←</b>, oito com as diagonais, ou <b>→ ←</b> num jogo de plataforma. A <b>←</b> sem <code>view=left</code> aparece como o Godot faz, a direita espelhada: só para ver (para mexer, use a <b>→</b>). Um botão apagado diz, com o mouse em cima, por que aquela vista não existe. No jogo, <code>$AnimationPlayer.tocar("walk", velocity)</code> escolhe a direção, e o sinal <code>evento(nome)</code> avisa os <code>event</code> (vários no mesmo quadro chegam um depois do outro). Com <code>feet=</code>, <code>velocidade()</code> diz quanto o personagem anda por segundo sem os pés escorregarem. <code>tocar("trote", velocity, true)</code> troca sem perder o passo; <code>trocar("idle", velocity)</code> usa as peças de <code>anim … from= to=</code>; <code>quadros("walk")</code> e <code>fps("walk")</code> dizem o tamanho e a velocidade da animação; <code>mostrar_quadro("walk", 3)</code> para num quadro. Para virar, use as animações <code>_left</code>, não <code>flip_h</code>. <code>only=pose,…</code> mostra a camada também na pose parada. Com <b>Hitboxes</b> ligado, as caixas aparecem no desenho (verde corpo, vermelho golpe, amarelo dano; tracejadas quando desligadas); desligado, só a da linha do cursor. Com <b>Guias</b>, os pontos de encaixe aparecem em roxo, com uma seta para onde o osso aponta.</p>
 
     <h3>Filme</h3>
     <p>Um arquivo com <code>film</code> vira um filme e sai em vídeo. Personagens e cenários continuam sendo arquivos comuns (os mesmos do jogo), postos em cena com <code>actor</code>.</p>
@@ -424,50 +424,50 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.77.1"></script>
-<script src="js/lang.js?v=1.77.1"></script>
-<script src="js/views.js?v=1.77.1"></script>
-<script src="js/simplify.js?v=1.77.1"></script>
-<script src="js/trace.js?v=1.77.1"></script>
-<script src="js/pathops.js?v=1.77.1"></script>
-<script src="js/art.js?v=1.77.1"></script>
-<script src="js/scene.js?v=1.77.1"></script>
-<script src="js/film.js?v=1.77.1"></script>
-<script src="js/audio.js?v=1.77.1"></script>
-<script src="js/nle.js?v=1.77.1"></script>
-<script src="js/webm.js?v=1.77.1"></script>
-<script src="js/svg.js?v=1.77.1"></script>
-<script src="js/gif.js?v=1.77.1"></script>
-<script src="js/webp.js?v=1.77.1"></script>
-<script src="js/mp4.js?v=1.77.1"></script>
-<script src="js/zip.js?v=1.77.1"></script>
-<script src="js/normal.js?v=1.77.1"></script>
-<script src="js/export.js?v=1.77.1"></script>
-<script src="js/godot.js?v=1.77.1"></script>
-<script src="js/rig.js?v=1.77.1"></script>
-<script src="js/editor.js?v=1.77.1"></script>
-<script src="js/examples.js?v=1.77.1"></script>
-<script src="js/ui-theme.js?v=1.77.1"></script>
-<script src="js/timeline.js?v=1.77.1"></script>
-<script src="js/keys.js?v=1.77.1"></script>
-<script src="js/app.js?v=1.77.1"></script>
-<script src="js/ui-menu.js?v=1.77.1"></script>
-<script src="js/ui-shell.js?v=1.77.1"></script>
-<script src="js/ui-3d.js?v=1.77.1"></script>
-<script src="js/ui-props.js?v=1.77.1"></script>
-<script src="js/ui-select.js?v=1.77.1"></script>
-<script src="js/ui-draw.js?v=1.77.1"></script>
-<script src="js/ui-pen.js?v=1.77.1"></script>
-<script src="js/ui-pencil.js?v=1.77.1"></script>
-<script src="js/ui-trace.js?v=1.77.1"></script>
-<script src="js/ui-paths.js?v=1.77.1"></script>
-<script src="js/ui-cut.js?v=1.77.1"></script>
-<script src="js/ui-layers.js?v=1.77.1"></script>
-<script src="js/ui-symbols.js?v=1.77.1"></script>
-<script src="js/ui-bones.js?v=1.77.1"></script>
-<script src="js/ui-anim.js?v=1.77.1"></script>
-<script src="js/ui-film.js?v=1.77.1"></script>
-<script src="js/ui-style.js?v=1.77.1"></script>
-<script src="js/ui-keys.js?v=1.77.1"></script>
+<script src="js/geom.js?v=1.78.0"></script>
+<script src="js/lang.js?v=1.78.0"></script>
+<script src="js/views.js?v=1.78.0"></script>
+<script src="js/simplify.js?v=1.78.0"></script>
+<script src="js/trace.js?v=1.78.0"></script>
+<script src="js/pathops.js?v=1.78.0"></script>
+<script src="js/art.js?v=1.78.0"></script>
+<script src="js/scene.js?v=1.78.0"></script>
+<script src="js/film.js?v=1.78.0"></script>
+<script src="js/audio.js?v=1.78.0"></script>
+<script src="js/nle.js?v=1.78.0"></script>
+<script src="js/webm.js?v=1.78.0"></script>
+<script src="js/svg.js?v=1.78.0"></script>
+<script src="js/gif.js?v=1.78.0"></script>
+<script src="js/webp.js?v=1.78.0"></script>
+<script src="js/mp4.js?v=1.78.0"></script>
+<script src="js/zip.js?v=1.78.0"></script>
+<script src="js/normal.js?v=1.78.0"></script>
+<script src="js/export.js?v=1.78.0"></script>
+<script src="js/godot.js?v=1.78.0"></script>
+<script src="js/rig.js?v=1.78.0"></script>
+<script src="js/editor.js?v=1.78.0"></script>
+<script src="js/examples.js?v=1.78.0"></script>
+<script src="js/ui-theme.js?v=1.78.0"></script>
+<script src="js/timeline.js?v=1.78.0"></script>
+<script src="js/keys.js?v=1.78.0"></script>
+<script src="js/app.js?v=1.78.0"></script>
+<script src="js/ui-menu.js?v=1.78.0"></script>
+<script src="js/ui-shell.js?v=1.78.0"></script>
+<script src="js/ui-3d.js?v=1.78.0"></script>
+<script src="js/ui-props.js?v=1.78.0"></script>
+<script src="js/ui-select.js?v=1.78.0"></script>
+<script src="js/ui-draw.js?v=1.78.0"></script>
+<script src="js/ui-pen.js?v=1.78.0"></script>
+<script src="js/ui-pencil.js?v=1.78.0"></script>
+<script src="js/ui-trace.js?v=1.78.0"></script>
+<script src="js/ui-paths.js?v=1.78.0"></script>
+<script src="js/ui-cut.js?v=1.78.0"></script>
+<script src="js/ui-layers.js?v=1.78.0"></script>
+<script src="js/ui-symbols.js?v=1.78.0"></script>
+<script src="js/ui-bones.js?v=1.78.0"></script>
+<script src="js/ui-anim.js?v=1.78.0"></script>
+<script src="js/ui-film.js?v=1.78.0"></script>
+<script src="js/ui-style.js?v=1.78.0"></script>
+<script src="js/ui-keys.js?v=1.78.0"></script>
 </body>
 </html>

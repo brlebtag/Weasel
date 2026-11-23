@@ -2,7 +2,7 @@
 
 [← Acabamento](12-acabamento.md) · [Índice](README.md) · [Próximo: Profundidade (2.5D) →](14-profundidade.md)
 
-O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso a linha `art` consegue pintar o mesmo desenho em outro estilo: pixel art, letras, quadrinhos, gravura, aquarela, vitral, tricô e outros. São 26 estilos. Você precisa dos capítulos 1 a 12. As duas partes do fim, sobre o jogo e o filme, usam os capítulos 15 a 17.
+O Weasel guarda o desenho como formas, e não como uma imagem pronta. Por isso a linha `art` consegue pintar o mesmo desenho em outro estilo: pixel art, letras, quadrinhos, gravura, aquarela, vitral, tricô e outros. São 26 estilos. Você precisa dos capítulos 1 a 12. As duas partes do fim, sobre o jogo e o filme, usam os capítulos 15, 16 e 18.
 
 ## A linha `art`
 
@@ -61,7 +61,7 @@ Repare:
 - Com `art`, o `pixel=` do `finish` fica de fora (aviso). O resto do `finish` entra por cima do estilo ([capítulo 12](12-acabamento.md#acabamento-finish)).
 - O SVG é feito das formas, então sai sem o estilo.
 
-No editor, **Janela › Acabamento e estilo** mostra uma miniatura de cada estilo, feita com o seu desenho, e escreve a linha `art` por você ([capítulo 22](22-editor.md#acabamento-e-estilo)).
+No editor, **Janela › Acabamento e estilo** mostra uma miniatura de cada estilo, feita com o seu desenho, e escreve a linha `art` por você ([capítulo 23](23-editor.md#acabamento-e-estilo)).
 
 ### Os 26 estilos
 
@@ -997,7 +997,7 @@ Esta parte usa a exportação para o Godot ([capítulo 15](15-jogo-personagem.md
 
 ## No filme
 
-Esta parte usa o filme ([capítulo 17](17-filme.md)). Se ainda não chegou lá, volte aqui depois.
+Esta parte usa o filme ([capítulo 18](18-filme.md)). Se ainda não chegou lá, volte aqui depois.
 
 No filme, o `art` vale em quatro níveis, e o lugar da linha decide qual. O mais específico ganha:
 
@@ -1048,7 +1048,7 @@ art ascii actor=fantasma
 
 ## Opções de cada estilo
 
-As opções de cada estilo estão nas seções acima. A [referência do `art`](19-referencia.md#art) tem todas elas, estilo por estilo, com as faixas e os padrões.
+As opções de cada estilo estão nas seções acima. A [referência do `art`](20-referencia.md#art) tem todas elas, estilo por estilo, com as faixas e os padrões.
 
 ## Juntando tudo
 

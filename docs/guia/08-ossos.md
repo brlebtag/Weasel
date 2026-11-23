@@ -157,7 +157,7 @@ anim parado frames=24 fps=12
 
 Repare:
 
-- Os movimentos automáticos só aparecem quando **uma animação está tocando**. Por isso o exemplo tem `anim parado`, uma animação sem nenhuma `key`. Na pose parada, eles não fazem nada. Num filme ([capítulo 17](17-filme.md)), eles se mexem mesmo sem animação.
+- Os movimentos automáticos só aparecem quando **uma animação está tocando**. Por isso o exemplo tem `anim parado`, uma animação sem nenhuma `key`. Na pose parada, eles não fazem nada. Num filme ([capítulo 18](18-filme.md)), eles se mexem mesmo sem animação.
 - O Weasel ajusta o tempo do vaivém para a animação terminar onde começou. Aqui a animação dura 2 segundos (24 ÷ 12), e cada vaivém também. Numa animação `once`, o tempo é exatamente o que você escreveu.
 - Eles **somam** com as `key`: um osso pode balançar sozinho e ainda ser animado.
 
@@ -300,7 +300,7 @@ Repare:
 | `jitter=` | treme a cada quadro | de 0 a 200, em pixels | 0 |
 | `spring=` | mola: gira atrasado e balança até parar | de 0 a 1 (perto de 1: dura) | sem mola |
 
-O osso tem mais opções: `path=` e `turn=` (andar por um caminho, [capítulo 9](09-animacao.md#andar-por-um-caminho-path)) e `yaw=`, `pitch=`, `persp=` e `round=` (o giro 3D, [capítulo 14](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)). A ficha completa está na [referência do `bone`](19-referencia.md#bone).
+O osso tem mais opções: `path=` e `turn=` (andar por um caminho, [capítulo 9](09-animacao.md#andar-por-um-caminho-path)) e `yaw=`, `pitch=`, `persp=` e `round=` (o giro 3D, [capítulo 14](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round)). A ficha completa está na [referência do `bone`](20-referencia.md#bone).
 
 ## Tecido: `cloth`
 
@@ -437,7 +437,7 @@ anim venta frames=24 fps=12
 | `swing=` | o balanço nos trancos | de 0 a 10 | 1 |
 | `bone=` | o osso de quem o pano sente o movimento | o nome de um osso | o osso da primeira forma com este `cloth=` |
 
-O `use` também aceita `cloth=`. A ficha completa está na [referência do `cloth`](19-referencia.md#cloth).
+O `use` também aceita `cloth=`. A ficha completa está na [referência do `cloth`](20-referencia.md#cloth).
 
 ## Formas que dobram: `bones=`
 
@@ -550,7 +550,7 @@ key 24 corpo=0,0
 
 **Cuidado:** os `@osso` não valem junto com `bones=` na mesma forma (dá aviso, e os pontos presos ficam parados).
 
-Numa forma com muitos pontos, escrever `@osso` em cada um dá trabalho. No editor, a ferramenta **Prender** (Shift+P) escreve para você ([capítulo 22](22-editor.md#prender)), e a **Testar ossos** (O) mexe nos ossos só na tela, para ver se cada ponto foi para o osso certo ([capítulo 22](22-editor.md#testar-ossos)).
+Numa forma com muitos pontos, escrever `@osso` em cada um dá trabalho. No editor, a ferramenta **Prender** (Shift+P) escreve para você ([capítulo 23](23-editor.md#prender)), e a **Testar ossos** (O) mexe nos ossos só na tela, para ver se cada ponto foi para o osso certo ([capítulo 23](23-editor.md#testar-ossos)).
 
 ## Pernas e braços com IK
 
@@ -648,7 +648,7 @@ key 24 corpo=0,0
 
 Quando o pé deve ficar num lugar que não é uma linha (um degrau, uma pedra, um galho), use `foot=x,y`, o ponto exato: `stroke pernaD limb=18,12 hip=222,125 on=corpo foot=268,170` deixa o pé parado em x=268, y=170. Uma perna com o pé mais perto do quadril é mais curta, e dobra mais quando o corpo desce.
 
-**Até onde o braço alcança:** o comprimento não aparece no desenho. Para ver até onde a mão pode ir, desenhe numa camada `guide` um círculo em volta do ombro, com esse raio, preso ao mesmo osso do ombro. A função `dist` ([capítulo 20](20-funcoes.md#dist)) faz a conta: `ellipse alcance 236,140 {dist(236,140,320,190)} c=none ink=2 inkc=#c44536 bone=corpo`.
+**Até onde o braço alcança:** o comprimento não aparece no desenho. Para ver até onde a mão pode ir, desenhe numa camada `guide` um círculo em volta do ombro, com esse raio, preso ao mesmo osso do ombro. A função `dist` ([capítulo 21](21-funcoes.md#dist)) faz a conta: `ellipse alcance 236,140 {dist(236,140,320,190)} c=none ink=2 inkc=#c44536 bone=corpo`.
 
 | Opção da perna | O que faz | Valores | Se não escrever |
 |---|---|---|---|
@@ -660,7 +660,7 @@ Quando o pé deve ficar num lugar que não é uma linha (um degrau, uma pedra, u
 | `limb=` | a largura no quadril e no pé | um número ou dois | a largura do `w=` (4) |
 | `bend=` | para que lado e quanto dobra | de −3 a 3 (acima de 1, igual a 1) | 1 |
 
-Com `foot=` e `target=` juntos, vale o `target=`, e o Weasel avisa. A ficha completa está na [referência do `stroke`](19-referencia.md#stroke).
+Com `foot=` e `target=` juntos, vale o `target=`, e o Weasel avisa. A ficha completa está na [referência do `stroke`](20-referencia.md#stroke).
 
 ## IK nos ossos: `ik`
 
@@ -759,7 +759,7 @@ key 36 bola=0,0
 | `target=` | o pivô da ponta vai até o pivô de outro osso | um osso de fora da corrente | — |
 | `bend=` | para que lado o meio dobra | `1` ou `-1` (`0` dá erro) | o lado em que o meio está no desenho |
 
-No editor, arrastar a ponta de um `ik` move o alvo ([capítulo 22](22-editor.md#ossos-no-desenho)). No Godot com esqueleto ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava os giros na animação. A ficha completa está na [referência do `ik`](19-referencia.md#ik).
+No editor, arrastar a ponta de um `ik` move o alvo ([capítulo 23](23-editor.md#ossos-no-desenho)). No Godot com esqueleto ([capítulo 16](16-jogo-avancado.md#esqueleto-de-verdade-rigbones-experimental)), o Weasel calcula o `ik` e grava os giros na animação. A ficha completa está na [referência do `ik`](20-referencia.md#ik).
 
 ## Juntando tudo
 
