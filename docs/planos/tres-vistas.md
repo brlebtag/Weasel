@@ -1,6 +1,6 @@
 # Três vistas, uma animação
 
-**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Nada implementado no Weasel. Depois do teste, entrou a proposta de uma vista no editor, [Vistas em 3D](#vistas-em-3d). Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir): o 6 mudou com o teste, o 11 e o 12 são novos, e o 13 é a vista.
+**Situação:** proposta de 23/11/2026. No mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades, e a etapa 0 (o protótipo, fora do projeto) foi feita: veja [o protótipo](#o-protótipo-etapa-0). Depois do teste, entrou a vista [Vistas em 3D](#vistas-em-3d), e você aceitou todas as recomendações: veja [o que foi decidido](#o-que-foi-decidido-23112026). Nada implementado no Weasel. A próxima é a [etapa 1a](#etapas), esperando o seu "pode fazer".
 
 **Origem:** a sua pergunta de 23/11/2026. Num jogo 2D visto de cima, tipo Zelda, o personagem precisa de quatro direções (baixo, cima, direita e esquerda). Desenhar cada uma já é trabalho; animar cada uma (andar, atacar, parado) multiplica o trabalho por três. A ideia: você desenha o personagem de frente, de lado e de costas, e o Weasel monta com isso um boneco "em 3D", que você anima uma vez só.
 
@@ -177,9 +177,9 @@ Como conferência: as 3 vistas do exemplo, um osso de espada e um de rabo, e 3 a
   1. comparando no ponto em que os dois ossos mais se aproximam: entre a coxa e a canela, esse ponto é o joelho, onde os dois têm a mesma profundidade, e a canela nunca ia para trás;
   2. comparando no ponto que mais mudou: o braço inteiro ia para trás da camisa pela mão, e a coxa passava por cima do quadril;
   3. a que ficou: a média dos pontos que se cobrem, com a grossura medida no desenho.
-- **O encurtamento:** com o mínimo de 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado. Com 10%, ela vira um ponto e some atrás da coxa ([ponto 6](#o-que-falta-decidir)).
-- **`turns`** no osso, para a cabeça que vira ([ponto 11](#o-que-falta-decidir)).
-- **O aviso de pé no chão** ([ponto 12](#o-que-falta-decidir)).
+- **O encurtamento:** com o mínimo de 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado. Com 10%, ela vira um ponto e some atrás da coxa ([ponto 6](#o-que-foi-decidido-23112026)).
+- **`turns`** no osso, para a cabeça que vira ([ponto 11](#o-que-foi-decidido-23112026)).
+- **O aviso de pé no chão** ([ponto 12](#o-que-foi-decidido-23112026)).
 - **`tip=x,y,z`:** o terceiro número (o quanto a ponta vai para a frente) foi preciso na espada do herói e na do furão, no pé do homem e no rabo do furão.
 - **`lat=`** no osso, para o jogo de plataforma ([os dois lados desenhados](#os-dois-lados-desenhados-opcional)).
 - **`side=`:** preciso nas armas. A maior peça da espada é a lâmina, longe da mão, e a profundidade lida dela fica errada.
@@ -266,7 +266,7 @@ Uma peça comprida (a espada, uma perna, um braço) tem que inclinar quando o os
 - a espada descendo para a frente (`espada.pitch=130`): de lado, ela gira 130° na tela; de frente, ela vem na sua direção e **encurta**;
 - a mesma espada varrendo (`espada.yaw` de -90 a 90): de frente, passa de um lado para o outro, por baixo do personagem na tela; de lado, vem de trás para a frente; de costas, passa atrás da cabeça.
 
-**O quanto encurta:** até 10% do tamanho ([ponto 6](#o-que-falta-decidir)). No protótipo, com 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado; com 10%, ela vira um ponto e some atrás da coxa.
+**O quanto encurta:** até 10% do tamanho ([ponto 6](#o-que-foi-decidido-23112026)). No protótipo, com 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado; com 10%, ela vira um ponto e some atrás da coxa.
 
 **Para onde o osso aponta:** para o osso filho, quando há um só. Sem filho (a espada), pela peça mais comprida do osso, na frente e no lado (as duas vistas dão as duas sombras da mesma direção, como a profundidade). `tip=x,y` no osso corrige, e `tip=x,y,z` diz também o quanto a ponta vai para a frente: a espada segurada inclinada para a frente, o pé, o rabo.
 
@@ -297,13 +297,13 @@ Girar a cabeça em volta do pescoço (`cabeca.yaw=80`) não troca o desenho: a c
 - em cada quadro, o Weasel vê para onde a frente da cabeça aponta e mostra o desenho da vista mais perto desse ângulo;
 - sem uma 3/4 desenhada, a troca de frente para perfil é seca, de um quadro para o outro (aos 45°). Com a 3/4, há um passo no meio.
 
-Sem `turns`, o osso só inclina e encurta ([ponto 11](#o-que-falta-decidir)).
+Sem `turns`, o osso só inclina e encurta ([ponto 11](#o-que-foi-decidido-23112026)).
 
 ### A câmera do jogo
 
 Num jogo tipo Zelda, a tela é quase o chão visto de cima, e os personagens estão de pé nele. O que vai para a frente desce na tela, e a altura não encolhe (os desenhos já estão no ângulo do jogo). Por isso, não é um giro de câmera como no teste, e sim uma conta só:
 
-- **um número para o arquivo inteiro:** o quanto um pixel "para a frente" desce na tela. Com 0.5, a espada 30 pixels à frente do furão virado para baixo aparece 15 pixels abaixo;
+- **um número para o arquivo inteiro:** o quanto um pixel "para a frente" desce na tela, escrito como o ângulo da câmera (`views tilt=30` desce `sin(30°)` = 0.5). Com 0.5, a espada 30 pixels à frente do furão virado para baixo aparece 15 pixels abaixo;
 - **as três vistas** precisam ser desenhadas no mesmo ângulo (o alto da cabeça aparecendo do mesmo tanto);
 - **a folga embaixo:** o pé que vai para a frente desce na tela. No homem do protótipo, uns 20 px com 30°: a tela dele cresceu para o pé não sair cortado.
 
@@ -343,7 +343,7 @@ O normal é a esquerda espelhada. Para um personagem assimétrico (a espada na m
 - **A assimetria fica certa sozinha:** a espada continua na mesma mão. De um lado, ela fica na frente do corpo; do outro, atrás. Quem decide é a profundidade, sem `above=` à mão.
 - **A profundidade fica melhor:** o braço de longe na vista da direita é o de perto na da esquerda, então todo osso aparece em pelo menos um dos lados, sem o chute do par espelhado. Quando os dois lados discordam, o Weasel avisa.
 - **A virada também melhora:** hoje, a virada pela esquerda é a da direita espelhada, e com uma frente assimétrica (a espada do furão) há um pulo no último quadro ([virada e metamorfose](metamorfose.md#como-ficou-a-virada-1450)). Com a esquerda desenhada, a virada pode usar os desenhos dela.
-- **Com diagonais:** se a esquerda é desenhada, a diagonal da esquerda também precisa ser (`view=down_left`, `view=up_left`). Espelhar a diagonal da direita trocaria a espada de mão só na diagonal ([o que falta decidir](#o-que-falta-decidir), ponto 10).
+- **Com diagonais:** se a esquerda é desenhada, a diagonal da esquerda também precisa ser (`view=down_left`, `view=up_left`). Espelhar a diagonal da direita trocaria a espada de mão só na diagonal ([o que foi decidido](#o-que-foi-decidido-23112026), ponto 10).
 - **O custo:** um desenho a mais (ou três, com as diagonais). Na folha do jogo, a esquerda passa a ter quadros próprios; hoje, o `_left` espelhado reaproveita a animação da direita. Por animação, nada a mais.
 
 **Num jogo de plataforma** (só a direita e a esquerda, sem frente nem costas):
@@ -361,7 +361,7 @@ O normal é a esquerda espelhada. Para um personagem assimétrico (a espada na m
 - **Godot com `rig=bones`:** cada quadro sai como a pose 2D daquela vista, assada, como o `ik`. A ordem que troca vira uma pista de `z_index`. A conferir no Godot (o 4.7.2 está instalado).
 - **`--info`:** as vistas e as camadas de cada uma; a profundidade de cada osso e de onde ela veio (`corpo -2 (lado) · peE 10 (lado) · bracoE 14 (par de bracoD) · espada 14 (side=)`, ou `(esquerda)` com os dois lados); o ângulo de cada diagonal (`down_right: 34°, medido`); as animações geradas; e o pé no chão, por quadro de cada animação (`run: 0 0 3 8 0 0 3 8`, em px acima do chão; negativo é afundando).
 - **Avisos:**
-  - o pé afundando no chão num quadro (`walk, quadro 2: o pé afunda 3 px`); no ar, não avisa, porque pular e correr tiram o pé do chão de propósito ([ponto 12](#o-que-falta-decidir));
+  - o pé afundando no chão num quadro (`walk, quadro 2: o pé afunda 3 px`); no ar, não avisa, porque pular e correr tiram o pé do chão de propósito ([ponto 12](#o-que-foi-decidido-23112026));
   - um osso com a peça em alturas muito diferentes na frente e no lado (vistas desalinhadas);
   - nas costas, uma peça do lado trocado (perto do osso espelhado);
   - `view=` e `only=` na mesma camada;
@@ -400,15 +400,15 @@ O esboço foi feito com os números do protótipo (o esqueleto em 3D do herói, 
 - **Animar.** De cima, dá para ver se a espada vai mesmo para a frente, o quanto a lança avança na estocada e se o pé passa do chão.
 - **Entender a ordem.** Quando uma peça pula para trás de outra, o boneco mostra quem está mais perto.
 
-As escolhas marcadas com **(R)** esperam a sua confirmação ([ponto 13](#o-que-falta-decidir)):
+As escolhas, aceitas em 23/11/2026 ([ponto 13](#o-que-foi-decidido-23112026)):
 
-- **Onde fica** **(R)**: o mesmo botão da barra de baixo e **Exibir › Vistas em 3D**, que aparece no lugar de **Camadas em 3D** quando o arquivo tem `view=`, como o Palco no filme. A outra saída é deixar os dois itens no menu.
-- **O que as placas mostram** **(R)**: o quadro gerado de cada vista, acompanhando o player. A outra saída é sempre o desenho parado.
-- **Os jeitos de olhar** **(R)**: **Por fora** e **De cima**, mais um botão para cada vista desenhada (de frente, 3/4, de lado, de costas, esquerda), que alinha a vista com ela para conferir. **Da câmera do jogo**, com a inclinação de `tilt=`, pode entrar junto.
-- **O clique** **(R)**: num osso, escolhe o osso, leva o código à linha dele e mostra o caminho da ponta.
-- **Mexer pela vista** **(R)**: fica de fora, por enquanto. Arrastar a bolinha para mudar o `side=` continua no Prender, na vista de lado; mudar a pose continua no Testar ossos.
-- **Por dentro** **(R)**: o mesmo jeito da Camadas em 3D (o `js/ui-3d.js`). Cada placa é um canvas pintado pelo Weasel e posto em 3D com CSS, e o boneco é desenhado num SVG por cima, com as contas da própria vista, como a pirâmide da câmera no Palco. Sem three.js.
-- **Quando entra** **(R)**: logo depois da etapa 1b, como o primeiro pedaço da etapa 2. Ela precisa do esqueleto em 3D (1a) e dos giros (1b), e ajuda a conferir as duas.
+- **Onde fica:** o mesmo botão da barra de baixo e **Exibir › Vistas em 3D**, que aparece no lugar de **Camadas em 3D** quando o arquivo tem `view=`, como o Palco no filme.
+- **O que as placas mostram:** o quadro gerado de cada vista, acompanhando o player.
+- **Os jeitos de olhar:** **Por fora** e **De cima**, mais um botão para cada vista desenhada (de frente, 3/4, de lado, de costas, esquerda), que alinha a vista com ela para conferir. **Da câmera do jogo**, com a inclinação de `tilt=`, pode entrar junto.
+- **O clique:** num osso, escolhe o osso, leva o código à linha dele e mostra o caminho da ponta.
+- **Mexer pela vista:** fica de fora, por enquanto. Arrastar a bolinha para mudar o `side=` continua no Prender, na vista de lado; mudar a pose continua no Testar ossos.
+- **Por dentro:** o mesmo jeito da Camadas em 3D (o `js/ui-3d.js`). Cada placa é um canvas pintado pelo Weasel e posto em 3D com CSS, e o boneco é desenhado num SVG por cima, com as contas da própria vista, como a pirâmide da câmera no Palco. Sem three.js.
+- **Quando entra:** logo depois da etapa 1b, como o primeiro pedaço da etapa 2. Ela precisa do esqueleto em 3D (1a) e dos giros (1b), e ajuda a conferir as duas.
 
 ## O que fica de fora
 
@@ -418,56 +418,23 @@ As escolhas marcadas com **(R)** esperam a sua confirmação ([ponto 13](#o-que-
 - **Personagens de proporção realista:** o homem do protótipo andou e correu bem nas três vistas, mas depende muito das peças que inclinam e da ordem que troca. O alvo continua sendo o tamanho de Zelda: cabeça grande, braços e pernas curtos.
 - **Uma peça que muda de desenho no meio da animação** (a mão abrindo) continua precisando de um desenho por vista, com `.shape=` ou `show`, como hoje.
 
-## O que falta decidir
+## O que foi decidido (23/11/2026)
 
-Em cada item, **(R)** é a minha recomendação.
+Você aceitou todas as recomendações:
 
-1. **Como dizer a vista de uma camada.**
-   - **(R)** `view=down|up|right|left` na camada, no lugar do `only=`.
-   - Uma linha só com as camadas de cada vista (`views down=frente,frente_arma up=costas …`). Fica tudo num lugar, mas a linha fica longa e repete os nomes.
-2. **Como pedir as animações geradas.**
-   - **(R)** Sozinho: num arquivo com `view=`, toda animação sem direção no nome gera uma por vista; uma escrita à mão com a direção ganha.
-   - Com uma palavra no `anim` (`anim walk views`). Mais explícito, uma palavra a mais em cada animação.
-3. **A profundidade dos ossos.**
-   - **(R)** Lida da vista de lado (a maior peça casada do osso), com o par espelhado e o pai quando faltar, e `side=` para corrigir.
-   - Sempre escrita à mão (`z=` no osso). Nada adivinhado, mas é o trabalho que este plano quer tirar.
-4. **O número da câmera.**
-   - O nome: `tilt=30` (o ângulo da câmera, em graus: desce `sin(30°)` = 0.5) ou um fator direto (`0.5`). **(R)** em graus, que é como se pensa numa câmera; o nome precisa não bater com outra palavra do Weasel.
-   - Onde: **(R)** numa linha nova do arquivo, `views tilt=30`, que também é o lugar de futuras opções das vistas. Sem a linha, 30°.
-5. **`pitch=` e `yaw=` nos ossos de um arquivo com vistas.**
-   - **(R)** Os mesmos nomes do 2.5D: o osso gira do mesmo jeito; só o desenho das peças muda (elas inclinam por vista, em vez de girar como cartas).
-   - Nomes novos, para não haver dois sentidos para a mesma palavra.
-6. **Peças compridas encurtam?**
-   - **(R)** Sim, até no mínimo 10% do tamanho. Mudou com o protótipo: com 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado ([a corrida](#o-que-mudou-no-plano-com-o-teste)); com 10%, ela vira um ponto e some atrás da coxa. A espada vindo na sua direção fica com a ponta à mostra.
-   - Sim, até 40%, como estava. A espada apontada para a câmera aparece mais, mas a perna dobrada escorrega.
-   - Não: só giram. Mais simples, mas a espada apontada para a câmera fica comprida demais.
-7. **O exemplo.**
-   - **(R)** Um furão novo (`exemplos/furao3d.weasel`), com as mesmas vistas e 3 animações. O `furao.weasel` de hoje fica como está: o guia e os testes usam ele.
-   - Converter o `furao.weasel`.
-   - O herói do protótipo (`exemplos/heroi.weasel`): um homem com espada e escudo, que mostra também a esquerda desenhada e a diagonal. Ele já existe, na sintaxe do plano: [`tres-vistas/heroi.weasel`](tres-vistas/heroi.weasel).
-8. **O ângulo de uma vista diagonal** (só quando houver uma).
-   - **(R)** Medido do desenho, com `angle=` para corrigir.
-   - Sempre 45°. Mais simples, mas uma 3/4 desenhada mais fechada (30–35°) faz as peças girarem em volta do ponto errado.
-   - Sempre escrito à mão (`angle=` obrigatório). Nada adivinhado, mas você precisa saber o ângulo do seu desenho.
-9. **A vista principal (onde os ossos são desenhados).**
-   - **(R)** A que aparece no `pose`: a frente num jogo visto de cima, o lado direito num de plataforma. Os arquivos de hoje já fazem assim.
-   - Sempre a frente. Mais simples, mas o jogo de plataforma fica de fora.
-   - Escolhida com uma palavra na camada (`view=right main`). Explícito, uma palavra a mais.
-10. **A esquerda desenhada com diagonais só da direita.**
-    - **(R)** A diagonal da esquerda não é gerada, e a exportação para o Godot deixa de espelhar essa diagonal: andando para baixo e para a esquerda, o `tocar()` cai na direção reta mais perto. A espada nunca troca de mão, e um aviso diz qual vista falta.
-    - Espelhar a diagonal da direita mesmo assim, com um aviso. Ficam as 8 direções, mas a espada troca de mão só nas diagonais da esquerda.
-11. **A cabeça que vira** (novo, do protótipo: o guarda olhando para o lado).
-    - **(R)** `turns` no osso: ele mostra o desenho da vista mais perto de para onde aponta ([a cabeça que vira](#a-cabeça-que-vira-turns)). Uma palavra a mais só nos ossos que precisam; com uma 3/4 desenhada, a troca fica suave.
-    - Todo osso com peças em mais de uma vista troca de desenho sozinho. Nada a escrever, mas um braço que gira um pouco trocaria de desenho sem você querer.
-    - Sem troca: a cabeça só inclina e encurta, e virar a cabeça fica com `.shape=` ou `show`, à mão, como hoje.
-12. **O pé no chão** (novo, do protótipo).
-    - **(R)** No `--info`, a altura do pé em cada quadro; um aviso só quando o pé afunda. Quem anima acerta a altura do quadril, como no protótipo.
-    - O Weasel acerta a altura do quadril sozinho, para o pé mais baixo ficar no chão. Nada a fazer, mas o pulo e o quadro no ar da corrida precisariam de uma palavra para não serem puxados para baixo.
-    - Nada: só o desenho mostra.
-13. **A vista Vistas em 3D** (novo, pedido depois do protótipo).
-    - **(R)** Entra no plano, com as escolhas marcadas em [Vistas em 3D](#vistas-em-3d): o botão de sempre, as placas com o quadro gerado, Por fora, De cima e um botão por vista, o clique no osso, só para olhar, e logo depois da etapa 1b.
-    - Entra, mas mais simples: só o boneco parado e as placas com o desenho, sem acompanhar a animação.
-    - Fica para depois do plano.
+1. **A vista de uma camada:** `view=down|up|right|left` na camada, no lugar do `only=`.
+2. **As animações geradas:** sozinhas. Num arquivo com `view=`, toda animação sem direção no nome gera uma por vista; uma escrita à mão com a direção ganha.
+3. **A profundidade dos ossos:** lida da vista de lado (a maior peça casada do osso), com o par espelhado e o pai quando faltar, e `side=` para corrigir.
+4. **A câmera:** `views tilt=30`, em graus, numa linha nova do arquivo, que também é o lugar de futuras opções das vistas. Sem a linha, 30°.
+5. **`pitch=` e `yaw=`:** os mesmos nomes do 2.5D. O osso gira do mesmo jeito; só o desenho das peças muda (elas inclinam por vista, em vez de girar como cartas).
+6. **As peças compridas encurtam** até no mínimo 10% do tamanho. Mudou com o protótipo: com 40%, a canela que aponta para dentro da tela virava um toco escorregando para o lado ([a corrida](#o-que-mudou-no-plano-com-o-teste)).
+7. **O exemplo:** um furão novo, `exemplos/furao3d.weasel`, com as mesmas vistas e 3 animações. O `furao.weasel` de hoje fica como está, porque o guia e os testes usam ele. O furão convertido no protótipo ([`tres-vistas/furao3d.weasel`](tres-vistas/furao3d.weasel)) é o ponto de partida.
+8. **O ângulo de uma vista diagonal:** medido do desenho, com `angle=` para corrigir.
+9. **A vista principal** (onde os ossos são desenhados): a que aparece no `pose`. A frente num jogo visto de cima, o lado direito num de plataforma.
+10. **A esquerda desenhada com diagonais só da direita:** a diagonal da esquerda não é gerada, e a exportação para o Godot deixa de espelhar essa diagonal. Andando para baixo e para a esquerda, o `tocar()` cai na direção reta mais perto. A espada nunca troca de mão, e um aviso diz qual vista falta.
+11. **A cabeça que vira:** `turns` no osso ([a cabeça que vira](#a-cabeça-que-vira-turns)).
+12. **O pé no chão:** a altura do pé em cada quadro no `--info`, e um aviso só quando o pé afunda. Quem anima acerta a altura do quadril.
+13. **A vista Vistas em 3D:** entra como está em [Vistas em 3D](#vistas-em-3d), como o primeiro pedaço da etapa 2.
 
 ## Etapas
 
