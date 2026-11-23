@@ -1,6 +1,7 @@
 /* Weasel — o painel Testar ossos (plano docs/planos/testar-ossos.md, etapa 1). Com a ferramenta Testar ossos
    (tecla O), a coluna da direita ganha esta parte: o osso na mão (escolhido no desenho ou na lista), os valores
-   dele para digitar como numa key (x, y, giro, escala x e escala y; along, yaw e pitch quando o osso usa) e os
+   dele para digitar como numa key (x, y, giro, escala x e escala y; along, yaw e pitch quando o osso usa; z, yaw e
+   pitch num arquivo com três vistas, nos valores da animação base) e os
    botões de zerar. Nada vai para o código: os valores vivem em js/app.js (A.boneTest) e somem ao trocar de
    ferramenta. Etapa 2: a forma clicada (a que osso ela segue), acender o que segue o osso e Escrever como key, que
    grava o teste numa key de verdade (um Ctrl+Z desfaz). */
@@ -18,12 +19,13 @@
   const FIELDS = [
     { k: 'x', label: 'x', get: (t) => t.v[0], set: (t, n) => ({ v: put(t.v, 0, n) }), d: 2, step: 0.5, tip: 'quanto o osso anda para o lado (o dx de uma key, na direção do pai)' },
     { k: 'y', label: 'y', get: (t) => t.v[1], set: (t, n) => ({ v: put(t.v, 1, n) }), d: 2, step: 0.5, tip: 'quanto o osso anda para baixo (o dy de uma key, na direção do pai)' },
+    { k: 'z', label: 'z', get: (t) => t.z, set: (t, n) => ({ z: n }), d: 1, step: 0.5, tip: 'quanto o osso anda para a frente (osso.z= das três vistas; negativo: para trás), na direção do pai', when: (b, m, vw) => vw },
     { k: 'rot', label: 'giro', get: (t) => t.v[2], set: (t, n) => ({ v: put(t.v, 2, n) }), d: 1, step: 1, tip: 'o giro do osso, em graus' },
     { k: 'sx', label: 'escala x', get: (t) => t.v[3], set: (t, n) => ({ v: put(t.v, 3, n) }), d: 3, step: 0.01, tip: 'quanto o osso estica ao longo de x (1 = como é; negativo espelha)' },
     { k: 'sy', label: 'escala y', get: (t) => t.v[4], set: (t, n) => ({ v: put(t.v, 4, n) }), d: 3, step: 0.01, tip: 'quanto o osso estica ao longo de y (1 = como é; negativo espelha)' },
     { k: 'along', label: 'along', get: (t) => t.along, set: (t, n) => ({ along: n }), d: 3, step: 0.005, tip: 'quanto do caminho (path=) o osso já andou, de 0 a 1', when: (b) => !!b.path },
-    { k: 'yaw', label: 'yaw', get: (t) => t.yaw, set: (t, n) => ({ yaw: n }), d: 1, step: 1, tip: 'o giro 3D para os lados, em graus', when: (b, m) => !!(m.has3d || b.yaw || b.pitch || b.round) },
-    { k: 'pitch', label: 'pitch', get: (t) => t.pitch, set: (t, n) => ({ pitch: n }), d: 1, step: 1, tip: 'o giro 3D para cima e para baixo, em graus', when: (b, m) => !!(m.has3d || b.yaw || b.pitch || b.round) },
+    { k: 'yaw', label: 'yaw', get: (t) => t.yaw, set: (t, n) => ({ yaw: n }), d: 1, step: 1, tip: 'o giro 3D para os lados, em graus', when: (b, m, vw) => !!(vw || m.has3d || b.yaw || b.pitch || b.round) },
+    { k: 'pitch', label: 'pitch', get: (t) => t.pitch, set: (t, n) => ({ pitch: n }), d: 1, step: 1, tip: 'o giro 3D para cima e para baixo, em graus', when: (b, m, vw) => !!(vw || m.has3d || b.yaw || b.pitch || b.round) },
   ];
   function put(v, i, n) { const o = v.slice(); o[i] = n; return o; }
 
@@ -67,8 +69,8 @@
     what.textContent = changed.size ? `${changed.size} mexido${changed.size > 1 ? 's' : ''}` : '';
     btnAll.disabled = !changed.size;
     btnOne.disabled = !sel || !changed.has(sel);
-    // Escrever como key: no quadro do player, ou numa anim nova
-    const an = T.anim();
+    // Escrever como key: no quadro do player, ou numa anim nova (nas três vistas, na animação base)
+    const an = T.anim(), vw = !!(T.views && T.views());
     btnWrite.textContent = an ? `Escrever como key ${an.frame} em ${an.name}` : 'Escrever como key (anim nova teste)';
     btnWrite.title = an ? `Grava os ossos mexidos na key ${an.frame} da anim ${an.name} (o quadro do player). Um Ctrl+Z desfaz.` : 'Sem animação no player: grava os ossos mexidos numa anim nova, teste, na key 0, no fim do arquivo. Um Ctrl+Z desfaz.';
     btnWrite.disabled = !changed.size;
@@ -78,9 +80,10 @@
     shapeEl.textContent = shp ? `forma: ${shp}` : '';
     if (!m.bones.size) { tip.textContent = 'Este desenho não tem ossos (bone).'; }
     else if (!sel) tip.textContent = 'Clique na bolinha de um osso no desenho (ou escolha na lista) para digitar os valores dele. A bolinha move, a ponta da haste gira, o quadradinho estica. Um clique numa forma diz a que osso ela segue. Nada vai para o código até Escrever como key.';
+    else if (vw) tip.textContent = `Os valores são os de uma key da animação base${an ? ` (anim ${an.name})` : ' (a pose parada)'}: a vista do player mostra o que o Weasel gera deles. De lado, a bolinha anda para a frente e para trás (z) e a ponta da haste gira o pitch. Arraste o nome de um campo para os lados (Shift: 10× mais). Nada vai para o código até Escrever como key.`;
     else tip.textContent = 'Os valores são os de uma key deste osso. Arraste o nome de um campo para os lados (Shift: 10× mais). Nada vai para o código até Escrever como key: o Esc zera, e trocar de ferramenta volta tudo.';
     // os campos
-    const b = sel && m.bones.get(sel), list = b ? FIELDS.filter((f) => !f.when || f.when(b, m)) : [];
+    const b = sel && m.bones.get(sel), list = b ? FIELDS.filter((f) => !f.when || f.when(b, m, vw)) : [];
     const sh = sel ? sel + '|' + list.map((f) => f.k).join(',') : '';
     if (sh !== shape) {
       shape = sh;

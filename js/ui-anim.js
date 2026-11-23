@@ -408,13 +408,14 @@
       ctx.fillText('Escolha uma animação no player para ver as key dela:', 10, RULER / 2 + 2);
       v.hot = [];
       let x = 10;
-      for (const a of st.model ? st.model.anims : []) {
-        const tw = ctx.measureText(a.name).width + 16;
+      // os nomes da lista do player (num arquivo com vistas, walk uma vez só: a direção é a dos botões)
+      for (const name of st.model ? [...$('animSel').options].map((o) => o.value).filter(Boolean) : []) {
+        const tw = ctx.measureText(name).width + 16;
         ctx.fillStyle = C.chip;
         ctx.fillRect(x, RULER + 4, tw, RH);
         ctx.fillStyle = C.text;
-        ctx.fillText(a.name, x + 8, RULER + 4 + RH / 2);
-        v.hot.push({ x, w: tw, name: a.name });
+        ctx.fillText(name, x + 8, RULER + 4 + RH / 2);
+        v.hot.push({ x, w: tw, name });
         x += tw + 6;
       }
       return;

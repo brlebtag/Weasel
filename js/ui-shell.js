@@ -137,6 +137,8 @@
   const panelOn = (id) => () => !$(id).hidden;
   const film = () => A.isFilm();
   const drawing = () => !A.isFilm();
+  // um desenho com camadas view= (três vistas): no lugar de Camadas em 3D, Vistas em 3D
+  const viewsOn = () => { if (A.isFilm()) return false; const m = A.model(); return !!(m && m.views && m.views.p3); };
   // o painel Propriedades carrega depois desta casca (js/ui-props.js)
   const NOP = new Proxy({}, { get: () => () => false });
   const P = () => W.props || NOP;
@@ -262,7 +264,8 @@
       { label: 'Ajustar à tela', key: 'Ctrl+0', run: A.fit },
       { label: 'Tamanho real (100%)', key: 'Ctrl+1', run: A.zoomActual },
       '-',
-      { label: 'Camadas em 3D', visible: drawing, on: () => st.view3d, run: () => A.set3d(!st.view3d) },
+      { label: 'Camadas em 3D', visible: () => drawing() && !viewsOn(), on: () => st.view3d, run: () => A.set3d(!st.view3d) },
+      { label: 'Vistas em 3D', visible: viewsOn, on: () => st.view3d, run: () => A.set3d(!st.view3d) },
       { label: 'Palco em 3D', visible: () => A.isFilm(), on: () => st.view3d, run: () => A.set3d(!st.view3d) },
       '-',
       Object.assign({ label: 'Réguas', key: 'Ctrl+R', visible: drawing }, chk('tRulers')),

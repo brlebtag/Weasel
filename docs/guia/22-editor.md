@@ -417,6 +417,18 @@ O painel **Camadas** fica na coluna da direita, entre as Propriedades e as Amost
 - A vista mostra o mesmo quadro do player, sem o estilo de arte e sem o halo das luzes.
 - Com mais de 1.500 peças (um [traçado de imagem](#traçado-de-imagem) grande, por exemplo), as camadas com mais linhas viram **uma peça só**, a camada inteira: peças demais travam o navegador. O clique nela ainda escolhe a forma que está embaixo do mouse.
 - Num filme, o mesmo botão abre o **Palco em 3D**, com cada camada e cada ator na sua distância (`depth=`) ([Palco em 3D](#palco-em-3d)).
+- Num desenho com [três vistas](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view) (`layer … view=`), o mesmo botão abre as **Vistas em 3D** (veja abaixo).
+
+## Vistas em 3D
+
+Num desenho com três vistas ([capítulo 16](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)), **Exibir › Vistas em 3D** (ou o mesmo botão da barra de baixo) mostra o boneco que o Weasel montou em 3D, com as vistas desenhadas em volta dele. Serve para conferir o que ele entendeu do desenho: a profundidade de cada osso, para onde ele aponta e o caminho da espada no golpe.
+
+- **As vistas desenhadas** ficam em pé em volta do boneco: a frente na frente, o lado do lado, as costas atrás. De cada lado, só aparece a vista virada para quem olha (as duas mais perto, com uma passagem suave entre elas). Uma vista escondida deixa a marca no chão. A caixinha **Vistas desenhadas** tira todas.
+- **O esqueleto:** o corpo em cinza (a grossura de cada osso medida nas peças), os ossos em vermelho e uma bolinha em cada junta. A cor da bolinha diz de onde veio a profundidade: verde, lida nas peças (do lado, de uma diagonal ou do osso espelhado); azul, escrita (`side=`, ou `lat=` num jogo de plataforma); vermelha, adivinhada (a do pai, ou 0).
+- **O chão** é uma grade na altura do pé mais baixo.
+- **A barra de cima:** **Por fora** olha de lado e de cima; **De cima** mostra para onde cada osso vai (a espada que desce para a frente, o pé que avança); um botão para cada vista desenhada (**de frente**, **de lado**, **de costas**, **3/4**…) gira até ela e mostra só aquela vista, com as bolinhas em cima das peças; **Câmera do jogo** olha com a inclinação do `views tilt=`, na vista que o player está tocando. **Ctrl+0** alinha com a vista principal.
+- **Clique num osso:** a barra diz a profundidade dele, de onde ela veio e para onde ele aponta; o código vai até a linha do `bone`, e a vista desenha em amarelo o caminho da ponta dele na animação do player, com os números dos quadros.
+- O boneco segue o player: a animação base (`walk`) do que está tocando, no mesmo quadro.
 
 ## Efeitos da camada
 
@@ -526,6 +538,7 @@ O player fica embaixo do desenho e mostra as animações ([capítulo 7](07-movim
 - Com o cursor numa linha `key` ou `event`, o player vai para aquele quadro.
 - Uma animação com `once` toca uma vez e para no último quadro; as outras repetem. O botão ao lado de ▶ troca entre **repetir** e **tocar uma vez**, só no player: o código não muda.
 - Os quadros com `event` aparecem com ⚑.
+- **Três vistas** ([capítulo 16](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)): o menu mostra cada animação uma vez (`walk`), e os botões de direção ao lado dele escolhem a vista: **↓ → ↑ ←**, oito com as diagonais, ou **→ ←** num jogo de plataforma. A esquerda sem `view=left` aparece como o Godot faz, a direita espelhada: só para ver (para mexer, use **→**). Um botão apagado diz, ao parar o mouse nele, por que aquela vista não existe.
 - **Exibir › Papel vegetal** mostra os quadros vizinhos por transparência, como na mesa de luz do animador.
 - **Exibir › Trajetória** desenha o caminho dos pontos (`point`) em todos os quadros. Com `feet=` no `anim`, mostra também quanto o personagem anda por segundo sem os pés escorregarem ([capítulo 15](15-jogo-personagem.md#andar-sem-escorregar-feet)).
 - **Adicionar imagem…** com uma animação escolhida já escreve o `only=` dela na linha `ref`.
@@ -585,6 +598,7 @@ A ferramenta **Prender** (o botão da tachinha na barra de ferramentas, ou **Shi
 - **Cada um no osso mais perto** prende cada ponto ao osso mais próximo. É um palpite: confira as cores e troque o que não ficou bom.
 - Parando o mouse num ponto, a barra do desenho diz de que forma ele é e a que osso está preso.
 - **Um clique na bolinha de um osso** escolhe todos os pontos presos a ele (com **Shift**, soma; com **Alt**, tira). Assim dá para ver de uma vez o que já está naquele osso, e trocar pelo botão direito.
+- **A profundidade, nas três vistas:** na vista de lado (o botão **→** do player), arrastar a bolinha de um osso para os lados escreve o `side=` dele, o x do osso de lado ([capítulo 16](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)); com **Shift**, de 1 em 1. As outras vistas e a ordem das peças mudam junto. O **duplo clique** na bolinha apaga o `side=`, e a profundidade volta a ser a lida das peças. Num jogo de plataforma, é o `lat=`, arrastado de frente ou de costas.
 - **Esc** tira a escolha dos pontos.
 - O Prender só prende: nele, os ossos não mexem. Para ver o resultado, troque para o [Testar ossos](#testar-ossos) (**O**).
 
@@ -642,6 +656,15 @@ Uma forma que fica apagada quando devia acender não está presa ao osso: confir
 
 Um **Ctrl+Z** desfaz tudo o que foi escrito. Depois de escrever, o teste recomeça do quadro, que agora já tem os valores.
 
+**Nas três vistas** ([capítulo 16](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view)), o teste mexe na animação base (`walk`), e a vista do player mostra o que o Weasel gera dela, com a ordem das peças e os `turns` como ficariam:
+
+- o painel tem também **z** (`osso.z=`, para a frente), **yaw** e **pitch**;
+- arrastar a **bolinha** move o osso no plano da vista: de frente, para os lados e para cima e para baixo; de lado, para a frente e para trás (o `z`); de costas, o lado fica invertido, como a vista;
+- a **ponta da haste** gira em volta do eixo que aponta para a câmera: de frente e de costas, o giro; de lado, o `pitch`. Numa diagonal, ela não gira: use os campos;
+- **Escrever como key** grava na `anim walk`, não na `walk_right` (o botão diz `Escrever como key 2 em walk`), com `osso.z=`, `osso.pitch=` e `osso.yaw=`. Sem animação no player, nasce uma `anim teste`, que também ganha uma animação por vista.
+
+Numa animação escrita à mão numa vista (`anim walk_up`), o teste é o de sempre, sem o `z`.
+
 **Para sair**, escolha outra ferramenta: tudo volta como estava. O **Esc** zera o teste sem sair da ferramenta. Não aparece em filmes.
 
 Para treinar, use o boneco de [Ossos no desenho](#ossos-no-desenho), sem animação no player:
@@ -689,6 +712,7 @@ Bom saber:
 - As teclas valem com o foco na linha do tempo: clique nela antes. Fora dela, o F5 recarrega a página. Com o player tocando, ela só mostra; pause para mexer.
 - O botão da linha do tempo no player (ou **Exibir › Linha do tempo**) esconde e mostra.
 - Uma transição (`from=` e `to=`) não tem `key`, nem uma combinada (`mix=`) sem `key` própria: nelas, a linha do tempo só avisa isso.
+- Numa animação gerada pelas [três vistas](16-jogo-avancado.md#três-vistas-uma-animação-views-e-view) (`walk_right`), a linha do tempo mostra as `key` da animação base (`walk`), e mexer nela muda a `walk`: todas as vistas mudam junto.
 
 ## Jogo
 

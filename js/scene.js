@@ -2589,11 +2589,15 @@
 
   // ---------- ordem de pintura ----------
   // três vistas: a ordem das peças de uma vista em cada quadro (anim.zorder, calculada em js/views.js); as key
-  // above=/below= vêm depois e ganham dela
+  // above=/below= vêm depois e ganham dela. O Testar ossos do editor traz a ordem da pose testada (pose.vorder)
   function viewOrder(items, pose) {
-    const a = srcAnim(pose), zo = a && a.zorder;
-    if (!zo || !items.length) return items;
-    const z = zo[Math.max(0, Math.min(zo.length - 1, Math.floor(srcFrame(pose) + 1e-6)))];
+    if (!items.length) return items;
+    let z = pose.vorder && pose.vorder.has(items[0].el.id) ? pose.vorder : null;
+    if (!z) {
+      const a = srcAnim(pose), zo = a && a.zorder;
+      if (!zo) return items;
+      z = zo[Math.max(0, Math.min(zo.length - 1, Math.floor(srcFrame(pose) + 1e-6)))];
+    }
     if (!z || !z.has(items[0].el.id)) return items;
     return items.map((it, i) => ({ it, i, r: z.has(it.el.id) ? z.get(it.el.id) : i })).sort((p, q) => p.r - q.r || p.i - q.i).map((o) => o.it);
   }

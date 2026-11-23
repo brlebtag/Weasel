@@ -427,14 +427,16 @@
     // trás, sy na altura. M2 é a matriz do 2D de sempre (o giro e a escala de cada osso, sem o 3D), S2 só a escala, e
     // th a soma dos giros: a vista principal sem pitch e sem yaw sai igual ao 2D.
     const apply = (w, p) => { const q = mv(w.L, p); return [q[0] + w.t[0], q[1] + w.t[1], q[2] + w.t[2]]; };
-    const valOf = (an, b, f) => { const s = G.segment(an.tracks.get(b.name), f, an.frames, an.loop); return s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : REST.slice(); };
-    const numOf = (an, key, f) => { const tr = an.ptracks.get(key), s = tr && G.segment(tr.keys, f, an.frames, an.loop); return s ? s.a.v + (s.b.v - s.a.v) * s.t : 0; };
-    function world(an, f) {
+    const valOf = (an, b, f) => { const s = an && G.segment(an.tracks.get(b.name), f, an.frames, an.loop); return s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : REST.slice(); };
+    const numOf = (an, key, f) => { const tr = an && an.ptracks.get(key), s = tr && G.segment(tr.keys, f, an.frames, an.loop); return s ? s.a.v + (s.b.v - s.a.v) * s.t : 0; };
+    // an = null: a pose parada. over (o Testar ossos): nome -> { v, z, pitch, yaw }, cada parte no lugar da animação
+    function world(an, f, over) {
       const out = new Map();
       const get = (b, depth) => {
         if (out.has(b.name)) return out.get(b.name);
-        const v = valOf(an, b, f), P = P3.get(b.name);
-        const dz = numOf(an, `${b.name}.z`, f), pitch = numOf(an, `${b.name}.pitch`, f), yaw = numOf(an, `${b.name}.yaw`, f);
+        const o = over && over.get(b.name), P = P3.get(b.name), v = o && o.v ? o.v.slice() : valOf(an, b, f);
+        const part = (k) => (o && o[k] !== undefined && o[k] !== null ? o[k] : numOf(an, `${b.name}.${k}`, f));
+        const dz = part('z'), pitch = part('pitch'), yaw = part('yaw');
         let Q = main === 'right' ? rotX(pitch - v[2]) : pitch ? mm(rotX(pitch), rotZ(v[2])) : rotZ(v[2]);
         if (yaw) Q = mm(rotY(yaw), Q);
         const L = Q.map((r) => [r[0] * v[3], r[1] * v[4], r[2] * v[3]]);
@@ -767,6 +769,36 @@
     }
     // as formas das camadas sem view= estão desenhadas na vista principal: presas a um osso, vão para o lugar dele
     for (const L of m.layers) if (!L.view) for (const it of L.items) if (it.el.bone) it.el.vsh = true;
+
+    // ---------- para a vista Vistas em 3D do editor (js/ui-3d.js) ----------
+    // o esqueleto em 3D parado (P3), a direção de cada osso (DIR), a grossura medida, o ângulo de cada vista, o chão e
+    // o mundo de cada osso num quadro de uma animação base (gen.baseAnim)
+    V.p3 = P3;
+    V.dir = DIR;
+    V.thickAt = thickAt;
+    V.ang = ang;
+    V.floor = ground;
+    V.world = world;
+    V.apply = apply;
+    // ---------- para o Testar ossos do editor (js/app.js) ----------
+    // os valores de um osso num quadro da animação base (an; null = a pose parada), como numa key
+    V.valsOf = (an, name, f) => {
+      const b = m.bones.get(name);
+      return { v: b ? valOf(an, b, f) : REST.slice(), z: numOf(an, `${name}.z`, f), pitch: numOf(an, `${name}.pitch`, f), yaw: numOf(an, `${name}.yaw`, f) };
+    };
+    // A pose de uma vista com alguns ossos trocados (over: nome -> { v, z, pitch, yaw }): as keys de cada osso (como as
+    // geradas, sem o quadro anterior: a matriz é a mesma), a ordem das peças (id -> lugar na camada), o desenho que
+    // cada osso com turns mostra ([id, show|reveal, 0|1]) e o mundo em 3D
+    V.testOf = (v, an, f, over) => {
+      const Wf = world(an, f, over), keys = keysOf(v, Wf, new Map(), null), order = new Map(), turns = [];
+      for (const { L, order: o } of orderOf(v, Wf)) o.forEach((x, i) => order.set(L.items[x].el.id, i));
+      for (const t of TURN.get(v) || []) {
+        const p = turnPick(t, Wf.get(t.bone.name));
+        for (const el of t.own) if (!(an && [...an.ptracks.values()].some((tr) => tr.prop === 'show' && tr.targets && tr.targets.includes(el)))) turns.push([el.id, 'show', p === null ? 1 : 0]);
+        for (const a of t.alts) for (const el of a.els) turns.push([el.id, 'reveal', p === a.cand.name ? 1 : 0]);
+      }
+      return { keys, order, turns, W: Wf };
+    };
   }
 
   W.views = { build, VIEWS, ANG, MIRROR, dirOf };

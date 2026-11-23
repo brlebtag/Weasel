@@ -507,6 +507,13 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
 - `ordem troca` diz em quantos quadros a ordem muda, e entre que peças.
 - Com `turns`, `vira` diz, para cada quadro, o desenho que o osso usa: `-` é o da própria vista, e `right`, `up`… o de outra. No exemplo do giro: `look_down: cabeca - - right right right right right -`.
 
+### No editor
+
+- No player, o menu mostra `walk` uma vez, e os botões de direção (**↓ → ↑ ←**) escolhem a vista ([capítulo 22](22-editor.md#player)). A linha do tempo de `walk_right` mostra e muda as `key` da `walk`.
+- **Exibir › Vistas em 3D** mostra o boneco que o Weasel montou em 3D, com as vistas desenhadas em volta, a profundidade de cada osso e o caminho da ponta de cada um ([capítulo 22](22-editor.md#vistas-em-3d)).
+- O **Testar ossos** (**O**) tem os campos `z`, `pitch` e `yaw`, e na vista de lado a bolinha anda para a frente e para trás; **Escrever como key** grava na `walk` ([capítulo 22](22-editor.md#testar-ossos)).
+- No **Prender** (**Shift+P**), na vista de lado, arrastar a bolinha de um osso escreve o `side=` dele, e o duplo clique apaga ([capítulo 22](22-editor.md#prender)).
+
 ### As diagonais e o lado esquerdo
 
 - **As diagonais** são `view=down_right` (três quartos de frente) e `view=up_right` (três quartos de costas). O ângulo de cada uma é medido no desenho, pelo lugar das peças; `angle=` na `layer` diz o ângulo à mão, de 1 a 89 graus a partir da frente (ou das costas). Sem diagonais, o `tocar()` escolhe a reta mais perto.

@@ -325,6 +325,12 @@ body[data-layout=code] main, body[data-layout=design] main { grid-template-colum
 .kw-film { color: var(--kw-film); }
 .player .tg { min-width: 30px; padding: 4px 6px; opacity: 0.5; }
 .player .tg.on { opacity: 1; color: var(--hi); }
+/* três vistas: os botões de direção ao lado da lista de animações */
+.vdirs { display: inline-flex; gap: 2px; }
+.vdirs[hidden] { display: none; }
+.player .vdir { width: 26px; font-size: 15px; line-height: 1; }
+.player .vdir.on { color: var(--accent); border-color: var(--accent); }
+.player .vdir:disabled { opacity: .35; }
 .media-list { position: absolute; z-index: 20; top: 8px; left: 8px; width: min(420px, calc(100% - 16px)); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px; box-shadow: 0 8px 24px var(--shadow); }
 .media-row { display: flex; gap: 8px; align-items: center; font: 12px var(--mono); padding: 3px 4px; }
 .media-row .mn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -848,7 +854,29 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .stage.ruled.lp-open .v3-info { left: 286px; }
 #z3d.on { color: var(--accent); border-color: var(--accent); }
 /* a vista do palco (o filme em 3D): a câmera do filme por cima das placas */
-.v3[data-mode=film] [data-only=draw], .v3[data-mode=draw] [data-only=film] { display: none; }
+.v3[data-mode=film] [data-only]:not([data-only~=film]), .v3[data-mode=draw] [data-only]:not([data-only~=draw]), .v3[data-mode=views] [data-only]:not([data-only~=views]) { display: none; }
+/* as Vistas em 3D: as placas das vistas desenhadas e o boneco em 3D (js/ui-3d.js) */
+.v3-vbtns { display: inline-flex; gap: 5px; flex-wrap: wrap; }
+.v3-vbtns > button { padding: 2px 8px; }
+.stage .v3-space > canvas.v3-plate { background: #fff; outline: var(--v3px, 1px) solid var(--frame); box-shadow: 0 0 calc(var(--v3px, 1px) * 14) var(--shadow); }
+.stage .v3-space > canvas.v3-plate.checker { background: repeating-conic-gradient(#e4e4e4 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+.v3-cam .v3-grid { fill: none; stroke: var(--dim); stroke-opacity: .4; stroke-width: 1; }
+.v3-cam .v3-foot { fill: none; stroke: var(--dim); stroke-width: 4; stroke-linecap: round; }
+.v3-cam .v3-body { fill: none; stroke: #8d93a6; stroke-linecap: round; opacity: .42; }
+.v3-cam .v3-body circle { fill: #8d93a6; stroke: none; }
+.v3-cam .v3-link { fill: none; stroke: #3d5fa8; stroke-width: 1.2; stroke-opacity: .7; }
+.v3-cam .v3-bone { fill: none; stroke: #d8332b; stroke-width: 2.5; stroke-linecap: round; }
+.v3-cam circle.v3-dot { stroke: #fff; stroke-width: 1.5; }
+.v3-cam circle.v3-dot.on { stroke: var(--text); stroke-width: 2; }
+.v3-cam circle.v3-src-read { fill: #2e9e4f; }
+.v3-cam circle.v3-src-set { fill: #2f6fdc; }
+.v3-cam circle.v3-src-guess { fill: #dc3d2f; }
+.v3-cam .v3-path { fill: none; stroke: #e2a000; stroke-width: 2; stroke-linejoin: round; }
+.v3-cam circle.v3-pdot { fill: #e2a000; }
+.v3-cam circle.v3-pdot.now { stroke: var(--text); stroke-width: 1.5; }
+.v3-cam text.v3-pnum { fill: #b07a00; font: 10px var(--mono); }
+.v3-cam text.v3-bname { fill: var(--text); font: 11px var(--mono); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+.v3-cam text.v3-vname { fill: var(--dim); font: 11px var(--mono); }
 .v3-cam { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
 .v3-cam .v3-matte { fill: rgba(8, 11, 15, .62); fill-rule: evenodd; stroke: none; }
 .v3-cam .v3-ray { fill: none; stroke: var(--cam); stroke-width: 1; stroke-opacity: .75; }

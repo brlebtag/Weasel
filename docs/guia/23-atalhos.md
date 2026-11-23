@@ -157,11 +157,14 @@ As duas caixinhas no pé da barra de ferramentas: a cor de dentro (preenchimento
 | `clique ou caixa (Shift soma, Alt tira)` | escolhe pontos | Prender |
 | `botão direito, depois 1 a 9` | prende os pontos escolhidos ao osso de número 1 a 9 | Prender |
 | `clique na bolinha de um osso` | escolhe os pontos presos a ele (Shift soma, Alt tira) | Prender |
+| `arrastar a bolinha de um osso para os lados` | muda a profundidade dele: escreve side= (num jogo de plataforma, lat=, de frente ou de costas); com Shift, de 1 em 1 | Prender, na vista de lado (três vistas) |
+| `duplo clique na bolinha de um osso` | apaga o side= (ou o lat=): a profundidade volta a ser a lida das peças | Prender, na vista de lado (três vistas) |
 | `Esc` | solta os pontos escolhidos | Prender |
 | `Shift ao girar` | gira de 15 em 15 graus | Testar ossos |
 | `Shift ao esticar` | estica por igual (mantém a proporção) | Testar ossos |
 | `clicar de novo no mesmo lugar` | pega o osso de baixo, quando as alças estão uma em cima da outra | Testar ossos |
 | `duplo clique numa alça` | volta o osso como estava | Testar ossos |
+| `arrastar a bolinha de um osso` | move o osso no plano da vista: de lado, para a frente e para trás (o z); a ponta da haste gira o pitch de lado e o giro de frente e de costas | Testar ossos, nas três vistas |
 | `clique numa forma` | diz a que osso ela segue e acende o que vai com ele; de novo no mesmo lugar, a forma de baixo | Testar ossos |
 | `Esc` | zera o teste (todos os ossos voltam) | Testar ossos |
 | `Ctrl+clique` | escreve no código, onde está o cursor, a coordenada do lugar clicado | vistas Código e Dividido |
@@ -229,9 +232,9 @@ Num arquivo com film. As teclas da linha do tempo valem com o foco nela (clique 
 | `Shift ao arrastar as alças` | zoom de 0.1 em 0.1, scale= de 0.05 em 0.05 e rot= de 15 em 15 graus | no desenho do filme |
 | `Enter` ou `Esc` | grava / desiste | nos campos do painel Filme |
 
-## Camadas em 3D e Palco em 3D
+## Camadas em 3D, Vistas em 3D e Palco em 3D
 
-Para entrar e sair: Exibir › Camadas em 3D (no filme, Palco em 3D) ou o botão da barra de baixo.
+Para entrar e sair: Exibir › Camadas em 3D (num arquivo com view=, Vistas em 3D; no filme, Palco em 3D) ou o botão da barra de baixo.
 
 | Tecla | O que faz | Onde vale |
 |---|---|---|
@@ -239,7 +242,8 @@ Para entrar e sair: Exibir › Camadas em 3D (no filme, Palco em 3D) ou o botão
 | `Espaço+arrastar` ou `botão do meio+arrastar` | move a vista (a Mão, H, também) | na vista 3D |
 | `roda do mouse` | aproxima e afasta | na vista 3D |
 | `clique numa peça` | escolhe a linha dela (no filme, o ator); com Shift, soma ou tira | na vista 3D |
-| `Ctrl+0` | volta a olhar de frente (no filme, da câmera) | na vista 3D |
+| `clique num osso` | escolhe o osso, leva o código à linha dele e mostra o caminho da ponta | nas Vistas em 3D |
+| `Ctrl+0` | volta a olhar de frente (no filme, da câmera; nas Vistas em 3D, alinha com a vista principal) | na vista 3D |
 | `Ctrl+1` ou `Ctrl+=` ou `Ctrl+-` | tamanho real, aproxima, afasta | na vista 3D |
 | `setas` ou `Ctrl+3` ou `Ctrl+D` ou `Ctrl+Z` ou `Delete` ou `Ctrl+A` ou `Ctrl+C` ou `Ctrl+V` ou `Ctrl+G` ou `Ctrl+2` | fazem o mesmo que no desenho | na vista 3D |
 

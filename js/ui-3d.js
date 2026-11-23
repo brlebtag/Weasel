@@ -6,6 +6,10 @@
    peça escolhe a linha dela).
    No filme, cada camada do palco e cada ator vira uma placa, pintada como sai no quadro do player (W.film.stageOf),
    na distância do depth= dela. A câmera do filme é uma pirâmide, e olhar por ela (Da câmera) mostra o quadro.
+   Num arquivo com camadas view= (três vistas, docs/planos/tres-vistas.md, etapa 2), a vista é a Vistas em 3D: cada
+   vista desenhada vira uma placa de pé em volta do personagem (pintada com o quadro gerado dela, acompanhando o
+   player), e o boneco que o Weasel montou em 3D (js/views.js) é desenhado num SVG por cima: o osso, o pivô com a cor
+   de onde veio a profundidade, a grossura medida e o chão. Clicar num osso escolhe o osso e mostra o caminho da ponta.
    Nada aqui muda o desenho nem o filme: é só um jeito de olhar. */
 (function (W) {
   'use strict';
@@ -40,14 +44,19 @@
     <div class="v3-bar" role="toolbar" aria-label="Camadas em 3D">
       <button type="button" data-go="explode" data-only="draw" title="Afasta as camadas e gira um pouco">Explodir</button>
       <button type="button" data-go="out" data-only="film" title="Olha o palco de fora, um pouco de lado e de cima, com a câmera do filme">Por fora</button>
+      <button type="button" data-go="out" data-only="views" title="Olha o boneco de fora, um pouco de lado e de cima, com as vistas desenhadas em volta">Por fora</button>
+      <button type="button" data-go="top" data-only="views" title="Olha de cima: para onde a espada vai, o quanto o pé avança">De cima</button>
+      <span class="v3-vbtns" data-only="views"></span>
+      <button type="button" data-go="game" data-only="views" title="Olha com a câmera do jogo (a inclinação do views tilt=), na vista que o player está tocando">Câmera do jogo</button>
       <button type="button" data-go="front" data-only="draw" title="Olha de frente, sem girar (Ctrl+0)">De frente</button>
       <button type="button" data-go="front" data-only="film" title="Olha pela câmera do filme: é o quadro do player (Ctrl+0)">Da câmera</button>
-      <button type="button" data-go="side" title="Olha quase de lado">De lado</button>
+      <button type="button" data-go="side" data-only="draw film" title="Olha quase de lado">De lado</button>
       <button type="button" data-go="join" data-only="draw" title="Junta as camadas de volta, de frente">Juntar</button>
       <label data-only="film" title="Aperta as distâncias para caber tudo. Toda à direita, elas são as de verdade: a profundidade 12 fica 12 vezes mais longe da câmera que o plano da ação (1). Da câmera, o quadro não muda.">Distâncias <input type="range" class="v3-dist" min="0.25" max="1" step="0.01"></label>
-      <label><span data-only="draw">Camadas</span><span data-only="film">Mesma distância</span> <input type="range" class="v3-gap" min="0" max="100" step="1"></label>
+      <label data-only="draw film"><span data-only="draw">Camadas</span><span data-only="film">Mesma distância</span> <input type="range" class="v3-gap" min="0" max="100" step="1"></label>
       <label data-only="draw" title="Quanto as formas de uma mesma camada se afastam umas das outras">Formas <input type="range" class="v3-gapf" min="0" max="100" step="1"></label>
-      <label><input type="checkbox" class="v3-frames" checked> <span data-only="draw">Molduras e nomes</span><span data-only="film">Molduras, nomes e câmera</span></label>
+      <label data-only="draw film"><input type="checkbox" class="v3-frames" checked> <span data-only="draw">Molduras e nomes</span><span data-only="film">Molduras, nomes e câmera</span></label>
+      <label data-only="views" title="As vistas desenhadas em volta do boneco (só aparece a virada para quem olha)"><input type="checkbox" class="v3-plates" checked> Vistas desenhadas</label>
       <button type="button" class="ic v3-close" title="Fechar a vista 3D" aria-label="Fechar">✕</button>
     </div>
     <div class="v3-info" hidden></div>`;
@@ -55,6 +64,7 @@
   const space = root.querySelector('.v3-space'), labelBox = root.querySelector('.v3-labels'), info = root.querySelector('.v3-info');
   const gapIn = root.querySelector('.v3-gap'), gapFIn = root.querySelector('.v3-gapf'), framesIn = root.querySelector('.v3-frames'), distIn = root.querySelector('.v3-dist');
   const camSvg = root.querySelector('.v3-cam');
+  const platesIn = root.querySelector('.v3-plates'), vbtns = root.querySelector('.v3-vbtns');
   const z3d = $('z3d');
 
   // ---------- o estado ----------
@@ -64,6 +74,11 @@
   let open = false, film = false, dims = null, lays = [], pieces = [], bg = null, order = [], built = null, hot = null, dimFn = null;
   let anim = 0, timer = 0, resTimer = 0, busyUntil = 0, hiddenVer = 0;
   const hidden = new Set(); // camadas escondidas só aqui (pelo olho); vale enquanto a página estiver aberta
+  // Vistas em 3D: views liga o modo; VW guarda o modelo, o esqueleto (m.views), a animação base e o quadro; solo é a
+  // vista alinhada por um botão (só a placa dela aparece, até girar com o mouse)
+  let views = false, VW = null, solo = null;
+  const hasViews = () => { if (A.isFilm()) return false; const m = A.model(); return !!(m && m.views && m.views.p3); };
+  const modeNow = () => (A.isFilm() ? 'film' : hasViews() ? 'views' : 'draw');
 
   // ---------- as peças ----------
   function newCanvas(cls) {
@@ -135,7 +150,8 @@
     }
     // outro papel (outro arquivo, a prévia de um def): o zoom fica o mesmo
     if (dims && dims.size !== size) { cam.F *= size / dims.size; cam.dist *= size / dims.size; }
-    dims = { paper, size, D: 2.6 * size, E: 2.6 * size };
+    // nas Vistas em 3D, a câmera fica mais longe (quase sem perspectiva), para o boneco cair em cima do desenho
+    dims = { paper, size, D: (views ? 6 : 2.6) * size, E: 2.6 * size };
     if (!film) cam.dist = dims.D;
     return paper;
   }
@@ -143,6 +159,7 @@
     const m = cur();
     if (!m) { clear(); return; }
     if (film) { buildFilm(m); return; }
+    if (views) { buildViews(m); return; }
     const pose = A.pose(), paper = setDims();
     const k = quantK(), lighting = S.sceneLights(m, pose);
     const limit = { x: paper.x - paper.w / 2, y: paper.y - paper.h / 2, w: paper.w * 2, h: paper.h * 2 };
@@ -280,6 +297,269 @@
     syncSel();
     applyDim();
   }
+
+  // ---------- Vistas em 3D ----------
+  // Uma placa por vista desenhada: o papel, pintado só com as camadas dessa vista, na pose da animação gerada dela
+  // (walk_right para a vista right) no quadro do player; sem animação (ou numa que não sai de uma base), o desenho
+  // parado. O boneco usa o mundo da animação base (o 3D de js/views.js) no mesmo quadro.
+  function buildViews(m) {
+    const V = m.views, P = setDims(), k = quantK();
+    const an = st.anim ? m.animMap.get(st.anim) : null;
+    const baseName = an ? an.viewOf || (an.aliases && an.aliases[0]) || null : null;
+    const gen = baseName ? m.anims.find((a) => a.viewOf === baseName && a.baseAnim) : null;
+    const ban = gen ? gen.baseAnim : null, rest = S.makePose(m, null, 0);
+    const old = new Map(pieces.map((p) => [p.id, p])), next = [];
+    for (const v of V.drawn) {
+      const id = 'v:' + v;
+      let p = old.get(id);
+      if (p) old.delete(id);
+      else p = { id, cv: newCanvas('v3-plate') };
+      const name = baseName && m.animMap.has(`${baseName}_${v}`) ? `${baseName}_${v}` : null;
+      const pose = name ? S.makePose(m, name, st.frame) : rest;
+      const layers = new Set(m.layers.filter((L) => L.view === v && !L.hidden));
+      Object.assign(p, { view: v, anim: name, box: P, layer: null, lay: null, line: -1, items: null, els: null, kid: null, layerNames: [...layers].map((L) => L.name) });
+      const x = sizeCanvas(p, k, 4e6);
+      if (m.canvas.bg) S.fillBg(x, m, pose, P);
+      p.cv.classList.toggle('checker', !m.canvas.bg);
+      S.drawScene(x, m, pose, { background: false, glows: false, layers });
+      next.push(p);
+    }
+    for (const p of old.values()) { p.cv.width = 0; p.cv.remove(); }
+    pieces = next;
+    lays = [];
+    const f = ban ? ((Math.round(st.frame) % ban.frames) + ban.frames) % ban.frames : 0;
+    const same = VW && VW.m === m && VW.ban === ban;
+    VW = { m, V, ban, base: baseName, frame: f, Wf: ban ? V.world(ban, f) : null, worlds: same ? VW.worlds : null, chosen: VW ? VW.chosen : null, hover: VW ? VW.hover : null, hits: [], lines: new Map([...m.bones.values()].map((b) => [b.line, b.name])) };
+    if (VW.chosen && !m.bones.has(VW.chosen)) VW.chosen = null;
+    built = { m, key: buildKey(), k };
+    syncSel();
+  }
+  // o nome de cada vista (os botões e as placas)
+  function viewName(v, V) {
+    const both = V.drawn.includes('right') && V.drawn.includes('left');
+    return { down: 'de frente', up: 'de costas', right: both || V.main === 'right' ? 'direita' : 'de lado', left: 'esquerda', down_right: '3/4', down_left: '3/4 esquerda', up_right: '3/4 de costas', up_left: '3/4 de costas, esquerda' }[v] || v;
+  }
+  const fmtN = (v) => { const s = String(Math.round(v * 10) / 10); return (s === '-0' ? '0' : s).replace('.', ','); };
+  // o ângulo de uma vista: o medido (ou o angle=) nas diagonais, o da direção nas outras
+  const angText = (v, V) => `${fmtN(V.angles[v] ? V.angles[v].deg : W.views.ANG[v])}°`;
+  // O meio de tudo (O, a raiz na altura do meio do papel) e a distância das placas até ele (g: passa da metade do
+  // papel, para as placas de frente e de lado não se cortarem). Cada placa cresce (plateOf, s): ela fica atrás do
+  // boneco, e crescida assim cai em cima dele quando a vista olha alinhada com ela.
+  function viewGeo() {
+    const V = VW.V, P = dims.paper, O = [V.rootX, P.y + P.h / 2, 0];
+    const g = Math.max(V.rootX - P.x, P.x + P.w - V.rootX) + 0.04 * dims.size;
+    return { O, g };
+  }
+  // A placa da vista v: N aponta para quem olha por ela (de frente, +z), R é a direita da vista. As diagonais ficam
+  // mais longe (1,5 vez), atrás do canto entre a frente e o lado, para não cortar as outras placas.
+  function plateOf(v, G) {
+    const P = dims.paper, a = VW.V.ang[v] * DEG, N = [-Math.sin(a), 0, Math.cos(a)], R = [Math.cos(a), 0, Math.sin(a)];
+    const g = v.includes('_') ? 1.5 * G.g : G.g, s = (cam.dist + g) / cam.dist;
+    const C = [G.O[0] - g * N[0], G.O[1], G.O[2] - g * N[2]], dx = (P.x - VW.V.rootX) * s, dy = (P.y - G.O[1]) * s;
+    return { N, R, C, s, P0: [C[0] + dx * R[0], C[1] + dy, C[2] + dx * R[2]], ax: [s * R[0], 0, s * R[2]], ay: [0, s, 0] };
+  }
+  // A matriz de uma placa em qualquer direção: o ponto (u, v) da placa é P0 + u·ax + v·ay (o matOf é o caso de ax e
+  // ay no plano do desenho).
+  function matAx(B, P0, ax, ay) {
+    const o = [P0[0] - B.C[0], P0[1] - B.C[1], P0[2] - B.C[2]], { r, u, f, cx, cy, F } = B, w3 = dot(f, o);
+    if (w3 <= 0) return null;
+    const M = [F * dot(r, ax) + cx * dot(f, ax), F * dot(r, ay) + cx * dot(f, ay), F * dot(r, o) + cx * w3,
+      F * dot(u, ax) + cy * dot(f, ax), F * dot(u, ay) + cy * dot(f, ay), F * dot(u, o) + cy * w3,
+      dot(f, ax), dot(f, ay), w3];
+    for (let i = 0; i < 9; i++) M[i] /= w3;
+    return M;
+  }
+  // um segmento em 3D no SVG, cortado onde passa perto demais da câmera
+  const depthOf = (B, a) => dot([a[0] - B.C[0], a[1] - B.C[1], a[2] - B.C[2]], B.f);
+  const ptS = (q) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`;
+  function seg3(B, a, b, near) {
+    near = near || 1;
+    const da = depthOf(B, a), db = depthOf(B, b), mix = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
+    if (da < near && db < near) return '';
+    if (da < near) a = mix(a, b, (near - da) / (db - da));
+    else if (db < near) b = mix(b, a, (near - db) / (da - db));
+    const p = project(B, a[0], a[1], a[2]), q = project(B, b[0], b[1], b[2]);
+    return p && q ? `M${ptS(p)}L${ptS(q)}` : '';
+  }
+  // O quanto a placa aparece: só as duas vistas entre as quais quem olha está (girando da frente para o lado, com
+  // uma 3/4 desenhada: a frente e a 3/4, depois a 3/4 e o lado), apagando nos últimos 5 graus, e só viradas para
+  // quem olha. Alinhada por um botão, só aquela.
+  function plateAlpha(v, dir) {
+    if (solo) return v === solo ? 1 : 0;
+    const V = VW.V, pl = plateOf(v, viewGeo()), face = clamp((dot(dir, pl.N) - 0.12) / 0.3, 0, 1);
+    if (face <= 0 || V.drawn.length < 2) return face;
+    const th = Math.atan2(-dir[0], dir[2]) / DEG, wrap = (a) => ((((a + 180) % 360) + 360) % 360) - 180;
+    const d = wrap(th - V.ang[v]);
+    // a vista desenhada mais perto para o lado em que quem olha está
+    let lim = 360;
+    for (const w of V.drawn) {
+      if (w === v) continue;
+      const o = wrap(V.ang[w] - V.ang[v]);
+      if (d >= 0 ? o > 0 : o < 0) lim = Math.min(lim, Math.abs(o));
+    }
+    return face * clamp((lim - Math.abs(d)) / Math.min(5, lim / 2), 0, 1);
+  }
+  function renderViews() {
+    const B = basis(), P = dims.paper;
+    space.style.setProperty('--v3px', `${(cam.dist / cam.F).toFixed(3)}px`);
+    if (!VW) { camSvg.textContent = ''; return; }
+    const G = viewGeo(), list = [];
+    for (const p of pieces) {
+      const t = plateOf(p.view, G), a = platesIn.checked ? plateAlpha(p.view, B.dir) : 0;
+      const M = a > 0 ? matAx(B, t.P0, t.ax, t.ay) : null, ok = !!M && inFront(M, P.w, P.h);
+      p.cv.style.visibility = ok ? '' : 'hidden';
+      if (ok) { p.cv.style.transform = css3d(M); p.cv.style.opacity = a < 1 ? a.toFixed(3) : ''; }
+      p.M = M;
+      p.vis = ok;
+      p.alpha = null;
+      list.push({ p, d: depthOf(B, t.C), a: ok ? a : 0, t });
+    }
+    // as placas mais longe primeiro
+    list.sort((x, y) => y.d - x.d);
+    list.forEach((it, i) => { it.p.cv.style.zIndex = String(i + 1); });
+    order = [];
+    drawSkel(B, G, list);
+    showZoom();
+  }
+  // as cores da bolinha: de onde veio a profundidade do osso (verde: lida das vistas; azul: side= ou lat=;
+  // vermelho: do pai ou adivinhada, sem peça)
+  function srcClass(from) {
+    if (from === 'side=' || from === 'lat=') return 'v3-src-set';
+    if (/^(lado|esquerda|os dois lados|diagonal|par de)/.test(from)) return 'v3-src-read';
+    return 'v3-src-guess';
+  }
+  // o mundo de cada quadro da animação base (para o caminho da ponta), guardado enquanto ela não muda
+  function worldsOf() {
+    if (!VW.ban) return null;
+    if (!VW.worlds) { VW.worlds = []; for (let f = 0; f < VW.ban.frames; f++) VW.worlds.push(VW.V.world(VW.ban, f)); }
+    return VW.worlds;
+  }
+  // O boneco no SVG: o chão (uma grade na altura do pé), a grossura medida (cinza), o osso (vermelho), a ligação com
+  // o pai, a bolinha do pivô e, no osso escolhido, o caminho da ponta na animação (amarelo, com o número do quadro).
+  function drawSkel(B, G, plates) {
+    const V = VW.V, m = VW.m, Wf = VW.Wf, sc = (a) => B.F / Math.max(1e-6, depthOf(B, a));
+    const pr = (a) => (depthOf(B, a) > 1 ? project(B, a[0], a[1], a[2]) : null);
+    let html = '';
+    // os nomes das placas, embaixo de cada uma; a placa que não aparece (de cima, ou virada para o outro lado) deixa
+    // o pé dela no chão, com o nome
+    if (plates) for (const it of plates) {
+      const P = dims.paper, t = it.t, name = `${esc(viewName(it.p.view, V))} (${angText(it.p.view, V)})`;
+      if (it.a >= 0.3) {
+        const q = pr([t.C[0], t.C[1] + (P.y + P.h - G.O[1]) * t.s + (14 * cam.dist) / cam.F, t.C[2]]);
+        if (q) html += `<text class="v3-vname" x="${q[0].toFixed(1)}" y="${q[1].toFixed(1)}" text-anchor="middle" style="opacity:${it.a.toFixed(2)}">${name}</text>`;
+      }
+      const fo = 1 - it.a;
+      if (fo < 0.05 || solo) continue;
+      const l0 = (P.x - V.rootX) * t.s, l1 = (P.x + P.w - V.rootX) * t.s;
+      const a = [t.C[0] + l0 * t.R[0], V.floor, t.C[2] + l0 * t.R[2]], b = [t.C[0] + l1 * t.R[0], V.floor, t.C[2] + l1 * t.R[2]];
+      html += `<path class="v3-foot" style="opacity:${fo.toFixed(2)}" d="${seg3(B, a, b)}"/>`;
+      const q = pr([t.C[0] - (8 * cam.dist * t.N[0]) / cam.F, V.floor, t.C[2] - (8 * cam.dist * t.N[2]) / cam.F]);
+      if (q) html += `<text class="v3-vname" x="${q[0].toFixed(1)}" y="${(q[1] + 4).toFixed(1)}" text-anchor="middle" style="opacity:${fo.toFixed(2)}">${name}</text>`;
+    }
+    // o chão: um quadrado em volta da raiz, do tamanho das placas
+    const step = [5, 10, 20, 25, 50, 100, 200].find((s) => s >= G.g / 5) || 200, n = Math.floor(G.g / step), y = V.floor;
+    let grid = '';
+    for (let i = -n; i <= n; i++) {
+      grid += seg3(B, [V.rootX + i * step, y, -n * step], [V.rootX + i * step, y, n * step]);
+      grid += seg3(B, [V.rootX - n * step, y, i * step], [V.rootX + n * step, y, i * step]);
+    }
+    html += `<path class="v3-grid" d="${grid}"/>`;
+    // cada osso: onde ficam o pivô, a ponta e o bastão das peças (a grossura) neste quadro
+    const at = (w, p) => (w ? V.apply(w, p) : p), add = (P, u, t) => [P[0] + u[0] * t, P[1] + u[1] * t, P[2] + u[2] * t];
+    const bones = [...m.bones.values()].map((b) => {
+      const P = V.p3.get(b.name), d = V.dir.get(b.name), w = Wf && Wf.get(b.name);
+      return { b, w, d, piv: at(w, P), tip: at(w, add(P, d.u, d.L)), P };
+    });
+    const byName = new Map(bones.map((o) => [o.b.name, o]));
+    // A grossura: o bastão de cada osso (do começo ao fim das peças dele) em 5 pontos, cada um com a meia largura
+    // medida. O corte do osso é uma elipse (de lado a lado, a do desenho de frente; de frente para trás, a do lado), e
+    // a largura na tela é a dela na direção que cruza o osso na tela. As pontas recolhem o raio, para o cinza acabar
+    // onde as peças acabam (um osso que aponta para quem olha vira um círculo).
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const unit = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return l > 1e-9 ? [a[0] / l, a[1] / l, a[2] / l] : null; };
+    const halfW = (bd, h) => {
+      const n = unit(cross(bd, B.f)) || B.r, e2 = unit([-bd[2] * bd[0], -bd[2] * bd[1], 1 - bd[2] * bd[2]]) || [1, 0, 0], e1 = cross(bd, e2);
+      return Math.hypot(h[0] * dot(e1, n), h[1] * dot(e2, n));
+    };
+    let body = '';
+    for (const o of bones) {
+      const { P, d, w } = o, pts = [];
+      for (let i = 0; i <= 4; i++) pts.push(at(w, add(P, d.u, d.s0 + ((d.s1 - d.s0) * i) / 4)));
+      if (pts.some((p) => depthOf(B, p) < 1)) continue;
+      const bd = unit([pts[4][0] - pts[0][0], pts[4][1] - pts[0][1], pts[4][2] - pts[0][2]]) || [0, 1, 0];
+      const q = pts.map((p) => project(B, p[0], p[1], p[2])), r = pts.map((p, i) => halfW(bd, V.thickAt(o.b.name, i / 4)) * sc(p));
+      const ex = q[4][0] - q[0][0], ey = q[4][1] - q[0][1], Ls = Math.hypot(ex, ey);
+      if (Ls < 1e-3) { body += `<circle cx="${q[0][0].toFixed(1)}" cy="${q[0][1].toFixed(1)}" r="${Math.max(...r).toFixed(1)}"/>`; continue; }
+      const c0 = Math.min(r[0], Ls / 2) / Ls, c4 = 1 - Math.min(r[4], Ls / 2) / Ls, s = (i) => c0 + ((c4 - c0) * i) / 4;
+      const Q = q.map((_, i) => [q[0][0] + ex * s(i), q[0][1] + ey * s(i)]);
+      for (let i = 0; i < 4; i++) body += `<path d="M${ptS(Q[i])}L${ptS(Q[i + 1])}" stroke-width="${Math.max(1, r[i] + r[i + 1]).toFixed(1)}"/>`;
+    }
+    html += `<g class="v3-body">${body}</g>`;
+    // de longe para perto: a ligação com o pai, o osso e a bolinha
+    const hits = [];
+    bones.sort((a, b) => depthOf(B, b.piv) - depthOf(B, a.piv));
+    let links = '', sticks = '', dots = '';
+    for (const o of bones) {
+      const par = o.b.parent && byName.get(o.b.parent);
+      if (par) links += seg3(B, par.piv, o.piv);
+      const s = seg3(B, o.piv, o.tip);
+      if (s) sticks += `<path d="${s}"/>`;
+      const q = pr(o.piv), qt = pr(o.tip);
+      if (!q) continue;
+      const on = o.b.name === VW.chosen || o.b.name === VW.hover, dep = V.depth.get(o.b.name);
+      dots += `<circle class="v3-dot ${srcClass(dep ? dep.from : '')}${on ? ' on' : ''}" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${on ? 6 : 4.5}"/>`;
+      if (on) dots += `<text class="v3-bname" x="${(q[0] + 9).toFixed(1)}" y="${(q[1] - 7).toFixed(1)}">${esc(o.b.name)}</text>`;
+      hits.push({ name: o.b.name, line: o.b.line, q, qt, d: depthOf(B, o.piv) });
+    }
+    html += `<path class="v3-link" d="${links}"/><g class="v3-bone">${sticks}</g>${dots}`;
+    VW.hits = hits;
+    // o caminho da ponta do osso escolhido
+    const ch = VW.chosen && byName.get(VW.chosen), ws = ch && worldsOf();
+    if (ch && ws && ws.length > 1) {
+      const pts = ws.map((Wq) => at(Wq.get(ch.b.name), add(ch.P, ch.d.u, ch.d.L)));
+      let path = '';
+      for (let i = 0; i < pts.length; i++) if (i + 1 < pts.length || VW.ban.loop) path += seg3(B, pts[i], pts[(i + 1) % pts.length]);
+      let marks = '';
+      pts.forEach((p, i) => {
+        const q = pr(p);
+        if (!q) return;
+        const now = i === VW.frame;
+        marks += `<circle class="v3-pdot${now ? ' now' : ''}" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${now ? 5 : 3}"/><text class="v3-pnum" x="${(q[0] + 6).toFixed(1)}" y="${(q[1] + 4).toFixed(1)}">${i}</text>`;
+      });
+      html += `<path class="v3-path" d="${path}"/>${marks}`;
+    }
+    camSvg.innerHTML = html;
+  }
+  // o osso no ponto da tela: a bolinha mais perto (até 10 px), senão o traço do osso (até 5 px); empate, o mais perto
+  function boneAt(sx, sy) {
+    if (!VW) return null;
+    let best = null, bd = Infinity;
+    for (const h of VW.hits) {
+      let d = Math.hypot(h.q[0] - sx, h.q[1] - sy);
+      if (d > 10 && h.qt) {
+        const ex = h.qt[0] - h.q[0], ey = h.qt[1] - h.q[1], L2 = ex * ex + ey * ey, t = L2 > 1e-6 ? clamp(((sx - h.q[0]) * ex + (sy - h.q[1]) * ey) / L2, 0, 1) : 0;
+        const ds = Math.hypot(h.q[0] + ex * t - sx, h.q[1] + ey * t - sy);
+        d = ds <= 5 ? 10 + ds : Infinity;
+      }
+      if (d === Infinity || d > 15) continue;
+      // o mais perto de quem olha ganha nos empates (as bolinhas foram desenhadas de longe para perto)
+      if (d < bd - 0.5 || (Math.abs(d - bd) <= 0.5 && h.d < best.d)) { bd = d; best = h; }
+    }
+    return best;
+  }
+  function hoverBone(h) {
+    const name = h ? h.name : null;
+    if (name !== VW.hover) { VW.hover = name; render(); }
+    if (!h) { info.hidden = true; return; }
+    const V = VW.V, dep = V.depth.get(name), aim = V.aim.get(name), z = dep ? (dep.z !== undefined ? dep.z : dep.lat - V.rootX) : 0;
+    info.textContent = `osso ${name} · ${V.main === 'right' ? 'de lado a lado' : 'profundidade'} ${fmtN(z)} (${dep ? dep.from : '?'})${aim ? ` · aponta: ${aim}` : ''} · linha ${h.line + 1} · clique escolhe`;
+    info.hidden = false;
+  }
+  function chooseBone(h) {
+    VW.chosen = h ? h.name : null;
+    if (h && h.line >= 0 && st.caret.line !== h.line) A.editor.reveal(h.line, 0);
+    render();
+  }
   function clear() {
     for (const p of pieces) { p.cv.width = 0; p.cv.remove(); }
     pieces = [];
@@ -289,6 +569,7 @@
     labelBox.textContent = '';
     built = null;
     hot = null;
+    VW = null;
   }
   const buildKey = () => [st.anim, st.frame, st.show.guides, st.variant, hiddenVer, quantK()].join('|');
 
@@ -368,9 +649,12 @@
     const dir = [sy * cp, -sp, cy * cp], r = [cy, 0, -sy];
     const u = [dir[1] * r[2] - dir[2] * r[1], dir[2] * r[0] - dir[0] * r[2], dir[0] * r[1] - dir[1] * r[0]];
     const f = [-dir[0], -dir[1], -dir[2]];
-    const zz = layoutZ(), P = dims.paper, D = c.dist;
-    // no filme, o alvo fica no plano da ação: de frente, sem pan e com dist = E, a câmera de olhar é o olho do filme
-    const T = film ? [P.w / 2 + c.pan[0], P.h / 2 + c.pan[1], c.pan[2]] : [P.x + P.w / 2 + c.pan[0], P.y + P.h / 2 + c.pan[1], (zz.z0 + zz.z1) / 2 + c.pan[2]];
+    const zz = views ? { z0: 0, z1: 0 } : layoutZ(), P = dims.paper, D = c.dist;
+    // no filme, o alvo fica no plano da ação: de frente, sem pan e com dist = E, a câmera de olhar é o olho do filme;
+    // nas Vistas em 3D, na raiz (o eixo em volta do qual as vistas giram), na altura do meio do papel
+    const T = film ? [P.w / 2 + c.pan[0], P.h / 2 + c.pan[1], c.pan[2]]
+      : views && VW ? [VW.V.rootX + c.pan[0], P.y + P.h / 2 + c.pan[1], c.pan[2]]
+        : [P.x + P.w / 2 + c.pan[0], P.y + P.h / 2 + c.pan[1], (zz.z0 + zz.z1) / 2 + c.pan[2]];
     const C = [T[0] + D * dir[0], T[1] + D * dir[1], T[2] + D * dir[2]];
     // o meio da vista fica no espaço abaixo da barrinha de cima
     return { r, u, f, C, T, dir, F: c.F, cx: space.clientWidth / 2, cy: (TOP + space.clientHeight) / 2 };
@@ -437,6 +721,7 @@
 
   function render() {
     if (!open || !dims || !space.clientWidth) return;
+    if (views) { renderViews(); return; }
     const B = basis(), P = dims.paper;
     space.style.setProperty('--v3px', `${(cam.dist / cam.F).toFixed(3)}px`);
     // o canto (x, y) da placa l (no desenho, s = 1 e sem deslocar)
@@ -515,6 +800,10 @@
     const t = { yaw, pitch, pan: [0, 0, (zz.z0 + zz.z1) / 2], dist: Math.max(dims.E, 1.4 * L), F: 1 };
     const P = dims.paper, pts = [[P.w / 2, P.h / 2, dims.E]];
     for (const l of [bg, ...lays]) if (l) pts.push(...quadOf(l));
+    return fitPts(t, pts);
+  }
+  // a câmera t (já girada) com o pan e a lente que põem os pontos pts no meio da vista, cabendo
+  function fitPts(t, pts) {
     const w = space.clientWidth || 800, h = Math.max(80, (space.clientHeight || 600) - TOP);
     // duas passadas para pôr o meio do que se vê no meio da vista; a terceira acha a lente
     for (let pass = 0; pass < 3; pass++) {
@@ -532,7 +821,34 @@
     }
     return t;
   }
+  // Nas Vistas em 3D: de fora (um pouco de lado, entre a frente e a vista de lado, e de cima), de cima, alinhada com
+  // uma vista desenhada (só a placa dela aparece; Ctrl+0 é a principal) ou com a câmera do jogo (a inclinação do
+  // tilt=, na vista que o player está tocando). De fora e de cima, a lente cabe as placas que aparecem e o chão.
+  function presetViews(name) {
+    const V = VW && VW.V;
+    if (!V) return {};
+    const align = (v, pitch) => ({ yaw: -V.ang[v] * DEG, pitch: pitch || 0, F: fitF(false), pan: [0, 0, 0], dist: dims.D, solo: v });
+    if (name === 'front') return align(V.main);
+    if (name.startsWith('view:')) return align(name.slice(5));
+    if (name === 'game') {
+      const an = st.anim && VW.m.animMap.get(st.anim), v = an && (an.view || W.views.dirOf(an.name));
+      return align(v && V.ang[v] !== undefined ? v : V.main, V.tilt * DEG);
+    }
+    solo = null;
+    const yaw = name === 'top' ? 0 : V.main === 'right' ? -60 * DEG : -40 * DEG, pitch = name === 'top' ? 89.9 * DEG : 18 * DEG;
+    const t = { yaw, pitch, pan: [0, 0, 0], dist: dims.D, F: 1 }, G = viewGeo(), P = dims.paper, pts = [];
+    // o chão e as placas que aparecem dali
+    for (const x of [-1, 1]) for (const z of [-1, 1]) pts.push([V.rootX + x * G.g, V.floor, z * G.g]);
+    const sy = Math.sin(yaw), cy = Math.cos(yaw), cp = Math.cos(pitch), dir = [sy * cp, -Math.sin(pitch), cy * cp];
+    for (const v of V.drawn) {
+      const pl = plateOf(v, G);
+      if (!platesIn.checked || plateAlpha(v, dir) <= 0) continue;
+      for (const [u, w] of [[0, 0], [P.w, 0], [P.w, P.h], [0, P.h]]) pts.push([pl.P0[0] + u * pl.ax[0], pl.P0[1] + w * pl.ay[1], pl.P0[2] + u * pl.ax[2]]);
+    }
+    return Object.assign(fitPts(t, pts), { solo: null });
+  }
   function presetOf(name) {
+    if (views) return presetViews(name);
     if (film) {
       if (name === 'front') return { yaw: 0, pitch: 0, F: fitF(false), pan: [0, 0, 0], dist: dims.E };
       if (name === 'out' || name === 'explode') return fitStage(38 * DEG, 16 * DEG);
@@ -557,6 +873,9 @@
     // o giro volta para perto de zero antes (para não dar voltas inteiras)
     cam.yaw = Math.atan2(Math.sin(cam.yaw), Math.cos(cam.yaw));
     const to = presetOf(name), from = { yaw: cam.yaw, pitch: cam.pitch, F: cam.F, dist: cam.dist, pan: cam.pan.slice(), gap: cam.gap, gapF: cam.gapF };
+    // pelo caminho mais curto (a esquerda, a 270°, fica a -90°)
+    if (to.yaw !== undefined) to.yaw = from.yaw + Math.atan2(Math.sin(to.yaw - from.yaw), Math.cos(to.yaw - from.yaw));
+    if (to.solo !== undefined) solo = to.solo;
     const dur = ms === undefined ? 950 : ms, t0 = performance.now();
     const step = () => {
       const t = dur ? clamp((performance.now() - t0) / dur, 0, 1) : 1, s = smooth(t);
@@ -580,6 +899,7 @@
   gapIn.addEventListener('input', () => { stopAnim(); cam.gap = +gapIn.value; render(); });
   gapFIn.addEventListener('input', () => { stopAnim(); cam.gapF = +gapFIn.value; render(); });
   framesIn.addEventListener('change', render);
+  platesIn.addEventListener('change', render);
   distIn.addEventListener('input', () => { stopAnim(); cam.gamma = +distIn.value; render(); });
 
   // o zoom: no ponto (sx, sy) da tela, que fica parado
@@ -657,16 +977,22 @@
   space.addEventListener('pointermove', (e) => {
     if (!drag) {
       lastMove = e;
-      if (!hoverRaf) hoverRaf = requestAnimationFrame(() => { hoverRaf = 0; if (lastMove && !drag) { const q = localXY(lastMove); setHot(hitAt(q[0], q[1])); } });
+      if (!hoverRaf) hoverRaf = requestAnimationFrame(() => { hoverRaf = 0; if (lastMove && !drag) { const q = localXY(lastMove); if (views) { if (VW) hoverBone(boneAt(q[0], q[1])); } else setHot(hitAt(q[0], q[1])); } });
       return;
     }
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) > 3) { drag.moved = true; setHot(null); if (drag.mode === 'orbit') space.classList.add('grabbing'); }
+    if (!drag.moved && Math.hypot(dx, dy) > 3) {
+      drag.moved = true;
+      if (views) { if (VW && VW.hover) hoverBone(null); } else setHot(null);
+      if (drag.mode === 'orbit') { space.classList.add('grabbing'); solo = null; }
+    }
     if (!drag.moved) return;
     if (drag.mode === 'orbit') {
-      // arrastar para a direita gira o desenho para a direita (a câmera vai para a esquerda)
+      // arrastar para a direita gira o desenho para a direita (a câmera vai para a esquerda); nas Vistas em 3D, dá
+      // para olhar de cima de tudo (o De cima)
+      const pm = (views ? 89.9 : 85) * DEG;
       cam.yaw = drag.yaw - dx * 0.4 * DEG;
-      cam.pitch = clamp(drag.pitch + dy * 0.4 * DEG, -85 * DEG, 85 * DEG);
+      cam.pitch = clamp(drag.pitch + dy * 0.4 * DEG, -pm, pm);
     } else if (drag.mode === 'pan') {
       const s = cam.dist / cam.F, B = drag.B;
       for (let i = 0; i < 3; i++) cam.pan[i] = drag.pan[i] - (dx * B.r[i] + dy * B.u[i]) * s;
@@ -682,6 +1008,7 @@
     const q = localXY(e);
     if (d.mode === 'zoom') { zoomAt(q[0], q[1], e.altKey ? 0.8 : 1.25); return; }
     if (d.mode !== 'orbit') return;
+    if (views) { if (VW) chooseBone(boneAt(q[0], q[1])); return; }
     const p = hitAt(q[0], q[1]);
     if (film) { if (p) pickPlate(p); return; }
     const line = p ? (p.whole ? lineIn(p) : p.line) : -1;
@@ -705,7 +1032,7 @@
   }
   space.addEventListener('pointerup', endDrag);
   space.addEventListener('pointercancel', endDrag);
-  space.addEventListener('pointerleave', () => { if (!drag) setHot(null); });
+  space.addEventListener('pointerleave', () => { if (drag) return; if (views) { if (VW && VW.hover) hoverBone(null); } else setHot(null); });
   space.addEventListener('wheel', (e) => {
     e.preventDefault();
     const q = localXY(e), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
@@ -724,6 +1051,12 @@
     syncSel();
   }
   function syncSel() {
+    // nas Vistas em 3D, o osso escolhido segue o cursor do código (numa linha bone)
+    if (views) {
+      const name = VW && VW.lines.get(st.caret.line);
+      if (name && name !== VW.chosen) { VW.chosen = name; if (dims) render(); }
+      return;
+    }
     if (film) {
       const ch = W.filmUi ? W.filmUi.chosen() : '';
       for (const p of pieces) p.cv.classList.toggle('sel', (!!p.ac && p.ac.name === ch) || (p.line >= 0 && p.line === st.caret.line));
@@ -733,6 +1066,7 @@
     for (const p of pieces) p.cv.classList.toggle('sel', sel.has(p.line) || (p.lay.line >= 0 && sel.has(p.lay.line)) || (!!p.whole && [...sel].some((l) => p.whole.has(l))));
   }
   function applyDim() {
+    if (views) return;
     for (const p of pieces) p.cv.classList.toggle('dim', !!dimFn && !dimFn(p));
     if (bg) bg.cv.classList.toggle('dim', !!dimFn);
   }
@@ -772,12 +1106,31 @@
     const ds = lays.filter((l) => !l.screen && l.d > 0).map((l) => l.d), r = Math.max(1, ...ds) / Math.min(1, ...ds);
     return r > 4 ? Math.round(clamp(Math.log(4) / Math.log(r), 0.25, 1) * 100) / 100 : 1;
   }
+  // os botões das vistas desenhadas (um para cada; o título diz a camada e o ângulo)
+  function fillViewButtons() {
+    const m = cur(), V = m && m.views;
+    vbtns.textContent = '';
+    if (!V) return;
+    for (const v of V.drawn) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.go = 'view:' + v;
+      const n = viewName(v, V);
+      b.textContent = n[0].toUpperCase() + n.slice(1);
+      const a = V.angles[v];
+      b.title = `Alinha com a vista view=${v} (${angText(v, V)}${a ? (a.from === 'medido' ? ', medido no desenho' : a.from === 'angle=' ? ', do angle=' : ', o padrão') : ''}): as bolinhas têm que cair em cima das peças${v === V.main ? ' (Ctrl+0)' : ''}`;
+      vbtns.appendChild(b);
+    }
+  }
   function openView() {
     open = true;
     film = A.isFilm();
+    views = !film && hasViews();
+    solo = null;
     root.hidden = false;
-    root.dataset.mode = film ? 'film' : 'draw';
-    root.querySelector('.v3-bar').setAttribute('aria-label', film ? 'Palco em 3D' : 'Camadas em 3D');
+    root.dataset.mode = film ? 'film' : views ? 'views' : 'draw';
+    root.querySelector('.v3-bar').setAttribute('aria-label', film ? 'Palco em 3D' : views ? 'Vistas em 3D' : 'Camadas em 3D');
+    if (views) fillViewButtons();
     gapIn.parentNode.title = film ? 'Quanto se afastam as placas que estão na mesma profundidade (o palco e os atores no plano da ação, por exemplo). Da câmera, o quadro não muda.' : 'Quanto as camadas se afastam umas das outras, em pixels do desenho';
     framesIn.parentNode.title = film ? 'As molduras do quadro em cada placa, os nomes e a câmera do filme' : 'As molduras do papel e os nomes das camadas';
     if (z3d) z3d.classList.add('on');
@@ -792,9 +1145,11 @@
     if (film) { cam.gamma = gammaFor(); distIn.value = String(cam.gamma); }
     syncCursor();
     render();
-    // abre de frente e se abre em leque (no filme, vai para fora do palco)
-    setTimeout(() => { if (open) go(film ? 'out' : 'explode', 1100); }, 120);
-    A.hint(film ? 'O palco: cada camada e cada ator na distância do depth= · Da câmera é o quadro · arraste para girar · clique escolhe' : 'Arraste para girar · Espaço ou a Mão movem · a roda aproxima · clique escolhe', 3600);
+    // abre de frente e se abre em leque (no filme e nas vistas, vai para fora)
+    setTimeout(() => { if (open) go(film || views ? 'out' : 'explode', 1100); }, 120);
+    A.hint(film ? 'O palco: cada camada e cada ator na distância do depth= · Da câmera é o quadro · arraste para girar · clique escolhe'
+      : views ? 'As vistas desenhadas em volta do boneco que o Weasel montou em 3D · arraste para girar · clique num osso mostra o caminho da ponta'
+        : 'Arraste para girar · Espaço ou a Mão movem · a roda aproxima · clique escolhe', 3600);
   }
   function closeView() {
     open = false;
@@ -807,15 +1162,24 @@
     clear();
     camSvg.textContent = '';
     dims = null;
+    views = false;
   }
   A.on('view3d', () => { if (st.view3d && !open) openView(); else if (!st.view3d && open) closeView(); });
   A.on('tool', syncCursor);
-  // do desenho para o filme (ou o contrário) com a vista aberta: ela começa de novo, do jeito certo
+  // do desenho para o filme (ou para um arquivo com vistas, ou o contrário) com a vista aberta: ela começa de novo,
+  // do jeito certo
   const TITLE_DRAW = z3d ? z3d.title : '', TITLE_FILM = 'Palco em 3D: as camadas e os atores do filme, cada um na distância do depth=, com a câmera';
-  const syncButton = () => { if (z3d) { z3d.title = A.isFilm() ? TITLE_FILM : TITLE_DRAW; z3d.setAttribute('aria-label', A.isFilm() ? 'Palco em 3D' : 'Camadas em 3D'); } };
+  const TITLE_VIEWS = 'Vistas em 3D: as vistas desenhadas em volta do boneco que o Weasel montou em 3D';
+  const syncButton = () => {
+    if (!z3d) return;
+    const mode = modeNow();
+    z3d.title = mode === 'film' ? TITLE_FILM : mode === 'views' ? TITLE_VIEWS : TITLE_DRAW;
+    z3d.setAttribute('aria-label', mode === 'film' ? 'Palco em 3D' : mode === 'views' ? 'Vistas em 3D' : 'Camadas em 3D');
+  };
   A.on('model', () => {
     syncButton();
-    if (open && film !== A.isFilm()) { closeView(); openView(); }
+    if (open && root.dataset.mode !== modeNow()) { closeView(); openView(); }
+    else if (open && views) { const m = cur(); if (m && m.views && vbtns.childElementCount !== m.views.drawn.length) fillViewButtons(); }
   });
   syncButton();
   if (z3d) {
@@ -833,7 +1197,9 @@
   W.view3d = {
     go: (name) => go(name, 0),
     rebuild,
-    state: () => ({ film, cam: JSON.parse(JSON.stringify(cam)), plates: lays.map((l) => ({ name: l.name, z: Math.round(l.z), s: +l.s.toFixed(3), line: l.line, n: l.pieces.length })), bg: bg ? { z: Math.round(bg.z), s: bg.s } : null }),
-    hit: (x, y) => { const p = hitAt(x, y); return p ? p.info || p.id : null; },
+    state: () => ({ film, views, solo, cam: JSON.parse(JSON.stringify(cam)), plates: lays.map((l) => ({ name: l.name, z: Math.round(l.z), s: +l.s.toFixed(3), line: l.line, n: l.pieces.length })), bg: bg ? { z: Math.round(bg.z), s: bg.s } : null,
+      vplates: views ? pieces.map((p) => ({ view: p.view, anim: p.anim, vis: p.vis, op: p.cv.style.opacity || '1' })) : null,
+      bones: views && VW ? VW.hits.map((h) => ({ name: h.name, x: Math.round(h.q[0]), y: Math.round(h.q[1]) })) : null, chosen: VW ? VW.chosen : null, base: VW ? VW.base : null, frame: VW ? VW.frame : null }),
+    hit: (x, y) => { if (views) { const h = boneAt(x, y); return h ? h.name : null; } const p = hitAt(x, y); return p ? p.info || p.id : null; },
   };
 })(window.Weasel = window.Weasel || {});

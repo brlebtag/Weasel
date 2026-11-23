@@ -14,6 +14,10 @@
     current: '',
     variant: '',
     anim: '',
+    // três vistas: a direção escolhida nos botões do player ('' = a vista principal) e a animação que aparece espelhada
+    // (a esquerda que o Godot espelha da direita); vale só enquanto st.anim for ela
+    vdir: '',
+    vflip: '',
     shot: '', // filme: '' = o filme inteiro; senão o número do plano na linha do tempo
     camView: true, // filme: o que a câmera filma (ou o mundo inteiro como foi desenhado)
     frame: 0,
@@ -48,7 +52,7 @@
     mdrag: null,
     // prender: ligada, os pontos escolhidos ("linha:ponto" → a linha sem os @, para conferir depois de editar),
     // a caixa sendo arrastada, o último clique (para pegar o de baixo) e o peso usado da última vez
-    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1 },
+    pin: { on: false, sel: new Map(), box: null, pick: null, w: 1, depth: null },
     // Testar ossos (a ferramenta, tecla O): os ossos mexidos só na tela (nome → { v, along, yaw, pitch }, como em
     // scene.testPose), o osso na mão, de que quadro o teste partiu ("anim|quadro") e o último aperto (para pegar o
     // osso de baixo quando as alças estão no mesmo lugar), o osso sob o mouse (hover), a forma clicada (shape: { el, m,
@@ -1919,19 +1923,24 @@
     showLoop();
   }
   function fillAnimSelect() {
-    if (isFilm()) { fillFilmSelect(); return; }
+    if (isFilm()) { fillFilmSelect(); $('vdirs').hidden = true; return; }
     const sel = $('animSel');
     const m = st.model;
-    const want = ['', ...m.anims.map((a) => a.name)];
+    // três vistas: a lista mostra walk (uma vez), e os botões de direção escolhem walk_down, walk_right…
+    const names = [];
+    for (const a of m.anims) { const n = groupOf(a) || a.name; if (!names.includes(n)) names.push(n); }
+    const want = ['', ...names];
     const have = [...sel.options].map((o) => o.value);
     // a lista vazia (a página abriu num arquivo sem animações) também precisa do "sem animações"
     if (want.join('\n') !== have.join('\n') || !have.length) {
       sel.innerHTML = '';
       const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
       add('', m.anims.length ? 'pose parada' : 'sem animações');
-      for (const a of m.anims) add(a.name, a.name);
+      for (const n of names) add(n, n);
     }
-    sel.value = st.anim;
+    const cur0 = currentAnim();
+    sel.value = (cur0 && groupOf(cur0)) || st.anim;
+    fillDirs();
     const anim = currentAnim();
     if (anim && st.frame >= anim.frames) st.frame = 0;
     const sl = $('frameSl');
@@ -1946,6 +1955,83 @@
     showLoop();
   }
   const currentAnim = () => (st.anim ? st.model.animMap.get(st.anim) : null);
+
+  // ---------- três vistas: os botões de direção do player ----------
+  // walk é um grupo: as animações geradas (walk_down, walk_right…) e as escritas à mão com a direção no nome
+  const viewsOf = () => (st.model && !isFilm() && st.model.views && st.model.views.gens ? st.model.views : null);
+  const isGroup = (base) => { const V = viewsOf(); return !!V && V.gens.some((g) => g.base === base); };
+  function groupOf(an) {
+    if (!viewsOf() || !an) return null;
+    if (an.viewOf) return an.viewOf;
+    const d = W.views.dirOf(an.name);
+    return d && an.aliases && an.aliases.length && isGroup(an.aliases[0]) ? an.aliases[0] : null;
+  }
+  // a animação do grupo numa direção: a da vista, ou a espelhada (a esquerda que o Godot espelha da direita); sem
+  // nenhuma das duas, a da vista principal
+  function animFor(base, dir) {
+    const V = viewsOf(), m = st.model, d = dir || V.main, mir = W.views.MIRROR[d];
+    if (m.animMap.has(`${base}_${d}`)) return { name: `${base}_${d}`, flip: false };
+    if (!V.noMirror && mir && m.animMap.has(`${base}_${mir}`)) return { name: `${base}_${mir}`, flip: true };
+    const main = `${base}_${V.main}`;
+    return { name: m.animMap.has(main) ? main : (m.anims.find((a) => groupOf(a) === base) || { name: '' }).name, flip: false };
+  }
+  const flipOn = () => !!st.vflip && st.vflip === st.anim && !!viewsOf();
+  // o x em volta do qual a esquerda espelhada vira (a raiz, o mesmo do Godot), ou null
+  const flipX = () => (flipOn() ? viewsOf().rootX : null);
+  // a direção que o player mostra agora ('' fora de um grupo)
+  function shownDir() {
+    const an = currentAnim();
+    if (!an || !groupOf(an)) return '';
+    const d = an.view || W.views.dirOf(an.name) || viewsOf().main;
+    return flipOn() ? W.views.MIRROR[d] : d;
+  }
+  const DIR_ICON = { down: '↓', down_right: '↘', right: '→', up_right: '↗', up: '↑', up_left: '↖', left: '←', down_left: '↙' };
+  const DIR_NAME = { down: 'para baixo (de frente)', down_right: 'para baixo e para a direita', right: 'para a direita', up_right: 'para cima e para a direita', up: 'para cima (de costas)', up_left: 'para cima e para a esquerda', left: 'para a esquerda', down_left: 'para baixo e para a esquerda' };
+  const sideName = (v) => ({ right: 'direita', left: 'esquerda' })[v] || v;
+  // Quatro botões (↓ → ↑ ←), oito num arquivo com diagonais, dois (→ ←) num jogo de plataforma. Os que não têm vista
+  // (nem a espelhada) ficam apagados, com o motivo.
+  function fillDirs() {
+    const box = $('vdirs'), V = viewsOf();
+    if (!V) { box.hidden = true; return; }
+    const diag = V.drawn.some((v) => v.includes('_'));
+    const list = V.main === 'right' ? ['right', 'left'] : diag ? ['down', 'down_right', 'right', 'up_right', 'up', 'up_left', 'left', 'down_left'] : ['down', 'right', 'up', 'left'];
+    const an = currentAnim(), base = an && groupOf(an), now = shownDir(), sig = list.join(',') + '|' + V.drawn.join(',') + '|' + V.noMirror;
+    if (box.dataset.sig !== sig) {
+      box.dataset.sig = sig;
+      box.textContent = '';
+      for (const d of list) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ico vdir';
+        b.dataset.dir = d;
+        b.textContent = DIR_ICON[d];
+        const mir = W.views.MIRROR[d];
+        const has = V.drawn.includes(d), fl = !has && !V.noMirror && !!mir && V.drawn.includes(mir);
+        b.dataset.ok = has || fl ? '1' : '';
+        b.title = has ? `Vista ${DIR_NAME[d]} (view=${d})`
+          : fl ? `Vista ${DIR_NAME[d]}: a ${sideName(mir)} espelhada, como o Godot faz (só para ver; para mexer, use ${DIR_ICON[mir]})`
+            : `Sem a vista ${DIR_NAME[d]}: nenhuma camada view=${d}${V.noMirror && mir && V.drawn.includes(mir) ? ' (com os dois lados desenhados, nada sai espelhado)' : ''}; o tocar() do Godot cai na direção mais perto`;
+        box.appendChild(b);
+      }
+    }
+    box.hidden = false;
+    for (const b of box.children) {
+      b.disabled = !b.dataset.ok || !base;
+      b.classList.toggle('on', b.dataset.dir === now);
+    }
+  }
+  function pickDir(d) {
+    st.vdir = d;
+    const an = currentAnim(), base = an && groupOf(an);
+    if (!base) return;
+    const r = animFor(base, d);
+    st.anim = r.name;
+    st.vflip = r.flip ? r.name : '';
+    const a2 = currentAnim();
+    if (a2 && st.frame >= a2.frames) st.frame = 0;
+    fillAnimSelect();
+    draw();
+  }
 
   function fillVariantSelect() {
     const sel = $('variantSel');
@@ -2272,7 +2358,7 @@
     if (P) return S.makePose(P, null, 0);
     const base = S.makePose(st.model, st.build ? '' : st.anim, st.frame);
     // Testar ossos: os ossos mexidos só na tela, por cima do quadro em que o teste começou
-    if (testOn()) { testBase(); if (st.bt.vals.size) return S.testPose(st.model, base, st.bt.vals); }
+    if (testOn()) { testBase(); if (st.bt.vals.size) { const vt = viewsTest(); return vt ? viewsTestPose(vt, base) : S.testPose(st.model, base, st.bt.vals); } }
     return base;
   }
 
@@ -2362,6 +2448,10 @@
     ctx.beginPath();
     ctx.rect(R.x, R.y, R.w, R.h);
     ctx.clip();
+    // três vistas: a esquerda espelhada da direita (como o Godot faz), virada em volta da raiz. Só para ver: sem os
+    // ossos, as alças e as caixas por cima (elas ficariam do lado errado)
+    const fx = P ? null : flipX();
+    if (fx !== null) { ctx.translate(2 * fx, 0); ctx.scale(-1, 1); }
     // estilo (art): com a chave Estilo ligada; os estilos pesados mostram o desenho normal enquanto você arrasta
     const artOn = !!m.art && st.show.art && !(st.drag && W.art.heavy(m.art));
     const post = m.finish.pixel > 1 || S.hasPost(m) || artOn;
@@ -2395,17 +2485,19 @@
     ctx.restore();
 
     T();
+    // nas ferramentas Prender e Testar ossos, os ossos aparecem mesmo com a chave Ossos desligada
+    const pinning = pinOn(), testing = testOn();
+    let gait = null;
+    if (fx === null) {
     if (refs) drawRefFrames(ctx, m, pose, z);
     if (st.show.guides && m.unity) drawUnity(ctx, m.unity, z);
     if (st.show.guides && m.tileset) drawTileset(ctx, m, z);
     if (m.boxes.size) drawBoxes(ctx, m, pose, z);
     if (st.show.guides && m.points.size) drawPoints(ctx, m, pose, z);
     if (st.show.guides && m.lights.size) drawLights(ctx, m, pose, z);
-    // nas ferramentas Prender e Testar ossos, os ossos aparecem mesmo com a chave Ossos desligada
-    const pinning = pinOn(), testing = testOn();
     if ((st.show.bones || pinning || testing) && !P) drawBones(ctx, m, pose, z);
     if (P) drawOrigin(ctx, z);
-    const gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
+    gait = st.show.traj && anim && m.points.size && !st.build ? S.drawTrajectory(ctx, m, anim, z, { frame: st.frame }) : null;
     if (bf) S.drawTrace(ctx, m, pose, st.build.plan, bf.st, z);
     else if (pinning) drawPins(ctx, m, pose, z);
     else if (testing) testOverlay(ctx, m, pose, z, glow); // testando ossos, as formas não mostram alças nem caixa
@@ -2414,11 +2506,13 @@
     const tk = toolHooks[st.tool];
     if (tk && tk.overlay) { ctx.save(); tk.overlay(ctx, z, dpr); ctx.restore(); T(); }
     for (const f of overlays) { ctx.save(); f(ctx, z, dpr); ctx.restore(); T(); }
+    }
     const ro = rulersOn();
     if (ro) drawGuides(ctx, dpr);
     if (st.meas) drawMeasure(ctx, dpr);
     if (ro) drawRulers(ctx, dpr);
-    if (gait) drawGaitNote(ctx, dpr, gait);
+    if (fx !== null) { const mir = W.views.MIRROR[shownDir()]; drawNote(ctx, dpr, [`${DIR_ICON[shownDir()]} a ${sideName(mir)} espelhada, como o Godot faz`, `só para ver: para mexer, use ${DIR_ICON[mir]}`]); }
+    else if (gait) drawGaitNote(ctx, dpr, gait);
     else if (testing) drawTestNote(ctx, dpr);
     else if (iso) drawNote(ctx, dpr, [`grupo ${iso.name || '(sem nome)'}${iso.lock ? ' (travado)' : ''}`, 'Esc ou duplo clique fora: sai']);
   }
@@ -2741,9 +2835,13 @@
   }
   // a bolinha (mover), a ponta da alça (girar) e, no Testar ossos, o quadradinho no meio da alça (esticar) de cada
   // osso, na pose do quadro; dir é para onde a alça aponta no desenho
+  // o osso na tela: nas três vistas, numa vista que não é a principal, o pivot= vai para o lugar do osso nessa vista
+  // (a matriz com o vxf da animação, como as caixas e os pontos); fora delas, a matriz do osso
+  const boneMat = (pose, name) => { const wm = pose.bones.get(name); return wm ? S.viewShift(pose, name, wm) : wm; };
+  const bonePt = (pose, b) => { const wm = boneMat(pose, b.name); return wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot; };
   function boneGrips(m, pose, z) {
     return [...m.bones.values()].map((b) => {
-      const wm = pose.bones.get(b.name), p = M.apply(wm, b.pivot[0], b.pivot[1]), a = boneDir(m, b);
+      const wm = boneMat(pose, b.name), p = M.apply(wm, b.pivot[0], b.pivot[1]), a = boneDir(m, b);
       let dx = wm[0] * Math.cos(a) + wm[2] * Math.sin(a), dy = wm[1] * Math.cos(a) + wm[3] * Math.sin(a);
       const l = Math.hypot(dx, dy) || 1;
       dx /= l; dy /= l;
@@ -2807,11 +2905,12 @@
     if (tip && !tip.target) { hint(`O pé do ik ${tip.name} fica no chão (foot=): ${test ? 'mexa no corpo e veja a perna dobrar' : 'para animar o pé, use target= com um osso de alvo'}.`, 3600); draw(); return; }
     if (tip && st.model.bones.has(tip.target)) { hint(`A ponta do ik ${tip.name} segue o alvo: ${test ? `o teste move ${tip.target}` : `a key vai para ${tip.target}`}.`, 2400); hb = { bone: tip.target, mode: 'move' }; if (test) st.bt.sel = tip.target; }
     const m = st.model, b = m.bones.get(hb.bone), pose = currentPose(), wm = pose.bones.get(b.name), parent = b.parent ? pose.bones.get(b.parent) : null;
-    const common = { bone: b.name, mode: hb.mode, p: M.apply(wm, b.pivot[0], b.pivot[1]), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null };
+    const common = { bone: b.name, mode: hb.mode, p: bonePt(pose, b), flip: M.det(wm) < 0, start: toCanvas(e), parentInv: parent ? M.invert(parent) : null };
     // Testar ossos: só na tela. Esticar puxa ao longo da alça: estica no eixo do osso mais perto dela (sx ou sy)
     if (test) {
-      const g = boneGrips(m, pose, st.view.z).find((q) => q.b === b);
-      st.pose = Object.assign(common, { test: true, v0: testVals(b.name).v, dir: g.dir, axis: Math.abs(Math.cos(g.a)) >= Math.abs(Math.sin(g.a)) ? 3 : 4, moved: false });
+      const g = boneGrips(m, pose, st.view.z).find((q) => q.b === b), vt = viewsTest(), vd = vt ? viewsDrag(vt, b, hb.mode) : null;
+      if (vt && !vd) { draw(); return; }
+      st.pose = Object.assign(common, { test: true, v0: testVals(b.name).v, dir: g.dir, axis: Math.abs(Math.cos(g.a)) >= Math.abs(Math.sin(g.a)) ? 3 : 4, moved: false, vt: vd });
       draw();
       return;
     }
@@ -2820,14 +2919,56 @@
     const v0 = s ? s.a.v.map((x, k) => x + (s.b.v[k] - x) * s.t) : [0, 0, 0, 1, 1];
     st.pose = Object.assign(common, { v0, anim: an.name, frame: f, key: 'pose' + Date.now() });
   }
+  // três vistas, Testar ossos: arrastar a alça de um osso muda os valores da animação base, em 3D. A bolinha anda no
+  // plano da vista que o player mostra (de lado, para a frente e para trás: osso.z=), contado na direção do pai; a
+  // ponta da haste gira em volta do eixo que aponta para a câmera: de frente e de costas, o giro; de lado, o pitch.
+  // Numa diagonal (ou de frente, num jogo de plataforma), girar pela haste não dá: o painel tem os campos
+  const mv3 = (A, v) => [0, 1, 2].map((i) => A[i][0] * v[0] + A[i][1] * v[1] + A[i][2] * v[2]);
+  function inv3(A) {
+    const [[a, b, c], [d, e, f], [g, h, i]] = A, c0 = e * i - f * h, c1 = f * g - d * i, c2 = d * h - e * g, det = a * c0 + b * c1 + c * c2;
+    if (Math.abs(det) < 1e-9) return null;
+    return [[c0 / det, (c * h - b * i) / det, (b * f - c * e) / det], [c1 / det, (a * i - c * g) / det, (c * d - a * f) / det], [c2 / det, (b * g - a * h) / det, (a * e - b * d) / det]];
+  }
+  function viewsDrag(vt, b, mode) {
+    const V = vt.V, phi = ((V.ang[vt.view] || 0) * Math.PI) / 180, t0 = testVals(b.name);
+    const out = { c: Math.cos(phi), s: Math.sin(phi), z0: t0.z, pitch0: t0.pitch, inv: null, spin: null };
+    if (mode === 'move') {
+      const q = b.parent && V.world(vt.base, st.frame, st.bt.vals).get(b.parent);
+      out.inv = q ? inv3(q.L) : null;
+    } else if (mode === 'rot') {
+      const spin = V.main === 'down' ? { down: ['rot', 1], up: ['rot', -1], right: ['pitch', -1], left: ['pitch', 1] }[vt.view] : { right: ['rot', 1], left: ['rot', -1] }[vt.view];
+      if (!spin) { hint(`Nesta vista (${vt.view}), a haste não gira o osso: gire ${V.main === 'down' ? 'de frente, de costas ou de lado' : 'de lado'}, ou digite o giro, o pitch e o yaw no painel.`, 3600); return null; }
+      out.spin = spin;
+    }
+    return out;
+  }
   function movePose(e) {
     const d = st.pose, [x, y] = toCanvas(e);
-    const v = d.v0.slice();
+    const v = d.v0.slice(), q = d.vt;
+    if (q && d.mode === 'move') {
+      // a tela anda para o lado da vista (c, s) e para baixo; visto do pai, em 3D. Num jogo de plataforma, a key anda
+      // para a frente (dx) no z do mundo, e osso.z= para perto da câmera
+      const sx = x - d.start[0], sy = y - d.start[1], w = [sx * q.c, sy, sx * q.s], l = q.inv ? mv3(q.inv, w) : w;
+      const k = st.model.views.main === 'down' ? l : [l[2], l[1], -l[0]];
+      v[0] = d.v0[0] + k[0];
+      v[1] = d.v0[1] + k[1];
+      d.moved = true;
+      setTest(d.bone, { v, z: q.z0 + k[2] });
+      return;
+    }
     if (d.mode === 'rot') {
       let da = ((Math.atan2(y - d.p[1], x - d.p[0]) - Math.atan2(d.start[1] - d.p[1], d.start[0] - d.p[0])) * 180) / Math.PI;
       while (da > 180) da -= 360;
       while (da < -180) da += 360;
-      v[2] = d.v0[2] + (d.flip ? -da : da);
+      const sg = q && q.spin ? q.spin[1] : 1;
+      if (q && q.spin && q.spin[0] === 'pitch') {
+        let pt = q.pitch0 + sg * (d.flip ? -da : da);
+        if (e.shiftKey) pt = Math.round(pt / 15) * 15;
+        d.moved = true;
+        setTest(d.bone, { pitch: pt });
+        return;
+      }
+      v[2] = d.v0[2] + sg * (d.flip ? -da : da);
       if (d.test && e.shiftKey) v[2] = Math.round(v[2] / 15) * 15;
     } else if (d.mode === 'scale') {
       // quanto o mouse anda ao longo da alça, contado do pivô; passar do pivô espelha. Shift: os dois eixos por igual
@@ -2850,13 +2991,14 @@
   }
   // escreve nome=valor na linha key do quadro d.frame da anim d.anim: troca o valor, se o nome já está nela; senão,
   // põe no fim da linha; sem a linha, cria uma, na ordem dos quadros. nome é um osso (osso=dx,dy,giro) ou uma parte
-  // dele (osso.along, osso.yaw, osso.pitch)
+  // dele (osso.along, osso.yaw, osso.pitch, osso.z). Nas três vistas, d.vbase é a animação base (anim walk): as linhas
+  // dela apontam para a gerada da vista principal (rec.viewBase); as de uma walk_down escrita à mão, não
   function writeKeyPart(d, name, val) {
     const text = `${name}=${val}`;
     const lineText = (line) => { const s = editor.lineStart(line), n = editor.value.indexOf('\n', s); return editor.value.slice(s, n < 0 ? editor.value.length : n).replace(/\r$/, ''); };
     let keyAt = -1, after = -1, best = -1;
     for (const [line, rec] of st.model.byLine) {
-      if (!rec.anim || rec.anim.name !== d.anim) continue;
+      if (!rec.anim || (d.vbase ? rec.viewBase !== d.vbase : rec.anim.name !== d.anim || rec.viewBase)) continue;
       if (rec.st.cmd === 'anim' && after < 0) after = line;
       if (rec.st.cmd === 'key' && rec.frame === d.frame && (keyAt < 0 || line < keyAt)) keyAt = line;
       if (rec.st.cmd === 'key' && rec.frame < d.frame && rec.frame >= best) { best = rec.frame; after = Math.max(after, line); }
@@ -2906,10 +3048,9 @@
       }
     }
     for (const b of m.bones.values()) {
-      const p = M.apply(pose.bones.get(b.name), b.pivot[0], b.pivot[1]);
+      const p = bonePt(pose, b);
       if (b.parent && m.bones.has(b.parent)) {
-        const pb = m.bones.get(b.parent);
-        const q = M.apply(pose.bones.get(pb.name), pb.pivot[0], pb.pivot[1]);
+        const q = bonePt(pose, m.bones.get(b.parent));
         ctx.strokeStyle = 'rgba(227,145,214,.85)';
         ctx.lineWidth = 2 / z;
         ctx.beginPath();
@@ -3529,9 +3670,41 @@
     if (st.bt.at !== at) { st.bt.at = at; st.bt.vals.clear(); }
     return S.makePose(st.model, st.anim, st.frame);
   }
-  // os valores do osso agora, como numa key: { v: [dx, dy, rot, sx, sy], along (null sem path=/key), yaw, pitch }
+  // três vistas: o teste mexe nos valores da animação base (anim walk, ou a pose parada), em 3D (osso.z=, .pitch=,
+  // .yaw=), e a vista do player mostra as keys que o Weasel gera deles, com a ordem das peças e os turns como ficariam.
+  // Numa animação escrita à mão numa vista (anim walk_up), o teste de sempre
+  function viewsTest() {
+    const V = viewsOf();
+    if (!V || !V.testOf) return null;
+    const an = currentAnim();
+    if (an && !an.viewOf) return null;
+    return { V, base: an ? an.baseAnim : null, view: an ? an.view : V.main };
+  }
+  let vtMemo = null;
+  function viewsTestPose(vt, base) {
+    const key = `${st.anim}|${st.frame}|${JSON.stringify([...st.bt.vals])}`;
+    if (vtMemo && vtMemo.m === st.model && vtMemo.key === key) return vtMemo.pose;
+    const r = vt.V.testOf(vt.view, vt.base, st.frame, st.bt.vals), vals = new Map();
+    for (const [n, v6] of r.keys) { const t = st.bt.vals.get(n); vals.set(n, t && t.along !== undefined ? { v: v6, along: t.along } : { v: v6 }); }
+    const pose = S.testPose(st.model, base, vals);
+    pose.vorder = r.order;
+    if (r.turns.length) {
+      const pm = new Map(pose.props);
+      for (const [id, k, val] of r.turns) pm.set(id, Object.assign({}, pm.get(id), { [k]: val }));
+      pose.props = pm;
+    }
+    vtMemo = { m: st.model, key, pose };
+    return pose;
+  }
+  // os valores do osso agora, como numa key: { v: [dx, dy, rot, sx, sy], along (null sem path=/key), yaw, pitch } (e,
+  // nas três vistas, z: os da animação base)
   function testVals(name) {
     const m = st.model, base = testBase(), t = st.bt.vals.get(name) || {};
+    const vt = viewsTest();
+    if (vt) {
+      const b0 = vt.V.valsOf(vt.base, name, st.frame), al = S.alongOf(m, base, name), part = (k) => (t[k] !== undefined ? t[k] : b0[k]);
+      return { v: (t.v || b0.v).slice(), along: t.along !== undefined ? t.along : al, yaw: part('yaw'), pitch: part('pitch'), z: part('z'), changed: st.bt.vals.has(name), views: true };
+    }
     const v = (t.v || S.poseVals(m, base).get(name) || [0, 0, 0, 1, 1]).slice();
     const tn = S.turnOf(m, base, name), al = S.alongOf(m, base, name);
     return { v, along: t.along !== undefined ? t.along : al, yaw: t.yaw !== undefined ? t.yaw : tn.yaw, pitch: t.pitch !== undefined ? t.pitch : tn.pitch, changed: st.bt.vals.has(name) };
@@ -3664,21 +3837,24 @@
   // player fica naquele quadro e o teste recomeça dali (os valores já estão no código).
   function writeTest() {
     if (!testOn()) return;
-    const m = st.model, an = st.anim ? m.animMap.get(st.anim) : null;
+    const m = st.model, an = st.anim ? m.animMap.get(st.anim) : null, vt = viewsTest();
     if (an && an.blendOf) { hint(`A animação ${an.name} é feita pelo Weasel (from= e to=): escolha outra no player, ou nenhuma.`, 3200); return; }
-    if (an && an.viewOf) { hint(`A animação ${an.name} é gerada pelas vistas, a partir de anim ${an.viewOf}: escreva as key em ${an.viewOf} (osso=dx,dy e osso.z=), ou escolha nenhuma no player.`, 3600); return; }
-    const base = testBase(), v0s = S.poseVals(m, base), parts = [];
+    if (an && an.viewOf && !vt) { hint(`A animação ${an.name} é gerada pelas vistas, a partir de anim ${an.viewOf}: escreva as key em ${an.viewOf} (osso=dx,dy e osso.z=), ou escolha nenhuma no player.`, 3600); return; }
+    // três vistas: os valores são os da animação base, e as key vão para ela (anim walk, não walk_right)
+    const base = testBase(), v0s = vt ? null : S.poseVals(m, base), parts = [];
     for (const [n, t] of st.bt.vals) {
       if (!testText(n)) continue;
-      const v0 = v0s.get(n) || [0, 0, 0, 1, 1], tn = S.turnOf(m, base, n), al = S.alongOf(m, base, n);
+      const b0 = vt ? vt.V.valsOf(vt.base, n, st.frame) : null;
+      const v0 = b0 ? b0.v : v0s.get(n) || [0, 0, 0, 1, 1], tn = b0 || S.turnOf(m, base, n), al = S.alongOf(m, base, n);
       if (t.v && t.v.some((x, i) => Math.abs(x - v0[i]) > 1e-6)) parts.push([n, 'v', t.v]);
       if (t.along !== undefined && t.along !== null && t.along !== al) parts.push([n, 'along', t.along]);
+      if (b0 && t.z !== undefined && Math.abs(t.z - b0.z) >= 0.05) parts.push([n, 'z', t.z]);
       if (t.yaw !== undefined && Math.abs(t.yaw - tn.yaw) >= 0.05) parts.push([n, 'yaw', t.yaw]);
       if (t.pitch !== undefined && Math.abs(t.pitch - tn.pitch) >= 0.05) parts.push([n, 'pitch', t.pitch]);
     }
     if (!parts.length) { hint('Nada mexido para escrever: mova, gire ou estique um osso primeiro.', 2400); return; }
     const key = 'btkey' + Date.now(), frame = an ? st.frame : 0;
-    let anim = an ? an.name : '';
+    let anim = an ? an.viewOf || an.name : '';
     if (!anim) {
       anim = 'teste';
       for (let i = 2; m.animMap.has(anim); i++) anim = `teste${i}`;
@@ -3687,16 +3863,19 @@
     }
     const f1 = (n) => String(Number(n.toFixed(1))), f3 = (n) => String(Number(n.toFixed(3)));
     for (const [n, kind, val] of parts) {
-      const d = { bone: n, anim, frame, key };
+      const d = vt ? { bone: n, anim: '', vbase: anim, frame, key } : { bone: n, anim, frame, key };
       if (kind === 'v') writeKey(d, val);
       else writeKeyPart(d, `${n}.${kind}`, kind === 'along' ? f3(val) : f1(val));
     }
     const names = [...new Set(parts.map((q) => q[0]))];
-    st.anim = anim;
+    // nas três vistas, o player fica na vista que estava (a anim nova: a gerada da vista principal)
+    const show = vt ? (an ? an.name : `${anim}_${vt.view}`) : anim;
+    st.anim = st.model.animMap.has(show) ? show : anim;
+    if (vt && !an) st.vflip = '';
     st.frame = frame;
     st.playing = false;
     st.bt.vals.clear();
-    st.bt.at = `${anim}|${frame}`;
+    st.bt.at = `${st.anim}|${frame}`;
     fillAnimSelect();
     hint(`Escrito: key ${frame} em ${anim} (${names.join(', ')}). Um Ctrl+Z desfaz.`, 3600);
     draw();
@@ -3706,7 +3885,8 @@
   function testText(name) {
     const t = st.bt.vals.get(name), m = st.model;
     if (!t || !m.bones.has(name)) return '';
-    const base = testBase(), v0 = S.poseVals(m, base).get(name) || [0, 0, 0, 1, 1], out = [];
+    const base = testBase(), vt = viewsTest(), b0 = vt ? vt.V.valsOf(vt.base, name, st.frame) : null;
+    const v0 = b0 ? b0.v : S.poseVals(m, base).get(name) || [0, 0, 0, 1, 1], out = [];
     if (t.v) {
       const v = t.v, dr = v[2] - v0[2], dx = v[0] - v0[0], dy = v[1] - v0[1];
       if (Math.abs(dr) >= 0.05) out.push(`${fmtN(dr, 1)}°`);
@@ -3714,7 +3894,8 @@
       const kx = v0[3] ? v[3] / v0[3] : v[3], ky = v0[4] ? v[4] / v0[4] : v[4];
       if (Math.abs(kx - 1) >= 0.005 || Math.abs(ky - 1) >= 0.005) out.push(Math.abs(kx - ky) < 0.005 ? `×${fmtN(kx, 2)}` : `×${fmtN(kx, 2)},${fmtN(ky, 2)}`);
     }
-    const tn = S.turnOf(m, base, name), al = S.alongOf(m, base, name);
+    if (b0 && t.z !== undefined && Math.abs(t.z - b0.z) >= 0.05) out.push(`z ${fmtN(t.z, 1)}`);
+    const tn = b0 || S.turnOf(m, base, name), al = S.alongOf(m, base, name);
     if (t.along !== undefined && t.along !== al) out.push(`along ${fmtN(t.along, 2)}`);
     if (t.yaw !== undefined && Math.abs(t.yaw - tn.yaw) >= 0.05) out.push(`yaw ${fmtN(t.yaw, 1)}°`);
     if (t.pitch !== undefined && Math.abs(t.pitch - tn.pitch) >= 0.05) out.push(`pitch ${fmtN(t.pitch, 1)}°`);
@@ -3807,10 +3988,72 @@
     const m = st.model, pose = currentPose(), [x, y] = toCanvas(e);
     let best = null, bd = 8 / st.view.z;
     for (const b of m.bones.values()) {
-      const wm = pose.bones.get(b.name), p = wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot, d = Math.hypot(p[0] - x, p[1] - y);
+      const p = bonePt(pose, b), d = Math.hypot(p[0] - x, p[1] - y);
       if (d < bd) { bd = d; best = b.name; }
     }
     return best;
+  }
+  // ---------- três vistas: a profundidade no Prender ----------
+  // a vista que o player mostra ('' fora das três vistas)
+  function shownView() {
+    const V = viewsOf();
+    if (!V) return '';
+    const an = currentAnim();
+    return an ? an.view || W.views.dirOf(an.name) || '' : V.main;
+  }
+  // Na vista de lado, a bolinha de um osso arrasta na horizontal a profundidade dele: side=, o x do osso na vista de
+  // lado. Num jogo de plataforma, a principal já é a de lado: ali é lat= (o x de frente), arrastado de frente ou de
+  // costas. k: quanto a bolinha anda na tela por pixel do valor (numa diagonal, menos); null nesta vista
+  function depthAxis() {
+    const V = viewsOf(), v = shownView();
+    if (!V || !V.ang || !v || flipOn()) return null;
+    const phi = (V.ang[v] * Math.PI) / 180, k = V.main === 'down' ? Math.sin(phi) : Math.cos(phi);
+    return Math.abs(k) < 0.3 ? null : { V, key: V.main === 'down' ? 'side' : 'lat', k };
+  }
+  const depthWhat = (ax) => (ax.key === 'side' ? 'a lida das peças' : 'a da ordem do desenho');
+  function boneLine(b) {
+    const m = st.model, line = m.lineMap ? m.lineMap[b.line] : b.line, rec = line >= 0 ? m.byLine.get(line) : null;
+    return rec && rec.bone === b && !rec.repeated ? line : -1;
+  }
+  // a profundidade de agora: a escrita, ou a que o Weasel montou (lida das peças)
+  function depthNow(ax, b) {
+    if (b[ax.key] !== null && b[ax.key] !== undefined) return b[ax.key];
+    const d = ax.V.depth.get(b.name);
+    return ax.key === 'side' ? ax.V.rootX + d.z : d.lat;
+  }
+  function depthStart(e) {
+    const ax = depthAxis();
+    if (!ax || pinsAt(e).length) return null;
+    const name = pinBoneAt(e), b = name && st.model.bones.get(name);
+    if (!b) return null;
+    return { ax, bone: name, x0: toCanvas(e)[0], cx: e.clientX, cy: e.clientY, v0: depthNow(ax, b), moved: false, stop: false, key: 'depth' + Date.now() };
+  }
+  function moveDepth(d, e) {
+    if (!d.moved && Math.hypot(e.clientX - d.cx, e.clientY - d.cy) < 4) return;
+    const b = st.model.bones.get(d.bone), k = d.ax.key;
+    if (!b) return;
+    if (!d.moved) {
+      d.moved = true;
+      if (String(b[k + 'At'] || '').includes('{')) { d.stop = true; hint(`O ${k}= de ${d.bone} vem de uma {expressão}: mude no código.`, 2800); }
+      else if (boneLine(b) < 0) { d.stop = true; hint(`A linha do osso ${d.bone} não está neste arquivo: mude o ${k}= no código dele.`, 2800); }
+    }
+    if (d.stop) return;
+    const val = d.v0 + (toCanvas(e)[0] - d.x0) / d.ax.k, txt = String(Number((e.shiftKey ? Math.round(val) : Math.round(val * 10) / 10).toFixed(1)));
+    setAttrs([boneLine(b)], { [k]: txt }, null, d.key);
+    hint(`${d.bone}: ${k}=${txt} (${k === 'side' ? 'a profundidade: o x do osso na vista de lado' : 'o x do osso de frente'}). Shift: de 1 em 1. Duplo clique na bolinha apaga e volta para ${depthWhat(d.ax)}.`, 3000);
+  }
+  // duplo clique na bolinha: apaga o side= (ou o lat=)
+  function depthClear(e) {
+    const ax = depthAxis();
+    if (!ax || pinsAt(e).length) return false;
+    const name = pinBoneAt(e), b = name && st.model.bones.get(name), k = ax.key;
+    if (!b) return false;
+    if (b[k] === null || b[k] === undefined) { hint(`${name} não tem ${k}=: a profundidade já é ${depthWhat(ax)}.`, 2400); return true; }
+    const line = boneLine(b);
+    if (line < 0) { hint(`A linha do osso ${name} não está neste arquivo: apague o ${k}= no código dele.`, 2800); return true; }
+    setAttrs([line], { [k]: null }, null, 'depth' + Date.now());
+    hint(`${name}: ${k}= apagado; a profundidade volta a ser ${depthWhat(ax)}.`, 2800);
+    return true;
   }
   function pinClick(e) {
     const here = pinsAt(e), how = e.altKey ? 'sub' : e.shiftKey ? 'toggle' : 'set';
@@ -3854,7 +4097,7 @@
   // volta da junta (a ponta do braço em volta da mão) fica com o filho.
   function boneReach(m, pose) {
     const piv = new Map();
-    for (const b of m.bones.values()) { const wm = pose.bones.get(b.name); piv.set(b.name, wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot); }
+    for (const b of m.bones.values()) piv.set(b.name, bonePt(pose, b));
     const kids = new Map([...m.bones.keys()].map((n) => [n, []]));
     for (const b of m.bones.values()) {
       if (!b.parent || !kids.has(b.parent)) continue;
@@ -3873,7 +4116,7 @@
   }
   function drawPins(ctx, m, pose, z) {
     const spots = pinSpots(), chosen = new Set(pinChosen().map((s) => s.key));
-    const pivot = (name) => { const b = m.bones.get(name), wm = pose.bones.get(name); return wm ? M.apply(wm, b.pivot[0], b.pivot[1]) : b.pivot; };
+    const pivot = (name) => bonePt(pose, m.bones.get(name));
     ctx.save();
     // cada osso com a cor dele: um anel em volta da bolinha
     ctx.lineWidth = 2.5 / z;
@@ -3943,7 +4186,9 @@
     if (!on) { st.pin.sel.clear(); closePinMenu(false); }
     if (on && st.measure) setMeasure(false);
     $('pinBtn').classList.toggle('on', on);
-    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : `Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.${st.model.bones.size ? ' Um clique na bolinha de um osso escolhe os pontos presos a ele.' : ''}`, 4200);
+    // três vistas: a bolinha de um osso arrasta a profundidade (side=, ou lat= num jogo de plataforma)
+    const V = on ? viewsOf() : null, dh = !V ? '' : V.main === 'down' ? ' Na vista de lado, arrastar a bolinha de um osso para os lados muda a profundidade dele (side=).' : ' De frente ou de costas, arrastar a bolinha de um osso para os lados muda o lat= dele.';
+    if (on) hint(pvModel() ? 'Prender: os pontos aparecem no desenho, fora da prévia do def (tire o cursor de dentro do def).' : `Prender: clique nos pontos (Shift soma, Alt tira) ou arraste uma caixa; o botão direito escolhe o osso.${st.model.bones.size ? ' Um clique na bolinha de um osso escolhe os pontos presos a ele.' : ''}${dh}`, 4200 + (dh ? 1800 : 0));
     draw();
   }
   // o menu dos ossos (botão direito): o osso mais perto dos pontos primeiro, o peso, cada um no mais perto e soltar
@@ -4479,6 +4724,12 @@
   view.addEventListener('pointerdown', (e) => {
     // clicar no desenho com a caixinha do texto aberta: grava o que foi escrito (como clicar fora)
     if (textEd) closeTextEd(true, false);
+    // a esquerda espelhada é só para ver (o Godot espelha a direita): mexer, só na vista desenhada
+    if (e.button === 0 && flipX() !== null && !st.space && st.tool !== 'hand' && st.tool !== 'zoom') {
+      const mir = W.views.MIRROR[shownDir()];
+      hint(`Esta vista é a ${sideName(mir)} espelhada, como o Godot faz: é só para ver. Para mexer, use o botão ${DIR_ICON[mir]} do player.`, 3200);
+      return;
+    }
     view.setPointerCapture(e.pointerId);
     // a Mão, o Espaço segurado e o botão do meio movem a vista, em cima do que for
     if (st.space || e.button === 1 || (e.button === 0 && st.tool === 'hand')) {
@@ -4508,6 +4759,10 @@
       return;
     }
     if (e.button === 0 && pinOn()) {
+      // três vistas, de lado: a bolinha de um osso arrasta a profundidade (side=); um clique sem arrastar escolhe os
+      // pontos presos a ele, como sempre
+      const dd = depthStart(e);
+      if (dd) { st.pin.depth = dd; return; }
       const p = toCanvas(e);
       st.pin.box = { a: p, b: p.slice(), add: e.shiftKey, sub: e.altKey, x: e.clientX, y: e.clientY, moved: false };
       return;
@@ -4637,6 +4892,7 @@
     if (st.mdrag) { moveMeasure(st.mdrag, e); return; }
     if (st.tdrag) { st.tdrag.move(e); return; }
     if (st.pose) { movePose(e); return; }
+    if (st.pin.depth) { moveDepth(st.pin.depth, e); return; }
     if (st.pin.box) {
       const b = st.pin.box;
       if (!b.moved && Math.hypot(e.clientX - b.x, e.clientY - b.y) < 4) return;
@@ -4701,9 +4957,10 @@
     if (pinOn()) {
       // sob o mouse: de que forma é o ponto e a que osso está preso
       const here = pinsAt(e), hb = here.length ? null : pinBoneAt(e);
+      const ax = hb ? depthAxis() : null;
       if (here.length) $('coords').textContent += ` · ${pinLabel(here)}`;
-      else if (hb) $('coords').textContent += ` · osso ${hb}: um clique escolhe os pontos presos a ele`;
-      view.style.cursor = here.length || hb ? 'pointer' : 'crosshair';
+      else if (hb) $('coords').textContent += ` · osso ${hb}: ${ax ? `arraste para os lados para mudar o ${ax.key}= (a profundidade); ` : ''}um clique escolhe os pontos presos a ele`;
+      view.style.cursor = here.length ? 'pointer' : hb ? (ax ? 'ew-resize' : 'pointer') : 'crosshair';
       return;
     }
     if (testOn()) {
@@ -4729,9 +4986,9 @@
     view.style.cursor = hb ? (hb.mode === 'rot' ? 'alias' : 'move') : hg ? (hg === 'spin' ? 'alias' : hg.k ? scaleCursor(hg.k) : 'move') : hs ? scaleCursor(hs.k) : hi >= 0 ? handleCursor(st.model.byLine.get(st.caret.line).handles[hi]) : hgd ? (hgd.axis === 'v' ? 'ew-resize' : 'ns-resize') : hr ? (hr.mode === 'scale' ? 'nwse-resize' : 'move') : (e.ctrlKey || e.metaKey) && st.layout !== 'design' ? 'crosshair' : st.tool === 'text' ? 'text' : INSERT_TOOLS[st.tool] || st.tool === 'lasso' ? 'crosshair' : st.tool === 'wand' ? 'cell' : 'default';
   });
 
-  const endPointer = () => { st.tdrag = null; st.vpress = null; st.marq = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; stage.classList.remove('pan'); draw(); };
+  const endPointer = () => { st.tdrag = null; st.vpress = null; st.marq = null; st.drag = null; st.gdrag = null; st.refDrag = null; st.pose = null; st.pan = null; st.guideDrag = null; st.mdrag = null; st.guideHot = null; st.pin.box = null; st.pin.depth = null; stage.classList.remove('pan'); draw(); };
   view.addEventListener('pointerup', (e) => {
-    const p = st.pan, pb = st.pin.box, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag, dg = st.drag, ps = st.pose;
+    const p = st.pan, pb = st.pin.box, pd = st.pin.depth, vp = st.vpress, mq = st.marq, gd = st.gdrag, td = st.tdrag, dg = st.drag, ps = st.pose;
     // Testar ossos: um clique sem arrastar (também num osso que o ik não deixa mexer) conta para trocar de osso
     const tp = st.bt.pick && st.bt.pick.down ? st.bt.pick : null;
     if (tp) { tp.down = false; if (testOn() && !(ps && ps.moved) && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 4) testClickUp(); }
@@ -4745,6 +5002,7 @@
     if (dg && dg.mode === 'pull' && !dg.moved) toggleCorner(dg);
     if (td) td.up(e);
     if (pb) pinBoxEnd(pb, e);
+    if (pd && !pd.moved) pinClick(e);
     if (vp) pickShape(e);
     if (mq) { if (mq.moved) marqueeEnd(mq); else clickAt(e); }
     if (p && p.click && !p.moved) clickAt(e);
@@ -5235,6 +5493,8 @@
 
   // duplo clique num ponto: liga/desliga o canto vivo (!); num ponto com alça de curva (ou na alça), tira a alça
   view.addEventListener('dblclick', (e) => {
+    // Prender, na vista de lado das três vistas: duplo clique na bolinha de um osso apaga o side= dele
+    if (pinOn() && depthClear(e)) return;
     // Testar ossos: duplo clique numa alça volta o osso para como estava
     if (testOn()) {
       const hb = hitBone(e);
@@ -5734,8 +5994,12 @@
 
   $('animSel').addEventListener('change', (e) => {
     if (isFilm()) { stopSound(); st.playing = false; st.shot = e.target.value; st.frame = filmRange()[0]; fillAnimSelect(); draw(); return; }
-    st.anim = e.target.value; st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
+    const v = e.target.value;
+    if (v && isGroup(v)) { const r = animFor(v, st.vdir); st.anim = r.name; st.vflip = r.flip ? r.name : ''; } else { st.anim = v; st.vflip = ''; }
+    st.frame = 0; stopBuild(); if (!st.anim) st.playing = false; fillAnimSelect(); draw();
   });
+  $('vdirs').addEventListener('click', (e) => { const b = e.target.closest('[data-dir]'); if (b && !b.disabled) pickDir(b.dataset.dir); });
+  $('vdirs').addEventListener('mousedown', (e) => e.preventDefault());
   $('tCamera').addEventListener('change', (e) => { st.camView = e.target.checked; draw(); });
   $('bPlay').addEventListener('click', () => play(!st.playing));
   $('bLoop').addEventListener('click', toggleLoop);
@@ -6327,7 +6591,9 @@
       glow: (on) => { if (on === undefined) return st.bt.glow; st.bt.glow = !!on; draw(); emit('bonetest'); return st.bt.glow; },
       write: () => writeTest(),
       shape: () => (testOn() && st.bt.shape && st.bt.shape.m === st.model ? st.bt.shape.text : ''),
-      anim: () => (st.anim && st.model.animMap.has(st.anim) ? { name: st.anim, frame: st.frame } : null),
+      anim: () => (st.anim && st.model.animMap.has(st.anim) ? { name: st.model.animMap.get(st.anim).viewOf || st.anim, frame: st.frame } : null),
+      // três vistas: o teste mexe na animação base, em 3D (os campos z, pitch e yaw)
+      views: () => !!(testOn() && viewsTest()),
     },
     toCanvas: (e) => toCanvas(e),
     snapPt: (e, x, y) => snapMouse({ self: true, ref: [x, y] }, x, y, e),
