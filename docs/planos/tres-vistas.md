@@ -1,10 +1,12 @@
 # Três vistas, uma animação
 
-**Situação:** proposta de 23/11/2026; no mesmo dia, as diagonais entraram como possibilidade. Nada implementado. Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir).
+**Situação:** proposta de 23/11/2026; no mesmo dia, as diagonais e os dois lados desenhados entraram como possibilidades. Nada implementado. Esperando você decidir os pontos de [o que falta decidir](#o-que-falta-decidir).
 
 **Origem:** a sua pergunta de 23/11/2026. Num jogo 2D visto de cima, tipo Zelda, o personagem precisa de quatro direções (baixo, cima, direita e esquerda). Desenhar cada uma já é trabalho; animar cada uma (andar, atacar, parado) multiplica o trabalho por três. A ideia: você desenha o personagem de frente, de lado e de costas, e o Weasel monta com isso um boneco "em 3D", que você anima uma vez só.
 
-Na maior parte do tempo, são as quatro direções. As diagonais ficam como **possibilidade**, para quando você desenhar uma vista de 3/4 ([vistas na diagonal](#vistas-na-diagonal-opcional)); sem ela, nada muda.
+Na maior parte do tempo, são as quatro direções, com a esquerda espelhada. Duas coisas ficam como **possibilidade**; sem elas, nada muda:
+- as diagonais, quando você desenhar uma vista de 3/4 ([vistas na diagonal](#vistas-na-diagonal-opcional));
+- os dois lados desenhados, para um personagem assimétrico, tanto no jogo visto de cima quanto num jogo de plataforma, que só tem os dois lados ([os dois lados desenhados](#os-dois-lados-desenhados-opcional)).
 
 **Weasel:** a linguagem, a exportação e o editor. **Jogo:** nada muda. Saem as mesmas animações de hoje (`walk_down`, `walk_right`, `walk_up` e o `_left` espelhado), e o `tocar("walk", velocity)` escolhe a direção.
 
@@ -23,7 +25,7 @@ Com este plano, o furão teria **3 animações**, **um osso de espada** e **uma 
 ## O que o Weasel já tem
 
 - **Vistas no mesmo arquivo:** camadas com `only=`, como no furão. O `pose` mostra a frente no desenho parado.
-- **Direções no nome da animação:** `_down`, `_up`, `_right`, `_left` e as diagonais. As transições, o `trocar()` e o `tocar()` já entendem esses nomes; a exportação para o Godot cria o `_left` espelhado (`--no-mirror` desliga), e também as diagonais da esquerda.
+- **Direções no nome da animação:** `_down`, `_up`, `_right`, `_left` e as diagonais. As transições, o `trocar()` e o `tocar()` já entendem esses nomes; a exportação para o Godot cria o `_left` espelhado (`--no-mirror` desliga), e também as diagonais da esquerda. O espelho só cria o lado que falta ([godot.js](../../js/godot.js), `playerAnims`): um `walk_left` escrito é usado como está.
 - **As diagonais no `tocar()`** ([godot.js](../../js/godot.js), `nome_com_direcao`): com as duas (`_down_right` e `_up_right`), ele divide o círculo em 8 fatias. Com só a de baixo, andando para cima na diagonal ele cai na direção reta mais perto: 6 direções, sem mudar nada no Godot.
 - **Caixas e pontos presos a ossos:** `box … bone=` e `point … bone=` seguem o osso, inclusive girando junto.
 - **Casar peças de duas vistas pelo nome, pelo osso, pela cor e pela distância:** é o que a virada (`anim … turn`, 1.45.0) faz para achar o par de cada peça (`corpo` e `corpoL`). Este plano reaproveita esse casamento.
@@ -70,12 +72,13 @@ layer lado view=right
 
 - `view=down` mostra a camada em todas as animações viradas para baixo, e no `pose` (o desenho parado).
 - Uma camada sem `view=` aparece em todas as vistas, como hoje uma camada sem `only=`.
-- `view=left` é opcional: sem ela, a esquerda sai espelhada, como hoje.
+- `view=left` é opcional: sem ela, a esquerda sai espelhada, como hoje. Veja [os dois lados desenhados](#os-dois-lados-desenhados-opcional).
 - `view=down_right` e `view=up_right` (3/4 de frente e de costas) também são opcionais: veja [vistas na diagonal](#vistas-na-diagonal-opcional).
+- **A vista principal** é a que aparece no `pose`, e é nela que os ossos são desenhados (o `pivot=`). Num jogo visto de cima, é a frente; num de plataforma, o lado direito.
 
 ### Um esqueleto em 3D
 
-Os ossos continuam os mesmos, com o pivô da frente (x e y). Cada osso ganha uma **profundidade** (o quanto ele está para a frente ou para trás do personagem), e com isso um lugar em 3D.
+Os ossos continuam os mesmos, com o pivô da vista principal (x e y; daqui em diante, a frente). Cada osso ganha uma **profundidade** (o quanto ele está para a frente ou para trás do personagem), e com isso um lugar em 3D.
 
 **De onde vem a profundidade:** da vista de lado. Na vista de lado, o "para a frente" é o x da tela. O Weasel casa as peças de cada osso entre a frente e o lado (como a virada casa `cabeca` com `cabecaL`) e lê o x da peça de lado:
 
@@ -84,6 +87,7 @@ Os ossos continuam os mesmos, com o pivô da frente (x e y). Cada osso ganha uma
 - `focinhoL` em x=106 fica de fora da conta: vale a maior peça casada do osso (a cabeça), e não a caixa de todas.
 
 **Quando não dá para ler:**
+- com a esquerda desenhada, um osso que some de um lado aparece no outro, e a profundidade vem dele ([os dois lados desenhados](#os-dois-lados-desenhados-opcional));
 - um osso sem peça na vista de lado (o braço de longe) usa a profundidade do **par espelhado** na frente: `bracoE` (x=58) usa a de `bracoD` (x=102), porque estão no mesmo y e espelhados em volta da raiz;
 - sem par, a do osso pai;
 - `side=` no osso corrige: `bone espada parent=corpo pivot=104,108 side=94` diz que, de lado, o osso fica em x=94.
@@ -117,7 +121,7 @@ event 0 passo
 event 4 passo
 ```
 
-- **Num arquivo com vistas, uma animação sem direção no nome gera uma por vista:** `walk` vira `walk_down`, `walk_right` e `walk_up` (e o `walk_left`, espelhado, na exportação para o Godot). Os `event`, o `once`, o `fps=` e o `feet=` vão junto.
+- **Num arquivo com vistas, uma animação sem direção no nome gera uma por vista:** `walk` vira `walk_down`, `walk_right` e `walk_up` (e o `walk_left`: espelhado na exportação para o Godot, ou gerado como os outros, com a esquerda desenhada). Os `event`, o `once`, o `fps=` e o `feet=` vão junto.
 - **Uma animação escrita à mão com a direção ganha da gerada:** se `attack_up` precisar de algo especial, escreva `anim attack_up`, e só essa sai da sua mão.
 - **Os movimentos em 3D:**
   - `osso=dx,dy` anda no plano da frente, como hoje (o `dy` para cima e para baixo vale em todas as vistas);
@@ -178,22 +182,44 @@ down_left (esp.)  down    down_right
 - **A diagonal também dá profundidade:** o braço de longe, que some de lado, aparece na 3/4. Como o x dele vem da frente, a 3/4 dá a profundidade dele sem precisar do par espelhado. Quando o lado e a diagonal discordam, o Weasel avisa: `peE: 10 no lado, 3 na diagonal`.
 - **O custo:** a 3/4 é a vista mais difícil de desenhar e a que mais precisa ter as alturas batendo com as outras. São um ou dois desenhos a mais; por animação, nada a mais.
 
+### Os dois lados desenhados (opcional)
+
+O normal é a esquerda espelhada. Para um personagem assimétrico (a espada na mão direita, uma cicatriz num olho), o espelho troca a mão. Com uma camada `view=left`, a esquerda é desenhada de verdade, e o esqueleto vira para a esquerda em vez de espelhar.
+
+**Num jogo visto de cima** (as quatro direções, com a esquerda desenhada):
+
+- **O `walk_left` sai do esqueleto, com os seus desenhos da esquerda.** O Godot já usa um `_left` que existe, em vez de espelhar.
+- **A assimetria fica certa sozinha:** a espada continua na mesma mão. De um lado, ela fica na frente do corpo; do outro, atrás. Quem decide é a profundidade, sem `above=` à mão.
+- **A profundidade fica melhor:** o braço de longe na vista da direita é o de perto na da esquerda, então todo osso aparece em pelo menos um dos lados, sem o chute do par espelhado. Quando os dois lados discordam, o Weasel avisa.
+- **A virada também melhora:** hoje, a virada pela esquerda é a da direita espelhada, e com uma frente assimétrica (a espada do furão) há um pulo no último quadro ([virada e metamorfose](metamorfose.md#como-ficou-a-virada-1450)). Com a esquerda desenhada, a virada pode usar os desenhos dela.
+- **Com diagonais:** se a esquerda é desenhada, a diagonal da esquerda também precisa ser (`view=down_left`, `view=up_left`). Espelhar a diagonal da direita trocaria a espada de mão só na diagonal ([o que falta decidir](#o-que-falta-decidir), ponto 10).
+- **O custo:** um desenho a mais (ou três, com as diagonais). Na folha do jogo, a esquerda passa a ter quadros próprios; hoje, o `_left` espelhado reaproveita a animação da direita. Por animação, nada a mais.
+
+**Num jogo de plataforma** (só a direita e a esquerda, sem frente nem costas):
+
+- A vista principal é a direita (`layer lado view=right`, com `pose`), e a esquerda é `view=left`.
+- **O "para a frente" vem dos dois lados,** e o que fica de perto ou de longe também: o que um lado desenha na frente do corpo, o outro desenha atrás. Sem a frente, o Weasel não sabe o quanto cada osso está para o lado, mas isso só serviria para decidir a ordem, e a ordem os dois lados já dão.
+- **O ganho:** um personagem assimétrico de plataforma com uma animação só para os dois lados. Hoje, ou a espada troca de mão (o espelho), ou tudo é escrito duas vezes.
+- **A câmera:** num jogo de plataforma, normalmente sem inclinação (`views tilt=0`).
+- **Quando não vale a pena:** num personagem simétrico, o espelho de hoje já resolve.
+
 ### Em todo lugar
 
 - **Editor, PNG, SVG, GIF, sprite sheet, normal map, estilos de arte:** as animações geradas são animações comuns.
 - **Godot por quadros:** as folhas de sempre; `tocar()`, `trocar()` e as transições, sem mudança.
 - **Godot com `rig=bones`:** cada quadro sai como a pose 2D daquela vista, assada, como o `ik`. A ordem que troca vira uma pista de `z_index`. A conferir no Godot (o 4.7.2 está instalado).
-- **`--info`:** as vistas e as camadas de cada uma; a profundidade de cada osso e de onde ela veio (`corpo -2 (lado) · peE 10 (lado) · bracoE 14 (par de bracoD) · espada 14 (side=)`); o ângulo de cada diagonal (`down_right: 34°, medido`); as animações geradas.
+- **`--info`:** as vistas e as camadas de cada uma; a profundidade de cada osso e de onde ela veio (`corpo -2 (lado) · peE 10 (lado) · bracoE 14 (par de bracoD) · espada 14 (side=)`, ou `(esquerda)` com os dois lados); o ângulo de cada diagonal (`down_right: 34°, medido`); as animações geradas.
 - **Avisos:**
   - um osso com a peça em alturas muito diferentes na frente e no lado (vistas desalinhadas);
   - nas costas, uma peça do lado trocado (perto do osso espelhado);
   - `view=` e `only=` na mesma camada;
   - um osso sem peça casada no lado e sem par espelhado (a profundidade foi a do pai);
-  - o lado e uma diagonal dando profundidades diferentes para o mesmo osso.
+  - o lado e uma diagonal, ou os dois lados, dando profundidades diferentes para o mesmo osso;
+  - a esquerda desenhada com uma diagonal da direita sem a diagonal da esquerda.
 
 ### No editor
 
-- **Ao lado da lista de animações, quatro botões de direção** (↓ → ↑ ←), ou oito num arquivo com diagonais. A lista mostra `walk`; os botões escolhem a vista mostrada. A linha do tempo edita as `key` do `walk`.
+- **Ao lado da lista de animações, quatro botões de direção** (↓ → ↑ ←), oito num arquivo com diagonais, ou dois (← →) num de plataforma. O ← mostra a esquerda desenhada, quando houver, ou a espelhada. A lista mostra `walk`; os botões escolhem a vista mostrada. A linha do tempo edita as `key` do `walk`.
 - **Testar ossos:** os campos `z`, `pitch` e `yaw` num arquivo com vistas. Na vista de lado, arrastar a bolinha do osso para a frente ou para trás muda a profundidade no teste; **Escrever como `key`** grava `osso.z=`.
 - **A profundidade de cada osso:** na vista de lado, com o Prender, arrastar a bolinha do osso na horizontal escreve o `side=` dele. Um duplo clique apaga o `side=` e volta à profundidade lida das peças.
 
@@ -230,17 +256,33 @@ Em cada item, **(R)** é a minha recomendação.
 7. **O exemplo.**
    - **(R)** Um furão novo (`exemplos/furao3d.weasel`), com as mesmas vistas e 3 animações. O `furao.weasel` de hoje fica como está: o guia e os testes usam ele.
    - Converter o `furao.weasel`.
+   - O herói do protótipo (`exemplos/heroi.weasel`): um homem com espada e escudo, que mostra também a esquerda desenhada e a diagonal.
 8. **O ângulo de uma vista diagonal** (só quando houver uma).
    - **(R)** Medido do desenho, com `angle=` para corrigir.
    - Sempre 45°. Mais simples, mas uma 3/4 desenhada mais fechada (30–35°) faz as peças girarem em volta do ponto errado.
    - Sempre escrito à mão (`angle=` obrigatório). Nada adivinhado, mas você precisa saber o ângulo do seu desenho.
+9. **A vista principal (onde os ossos são desenhados).**
+   - **(R)** A que aparece no `pose`: a frente num jogo visto de cima, o lado direito num de plataforma. Os arquivos de hoje já fazem assim.
+   - Sempre a frente. Mais simples, mas o jogo de plataforma fica de fora.
+   - Escolhida com uma palavra na camada (`view=right main`). Explícito, uma palavra a mais.
+10. **A esquerda desenhada com diagonais só da direita.**
+    - **(R)** A diagonal da esquerda não é gerada, e a exportação para o Godot deixa de espelhar essa diagonal: andando para baixo e para a esquerda, o `tocar()` cai na direção reta mais perto. A espada nunca troca de mão, e um aviso diz qual vista falta.
+    - Espelhar a diagonal da direita mesmo assim, com um aviso. Ficam as 8 direções, mas a espada troca de mão só nas diagonais da esquerda.
 
 ## Etapas
 
 Cada etapa só começa com o seu "pode fazer", e as imagens vão junto com cada decisão que muda o desenho.
 
-- **Etapa 0, o protótipo (fora do projeto):** o furão das três vistas, com `walk` e `attack` escritos uma vez, montado por um script no scratchpad. Ele confere a profundidade lida do lado, o avanço da câmera, a ordem e a espada inclinando. Você vê as folhas das três direções lado a lado com as de hoje antes de a sintaxe ficar fixa. A diagonal entra só para conferir a conta: uma 3/4 do bichinho do teste, gerada a 35°, tem que sair medida como 35°.
-- **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca, caixas e pontos, `--info` e os avisos. Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também; sem uma vista diagonal, nada disso aparece. Guia, exemplo e caso de teste.
+- **Etapa 0, o protótipo (fora do projeto):** um script no scratchpad lê as vistas pelo Weasel de hoje, monta o esqueleto em 3D e escreve um `.weasel` comum, com cada direção em `key` normais; nada no projeto muda. Você vê as folhas de cada direção antes de a sintaxe ficar fixa.
+
+  Os personagens do teste são **homens**, desenhados para o protótipo, cada um olhando o método de um jeito (pedido de 23/11/2026):
+  - **o herói,** no tamanho de Zelda (cabeça grande, braços e pernas curtos), com a espada numa mão e o escudo na outra. É o caso esperado: `idle`, `walk` e `attack` nas quatro direções; a esquerda desenhada (a espada fica na mesma mão, na frente do corpo de um lado e atrás do outro); e uma 3/4 de frente desenhada num ângulo conhecido (35°), que tem que sair medida como 35°;
+  - **o homem de proporção realista** (umas sete cabeças de altura), andando e correndo: as pernas e os braços compridos inclinando e encurtando, e o pé no chão com a câmera inclinada;
+  - **o guarda de capa e lança:** a estocada na direção da câmera, a capa passando na frente e atrás do corpo, e a cabeça virando para o lado enquanto o corpo anda. É o que deve quebrar; o teste mostra quanto;
+  - **o herói num jogo de plataforma:** só os dois lados, sem inclinação de câmera.
+
+  Para cada um, o resultado é um mapa: o que sai bom, o que sai aceitável e o que quebra. O furão fica só como conferência: as 9 animações dele, feitas à mão, são a única referência pronta para comparar com as geradas. Os desenhos dos homens seriam meus, então eles medem o método, não a arte.
+- **Etapa 1a, as vistas e os movimentos:** `view=`, a linha `views`, a profundidade dos ossos (`side=`), as animações geradas, `osso=dx,dy` e `osso.z=` em 3D, a câmera, a ordem que troca, caixas e pontos, `--info` e os avisos. Dá conta do `idle` e do `walk`. A conta já sai para qualquer ângulo, então `view=down_right` e `view=up_right`, com o ângulo medido e `angle=`, entram aqui também, assim como `view=left` (e as diagonais da esquerda) e a vista principal, que deixa o jogo de plataforma usar só os dois lados. Sem essas vistas, nada disso aparece. Guia, exemplo e caso de teste.
 - **Etapa 1b, os giros:** `rot`, `pitch` e `yaw` em 3D, as peças que inclinam e encurtam, `tip=`, e o Godot com `rig=bones` conferido no Godot. Dá conta do `attack`.
 - **Etapa 2, o editor:** os botões de direção no player (quatro, ou oito com diagonais), a linha do tempo da animação base, o Testar ossos com `z`, `pitch` e `yaw`, e arrastar a profundidade no Prender.
 
