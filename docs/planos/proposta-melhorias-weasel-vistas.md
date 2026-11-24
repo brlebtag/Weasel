@@ -491,3 +491,80 @@ com prefixo; o `-s` como está).
 - **Uma ideia para depois (não feita):** em vez do corte seco no 0,25 (abaixo disso o osso não gira nem encurta),
   diminuir o giro e o encurtamento aos poucos quando o osso aponta quase para a câmera. Isso acabaria com a virada da
   bota, mas muda os exemplos, então espera uma decisão.
+
+**Etapa C (item 1): o protótipo, em 23/11/2026.** Os arquivos estão em `.claude/juntas/` (fora do git): a mudança
+no Weasel (`lang.diff` e `views.diff`), o script do soldado adaptado (`rig_juntas.py`), a medida da fresta
+(`fresta.js`) e o soldado montado (`soldado_juntas.weasel`).
+
+- **O soldado sem esticar.** O `rig_vistas.py` rodou de novo numa pasta à parte, com a etapa `alinhar` só
+  deslocando cada vista (a sola na altura da sola da frente, o quadril na raiz), sem esticar. As juntas de lado
+  ficaram bem mais fora que os 14 px da proposta, na escala do arquivo: o pescoço 24,5 px acima do da frente, os
+  ombros 16 e 18,5, o quadril 15, os cotovelos 13 e 14, os joelhos 8. De costas: o pescoço 15,5, o ombro direito
+  12, o quadril 5,5. Cada osso ganhou `side=x,y` (a junta medida de lado) e `back=x,y` (a medida de costas).
+- **A conta da análise não funcionou.** Somar ao lugar 3D a diferença da junta (desenhada menos projetada), girada
+  pela matriz do pai, abriu fresta onde não havia: a mão, correndo de lado, foi de 0,3 para 17,3 px. A diferença de
+  cada junta é absoluta, e na peça do pai só fica a parte **relativa** à junta do pai.
+- **A conta que funcionou: a diferença anda pela corrente.** O lugar animado de cada osso é o 3D projetado, como
+  hoje, mais um desvio `D`. Na raiz, `D` é a diferença dela. Num filho, é o `D` do pai mais a matriz do pai na tela
+  aplicada a (a diferença do filho − a diferença do pai). Assim a fresta entre pai e filho fica exatamente a do 3D,
+  a mesma de um desenho sem diferença nenhuma. O `yaw` continua no 3D, e só as diferenças desenhadas andam com as
+  matrizes 2D. Numa vista sem junta desenhada, `D` não é calculado, e os 5 exemplos de três vistas (21 animações, de frente, de lado e de costas)
+  saem iguais byte a byte.
+
+A fresta em cada junta, no pior quadro (px do arquivo; a junta desenhada, levada pela matriz do pai e pela do filho):
+
+| Junta | hoje (lado esticado) | sem esticar, só `side=x` | sem esticar, `side=x,y` e `back=x,y` |
+|---|---|---|---|
+| correndo de lado: pescoço | 1 | 1,1 | 1 |
+| ombros | 5,2 e 4,9 | 6,8 e 7,4 | 7 e 7,5 |
+| cotovelos | 0 e 1,3 | **17,3 e 18,8** | 0 e 0 |
+| quadris | 4,5 | 7,3 e 7,9 | 4,5 |
+| joelhos | 0 | **12,1 e 12,4** | 0 |
+| tornozelos | 0 | 0,7 | 0 |
+| correndo de costas: cotovelos | 1 e **8,9** | 3,4 e 9,1 | 0 e 0 |
+| ombros | 4,5 e 4,3 | 4,4 e 4,2 | 4,8 e 5,8 |
+| tornozelos | 0,4 e 0,7 | 2,7 e 3,5 | 0,2 e 0,2 |
+
+- **Com a junta desenhada,** o cotovelo, o pulso, o joelho e o tornozelo ficam sem fresta, melhor até que o soldado
+  esticado de hoje. Sem o y, as mesmas peças giram em volta do ponto errado: o cotovelo dobrado 82° na corrida abre
+  17 a 19 px.
+- **O que sobra** é a fresta do próprio 3D, nos ombros, no quadril e no pescoço: o tronco gira com `yaw` e a matriz
+  dele na tela não mostra isso (o limite da análise). Ela fica perto da de hoje; nos ombros, 2 px maior, porque a
+  direção do tronco é medida nas peças sem esticar.
+- O pescoço andando de lado (o "Para conferir" da proposta): 0,6 px, igual a hoje.
+
+![Os braços do soldado correndo de lado, ampliados, nos quadros 0, 1, 5 e 6: hoje (lado esticado), sem esticar com só side=x (o antebraço sai da manga mais baixo e solto) e sem esticar com side=x,y (o antebraço sai da manga como hoje)](img/proposta-vistas_juntas.png)
+
+**Para a etapa C no Weasel (o OK veio no mesmo dia):**
+
+- `side=x,y` e `back=x,y` no `bone`, com a conta da corrente. As diagonais e o jogo de plataforma depois.
+- O aviso de altura não vale para um osso com `side=x,y`; o `--info` mostra a diferença das juntas desenhadas.
+- `--guides` com as juntas de cada vista; o Godot já recebe o lugar parado de cada vista pelo `anim.voff`, mas o
+  `rig=bones` precisa ser conferido.
+- O capítulo 17 e a referência, com um exemplo de cabeça desenhada mais curta de lado, e os testes.
+- No Zombie Escape Room, o `alinhar` deixa de esticar (só desloca), e o `montar` escreve `side=x,y` e `back=x,y`.
+
+**Etapa C (item 1): feita em 23/11/2026**, com a conta da corrente do protótipo.
+
+- **A linguagem:** `side=x,y` (o y é a junta desenhada de lado, nos dois lados) e `back=x,y` (a junta desenhada de
+  costas), só com a frente como vista principal. Num jogo de plataforma, o y e o `back=` avisam (a junta do lado já é
+  o `pivot=`); o `back=` sem `view=up` também avisa. As diagonais ficaram para depois: nelas a junta continua a da
+  frente.
+- **O aviso de altura** não vale para um osso com `side=x,y`. O `--info` ganhou as linhas `junta de lado` e `junta de
+  costas` (`cabeca 24.5 acima · …`), só com as diferenças acima de 0,05 px.
+- **O soldado** (`soldado_juntas.weasel`) sai no Weasel igual ao protótipo, byte a byte, nos quadros conferidos. O
+  `rig=bones` do Godot exporta sem erro: ele lê a mesma pose (`makePose`), então segue as keys geradas.
+- **As juntas na imagem:** o plano dizia `--guides`, mas com ele a régua do capítulo 17 (`17_regua.png`, uma camada
+  `guide`) ganhava bolinhas que brigavam com as dela. Ficou um `--joints` à parte, como o `--trajectory`: uma bolinha
+  em cada junta e um traço até a do pai, a desenhada em azul. Vale em PNG, JPG, WebP, GIF, vídeo e no `--contact`, e
+  também num desenho sem vistas (os pivôs de sempre).
+- **No editor:** a bolinha do Prender já fica na junta desenhada (ela usa o lugar de cada osso na vista); arrastar
+  muda só o x do `side=x,y`, e o duplo clique apaga os dois.
+- **Os testes:** no `_vistas`, a cabeça e a orelha desenhadas mais altas de lado e de costas: com `side=x,y` e
+  `back=x,y`, a fresta nas juntas fica igual à do desenho alinhado (diferença menor que 1e-6 px, girando o corpo, a
+  cabeça e a orelha); sem o y, abre até 6,6 px. No `_avisos`, os dois avisos novos. Os 5 exemplos de três vistas não
+  mudaram.
+- **O guia:** a seção "Quando as vistas não batem" no capítulo 17 (o bicho com a cabeça 10 px mais baixa de lado e de
+  costas, `17_junta.png`), a ficha do `bone` no capítulo 20 e o `--joints` no capítulo 22.
+- **Falta, no Zombie Escape Room:** o `alinhar` deixar de esticar (só deslocar) e o `montar` escrever `side=x,y` e
+  `back=x,y`. A próxima no Weasel é a etapa D (o item 2 e a `--compare`), que espera o OK.

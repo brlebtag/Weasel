@@ -3615,8 +3615,36 @@
 
   // Imagem pronta de um quadro: escala, recorte, acabamentos e pixelado. opts.screen === false: sem os efeitos de
   // tela (oldfilm, vhs, glitch, crt), nas exportações de jogo.
+  // --joints: uma bolinha em cada junta e um traço até a do pai. Nas três vistas, a junta na vista da animação (em
+  // azul, a desenhada: side=x,y ou back=x,y). s: a escala da imagem (a bolinha tem o mesmo tamanho em qualquer escala)
+  function drawJoints(ctx, model, pose, s) {
+    const V = model.views, a = pose.src ? pose.src.anim : pose.anim, dj = V && V.dj && V.dj.get((a && a.view) || V.main), pt = new Map();
+    for (const b of model.bones.values()) { const wm = pose.bones.get(b.name); if (wm) pt.set(b.name, M.apply(viewShift(pose, b.name, wm), b.pivot[0], b.pivot[1])); }
+    ctx.save();
+    ctx.lineWidth = 1.2 / s;
+    ctx.strokeStyle = 'rgba(208,64,44,.75)';
+    for (const b of model.bones.values()) {
+      const p = pt.get(b.name), q = b.parent && pt.get(b.parent);
+      if (!p || !q) continue;
+      ctx.beginPath();
+      ctx.moveTo(q[0], q[1]);
+      ctx.lineTo(p[0], p[1]);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#ffffff';
+    for (const [name, p] of pt) {
+      ctx.fillStyle = dj && dj.has(name) ? '#2f6fd0' : '#d0402c';
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], 3.5 / s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function renderImage(model, pose, opts) {
     opts = opts || {};
+    const joints = opts.joints && model.bones.size;
     const scale = opts.scale || 1;
     const rect = opts.rect || { x: 0, y: 0, w: model.canvas.w, h: model.canvas.h };
     const W2 = Math.max(1, Math.round(rect.w * scale)), H2 = Math.max(1, Math.round(rect.h * scale));
@@ -3638,6 +3666,7 @@
         drawScene(ctx, model, pose, { background: false, guides: opts.guides, filter: opts.filter });
       }
       if (opts.refs) drawRefs(ctx, model, pose, opts.refs, true);
+      if (joints) drawJoints(ctx, model, pose, s);
       if (opts.after) opts.after(ctx, s);
     };
     // estilo de arte (art pixel, art ascii…): o desenho vai numa imagem de trabalho e o estilo pinta o resultado;
@@ -3662,7 +3691,12 @@
           fillBg(x, model, pose, R, opts.matte);
         },
       }, { colors: () => W.art.colorsOf([model], !opts.transparent && (opts.matte || !model.canvas.bg) ? [opts.matte || '#ffffff'] : null), ink: model.palette.get('ink'), paper: opts.matte || W.art.paperOf(model), bare: !model.canvas.bg && !opts.matte, lit: !!sceneLights(model, pose), frame: pose.frame || 0 });
-      if (opts.after) { octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale); opts.after(octx, scale); octx.setTransform(1, 0, 0, 1, 0, 0); }
+      if (joints || opts.after) {
+        octx.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale);
+        if (joints) drawJoints(octx, model, pose, scale);
+        if (opts.after) opts.after(octx, scale);
+        octx.setTransform(1, 0, 0, 1, 0, 0);
+      }
       if (!opts.noPost) postFx(out, model, pose.frame, { screen: opts.screen });
       if (r.text) out.artText = r.text;
       return out;

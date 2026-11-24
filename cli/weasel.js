@@ -48,6 +48,8 @@ Saída:
       --speed <n>         velocidade da pintura no GIF "build" (padrão 1)
       --dither            GIF com pontilhado (menos faixas em brilhos e degradês)
       --guides            inclui as camadas "guide"
+      --joints            as juntas dos ossos: uma bolinha em cada uma e um traço até a do pai; nas
+                          três vistas, a junta de cada vista (em azul, a desenhada: side=x,y, back=)
       --refs              desenha as imagens guia (ref) por baixo, para conferir o traço
       --trajectory[=pontos]  png/jpg: a trajetória dos pés (anim feet=) em todos os quadros da
                           animação, numerada, por cima do personagem clarinho; =pe,mao segue
@@ -166,7 +168,7 @@ const usage = (msg) => { throw new Fail(msg, 2); };
 function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
-    layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
+    layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, joints: false, watch: false, check: false, info: false, force: false, quiet: false,
     simplify: null, colors: null, tol: null, blur: null, noBg: null, outScale: null, prefix: null, bone: null, bones: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
@@ -231,6 +233,7 @@ function parseArgs(argv) {
       case '--speed': o.speed = num('--speed', val(), 0.05, 20); break;
       case '--dither': o.dither = true; break;
       case '--guides': o.guides = true; break;
+      case '--joints': o.joints = true; break;
       case '--refs': o.refs = true; break;
       case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '--contact': o.contact = inline || true; break;
@@ -403,6 +406,14 @@ function viewsInfo(V) {
   for (const [v, a] of Object.entries(V.angles)) out.push(`${pad}${v.padEnd(12)} ${n(a.deg)}° ${v.startsWith('down') ? 'da frente' : 'das costas'}, ${a.from === 'medido' ? `medido (${a.n} ossos, erro médio ${n(a.err)} px)` : a.from === 'angle=' ? 'pelo angle=' : 'o padrão (não deu para medir)'}`);
   out.push(`${pad}grossura     ${[...V.thick].map(([b, t]) => `${b} ${n(2 * t[0])}/${n(2 * t[1])}`).join(' · ')}  [de lado a lado / de frente para trás]`);
   if (V.aim) out.push(`${pad}aponta       ${[...V.aim].map(([b, f]) => `${b} (${f})`).join(' · ')}`);
+  // a junta desenhada (side=x,y e back=x,y): onde ela está, em relação à que o 3D daria (a da frente, projetada)
+  const NAMES = { right: 'de lado', left: 'de lado', up: 'de costas' };
+  for (const v of ['right', 'left', 'up']) {
+    const js = (V.joints || []).filter((j) => j.view === v && (Math.abs(j.dx) >= 0.05 || Math.abs(j.dy) >= 0.05));
+    if (!js.length) continue;
+    const say = (j) => [Math.abs(j.dy) >= 0.05 && `${n(Math.abs(j.dy))} ${j.dy < 0 ? 'acima' : 'abaixo'}`, Math.abs(j.dx) >= 0.05 && `${n(Math.abs(j.dx))} à ${j.dx < 0 ? 'esquerda' : 'direita'}`].filter(Boolean).join(' e ');
+    out.push(`${pad}junta ${NAMES[v].padEnd(9)} ${js.map((j) => `${j.bone} ${say(j)}`).join(' · ')}  [desenhada, contra a da frente${v === 'up' ? ' espelhada' : ''}]`);
+  }
   for (const [a, g] of V.ground) out.push(`${pad}pé no chão   ${a}: ${g.map(n).join(' ')}`);
   for (const g of V.gens) out.push(`${pad}geradas      ${g.base} → ${g.names.length ? g.names.join(', ') : 'nenhuma (todas escritas à mão)'}`);
   // ordem troca: em quantos quadros, e quem passa na frente de quem, com os quadros (0–3, 6)
@@ -506,7 +517,7 @@ async function drawingVideo(model, o, format, source, opts, outName) {
 
 // Exporta um modelo (uma variante). sfx vai no fim do nome dos arquivos.
 async function exportModel(model, o, format, base, sfx) {
-  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, refs: o.refImages || null, format };
+  const opts = { scale: o.scale, transparent: o.transparent && format !== 'jpg', trim: o.trim, margin: o.margin, quality: o.quality / 100, layout: o.layout, cols: o.cols, padding: o.padding, speed: o.speed, dither: o.dither, guides: o.guides, joints: o.joints, refs: o.refImages || null, format };
   const named = (file) => (sfx ? withSuffix(file, sfx) : file);
   // --contact: a folha de conferência, os quadros numerados, uma linha por animação, com as marcas (eventos, pés no
   // chão e escorregão)
@@ -521,7 +532,7 @@ async function exportModel(model, o, format, base, sfx) {
     for (const n of names) pickAnim(model, n, true);
     let cv;
     try {
-      cv = X.contactCanvas(model, names, { scale: o.scaleSet ? o.scale : null, margin: o.margin, cols: o.cols, guides: o.guides });
+      cv = X.contactCanvas(model, names, { scale: o.scaleSet ? o.scale : null, margin: o.margin, cols: o.cols, guides: o.guides, joints: o.joints });
     } catch (e) {
       if (!e.big) throw e;
       usage(`${e.message}: diminua a escala (-s), as colunas (--cols) ou escolha as animações (-a "idle walk")`);
@@ -738,6 +749,8 @@ async function run(o) {
   if (format === 'jpeg') format = 'jpg';
   if (o.out) checkOut(o.out, format, model.film);
   if (![...['png', 'jpg', 'gif', 'webp', 'svg', 'txt', 'sheet', 'godot', 'tscn', 'build', 'wav', 'edl', 'fcpxml'], ...V.VIDEO].includes(format)) usage(`formato desconhecido "${format}" (use png, jpg, gif, webp, svg, txt, sheet, godot, tscn, build, mp4, mov, webm ou mkv)`);
+  if (o.joints && model.film) usage('--joints vale para desenhos (num filme, confira o ator no arquivo dele)');
+  if (o.joints && ![...['png', 'jpg', 'webp', 'gif'], ...V.VIDEO].includes(format)) usage('--joints sai em png, jpg, webp, gif ou vídeo');
   if (model.film) {
     if (format === 'webp') usage('webp sai de desenhos; para o filme use gif ou mp4');
     if (o.sticker) usage('--sticker vale para o webp de um desenho');

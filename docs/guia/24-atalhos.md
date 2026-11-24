@@ -157,8 +157,8 @@ As duas caixinhas no pé da barra de ferramentas: a cor de dentro (preenchimento
 | `clique ou caixa (Shift soma, Alt tira)` | escolhe pontos | Prender |
 | `botão direito, depois 1 a 9` | prende os pontos escolhidos ao osso de número 1 a 9 | Prender |
 | `clique na bolinha de um osso` | escolhe os pontos presos a ele (Shift soma, Alt tira) | Prender |
-| `arrastar a bolinha de um osso para os lados` | muda a profundidade dele: escreve side= (num jogo de plataforma, lat=, de frente ou de costas); com Shift, de 1 em 1 | Prender, na vista de lado (três vistas) |
-| `duplo clique na bolinha de um osso` | apaga o side= (ou o lat=): a profundidade volta a ser a lida das peças | Prender, na vista de lado (três vistas) |
+| `arrastar a bolinha de um osso para os lados` | muda a profundidade dele: escreve side= (num jogo de plataforma, lat=, de frente ou de costas); o y de um side=x,y fica; com Shift, de 1 em 1 | Prender, na vista de lado (três vistas) |
+| `duplo clique na bolinha de um osso` | apaga o side= (ou o lat=): a profundidade volta a ser a lida das peças (e, num side=x,y, a junta de lado volta a ser a da frente) | Prender, na vista de lado (três vistas) |
 | `Esc` | solta os pontos escolhidos | Prender |
 | `Shift ao girar` | gira de 15 em 15 graus | Testar ossos |
 | `Shift ao esticar` | estica por igual (mantém a proporção) | Testar ossos |

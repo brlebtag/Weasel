@@ -29,7 +29,7 @@
     art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'grout', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'view', 'angle', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat', 'tip', 'shorten'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat', 'tip', 'shorten', 'back'],
     // três vistas (docs/planos/tres-vistas.md): tilt= é o ângulo da câmera do jogo, em graus
     views: ['tilt'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
@@ -1275,8 +1275,16 @@
           }
           if (b.yaw || b.pitch || b.round) m.has3d = true;
           // três vistas: side= é o x do osso na vista de lado (a profundidade); lat=, num jogo de plataforma, o x que
-          // ele teria de frente
-          for (const k of ['side', 'lat']) if (A.has(k)) { b[k] = number(st, A.get(k), 0); b[k + 'At'] = A.get(k); }
+          // ele teria de frente. side=x,y: o y é a altura da junta como ela está desenhada de lado; back=x,y, a junta
+          // como está desenhada de costas (js/views.js: as peças daquela vista giram ali)
+          if (A.has('lat')) { b.lat = number(st, A.get('lat'), 0); b.latAt = A.get('lat'); }
+          if (A.has('side')) {
+            const a = A.get('side');
+            if (topIndex(a.text, ',') > 0) { const v = list(st, a, 2, 2, null); if (v) { b.side = v[0]; b.sideY = v[1]; } }
+            else b.side = number(st, a, 0);
+            b.sideAt = a;
+          }
+          if (A.has('back')) { const v = pair(st, A.get('back'), null); if (v) b.back = v; }
           // tip=x,y[,z]: para onde o osso aponta (a ponta, desenhada na vista principal; z, o quanto ela vai para a
           // frente); turns: nas vistas, o osso mostra o desenho da vista para onde a frente dele aponta
           if (A.has('tip')) { const v = list(st, A.get('tip'), 2, 3, null); if (v) b.vtip = v; }

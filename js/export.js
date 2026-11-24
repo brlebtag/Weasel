@@ -56,7 +56,7 @@
   // As funções *Canvas / *Bytes / *Text não dependem do navegador: a linha de comando usa as mesmas.
   function imageCanvas(model, animName, frame, o) {
     const rect = o.rect || (o.trim ? contentRect(model, [animName || null], o.margin) : fullRect(model));
-    return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides, refs: o.refs });
+    return S.renderImage(model, S.makePose(model, animName, frame), { scale: o.scale, rect, transparent: o.format !== 'jpg' && o.transparent, guides: o.guides, joints: o.joints, refs: o.refs });
   }
 
   // A trajetória (linha de comando --trajectory): o caminho dos pés (anim feet=) ou dos pontos em todos os quadros da
@@ -72,7 +72,7 @@
       rect = { x: x0 - pad, y: y0 - pad * 1.6, w: x1 - x0 + 2 * pad, h: y1 - y0 + pad * 2.6 };
     }
     const z = Math.max(0.25, Math.min(8, 1200 / rect.w, 800 / rect.h)), band = 24, font = '13px ui-monospace, Menlo, Consolas, monospace';
-    const img = S.renderImage(model, S.makePose(model, animName, frame), { scale: z, rect, transparent: true, guides: o.guides, screen: false });
+    const img = S.renderImage(model, S.makePose(model, animName, frame), { scale: z, rect, transparent: true, guides: o.guides, joints: o.joints, screen: false });
     // em cima: a animação e quanto o personagem anda
     const g = S.gait(model, anim), title = `${animName}${g ? ': ' + S.gaitText(g, o.scale).head : ''}`;
     const probe = document.createElement('canvas').getContext('2d');
@@ -215,7 +215,7 @@
       const cells = [];
       for (let f = 0; f < a.frames; f++) {
         // sem os efeitos de tela (oldfilm, vhs…), como na sprite sheet: a folha mostra o desenho
-        const img = S.renderImage(model, S.makePose(model, name, f), { scale: z, rect, transparent: false, guides: o.guides, screen: false });
+        const img = S.renderImage(model, S.makePose(model, name, f), { scale: z, rect, transparent: false, guides: o.guides, joints: o.joints, screen: false });
         cells.push({
           img, num: String(f), events: a.events.filter((e) => e.frame === f).map((e) => e.name),
           feet: g ? g.feet.map((ft) => ({ c: CONTACT.feet[feet.indexOf(ft.name) % CONTACT.feet.length], on: ft.on[f], slip: slips.get(ft.name).has(f) })) : [],
@@ -332,7 +332,7 @@
         return cv;
       }
       const key = `${x.name}\n${x.f}`;
-      if (!cache.has(key)) cache.set(key, S.renderImage(model, S.makePose(model, x.name, x.f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, refs: o.refs }));
+      if (!cache.has(key)) cache.set(key, S.renderImage(model, S.makePose(model, x.name, x.f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, joints: o.joints, refs: o.refs }));
       return cache.get(key);
     };
   }
@@ -494,7 +494,7 @@
         const c = cells[flat];
         if (o.progress) o.progress('quadros', flat + 1, cells.length);
         // a folha é para o jogo: sem os efeitos de tela
-        const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, screen: false });
+        const cv = S.renderImage(model, S.makePose(model, name, f), { scale: o.scale, rect, transparent: o.transparent, guides: o.guides, joints: o.joints, screen: false });
         ctx.drawImage(cv, c.x, c.y);
         const id = `${key}_${String(f).padStart(2, '0')}`;
         const root = model.unity ? model.unity.root : [rect.x + rect.w / 2, rect.y + rect.h];

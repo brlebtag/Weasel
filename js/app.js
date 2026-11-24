@@ -4048,7 +4048,9 @@
       else if (boneLine(b) < 0) { d.stop = true; hint(`A linha do osso ${d.bone} não está neste arquivo: mude o ${k}= no código dele.`, 2800); }
     }
     if (d.stop) return;
-    const val = d.v0 + (toCanvas(e)[0] - d.x0) / d.ax.k, txt = String(Number((e.shiftKey ? Math.round(val) : Math.round(val * 10) / 10).toFixed(1)));
+    // side=x,y: o y (a junta desenhada de lado) fica como está escrito
+    const val = d.v0 + (toCanvas(e)[0] - d.x0) / d.ax.k, x = String(Number((e.shiftKey ? Math.round(val) : Math.round(val * 10) / 10).toFixed(1)));
+    const yTxt = k === 'side' && b.sideY !== undefined && b.sideAt ? b.sideAt.text.slice(b.sideAt.text.indexOf(',') + 1) : null, txt = yTxt !== null ? `${x},${yTxt}` : x;
     setAttrs([boneLine(b)], { [k]: txt }, null, d.key);
     hint(`${d.bone}: ${k}=${txt} (${k === 'side' ? 'a profundidade: o x do osso na vista de lado' : 'o x do osso de frente'}). Shift: de 1 em 1. Duplo clique na bolinha apaga e volta para ${depthWhat(d.ax)}.`, 3000);
   }
@@ -4062,7 +4064,7 @@
     const line = boneLine(b);
     if (line < 0) { hint(`A linha do osso ${name} não está neste arquivo: apague o ${k}= no código dele.`, 2800); return true; }
     setAttrs([line], { [k]: null }, null, 'depth' + Date.now());
-    hint(`${name}: ${k}= apagado; a profundidade volta a ser ${depthWhat(ax)}.`, 2800);
+    hint(`${name}: ${k}= apagado; a profundidade volta a ser ${depthWhat(ax)}${k === 'side' && b.sideY !== undefined ? ', e a junta de lado volta a ser a da frente (o y saiu junto)' : ''}.`, 2800);
     return true;
   }
   function pinClick(e) {

@@ -1132,6 +1132,46 @@ async function viewsCase() {
       return `${n.slice(7)} ${lo.toFixed(2)}…${hi.toFixed(2)}`;
     }).join(' · ')}${mm.errors.length ? ` (avisos: ${mm.errors.length})` : ''}`);
   }
+  // (9) a junta desenhada (1.81.0): a cabeça e a orelha desenhadas 10 px mais altas de lado e 3 à direita e 6 acima de
+  // costas, com side=x,y e back=x,y. Girando (o corpo gira, estica e anda; a cabeça e a orelha com pitch e yaw), a
+  // fresta em cada junta (onde o filho põe a junta dele, menos onde o pai a leva) fica a mesma do desenho alinhado;
+  // sem o y, as peças giram em volta do ponto errado. Parado, as peças ficam onde foram desenhadas.
+  const juntaSrc = (dy, bx, by, withY) => [
+    'canvas 120 120', 'godot root=60,110', 'views tilt=30',
+    'bone corpo pivot=60,110 tip=60,70',
+    `bone cabeca parent=corpo pivot=60,72 tip=60,40 side=64${withY ? `,${72 + dy} back=${60 + bx},${72 + by}` : ''}`,
+    `bone orelha parent=cabeca pivot=52,44 tip=48,30 side=58${withY ? `,${44 + dy} back=${68 + bx},${44 + by}` : ''}`,
+    'layer frente view=down', 'ellipse corpoF 60,88 20,18 bone=corpo', 'ellipse cabecaF 60,56 17,15 bone=cabeca', 'ellipse orelhaF 50,38 5,8 bone=orelha',
+    'layer lado view=right', 'ellipse corpoL 60,88 17,18 bone=corpo', `ellipse cabecaL 64,${56 + dy} 15,15 bone=cabeca`, `ellipse orelhaL 58,${38 + dy} 5,8 bone=orelha`,
+    'layer costas view=up', 'ellipse corpoC 60,88 20,18 bone=corpo', `ellipse cabecaC ${60 + bx},${56 + by} 17,15 bone=cabeca`, `ellipse orelhaC ${70 + bx},${38 + by} 5,8 bone=orelha`,
+    'anim walk frames=4 fps=8',
+    'key 0 corpo=0,0,0 corpo.z=0 cabeca=0,0,0 cabeca.pitch=0 cabeca.yaw=0 orelha=0,0,0 orelha.pitch=0 orelha.yaw=0',
+    'key 2 corpo=0,-3,12,1.05,0.95 corpo.z=6 cabeca=0,0,-15 cabeca.pitch=-30 cabeca.yaw=25 orelha.pitch=40 orelha.yaw=-20',
+    'key 4 corpo=0,0,0 corpo.z=0 cabeca=0,0,0 cabeca.pitch=0 cabeca.yaw=0 orelha=0,0,0 orelha.pitch=0 orelha.yaw=0',
+  ].join('\n');
+  const mA = W.lang.parse(juntaSrc(0, 0, 0, false), { file: 'junta.weasel' }), mB = W.lang.parse(juntaSrc(-10, 3, -6, true), { file: 'junta.weasel' }), mC = W.lang.parse(juntaSrc(-10, 3, -6, false), { file: 'junta.weasel' });
+  // J: a junta desenhada do filho (a do mB, nos dois desenhados mais altos; sem o y, as peças se encontram ali)
+  const gapOf = (mm, mj, n, f, child, parent) => {
+    const P = S.makePose(mm, n, f), o = mj.animMap.get(n).voff.get(child), b = mm.bones.get(child), J = [b.pivot[0] + o[0], b.pivot[1] + o[1]];
+    const p = W.geom.M.apply(P.bones.get(child), J[0], J[1]), q = W.geom.M.apply(P.bones.get(parent), J[0], J[1]);
+    return [p[0] - q[0], p[1] - q[1]];
+  };
+  const gapDiff = (mm, mj) => {
+    let most = 0, open = 0;
+    for (const n of ['walk_right', 'walk_up']) for (let f = 0; f <= 16; f++) for (const [c, p] of [['cabeca', 'corpo'], ['orelha', 'cabeca']]) {
+      const a = gapOf(mA, mA, n, f / 4, c, p), b = gapOf(mm, mj, n, f / 4, c, p);
+      most = Math.max(most, Math.hypot(a[0] - b[0], a[1] - b[1]));
+      open = Math.max(open, Math.hypot(a[0], a[1]));
+    }
+    return { most, open };
+  };
+  const gB = gapDiff(mB, mB), gC = gapDiff(mC, mB);
+  lines.push(`junta desenhada, a fresta no pescoço e na orelha contra a do desenho alinhado (walk_right e walk_up, a cada 1/4 de quadro): com side=x,y e back=x,y ${gB.most < 1e-6 ? 'a mesma' : `até ${gB.most.toFixed(3)} px a mais`} (a do 3D chega a ${gB.open.toFixed(2)} px); sem o y, até ${gC.most.toFixed(1)} px a mais`);
+  const center = (mm, n, el) => { const bb = S.segsBox(S.geometry(mm, S.makePose(mm, n, 0), mm.elements.find((e) => e.name === el)).segs); return `${Math.round((bb.x + bb.w / 2) * 100) / 100},${Math.round((bb.y + bb.h / 2) * 100) / 100}`; };
+  lines.push(`junta desenhada, parado (quadro 0): cabecaL ${center(mB, 'walk_right', 'cabecaL')} · orelhaL ${center(mB, 'walk_right', 'orelhaL')} · cabecaC ${center(mB, 'walk_up', 'cabecaC')} · orelhaC ${center(mB, 'walk_up', 'orelhaC')}`);
+  lines.push(`junta desenhada, o --info: ${mB.views.joints.map((j) => `${j.bone} ${j.view} ${j.dx},${j.dy}`).join(' · ')}; avisos com o y: ${mB.errors.length}; sem o y: ${mC.errors.map((e) => `[l${e.line + 1}] ${e.msg.slice(0, 50)}…`).join(' | ') || '—'}`);
+  const px = (cv, x, y) => [...cv.getContext('2d').getImageData(x, y, 1, 1).data.slice(0, 3)].join(',');
+  lines.push(`--joints: o pescoço de lado (64,62) ${px(X.imageCanvas(mB, 'walk_right', 0, { joints: true }), 64, 62)}, o corpo (60,110) ${px(X.imageCanvas(mB, 'walk_right', 0, { joints: true }), 60, 110)}; sem --joints, o pescoço ${px(X.imageCanvas(mB, 'walk_right', 0, {}), 64, 62)}`);
   await check('_vistas', 'vistas.txt', 'text', lines.join('\n') + '\n');
 }
 
@@ -1224,7 +1264,9 @@ async function warnCase() {
     ['vistas: sem a principal', 'canvas 120 120\nbone corpo pivot=60,100\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,20'],
     ['vistas: o giro e o ik', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nbone dedo parent=mao pivot=88,80\nbone unha parent=dedo pivot=94,80\nbone alvo pivot=92,70\nik dedo bones=mao,dedo,unha target=alvo\nanim a frames=2\nkey 1 mao=0,0,20'],
     ['vistas: o 3D numa animação escrita à mão', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nanim a_right frames=2\nkey 1 mao.pitch=30 mao.z=4 corpo.yaw=10'],
-    ['shorten= fora da faixa', C + 'bone a pivot=50,50 shorten=0\nbone b pivot=50,50 shorten=0.5,0.8\nbone c pivot=50,50 shorten=talvez\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a', C + 'bone a pivot=50,50\nbone b pivot=50,50\nbone c pivot=50,50\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a'],
+    ['vistas: side=x,y e back= num jogo de plataforma', 'canvas 120 120\ngodot root=60,100\nbone corpo pivot=60,100 side=60,90 back=60,90\nlayer r view=right\nellipse tr 60,80 10,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,10', 'canvas 120 120\ngodot root=60,100\nbone corpo pivot=60,100 side=60\nlayer r view=right\nellipse tr 60,80 10,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,10'],
+    ['vistas: back= sem a vista de costas', 'canvas 120 120\ngodot root=60,100\nbone corpo pivot=60,100\nbone mao parent=corpo pivot=80,80 back=40,76\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nanim a frames=2\nkey 1 mao=0,0,20', 'canvas 120 120\ngodot root=60,100\nbone corpo pivot=60,100\nbone mao parent=corpo pivot=80,80\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nanim a frames=2\nkey 1 mao=0,0,20'],
+    ['shorten= fora da faixa',C + 'bone a pivot=50,50 shorten=0\nbone b pivot=50,50 shorten=0.5,0.8\nbone c pivot=50,50 shorten=talvez\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a', C + 'bone a pivot=50,50\nbone b pivot=50,50\nbone c pivot=50,50\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a'],
     ['vistas: dois lados com uma diagonal só, walk_left sem vista e rig=bones', 'canvas 120 120\ngodot root=60,100 rig=bones\nbone corpo pivot=60,100\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nlayer r view=right\nellipse tr 62,80 10,20 bone=corpo\nlayer l view=left\nellipse tl 58,80 10,20 bone=corpo\nlayer d view=down_right\nellipse td 61,80 12,20 bone=corpo\nanim a frames=2\nanim b_up frames=2'],
     ['cut no stroke', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 cut=furo : 10,10 90,90', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 : 10,10 90,90'],
     ['bold na ellipse', C + 'ellipse e 50,50 10 bold', C + 'ellipse e 50,50 10'],

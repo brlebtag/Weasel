@@ -31,7 +31,7 @@ Com as **vistas**, a ideia é a de um boneco de verdade:
 ```
 layer nome view=vista [angle=graus]
 views [tilt=graus]
-bone nome pivot=x,y [side=x] [lat=x] [tip=x,y[,z]] [shorten=off|mín[,máx]] [turns]
+bone nome pivot=x,y [side=x[,y]] [back=x,y] [lat=x] [tip=x,y[,z]] [shorten=off|mín[,máx]] [turns]
 key quadro osso.z=pixels osso.pitch=graus osso.yaw=graus
 ```
 
@@ -102,7 +102,7 @@ Repare:
 - **Cada vista é uma camada com `view=`:** `down` (de frente: o personagem olha para baixo na tela, para quem joga), `right` (de lado, olhando para a direita) e `up` (de costas). As peças de todas as vistas usam os mesmos ossos.
 - **A frente é a vista principal.** Os `pivot=` dos ossos são medidos nela, e a pose parada (`pose`) mostra a frente.
 - **A vista de lado dá a profundidade.** O x de cada peça na vista de lado diz o quanto o osso dela fica na frente da raiz (o `root=` do `godot`, aqui x=60). A cabeça de lado está em x=64, e o focinho e o olho, na frente dela, puxam um pouco: o centro das peças da cabeça fica em x=65,5, e ela fica 5,5 pixels na frente do corpo.
-- **A altura tem que bater.** Uma peça de lado fica na mesma altura que a peça do mesmo osso de frente: o y é o mesmo nas duas vistas. Se a diferença passa de 8 pixels, o Weasel avisa que as vistas estão desalinhadas.
+- **A altura tem que bater.** Uma peça de lado fica na mesma altura que a peça do mesmo osso de frente: o y é o mesmo nas duas vistas. Se a diferença passa de 8 pixels, o Weasel avisa que as vistas estão desalinhadas. Quando a diferença é de propósito (a cabeça desenhada mais baixa de lado), o `side=x,y` diz onde a junta está ([mais abaixo](#quando-as-vistas-não-batem-sidexy-e-backxy)).
 - **De costas, a esquerda e a direita trocam de lado.** O pé esquerdo (`peE`) fica em x=50 de frente e em x=70 de costas, como num boneco que gira. Uma peça do lado errado ganha um aviso.
 - **`osso.z=` anda para a frente** (positivo) ou para trás (negativo), em pixels, a partir do desenho. O pé que vai para a frente desce na tela de frente, vai para a direita de lado e sobe de costas.
 - **A animação não tem direção no nome.** A `walk` vira `walk_down`, `walk_right` e `walk_up`, e a `walk` some da lista. No Godot, a `walk_left` sai espelhada, como sempre, e o `tocar("walk", velocity)` escolhe a vista ([capítulo 15](15-jogo-personagem.md#no-jogo-o-ajudante-tocar)).
@@ -177,7 +177,7 @@ Quando a vista de lado não diz a profundidade de um osso, o Weasel procura em o
 
 | De onde | Quando | No `--info` |
 |---|---|---|
-| `side=x` no `bone` | sempre que estiver escrito: é o x do osso na vista de lado | `(side=)` |
+| `side=x` no `bone` (ou o x do `side=x,y`) | sempre que estiver escrito: é o x do osso na vista de lado | `(side=)` |
 | a vista de lado | o centro das peças do osso de lado (com os dois lados desenhados, a média dos dois; se eles discordam mais de 4 pixels, um aviso) | `(lado)`, `(os dois lados)` |
 | uma diagonal | o osso não tem peça de lado, mas tem numa diagonal (o ângulo dela entra na conta) | `(diagonal down_right)` |
 | o osso espelhado | o osso não aparece de lado, mas na frente há outro na mesma altura, do outro lado da raiz: o braço esquerdo usa a profundidade do direito | `(par de bracoD)` |
@@ -320,6 +320,88 @@ Repare:
 - As caixas e os pontos presos ao osso giram junto, em cada vista. Uma transição (`from=` e `to=`) mistura o giro pelo caminho mais curto.
 
 **Experimente:** apague o `turns` da linha `bone cabeca`. No `look_down`, a cabeça fica de frente o tempo todo. Depois troque `espada.pitch=-100` por `espada.yaw=-100`: o `yaw` gira em volta da vertical, e a espada quase em pé só leva a ponta para o lado.
+
+## Quando as vistas não batem: `side=x,y` e `back=x,y`
+
+Três desenhos que batem certinho são difíceis de fazer. Num desenho feito à mão (ou por uma IA), o pescoço, o cotovelo ou o joelho quase sempre ficam um pouco mais altos num lado que no outro. O Weasel tira as juntas da frente: de lado, a junta de cada osso fica na altura do `pivot=`, e as peças giram em volta dela. Se a junta foi desenhada em outro lugar, a peça gira em volta do ponto errado.
+
+No bicho abaixo, de lado e de costas, a cabeça foi desenhada 10 pixels mais baixa, encostada no corpo: o pescoço ficou em y=82, e não em y=72. O `side=64,82` e o `back=60,82` dizem onde o pescoço está nessas vistas:
+
+<!-- gerar: img/17_junta.png --contact -a yes_right,yes_up --joints -s 2.5 -->
+```weasel
+canvas 120 120 bg=none
+palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 escuro=#b07a3a
+
+godot root=60,110
+views tilt=30
+
+bone corpo pivot=60,110
+# de lado e de costas, o pescoço foi desenhado em y=82: a junta desenhada
+bone cabeca parent=corpo pivot=60,72 side=64,82 back=60,82
+bone peE pivot=50,106
+bone peD pivot=70,106
+bone bracoE parent=corpo pivot=42,82
+bone bracoD parent=corpo pivot=78,82
+
+# de frente
+layer frente view=down
+ellipse peE 50,106 8,5 c=escuro ink=2 bone=peE
+ellipse peD 70,106 8,5 c=escuro ink=2 bone=peD
+ellipse corpo 60,88 20,18 c=pelo ink=3 bone=corpo
+ellipse barriga 60,92 11,10 c=claro bone=corpo
+ellipse bracoE 42,88 5,8 c=escuro ink=2 bone=bracoE
+ellipse bracoD 78,88 5,8 c=escuro ink=2 bone=bracoD
+ellipse cabeca 60,56 17,15 c=pelo ink=3 bone=cabeca
+ellipse olhoE 54,53 3,3 c=ink bone=cabeca
+ellipse olhoD 66,53 3,3 c=ink bone=cabeca
+
+# de lado: a cabeça 10 pixels mais baixa
+layer lado view=right
+ellipse bracoDl 60,88 5,8 c=escuro ink=2 bone=bracoD
+ellipse peDl 60,106 8,5 c=escuro ink=2 bone=peD
+ellipse corpoL 60,88 17,18 c=pelo ink=3 bone=corpo
+ellipse peEl 60,106 8,5 c=escuro ink=2 bone=peE
+ellipse cabecaL 64,66 15,15 c=pelo ink=3 bone=cabeca
+ellipse focinhoL 78,70 6,4 c=claro ink=2 bone=cabeca
+ellipse olhoL 70,62 3,3 c=ink bone=cabeca
+ellipse bracoEl 60,88 5,8 c=escuro ink=2 bone=bracoE
+
+# de costas: a cabeça também mais baixa
+layer costas view=up
+ellipse peEc 70,106 8,5 c=escuro ink=2 bone=peE
+ellipse peDc 50,106 8,5 c=escuro ink=2 bone=peD
+ellipse corpoC 60,88 20,18 c=pelo ink=3 bone=corpo
+ellipse bracoEc 78,88 5,8 c=escuro ink=2 bone=bracoE
+ellipse bracoDc 42,88 5,8 c=escuro ink=2 bone=bracoD
+ellipse cabecaC 60,66 17,15 c=pelo ink=3 bone=cabeca
+
+# sim: a cabeça abaixa para a frente e volta
+anim yes frames=6 fps=10
+key 0 cabeca.pitch=0
+key 3 cabeca.pitch=-35
+key 6 cabeca.pitch=0
+```
+
+![Folha de conferência com duas linhas, o bicho dizendo sim de lado e de costas, com uma bolinha em cada junta e um traço até a do pai: de lado, a cabeça abaixa para a frente em volta de uma bolinha azul no pescoço, em cima do corpo; de costas, ela encurta em volta da bolinha azul do pescoço](img/17_junta.png)
+
+Repare:
+
+- **`side=x,y`:** o x continua sendo o x do osso de lado (a profundidade), e o y é a altura da junta como ela foi desenhada de lado. Ele vale para os dois lados (`view=right` e `view=left`).
+- **`back=x,y`:** a junta como ela foi desenhada de costas. Sem ele, de costas, a junta é a da frente espelhada (aqui, x=60 e y=72).
+- **As peças giram em volta da junta desenhada.** Com `cabeca.pitch=-35`, a cabeça de lado abaixa em volta do pescoço. Sem o `,82`, ela giraria em volta de y=72, no meio dela: a parte de baixo iria para trás, para dentro do corpo, e a cabeça mal sairia do lugar.
+- **O `--joints` mostra as juntas** de cada vista: uma bolinha em cada uma e um traço até a do pai. A azul é uma junta desenhada (`side=x,y` ou `back=x,y`); as vermelhas são as que o Weasel tira da frente.
+- **Os filhos vão junto.** Um osso filho anda o mesmo que o pai, mais a diferença dele, girada pelo pai. Assim, girando, a fresta entre o pai e o filho fica a mesma de um desenho em que as juntas batem. Um filho que também foi desenhado em outro lugar (o antebraço, com o cotovelo mais alto) precisa do `side=x,y` dele.
+- **A frente não muda.** Os `pivot=`, a pose parada e as animações da frente continuam os mesmos, e a profundidade continua vindo do x do lado.
+- **O aviso de altura sai.** Sem o `,82`, o Weasel avisa que a cabeça de lado está 10 pixels mais baixa que na frente (ele avisa a partir de 8). Com o `side=x,y`, a diferença é de propósito, e o `--info` mostra quanto cada junta desenhada se afasta da que o Weasel tiraria da frente:
+
+```
+  junta de lado   cabeca 10 abaixo  [desenhada, contra a da frente]
+  junta de costas cabeca 10 abaixo  [desenhada, contra a da frente espelhada]
+```
+
+- A junta desenhada vale de lado e de costas, quando a vista principal é a frente. Nas diagonais, a junta continua a da frente. Num jogo de plataforma, a principal é o lado, e a junta dele já é o `pivot=`: o y do `side=` e o `back=` só avisam.
+
+**Experimente:** apague o `,82` do `side=64,82` e gere a folha com `--joints` (`node cli/weasel.js bicho.weasel --contact --joints`). O Weasel avisa, a bolinha da cabeça de lado fica vermelha, no meio da cabeça, e a cabeça gira em volta dela. Ponha o `,82` de volta e abra o arquivo no editor: escolha `yes` no player, aperte **→** e use o **Prender** (**Shift+P**). A bolinha da cabeça fica no pescoço desenhado. Arrastar a bolinha muda só o x do `side=`; o y fica.
 
 ## O guarda: a lança, a capa e a cabeça que vira
 
@@ -1239,6 +1321,7 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
 - `aponta` diz de onde veio a direção de cada osso, a que o `pitch=` e o `yaw=` encurtam: do `tip=`, do filho, das peças (o centro delas) ou, num osso curto demais, para baixo. Quando um osso encurta errado, um `tip=` resolve.
 - `pé no chão` diz, em cada quadro, quantos pixels o pé mais baixo fica acima do chão. Um número negativo é o pé afundando: abaixo de −1, o Weasel avisa. No quadro 1 do `walk` do furão, um pé desce e o outro sobe, e os dois estão no ar: o mais baixo fica 1,5 pixel acima do chão, um pulinho.
 - `geradas` lista as animações de cada vista.
+- `junta de lado` e `junta de costas` aparecem com `side=x,y` e `back=x,y`: o quanto cada junta desenhada fica longe da que o Weasel tiraria da frente ([acima](#quando-as-vistas-não-batem-sidexy-e-backxy)).
 - Com diagonais, uma linha para cada uma diz o ângulo e de onde ele veio (`34.5° da frente, medido (8 ossos, erro médio 0.4 px)`, ou `angle=`). Um erro médio grande quer dizer que as peças da diagonal não estão onde a conta espera.
 
 O furão não troca a ordem nem usa `turns`. No guarda, o `--info` tem mais estas linhas:
@@ -1307,6 +1390,7 @@ No **Prender** (**Shift+P**), na vista de lado (o botão **→** do player), arr
 - Com **Shift**, de 1 em 1 pixel. Um **Ctrl+Z** desfaz o arraste inteiro.
 - As outras vistas e a ordem das peças mudam junto.
 - O **duplo clique** na bolinha apaga o `side=`, e a profundidade volta a ser a lida nas peças.
+- Num `side=x,y`, arrastar muda só o x, e a bolinha fica na junta desenhada. O duplo clique apaga os dois, e a junta de lado volta a ser a da frente.
 - Num jogo de plataforma, é o `lat=`, arrastado de frente ou de costas.
 
 ### Para treinar
@@ -1327,7 +1411,8 @@ Com o furão aberto (**Arquivo › Exemplos › Furão em três vistas**):
 |---|---|---|---|---|
 | `layer` | `view=`, `angle=` | a vista da camada e o ângulo da diagonal | `down`, `down_right`, `right`, `up_right`, `up`, `up_left`, `left`, `down_left`; 1 a 89 | sem vista; o ângulo medido |
 | `views` | `tilt=` | quantos graus a câmera olha de cima | 0 a 80 | 30 |
-| `bone` | `side=`, `lat=` | o x do osso de lado; o x do osso de frente (jogo de plataforma) | números, em pixels | medidos no desenho |
+| `bone` | `side=x[,y]`, `lat=` | o x do osso de lado (e a altura da junta desenhada de lado); o x do osso de frente (jogo de plataforma) | números, em pixels | medidos no desenho; a junta, a da frente |
+| `bone` | `back=x,y` | a junta desenhada de costas | dois números, em pixels | a da frente, espelhada |
 | `bone` | `tip=x,y[,z]` | para onde o osso aponta | dois ou três números, em pixels | o filho, ou o centro das peças |
 | `bone` | `shorten=` | o quanto as peças do osso encurtam e esticam | `off`; mínimo de 0.01 a 1; máximo de 1 a 4 | `0.1,1.4` |
 | `bone` | `turns` | troca as peças do osso pelas da vista para onde ele virou | palavra solta | não troca |
@@ -1355,6 +1440,8 @@ As vistas são um jeito de **desenhar menos**, não um 3D completo. Estes são o
 | Um osso que aponta **quase** para a câmera (um pé de frente, com o `tip=` na ponta da bota) | um giro pequeno muda muito a direção dele na tela: a peça vira de ponta-cabeça num quadro, mesmo com `shorten=off` | ponha o `tip=` a meio caminho (o z igual à distância na tela, 45°) e use `shorten=off` |
 | Um desenho chapado não mostra o giro em volta do próprio comprimento | a cabeça que vira com `yaw` continua de frente | `turns` no `bone` |
 | Sem uma 3/4 desenhada, o `turns` troca seco | a cabeça pula de frente para o perfil aos 45° | desenhe a 3/4 |
+| A junta desenhada só vale de lado e de costas | nas diagonais, a junta é a da frente; num jogo de plataforma, o y do `side=` e o `back=` só avisam | desenhe a diagonal com as juntas na altura da frente |
+| Um tronco que gira com `yaw` não leva junto, na tela, as juntas que saem dele | o ombro e o quadril abrem uns pixels quando o tronco torce (o mesmo com ou sem a junta desenhada) | deixe a manga e o quadril cobrirem a junta |
 | A escala de um osso estica também a profundidade dos filhos | um filho longe da raiz anda uma fração de pixel quando o pai respira | nada: é menos de meio pixel |
 | No jogo de plataforma, sem `lat=`, o lado é adivinhado | pela ordem do desenho, 8 pixels para perto ou para longe | escreva `lat=` |
 | Sem nenhuma camada `view=` | nada muda: `views` sozinho e `osso.z=` avisam | desenhe as vistas |
@@ -1374,10 +1461,11 @@ E no editor:
 - Cada lado é uma camada com `view=` (`down`, `right`, `up`, as diagonais e `left`), e as peças de todas usam os mesmos ossos.
 - A frente é a vista principal: os `pivot=` e a pose são dela. Num jogo de plataforma, é o lado direito, e `lat=` diz o lado de cada osso.
 - A profundidade de cada osso vem da vista de lado (o x do centro das peças dele, a partir da raiz); `side=` corrige.
+- Quando uma junta foi desenhada em outro lugar de lado ou de costas, `side=x,y` e `back=x,y` dizem onde, e as peças giram em volta dela; o `--joints` mostra as juntas de cada vista.
 - A animação é escrita uma vez, sem direção no nome, com `osso.z=`, `osso.pitch=` e `osso.yaw=`; o Weasel gera uma para cada vista, com `key` comuns.
 - `views tilt=` é a câmera: o que vai para a frente desce na tela.
 - A ordem das peças troca sozinha, dentro de cada camada; `turns` troca o desenho do osso que gira; `tip=` diz para onde ele aponta.
-- O `--info` mostra a profundidade, a grossura, a direção, o pé no chão, as geradas e a ordem que troca.
+- O `--info` mostra a profundidade, a grossura, a direção, o pé no chão, as geradas, as juntas desenhadas e a ordem que troca.
 - No editor: os botões de direção no player, a **Vistas em 3D**, o **Testar ossos** com `z`, `yaw` e `pitch`, e o `side=` arrastado no **Prender**.
 
 [← Jogo: fases e recursos avançados](16-jogo-avancado.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](18-filme.md)

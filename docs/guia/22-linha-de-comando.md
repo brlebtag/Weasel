@@ -269,6 +269,7 @@ Um SVG da coruja e um de cada variante de cor: `coruja.svg`, `coruja_neve.svg` e
 | `-q`, `--quality` | a qualidade do JPG: mais alta, melhor e maior | de 1 a 100 | 92 |
 | `--variant` | as cores de uma variante | o nome de uma `variant`; ou `all`: o desenho normal e um arquivo para cada variante | o desenho normal |
 | `--guides` | inclui as camadas `guide` | — | desligada: as camadas `guide` não saem |
+| `--joints` | as juntas dos ossos, para conferir os pivôs: uma bolinha em cada uma e um traço até a do pai. Nas [três vistas](17-jogo-tres-vistas.md#quando-as-vistas-não-batem-sidexy-e-backxy), a junta de cada vista (em azul, a desenhada: `side=x,y` ou `back=x,y`) | — | desligada |
 | `--refs` | desenha as imagens guia (`ref`) por baixo, para conferir o traço | — | desligada |
 
 - `--trim` mede o desenho em **todos** os quadros da animação, então o recorte é o mesmo em todos. Ele nunca passa da borda do `canvas`.
@@ -306,7 +307,7 @@ Uma figurinha do WhatsApp.
 | `-q`, `--quality` | a qualidade do WebP | de 1 a 100; 100 = sem perda nenhuma | 92 |
 | `--sticker` | o WebP do jeito que o WhatsApp pede: 512 × 512, fundo transparente e até 500 KB | — | desligada |
 
-- `-s`, `-t`, `--trim`, `--variant`, `--guides` e `--refs` valem como numa imagem ([acima](#uma-imagem)).
+- `-s`, `-t`, `--trim`, `--variant`, `--guides`, `--joints` e `--refs` valem como numa imagem ([acima](#uma-imagem)).
 - Cada quadro fica na tela o tempo que o `fps=` da animação manda. O GIF e o WebP repetem sem parar.
 - Com `--sticker`, a escala, o fundo e o recorte são escolhidos sozinhos (`-s`, `-t` e `--trim` não contam). Se o arquivo passar de 500 KB, a qualidade baixa até caber. Se nem assim couber, a resposta avisa: `aviso: a figurinha passou de 500 KB mesmo na qualidade mais baixa; o WhatsApp pode recusar (use uma animação mais curta)`.
 - Num desenho sem animação, a resposta é `o desenho não tem animações (anim/key); para o GIF da pintura use -f build`.
@@ -508,7 +509,7 @@ Um vídeo com fundo transparente, para pôr por cima de outro no editor de víde
 | `--ffmpeg` | onde está o ffmpeg, se o terminal não o acha sozinho | o caminho do programa | a variável `WEASEL_FFMPEG`; depois, o `ffmpeg` instalado |
 | `-t`, `--transparent` | fundo transparente: só o `.mov` e o `.webm` guardam | — | desligada |
 
-- `-s`, `--trim`, `--variant`, `--guides` e `--refs` valem como numa [imagem](#uma-imagem). A pintura (`-f build -o pintura.mp4`) também sai em vídeo, sem repetir.
+- `-s`, `--trim`, `--variant`, `--guides`, `--joints` e `--refs` valem como numa [imagem](#uma-imagem). A pintura (`-f build -o pintura.mp4`) também sai em vídeo, sem repetir.
 - O vídeo segue o `fps=` da animação. Numa sequência com `fps=` diferentes, o Weasel escolhe um que sirva para todas (8 e 12 viram 24).
 - O vídeo de um desenho não tem som. O som é coisa do [filme](#filme).
 - `--small` não vale com `.mov`: `--small vale para mp4, mkv e webm; o .mov é ProRes, feito para editar`. O `--crf` não muda o `.mov`.
@@ -766,6 +767,7 @@ Algumas opções só fazem sentido com um formato ou com um tipo de arquivo. For
 | `-a "idle walk*3"` (uma sequência) | GIF, WebP e vídeo | erro: `uma sequência de animações (-a "idle walk*3") vale para gif, webp e vídeo` |
 | `-a all` | sprite sheet, `-f godot` e `--contact` | erro: `animação "all" não existe (tem: …)` |
 | `--trajectory` | PNG e JPG de um desenho com pontos | erro: `--trajectory sai em png ou jpg` |
+| `--joints` | PNG, JPG, WebP, GIF e vídeo de um desenho, e o `--contact` | erro: `--joints sai em png, jpg, webp, gif ou vídeo`; num filme: `--joints vale para desenhos (num filme, confira o ator no arquivo dele)` |
 | `--contact` | PNG e JPG de um desenho com animações, ou de um filme | erro: `--contact sai em png ou jpg`; junto com `--trajectory`: `use --contact ou --trajectory, não os dois`; com `--frames`: `use --contact ou --frames, não os dois` |
 | `--contact=N` | filmes | num desenho, erro: `--contact=N (o intervalo) vale para filmes; num desenho, a folha tem todos os quadros` |
 | `--sticker` | WebP de um desenho | erro: `--sticker vale para webp` |

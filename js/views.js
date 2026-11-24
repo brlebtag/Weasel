@@ -14,7 +14,10 @@
    Os giros (etapa 1b): o osso gira em 3D (rot no plano da vista principal, osso.pitch= para a frente e para trás,
    osso.yaw= em volta do eixo de pé). Em cada vista, as peças giram pelo quanto o osso parece ter girado ali e
    encurtam ao longo dele (até 10%, ou o shorten= do osso); a largura fica. As keys geradas têm um sexto número, a inclinação (o 2D de um
-   pai encurtado), que a cena e o Godot (skew) sabem desenhar. */
+   pai encurtado), que a cena e o Godot (skew) sabem desenhar.
+   A junta desenhada (docs/planos/proposta-melhorias-weasel-vistas.md, item 1): side=x,y e back=x,y no osso dizem onde
+   a junta está desenhada de lado e de costas, quando a vista foi desenhada com outra proporção. As peças daquela vista
+   giram ali, e a diferença para a junta projetada anda pela corrente de ossos (o desvio D em localsOf). */
 (function (W) {
   'use strict';
   const G = W.geom, M = G.M;
@@ -136,7 +139,7 @@
     const tilt = m.viewsSpec ? m.viewsSpec.tilt : 30, K = Math.sin(tilt * D2R);
     const rootX = m.godot && m.godot.root ? m.godot.root[0] : m.canvas.w / 2;
     const bones = [...m.bones.values()];
-    const V = { drawn, main, tilt, K, rootX, depth: new Map(), angles: {}, thick: new Map(), gens: [], ground: new Map(), swaps: [], off: new Map(), xf: new Map(), aim: new Map(), turned: [] };
+    const V = { drawn, main, tilt, K, rootX, depth: new Map(), angles: {}, thick: new Map(), gens: [], ground: new Map(), swaps: [], off: new Map(), xf: new Map(), aim: new Map(), turned: [], joints: [], dj: new Map() };
     m.views = V;
 
     // as formas de cada vista (as das camadas view=), na ordem do arquivo; as escondidas (os buracos de um cut=) e as
@@ -373,7 +376,7 @@
       // dois não avisa: de frente, o tronco vai até o quadril, e de lado ele pode parar no cinto
       for (const b of bones) {
         const f = pieceOf('down', b.name), s = pieceOf(sideView, b.name);
-        if (!f || !s) continue;
+        if (!f || !s || b.sideY !== undefined) continue;
         const dt = s.box[1] - f.box[1], db = s.box[3] - f.box[3], d = Math.min(Math.abs(dt), Math.abs(db));
         if (d > 8 && Math.sign(dt) === Math.sign(db)) warn(b.line, `${b.name}: de lado, a peça inteira está ${fmt(d)} px mais ${dt < 0 ? 'alta' : 'baixa'} que na frente (de y=${fmt(f.box[1])} a ${fmt(f.box[3])} na frente, de y=${fmt(s.box[1])} a ${fmt(s.box[3])} de lado): as vistas estão desalinhadas? a altura tem que bater`);
       }
@@ -396,17 +399,35 @@
       };
     }
     const PR = new Map(drawn.map((v) => [v, proj(v)]));
-    const REST_XY = new Map(), REST_DEP = new Map();
+    // A junta desenhada: side=x,y (o y vale nos dois lados, view=right e view=left) e back=x,y (view=up). O lugar parado
+    // do osso naquela vista passa a ser ela, e DRAWN guarda a diferença para a projeção (o que o 3D daria). Só com a
+    // frente como vista principal; num jogo de plataforma, a principal já é o lado.
+    if (main === 'right') {
+      for (const b of bones) if (b.sideY !== undefined || b.back) warn(b.line, `${b.name}: num jogo de plataforma a vista principal é o lado, e a junta dele é o pivot=: o y do side= e o back= não valem aqui`);
+    } else if (!drawn.includes('up')) {
+      for (const b of bones) if (b.back) warn(b.line, `${b.name}: back= é a junta desenhada de costas, mas não há vista de costas (view=up): ele não faz nada`);
+    }
+    const REST_XY = new Map(), REST_DEP = new Map(), DRAWN = new Map();
     for (const v of drawn) {
-      const pr = PR.get(v), xy = new Map(), dp = new Map(), off = new Map();
+      const pr = PR.get(v), xy = new Map(), dp = new Map(), off = new Map(), dd = new Map();
       for (const b of bones) {
-        const P = P3.get(b.name), q = pr.restXY(P);
+        const P = P3.get(b.name);
+        let q = pr.restXY(P);
+        const dj = main !== 'down' ? null : (v === 'right' || v === 'left') && b.sideY !== undefined ? [q[0], b.sideY] : v === 'up' && b.back ? b.back : null;
+        if (dj) {
+          const d = [dj[0] - q[0], dj[1] - q[1]];
+          dd.set(b.name, d);
+          if (v !== 'left' || !drawn.includes('right')) V.joints.push({ bone: b.name, view: v, dx: d[0], dy: d[1] });
+          q = dj;
+        }
         xy.set(b.name, q);
         dp.set(b.name, pr.dep(P));
         off.set(b.name, [q[0] - b.pivot[0], q[1] - b.pivot[1]]);
       }
       REST_XY.set(v, xy);
       REST_DEP.set(v, dp);
+      DRAWN.set(v, dd);
+      V.dj.set(v, new Set(dd.keys()));
       if (v !== main) V.off.set(v, off);
     }
     // o que foi desenhado só na vista principal (as caixas, os pontos, as formas das camadas sem view=), preso a um
@@ -555,7 +576,7 @@
     }
     // a matriz de cada osso numa vista, vista do pai (U), e onde o lugar do osso na vista vai parar (q)
     function localsOf(v, Wf, last) {
-      const pr = PR.get(v), xy = REST_XY.get(v), dp = REST_DEP.get(v), isMain = v === main, A = new Map(), out = new Map();
+      const pr = PR.get(v), xy = REST_XY.get(v), dp = REST_DEP.get(v), dd = DRAWN.get(v), isMain = v === main, A = new Map(), out = new Map(), Z2 = [0, 0];
       const scr = (b) => {
         if (A.has(b.name)) return A.get(b.name);
         const w = Wf.get(b.name), u = DIR.get(b.name).u;
@@ -581,7 +602,21 @@
             Mb = M.mul(M.rotate(g), M.mul(N, base));
           }
         }
-        const a = { cur, M: Mb, rv: xy.get(b.name) };
+        // a junta desenhada: a diferença dela para a projeção anda pela corrente. Na peça do pai fica a diferença do
+        // osso menos a do pai; ela vai com a matriz do pai na tela, somada ao desvio do pai (D). Assim a fresta entre pai e
+        // filho é a do 3D, a mesma de um desenho sem diferença. Sem junta desenhada na vista, nada muda.
+        let D = null;
+        if (dd.size) {
+          const dj = dd.get(b.name) || Z2, par = b.parent && m.bones.get(b.parent);
+          if (!par) D = dj.slice();
+          else {
+            const pa = scr(par), dq = dd.get(par.name) || Z2, e = [dj[0] - dq[0], dj[1] - dq[1]], PM = pa.M;
+            D = [pa.D[0] + PM[0] * e[0] + PM[2] * e[1], pa.D[1] + PM[1] * e[0] + PM[3] * e[1]];
+          }
+          cur[0] += D[0];
+          cur[1] += D[1];
+        }
+        const a = { cur, M: Mb, rv: xy.get(b.name), D };
         A.set(b.name, a);
         return a;
       };
