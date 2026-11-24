@@ -10,24 +10,24 @@ camadas  7
 formas   129
 ossos    corpo, cabeca←corpo, pernaD, pernaE, bracoD←corpo, bracoE←corpo, espada←bracoD, escudo←bracoE
 vistas   down, down_right, right, up, left, down_left (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
-  profundidade corpo 0 (os dois lados) · cabeca 2 (os dois lados) · pernaD 0 (os dois lados) · pernaE 0 (os dois lados) · bracoD 0 (os dois lados) · bracoE 0 (os dois lados) · espada 0 (side=) · escudo 0 (side=)
-  down_right   34.5° da frente, medido (8 ossos, erro médio 0.4 px)
-  down_left    35.5° da frente, medido (8 ossos, erro médio 0.3 px)
-  grossura     corpo 34/23 · cabeca 39.9/39.9 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · bracoE 11.7/11.6 · espada 3.9/3.3 · escudo 20/7  [de lado a lado / de frente para trás]
-  aponta       corpo (a maior peça, de frente e de lado) · cabeca (a maior peça, de frente e de lado) · pernaD (tip=) · pernaE (tip=) · bracoD (filho espada) · bracoE (filho escudo) · espada (tip=) · escudo (tip=)
+  profundidade corpo -0.3 (os dois lados) · cabeca -1.3 (os dois lados) · pernaD 0.6 (os dois lados) · pernaE 0.6 (os dois lados) · bracoD 0.1 (os dois lados) · bracoE 0 (os dois lados) · espada 0 (side=) · escudo 0 (side=)
+  down_right   34° da frente, medido (8 ossos, erro médio 0.6 px)
+  down_left    35.5° da frente, medido (8 ossos, erro médio 0.5 px)
+  grossura     corpo 34/26 · cabeca 54.9/56.4 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · bracoE 11.7/11.6 · espada 3.9/3.3 · escudo 20/7  [de lado a lado / de frente para trás]
+  aponta       corpo (as peças, de frente e de lado) · cabeca (as peças, de frente e de lado) · pernaD (tip=) · pernaE (tip=) · bracoD (filho espada) · bracoE (filho escudo) · espada (tip=) · escudo (tip=)
   pé no chão   idle: 0 0 0 0 0 0 0 0
   pé no chão   walk: 0 -0.9 0 -0.9 0 -0.9 0 -0.9
   pé no chão   attack: 0 0 0 0 0 0
   geradas      idle → idle_down, idle_down_right, idle_right, idle_up, idle_left, idle_down_left
   geradas      walk → walk_down, walk_down_right, walk_right, walk_up, walk_left, walk_down_left
   geradas      attack → attack_down, attack_down_right, attack_right, attack_up, attack_left, attack_down_left
-  ordem troca  walk_down: em 1 de 8 quadros (lamina, guarda, tunica, cinto, fivela)
-  ordem troca  walk_up: em 3 de 8 quadros (calcaEc, botaEc, escudoC, mangaEc, maoEc, laminaC, guardaC, tunicaC, cintoC)
-  ordem troca  attack_down: em 2 de 6 quadros (mangaE, maoE, escudo, bossa, lamina, guarda, mangaD, maoD)
-  ordem troca  attack_right: em 2 de 6 quadros (laminaL, guardaL, tunicaL, cintoL, mangaDl, maoDl, pontasL, rostoL, narizL, cabeloL, faixaL, orelhaL, olhoL)
-  ordem troca  attack_up: em 4 de 6 quadros (laminaC, guardaC, mangaDc, maoDc, tunicaC, cintoC, calcaEc, botaEc, calcaDc, botaDc, mangaEc, maoEc, escudoC)
-  ordem troca  attack_left: em 1 de 6 quadros (calcaDle, botaDle, mangaDle)
-  ordem troca  attack_down_left: em 3 de 6 quadros (calcaDde, botaDde, calcaEde, botaEde, mangaDde, maoDde, laminaDe, guardaDe)
+  ordem troca  walk_down: em 1 de 8 quadros: corpo na frente de espada (0)
+  ordem troca  walk_up: em 3 de 8 quadros: corpo na frente de espada (4), escudo na frente de pernaE (4–5)
+  ordem troca  attack_down: em 2 de 6 quadros: bracoD na frente de bracoE (3–4), bracoD na frente de escudo (3–4), espada na frente de bracoE (3–4), espada na frente de escudo (3–4)
+  ordem troca  attack_right: em 2 de 6 quadros: cabeca na frente de espada (3–4), corpo na frente de espada (3–4), cabeca na frente de bracoD (4)
+  ordem troca  attack_up: em 4 de 6 quadros: corpo na frente de bracoD (2, 5), corpo na frente de espada (2–3, 5), bracoE na frente de espada (3), bracoE na frente de pernaE (3–4), escudo na frente de espada (5), pernaE na frente de espada (5)
+  ordem troca  attack_left: em 1 de 6 quadros: espada na frente de pernaD (4), espada na frente de pernaE (4)
+  ordem troca  attack_down_left: em 3 de 6 quadros: bracoD na frente de pernaD (3, 5), bracoD na frente de pernaE (3), espada na frente de pernaE (3–4), espada na frente de pernaD (5)
 animações 18
   idle_down      8 quadros, 8 fps, gerada de idle
   idle_down_right 8 quadros, 8 fps, gerada de idle

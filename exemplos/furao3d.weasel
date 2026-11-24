@@ -34,7 +34,7 @@ bone peD pivot=92,126
 # o braço esquerdo não aparece de lado: a profundidade vem do direito (o par espelhado)
 bone bracoE parent=corpo pivot=58,100
 bone bracoD parent=corpo pivot=102,100
-# side= diz o x do osso na vista de lado, quando a maior peça dele engana; tip= diz para onde ele aponta
+# side= diz o x do osso na vista de lado, quando o centro das peças dele engana; tip= diz para onde ele aponta
 # (o x,y na frente e quantos px para a frente ou para trás): a cauda vai para trás, a espada para cima
 bone cauda parent=corpo pivot=80,118 side=58 tip=80,118,-30
 bone espada parent=bracoD pivot=104,108 side=94 tip=119,75,-21

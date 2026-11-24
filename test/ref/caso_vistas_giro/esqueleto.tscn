@@ -2380,7 +2380,7 @@ tracks/2/keys = {
 "times": PackedFloat32Array(0, 0.9688),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(0, -28), Vector2(0, -27.9998)]
+"values": [Vector2(0, -28), Vector2(0, -28)]
 }
 tracks/3/type = "value"
 tracks/3/imported = false
@@ -2392,7 +2392,7 @@ tracks/3/keys = {
 "times": PackedFloat32Array(0, 0.5625, 0.9688),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector2(0, -24), Vector2(0, -24.0376), Vector2(0, -24.0016)]
+"values": [Vector2(0, -24), Vector2(0, -24.0384), Vector2(0, -24.0016)]
 }
 tracks/4/type = "value"
 tracks/4/imported = false
@@ -4102,7 +4102,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.125, 0.375, 0.5, 0.625, 0.875, 0.9688),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0, -38.5), Vector2(0, -38.3828), Vector2(0, -37.8672), Vector2(0, -37.75), Vector2(0, -37.8672), Vector2(0, -38.3828), Vector2(0, -38.4707)]
+"values": [Vector2(0, -38.5), Vector2(-0.0003, -38.3828), Vector2(-0.0015, -37.8672), Vector2(-0.0018, -37.75), Vector2(-0.0015, -37.8672), Vector2(-0.0003, -38.3828), Vector2(-0.0001, -38.4707)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -5920,7 +5920,7 @@ tracks/2/keys = {
 "times": PackedFloat32Array(0, 0.9688),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(0, -28), Vector2(0, -28.0002)]
+"values": [Vector2(0, -28), Vector2(0, -28)]
 }
 tracks/3/type = "value"
 tracks/3/imported = false
@@ -5932,7 +5932,7 @@ tracks/3/keys = {
 "times": PackedFloat32Array(0, 0.5625, 0.9688),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector2(0, -24), Vector2(0, -23.9624), Vector2(0, -23.9984)]
+"values": [Vector2(0, -24), Vector2(0, -23.9616), Vector2(0, -23.9984)]
 }
 tracks/4/type = "value"
 tracks/4/imported = false
@@ -7978,7 +7978,7 @@ tracks/22/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [-0.0613, -0.0248, 0.0, 0.016, 0.0242, 0.016, 0.0, -0.0248, -0.0491]
+"values": [-0.0511, -0.0207, 0.0, 0.0133, 0.0202, 0.0133, 0.0, -0.0207, -0.0409]
 }
 tracks/23/type = "value"
 tracks/23/imported = false
@@ -7990,7 +7990,7 @@ tracks/23/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9977, 0.8174)]
+"values": [Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9984, 0.8157)]
 }
 tracks/24/type = "value"
 tracks/24/imported = false
@@ -8002,7 +8002,7 @@ tracks/24/keys = {
 "times": PackedFloat32Array(0, 0.0333, 0.0667, 0.1, 0.1333, 0.1667, 0.2, 0.2667, 0.3, 0.4, 0.5, 0.5667, 0.6, 0.6333, 0.6667, 0.7, 0.7333, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [0.0606, 0.0474, 0.0354, 0.0246, 0.0158, 0.0077, 0.0, -0.0108, -0.0159, -0.0241, -0.0159, -0.0055, 0.0, 0.0077, 0.0158, 0.0246, 0.0354, 0.0474]
+"values": [0.0507, 0.0396, 0.0296, 0.0206, 0.0132, 0.0064, 0.0, -0.009, -0.0132, -0.0201, -0.0132, -0.0046, 0.0, 0.0064, 0.0132, 0.0206, 0.0296, 0.0396]
 }
 tracks/25/type = "value"
 tracks/25/imported = false
@@ -9544,7 +9544,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.2728, -34.9334)]
+"values": [Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.2527, -34.8281)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -9580,7 +9580,7 @@ tracks/10/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.2728, -34.6001)]
+"values": [Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2929, -34.7053)]
 }
 tracks/11/type = "value"
 tracks/11/imported = false
@@ -9712,7 +9712,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.1378, -19.7128)]
+"values": [Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.1421, -19.7394)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -11506,7 +11506,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.5217, -22.4127), Vector2(8.5148, -22.2715), Vector2(8.5, -22), Vector2(8.4726, -21.5782), Vector2(8.4213, -20.9621), Vector2(8.4726, -21.5782), Vector2(8.5, -22), Vector2(8.5148, -22.2715), Vector2(8.5194, -22.3656)]
+"values": [Vector2(8.515, -22.3437), Vector2(8.5102, -22.2262), Vector2(8.5, -22), Vector2(8.481, -21.6484), Vector2(8.4455, -21.1339), Vector2(8.481, -21.6484), Vector2(8.5, -22), Vector2(8.5102, -22.2262), Vector2(8.5134, -22.3046)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -11518,7 +11518,7 @@ tracks/22/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [-0.0242, -0.016, 0.0, 0.0248, 0.0613, 0.0248, 0.0, -0.016, -0.0215]
+"values": [-0.0202, -0.0133, 0.0, 0.0207, 0.0511, 0.0207, 0.0, -0.0133, -0.0179]
 }
 tracks/23/type = "value"
 tracks/23/imported = false
@@ -11530,7 +11530,7 @@ tracks/23/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0014, 1.0951)]
+"values": [Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.001, 1.0959)]
 }
 tracks/24/type = "value"
 tracks/24/imported = false
@@ -11542,7 +11542,7 @@ tracks/24/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.1667, 0.2, 0.2333, 0.2667, 0.3, 0.3333, 0.3667, 0.4, 0.4333, 0.4667, 0.5, 0.5333, 0.5667, 0.6, 0.6667, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [0.0241, 0.0159, 0.0055, 0.0, -0.0077, -0.0158, -0.0246, -0.0354, -0.0474, -0.0606, -0.0474, -0.0354, -0.0246, -0.0158, -0.0077, 0.0, 0.0108, 0.0159, 0.0214]
+"values": [0.0201, 0.0132, 0.0046, 0.0, -0.0064, -0.0132, -0.0206, -0.0296, -0.0396, -0.0507, -0.0396, -0.0296, -0.0206, -0.0132, -0.0064, 0.0, 0.009, 0.0132, 0.0179]
 }
 tracks/25/type = "value"
 tracks/25/imported = false
@@ -13336,7 +13336,7 @@ tracks/22/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [-0.0613, -0.0248, 0.0, 0.016, 0.0242, 0.016, 0.0, -0.0248, -0.0613, -0.0248, 0.0, 0.016, 0.0242, 0.016, 0.0, -0.0248, -0.0491]
+"values": [-0.0511, -0.0207, 0.0, 0.0133, 0.0202, 0.0133, 0.0, -0.0207, -0.0511, -0.0207, 0.0, 0.0133, 0.0202, 0.0133, 0.0, -0.0207, -0.0409]
 }
 tracks/23/type = "value"
 tracks/23/imported = false
@@ -13348,7 +13348,7 @@ tracks/23/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9977, 0.8174)]
+"values": [Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9984, 0.8157)]
 }
 tracks/24/type = "value"
 tracks/24/imported = false
@@ -13360,7 +13360,7 @@ tracks/24/keys = {
 "times": PackedFloat32Array(0, 0.0333, 0.0667, 0.1, 0.1333, 0.1667, 0.2, 0.2667, 0.3, 0.4, 0.5, 0.5667, 0.6, 0.6333, 0.6667, 0.7, 0.7333, 0.7667, 0.8, 0.8333, 0.8667, 0.9, 0.9333, 0.9667, 1, 1.0667, 1.1, 1.2, 1.3, 1.3667, 1.4, 1.4333, 1.4667, 1.5, 1.5333, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [0.0606, 0.0474, 0.0354, 0.0246, 0.0158, 0.0077, 0.0, -0.0108, -0.0159, -0.0241, -0.0159, -0.0055, 0.0, 0.0077, 0.0158, 0.0246, 0.0354, 0.0474, 0.0606, 0.0474, 0.0354, 0.0246, 0.0158, 0.0077, 0.0, -0.0108, -0.0159, -0.0241, -0.0159, -0.0055, 0.0, 0.0077, 0.0158, 0.0246, 0.0354, 0.0474]
+"values": [0.0507, 0.0396, 0.0296, 0.0206, 0.0132, 0.0064, 0.0, -0.009, -0.0132, -0.0201, -0.0132, -0.0046, 0.0, 0.0064, 0.0132, 0.0206, 0.0296, 0.0396, 0.0507, 0.0396, 0.0296, 0.0206, 0.0132, 0.0064, 0.0, -0.009, -0.0132, -0.0201, -0.0132, -0.0046, 0.0, 0.0064, 0.0132, 0.0206, 0.0296, 0.0396]
 }
 tracks/25/type = "value"
 tracks/25/imported = false
@@ -14986,7 +14986,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.2728, -34.9334)]
+"values": [Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.2527, -34.8281)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -15022,7 +15022,7 @@ tracks/10/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.2728, -34.6001)]
+"values": [Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2929, -34.7053)]
 }
 tracks/11/type = "value"
 tracks/11/imported = false
@@ -15154,7 +15154,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.1378, -19.7128)]
+"values": [Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.1421, -19.7394)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -16984,7 +16984,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.5217, -22.4127), Vector2(8.5148, -22.2715), Vector2(8.5, -22), Vector2(8.4726, -21.5782), Vector2(8.4213, -20.9621), Vector2(8.4726, -21.5782), Vector2(8.5, -22), Vector2(8.5148, -22.2715), Vector2(8.5217, -22.4127), Vector2(8.5148, -22.2715), Vector2(8.5, -22), Vector2(8.4726, -21.5782), Vector2(8.4213, -20.9621), Vector2(8.4726, -21.5782), Vector2(8.5, -22), Vector2(8.5148, -22.2715), Vector2(8.5194, -22.3656)]
+"values": [Vector2(8.515, -22.3437), Vector2(8.5102, -22.2262), Vector2(8.5, -22), Vector2(8.481, -21.6484), Vector2(8.4455, -21.1339), Vector2(8.481, -21.6484), Vector2(8.5, -22), Vector2(8.5102, -22.2262), Vector2(8.515, -22.3437), Vector2(8.5102, -22.2262), Vector2(8.5, -22), Vector2(8.481, -21.6484), Vector2(8.4455, -21.1339), Vector2(8.481, -21.6484), Vector2(8.5, -22), Vector2(8.5102, -22.2262), Vector2(8.5134, -22.3046)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -16996,7 +16996,7 @@ tracks/22/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [-0.0242, -0.016, 0.0, 0.0248, 0.0613, 0.0248, 0.0, -0.016, -0.0242, -0.016, 0.0, 0.0248, 0.0613, 0.0248, 0.0, -0.016, -0.0215]
+"values": [-0.0202, -0.0133, 0.0, 0.0207, 0.0511, 0.0207, 0.0, -0.0133, -0.0202, -0.0133, 0.0, 0.0207, 0.0511, 0.0207, 0.0, -0.0133, -0.0179]
 }
 tracks/23/type = "value"
 tracks/23/imported = false
@@ -17008,7 +17008,7 @@ tracks/23/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0016, 1.1078), Vector2(1.001, 1.0698), Vector2(1, 1), Vector2(0.9987, 0.9009), Vector2(0.9972, 0.7759), Vector2(0.9987, 0.9009), Vector2(1, 1), Vector2(1.001, 1.0698), Vector2(1.0014, 1.0951)]
+"values": [Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.0011, 1.1087), Vector2(1.0007, 1.0703), Vector2(1, 1), Vector2(0.9991, 0.9), Vector2(0.9981, 0.7736), Vector2(0.9991, 0.9), Vector2(1, 1), Vector2(1.0007, 1.0703), Vector2(1.001, 1.0959)]
 }
 tracks/24/type = "value"
 tracks/24/imported = false
@@ -17020,7 +17020,7 @@ tracks/24/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.1667, 0.2, 0.2333, 0.2667, 0.3, 0.3333, 0.3667, 0.4, 0.4333, 0.4667, 0.5, 0.5333, 0.5667, 0.6, 0.6667, 0.7, 0.8, 0.9, 0.9667, 1, 1.0333, 1.0667, 1.1, 1.1333, 1.1667, 1.2, 1.2333, 1.2667, 1.3, 1.3333, 1.3667, 1.4, 1.4667, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [0.0241, 0.0159, 0.0055, 0.0, -0.0077, -0.0158, -0.0246, -0.0354, -0.0474, -0.0606, -0.0474, -0.0354, -0.0246, -0.0158, -0.0077, 0.0, 0.0108, 0.0159, 0.0241, 0.0159, 0.0055, 0.0, -0.0077, -0.0158, -0.0246, -0.0354, -0.0474, -0.0606, -0.0474, -0.0354, -0.0246, -0.0158, -0.0077, 0.0, 0.0108, 0.0159, 0.0214]
+"values": [0.0201, 0.0132, 0.0046, 0.0, -0.0064, -0.0132, -0.0206, -0.0296, -0.0396, -0.0507, -0.0396, -0.0296, -0.0206, -0.0132, -0.0064, 0.0, 0.009, 0.0132, 0.0201, 0.0132, 0.0046, 0.0, -0.0064, -0.0132, -0.0206, -0.0296, -0.0396, -0.0507, -0.0396, -0.0296, -0.0206, -0.0132, -0.0064, 0.0, 0.009, 0.0132, 0.0179]
 }
 tracks/25/type = "value"
 tracks/25/imported = false
@@ -19062,7 +19062,7 @@ tracks/36/path = NodePath("Visual/Pecas/bracoDf_10:z_index")
 tracks/36/interp = 0
 tracks/36/loop_wrap = true
 tracks/36/keys = {
-"times": PackedFloat32Array(0, 0.1667, 0.5),
+"times": PackedFloat32Array(0, 0.1667, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -19086,10 +19086,10 @@ tracks/38/path = NodePath("Visual/Pecas/hasteF_11:z_index")
 tracks/38/interp = 0
 tracks/38/loop_wrap = true
 tracks/38/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.5),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
+"times": PackedFloat32Array(0, 0.5833),
+"transitions": PackedFloat32Array(1, 1),
 "update": 1,
-"values": [0, 1, 0, 1]
+"values": [0, 1]
 }
 tracks/39/type = "value"
 tracks/39/imported = false
@@ -19110,10 +19110,10 @@ tracks/40/path = NodePath("Visual/Pecas/pontaF_12:z_index")
 tracks/40/interp = 0
 tracks/40/loop_wrap = true
 tracks/40/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.5),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
+"times": PackedFloat32Array(0, 0.5833),
+"transitions": PackedFloat32Array(1, 1),
 "update": 1,
-"values": [0, 1, 0, 1]
+"values": [0, 1]
 }
 tracks/41/type = "value"
 tracks/41/imported = false
@@ -19134,7 +19134,7 @@ tracks/42/path = NodePath("Visual/Pecas/maoDf_13:z_index")
 tracks/42/interp = 0
 tracks/42/loop_wrap = true
 tracks/42/keys = {
-"times": PackedFloat32Array(0, 0.1667, 0.5),
+"times": PackedFloat32Array(0, 0.1667, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -19158,7 +19158,7 @@ tracks/44/path = NodePath("Visual/Pecas/rostoF_14:z_index")
 tracks/44/interp = 0
 tracks/44/loop_wrap = true
 tracks/44/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19182,7 +19182,7 @@ tracks/46/path = NodePath("Visual/Pecas/elmoF_15:z_index")
 tracks/46/interp = 0
 tracks/46/loop_wrap = true
 tracks/46/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19206,7 +19206,7 @@ tracks/48/path = NodePath("Visual/Pecas/protecaoF_16:z_index")
 tracks/48/interp = 0
 tracks/48/loop_wrap = true
 tracks/48/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19230,7 +19230,7 @@ tracks/50/path = NodePath("Visual/Pecas/crinaF_17:z_index")
 tracks/50/interp = 0
 tracks/50/loop_wrap = true
 tracks/50/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19254,7 +19254,7 @@ tracks/52/path = NodePath("Visual/Pecas/olhoDf_18:z_index")
 tracks/52/interp = 0
 tracks/52/loop_wrap = true
 tracks/52/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19278,7 +19278,7 @@ tracks/54/path = NodePath("Visual/Pecas/olhoEf_19:z_index")
 tracks/54/interp = 0
 tracks/54/loop_wrap = true
 tracks/54/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19302,7 +19302,7 @@ tracks/56/path = NodePath("Visual/Pecas/bigodeF_20:z_index")
 tracks/56/interp = 0
 tracks/56/loop_wrap = true
 tracks/56/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19398,7 +19398,7 @@ tracks/64/path = NodePath("Visual/Pecas/nucaC_28:z_index")
 tracks/64/interp = 0
 tracks/64/loop_wrap = true
 tracks/64/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19410,7 +19410,7 @@ tracks/65/path = NodePath("Visual/Pecas/elmoC_29:z_index")
 tracks/65/interp = 0
 tracks/65/loop_wrap = true
 tracks/65/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19422,7 +19422,7 @@ tracks/66/path = NodePath("Visual/Pecas/crinaC_30:z_index")
 tracks/66/interp = 0
 tracks/66/loop_wrap = true
 tracks/66/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19434,7 +19434,7 @@ tracks/67/path = NodePath("Visual/Pecas/rostoL_31:z_index")
 tracks/67/interp = 0
 tracks/67/loop_wrap = true
 tracks/67/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19446,7 +19446,7 @@ tracks/68/path = NodePath("Visual/Pecas/narizL_32:z_index")
 tracks/68/interp = 0
 tracks/68/loop_wrap = true
 tracks/68/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19458,7 +19458,7 @@ tracks/69/path = NodePath("Visual/Pecas/elmoL_33:z_index")
 tracks/69/interp = 0
 tracks/69/loop_wrap = true
 tracks/69/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19470,7 +19470,7 @@ tracks/70/path = NodePath("Visual/Pecas/protecaoL_34:z_index")
 tracks/70/interp = 0
 tracks/70/loop_wrap = true
 tracks/70/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19482,7 +19482,7 @@ tracks/71/path = NodePath("Visual/Pecas/crinaL_35:z_index")
 tracks/71/interp = 0
 tracks/71/loop_wrap = true
 tracks/71/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19494,7 +19494,7 @@ tracks/72/path = NodePath("Visual/Pecas/olhoL_36:z_index")
 tracks/72/interp = 0
 tracks/72/loop_wrap = true
 tracks/72/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19506,7 +19506,7 @@ tracks/73/path = NodePath("Visual/Pecas/bigodeL_37:z_index")
 tracks/73/interp = 0
 tracks/73/loop_wrap = true
 tracks/73/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19662,7 +19662,7 @@ tracks/86/path = NodePath("Visual/Pecas/rostoF_50:z_index")
 tracks/86/interp = 0
 tracks/86/loop_wrap = true
 tracks/86/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19674,7 +19674,7 @@ tracks/87/path = NodePath("Visual/Pecas/elmoF_51:z_index")
 tracks/87/interp = 0
 tracks/87/loop_wrap = true
 tracks/87/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19686,7 +19686,7 @@ tracks/88/path = NodePath("Visual/Pecas/protecaoF_52:z_index")
 tracks/88/interp = 0
 tracks/88/loop_wrap = true
 tracks/88/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19698,7 +19698,7 @@ tracks/89/path = NodePath("Visual/Pecas/crinaF_53:z_index")
 tracks/89/interp = 0
 tracks/89/loop_wrap = true
 tracks/89/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19710,7 +19710,7 @@ tracks/90/path = NodePath("Visual/Pecas/olhoDf_54:z_index")
 tracks/90/interp = 0
 tracks/90/loop_wrap = true
 tracks/90/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19722,7 +19722,7 @@ tracks/91/path = NodePath("Visual/Pecas/olhoEf_55:z_index")
 tracks/91/interp = 0
 tracks/91/loop_wrap = true
 tracks/91/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19734,7 +19734,7 @@ tracks/92/path = NodePath("Visual/Pecas/bigodeF_56:z_index")
 tracks/92/interp = 0
 tracks/92/loop_wrap = true
 tracks/92/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19782,7 +19782,7 @@ tracks/96/path = NodePath("Visual/Pecas/rostoL_60:z_index")
 tracks/96/interp = 0
 tracks/96/loop_wrap = true
 tracks/96/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19794,7 +19794,7 @@ tracks/97/path = NodePath("Visual/Pecas/narizL_61:z_index")
 tracks/97/interp = 0
 tracks/97/loop_wrap = true
 tracks/97/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19806,7 +19806,7 @@ tracks/98/path = NodePath("Visual/Pecas/elmoL_62:z_index")
 tracks/98/interp = 0
 tracks/98/loop_wrap = true
 tracks/98/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19818,7 +19818,7 @@ tracks/99/path = NodePath("Visual/Pecas/protecaoL_63:z_index")
 tracks/99/interp = 0
 tracks/99/loop_wrap = true
 tracks/99/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19830,7 +19830,7 @@ tracks/100/path = NodePath("Visual/Pecas/crinaL_64:z_index")
 tracks/100/interp = 0
 tracks/100/loop_wrap = true
 tracks/100/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19842,7 +19842,7 @@ tracks/101/path = NodePath("Visual/Pecas/olhoL_65:z_index")
 tracks/101/interp = 0
 tracks/101/loop_wrap = true
 tracks/101/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -19854,7 +19854,7 @@ tracks/102/path = NodePath("Visual/Pecas/bigodeL_66:z_index")
 tracks/102/interp = 0
 tracks/102/loop_wrap = true
 tracks/102/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20106,7 +20106,7 @@ tracks/123/path = NodePath("Visual/Pecas/rostoF_87:z_index")
 tracks/123/interp = 0
 tracks/123/loop_wrap = true
 tracks/123/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20118,7 +20118,7 @@ tracks/124/path = NodePath("Visual/Pecas/elmoF_88:z_index")
 tracks/124/interp = 0
 tracks/124/loop_wrap = true
 tracks/124/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20130,7 +20130,7 @@ tracks/125/path = NodePath("Visual/Pecas/protecaoF_89:z_index")
 tracks/125/interp = 0
 tracks/125/loop_wrap = true
 tracks/125/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20142,7 +20142,7 @@ tracks/126/path = NodePath("Visual/Pecas/crinaF_90:z_index")
 tracks/126/interp = 0
 tracks/126/loop_wrap = true
 tracks/126/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20154,7 +20154,7 @@ tracks/127/path = NodePath("Visual/Pecas/olhoDf_91:z_index")
 tracks/127/interp = 0
 tracks/127/loop_wrap = true
 tracks/127/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20166,7 +20166,7 @@ tracks/128/path = NodePath("Visual/Pecas/olhoEf_92:z_index")
 tracks/128/interp = 0
 tracks/128/loop_wrap = true
 tracks/128/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20178,7 +20178,7 @@ tracks/129/path = NodePath("Visual/Pecas/bigodeF_93:z_index")
 tracks/129/interp = 0
 tracks/129/loop_wrap = true
 tracks/129/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20190,7 +20190,7 @@ tracks/130/path = NodePath("Visual/Pecas/rostoL_94:z_index")
 tracks/130/interp = 0
 tracks/130/loop_wrap = true
 tracks/130/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20202,7 +20202,7 @@ tracks/131/path = NodePath("Visual/Pecas/narizL_95:z_index")
 tracks/131/interp = 0
 tracks/131/loop_wrap = true
 tracks/131/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20214,7 +20214,7 @@ tracks/132/path = NodePath("Visual/Pecas/elmoL_96:z_index")
 tracks/132/interp = 0
 tracks/132/loop_wrap = true
 tracks/132/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20226,7 +20226,7 @@ tracks/133/path = NodePath("Visual/Pecas/protecaoL_97:z_index")
 tracks/133/interp = 0
 tracks/133/loop_wrap = true
 tracks/133/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20238,7 +20238,7 @@ tracks/134/path = NodePath("Visual/Pecas/crinaL_98:z_index")
 tracks/134/interp = 0
 tracks/134/loop_wrap = true
 tracks/134/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20250,7 +20250,7 @@ tracks/135/path = NodePath("Visual/Pecas/olhoL_99:z_index")
 tracks/135/interp = 0
 tracks/135/loop_wrap = true
 tracks/135/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20262,7 +20262,7 @@ tracks/136/path = NodePath("Visual/Pecas/bigodeL_100:z_index")
 tracks/136/interp = 0
 tracks/136/loop_wrap = true
 tracks/136/keys = {
-"times": PackedFloat32Array(0, 0.0833),
+"times": PackedFloat32Array(0, 0.1667),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [0, 1]
@@ -20476,7 +20476,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.0833, 0.1667, 0.25, 0.4167, 0.5, 0.5833, 0.6389),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.5, -38.5), Vector2(-3.4952, -38.2943), Vector2(-3.4808, -37.7547), Vector2(-3.2451, -35.6889), Vector2(-3.2451, -35.6889), Vector2(-3.3594, -36.4068), Vector2(-3.4827, -37.7633), Vector2(-3.4942, -38.2544)]
+"values": [Vector2(-3.5, -38.5), Vector2(-3.4948, -38.3105), Vector2(-3.4791, -37.7871), Vector2(-3.2226, -35.5731), Vector2(-3.2226, -35.5731), Vector2(-3.347, -36.32), Vector2(-3.4811, -37.7325), Vector2(-3.4937, -38.2442)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -23468,7 +23468,7 @@ tracks/106/path = NodePath("Visual/Pecas/capaC_75:z_index")
 tracks/106/interp = 0
 tracks/106/loop_wrap = true
 tracks/106/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -23492,7 +23492,7 @@ tracks/108/path = NodePath("Visual/Pecas/dobraC1_76:z_index")
 tracks/108/interp = 0
 tracks/108/loop_wrap = true
 tracks/108/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -23516,7 +23516,7 @@ tracks/110/path = NodePath("Visual/Pecas/dobraC2_77:z_index")
 tracks/110/interp = 0
 tracks/110/loop_wrap = true
 tracks/110/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -23588,7 +23588,7 @@ tracks/116/path = NodePath("Visual/Pecas/bracoDc_80:z_index")
 tracks/116/interp = 0
 tracks/116/loop_wrap = true
 tracks/116/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23612,7 +23612,7 @@ tracks/118/path = NodePath("Visual/Pecas/hasteC_81:z_index")
 tracks/118/interp = 0
 tracks/118/loop_wrap = true
 tracks/118/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -23636,7 +23636,7 @@ tracks/120/path = NodePath("Visual/Pecas/pontaC_82:z_index")
 tracks/120/interp = 0
 tracks/120/loop_wrap = true
 tracks/120/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [0, 1, 0]
@@ -23660,7 +23660,7 @@ tracks/122/path = NodePath("Visual/Pecas/maoDc_83:z_index")
 tracks/122/interp = 0
 tracks/122/loop_wrap = true
 tracks/122/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23684,7 +23684,7 @@ tracks/124/path = NodePath("Visual/Pecas/nucaC_84:z_index")
 tracks/124/interp = 0
 tracks/124/loop_wrap = true
 tracks/124/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23708,7 +23708,7 @@ tracks/126/path = NodePath("Visual/Pecas/elmoC_85:z_index")
 tracks/126/interp = 0
 tracks/126/loop_wrap = true
 tracks/126/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23732,7 +23732,7 @@ tracks/128/path = NodePath("Visual/Pecas/crinaC_86:z_index")
 tracks/128/interp = 0
 tracks/128/loop_wrap = true
 tracks/128/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23744,7 +23744,7 @@ tracks/129/path = NodePath("Visual/Pecas/rostoF_87:z_index")
 tracks/129/interp = 0
 tracks/129/loop_wrap = true
 tracks/129/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23756,7 +23756,7 @@ tracks/130/path = NodePath("Visual/Pecas/elmoF_88:z_index")
 tracks/130/interp = 0
 tracks/130/loop_wrap = true
 tracks/130/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23768,7 +23768,7 @@ tracks/131/path = NodePath("Visual/Pecas/protecaoF_89:z_index")
 tracks/131/interp = 0
 tracks/131/loop_wrap = true
 tracks/131/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23780,7 +23780,7 @@ tracks/132/path = NodePath("Visual/Pecas/crinaF_90:z_index")
 tracks/132/interp = 0
 tracks/132/loop_wrap = true
 tracks/132/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23792,7 +23792,7 @@ tracks/133/path = NodePath("Visual/Pecas/olhoDf_91:z_index")
 tracks/133/interp = 0
 tracks/133/loop_wrap = true
 tracks/133/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23804,7 +23804,7 @@ tracks/134/path = NodePath("Visual/Pecas/olhoEf_92:z_index")
 tracks/134/interp = 0
 tracks/134/loop_wrap = true
 tracks/134/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23816,7 +23816,7 @@ tracks/135/path = NodePath("Visual/Pecas/bigodeF_93:z_index")
 tracks/135/interp = 0
 tracks/135/loop_wrap = true
 tracks/135/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23828,7 +23828,7 @@ tracks/136/path = NodePath("Visual/Pecas/rostoL_94:z_index")
 tracks/136/interp = 0
 tracks/136/loop_wrap = true
 tracks/136/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23840,7 +23840,7 @@ tracks/137/path = NodePath("Visual/Pecas/narizL_95:z_index")
 tracks/137/interp = 0
 tracks/137/loop_wrap = true
 tracks/137/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23852,7 +23852,7 @@ tracks/138/path = NodePath("Visual/Pecas/elmoL_96:z_index")
 tracks/138/interp = 0
 tracks/138/loop_wrap = true
 tracks/138/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23864,7 +23864,7 @@ tracks/139/path = NodePath("Visual/Pecas/protecaoL_97:z_index")
 tracks/139/interp = 0
 tracks/139/loop_wrap = true
 tracks/139/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23876,7 +23876,7 @@ tracks/140/path = NodePath("Visual/Pecas/crinaL_98:z_index")
 tracks/140/interp = 0
 tracks/140/loop_wrap = true
 tracks/140/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23888,7 +23888,7 @@ tracks/141/path = NodePath("Visual/Pecas/olhoL_99:z_index")
 tracks/141/interp = 0
 tracks/141/loop_wrap = true
 tracks/141/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -23900,7 +23900,7 @@ tracks/142/path = NodePath("Visual/Pecas/bigodeL_100:z_index")
 tracks/142/interp = 0
 tracks/142/loop_wrap = true
 tracks/142/keys = {
-"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.0833, 0.25, 0.5833),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 1]
@@ -24031,7 +24031,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.125, 0.375, 0.5, 0.625, 0.875, 0.9688),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0, -38.5), Vector2(0, -38.3828), Vector2(0, -37.8672), Vector2(0, -37.75), Vector2(0, -37.8672), Vector2(0, -38.3828), Vector2(0, -38.4707)]
+"values": [Vector2(0, -38.5), Vector2(-0.0003, -38.3828), Vector2(-0.0015, -37.8672), Vector2(-0.0018, -37.75), Vector2(-0.0015, -37.8672), Vector2(-0.0003, -38.3828), Vector2(-0.0001, -38.4707)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -25909,7 +25909,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.2728, -34.9334)]
+"values": [Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.2527, -34.8281)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -25945,7 +25945,7 @@ tracks/10/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.2728, -34.6001)]
+"values": [Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2929, -34.7053)]
 }
 tracks/11/type = "value"
 tracks/11/imported = false
@@ -26077,7 +26077,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.1378, -19.7128)]
+"values": [Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.1421, -19.7394)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -27703,7 +27703,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.1974, -33.8264), Vector2(-3.4235, -36.1473), Vector2(-3.5, -38.5), Vector2(-3.4235, -37.6027), Vector2(-3.1974, -36.6736), Vector2(-3.4235, -38.6027), Vector2(-3.5, -40.5), Vector2(-3.4235, -37.1473), Vector2(-3.2728, -34.9334)]
+"values": [Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.1707, -33.7007), Vector2(-3.4168, -36.083), Vector2(-3.5, -38.5), Vector2(-3.4168, -37.667), Vector2(-3.1707, -36.7993), Vector2(-3.4168, -38.667), Vector2(-3.5, -40.5), Vector2(-3.4168, -37.083), Vector2(-3.2527, -34.8281)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -27739,7 +27739,7 @@ tracks/10/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.1974, -33.8264), Vector2(3.4235, -37.1473), Vector2(3.5, -40.5), Vector2(3.4235, -38.6027), Vector2(3.1974, -36.6736), Vector2(3.4235, -37.6027), Vector2(3.5, -38.5), Vector2(3.4235, -36.1473), Vector2(3.2728, -34.6001)]
+"values": [Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2241, -33.9522), Vector2(3.4303, -37.2116), Vector2(3.5, -40.5), Vector2(3.4303, -38.5384), Vector2(3.2241, -36.5478), Vector2(3.4303, -37.5384), Vector2(3.5, -38.5), Vector2(3.4303, -36.2116), Vector2(3.2929, -34.7053)]
 }
 tracks/11/type = "value"
 tracks/11/imported = false
@@ -27871,7 +27871,7 @@ tracks/21/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.5667),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.0175, -19.2638), Vector2(8.3785, -20.6108), Vector2(8.5, -22), Vector2(8.3785, -23.3892), Vector2(8.0175, -24.7362), Vector2(8.3785, -23.3892), Vector2(8.5, -22), Vector2(8.3785, -20.6108), Vector2(8.1378, -19.7128)]
+"values": [Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.0231, -19.2956), Vector2(8.3799, -20.627), Vector2(8.5, -22), Vector2(8.3799, -23.373), Vector2(8.0231, -24.7044), Vector2(8.3799, -23.373), Vector2(8.5, -22), Vector2(8.3799, -20.627), Vector2(8.1421, -19.7394)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -29532,7 +29532,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.0833, 0.1667, 0.25, 0.4167, 0.5, 0.5833, 0.6389),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-3.5, -38.5), Vector2(-3.4952, -38.2943), Vector2(-3.4808, -37.7547), Vector2(-3.2451, -35.6889), Vector2(-3.2451, -35.6889), Vector2(-3.3594, -36.4068), Vector2(-3.4827, -37.7633), Vector2(-3.4942, -38.2544)]
+"values": [Vector2(-3.5, -38.5), Vector2(-3.4948, -38.3105), Vector2(-3.4791, -37.7871), Vector2(-3.2226, -35.5731), Vector2(-3.2226, -35.5731), Vector2(-3.347, -36.32), Vector2(-3.4811, -37.7325), Vector2(-3.4937, -38.2442)]
 }
 tracks/8/type = "value"
 tracks/8/imported = false
@@ -31294,8 +31294,8 @@ remote_path = NodePath("../../../Pecas/tunicaC_74")
 position = Vector2(0, -28)
 rest = Transform2D(1, 0, 0, 1, 0, -28)
 auto_calculate_length_and_angle = false
-length = 11.2651
-bone_angle = -89.1523
+length = 11.2708
+bone_angle = -89.9294
 
 [node name="rostoF_14" type="RemoteTransform2D" parent="Visual/Esqueleto/corpo/cabeca"]
 remote_path = NodePath("../../../../Pecas/rostoF_14")
@@ -31669,7 +31669,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4.5, 28)
 region_enabled = true
-region_rect = Rect2(128, 183, 9, 11)
+region_rect = Rect2(148, 185, 9, 11)
 
 [node name="pernaEf_3" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
@@ -31683,49 +31683,49 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4.5, 28)
 region_enabled = true
-region_rect = Rect2(139, 183, 9, 11)
+region_rect = Rect2(159, 185, 9, 11)
 
 [node name="tunicaF_5" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-12, -23)
 region_enabled = true
-region_rect = Rect2(2, 108, 24, 31)
+region_rect = Rect2(11, 108, 24, 31)
 
 [node name="peitoF_6" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-10, -26)
 region_enabled = true
-region_rect = Rect2(65, 108, 20, 21)
+region_rect = Rect2(74, 108, 20, 21)
 
 [node name="cintoF_7" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-10, -8)
 region_enabled = true
-region_rect = Rect2(98, 213, 20, 3)
+region_rect = Rect2(115, 215, 20, 3)
 
 [node name="bracoEf_8" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-3.5, -1)
 region_enabled = true
-region_rect = Rect2(94, 108, 9, 20)
+region_rect = Rect2(96, 108, 9, 20)
 
 [node name="maoEf_9" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-2.5, 15)
 region_enabled = true
-region_rect = Rect2(159, 200, 7, 6)
+region_rect = Rect2(176, 202, 7, 6)
 
 [node name="bracoDf_10" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-5.5, -1)
 region_enabled = true
-region_rect = Rect2(105, 108, 9, 20)
+region_rect = Rect2(107, 108, 9, 20)
 
 [node name="hasteF_11" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
@@ -31739,87 +31739,87 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-2.5, -62.5)
 region_enabled = true
-region_rect = Rect2(94, 200, 5, 9)
+region_rect = Rect2(109, 202, 5, 9)
 
 [node name="maoDf_13" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4.5, 15)
 region_enabled = true
-region_rect = Rect2(168, 200, 7, 6)
+region_rect = Rect2(2, 215, 7, 6)
 
 [node name="rostoF_14" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(164, 108, 18, 19)
+region_rect = Rect2(2, 143, 18, 19)
 
 [node name="elmoF_15" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(44, 183, 18, 13)
+region_rect = Rect2(64, 185, 18, 13)
 
 [node name="protecaoF_16" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-2, -15)
 region_enabled = true
-region_rect = Rect2(101, 200, 4, 9)
+region_rect = Rect2(116, 202, 4, 9)
 
 [node name="crinaF_17" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(105, 183, 6, 12)
+region_rect = Rect2(124, 185, 6, 12)
 
 [node name="olhoDf_18" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4, -10)
 region_enabled = true
-region_rect = Rect2(120, 213, 2, 3)
+region_rect = Rect2(137, 215, 2, 3)
 
 [node name="olhoEf_19" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(2, -10)
 region_enabled = true
-region_rect = Rect2(124, 213, 2, 3)
+region_rect = Rect2(141, 215, 2, 3)
 
 [node name="bigodeF_20" type="Sprite2D" parent="Visual/Pecas"]
 texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-5, -6)
 region_enabled = true
-region_rect = Rect2(128, 213, 10, 3)
+region_rect = Rect2(145, 215, 10, 3)
 
 [node name="rostoL_21" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -18)
+offset = Vector2(-8, -18)
 region_enabled = true
-region_rect = Rect2(2, 141, 18, 19)
+region_rect = Rect2(22, 143, 17, 19)
 
 [node name="narizL_22" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(5, -11)
+offset = Vector2(6, -11)
 region_enabled = true
-region_rect = Rect2(20, 213, 4, 5)
+region_rect = Rect2(37, 215, 4, 5)
 
 [node name="elmoL_23" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-10, -21)
+offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(103, 162, 19, 15)
+region_rect = Rect2(120, 164, 19, 15)
 
 [node name="protecaoL_24" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31827,23 +31827,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(5, -15)
 region_enabled = true
-region_rect = Rect2(125, 200, 4, 7)
+region_rect = Rect2(141, 202, 4, 7)
 
 [node name="crinaL_25" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -26)
+offset = Vector2(-8, -26)
 region_enabled = true
-region_rect = Rect2(150, 183, 16, 11)
+region_rect = Rect2(170, 185, 15, 11)
 
 [node name="olhoL_26" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(3, -10)
+offset = Vector2(4, -10)
 region_enabled = true
-region_rect = Rect2(181, 213, 3, 2)
+region_rect = Rect2(14, 223, 2, 2)
 
 [node name="bigodeL_27" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31851,7 +31851,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(3, -7)
 region_enabled = true
-region_rect = Rect2(56, 213, 5, 4)
+region_rect = Rect2(73, 215, 5, 4)
 
 [node name="nucaC_28" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31859,7 +31859,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(22, 141, 18, 19)
+region_rect = Rect2(41, 143, 18, 19)
 
 [node name="elmoC_29" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31867,7 +31867,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(42, 162, 18, 18)
+region_rect = Rect2(60, 164, 18, 18)
 
 [node name="crinaC_30" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31875,7 +31875,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(116, 108, 6, 20)
+region_rect = Rect2(118, 108, 6, 20)
 
 [node name="rostoL_31" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31883,23 +31883,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(42, 141, 18, 19)
+region_rect = Rect2(61, 143, 17, 19)
 
 [node name="narizL_32" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -11)
+offset = Vector2(-10, -11)
 region_enabled = true
-region_rect = Rect2(26, 213, 4, 5)
+region_rect = Rect2(43, 215, 4, 5)
 
 [node name="elmoL_33" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -21)
+offset = Vector2(-10, -21)
 region_enabled = true
-region_rect = Rect2(124, 162, 19, 15)
+region_rect = Rect2(141, 164, 19, 15)
 
 [node name="protecaoL_34" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31907,7 +31907,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -15)
 region_enabled = true
-region_rect = Rect2(131, 200, 4, 7)
+region_rect = Rect2(147, 202, 4, 7)
 
 [node name="crinaL_35" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31915,7 +31915,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-7, -26)
 region_enabled = true
-region_rect = Rect2(168, 183, 16, 11)
+region_rect = Rect2(2, 202, 15, 11)
 
 [node name="olhoL_36" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31923,7 +31923,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-6, -10)
 region_enabled = true
-region_rect = Rect2(186, 213, 3, 2)
+region_rect = Rect2(18, 223, 2, 2)
 
 [node name="bigodeL_37" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31931,7 +31931,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-8, -7)
 region_enabled = true
-region_rect = Rect2(63, 213, 5, 4)
+region_rect = Rect2(80, 215, 5, 4)
 
 [node name="capaL_38" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31947,7 +31947,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-12.5, -1)
 region_enabled = true
-region_rect = Rect2(54, 108, 9, 22)
+region_rect = Rect2(63, 108, 9, 22)
 
 [node name="pernaEl_40" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31979,7 +31979,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-8, -18)
 region_enabled = true
-region_rect = Rect2(62, 141, 17, 19)
+region_rect = Rect2(80, 143, 17, 19)
 
 [node name="narizL_44" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31987,7 +31987,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(6, -11)
 region_enabled = true
-region_rect = Rect2(32, 213, 4, 5)
+region_rect = Rect2(49, 215, 4, 5)
 
 [node name="elmoL_45" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -31995,7 +31995,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(145, 162, 19, 15)
+region_rect = Rect2(162, 164, 19, 15)
 
 [node name="protecaoL_46" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32003,7 +32003,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(6, -15)
 region_enabled = true
-region_rect = Rect2(137, 200, 3, 7)
+region_rect = Rect2(153, 202, 3, 7)
 
 [node name="crinaL_47" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32011,7 +32011,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-8, -26)
 region_enabled = true
-region_rect = Rect2(2, 200, 15, 11)
+region_rect = Rect2(19, 202, 15, 11)
 
 [node name="olhoL_48" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32019,7 +32019,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(4, -10)
 region_enabled = true
-region_rect = Rect2(2, 221, 2, 2)
+region_rect = Rect2(22, 223, 2, 2)
 
 [node name="bigodeL_49" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32027,15 +32027,15 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(3, -7)
 region_enabled = true
-region_rect = Rect2(70, 213, 5, 4)
+region_rect = Rect2(87, 215, 5, 4)
 
 [node name="rostoF_50" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-8, -18)
+offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(81, 141, 17, 19)
+region_rect = Rect2(99, 143, 18, 19)
 
 [node name="elmoF_51" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32043,23 +32043,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(64, 183, 19, 13)
+region_rect = Rect2(84, 185, 18, 13)
 
 [node name="protecaoF_52" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-1, -15)
+offset = Vector2(-2, -15)
 region_enabled = true
-region_rect = Rect2(107, 200, 3, 9)
+region_rect = Rect2(122, 202, 4, 9)
 
 [node name="crinaF_53" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-2, -29)
+offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(113, 183, 5, 12)
+region_rect = Rect2(132, 185, 6, 12)
 
 [node name="olhoDf_54" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32067,7 +32067,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4, -10)
 region_enabled = true
-region_rect = Rect2(140, 213, 3, 3)
+region_rect = Rect2(157, 215, 2, 3)
 
 [node name="olhoEf_55" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32075,23 +32075,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(2, -10)
 region_enabled = true
-region_rect = Rect2(145, 213, 3, 3)
+region_rect = Rect2(161, 215, 2, 3)
 
 [node name="bigodeF_56" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-4, -6)
+offset = Vector2(-5, -6)
 region_enabled = true
-region_rect = Rect2(150, 213, 9, 3)
+region_rect = Rect2(165, 215, 10, 3)
 
 [node name="nucaC_57" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-8, -18)
+offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(100, 141, 17, 19)
+region_rect = Rect2(119, 143, 18, 19)
 
 [node name="elmoC_58" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32099,31 +32099,31 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(62, 162, 19, 18)
+region_rect = Rect2(80, 164, 18, 18)
 
 [node name="crinaC_59" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-2, -29)
+offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(87, 108, 5, 21)
+region_rect = Rect2(126, 108, 6, 20)
 
 [node name="rostoL_60" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-8, -18)
+offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(119, 141, 17, 19)
+region_rect = Rect2(139, 143, 17, 19)
 
 [node name="narizL_61" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -11)
+offset = Vector2(-10, -11)
 region_enabled = true
-region_rect = Rect2(38, 213, 4, 5)
+region_rect = Rect2(55, 215, 4, 5)
 
 [node name="elmoL_62" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32131,39 +32131,39 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(166, 162, 19, 15)
+region_rect = Rect2(2, 185, 18, 15)
 
 [node name="protecaoL_63" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-8, -15)
+offset = Vector2(-9, -15)
 region_enabled = true
-region_rect = Rect2(142, 200, 3, 7)
+region_rect = Rect2(158, 202, 4, 7)
 
 [node name="crinaL_64" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-6, -26)
+offset = Vector2(-7, -26)
 region_enabled = true
-region_rect = Rect2(19, 200, 15, 11)
+region_rect = Rect2(36, 202, 15, 11)
 
 [node name="olhoL_65" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-5, -10)
+offset = Vector2(-6, -10)
 region_enabled = true
-region_rect = Rect2(6, 221, 2, 2)
+region_rect = Rect2(26, 223, 2, 2)
 
 [node name="bigodeL_66" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-7, -7)
+offset = Vector2(-8, -7)
 region_enabled = true
-region_rect = Rect2(77, 213, 5, 4)
+region_rect = Rect2(94, 215, 5, 4)
 
 [node name="bracoDl_67" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32171,7 +32171,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(4.5, -1)
 region_enabled = true
-region_rect = Rect2(124, 108, 8, 20)
+region_rect = Rect2(134, 108, 8, 20)
 
 [node name="hasteL_68" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32187,7 +32187,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(5.5, 15)
 region_enabled = true
-region_rect = Rect2(177, 200, 6, 6)
+region_rect = Rect2(11, 215, 6, 6)
 
 [node name="pernaDc_70" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32203,7 +32203,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(2.5, 28)
 region_enabled = true
-region_rect = Rect2(36, 200, 9, 11)
+region_rect = Rect2(53, 202, 9, 11)
 
 [node name="pernaEc_72" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32211,7 +32211,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-10.5, -1)
 region_enabled = true
-region_rect = Rect2(182, 2, 7, 33)
+region_rect = Rect2(2, 108, 7, 33)
 
 [node name="botaEc_73" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32219,7 +32219,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-11.5, 28)
 region_enabled = true
-region_rect = Rect2(47, 200, 9, 11)
+region_rect = Rect2(64, 202, 9, 11)
 
 [node name="tunicaC_74" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32227,7 +32227,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-12, -23)
 region_enabled = true
-region_rect = Rect2(28, 108, 24, 31)
+region_rect = Rect2(37, 108, 24, 31)
 
 [node name="capaC_75" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32259,7 +32259,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-22.5, -1)
 region_enabled = true
-region_rect = Rect2(134, 108, 9, 20)
+region_rect = Rect2(144, 108, 9, 20)
 
 [node name="maoEc_79" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32267,7 +32267,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-21.5, 15)
 region_enabled = true
-region_rect = Rect2(2, 213, 7, 6)
+region_rect = Rect2(19, 215, 7, 6)
 
 [node name="bracoDc_80" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32275,7 +32275,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(13.5, -1)
 region_enabled = true
-region_rect = Rect2(145, 108, 9, 20)
+region_rect = Rect2(155, 108, 9, 20)
 
 [node name="hasteC_81" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32291,7 +32291,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(16.5, -62.5)
 region_enabled = true
-region_rect = Rect2(112, 200, 5, 9)
+region_rect = Rect2(128, 202, 5, 9)
 
 [node name="maoDc_83" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32299,7 +32299,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(14.5, 15)
 region_enabled = true
-region_rect = Rect2(11, 213, 7, 6)
+region_rect = Rect2(28, 215, 7, 6)
 
 [node name="nucaC_84" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32307,7 +32307,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(138, 141, 18, 19)
+region_rect = Rect2(158, 143, 18, 19)
 
 [node name="elmoC_85" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32315,7 +32315,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(83, 162, 18, 18)
+region_rect = Rect2(100, 164, 18, 18)
 
 [node name="crinaC_86" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32323,7 +32323,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(156, 108, 6, 20)
+region_rect = Rect2(166, 108, 6, 20)
 
 [node name="rostoF_87" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32331,7 +32331,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(158, 141, 18, 19)
+region_rect = Rect2(2, 164, 18, 19)
 
 [node name="elmoF_88" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32339,7 +32339,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(85, 183, 18, 13)
+region_rect = Rect2(104, 185, 18, 13)
 
 [node name="protecaoF_89" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32347,7 +32347,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-2, -15)
 region_enabled = true
-region_rect = Rect2(119, 200, 4, 9)
+region_rect = Rect2(135, 202, 4, 9)
 
 [node name="crinaF_90" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32355,7 +32355,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-3, -29)
 region_enabled = true
-region_rect = Rect2(120, 183, 6, 12)
+region_rect = Rect2(140, 185, 6, 12)
 
 [node name="olhoDf_91" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32363,7 +32363,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-4, -10)
 region_enabled = true
-region_rect = Rect2(161, 213, 2, 3)
+region_rect = Rect2(177, 215, 2, 3)
 
 [node name="olhoEf_92" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32371,7 +32371,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(2, -10)
 region_enabled = true
-region_rect = Rect2(165, 213, 2, 3)
+region_rect = Rect2(181, 215, 2, 3)
 
 [node name="bigodeF_93" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32379,31 +32379,31 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-5, -6)
 region_enabled = true
-region_rect = Rect2(169, 213, 10, 3)
+region_rect = Rect2(2, 223, 10, 3)
 
 [node name="rostoL_94" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -18)
+offset = Vector2(-8, -18)
 region_enabled = true
-region_rect = Rect2(2, 162, 18, 19)
+region_rect = Rect2(22, 164, 17, 19)
 
 [node name="narizL_95" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(5, -11)
+offset = Vector2(6, -11)
 region_enabled = true
-region_rect = Rect2(44, 213, 4, 5)
+region_rect = Rect2(61, 215, 4, 5)
 
 [node name="elmoL_96" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-10, -21)
+offset = Vector2(-9, -21)
 region_enabled = true
-region_rect = Rect2(2, 183, 19, 15)
+region_rect = Rect2(22, 185, 19, 15)
 
 [node name="protecaoL_97" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32411,23 +32411,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(5, -15)
 region_enabled = true
-region_rect = Rect2(147, 200, 4, 7)
+region_rect = Rect2(164, 202, 4, 7)
 
 [node name="crinaL_98" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -26)
+offset = Vector2(-8, -26)
 region_enabled = true
-region_rect = Rect2(58, 200, 16, 11)
+region_rect = Rect2(75, 202, 15, 11)
 
 [node name="olhoL_99" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(3, -10)
+offset = Vector2(4, -10)
 region_enabled = true
-region_rect = Rect2(10, 221, 3, 2)
+region_rect = Rect2(30, 223, 2, 2)
 
 [node name="bigodeL_100" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32435,7 +32435,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(3, -7)
 region_enabled = true
-region_rect = Rect2(84, 213, 5, 4)
+region_rect = Rect2(101, 215, 5, 4)
 
 [node name="rostoL_101" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32443,23 +32443,23 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -18)
 region_enabled = true
-region_rect = Rect2(22, 162, 18, 19)
+region_rect = Rect2(41, 164, 17, 19)
 
 [node name="narizL_102" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -11)
+offset = Vector2(-10, -11)
 region_enabled = true
-region_rect = Rect2(50, 213, 4, 5)
+region_rect = Rect2(67, 215, 4, 5)
 
 [node name="elmoL_103" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
 texture = SubResource("CanvasTexture_pecas")
 centered = false
-offset = Vector2(-9, -21)
+offset = Vector2(-10, -21)
 region_enabled = true
-region_rect = Rect2(23, 183, 19, 15)
+region_rect = Rect2(43, 185, 19, 15)
 
 [node name="protecaoL_104" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32467,7 +32467,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-9, -15)
 region_enabled = true
-region_rect = Rect2(153, 200, 4, 7)
+region_rect = Rect2(170, 202, 4, 7)
 
 [node name="crinaL_105" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32475,7 +32475,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-7, -26)
 region_enabled = true
-region_rect = Rect2(76, 200, 16, 11)
+region_rect = Rect2(92, 202, 15, 11)
 
 [node name="olhoL_106" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32483,7 +32483,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-6, -10)
 region_enabled = true
-region_rect = Rect2(15, 221, 3, 2)
+region_rect = Rect2(34, 223, 2, 2)
 
 [node name="bigodeL_107" type="Sprite2D" parent="Visual/Pecas"]
 visible = false
@@ -32491,7 +32491,7 @@ texture = SubResource("CanvasTexture_pecas")
 centered = false
 offset = Vector2(-8, -7)
 region_enabled = true
-region_rect = Rect2(91, 213, 5, 4)
+region_rect = Rect2(108, 215, 5, 4)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

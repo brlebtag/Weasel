@@ -101,7 +101,7 @@ Repare:
 
 - **Cada vista é uma camada com `view=`:** `down` (de frente: o personagem olha para baixo na tela, para quem joga), `right` (de lado, olhando para a direita) e `up` (de costas). As peças de todas as vistas usam os mesmos ossos.
 - **A frente é a vista principal.** Os `pivot=` dos ossos são medidos nela, e a pose parada (`pose`) mostra a frente.
-- **A vista de lado dá a profundidade.** O x de cada peça na vista de lado diz o quanto o osso dela fica na frente da raiz (o `root=` do `godot`, aqui x=60). A cabeça de lado está em x=64, então fica 4 pixels na frente do corpo.
+- **A vista de lado dá a profundidade.** O x de cada peça na vista de lado diz o quanto o osso dela fica na frente da raiz (o `root=` do `godot`, aqui x=60). A cabeça de lado está em x=64, e o focinho e o olho, na frente dela, puxam um pouco: o centro das peças da cabeça fica em x=65,5, e ela fica 5,5 pixels na frente do corpo.
 - **A altura tem que bater.** Uma peça de lado fica na mesma altura que a peça do mesmo osso de frente: o y é o mesmo nas duas vistas. Se a diferença passa de 8 pixels, o Weasel avisa que as vistas estão desalinhadas.
 - **De costas, a esquerda e a direita trocam de lado.** O pé esquerdo (`peE`) fica em x=50 de frente e em x=70 de costas, como num boneco que gira. Uma peça do lado errado ganha um aviso.
 - **`osso.z=` anda para a frente** (positivo) ou para trás (negativo), em pixels, a partir do desenho. O pé que vai para a frente desce na tela de frente, vai para a direita de lado e sobe de costas.
@@ -138,7 +138,7 @@ Cada osso ganha um lugar em 3D: o **x** para o lado, o **y** para baixo (como na
 
 - **O x e o y são o `pivot=`**, medido na vista principal. A vista principal é a frente (`view=down`). Sem a frente, num jogo de plataforma, é o lado direito (veja [mais abaixo](#num-jogo-de-plataforma)).
 - **A raiz é o meio.** O x do `root=` do `godot` (sem ele, o meio do papel) é o eixo em volta do qual o personagem gira. É a partir dele que a profundidade é contada.
-- **O z é a profundidade.** Na vista de lado, o personagem olha para a direita, e o que fica na frente dele fica à direita na tela. Por isso o Weasel lê a profundidade de cada osso no **x da maior peça dele na vista de lado**, contado a partir da raiz.
+- **O z é a profundidade.** Na vista de lado, o personagem olha para a direita, e o que fica na frente dele fica à direita na tela. Por isso o Weasel lê a profundidade de cada osso no **x do centro das peças dele na vista de lado**, contado a partir da raiz. O centro junta todas as peças do osso, e cada uma pesa pela área: o focinho e o olho puxam um pouco, a orelha pequena quase nada.
 
 No furão do fim do capítulo, a raiz está em x=80. A régua vermelha mostra a profundidade de alguns ossos, lida na vista de lado:
 
@@ -151,12 +151,12 @@ layer regua guide view=right
 palette regua=#d0402c
 line raiz c=regua w=0.8 dash=3,2 : 80,14 80,150
 text raizT 80,157 "raiz" size=6 c=regua ink=2.5 inkc=#eef0e6
-line cabecaR c=regua w=1.2 : 80,70 84,70
-ellipse cabecaP 84,70 1.6 c=regua
-text cabecaT 86,58 "+4" size=7 c=regua ink=2.5 inkc=#eef0e6
-line corpoR c=regua w=1.2 : 80,106 78,106
-ellipse corpoP 78,106 1.6 c=regua
-text corpoT 70,99 "−2" size=7 c=regua ink=2.5 inkc=#eef0e6
+line cabecaR c=regua w=1.2 : 80,70 87.2,70
+ellipse cabecaP 87.2,70 1.6 c=regua
+text cabecaT 89,58 "+7,2" size=7 c=regua ink=2.5 inkc=#eef0e6
+line corpoR c=regua w=1.2 : 80,106 79.7,106
+ellipse corpoP 79.7,106 1.6 c=regua
+text corpoT 68,99 "−0,3" size=7 c=regua ink=2.5 inkc=#eef0e6
 line peER c=regua w=1.2 : 80,138 90,138
 text peET 92,144 "+10" size=7 c=regua ink=2.5 inkc=#eef0e6
 line peDR c=regua w=1.2 : 80,142 72,142
@@ -166,11 +166,11 @@ ellipse caudaP 58,118 1.6 c=regua
 text caudaT 34,126 "−22 (side=)" size=6 c=regua ink=2.5 inkc=#eef0e6
 ```
 
-![O furão de lado, com uma linha vermelha tracejada na raiz e a distância de cada osso até ela: a cabeça +4, o corpo −2, o pé esquerdo +10, o pé direito −8 e a cauda −22, escrita com side=](img/17_regua.png)
+![O furão de lado, com uma linha vermelha tracejada na raiz e a distância de cada osso até ela: a cabeça +7,2, o corpo −0,3, o pé esquerdo +10, o pé direito −8 e a cauda −22, escrita com side=](img/17_regua.png)
 
 Repare:
 
-- A cabeça está 4 pixels na frente da raiz, e o corpo, 2 atrás. O pé esquerdo (o de perto, de lado) está 10 na frente, e o direito, 8 atrás: o furão está parado com um pé na frente do outro.
+- A cabeça está 7,2 pixels na frente da raiz, e o corpo, quase nela (0,3 atrás). O focinho, o olho e o nariz puxam o centro da cabeça para a frente; a barriga, o do corpo. O pé esquerdo (o de perto, de lado) está 10 na frente, e o direito, 8 atrás: o furão está parado com um pé na frente do outro.
 - A régua é uma camada `guide` com `view=right`: ela só aparece na vista de lado, e só com `--guides` (no editor, com **Exibir › Guias**). O `include` traz o furão inteiro de `exemplos/`.
 
 Quando a vista de lado não diz a profundidade de um osso, o Weasel procura em outro lugar, nesta ordem:
@@ -178,19 +178,19 @@ Quando a vista de lado não diz a profundidade de um osso, o Weasel procura em o
 | De onde | Quando | No `--info` |
 |---|---|---|
 | `side=x` no `bone` | sempre que estiver escrito: é o x do osso na vista de lado | `(side=)` |
-| a vista de lado | a maior peça do osso de lado (com os dois lados desenhados, a média dos dois; se eles discordam mais de 4 pixels, um aviso) | `(lado)`, `(os dois lados)` |
+| a vista de lado | o centro das peças do osso de lado (com os dois lados desenhados, a média dos dois; se eles discordam mais de 4 pixels, um aviso) | `(lado)`, `(os dois lados)` |
 | uma diagonal | o osso não tem peça de lado, mas tem numa diagonal (o ângulo dela entra na conta) | `(diagonal down_right)` |
 | o osso espelhado | o osso não aparece de lado, mas na frente há outro na mesma altura, do outro lado da raiz: o braço esquerdo usa a profundidade do direito | `(par de bracoD)` |
 | o pai | nenhum dos de cima: o osso fica na profundidade do pai, com um aviso | `(pai, corpo)` |
 
-O `side=` serve quando a maior peça engana. A cauda do furão é comprida e vai para trás: o meio dela não é o lugar do osso. Uma espada também engana, porque a lâmina vai longe da mão.
+O `side=` serve quando o centro das peças engana. A cauda do furão é comprida e vai para trás: o meio dela não é o lugar do osso. Uma espada também engana, porque a lâmina vai longe da mão.
 
 ### 2. A grossura e para onde o osso aponta
 
 Para trocar a ordem das peças e para girar em 3D, o Weasel precisa de mais duas medidas de cada osso:
 
-- **Para onde ele aponta.** Vale o `tip=` do `bone`, se estiver escrito. Sem ele, vale o osso filho (quando o osso tem um só), ou a maior peça do osso, de frente e de lado. Um osso curto demais para medir (um pé redondo) aponta para baixo.
-- **A grossura.** O Weasel corta as peças do osso de través, em cinco lugares, da junta até a ponta. De frente, o corte dá a grossura de lado a lado; de lado, a de frente para trás.
+- **Para onde ele aponta.** Vale o `tip=` do `bone`, se estiver escrito. Sem ele, vale o osso filho (quando o osso tem um só), ou o centro das peças do osso, de frente e de lado. Um osso curto demais para medir (um pé redondo) aponta para baixo.
+- **A grossura.** O Weasel corta as peças do osso de través, em cinco lugares, da junta até a ponta, e mede da primeira à última peça que o corte pega. De frente, o corte dá a grossura de lado a lado; de lado, a de frente para trás.
 
 O `--info` mostra as duas, nas linhas `aponta` e `grossura`.
 
@@ -238,7 +238,7 @@ Algumas peças nunca trocam:
 - as do mesmo osso e as sem osso ficam na ordem do desenho;
 - uma peça só troca com as da **mesma camada**. Por isso, o mais simples é desenhar cada vista numa camada só.
 
-O `--info` diz, em `ordem troca`, em quantos quadros a ordem muda e entre que peças.
+O `--info` diz, em `ordem troca`, em quantos quadros a ordem muda e quem passa na frente de quem, em que quadros (`capa na frente de bracoE (0–2, 6–7)`).
 
 ### 6. O desenho que vira: `turns`
 
@@ -495,7 +495,7 @@ Repare:
 
 - **Uma perna inclinada fica mais curta na altura.** A perna do guarda tem 77 pixels (do `pivot=` ao `tip=`). Inclinada 24°, no quadro 0, a ponta dela sobe 77 × (1 − cos 24°) ≈ 6,6 pixels: por isso as duas pernas descem 6,5 (`pernaD=0,6.5`), e o pé fica no chão.
 - **Nos quadros ímpares, a perna que está no chão desce só 1,6 pixel** (`key 1 pernaD=0,1.6`). No quadro 1, ela está no meio do caminho, inclinada 12°, e a ponta sobe 77 × (1 − cos 12°) ≈ 1,6. Sem essa `key`, ela ficaria no meio das `key` 0 e 2, descendo 3,25, e o pé afundaria 1,6 pixel no chão: o Weasel avisaria. Com ela, o `--info` mostra, em `pé no chão`, no máximo 0,2 pixel de folga.
-- **A ordem troca em todos os quadros de costas** (`walk_up`), porque a capa balança por cima dos braços. De frente, na estocada, a lança passa na frente da mão.
+- **A ordem troca em todos os quadros de costas** (`walk_up`), porque a capa balança por cima dos braços. De frente, na estocada, o braço passa na frente da lança (no `--info`, `bracoD na frente de lanca (2–6)`).
 - **O `look` repete o andar duas vezes**, com as mesmas `key` das pernas, e só a cabeça muda. O `--info` mostra o desenho escolhido em cada quadro: `vira look_down: cabeca - - - right right…` (o `-` é o desenho da própria vista).
 
 ## As diagonais e o lado esquerdo: o herói
@@ -1089,7 +1089,7 @@ bone peD pivot=92,126
 # o braço esquerdo não aparece de lado: a profundidade vem do direito (o par espelhado)
 bone bracoE parent=corpo pivot=58,100
 bone bracoD parent=corpo pivot=102,100
-# side= diz o x do osso na vista de lado, quando a maior peça dele engana; tip= diz para onde ele aponta
+# side= diz o x do osso na vista de lado, quando o centro das peças dele engana; tip= diz para onde ele aponta
 # (o x,y na frente e quantos px para a frente ou para trás): a cauda vai para trás, a espada para cima
 bone cauda parent=corpo pivot=80,118 side=58 tip=80,118,-30
 bone espada parent=bracoD pivot=104,108 side=94 tip=119,75,-21
@@ -1222,9 +1222,9 @@ node cli/weasel.js furao3d.weasel --info
 
 ```
 vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a frente desce 0.5 px por px)
-  profundidade corpo -2 (lado) · cabeca 4 (lado) · peE 10 (lado) · peD -8 (lado) · bracoE 14 (par de bracoD) · bracoD 14 (lado) · cauda -22 (side=) · espada 14 (side=)
+  profundidade corpo -0.3 (lado) · cabeca 7.2 (lado) · peE 10 (lado) · peD -8 (lado) · bracoE 14 (par de bracoD) · bracoD 14 (lado) · cauda -22 (side=) · espada 14 (side=)
   grossura     corpo 48/52 · cabeca 59.3/51.8 · peE 16.9/18.8 · peD 16.9/16.9 · bracoE 14/14 · bracoD 14.1/14 · cauda 11.8/11.8 · espada 6/6  [de lado a lado / de frente para trás]
-  aponta       corpo (a maior peça, de frente e de lado) · cabeca (a maior peça, de frente e de lado) · peE (para baixo: curto demais para medir) · peD (para baixo: curto demais para medir) · bracoE (a maior peça) · bracoD (filho espada) · cauda (tip=) · espada (tip=)
+  aponta       corpo (as peças, de frente e de lado) · cabeca (as peças, de frente e de lado) · peE (para baixo: curto demais para medir) · peD (para baixo: curto demais para medir) · bracoE (as peças) · bracoD (filho espada) · cauda (tip=) · espada (tip=)
   pé no chão   idle: 0 0 0 0 0 0 0 0
   pé no chão   walk: 0 1.5 0 0 0 1.5 0 0
   pé no chão   attack: 0 0 0 0 0 0
@@ -1235,7 +1235,7 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
 
 - `profundidade` diz a profundidade de cada osso e de onde ela veio: do lado, do `side=`, de uma diagonal, do osso espelhado (`par de`) ou do pai. Num jogo de plataforma, a linha mostra o `lat=` (ou a adivinhação).
 - `grossura` é a largura de cada osso, de lado a lado e de frente para trás, medida nas peças. Duas peças só trocam de ordem quando uma passa da outra mais do que essa grossura.
-- `aponta` diz de onde veio a direção de cada osso, a que o `pitch=` e o `yaw=` encurtam: do `tip=`, do filho, da maior peça ou, num osso curto demais, para baixo. Quando um osso encurta errado, um `tip=` resolve.
+- `aponta` diz de onde veio a direção de cada osso, a que o `pitch=` e o `yaw=` encurtam: do `tip=`, do filho, das peças (o centro delas) ou, num osso curto demais, para baixo. Quando um osso encurta errado, um `tip=` resolve.
 - `pé no chão` diz, em cada quadro, quantos pixels o pé mais baixo fica acima do chão. Um número negativo é o pé afundando: abaixo de −1, o Weasel avisa. No quadro 1 do `walk` do furão, um pé desce e o outro sobe, e os dois estão no ar: o mais baixo fica 1,5 pixel acima do chão, um pulinho.
 - `geradas` lista as animações de cada vista.
 - Com diagonais, uma linha para cada uma diz o ângulo e de onde ele veio (`34.5° da frente, medido (8 ossos, erro médio 0.4 px)`, ou `angle=`). Um erro médio grande quer dizer que as peças da diagonal não estão onde a conta espera.
@@ -1243,13 +1243,13 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
 O furão não troca a ordem nem usa `turns`. No guarda, o `--info` tem mais estas linhas:
 
 ```
-  ordem troca  walk_up: em 8 de 8 quadros (bracoEc, maoEc, capaC, dobraC1, dobraC2, bracoDc, hasteC, pontaC, maoDc)
-  ordem troca  attack_down: em 7 de 8 quadros (maoDf, hasteF, pontaF, bracoDf)
+  ordem troca  walk_up: em 8 de 8 quadros: capa na frente de bracoE (0–2, 6–7), capa na frente de bracoD (1–7), capa na frente de lanca (1–7)
+  ordem troca  attack_down: em 6 de 8 quadros: bracoD na frente de lanca (2–6), lanca na frente de bracoD (7)
   vira         look_down: cabeca - - - right right right right right right right right right right - - -
   vira         look_right: cabeca - - - up up up up up up up up up up - - -
 ```
 
-- `ordem troca` diz em quantos quadros a ordem das peças muda, e entre que peças.
+- `ordem troca` diz em quantos quadros a ordem das peças muda e, para cada par de ossos que troca, quem passa na frente de quem e em que quadros.
 - `vira` diz, para cada quadro, o desenho que um osso com `turns` usa: `-` é o da própria vista, e `right`, `up`… o de outra. No `look_down`, a cabeça usa o desenho de lado do quadro 3 ao 12.
 
 ## No editor
@@ -1327,7 +1327,7 @@ Com o furão aberto (**Arquivo › Exemplos › Furão em três vistas**):
 | `layer` | `view=`, `angle=` | a vista da camada e o ângulo da diagonal | `down`, `down_right`, `right`, `up_right`, `up`, `up_left`, `left`, `down_left`; 1 a 89 | sem vista; o ângulo medido |
 | `views` | `tilt=` | quantos graus a câmera olha de cima | 0 a 80 | 30 |
 | `bone` | `side=`, `lat=` | o x do osso de lado; o x do osso de frente (jogo de plataforma) | números, em pixels | medidos no desenho |
-| `bone` | `tip=x,y[,z]` | para onde o osso aponta | dois ou três números, em pixels | o filho, ou a maior peça |
+| `bone` | `tip=x,y[,z]` | para onde o osso aponta | dois ou três números, em pixels | o filho, ou o centro das peças |
 | `bone` | `turns` | troca as peças do osso pelas da vista para onde ele virou | palavra solta | não troca |
 | `key` | `osso.z=` | o osso anda para a frente ou para trás | qualquer número, em pixels | 0 |
 | `key` | `osso.pitch=`, `osso.yaw=` | o osso gira para a frente ou para trás; de um lado para o outro | graus, qualquer número | 0 |
@@ -1370,7 +1370,7 @@ E no editor:
 
 - Cada lado é uma camada com `view=` (`down`, `right`, `up`, as diagonais e `left`), e as peças de todas usam os mesmos ossos.
 - A frente é a vista principal: os `pivot=` e a pose são dela. Num jogo de plataforma, é o lado direito, e `lat=` diz o lado de cada osso.
-- A profundidade de cada osso vem da vista de lado (o x da maior peça, a partir da raiz); `side=` corrige.
+- A profundidade de cada osso vem da vista de lado (o x do centro das peças dele, a partir da raiz); `side=` corrige.
 - A animação é escrita uma vez, sem direção no nome, com `osso.z=`, `osso.pitch=` e `osso.yaw=`; o Weasel gera uma para cada vista, com `key` comuns.
 - `views tilt=` é a câmera: o que vai para a frente desce na tela.
 - A ordem das peças troca sozinha, dentro de cada camada; `turns` troca o desenho do osso que gira; `tip=` diz para onde ele aponta.

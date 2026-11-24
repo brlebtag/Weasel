@@ -2,7 +2,7 @@
    Num arquivo com camadas view=, cada animação sem direção no nome (walk) vira uma por vista desenhada (walk_down,
    walk_right, walk_up…). O Weasel monta um esqueleto em 3D:
    - o pivô de cada osso vem da vista principal (a frente; num jogo de plataforma, o lado direito);
-   - a profundidade vem da vista de lado (a maior peça do osso), dos dois lados, de uma diagonal, do par espelhado
+   - a profundidade vem da vista de lado (o centro das formas do osso, pesado pela área), dos dois lados, de uma diagonal, do par espelhado
      ou do pai; side= no osso corrige (lat=, num jogo de plataforma, diz o x que o osso teria de frente);
    - cada diagonal tem o ângulo medido no desenho (angle= na camada corrige).
    Em cada quadro, os ossos andam em 3D (osso=dx,dy e osso.z=) e cada vista recebe a pose 2D dela: o lugar de cada
@@ -61,14 +61,31 @@
     const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
     // traço (aberto): a grossura é a da linha
     const sw = !el.closed && typeof el.w === 'number' ? el.w : 0;
-    return { el, name: el.name, bone: el.bone || null, poly: pts, box, sw, cx: (box[0] + box[2]) / 2, cy: (box[1] + box[3]) / 2, area: Math.max(1e-3, (box[2] - box[0]) * (box[3] - box[1])) };
+    // o peso e o centro da forma, para a peça do osso (pieceOf): a área de dentro e o centro dela; num traço, o
+    // comprimento vezes a grossura e o meio dele; num ponto, quase nada
+    let wt = 0, wc = null;
+    if (!sw && pts.length > 2) {
+      let A = 0, cx = 0, cy = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length], c = a[0] * b[1] - b[0] * a[1];
+        A += c; cx += (a[0] + b[0]) * c; cy += (a[1] + b[1]) * c;
+      }
+      if (Math.abs(A) > 1e-6) { wt = Math.abs(A) / 2; wc = [cx / (3 * A), cy / (3 * A)]; }
+    }
+    if (!wc && pts.length > 1) {
+      let len = 0, cx = 0, cy = 0;
+      for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]); len += l; cx += ((a[0] + b[0]) / 2) * l; cy += ((a[1] + b[1]) / 2) * l; }
+      if (len > 1e-6) { wt = len * Math.max(1, sw); wc = [cx / len, cy / len]; }
+    }
+    if (!wc) { wt = 1e-3; wc = [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]; }
+    return { el, name: el.name, bone: el.bone || null, poly: pts, box, sw, wt, wc, cx: (box[0] + box[2]) / 2, cy: (box[1] + box[3]) / 2, area: Math.max(1e-3, (box[2] - box[0]) * (box[3] - box[1])) };
   }
-  // a meia largura da peça na reta que passa por p na direção n (null: a reta não pega a peça)
-  function widthAcross(pc, p, n) {
-    if (pc.sw) return pc.sw / 2;
+  // onde a reta que passa por p na direção n entra e sai da forma ([lo, hi], a partir de p; null: não pega a forma).
+  // Num traço, os cruzamentos com a linha, mais a meia grossura para cada lado.
+  function crossing(pc, p, n) {
     let lo = Infinity, hi = -Infinity;
-    const P = pc.poly;
-    for (let i = 0; i < P.length; i++) {
+    const P = pc.poly, open = !!pc.sw, last = open ? P.length - 1 : P.length;
+    for (let i = 0; i < last; i++) {
       const A = P[i], B = P[(i + 1) % P.length];
       const ex = B[0] - A[0], ey = B[1] - A[1], den = ex * n[1] - ey * n[0];
       if (Math.abs(den) < 1e-9) continue;
@@ -77,6 +94,26 @@
       if (u < 0 || u > 1) continue;
       if (-l < lo) lo = -l;
       if (-l > hi) hi = -l;
+    }
+    if (open) return lo <= hi ? [lo - pc.sw / 2, hi + pc.sw / 2] : null;
+    return hi > lo ? [lo, hi] : null;
+  }
+  // a meia largura da peça (todas as formas do osso) na reta que passa por p na direção n: do primeiro ao último
+  // cruzamento com qualquer forma (null: a reta não pega a peça). Uma forma só: a conta de sempre (um traço vale a
+  // grossura dele, onde quer que a reta passe)
+  function widthAcross(pc, p, n) {
+    if (pc.parts.length === 1) {
+      const one = pc.parts[0];
+      if (one.sw) return one.sw / 2;
+      const r = crossing(one, p, n);
+      return r ? (r[1] - r[0]) / 2 : null;
+    }
+    let lo = Infinity, hi = -Infinity;
+    for (const part of pc.parts) {
+      const r = crossing(part, p, n);
+      if (!r) continue;
+      if (r[0] < lo) lo = r[0];
+      if (r[1] > hi) hi = r[1];
     }
     return hi > lo ? (hi - lo) / 2 : null;
   }
@@ -100,15 +137,33 @@
     const V = { drawn, main, tilt, K, rootX, depth: new Map(), angles: {}, thick: new Map(), gens: [], ground: new Map(), swaps: [], off: new Map(), xf: new Map(), aim: new Map(), turned: [] };
     m.views = V;
 
-    // as peças de cada vista (as formas das camadas view=), na ordem do arquivo
+    // as formas de cada vista (as das camadas view=), na ordem do arquivo; as escondidas (os buracos de um cut=) e as
+    // das camadas guide não entram na medida da peça
     const pieces = new Map(drawn.map((v) => [v, []]));
-    for (const L of vl) for (const it of L.items) { const p = piece(it.el); if (p) pieces.get(L.view).push(p); }
+    for (const L of vl) for (const it of L.items) { const p = piece(it.el); if (p) { p.aside = !!(L.guide || it.el.hidden); pieces.get(L.view).push(p); } }
     const piecesOf = (v) => pieces.get(v) || [];
-    const big = new Map();
-    const biggest = (v, b) => {
+    // A peça de um osso numa vista: todas as formas dele juntas. A caixa é a união das caixas, e a grossura vai do
+    // primeiro ao último cruzamento com qualquer forma (widthAcross). O centro é a média dos centros das formas, pesada
+    // pela área de cada uma: numa peça traçada, cada mancha de cor conta pelo tamanho dela, e num desenho feito à mão o
+    // nariz de perfil ou a ponta do cabelo quase não puxam. big é a maior forma (a linha dos avisos, a ordem do desenho).
+    const agg = new Map();
+    const pieceOf = (v, b) => {
       const k = v + '|' + b;
-      if (!big.has(k)) { let best = null; for (const p of piecesOf(v)) if (p.bone === b && (!best || p.area > best.area)) best = p; big.set(k, best); }
-      return big.get(k);
+      if (agg.has(k)) return agg.get(k);
+      const mine = piecesOf(v).filter((p) => p.bone === b), shown = mine.filter((p) => !p.aside), parts = shown.length ? shown : mine;
+      let r = null;
+      if (parts.length) {
+        let big = parts[0], W = 0, cx = 0, cy = 0;
+        const box = [Infinity, Infinity, -Infinity, -Infinity];
+        for (const p of parts) {
+          if (p.area > big.area) big = p;
+          W += p.wt; cx += p.wc[0] * p.wt; cy += p.wc[1] * p.wt;
+          box[0] = Math.min(box[0], p.box[0]); box[1] = Math.min(box[1], p.box[1]); box[2] = Math.max(box[2], p.box[2]); box[3] = Math.max(box[3], p.box[3]);
+        }
+        r = { parts, big, box, cx: cx / W, cy: cy / W };
+      }
+      agg.set(k, r);
+      return r;
     };
     const sides = drawn.includes('right') || drawn.includes('left');
     const diags = drawn.filter((v) => v.includes('_'));
@@ -118,7 +173,7 @@
     const read = new Set(); // a profundidade veio de uma peça (serve para medir o ângulo das diagonais)
     if (main === 'down') {
       for (const b of bones) {
-        const R = biggest('right', b.name), Lf = biggest('left', b.name);
+        const R = pieceOf('right', b.name), Lf = pieceOf('left', b.name);
         const zr = R ? R.cx - rootX : null, zl = Lf ? rootX - Lf.cx : null;
         let Z = null, from = '';
         if (b.side !== null && b.side !== undefined) { Z = b.side - rootX; from = 'side='; }
@@ -137,9 +192,9 @@
         let X = rootX, from = 'meio';
         if (b.lat !== null && b.lat !== undefined) { X = b.lat; from = 'lat='; }
         else {
-          const body = rootBone && biggest(main, rootBone.name), mine = biggest(main, b.name), list = piecesOf(main);
+          const body = rootBone && pieceOf(main, rootBone.name), mine = pieceOf(main, b.name), list = piecesOf(main);
           if (body && mine && mine !== body) {
-            const near = list.indexOf(mine) > list.indexOf(body);
+            const near = list.indexOf(mine.big) > list.indexOf(body.big);
             X = rootX + (near ? -8 : 8);
             from = near ? 'perto: desenhado na frente do corpo' : 'longe: desenhado atrás do corpo';
           }
@@ -158,7 +213,7 @@
       // o ângulo que melhor encaixa o x da frente e a profundidade do lado no x que a diagonal mostra
       const obs = [];
       if (main === 'down') for (const b of bones) {
-        const f = biggest('down', b.name), d = biggest(v, b.name), R = biggest('right', b.name), Lf = biggest('left', b.name);
+        const f = pieceOf('down', b.name), d = pieceOf(v, b.name), R = pieceOf('right', b.name), Lf = pieceOf('left', b.name);
         if (!f || !d || !(R || Lf)) continue;
         const z = R && Lf ? (R.cx - rootX + rootX - Lf.cx) / 2 : R ? R.cx - rootX : rootX - Lf.cx;
         obs.push([f.cx - rootX, z, d.cx - rootX]);
@@ -184,11 +239,11 @@
     // ---------- a profundidade que falta: a diagonal, o par espelhado, o pai ----------
     if (main === 'down') {
       for (const b of bones) for (const v of diags) {
-        const d = biggest(v, b.name);
+        const d = pieceOf(v, b.name);
         if (!d) continue;
         const phi = ang[v] * D2R, s = Math.sin(phi), c = Math.cos(phi);
         if (Math.abs(s) < 0.2) continue;
-        const f = biggest('down', b.name), x = (f ? f.cx : b.pivot[0]) - rootX, z = (d.cx - rootX - x * c) / s;
+        const f = pieceOf('down', b.name), x = (f ? f.cx : b.pivot[0]) - rootX, z = (d.cx - rootX - x * c) / s;
         const P = P3.get(b.name), from = src.get(b.name);
         if (P[2] === null) { P[2] = z; src.set(b.name, `diagonal ${v}`); }
         else if (read.has(b.name) && !from.startsWith('diagonal') && Math.abs(z - P[2]) > 5) warn(b.line, `${b.name}: ${fmt(P[2])} de profundidade no lado, ${fmt(z)} na diagonal ${v} (vale a do lado; side= no osso decide)`);
@@ -223,8 +278,8 @@
     }
 
     // ---------- para onde cada osso aponta (o giro das peças, o bastão da ordem) ----------
-    // tip= no osso; sem ele, o osso filho, quando há um só; sem filho, a maior peça do osso na vista principal, com a
-    // profundidade da maior peça dele de lado (as duas sombras da mesma direção). tip=x,y,z: x,y desenhados na vista
+    // tip= no osso; sem ele, o osso filho, quando há um só; sem filho, o centro das peças do osso na vista principal,
+    // com a profundidade do centro das peças dele de lado (as duas sombras da mesma direção). tip=x,y,z: x,y desenhados na vista
     // principal, z o quanto a ponta vai para a frente (num jogo de plataforma, para perto da câmera)
     const sideView = drawn.includes('right') ? 'right' : drawn.includes('left') ? 'left' : null;
     const DIR = new Map();
@@ -238,12 +293,12 @@
         from = 'tip=';
       } else if (kids.length === 1) { const Q = P3.get(kids[0].name); v = [Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]]; from = `filho ${kids[0].name}`; }
       else {
-        const pc = biggest(main, b.name);
+        const pc = pieceOf(main, b.name);
         if (pc && main === 'down') {
-          const sd = sideView && biggest(sideView, b.name), dz = sd ? (sideView === 'left' ? rootX - sd.cx : sd.cx - rootX) - P[2] : 0;
+          const sd = sideView && pieceOf(sideView, b.name), dz = sd ? (sideView === 'left' ? rootX - sd.cx : sd.cx - rootX) - P[2] : 0;
           v = [pc.cx - b.pivot[0], pc.cy - b.pivot[1], dz];
-          from = sd ? 'a maior peça, de frente e de lado' : 'a maior peça';
-        } else if (pc) { v = [0, pc.cy - b.pivot[1], pc.cx - b.pivot[0]]; from = 'a maior peça'; }
+          from = sd ? 'as peças, de frente e de lado' : 'as peças';
+        } else if (pc) { v = [0, pc.cy - b.pivot[1], pc.cx - b.pivot[0]]; from = 'as peças'; }
       }
       if (!v || Math.hypot(...v) < 2) { v = [0, 10, 0]; from = 'para baixo: curto demais para medir'; }
       V.aim.set(b.name, from);
@@ -268,7 +323,7 @@
     const THK = new Map();
     for (const b of bones) {
       const P = P3.get(b.name), d = DIR.get(b.name);
-      const f = main === 'down' ? biggest('down', b.name) : null, sd = sideView ? biggest(sideView, b.name) : null;
+      const f = main === 'down' ? pieceOf('down', b.name) : null, sd = sideView ? pieceOf(sideView, b.name) : null;
       const sg = sideView === 'left' ? -1 : 1;
       const rows = [];
       for (let k = 0; k <= 4; k++) {
@@ -305,16 +360,20 @@
     // ---------- conferências do desenho ----------
     if (main === 'down' && drawn.includes('up')) {
       for (const b of bones) {
-        const pc = biggest('up', b.name), X = P3.get(b.name)[0];
+        const pc = pieceOf('up', b.name), X = P3.get(b.name)[0];
         if (!pc || Math.abs(X - rootX) < 6) continue;
         const want = 2 * rootX - X;
-        if (Math.abs(pc.cx - X) < Math.abs(pc.cx - want)) warn(pc.el.line, `de costas, a esquerda e a direita trocam de lado: ${pc.name || 'esta peça'} (osso ${b.name}) está perto de x=${fmt(X)}, mas de costas o osso fica em x=${fmt(want)} (troque o bone= pelo do osso espelhado, ou mude a peça de lado)`);
+        if (Math.abs(pc.cx - X) < Math.abs(pc.cx - want)) warn(pc.big.el.line, `de costas, a esquerda e a direita trocam de lado: ${pc.big.name || 'esta peça'} (osso ${b.name}) está perto de x=${fmt(X)}, mas de costas o osso fica em x=${fmt(want)} (troque o bone= pelo do osso espelhado, ou mude a peça de lado)`);
       }
     }
     if (main === 'down' && sideView) {
+      // a peça inteira mais alta (ou mais baixa) de lado: o alto e o baixo dela mudaram para o mesmo lado. Só um dos
+      // dois não avisa: de frente, o tronco vai até o quadril, e de lado ele pode parar no cinto
       for (const b of bones) {
-        const f = biggest('down', b.name), s = biggest(sideView, b.name);
-        if (f && s && Math.abs(f.cy - s.cy) > 8) warn(b.line, `${b.name}: a peça está em y=${fmt(f.cy)} na frente e em y=${fmt(s.cy)} de lado (as vistas estão desalinhadas? a altura tem que bater)`);
+        const f = pieceOf('down', b.name), s = pieceOf(sideView, b.name);
+        if (!f || !s) continue;
+        const dt = s.box[1] - f.box[1], db = s.box[3] - f.box[3], d = Math.min(Math.abs(dt), Math.abs(db));
+        if (d > 8 && Math.sign(dt) === Math.sign(db)) warn(b.line, `${b.name}: de lado, a peça inteira está ${fmt(d)} px mais ${dt < 0 ? 'alta' : 'baixa'} que na frente (de y=${fmt(f.box[1])} a ${fmt(f.box[3])} na frente, de y=${fmt(s.box[1])} a ${fmt(s.box[3])} de lado): as vistas estão desalinhadas? a altura tem que bater`);
       }
     }
     if (drawn.includes('right') && drawn.includes('left')) {
@@ -626,7 +685,18 @@
           order.push(pick);
           for (const j of below[pick]) need[j]--;
         }
-        out.push({ L, order });
+        // quem passou na frente de quem (para o --info): os pares de ossos que se cobrem e ficaram ao contrário do desenho
+        const pairs = new Set();
+        if (order.some((x, i) => x !== i)) {
+          const pos = new Array(N);
+          order.forEach((x, i) => { pos[x] = i; });
+          for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+            if (pos[i] < pos[j]) continue;
+            const a = list[i].el.bone, b = list[j].el.bone;
+            if (a && b && a !== b && P3.has(a) && P3.has(b) && verdict(a, b)) pairs.add(a + '>' + b);
+          }
+        }
+        out.push({ L, order, pairs });
       }
       return out;
     }
@@ -720,9 +790,16 @@
         }
         if (changed.size) {
           gen.zorder = per.map((o) => { const z = new Map(); for (const { L, order } of o) if (changed.has(L)) order.forEach((x, i) => z.set(L.items[x].el.id, i)); return z; });
-          const moved = new Set(), frames = new Set();
-          per.forEach((o, f) => { for (const { L, order } of o) order.forEach((x, i) => { if (x !== i) { moved.add(L.items[x].el.name || `linha ${L.items[x].el.line}`); frames.add(f); } }); });
-          V.swaps.push({ anim: name, frames: frames.size, total: N, pieces: [...moved] });
+          // para o --info: em que quadros a ordem muda, e cada par de ossos que troca (o primeiro passa na frente do
+          // segundo) com os quadros dele
+          const frames = new Set(), pairs = new Map();
+          per.forEach((o, f) => {
+            for (const { order, pairs: ps } of o) {
+              if (order.some((x, i) => x !== i)) frames.add(f);
+              for (const p of ps) { if (!pairs.has(p)) pairs.set(p, []); if (!pairs.get(p).includes(f)) pairs.get(p).push(f); }
+            }
+          });
+          V.swaps.push({ anim: name, frames: frames.size, total: N, pairs: [...pairs].map(([p, fs]) => { const [front, back] = p.split('>'); return { front, back, frames: fs }; }).sort((a, b) => a.frames[0] - b.frames[0] || (a.front + a.back).localeCompare(b.front + b.back)) });
         }
         names.push(name);
         out.push(gen);

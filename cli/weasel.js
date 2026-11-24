@@ -387,7 +387,18 @@ function viewsInfo(V) {
   if (V.aim) out.push(`${pad}aponta       ${[...V.aim].map(([b, f]) => `${b} (${f})`).join(' · ')}`);
   for (const [a, g] of V.ground) out.push(`${pad}pé no chão   ${a}: ${g.map(n).join(' ')}`);
   for (const g of V.gens) out.push(`${pad}geradas      ${g.base} → ${g.names.length ? g.names.join(', ') : 'nenhuma (todas escritas à mão)'}`);
-  for (const s of V.swaps) out.push(`${pad}ordem troca  ${s.anim}: em ${s.frames} de ${s.total} quadros (${s.pieces.join(', ')})`);
+  // ordem troca: em quantos quadros, e quem passa na frente de quem, com os quadros (0–3, 6)
+  const runs = (fs) => {
+    const s = [...fs].sort((a, b) => a - b), parts = [];
+    for (let i = 0; i < s.length; i++) {
+      let j = i;
+      while (j + 1 < s.length && s[j + 1] === s[j] + 1) j++;
+      parts.push(j > i ? `${s[i]}–${s[j]}` : `${s[i]}`);
+      i = j;
+    }
+    return parts.join(', ');
+  };
+  for (const s of V.swaps) out.push(`${pad}ordem troca  ${s.anim}: em ${s.frames} de ${s.total} quadros${s.pairs.length ? ': ' + s.pairs.map((p) => `${p.front} na frente de ${p.back} (${runs(p.frames)})`).join(', ') : ' (peças que não se cobrem)'}`);
   // turns: o desenho que cada quadro mostra (- = o da própria vista)
   for (const t of V.turned || []) out.push(`${pad}vira         ${t.anim}: ${t.bone} ${t.picks.map((p) => p || '-').join(' ')}`);
   return out;

@@ -1,5 +1,5 @@
 idle_down sem escala contra o 2D: iguais nos 8 quadros; avisos do 2D: 0
-idle_down com escala contra o 2D: no máximo 0.30 px (cauda, quadro 4)
+idle_down com escala contra o 2D: no máximo 0.33 px (cauda, quadro 4)
 Godot com os dois lados: idle_down idle_down_right idle_right idle_up idle_left walk_down walk_down_right walk_right walk_up walk_left · espelhadas: nenhuma
 Godot só com o direito: espelhadas idle_left walk_left attack_left
 a mão (walk_down, walk_right, walk_up): 80,84 80,78 80,72 80,78 74,80 66,78 58,76 66,78 40,80 40,80 40,80 40,80
@@ -11,4 +11,4 @@ avisos: —
 attack, quadro 2, a lâmina: down 103,114,121,152 · right 97,108,130,122 · up 39,91,57,110
 attack, a menor escala x da espada nas keys: down 0.93 · right 1.00 · up 0.93
 o comprimento da espada a cada 1/4 de quadro (attack e a transição para o idle): no mínimo 0.93
-skew no Godot contra a matriz do Weasel (vistas_giro, 209 keys inclinadas): erro máximo menos de 1e-9
+skew no Godot contra a matriz do Weasel (vistas_giro, 213 keys inclinadas): erro máximo menos de 1e-9

@@ -7,8 +7,8 @@ formas   39
 ossos    corpo, cabeca←corpo, pernaD, pernaE, bracoD←corpo, espada←bracoD, bracoE←corpo, escudo←bracoE
 vistas   right, left (principal: right), câmera tilt=0 (o que vai para a frente desce 0 px por px)
   profundidade corpo 0 (meio) · cabeca -8 (perto: desenhado na frente do corpo) · pernaD -7 (lat=) · pernaE 7 (lat=) · bracoD -14 (lat=) · espada -14 (lat=) · bracoE 14 (lat=) · escudo 14 (lat=)  [de lado a lado, pelo lat=]
-  grossura     corpo 23/23 · cabeca 39.9/39.9 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · espada 3.3/3.3 · bracoE 12/12 · escudo 21.4/21.4  [de lado a lado / de frente para trás]
-  aponta       corpo (a maior peça) · cabeca (a maior peça) · pernaD (a maior peça) · pernaE (a maior peça) · bracoD (filho espada) · espada (a maior peça) · bracoE (filho escudo) · escudo (a maior peça)
+  grossura     corpo 26/26 · cabeca 55.3/55.3 · pernaD 10/10 · pernaE 10/10 · bracoD 11.5/11.5 · espada 3.3/3.3 · bracoE 12/12 · escudo 21.4/21.4  [de lado a lado / de frente para trás]
+  aponta       corpo (as peças) · cabeca (as peças) · pernaD (as peças) · pernaE (as peças) · bracoD (filho espada) · espada (as peças) · bracoE (filho escudo) · escudo (as peças)
   pé no chão   idle: 0 0 0 0 0 0 0 0
   pé no chão   walk: 0 0 0 0 0 0 0 0
   pé no chão   jump: 0 0 20 27.5 30 20 10 0
