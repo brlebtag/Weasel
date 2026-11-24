@@ -103,8 +103,8 @@
   document.addEventListener('keydown', (e) => { if (fly && e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeFly(); } }, true);
   window.addEventListener('blur', closeFly);
   function syncTools() {
-    // no filme e na vista Camadas em 3D, só as ferramentas que valem lá
-    const film = A.isFilm() || st.view3d;
+    // no filme, na vista Camadas em 3D e na Comparar vistas, só as ferramentas que valem lá
+    const film = A.isFilm() || st.view3d || st.compare;
     for (const s of slots) {
       const t = s.tools.find((x) => x.id === st.tool);
       if (t) s.cur = t;
@@ -266,6 +266,7 @@
       '-',
       { label: 'Camadas em 3D', visible: () => drawing() && !viewsOn(), on: () => st.view3d, run: () => A.set3d(!st.view3d) },
       { label: 'Vistas em 3D', visible: viewsOn, on: () => st.view3d, run: () => A.set3d(!st.view3d) },
+      { label: 'Comparar vistas', visible: viewsOn, on: () => st.compare, run: () => A.setCompare(!st.compare) },
       { label: 'Palco em 3D', visible: () => A.isFilm(), on: () => st.view3d, run: () => A.set3d(!st.view3d) },
       '-',
       Object.assign({ label: 'Réguas', key: 'Ctrl+R', visible: drawing }, chk('tRulers')),
@@ -328,13 +329,13 @@
     const t = e.target, mod = e.ctrlKey || e.metaKey;
     if (t && t.closest && t.closest('textarea, input, select, dialog')) return;
     // a Curvatura é Shift+~: no teclado brasileiro, o ~ é uma tecla morta (Dead, na posição da aspa do americano)
-    if (!mod && !e.altKey && e.key === 'Dead' && e.code === 'Quote' && !A.isFilm() && !st.view3d) { e.preventDefault(); A.setTool('curve'); return; }
+    if (!mod && !e.altKey && e.key === 'Dead' && e.code === 'Quote' && !A.isFilm() && !st.view3d && !st.compare) { e.preventDefault(); A.setTool('curve'); return; }
     if (mod || e.altKey || e.key.length !== 1) return;
     const k = e.key.toLowerCase();
     const tool = TOOLS.find((x) => x !== '-' && x.key === k && !!x.shift === e.shiftKey);
     if (tool) {
       e.preventDefault();
-      if ((A.isFilm() || st.view3d) && !FILM_TOOLS.includes(tool.id)) return;
+      if ((A.isFilm() || st.view3d || st.compare) && !FILM_TOOLS.includes(tool.id)) return;
       A.setTool(tool.id);
       return;
     }

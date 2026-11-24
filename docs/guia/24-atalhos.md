@@ -247,6 +247,20 @@ Para entrar e sair: Exibir › Camadas em 3D (num arquivo com view=, Vistas em 3
 | `Ctrl+1` ou `Ctrl+=` ou `Ctrl+-` | tamanho real, aproxima, afasta | na vista 3D |
 | `setas` ou `Ctrl+3` ou `Ctrl+D` ou `Ctrl+Z` ou `Delete` ou `Ctrl+A` ou `Ctrl+C` ou `Ctrl+V` ou `Ctrl+G` ou `Ctrl+2` | fazem o mesmo que no desenho | na vista 3D |
 
+## Comparar vistas
+
+Para entrar e sair: Exibir › Comparar vistas, num arquivo com camadas view= (três vistas).
+
+| Tecla | O que faz | Onde vale |
+|---|---|---|
+| `arrastar a bolinha` | grava a junta desenhada: side=x,y de lado, back=x,y de costas (Shift: de 1 em 1) | na Comparar vistas, parada |
+| `duplo clique na bolinha` | na vazia, grava a pista; na cheia, apaga a junta desenhada | na Comparar vistas, parada |
+| `clique numa peça` | escolhe todas as formas daquele osso naquela vista; com Shift, soma | na Comparar vistas |
+| `clique numa bolinha` ou `clique num nome da lista` | escolhe o osso e leva o código à linha dele | na Comparar vistas |
+| `setas` ou `Shift+setas` | movem as formas escolhidas 1 px / 10 px | na Comparar vistas |
+| `Espaço+arrastar` ou `botão do meio+arrastar` ou `roda do mouse` | move a folha (a Mão, H, também) / aproxima e afasta | na Comparar vistas |
+| `Ctrl+0` ou `Ctrl+1` ou `Ctrl+=` ou `Ctrl+-` | ajusta à tela, tamanho real, aproxima, afasta | na Comparar vistas |
+
 ## Menus e painéis
 
 | Tecla | O que faz | Onde vale |

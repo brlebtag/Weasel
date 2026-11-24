@@ -59,6 +59,10 @@ Saída:
                           cantos vivos ganham !. Grava arquivo_simple.weasel (ou o -o .weasel; com
                           -e ou stdin, na saída padrão). Formas usadas na troca de forma (shape=, mouth)
                           ficam como estão, a não ser com --force
+      --compare[=vistas]  png/jpg: as vistas paradas lado a lado, na mesma escala, com uma linha na
+                          altura de cada junta da principal (e no alto e no chão) e o quanto cada
+                          junta sai dela (três vistas); =down,right escolhe as vistas (a principal
+                          entra sempre)
       --contact           png/jpg: folha de conferência, para achar um quadro: os quadros em grade,
                           numerados, uma linha por animação (todas, ou -a "idle walk"), com os
                           eventos, os pés no chão (feet=) e o escorregão em vermelho; -s muda o
@@ -237,6 +241,7 @@ function parseArgs(argv) {
       case '--refs': o.refs = true; break;
       case '--trajectory': o.trajectory = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '--contact': o.contact = inline || true; break;
+      case '--compare': o.compare = inline !== undefined ? inline.split(',').filter(Boolean) : true; break;
       case '--simplify': o.simplify = num('--simplify', val(), 0.01, 1000); break;
       case '--colors': o.colors = Math.round(num('--colors', val(), 2, 256)); break;
       case '--tol': o.tol = num('--tol', val(), 0.05, 20); break;
@@ -414,6 +419,13 @@ function viewsInfo(V) {
     const say = (j) => [Math.abs(j.dy) >= 0.05 && `${n(Math.abs(j.dy))} ${j.dy < 0 ? 'acima' : 'abaixo'}`, Math.abs(j.dx) >= 0.05 && `${n(Math.abs(j.dx))} à ${j.dx < 0 ? 'esquerda' : 'direita'}`].filter(Boolean).join(' e ');
     out.push(`${pad}junta ${NAMES[v].padEnd(9)} ${js.map((j) => `${j.bone} ${say(j)}`).join(' · ')}  [desenhada, contra a da frente${v === 'up' ? ' espelhada' : ''}]`);
   }
+  // sem a junta desenhada: onde ela cairia pelas peças, quando passa de 4 px (uma pista; confira com --compare)
+  for (const v of V.drawn) {
+    if (v === V.main || !V.compare) continue;
+    const off = (r) => Math.round(Math.max(Math.abs(r.dy), Math.abs(r.dx)) * 10) / 10, sg = (d) => `${n(d) !== '0' && d > 0 ? '+' : ''}${n(d)}`;
+    const es = V.compare(v).filter((r) => r.est && off(r) > 4).sort((a, b) => off(b) - off(a));
+    if (es.length) out.push(`${pad}pelas peças  ${v}: ${es.map((r) => `${r.bone} ${sg(r.dy)}${Math.abs(r.dx) >= 0.5 ? ` (x ${sg(r.dx)})` : ''}`).join(' · ')}  [sem side=x,y${v === 'up' ? ' e back=x,y' : ''}: onde a junta cairia pelas peças, contra a da ${V.main}; confira com --compare]`);
+  }
   for (const [a, g] of V.ground) out.push(`${pad}pé no chão   ${a}: ${g.map(n).join(' ')}`);
   for (const g of V.gens) out.push(`${pad}geradas      ${g.base} → ${g.names.length ? g.names.join(', ') : 'nenhuma (todas escritas à mão)'}`);
   // ordem troca: em quantos quadros, e quem passa na frente de quem, com os quadros (0–3, 6)
@@ -548,6 +560,22 @@ async function exportModel(model, o, format, base, sfx) {
         }
       }
     }
+    return;
+  }
+
+  // --compare: as vistas paradas lado a lado, com as linhas das juntas da principal (três vistas)
+  if (o.compare) {
+    if (format !== 'png' && format !== 'jpg') usage('--compare sai em png ou jpg');
+    if (o.contact || o.trajectory) usage('use --compare sozinho (sem --contact nem --trajectory)');
+    if (o.anim) usage('--compare compara as vistas paradas, sem -a');
+    const VW = model.views;
+    if (!VW || !VW.p3) usage('--compare compara as vistas: o desenho não tem camadas com view=');
+    const want = o.compare === true ? VW.drawn : o.compare;
+    for (const v of want) if (!VW.drawn.includes(v)) usage(`a vista "${v}" não está desenhada (tem: ${VW.drawn.join(', ')})`);
+    const views = [VW.main, ...new Set(want.filter((v) => v !== VW.main))];
+    if (views.length < 2) usage(`--compare precisa de uma vista além da principal (${VW.main}); tem: ${VW.drawn.join(', ')}`);
+    const cv = X.compareCanvas(model, views, { scale: o.scaleSet ? o.scale : null });
+    save(named(o.out || `${base}_comparar.${format}`), format === 'jpg' ? cv.toBuffer('image/jpeg', o.quality) : cv.toBuffer('image/png'), `${cv.width}×${cv.height}, comparar vistas: ${views.join(', ')}`, o.quiet);
     return;
   }
 

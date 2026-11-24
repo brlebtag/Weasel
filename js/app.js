@@ -74,6 +74,7 @@
     symIso: [], // os símbolos abertos (duplo clique num use, etapa 6b), de fora para dentro: { name, back, had, was }
     clip: null, // o que o Ctrl+C copiou ({ text, n }), para o Ctrl+F e o Ctrl+B (js/ui-select.js)
     view3d: false, // a vista Camadas em 3D (js/ui-3d.js) no lugar do desenho
+    compare: false, // a tela Comparar vistas (js/ui-compare.js) no lugar do desenho, num arquivo com camadas view=
   };
   // prévia do def: ligada/desligada por def (sem entrada, ligada só sem use), os valores do painel por def,
   // o def mostrado agora e a vista de antes da prévia (volta quando ela some)
@@ -2408,8 +2409,8 @@
     if (testOn()) syncTest();
     // quem acompanha o desenho (o painel Propriedades, a vista 3D) fica sabendo
     emit('draw');
-    // com a vista Camadas em 3D aberta, ela pinta (o desenho de baixo fica parado, escondido)
-    if (st.view3d) return;
+    // com a vista Camadas em 3D (ou a Comparar vistas) aberta, ela pinta (o desenho de baixo fica parado, escondido)
+    if (st.view3d || st.compare) return;
     const cv = $('view'), ctx = cv.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const cw = Math.max(1, Math.round(cv.clientWidth * dpr)), ch = Math.max(1, Math.round(cv.clientHeight * dpr));
@@ -4553,7 +4554,7 @@
   const filmHooks = [];
   let ctxMenu = null;
   function setTool(id) {
-    if (!TOOLS.includes(id) || ((isFilm() || st.view3d) && !FILM_TOOLS.includes(id))) return;
+    if (!TOOLS.includes(id) || ((isFilm() || st.view3d || st.compare) && !FILM_TOOLS.includes(id))) return;
     if (id === 'pin' && pvModel()) { hint('O Prender não funciona dentro da prévia do def: tire o cursor de dentro do def.', 3200); return; }
     const wasTest = st.tool === 'bonetest';
     st.tool = id;
@@ -4575,10 +4576,11 @@
   }
   // a vista Camadas em 3D (js/ui-3d.js): toma o lugar do desenho (no filme, é a vista do palco). Nela valem as
   // ferramentas do filme; o zoom e o ajustar da barra de baixo e do teclado vão para ela (v3, que ela registra).
-  let v3 = null;
+  let v3 = null, vc = null;
   function set3d(on) {
     on = !!on && !!st.model;
     if (on === st.view3d) return;
+    if (on && st.compare) setCompare(false);
     st.view3d = on;
     stage.classList.toggle('v3-on', on);
     if (on && !FILM_TOOLS.includes(st.tool)) setTool('select');
@@ -4586,8 +4588,23 @@
     emit('tool');
     draw();
   }
-  const zoomBy = (f) => { if (st.view3d && v3) v3.zoom(f); else zoomAt(view.clientWidth / 2, view.clientHeight / 2, f); };
-  const fitView = () => { if (st.view3d && v3) v3.fit(); else { st.view.auto = true; draw(); } };
+  // a tela Comparar vistas (js/ui-compare.js): também toma o lugar do desenho, com as mesmas ferramentas; uma ou outra.
+  // Os que acompanham a vista 3D (as ferramentas, as caixinhas de cor) ouvem o 'view3d' também.
+  function setCompare(on) {
+    const m = st.model;
+    on = !!on && !!m && !isFilm() && !pvModel() && !!(m.views && m.views.p3);
+    if (on === st.compare) return;
+    if (on && st.view3d) set3d(false);
+    st.compare = on;
+    stage.classList.toggle('cmp-on', on);
+    if (on && !FILM_TOOLS.includes(st.tool)) setTool('select');
+    emit('compare');
+    emit('view3d');
+    emit('tool');
+    draw();
+  }
+  const zoomBy = (f) => { if (st.compare && vc) vc.zoom(f); else if (st.view3d && v3) v3.zoom(f); else zoomAt(view.clientWidth / 2, view.clientHeight / 2, f); };
+  const fitView = () => { if (st.compare && vc) vc.fit(); else if (st.view3d && v3) v3.fit(); else { st.view.auto = true; draw(); } };
   // a vista: só o código, os dois lado a lado ou só o desenho (o código continua lá, escondido)
   function setLayout(v, keep) {
     if (!['code', 'split', 'design'].includes(v)) v = 'split';
@@ -4720,6 +4737,7 @@
   }
   // 100%: um pixel do desenho, um pixel da tela, com o meio da vista parado
   function zoomActual() {
+    if (st.compare && vc) { vc.actual(); return; }
     if (st.view3d && v3) { v3.actual(); return; }
     const f = 1 / st.view.z;
     if (Math.abs(f - 1) > 1e-9) zoomAt(view.clientWidth / 2, view.clientHeight / 2, f);
@@ -6523,6 +6541,10 @@
     // para a vista Camadas em 3D (js/ui-3d.js)
     set3d,
     register3d: (o) => { v3 = o; },
+    // a tela Comparar vistas (js/ui-compare.js)
+    setCompare,
+    registerCompare: (o) => { vc = o; },
+    boneLine: (b) => boneLine(b),
     model: () => (isFilm() ? null : pvModel() || st.model),
     pose: () => currentPose(),
     paper: () => viewRect(),

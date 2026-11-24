@@ -879,6 +879,8 @@
     for (const L of vl) {
       const list = m.anims.filter((an) => (an.view || dirOf(an.name)) === L.view && !an.blendOf).map((an) => an.name);
       if (L.view === main) list.push('pose');
+      // a pose parada da vista (V.restPose, a Comparar vistas): um nome que nenhuma animação pode ter
+      list.push(`(${L.view})`);
       L.only = list;
     }
     // as formas das camadas sem view= estão desenhadas na vista principal: presas a um osso, vão para o lugar dele
@@ -888,6 +890,36 @@
     // o esqueleto em 3D parado (P3), a direção de cada osso (DIR), a grossura medida, o ângulo de cada vista, o chão e
     // o mundo de cada osso num quadro de uma animação base (gen.baseAnim)
     V.p3 = P3;
+    // ---------- para a Comparar vistas (o editor e o --compare) ----------
+    // a caixa das peças de um osso numa vista ([x0, y0, x1, y1], ou null)
+    V.boxOf = (v, b) => { const r = pieceOf(v, b); return r ? r.box : null; };
+    // a pose parada de uma vista: os ossos como desenhados, as camadas dela à mostra
+    V.restPose = (v) => {
+      const P = W.scene.makePose(m, null, 0);
+      if (v !== main) P.anim = { name: `(${v})`, view: v, voff: V.off.get(v), vxf: V.xf.get(v), frames: 1, fps: 1, loop: true, tracks: new Map(), ptracks: new Map(), events: [] };
+      return P;
+    };
+    // cada osso numa vista, parado, contra a vista principal: ref, a junta na principal (o pivot=); at, a junta que o
+    // Weasel usa na vista (drawn: a desenhada, side=x,y ou back=x,y; sem ela, a da principal levada para a vista);
+    // est, sem a desenhada, onde a junta cairia pelas peças (o lugar do pivô na caixa da principal, levado para a caixa
+    // da vista; de costas, com o x espelhado). dy (e dx, de costas): o quanto a junta (ou a estimada) sai da principal.
+    V.compare = (v) => {
+      const xy = REST_XY.get(v), dd = DRAWN.get(v) || new Map(), out = [];
+      if (!xy) return out;
+      for (const b of bones) {
+        const ref = b.pivot, at = xy.get(b.name), drawnJ = dd.has(b.name), f = pieceOf(main, b.name), s = v === main ? null : pieceOf(v, b.name);
+        let est = null;
+        if (!drawnJ && f && s && f.box[3] - f.box[1] > 2) {
+          const ty = (ref[1] - f.box[1]) / (f.box[3] - f.box[1]), y = s.box[1] + ty * (s.box[3] - s.box[1]);
+          let x = at[0];
+          if (v === 'up' && f.box[2] - f.box[0] > 2) { const tx = (ref[0] - f.box[0]) / (f.box[2] - f.box[0]); x = s.box[2] - tx * (s.box[2] - s.box[0]); }
+          est = [x, y];
+        }
+        const p = drawnJ ? at : est;
+        out.push({ bone: b.name, ref, at, drawn: drawnJ, est, dy: p ? p[1] - ref[1] : 0, dx: p && v === 'up' ? p[0] - (2 * rootX - ref[0]) : 0, box: s ? s.box : null, refBox: f ? f.box : null });
+      }
+      return out;
+    };
     V.dir = DIR;
     V.thickAt = thickAt;
     V.ang = ang;

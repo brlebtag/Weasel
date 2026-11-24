@@ -465,6 +465,28 @@ salvo folha.png  2086×1522, folha de conferência: 76 quadros de 6 animações 
 - Num filme, a folha tem uma linha por plano ([abaixo](#a-folha-de-conferência-do-filme)).
 - O que cada marca quer dizer: [capítulo 15](15-jogo-personagem.md#a-folha-de-conferência---contact).
 
+### Comparar as vistas: `--compare`
+
+Num personagem em [três vistas](17-jogo-tres-vistas.md), as vistas paradas lado a lado, na mesma escala, com uma linha tracejada na altura de cada junta da vista principal, e mais duas: o alto do desenho e o chão. Em cada vista, uma bolinha diz o quanto a junta sai da linha, e um traço, o quanto o alto e o chão dela saem.
+
+```bash
+node cli/weasel.js exemplos/heroi3d.weasel --compare=right -o comparar.png
+```
+
+```
+salvo comparar.png  1112×568, comparar vistas: down, right · 121 KB
+```
+
+| Opção | O que faz | Valores | Padrão |
+|---|---|---|---|
+| `--compare` | a folha de comparar vistas, em PNG ou JPG | `--compare=right,up`: só essas vistas, separadas por vírgula (a principal entra sempre) | todas as vistas desenhadas |
+| `-s`, `--scale` | o tamanho dos painéis | de 0.05 a 16 | automático: uns 420 pixels de altura |
+
+- Com duas vistas, um terceiro painel mostra a segunda por cima da primeira, meio transparente (as costas, espelhadas).
+- Uma vista que não está desenhada dá erro: `a vista "frente" não está desenhada (tem: down, right, up)`. Sem nenhuma vista além da principal, também.
+- Num desenho sem camadas com `view=`, a resposta é `--compare compara as vistas: o desenho não tem camadas com view=`.
+- Como ler a folha: [capítulo 17](17-jogo-tres-vistas.md#comparar-as-vistas---compare).
+
 ## Vídeo de um desenho
 
 Uma animação em vídeo, para mandar por mensagem ou pôr num editor de vídeo. O vídeo precisa do **ffmpeg**, um programa à parte. No Windows, instale com `winget install ffmpeg` no terminal; nos outros sistemas, veja em [ffmpeg.org](https://ffmpeg.org). Sem ele, a resposta é `weasel: não achei o ffmpeg. Instale (https://ffmpeg.org; no Windows: winget install ffmpeg), passe --ffmpeg <caminho> ou exporte um gif ou webp`.
@@ -769,6 +791,7 @@ Algumas opções só fazem sentido com um formato ou com um tipo de arquivo. For
 | `--trajectory` | PNG e JPG de um desenho com pontos | erro: `--trajectory sai em png ou jpg` |
 | `--joints` | PNG, JPG, WebP, GIF e vídeo de um desenho, e o `--contact` | erro: `--joints sai em png, jpg, webp, gif ou vídeo`; num filme: `--joints vale para desenhos (num filme, confira o ator no arquivo dele)` |
 | `--contact` | PNG e JPG de um desenho com animações, ou de um filme | erro: `--contact sai em png ou jpg`; junto com `--trajectory`: `use --contact ou --trajectory, não os dois`; com `--frames`: `use --contact ou --frames, não os dois` |
+| `--compare` | PNG e JPG de um desenho com camadas `view=`, sem `-a` | erro: `--compare sai em png ou jpg`; junto com `--contact` ou `--trajectory`: `use --compare sozinho (sem --contact nem --trajectory)`; com `-a`: `--compare compara as vistas paradas, sem -a` |
 | `--contact=N` | filmes | num desenho, erro: `--contact=N (o intervalo) vale para filmes; num desenho, a folha tem todos os quadros` |
 | `--sticker` | WebP de um desenho | erro: `--sticker vale para webp` |
 | `--min-length` | vídeo de um desenho | erro: `--min-length vale para o vídeo (mp4, mov, webm, mkv)`; num filme: `--min-length vale para o vídeo de um desenho; no filme, use --from e --to` |

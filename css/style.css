@@ -878,6 +878,33 @@ body[data-layout=code] .statusbar .zoom, body[data-layout=code] #coords { displa
 .v3-cam text.v3-bname { fill: var(--text); font: 11px var(--mono); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
 .v3-cam text.v3-vname { fill: var(--dim); font: 11px var(--mono); }
 .v3-cam { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+/* a tela Comparar vistas (js/ui-compare.js): por cima do desenho, como a vista 3D; os painéis num canvas e a lista embaixo */
+.cmp { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none; }
+.cmp[hidden] { display: none; }
+.stage.cmp-on > #view { visibility: hidden; }
+.cmp-space { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; cursor: default; }
+.cmp-cv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cmp-space.on-dot { cursor: move; }
+.cmp-space[data-tool=hand], .stage.space .cmp-space { cursor: grab; }
+.cmp-space[data-tool=zoom] { cursor: zoom-in; }
+.cmp-space.grabbing, .stage.space .cmp-space.grabbing { cursor: grabbing; }
+.cmp-bar select { padding: 1px 4px; }
+.cmp-bar .cmp-alpha { width: 70px; }
+.stage.lp-open .cmp-bar { left: calc(50% + 133px); max-width: calc(100% - 282px); }
+.cmp-info { position: absolute; left: 8px; bottom: 6px; z-index: 3; max-width: calc(100% - 16px); padding: 3px 8px; font: 11px var(--mono); color: var(--text); background: var(--glass); border: 1px solid var(--line); border-radius: 4px; pointer-events: none; }
+.cmp-info[hidden] { display: none; }
+.stage.ruled .cmp-info { left: 28px; }
+.stage.lp-open .cmp-info { left: 266px; max-width: calc(100% - 274px); }
+.stage.ruled.lp-open .cmp-info { left: 286px; }
+.cmp-list { flex: none; max-height: 32%; overflow: auto; padding: 5px 10px 7px; font: 12px var(--mono); line-height: 1.75; color: var(--text); background: var(--panel); border-top: 1px solid var(--line); user-select: text; -webkit-user-select: text; }
+.stage.lp-open .cmp-list { padding-left: 276px; }
+.cmp-leg { color: var(--dim); font-size: 11px; line-height: 1.45; margin-bottom: 3px; }
+.cmp-list button.cmp-it, .cmp-list button.cmp-vw { padding: 0 3px; border: 1px solid transparent; border-radius: 4px; background: none; font: inherit; }
+.cmp-list button.cmp-it:hover, .cmp-list button.cmp-vw:hover { background: var(--hover); border-color: var(--line); }
+.cmp-list button.cmp-it.on { border-color: var(--accent); }
+.cmp-list button.cmp-vw, .cmp-vn { font-weight: 700; color: var(--text); }
+.cmp-row:not(.cur) button.cmp-vw { font-weight: 400; color: var(--dim); }
+.cmp-edge { padding: 0 3px; }
 .v3-cam .v3-matte { fill: rgba(8, 11, 15, .62); fill-rule: evenodd; stroke: none; }
 .v3-cam .v3-ray { fill: none; stroke: var(--cam); stroke-width: 1; stroke-opacity: .75; }
 .v3-cam .v3-act { fill: none; stroke: var(--cam); stroke-width: 2; }

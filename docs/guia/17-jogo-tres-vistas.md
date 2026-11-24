@@ -328,6 +328,7 @@ Três desenhos que batem certinho são difíceis de fazer. Num desenho feito à 
 No bicho abaixo, de lado e de costas, a cabeça foi desenhada 10 pixels mais baixa, encostada no corpo: o pescoço ficou em y=82, e não em y=72. O `side=64,82` e o `back=60,82` dizem onde o pescoço está nessas vistas:
 
 <!-- gerar: img/17_junta.png --contact -a yes_right,yes_up --joints -s 2.5 -->
+<!-- gerar: img/17_comparar.png --compare -s 2.4 -->
 ```weasel
 canvas 120 120 bg=none
 palette ink=#2b2a33 pelo=#e0a050 claro=#f6e2c0 escuro=#b07a3a
@@ -402,6 +403,33 @@ Repare:
 - A junta desenhada vale de lado e de costas, quando a vista principal é a frente. Nas diagonais, a junta continua a da frente. Num jogo de plataforma, a principal é o lado, e a junta dele já é o `pivot=`: o y do `side=` e o `back=` só avisam.
 
 **Experimente:** apague o `,82` do `side=64,82` e gere a folha com `--joints` (`node cli/weasel.js bicho.weasel --contact --joints`). O Weasel avisa, a bolinha da cabeça de lado fica vermelha, no meio da cabeça, e a cabeça gira em volta dela. Ponha o `,82` de volta e abra o arquivo no editor: escolha `yes` no player, aperte **→** e use o **Prender** (**Shift+P**). A bolinha da cabeça fica no pescoço desenhado. Arrastar a bolinha muda só o x do `side=`; o y fica.
+
+### Comparar as vistas: `--compare`
+
+Para achar as juntas que não batem, compare as vistas paradas lado a lado. Com o bicho acima:
+
+```bash
+node cli/weasel.js bicho.weasel --compare -o comparar.png
+```
+
+![A folha de comparar vistas do bicho: de frente, de lado e de costas, parados, lado a lado; uma linha tracejada cruza os três na altura de cada junta da frente (cabeca, bracoE e bracoD, corpo, peE e peD) e mais duas, no alto da cabeça e no chão; de lado e de costas, a bolinha do pescoço fica 10 pixels abaixo da linha da cabeça, vermelha, com +10, e o alto da cabeça também, com um traço vermelho; embaixo, a lista com os números](img/17_comparar.png)
+
+- **Cada vista parada, na mesma escala.** Uma linha tracejada cruza todas na altura de cada junta da vista principal, com o nome do osso na margem.
+- **O alto e o chão.** Mais duas linhas, no alto das peças da principal e no chão (o fim delas). Em cada outra vista, um traço no alto e no chão dela, com o número. Uma cabeça desenhada mais curta de lado aparece no alto, mesmo sem ser junta.
+- **Na principal,** uma bolinha cinza em cada `pivot=`.
+- **Nas outras, a bolinha da junta.** Cheia, é a junta desenhada (`side=x,y` ou `back=x,y`). Vazia, é onde a junta cairia pelas peças, num osso sem ela.
+- **O número** diz o quanto a junta sai da linha, em pixels do arquivo: verde até 4, amarelo até 8 e vermelho acima (o mesmo limite do aviso de altura). De costas, conta também o x, contra o da frente espelhado.
+- **A bolinha vazia é uma pista, não uma medida.** O Weasel põe a junta no mesmo lugar dentro das peças do osso que ela tem na frente. Isso acerta quando a peça tem a mesma altura nas duas vistas. Quando ela muda de forma de lado (o cabelo que cresce para trás, o braço que some atrás do corpo), a pista aponta para o lado certo, mas erra o tamanho: num soldado traçado, ela achou o pescoço 14 pixels acima, e o pescoço desenhado estava 24,5 acima. Ela diz onde olhar; o número do `side=x,y` vem do desenho.
+- **Com duas vistas** (`--compare=right`), um terceiro painel põe a segunda por cima da primeira, meio transparente (as costas, espelhadas).
+- **Embaixo,** os números de cada vista, do maior para o menor.
+- **No editor,** a mesma folha fica em **Exibir › Comparar vistas**, onde dá para arrastar a junta e mover a peça ([veja abaixo](#comparar-vistas)).
+
+Sem o `,82` e o `back=`, a bolinha do pescoço fica vazia, com `≈+10`: as peças dizem que o pescoço foi desenhado 10 pixels abaixo. O `--info` mostra as mesmas pistas, quando passam de 4 pixels, na linha `pelas peças`:
+
+```
+  pelas peças  right: cabeca +10  [sem side=x,y: onde a junta cairia pelas peças, contra a da down; confira com --compare]
+  pelas peças  up: cabeca +10  [sem side=x,y e back=x,y: onde a junta cairia pelas peças, contra a da down; confira com --compare]
+```
 
 ## O guarda: a lança, a capa e a cabeça que vira
 
@@ -1322,6 +1350,7 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
 - `pé no chão` diz, em cada quadro, quantos pixels o pé mais baixo fica acima do chão. Um número negativo é o pé afundando: abaixo de −1, o Weasel avisa. No quadro 1 do `walk` do furão, um pé desce e o outro sobe, e os dois estão no ar: o mais baixo fica 1,5 pixel acima do chão, um pulinho.
 - `geradas` lista as animações de cada vista.
 - `junta de lado` e `junta de costas` aparecem com `side=x,y` e `back=x,y`: o quanto cada junta desenhada fica longe da que o Weasel tiraria da frente ([acima](#quando-as-vistas-não-batem-sidexy-e-backxy)).
+- `pelas peças` aparece quando um osso sem a junta desenhada parece ter a junta em outro lugar naquela vista, a mais de 4 pixels: é uma pista, para conferir com o [`--compare`](#comparar-as-vistas---compare).
 - Com diagonais, uma linha para cada uma diz o ângulo e de onde ele veio (`34.5° da frente, medido (8 ossos, erro médio 0.4 px)`, ou `angle=`). Um erro médio grande quer dizer que as peças da diagonal não estão onde a conta espera.
 
 O furão não troca a ordem nem usa `turns`. No guarda, o `--info` tem mais estas linhas:
@@ -1369,6 +1398,30 @@ Com uma animação gerada no player (`walk_right`), a linha do tempo mostra as `
 
 **De cima** é a melhor vista para conferir a profundidade. Nela, a frente do furão fica para baixo na imagem: a cauda vai para cima (para trás), e a espada vem para baixo no golpe (para a frente). As placas aparecem de lado, como linhas; a placa de frente fica no alto, atrás dele.
 
+### Comparar vistas
+
+**Exibir › Comparar vistas** é a folha da [`--compare`](#comparar-as-vistas---compare) dentro do editor, para mexer. No lugar do desenho, ficam a vista principal e uma outra lado a lado, na mesma escala. O menu **Comparar com** da barra de cima escolhe a outra. Com **Sobrepor**, um terceiro painel põe a outra por cima da principal, meio transparente (as costas, espelhadas), e o controle ao lado diz o quanto ela aparece.
+
+![A tela Comparar vistas com o bicho da seção acima: de frente, de lado e o lado sobre a frente; as linhas tracejadas do alto, da cabeca, dos braços, dos pés e do chão cruzam os três; de lado, a bolinha do pescoço fica 10 pixels abaixo da linha da cabeca, cheia e vermelha, com +10, e o alto da cabeça tem um traço vermelho com +10; embaixo, a caixa diz "cabeca, de lado: a junta desenhada (side=), 10 px abaixo da linha", e a lista mostra os números de lado e de costas](fotos/17_comparar_parado.png)
+
+**Parada** (o player na **pose parada**, ou o botão **Parado** da barra):
+
+- É a mesma folha da `--compare`: uma linha tracejada na altura de cada junta da principal, mais o alto e o chão das peças, e o mesmo verde, amarelo e vermelho.
+- Na outra vista, a **bolinha cheia** é a junta desenhada (`side=x,y` ou `back=x,y`), e a **vazia** é a pista, onde a junta cairia pelas peças.
+- O mouse numa bolinha diz o que ela é e o quanto ela sai da linha, na caixa de baixo.
+- **Arrastar a bolinha** grava a junta enquanto você arrasta: `side=x,y` de lado, `back=x,y` de costas. Com **Shift**, de 1 em 1 pixel. Um **Ctrl+Z** desfaz o arraste inteiro. Na esquerda (`view=left`), só o y muda: o x do `side=` é a profundidade, que vem da direita.
+- **O duplo clique numa bolinha vazia** grava a pista. Confira no desenho: a pista erra quando a peça muda de forma de lado. **Numa cheia**, ele apaga a junta desenhada: de lado, sai só o y (a profundidade fica); de costas, sai o `back=`.
+- Só arrastam as juntas de lado e de costas, com a frente como vista principal. Numa diagonal, a junta vem da frente; num jogo de plataforma, a junta é o `pivot=`.
+
+**Mover a peça, e não a junta.** Às vezes a junta está certa e é a peça que saiu do lugar. Clique numa peça, em qualquer painel menos o de cima um do outro: ficam escolhidas todas as formas daquele osso naquela vista (com **Shift**, soma). As **setas** movem 1 pixel (com **Shift**, 10), e o resto vale como no desenho: **Ctrl+Z**, **Delete**, o painel Propriedades. A pista e as linhas se refazem a cada passo.
+
+**Com uma animação no player**, cada vista mostra o quadro da animação dela (`walk_down`, `walk_right`…), e a bolinha de cada junta diz a **fresta**: a distância entre onde a peça do pai e a do filho levam a junta, no quadro. Verde até 4 pixels, amarelo até 8, vermelho acima. Cinza é a raiz (sem pai, sem fresta). Toque, ou ande quadro a quadro com **,** e **.**: a fresta que abre num quadro só aparece na hora.
+
+![A tela Comparar vistas com o furão andando, no quadro 0 do walk: de frente, os dois braços com 2,5 de fresta, verdes; de lado, o braço direito com 5, amarelo; a caixa diz "bracoD, de lado: fresta de 5 px entre a peça de corpo e a dele, neste quadro"; embaixo, a lista com a fresta de cada junta em cada vista](fotos/17_comparar_fresta.png)
+
+- **Clique numa bolinha ou num nome da lista** escolhe o osso e leva o código à linha do `bone`.
+- A roda do mouse aproxima e afasta; **Espaço** (ou o botão do meio, ou a Mão) move a folha; **Ctrl+0** ajusta à tela.
+
 ### Testar ossos nas três vistas
 
 O **Testar ossos** (**O**) mexe nos ossos só na tela ([capítulo 23](23-editor.md#testar-ossos)). Num arquivo com vistas, o teste mexe na animação base (`walk`), e a vista do player mostra o que o Weasel gera dela, com a ordem das peças e os `turns` como ficariam:
@@ -1404,6 +1457,8 @@ Com o furão aberto (**Arquivo › Exemplos › Furão em três vistas**):
 5. Aperte **O** (Testar ossos), pause o player no quadro 0 e arraste a bolinha do `peE` para a direita: o pé vai para a frente, e o campo **z** do painel cresce.
 6. Aperte **↓**: o teste continua, e de frente o pé que foi para a frente desce na tela.
 7. Clique em **Escrever como key 0 em walk** para gravar o teste (um **Ctrl+Z** desfaz), ou aperte **Esc** para zerar.
+8. Abra **Exibir › Comparar vistas** e toque o `walk`: de lado, o braço direito abre 5 pixels de fresta no quadro 0 (amarelo).
+9. Clique em **Parado** e passe o mouse na bolinha vazia da cabeça de lado: a pista diz onde o pescoço cairia pelas peças. Clique na cabeça de lado e aperte **↓** algumas vezes: a cabeça desce, e o número da pista muda junto. O **Ctrl+Z** desfaz.
 
 ## Opções das três vistas
 
@@ -1465,7 +1520,7 @@ E no editor:
 - A animação é escrita uma vez, sem direção no nome, com `osso.z=`, `osso.pitch=` e `osso.yaw=`; o Weasel gera uma para cada vista, com `key` comuns.
 - `views tilt=` é a câmera: o que vai para a frente desce na tela.
 - A ordem das peças troca sozinha, dentro de cada camada; `turns` troca o desenho do osso que gira; `tip=` diz para onde ele aponta.
-- O `--info` mostra a profundidade, a grossura, a direção, o pé no chão, as geradas, as juntas desenhadas e a ordem que troca.
+- O `--info` mostra a profundidade, a grossura, a direção, o pé no chão, as geradas, as juntas desenhadas, as pistas das juntas pelas peças e a ordem que troca; o `--compare` põe as vistas paradas lado a lado, com as linhas das juntas, do alto e do chão; no editor, **Exibir › Comparar vistas** faz o mesmo, e nela se arrasta a junta (`side=x,y`, `back=x,y`), se move a peça e se vê a fresta de cada junta na animação.
 - No editor: os botões de direção no player, a **Vistas em 3D**, o **Testar ossos** com `z`, `yaw` e `pitch`, e o `side=` arrastado no **Prender**.
 
 [← Jogo: fases e recursos avançados](16-jogo-avancado.md) · [Índice](README.md) · [Próximo: Filme: atores, planos e câmera →](18-filme.md)

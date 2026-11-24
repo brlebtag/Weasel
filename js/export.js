@@ -226,6 +226,171 @@
     return contactGrid(rows, { cols: o.cols || 12, feet });
   }
 
+  // A folha de comparar vistas (linha de comando --compare): as vistas paradas lado a lado, na mesma escala, com uma
+  // linha tracejada na altura de cada junta da vista principal. Em cada vista, a bolinha da junta: cheia, a desenhada
+  // (side=x,y, back=x,y); vazia, onde ela cairia pelas peças (V.compare); com o quanto ela sai da linha, verde até 4
+  // px, amarelo até 8, vermelho acima. Mais duas linhas, o alto e o chão das peças da principal, e em cada vista um
+  // traço no alto e no chão dela. Com duas vistas, um terceiro painel com a segunda sobre a primeira (as costas
+  // espelhadas). views: os nomes das vistas, a principal primeiro. o.scale (-s): a escala; sem ela, uns 420 px de altura.
+  const CMP = { ok: '#16a34a', mid: '#d97706', bad: '#dc2626', line: '#9a968c', ref: '#4b5563' };
+  // a cor pelo número que aparece (arredondado a meio pixel)
+  const cmpColor = (d) => { const a = Math.round(Math.abs(d) * 2) / 2; return a <= 4 ? CMP.ok : a <= 8 ? CMP.mid : CMP.bad; };
+  // o quanto a junta sai: em y; de costas, o maior de y e x
+  const cmpOff = (r) => Math.max(Math.abs(r.dy), Math.abs(r.dx));
+  const cmpNum = (d) => { const r = Math.round(d * 2) / 2; return (r > 0 ? '+' : r < 0 ? '−' : '') + String(Math.abs(r)).replace('.', ','); };
+  function compareCanvas(model, views, o) {
+    const V = model.views, main = V.main, others = views.filter((v) => v !== main);
+    const font = '12px ui-monospace, Menlo, Consolas, monospace', bold = 'bold 13px ui-monospace, Menlo, Consolas, monospace', small = '11px ui-monospace, Menlo, Consolas, monospace';
+    // o recorte: as peças de todas as vistas escolhidas, com uma margem
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const v of views) for (const b of model.bones.values()) { const bx = V.boxOf(v, b.name); if (bx) { x0 = Math.min(x0, bx[0]); y0 = Math.min(y0, bx[1]); x1 = Math.max(x1, bx[2]); y1 = Math.max(y1, bx[3]); } }
+    const c = model.canvas, mg = 12;
+    const rect = x0 === Infinity ? fullRect(model) : { x: Math.max(0, Math.floor(x0 - mg)), y: Math.max(0, Math.floor(y0 - mg)), w: 0, h: 0 };
+    if (x0 !== Infinity) { rect.w = Math.min(c.w, Math.ceil(x1 + mg)) - rect.x; rect.h = Math.min(c.h, Math.ceil(y1 + mg)) - rect.y; }
+    const z = o.scale || Math.max(0.1, Math.min(6, 420 / rect.h));
+    const PW = Math.round(rect.w * z), PH = Math.round(rect.h * z);
+    const cmp = new Map(others.map((v) => [v, V.compare(v)]));
+    const panels = views.map((v) => ({ v, title: v === main ? `${v} (a principal)` : v, img: S.renderImage(model, V.restPose(v), { scale: z, rect, transparent: false, screen: false }) }));
+    if (views.length === 2 && others.length === 1) panels.push({ v: null, title: `${others[0]} sobre ${main}${others[0] === 'up' ? ' (espelhada)' : ''}`, over: others[0] });
+    // as linhas: a altura de cada junta da principal; juntas a menos de 2 px da tela, uma linha só
+    const lines = [];
+    for (const b of model.bones.values()) {
+      if (!V.boxOf(main, b.name)) continue;
+      const y = (b.pivot[1] - rect.y) * z, l = lines.find((q) => Math.abs(q.y - y) < 2);
+      if (l) l.names.push(b.name); else lines.push({ y, names: [b.name] });
+    }
+    // o alto do desenho e o chão: as pontas das peças, que não são juntas mas precisam bater (a cabeça mais curta)
+    const ends = (v) => {
+      let t = Infinity, bt = -Infinity, l = Infinity, r = -Infinity;
+      for (const b of model.bones.values()) { const bx = V.boxOf(v, b.name); if (bx) { t = Math.min(t, bx[1]); bt = Math.max(bt, bx[3]); l = Math.min(l, bx[0]); r = Math.max(r, bx[2]); } }
+      return t === Infinity ? null : { t, b: bt, l, r };
+    };
+    const mE = ends(main), edges = new Map();
+    if (mE) {
+      for (const [name, y] of [['alto', mE.t], ['chão', mE.b]]) {
+        // a menos de 2 px do arquivo de uma junta, na linha dela
+        const sy = (y - rect.y) * z, l = lines.find((q) => Math.abs(q.y - sy) < Math.max(2, 2 * z));
+        if (l) l.names.push(name); else lines.push({ y: sy, names: [name] });
+      }
+      for (const v of others) {
+        const e = ends(v);
+        if (e) edges.set(v, [{ bone: 'alto', drawn: true, dy: e.t - mE.t, dx: 0, y: e.t, l: e.l, r: e.r }, { bone: 'chão', drawn: true, dy: e.b - mE.b, dx: 0, y: e.b, l: e.l, r: e.r }]);
+      }
+    }
+    lines.sort((a, b) => a.y - b.y);
+    const probe = document.createElement('canvas').getContext('2d');
+    const textW = (t, f) => { probe.font = f; return Math.ceil(probe.measureText(t).width); };
+    const LEFT = Math.min(220, Math.max(90, ...lines.map((l) => textW(l.names.join(' · '), small) + 16))), TOP = 76, GAP = 14;
+    // embaixo: os números de cada vista, do maior para o menor
+    const list = others.map((v) => ({ v, items: [...cmp.get(v).filter((r) => r.drawn || r.est), ...(edges.get(v) || [])].sort((a, b) => cmpOff(b) - cmpOff(a)) }));
+    const LEG = ['● a junta desenhada (side=x,y, back=x,y)   ○ sem ela, onde a junta cairia pelas peças (uma pista)   ― o alto e o chão das peças', 'o número: o quanto sai da linha da principal, em px do arquivo (verde até 4, amarelo até 8, vermelho acima)'];
+    const W2 = Math.max(LEFT + panels.length * (PW + GAP) + GAP, ...LEG.map((t) => textW(t, small) + 20)), wrapW = W2 - 24;
+    const listLines = [];
+    for (const { v, items } of list) {
+      let row = [{ t: `${v} − ${main}: `, c: CONTACT.ink, f: bold }], w = textW(row[0].t, bold);
+      for (const r of items) {
+        const t = `${r.bone} ${r.drawn ? '' : '≈'}${cmpNum(r.dy)}${v === 'up' && Math.abs(r.dx) >= 0.5 ? ` (x ${cmpNum(r.dx)})` : ''}   `, tw = textW(t, font);
+        if (w + tw > wrapW && row.length > 1) { listLines.push(row); row = [{ t: '   ', c: CONTACT.ink, f: font }]; w = textW('   ', font); }
+        row.push({ t, c: cmpColor(cmpOff(r)), f: font });
+        w += tw;
+      }
+      listLines.push(row);
+    }
+    const H2 = TOP + PH + 20 + listLines.length * 18 + 34;
+    const out = document.createElement('canvas');
+    out.width = W2;
+    out.height = H2;
+    const g = out.getContext('2d');
+    g.fillStyle = CONTACT.bg;
+    g.fillRect(0, 0, W2, H2);
+    g.fillStyle = CONTACT.ink;
+    g.font = bold;
+    g.textBaseline = 'alphabetic';
+    g.fillText('Comparar vistas, paradas', 10, 20);
+    g.font = small;
+    g.fillStyle = CONTACT.soft;
+    LEG.forEach((t, i) => g.fillText(t, 10, 38 + i * 16));
+    // os painéis
+    panels.forEach((p, i) => {
+      const px = LEFT + GAP + i * (PW + GAP);
+      g.fillStyle = CONTACT.ink;
+      g.font = bold;
+      g.fillText(p.title, px, TOP - 4);
+      if (p.img) g.drawImage(p.img, px, TOP);
+      else {
+        g.drawImage(panels[0].img, px, TOP);
+        const top = panels.find((q) => q.v === p.over).img;
+        g.save();
+        g.globalAlpha = 0.45;
+        if (p.over === 'up') { g.translate(px + ((V.rootX - rect.x) * z) * 2, TOP); g.scale(-1, 1); g.drawImage(top, 0, 0); } else g.drawImage(top, px, TOP);
+        g.restore();
+      }
+      g.strokeStyle = CONTACT.line;
+      g.lineWidth = 1;
+      g.strokeRect(px - 0.5, TOP - 0.5, PW + 1, PH + 1);
+    });
+    // as linhas, de ponta a ponta, e os nomes na margem
+    g.save();
+    g.setLineDash([5, 4]);
+    g.strokeStyle = CMP.line;
+    g.lineWidth = 1;
+    for (const l of lines) { g.beginPath(); g.moveTo(LEFT - 4, TOP + l.y + 0.5); g.lineTo(W2 - GAP, TOP + l.y + 0.5); g.stroke(); }
+    g.restore();
+    g.font = small;
+    g.fillStyle = CONTACT.soft;
+    let lastY = -Infinity;
+    for (const l of lines) { const ty = Math.max(TOP + l.y + 4, lastY + 12); g.fillText(l.names.join(' · '), 8, ty); lastY = ty; }
+    // as bolinhas
+    const dot = (x, y, fill, ring, r) => { g.beginPath(); g.arc(x, y, r || 4, 0, Math.PI * 2); if (fill) { g.fillStyle = fill; g.fill(); } g.lineWidth = 1.6; g.strokeStyle = ring; g.stroke(); };
+    panels.forEach((p, i) => {
+      if (!p.v) return;
+      const px = LEFT + GAP + i * (PW + GAP), at = (q) => [px + (q[0] - rect.x) * z, TOP + (q[1] - rect.y) * z];
+      if (p.v === main) { for (const b of model.bones.values()) if (V.boxOf(main, b.name)) { const [x, y] = at(b.pivot); dot(x, y, CMP.ref, '#ffffff', 3.5); } return; }
+      g.font = small;
+      // os números ao lado das bolinhas, sem cair um em cima do outro
+      const placed = [];
+      const free = (x, y, w) => !placed.some((q) => x < q[0] + q[2] && q[0] < x + w && Math.abs(q[1] - y) < 12);
+      // o alto e o chão desta vista: um traço da largura das peças, com o número na ponta
+      for (const e of edges.get(p.v) || []) {
+        const [xl, y] = at([e.l, e.y]), [xr] = at([e.r, e.y]), col = cmpColor(e.dy);
+        g.strokeStyle = col;
+        g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(xl, y); g.lineTo(xr, y); g.stroke();
+        if (Math.abs(e.dy) < 0.5) continue;
+        const t = cmpNum(e.dy), tw = textW(t, small), ty = y + (e.bone === 'alto' ? -3 : 11);
+        placed.push([xr + 3, ty, tw]);
+        g.fillStyle = CONTACT.bg; g.globalAlpha = 0.8; g.fillRect(xr + 2, ty - 10, tw + 2, 13); g.globalAlpha = 1;
+        g.fillStyle = col; g.fillText(t, xr + 3, ty);
+      }
+      for (const r of cmp.get(p.v)) {
+        const q = r.drawn ? r.at : r.est;
+        if (!q) continue;
+        const [x, y] = at(q), col = cmpColor(cmpOff(r));
+        if (Math.abs(r.dy) >= 0.5) { g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x, TOP + (r.ref[1] - rect.y) * z); g.stroke(); }
+        if (r.drawn) dot(x, y, col, '#ffffff'); else dot(x, y, '#ffffff', col);
+        if (cmpOff(r) < 0.5) continue;
+        const t = `${r.drawn ? '' : '≈'}${cmpNum(r.dy)}`, tw = textW(t, small);
+        let ty = y + 4;
+        for (const k of [0, 12, -12, 24, -24, 36]) if (free(x + 7, y + 4 + k, tw)) { ty = y + 4 + k; break; }
+        placed.push([x + 7, ty, tw]);
+        g.fillStyle = CONTACT.bg;
+        g.globalAlpha = 0.8;
+        g.fillRect(x + 6, ty - 10, tw + 2, 13);
+        g.globalAlpha = 1;
+        g.fillStyle = col;
+        g.fillText(t, x + 7, ty);
+      }
+    });
+    // a lista
+    let ly = TOP + PH + 30;
+    for (const row of listLines) {
+      let lx = 10;
+      for (const s of row) { g.font = s.f; g.fillStyle = s.c; g.fillText(s.t, lx, ly); lx += textW(s.t, s.f); }
+      ly += 18;
+    }
+    return out;
+  }
+
   // O tempo embaixo dos quadros do filme, no jeito que o --time aceita: 0s, 0.5s, 12s, 1m05s
   function contactTime(t) {
     const r = Math.round(t * 100) / 100;
@@ -1119,5 +1284,5 @@
     return out;
   }
 
-  W.exporter = { imageCanvas, trajectoryCanvas, contactCanvas, filmContactCanvas, contactTime, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg, artTarget, artThumb };
+  W.exporter = { imageCanvas, trajectoryCanvas, contactCanvas, compareCanvas, cmp: { color: cmpColor, num: cmpNum, off: cmpOff, colors: CMP }, filmContactCanvas, contactTime, svgText, gifBytes, webpBytes, videoFrames, frameList, parseSeq, isSeq, sheetCanvas, godotText, image, gif, sheet, contentRect, buildFiles, exportJob, download, setupDialog, BUILD, ALL, SEQ, solidBg, artTarget, artThumb };
 })(window.Weasel = window.Weasel || {});

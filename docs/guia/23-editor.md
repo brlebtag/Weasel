@@ -430,6 +430,17 @@ Num desenho com três vistas ([capítulo 17](17-jogo-tres-vistas.md)), **Exibir 
 - **Clique num osso:** a barra diz a profundidade dele, de onde ela veio e para onde ele aponta; o código vai até a linha do `bone`, e a vista desenha em amarelo o caminho da ponta dele na animação do player, com os números dos quadros.
 - O boneco segue o player: a animação base (`walk`) do que está tocando, no mesmo quadro.
 
+## Comparar vistas
+
+Num desenho com três vistas, **Exibir › Comparar vistas** põe a vista principal e uma outra lado a lado, na mesma escala, no lugar do desenho ([capítulo 17](17-jogo-tres-vistas.md#comparar-vistas)). É a folha do [`--compare`](22-linha-de-comando.md#comparar-as-vistas---compare), para mexer.
+
+- **A barra de cima:** **Comparar com** escolhe a outra vista; **Sobrepor** põe a outra por cima da principal, meio transparente (as costas, espelhadas), com o quanto ela aparece ao lado; **Parado** volta o player para a pose parada.
+- **Parada:** uma linha tracejada na altura de cada junta da principal, mais o alto e o chão das peças. Na outra vista, a bolinha da junta (cheia: a desenhada, `side=x,y` ou `back=x,y`; vazia: a pista, onde ela cairia pelas peças) com o quanto ela sai da linha: verde até 4 pixels, amarelo até 8, vermelho acima.
+- **Arrastar a bolinha** grava a junta (**Shift**: de 1 em 1). O **duplo clique** numa vazia grava a pista; numa cheia, apaga a junta desenhada.
+- **Com uma animação no player**, cada vista mostra o quadro da animação dela, e a bolinha diz a fresta da junta naquele quadro.
+- **Clique numa peça** escolhe todas as formas daquele osso naquela vista (**Shift** soma): as setas, o **Delete** e o painel Propriedades valem como no desenho. **Clique numa bolinha ou num nome da lista** leva o código ao osso.
+- A roda aproxima e afasta, **Espaço** ou a Mão movem a folha, e **Ctrl+0** ajusta à tela.
+
 ## Efeitos da camada
 
 Os efeitos de camada ([capítulo 11](11-efeitos.md#efeitos-de-camada)) se ligam sem escrever:

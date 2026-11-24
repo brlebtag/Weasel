@@ -568,3 +568,57 @@ A fresta em cada junta, no pior quadro (px do arquivo; a junta desenhada, levada
   costas, `17_junta.png`), a ficha do `bone` no capítulo 20 e o `--joints` no capítulo 22.
 - **Falta, no Zombie Escape Room:** o `alinhar` deixar de esticar (só deslocar) e o `montar` escrever `side=x,y` e
   `back=x,y`. A próxima no Weasel é a etapa D (o item 2 e a `--compare`), que espera o OK.
+
+**Etapa D, parte 1 (a `--compare` e a pista no `--info`): feita em 23/11/2026**, na 1.82.0 junto com a parte 2.
+
+- **A folha:** `--compare` (todas as vistas desenhadas) ou `--compare=right,up`, em PNG ou JPG. As vistas paradas
+  lado a lado, na mesma escala (uns 420 px de altura, ou `-s`); uma linha tracejada na altura de cada junta da
+  principal, com o nome na margem, e mais duas, o alto e o chão das peças da principal. Na principal, uma bolinha cinza
+  em cada `pivot=`; nas outras, a bolinha cheia é a junta desenhada e a vazia é a pista (abaixo); em cada uma, um
+  traço no alto e no chão dela. O número é verde até 4 px, amarelo até 8 e vermelho acima; de costas, conta também o
+  x, contra o da frente espelhado. Com duas vistas, um terceiro painel põe a segunda sobre a primeira (as costas
+  espelhadas). Embaixo, a lista de cada vista, do maior para o menor.
+- **Sem `-a`:** o esboço da proposta tinha uma fileira por quadro com `--anim`. Ficou de fora: animando, as juntas
+  saem da linha de propósito (o braço que balança, o tronco que gira), e o que interessa ali é a fresta entre pai e
+  filho, que o `--joints` já mostra. Com `-a`, a resposta é `--compare compara as vistas paradas, sem -a`.
+- **A pista (a bolinha vazia):** num osso sem a junta desenhada, o Weasel põe a junta no mesmo lugar dentro das
+  peças do osso (a caixa) que ela tem na frente; de costas, com o x espelhado. No soldado de hoje (o lado esticado),
+  ela acha o pescoço 14 px acima de lado, o número da proposta, e o ombro direito de costas 8 px acima e 9,5 para
+  dentro. Contra as juntas medidas à mão no protótipo da etapa C (o soldado sem esticar), ela erra até 4 px no tronco,
+  nas coxas e nos pés, e 8 a 13 px na cabeça e nos braços de lado: o cabelo e o braço mudam de forma de lado. Ela
+  aponta para o lado certo, mas o número do `side=x,y` vem do desenho; por isso ela sai com `≈` e se chama pista.
+- **No `--info`:** a linha `pelas peças  right: cabeca +10 · …`, com as pistas acima de 4 px, para os ossos sem a junta
+  desenhada. Dos exemplos, só o guarda tem uma (a capa, +5,7 de lado).
+- **A conta** fica no `views.js` (`V.compare`, `V.restPose` e `V.boxOf`), para a tela do editor usar a mesma.
+- **O guia:** a seção "Comparar as vistas" no capítulo 17 (`17_comparar.png`, o bicho) e a `--compare` no capítulo
+  22. **Os testes:** no `_vistas`, a folha (`comparar.png`) e as pistas, com e sem a junta desenhada.
+
+**Etapa D, parte 2 (a tela no editor): feita em 23/11/2026**, com o OK no mesmo dia; as duas partes saem na 1.82.0.
+
+- **Exibir › Comparar vistas** (`js/ui-compare.js`), num arquivo com camadas `view=`: um modo da área de desenho como
+  a Vistas em 3D (uma fecha a outra), com as ferramentas do filme (Seleção, Mão, Zoom). A principal e uma outra lado a
+  lado (o menu **Comparar com**), e, com **Sobrepor**, a outra por cima da principal, com a transparência num
+  controle (as costas, espelhadas). Embaixo, a lista de todas as outras vistas; o mouse numa bolinha explica ela numa
+  caixa embaixo dos painéis.
+- **Parada** (o player na pose parada, ou o botão **Parado**): a folha da `--compare`, com as mesmas contas
+  (`V.compare`) e cores (`W.exporter.cmp`). Arrastar a bolinha grava `side=x,y` (de lado) ou `back=x,y` (de costas)
+  enquanto arrasta, um Ctrl+Z para o arraste inteiro, como no Prender; na esquerda, só o y (o x do `side=` é a
+  profundidade, da direita). O duplo clique numa vazia grava a pista, e numa cheia apaga a junta desenhada (de lado, só
+  o y). Só arrastam as juntas de lado e de costas com a frente como principal; uma `{expressão}` ou um osso de outro
+  arquivo avisam, como no Prender.
+- **Com uma animação no player:** cada vista no quadro da animação dela, e a bolinha de cada junta diz a fresta (a
+  junta parada da vista levada pela matriz do pai e pela do filho, a conta do protótipo da etapa C). No
+  `soldado_juntas`, correndo de lado, as piores saem iguais às do protótipo: ombros 7 e 7,5, quadris 4,5, cabeça 1,
+  cotovelos, pulsos e joelhos 0. Nos exemplos, a maior é a lança do guarda de costas (8,2); o furão andando de lado
+  abre 5 no braço direito, no quadro 0 (a foto do capítulo 17).
+- **Mover a peça:** o clique numa peça escolhe todas as formas daquele osso naquela vista (Shift soma), e daí em
+  diante vale o editor de sempre (as setas, o Delete, o painel Propriedades, o Ctrl+Z). A pista e as linhas se refazem
+  a cada passo. O clique numa bolinha ou num nome da lista leva o código ao osso.
+- **O zoom:** a roda, a Mão, o Espaço e o botão do meio, e Ctrl+0, Ctrl+1, Ctrl+= e Ctrl+- (a barra de baixo vale para
+  a tela).
+- **Fora do plano:** o "Esticar entre linhas" continua para depois, como a análise recomendava. Os avisos de altura do
+  `--info` não entraram na lista (as bolinhas mostram o mesmo).
+- **O guia:** a seção "Comparar vistas" no capítulo 17 (duas fotos do editor: o bicho parado e o furão andando, em
+  `fotos/`), no capítulo 23 e na página dos atalhos (24, da lista nova em `js/keys.js`); a ajuda F1 também. A tela não
+  tem teste automático (os testes não abrem o editor): ela foi conferida no navegador com o herói, o furão, o bicho e
+  os dois soldados (arrastar, duplo clique, Ctrl+Z, clique na peça e setas, as costas, a fresta).

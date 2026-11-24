@@ -205,6 +205,15 @@
       { k: ['Ctrl+1', 'Ctrl+=', 'Ctrl+-'], d: 'tamanho real, aproxima, afasta', w: 'na vista 3D' },
       { k: ['setas', 'Ctrl+3', 'Ctrl+D', 'Ctrl+Z', 'Delete', 'Ctrl+A', 'Ctrl+C', 'Ctrl+V', 'Ctrl+G', 'Ctrl+2'], d: 'fazem o mesmo que no desenho', w: 'na vista 3D' },
     ] },
+    { id: 'comparar', title: 'Comparar vistas', note: 'Para entrar e sair: Exibir › Comparar vistas, num arquivo com camadas view= (três vistas).', items: [
+      { k: 'arrastar a bolinha', d: 'grava a junta desenhada: side=x,y de lado, back=x,y de costas (Shift: de 1 em 1)', w: 'na Comparar vistas, parada' },
+      { k: 'duplo clique na bolinha', d: 'na vazia, grava a pista; na cheia, apaga a junta desenhada', w: 'na Comparar vistas, parada' },
+      { k: 'clique numa peça', d: 'escolhe todas as formas daquele osso naquela vista; com Shift, soma', w: 'na Comparar vistas' },
+      { k: ['clique numa bolinha', 'clique num nome da lista'], d: 'escolhe o osso e leva o código à linha dele', w: 'na Comparar vistas' },
+      { k: ['setas', 'Shift+setas'], d: 'movem as formas escolhidas 1 px / 10 px', w: 'na Comparar vistas' },
+      { k: ['Espaço+arrastar', 'botão do meio+arrastar', 'roda do mouse'], d: 'move a folha (a Mão, H, também) / aproxima e afasta', w: 'na Comparar vistas' },
+      { k: ['Ctrl+0', 'Ctrl+1', 'Ctrl+=', 'Ctrl+-'], d: 'ajusta à tela, tamanho real, aproxima, afasta', w: 'na Comparar vistas' },
+    ] },
     { id: 'paineis', title: 'Menus e painéis', items: [
       { k: ['↑', '↓'], d: 'andam nos itens', w: 'num menu aberto' },
       { k: ['→', '←'], d: 'abre o submenu / fecha o submenu', w: 'num menu aberto' },

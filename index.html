@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="docs/icone.png">
 <!-- o tema (Exibir › Tema) antes de pintar, para não piscar; a troca fica em js/ui-theme.js -->
 <script>try{var p=localStorage.getItem('weasel.theme');document.documentElement.dataset.theme=p==='dark'||(p==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
-<link rel="stylesheet" href="css/style.css?v=1.81.0">
+<link rel="stylesheet" href="css/style.css?v=1.82.0">
 </head>
 <body>
 <header class="top">
@@ -265,6 +265,7 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
       <li>A barra de baixo mostra os erros, o caminho da escolha (<code>arquivo › camada › forma</code>; clicar na camada escolhe ela inteira), a linha do código, as coordenadas do mouse, a variante de cores e o zoom (clicar no número volta a 100%).</li>
       <li><b>Exibir › Camadas em 3D</b> (ou o botão de camadas na ponta direita da barra de baixo) afasta as camadas no espaço, para ver o que fica na frente de quê: cada linha do painel Camadas vira uma peça. Arraste para girar; <kbd>Espaço</kbd>, a Mão ou o botão do meio movem; a roda e o Zoom aproximam; <kbd>Ctrl</kbd>+<kbd>0</kbd> volta de frente. Clique numa peça escolhe a linha dela (<kbd>Shift</kbd> soma ou tira), e as setas, <kbd>Ctrl</kbd>+<kbd>3</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd> e <kbd>Ctrl</kbd>+<kbd>Z</kbd> valem como no desenho. Na barrinha: <b>Explodir</b>, <b>De frente</b>, <b>De lado</b>, <b>Juntar</b>, quanto as camadas (e as formas de cada camada) se afastam e as molduras com os nomes; o olho de cada nome esconde a camada só ali. O mouse numa linha do painel Camadas apaga as outras peças. Acompanha o player (pulando quadros num desenho pesado), sem estilo de arte e sem os halos das luzes. Num filme, ele abre o Palco em 3D; num arquivo com camadas <code>view=</code>, as Vistas em 3D.</li>
       <li><b>Exibir › Vistas em 3D</b> (num arquivo com camadas <code>view=</code>, ou o mesmo botão): cada vista desenhada fica de pé em volta do personagem, como uma placa (só aparece a virada para quem olha), e no meio fica o boneco que o Weasel montou em 3D: o traço vermelho é o osso, o cinza a grossura medida no desenho, e a bolinha o pivô, verde quando a profundidade foi lida das vistas, azul quando veio do <code>side=</code> (ou do <code>lat=</code>) e vermelha quando veio do pai, sem peça. O chão é uma grade na altura do pé. Acompanha o player: cada placa mostra o quadro gerado da vista dela. <b>Por fora</b>, <b>De cima</b>, um botão para cada vista desenhada (alinha com ela: as bolinhas têm que cair em cima das peças; <kbd>Ctrl</kbd>+<kbd>0</kbd> é a principal) e <b>Câmera do jogo</b> (com a inclinação do <code>views tilt=</code>). Clique num osso escolhe o osso, leva o código à linha dele e mostra o caminho da ponta na animação (amarelo, com o número de cada quadro). Só para olhar.</li>
+      <li><b>Exibir › Comparar vistas</b> (num arquivo com camadas <code>view=</code>): a vista principal e uma outra lado a lado, na mesma escala (o menu da barrinha escolhe a outra), e, com <b>Sobrepor</b>, a outra por cima da principal, meio transparente (as costas, espelhadas). Parada (o player na pose parada, ou o botão <b>Parado</b>), uma linha tracejada passa na altura de cada junta da principal, mais o alto e o chão das peças; na outra vista, a bolinha da junta diz o quanto ela sai da linha, em pixels do arquivo (verde até 4, amarelo até 8, vermelho acima): cheia, é a junta desenhada (<code>side=x,y</code> de lado, <code>back=x,y</code> de costas); vazia, é a pista, onde a junta cairia pelas peças. Arrastar a bolinha grava a junta (<kbd>Shift</kbd>: de 1 em 1); o duplo clique numa vazia grava a pista, e numa cheia apaga a junta desenhada. Com uma animação no player, cada vista mostra o quadro da animação dela, e a bolinha diz a fresta da junta: a distância entre onde a peça do pai e a do filho levam a junta. Clicar numa peça escolhe todas as formas daquele osso naquela vista (as setas movem, como no desenho); clicar numa bolinha ou num nome da lista de baixo leva o código ao osso. É a folha do <code>--compare</code> da linha de comando, para mexer.</li>
       <li><b>Exibir › Palco em 3D</b> (num filme, ou o mesmo botão): o filme visto de fora, no quadro do player. Cada camada e cada ator vira uma placa na distância do <code>depth=</code> dela, e a câmera do filme é uma pirâmide amarela. <b>Por fora</b>, <b>Da câmera</b> (o quadro do player; o que fica fora aparece escurecido) e <b>De lado</b>; <b>Distâncias</b> aperta as distâncias para tudo caber (toda à direita, as de verdade) e <b>Mesma distância</b> afasta as placas de mesma profundidade. Clique numa placa escolhe o ator (painel Filme) e leva o código à linha dele ou à da camada. Só para olhar: sem a transição, o estilo de arte, o acabamento e o escurecer da câmera.</li>
       <li>A barra de ferramentas fica à esquerda do desenho. A letra troca de ferramenta com o foco no desenho; as casas com um triangulinho guardam mais de uma (segure o botão, ou o botão direito nele, para escolher):
         <ul>
@@ -424,50 +425,51 @@ at 3s heroi.pos=1400,900 camera.pos=1300,540 ease=out</pre>
   </div>
 </dialog>
 
-<script src="js/geom.js?v=1.81.0"></script>
-<script src="js/lang.js?v=1.81.0"></script>
-<script src="js/views.js?v=1.81.0"></script>
-<script src="js/simplify.js?v=1.81.0"></script>
-<script src="js/trace.js?v=1.81.0"></script>
-<script src="js/pathops.js?v=1.81.0"></script>
-<script src="js/art.js?v=1.81.0"></script>
-<script src="js/scene.js?v=1.81.0"></script>
-<script src="js/film.js?v=1.81.0"></script>
-<script src="js/audio.js?v=1.81.0"></script>
-<script src="js/nle.js?v=1.81.0"></script>
-<script src="js/webm.js?v=1.81.0"></script>
-<script src="js/svg.js?v=1.81.0"></script>
-<script src="js/gif.js?v=1.81.0"></script>
-<script src="js/webp.js?v=1.81.0"></script>
-<script src="js/mp4.js?v=1.81.0"></script>
-<script src="js/zip.js?v=1.81.0"></script>
-<script src="js/normal.js?v=1.81.0"></script>
-<script src="js/export.js?v=1.81.0"></script>
-<script src="js/godot.js?v=1.81.0"></script>
-<script src="js/rig.js?v=1.81.0"></script>
-<script src="js/editor.js?v=1.81.0"></script>
-<script src="js/examples.js?v=1.81.0"></script>
-<script src="js/ui-theme.js?v=1.81.0"></script>
-<script src="js/timeline.js?v=1.81.0"></script>
-<script src="js/keys.js?v=1.81.0"></script>
-<script src="js/app.js?v=1.81.0"></script>
-<script src="js/ui-menu.js?v=1.81.0"></script>
-<script src="js/ui-shell.js?v=1.81.0"></script>
-<script src="js/ui-3d.js?v=1.81.0"></script>
-<script src="js/ui-props.js?v=1.81.0"></script>
-<script src="js/ui-select.js?v=1.81.0"></script>
-<script src="js/ui-draw.js?v=1.81.0"></script>
-<script src="js/ui-pen.js?v=1.81.0"></script>
-<script src="js/ui-pencil.js?v=1.81.0"></script>
-<script src="js/ui-trace.js?v=1.81.0"></script>
-<script src="js/ui-paths.js?v=1.81.0"></script>
-<script src="js/ui-cut.js?v=1.81.0"></script>
-<script src="js/ui-layers.js?v=1.81.0"></script>
-<script src="js/ui-symbols.js?v=1.81.0"></script>
-<script src="js/ui-bones.js?v=1.81.0"></script>
-<script src="js/ui-anim.js?v=1.81.0"></script>
-<script src="js/ui-film.js?v=1.81.0"></script>
-<script src="js/ui-style.js?v=1.81.0"></script>
-<script src="js/ui-keys.js?v=1.81.0"></script>
+<script src="js/geom.js?v=1.82.0"></script>
+<script src="js/lang.js?v=1.82.0"></script>
+<script src="js/views.js?v=1.82.0"></script>
+<script src="js/simplify.js?v=1.82.0"></script>
+<script src="js/trace.js?v=1.82.0"></script>
+<script src="js/pathops.js?v=1.82.0"></script>
+<script src="js/art.js?v=1.82.0"></script>
+<script src="js/scene.js?v=1.82.0"></script>
+<script src="js/film.js?v=1.82.0"></script>
+<script src="js/audio.js?v=1.82.0"></script>
+<script src="js/nle.js?v=1.82.0"></script>
+<script src="js/webm.js?v=1.82.0"></script>
+<script src="js/svg.js?v=1.82.0"></script>
+<script src="js/gif.js?v=1.82.0"></script>
+<script src="js/webp.js?v=1.82.0"></script>
+<script src="js/mp4.js?v=1.82.0"></script>
+<script src="js/zip.js?v=1.82.0"></script>
+<script src="js/normal.js?v=1.82.0"></script>
+<script src="js/export.js?v=1.82.0"></script>
+<script src="js/godot.js?v=1.82.0"></script>
+<script src="js/rig.js?v=1.82.0"></script>
+<script src="js/editor.js?v=1.82.0"></script>
+<script src="js/examples.js?v=1.82.0"></script>
+<script src="js/ui-theme.js?v=1.82.0"></script>
+<script src="js/timeline.js?v=1.82.0"></script>
+<script src="js/keys.js?v=1.82.0"></script>
+<script src="js/app.js?v=1.82.0"></script>
+<script src="js/ui-menu.js?v=1.82.0"></script>
+<script src="js/ui-shell.js?v=1.82.0"></script>
+<script src="js/ui-3d.js?v=1.82.0"></script>
+<script src="js/ui-compare.js?v=1.82.0"></script>
+<script src="js/ui-props.js?v=1.82.0"></script>
+<script src="js/ui-select.js?v=1.82.0"></script>
+<script src="js/ui-draw.js?v=1.82.0"></script>
+<script src="js/ui-pen.js?v=1.82.0"></script>
+<script src="js/ui-pencil.js?v=1.82.0"></script>
+<script src="js/ui-trace.js?v=1.82.0"></script>
+<script src="js/ui-paths.js?v=1.82.0"></script>
+<script src="js/ui-cut.js?v=1.82.0"></script>
+<script src="js/ui-layers.js?v=1.82.0"></script>
+<script src="js/ui-symbols.js?v=1.82.0"></script>
+<script src="js/ui-bones.js?v=1.82.0"></script>
+<script src="js/ui-anim.js?v=1.82.0"></script>
+<script src="js/ui-film.js?v=1.82.0"></script>
+<script src="js/ui-style.js?v=1.82.0"></script>
+<script src="js/ui-keys.js?v=1.82.0"></script>
 </body>
 </html>

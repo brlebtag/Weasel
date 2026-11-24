@@ -20,3 +20,6 @@ junta desenhada, a fresta no pescoço e na orelha contra a do desenho alinhado (
 junta desenhada, parado (quadro 0): cabecaL 64,46 · orelhaL 58,28 · cabecaC 63,50 · orelhaC 73,32
 junta desenhada, o --info: cabeca right 0,-10 · orelha right 0,-10 · cabeca up 3,-6 · orelha up 3,-6; avisos com o y: 0; sem o y: [l5] cabeca: de lado, a peça inteira está 10 px mais al… | [l6] orelha: de lado, a peça inteira está 10 px mais al…
 --joints: o pescoço de lado (64,62) 47,111,208, o corpo (60,110) 208,64,44; sem --joints, o pescoço 255,255,255
+comparar, com o y: right corpo pelas peças 0 · cabeca desenhada -10 · orelha desenhada -10 | up corpo pelas peças 0 (x 0) · cabeca desenhada -6 (x 3) · orelha desenhada -6 (x 3)
+comparar, sem o y: right corpo pelas peças 0 · cabeca pelas peças -10 · orelha pelas peças -10 | up corpo pelas peças 0 (x 0) · cabeca pelas peças -6 (x 3) · orelha pelas peças -6 (x 3)
+comparar, as camadas à mostra na pose parada: down frente · right lado · up costas

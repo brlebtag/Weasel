@@ -10,6 +10,7 @@ vistas   down, right, up (principal: down), câmera tilt=30 (o que vai para a fr
   profundidade corpo 0.2 (lado) · cabeca 0.1 (lado) · capa -8 (side=) · pernaD 0.6 (lado) · pernaE 0.6 (lado) · bracoD 0 (lado) · lanca 0 (side=) · bracoE 1.2 (lado)
   grossura     corpo 36.4/26.5 · cabeca 31.5/32.3 · capa 51.4/18.9 · pernaD 12/12 · pernaE 12/12 · bracoD 11.8/11.8 · lanca 3/3 · bracoE 11.9/11.8  [de lado a lado / de frente para trás]
   aponta       corpo (as peças, de frente e de lado) · cabeca (as peças, de frente e de lado) · capa (tip=) · pernaD (tip=) · pernaE (tip=) · bracoD (filho lanca) · lanca (tip=) · bracoE (as peças, de frente e de lado)
+  pelas peças  right: capa +5.7  [sem side=x,y: onde a junta cairia pelas peças, contra a da down; confira com --compare]
   pé no chão   idle: 0 0 0 0 0 0 0 0
   pé no chão   walk: 0.2 -1.6 0 -1.6 0.2 -1.6 0 -1.6
   pé no chão   look: 0.2 -1.6 0 -1.6 0.2 -1.6 0 -1.6 0.2 -1.6 0 -1.6 0.2 -1.6 0 -1.6

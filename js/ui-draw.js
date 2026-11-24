@@ -225,7 +225,7 @@
 
   // as letras das caixinhas (com o foco no desenho): D padrão, X a da frente, Shift+X troca, / nenhuma, Shift+D modo
   document.addEventListener('keydown', (e) => {
-    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || A.isFilm() || st.view3d) return;
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || A.isFilm() || st.view3d || st.compare) return;
     const t = e.target;
     if (t && t.closest && t.closest('textarea, input, select, dialog, [contenteditable]')) return;
     if (document.querySelector('.menu-pop')) return;
@@ -244,7 +244,7 @@
     if (l !== undefined) loadFrom(l);
     paintSw();
   }
-  const syncWrap = () => { wrap.hidden = A.isFilm() || st.view3d; };
+  const syncWrap = () => { wrap.hidden = A.isFilm() || st.view3d || st.compare; };
   A.on('draw', follow);
   A.on('model', () => { syncWrap(); paintSw(); });
   A.on('view3d', syncWrap);

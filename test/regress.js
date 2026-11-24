@@ -1172,6 +1172,14 @@ async function viewsCase() {
   lines.push(`junta desenhada, o --info: ${mB.views.joints.map((j) => `${j.bone} ${j.view} ${j.dx},${j.dy}`).join(' · ')}; avisos com o y: ${mB.errors.length}; sem o y: ${mC.errors.map((e) => `[l${e.line + 1}] ${e.msg.slice(0, 50)}…`).join(' | ') || '—'}`);
   const px = (cv, x, y) => [...cv.getContext('2d').getImageData(x, y, 1, 1).data.slice(0, 3)].join(',');
   lines.push(`--joints: o pescoço de lado (64,62) ${px(X.imageCanvas(mB, 'walk_right', 0, { joints: true }), 64, 62)}, o corpo (60,110) ${px(X.imageCanvas(mB, 'walk_right', 0, { joints: true }), 60, 110)}; sem --joints, o pescoço ${px(X.imageCanvas(mB, 'walk_right', 0, {}), 64, 62)}`);
+  // (10) a Comparar vistas (V.compare e o --compare): com o y, a junta desenhada; sem ele, a pista pelas peças
+  // (o lugar do pivô na caixa da frente, levado para a caixa da vista) acha os 10 px de lado e os 6 (e 3 em x) de costas
+  const cmpLine = (mm, v) => mm.views.compare(v).filter((r) => r.drawn || r.est).map((r) => `${r.bone} ${r.drawn ? 'desenhada' : 'pelas peças'} ${Math.round(r.dy * 10) / 10}${v === 'up' ? ` (x ${Math.round(r.dx * 10) / 10})` : ''}`).join(' · ');
+  lines.push(`comparar, com o y: right ${cmpLine(mB, 'right')} | up ${cmpLine(mB, 'up')}`);
+  lines.push(`comparar, sem o y: right ${cmpLine(mC, 'right')} | up ${cmpLine(mC, 'up')}`);
+  const shown = (v) => ['frente', 'lado', 'costas'].filter((n) => S.layerVisible(mC.layerMap.get(n), mC.views.restPose(v), {})).join(',');
+  lines.push(`comparar, as camadas à mostra na pose parada: down ${shown('down')} · right ${shown('right')} · up ${shown('up')}`);
+  await check('_vistas', 'comparar.png', 'png', X.compareCanvas(mC, ['down', 'right', 'up'], {}));
   await check('_vistas', 'vistas.txt', 'text', lines.join('\n') + '\n');
 }
 
