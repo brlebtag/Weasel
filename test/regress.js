@@ -1114,6 +1114,24 @@ async function viewsCase() {
     for (let i = 0; i < 4; i++) worst = Math.max(worst, Math.abs(godot[i] - weasel[i]));
   }
   lines.push(`skew no Godot contra a matriz do Weasel (vistas_giro, ${sheared} keys inclinadas): erro máximo ${worst < 1e-9 ? 'menos de 1e-9' : worst.toExponential(2)}`);
+  // (8) shorten= no bone (1.80.0): o comprimento da lâmina no attack (o diâmetro da forma, contra o quadro 0), a cada
+  // 1/4 de quadro. Sem shorten=, de 10% a 1,4 vez; off, o tamanho do desenho; 0.6 e 0.6,1.2, os limites do osso
+  const diam = (mm, n, f, el) => {
+    const P = [];
+    for (const sg of S.geometry(mm, S.makePose(mm, n, f), mm.elements.find((e) => e.name === el)).segs) for (let i = 0; i + 1 < sg.length; i += 2) if (typeof sg[i] === 'number') P.push([sg[i], sg[i + 1]]);
+    let d = 0;
+    for (const a of P) for (const b of P) d = Math.max(d, Math.hypot(a[0] - b[0], a[1] - b[1]));
+    return d;
+  };
+  for (const sh of ['', ' shorten=off', ' shorten=0.6', ' shorten=0.6,1.2']) {
+    const mm = W.lang.parse(furao.replace(/^(bone espada[^\n]*)/m, '$1' + sh), { file: 'furao3d.weasel' });
+    lines.push(`a lâmina no attack, ${sh ? sh.trim() : 'sem shorten='}: ${[['attack_down', 'laminaF'], ['attack_right', 'laminaL'], ['attack_up', 'laminaC']].map(([n, el]) => {
+      const rest = diam(mm, n, 0, el);
+      let lo = Infinity, hi = 0;
+      for (let f = 0; f < mm.animMap.get(n).frames * 4; f++) { const r = diam(mm, n, f / 4, el) / rest; lo = Math.min(lo, r); hi = Math.max(hi, r); }
+      return `${n.slice(7)} ${lo.toFixed(2)}…${hi.toFixed(2)}`;
+    }).join(' · ')}${mm.errors.length ? ` (avisos: ${mm.errors.length})` : ''}`);
+  }
   await check('_vistas', 'vistas.txt', 'text', lines.join('\n') + '\n');
 }
 
@@ -1206,6 +1224,7 @@ async function warnCase() {
     ['vistas: sem a principal', 'canvas 120 120\nbone corpo pivot=60,100\nlayer c view=up\nellipse tc 60,80 14,20 bone=corpo\nanim a frames=2\nkey 1 corpo=0,0,20'],
     ['vistas: o giro e o ik', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nbone dedo parent=mao pivot=88,80\nbone unha parent=dedo pivot=94,80\nbone alvo pivot=92,70\nik dedo bones=mao,dedo,unha target=alvo\nanim a frames=2\nkey 1 mao=0,0,20'],
     ['vistas: o 3D numa animação escrita à mão', V3 + 'layer f view=down\nellipse t 60,80 14,20 bone=corpo\nellipse m 80,80 5 bone=mao\nlayer l view=right\nellipse tl 60,80 10,20 bone=corpo\nellipse ml 66,80 5 bone=mao\nanim a_right frames=2\nkey 1 mao.pitch=30 mao.z=4 corpo.yaw=10'],
+    ['shorten= fora da faixa', C + 'bone a pivot=50,50 shorten=0\nbone b pivot=50,50 shorten=0.5,0.8\nbone c pivot=50,50 shorten=talvez\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a', C + 'bone a pivot=50,50\nbone b pivot=50,50\nbone c pivot=50,50\nbone d pivot=50,50 shorten=off\nbone e pivot=50,50 shorten=0.6,1.2\nellipse k 50,50 10 bone=a'],
     ['vistas: dois lados com uma diagonal só, walk_left sem vista e rig=bones', 'canvas 120 120\ngodot root=60,100 rig=bones\nbone corpo pivot=60,100\nlayer f view=down\nellipse t 60,80 14,20 bone=corpo\nlayer r view=right\nellipse tr 62,80 10,20 bone=corpo\nlayer l view=left\nellipse tl 58,80 10,20 bone=corpo\nlayer d view=down_right\nellipse td 61,80 12,20 bone=corpo\nanim a frames=2\nanim b_up frames=2'],
     ['cut no stroke', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 cut=furo : 10,10 90,90', C + 'ellipse furo 50,50 10 hidden\nstroke s w=4 : 10,10 90,90'],
     ['bold na ellipse', C + 'ellipse e 50,50 10 bold', C + 'ellipse e 50,50 10'],
@@ -1375,6 +1394,26 @@ async function traceCase() {
   const outNb = fs.existsSync(wslNb) ? fs.readFileSync(wslNb, 'utf8') : '';
   const againNb = W.trace.file(W.trace.trace(await pixels(fs.readFileSync(pngNb)), { noBg: true }), {});
   record(rn.status === 0 && outNb.includes(`\n# sem fundo: ${nb.bg}\n`) && body(outNb) === body('\n' + againNb), '_tracado/cli-sem-fundo', `o CLI com --no-bg deu outro traçado (saída ${rn.status}): ${(rn.stderr || '').trim().slice(0, 200)}`);
+  // uma peça para um personagem (1.80.0): --out-scale 0.5 --prefix pe --bones coxa,canela. O canvas e a ref pela
+  // metade; cada número das formas e dos degradês é a metade do traçado de 1:1 (as formas com duas casas, os degradês
+  // com uma); todo nome com o prefixo (pe_color1, pe_gradient1, _pe_hole1) e todo shape com bones=; e o arquivo abre
+  // sozinho, sem erro, com os ossos de mentira.
+  const wslP = path.join(dir, 'sintetica_peca.weasel');
+  const rp = spawnSync(process.execPath, [CLI, png, '-o', wslP, '--out-scale', '0.5', '--prefix', 'pe', '--bones', 'coxa,canela', '--force', '--quiet'], { encoding: 'utf8' });
+  const outP = fs.existsSync(wslP) ? fs.readFileSync(wslP, 'utf8').replace(/\r\n/g, '\n') : '';
+  const drawn = (t) => t.split('\n').filter((l) => /^(shape|gradient) /.test(l));
+  const nums = (l) => (l.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g) || []).flatMap((p) => p.split(',').map(Number));
+  const full = drawn(again), half = drawn(outP);
+  // os arredondamentos: 0,005 nas formas (duas casas) e 0,05 nos degradês (uma), nos dois arquivos
+  let worstP = 0;
+  const sameCount = full.length === half.length && full.every((l, i) => nums(l).length === nums(half[i]).length);
+  if (sameCount) full.forEach((l, i) => { const a = nums(l), b = nums(half[i]), k = l.startsWith('gradient ') ? 0.08 : 0.01; a.forEach((v, j) => { worstP = Math.max(worstP, Math.abs(v / 2 - b[j]) / k); }); });
+  const mP = W.lang.parse(outP, { file: 'sintetica_peca.weasel' });
+  const named = !/(?<![\w-])_?(color|gradient|hole)\d/.test(half.join('\n') + outP.split('\n').filter((l) => l.startsWith('palette ')).join('\n'));
+  const okP = rp.status === 0 && outP.includes(`\ncanvas ${Wd / 2} ${Hd / 2} bg=none\n`) && /\nref original "sintetica\.png" scale=0\.5 hidden\n/.test(outP)
+    && sameCount && worstP <= 1 && named && /cut=_pe_hole1 /.test(outP) && /c=pe_gradient1 /.test(outP)
+    && half.filter((l) => l.startsWith('shape ')).every((l) => / bones=coxa,canela : /.test(l)) && /\nbone coxa pivot=/.test(outP) && /\nbone canela parent=coxa pivot=/.test(outP) && !mP.errors.length;
+  record(okP, '_tracado/cli-peca', `saída ${rp.status}, ${half.length} de ${full.length} linhas, diferença máxima ${worstP.toFixed(2)} do arredondamento (limite 1), nomes ${named ? 'com o prefixo' : 'SEM o prefixo'}, erros: ${mP.errors.map((e) => e.msg).join('; ') || 'nenhum'} ${(rp.stderr || '').trim().slice(0, 200)}`);
 }
 
 async function main() {

@@ -31,7 +31,7 @@ Com as **vistas**, a ideia é a de um boneco de verdade:
 ```
 layer nome view=vista [angle=graus]
 views [tilt=graus]
-bone nome pivot=x,y [side=x] [lat=x] [tip=x,y[,z]] [turns]
+bone nome pivot=x,y [side=x] [lat=x] [tip=x,y[,z]] [shorten=off|mín[,máx]] [turns]
 key quadro osso.z=pixels osso.pitch=graus osso.yaw=graus
 ```
 
@@ -313,7 +313,7 @@ Repare:
 
 - **`osso.pitch=` gira para a frente ou para trás**, em volta do eixo que vai de um ombro ao outro. O negativo leva para a frente o que está **acima** da junta e para trás o que está **abaixo**: a espada, que aponta para cima, desce para a frente com `pitch=-100`. Num osso que aponta para baixo (uma perna, um braço, uma capa), é o positivo que leva a ponta para a frente.
 - **`osso.yaw=` gira de um lado para o outro**, em volta do eixo de pé, como quem vira a cabeça. O giro da `key` (o terceiro número) continua girando na tela da vista principal.
-- **Cada vista mostra o giro de um jeito.** De lado, a espada faz o arco inteiro. De frente, ela vem na direção de quem olha e **encurta** (até 10% do tamanho, quando aponta para a câmera). De costas, ela também encurta, indo para longe de quem olha.
+- **Cada vista mostra o giro de um jeito.** De lado, a espada faz o arco inteiro. De frente, ela vem na direção de quem olha e **encurta** (até 10% do tamanho, quando aponta para a câmera; o `shorten=` do `bone` muda isso). De costas, ela também encurta, indo para longe de quem olha.
 - **`tip=x,y,z` no `bone` diz para onde o osso aponta:** o x,y desenhados na frente e, com o terceiro número, quantos pixels ele vai para a frente (positivo) ou para trás. A espada aponta para cima e 8 pixels para trás; é em volta dessa direção que ela encurta.
 - **`turns` no `bone` troca o desenho:** quando o osso gira mais da metade do caminho até outra vista, as peças dele saem e entram as dessa vista. A cabeça que vira 90 graus aparece de perfil na frente, de costas no lado e de perfil para o outro lado nas costas (a vista que falta sai espelhada). Sem uma 3/4 desenhada, a troca é seca, aos 45°.
 - **Quem fica na frente continua trocando sozinho**, agora também com o giro: um osso que gira para a frente pode passar na frente de outro.
@@ -910,6 +910,7 @@ Repare:
 - **O joelho, o tornozelo e o cotovelo dobram com `pitch`.** No quadro 0, `coxaD.pitch=22` leva a coxa para a frente, `canelaD.pitch=-4` dobra um pouco o joelho e `peD.pitch=18` levanta a ponta do pé: é o calcanhar chegando no chão. Como cada osso é filho do anterior, os giros se somam, como num braço de robô: a canela gira 22 − 4 = 18° no total.
 - **O corpo torce:** `quadril.yaw=` e `tronco.yaw=` giram ao contrário um do outro a cada passo, como numa pessoa andando. De frente, o tronco não muda de largura (o Weasel não estreita as peças), mas os ombros e os braços, que vão junto, andam para a frente e para trás.
 - **`tip=69,250,16` no pé** diz que ele aponta 16 pixels para a frente, rente ao chão. É em volta dessa direção que ele encurta de frente.
+- **`shorten=` no `bone` diz quanto as peças encurtam.** Um pé desenhado de frente já está curto no desenho: a bota de frente é a ponta dela. Quando ele gira, o Weasel ainda encurta (e estica) a peça, e uma bota grande pode ficar achatada num quadro e comprida no outro. `shorten=off` deixa a peça com o tamanho do desenho: ela só gira. `shorten=0.6` deixa encurtar até 60%, e `shorten=0.6,1.2` também estica só até 1,2 vez. Os pés do homem são pequenos e ficam sem `shorten=`.
 - **O quadril sobe e desce em cada quadro** (`quadril=0,7.77` no quadro 0) para o pé de apoio ficar no chão: no `--info`, o `pé no chão` do `walk` é 0 em todos os quadros. Na corrida, ele diz `0 8 18 3.9 0 8 18 3.9`: nos quadros 1 a 3, o homem está no ar.
 - **As animações têm uma `key` por quadro**, com `ease=linear`. Elas foram calculadas por um programa, mas poderiam ser escritas à mão, com menos `key`.
 - Para as pernas, os giros (`pitch`) são mais seguros que o `ik`: o `ik` não é resolvido nas outras vistas (veja [os limites](#os-limites)).
@@ -1328,6 +1329,7 @@ Com o furão aberto (**Arquivo › Exemplos › Furão em três vistas**):
 | `views` | `tilt=` | quantos graus a câmera olha de cima | 0 a 80 | 30 |
 | `bone` | `side=`, `lat=` | o x do osso de lado; o x do osso de frente (jogo de plataforma) | números, em pixels | medidos no desenho |
 | `bone` | `tip=x,y[,z]` | para onde o osso aponta | dois ou três números, em pixels | o filho, ou o centro das peças |
+| `bone` | `shorten=` | o quanto as peças do osso encurtam e esticam | `off`; mínimo de 0.01 a 1; máximo de 1 a 4 | `0.1,1.4` |
 | `bone` | `turns` | troca as peças do osso pelas da vista para onde ele virou | palavra solta | não troca |
 | `key` | `osso.z=` | o osso anda para a frente ou para trás | qualquer número, em pixels | 0 |
 | `key` | `osso.pitch=`, `osso.yaw=` | o osso gira para a frente ou para trás; de um lado para o outro | graus, qualquer número | 0 |
@@ -1348,8 +1350,9 @@ As vistas são um jeito de **desenhar menos**, não um 3D completo. Estes são o
 | `_left` sem `view=left` | a animação mostra só as camadas sem `view=` (aviso) | deixe o Godot espelhar (não escreva `_left`), ou desenhe o lado esquerdo |
 | Com os dois lados, uma diagonal sem a do outro lado | aviso, e as animações da diagonal que falta não saem | desenhe as duas (`down_right` e `down_left`) |
 | O `feet=` só vale de lado | nas geradas de frente e de costas, ele não conta | confira o passo na `walk_right` |
-| Uma peça encurta até 10% | a espada apontada para a câmera fica um tracinho, nunca some | é de propósito: um osso não desaparece |
+| Uma peça encurta até 10% | a espada apontada para a câmera fica um tracinho, nunca some | é de propósito: um osso não desaparece; para um osso, `shorten=` muda o limite (`shorten=off`: não encurta) |
 | Um osso que aponta para a câmera no desenho | naquela vista, ele não gira nem encurta | desenhe-o de outro jeito naquela vista, ou use `turns` |
+| Um osso que aponta **quase** para a câmera (um pé de frente, com o `tip=` na ponta da bota) | um giro pequeno muda muito a direção dele na tela: a peça vira de ponta-cabeça num quadro, mesmo com `shorten=off` | ponha o `tip=` a meio caminho (o z igual à distância na tela, 45°) e use `shorten=off` |
 | Um desenho chapado não mostra o giro em volta do próprio comprimento | a cabeça que vira com `yaw` continua de frente | `turns` no `bone` |
 | Sem uma 3/4 desenhada, o `turns` troca seco | a cabeça pula de frente para o perfil aos 45° | desenhe a 3/4 |
 | A escala de um osso estica também a profundidade dos filhos | um filho longe da raiz anda uma fração de pixel quando o pai respira | nada: é menos de meio pixel |

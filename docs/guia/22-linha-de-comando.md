@@ -683,6 +683,10 @@ salvo raposa.weasel  traçado de imagem · 81 KB
 | `--blur` | desfoca o desenho todo (`layer arte blur=`), como o serrilhado da imagem: fica mais perto dela, e menos nítido | de 0 a 50 pixels | 0 (desligado) |
 | `--no-bg` | tira o fundo chapado: a cor que ocupa a maior parte da borda da imagem não vira forma ([capítulo 2](02-formas.md#traçar-uma-imagem)) | — | desligado |
 | `-s`, `--scale` | muda o tamanho da imagem antes de traçar | de 0.05 a 16 | 1 |
+| `--out-scale` | traça no tamanho da imagem e grava o desenho nessa escala: os pontos, as pontas dos degradês, o `canvas`, o `scale=` da `ref` e o `--blur` | de 0.01 a 16 | 1 |
+| `--prefix` | o prefixo dos nomes: `manga_e_color1`, `manga_e_gradient1`, `_manga_e_hole1` | um nome (letras sem acento, números, `_` e `-`) | sem prefixo |
+| `--bone` | `bone=` em todas as formas | o nome do osso | sem osso |
+| `--bones` | `bones=` em todas as formas | dois ossos ou mais, separados por vírgula | sem osso |
 | `--force` | grava por cima de um arquivo que já existe | — | desligada |
 | `--quiet` | sem a linha do que saiu | — | desligada |
 | `-w`, `--watch` | traça de novo quando a imagem muda | — | desligada |
@@ -695,6 +699,36 @@ salvo raposa.weasel  traçado de imagem · 81 KB
 - Com `--no-bg`, a resposta diz a cor que saiu (`…, 183 cores, fundo #ffffff tirado · 2,1 s`), e o comentário do arquivo ganha a linha `# sem fundo: #ffffff`. Sem um fundo chapado na imagem, o traçado fica com tudo e vem um aviso: `--no-bg: não achei um fundo chapado (uma cor só, opaca, em pelo menos metade da borda da imagem): o traçado ficou com tudo`.
 - A mesma imagem com as mesmas opções dá sempre o mesmo arquivo.
 - As opções de exportar (`-a`, `-f`, `-t`, `--trim`…) não valem aqui e são ignoradas.
+
+### Uma peça para um personagem
+
+Para trocar a `ref` de uma peça de personagem pelo traçado, o arquivo traçado precisa encaixar no personagem: na escala dele, com nomes que não colidem com os que ele já tem e com o osso em cada forma. As três opções fazem isso:
+
+```bash
+node cli/weasel.js manga_e.png --out-scale 0.5 --prefix manga_e --bone bracoE
+```
+
+```
+# manga_e.png: traçado de imagem do Weasel 1.80.0.
+# 19 regiões, da maior para a menor; 1 px da imagem (896×1184) = 0,5 unidade, com --out-scale 0.5.
+# opções: --out-scale 0.5 --prefix manga_e --bone bracoE
+# a imagem original está na linha ref: tire o hidden para comparar.
+
+canvas 448 592 bg=none
+ref original "manga_e.png" scale=0.5 hidden
+palette manga_e_color1=#10120ef5 manga_e_color2=#0a0d09f4 …
+
+# osso de mentira, só para este arquivo abrir sozinho: no personagem, copie as formas e não este bone
+bone bracoE pivot=224,296
+
+shape c=manga_e_color1 bone=bracoE : 278.52,221.75 280.25,221.53 282.75,223.16 …
+```
+
+- **`-s` ou `--out-scale`?** O `-s 0.5` reduz a **imagem** antes de traçar: o traçado vê a metade dos pixels e perde os detalhes pequenos. O `--out-scale 0.5` traça a imagem **inteira** e só grava os números pela metade: o desenho tem todos os detalhes, no tamanho do personagem. Os dois juntos multiplicam.
+- O `--prefix` vale para a `palette`, os degradês e os buracos. O `_` na frente do buraco continua, como no `_hole1` sem prefixo.
+- Um `bone=` de um osso que não existe é erro. Por isso o arquivo leva o `bone` com um comentário em cima: ele só deixa o traçado abrir sozinho. No personagem os ossos já existem: copie a `palette`, os `gradient` e os `shape`, sem esse `bone`. Com `--bones a,b`, os ossos de mentira saem encadeados (`parent=`), como numa perna.
+- Com `--blur`, o número que vai para o `layer arte blur=` também muda de escala: `--blur 1 --out-scale 0.5` grava `blur=0.5`, o mesmo desfoque de um pixel da imagem.
+- Os pontos saem com duas casas depois do ponto. Uma peça traçada com `--out-scale 0.5` fica igual à mesma peça desenhada com `-s 0.5` na hora de exportar, a menos de uns pixels quase transparentes.
 
 ## Ver enquanto edita
 

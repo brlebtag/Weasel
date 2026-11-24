@@ -13,7 +13,7 @@
    pivot= (os giros que o Weasel soma, como o sway=, e as caixas, os pontos e as camadas sem view= usam isso).
    Os giros (etapa 1b): o osso gira em 3D (rot no plano da vista principal, osso.pitch= para a frente e para trás,
    osso.yaw= em volta do eixo de pé). Em cada vista, as peças giram pelo quanto o osso parece ter girado ali e
-   encurtam ao longo dele (até 10%); a largura fica. As keys geradas têm um sexto número, a inclinação (o 2D de um
+   encurtam ao longo dele (até 10%, ou o shorten= do osso); a largura fica. As keys geradas têm um sexto número, a inclinação (o 2D de um
    pai encurtado), que a cena e o Godot (skew) sabem desenhar. */
 (function (W) {
   'use strict';
@@ -31,8 +31,10 @@
   // angle= (graus a partir da frente, nas diagonais de baixo, ou das costas, nas de cima) → o ângulo da vista
   const angOf = (v, a) => (v === 'down_right' ? a : v === 'down_left' ? 360 - a : v === 'up_right' ? 180 - a : 180 + a);
   const R2D = 180 / Math.PI;
-  // o quanto uma peça comprida encurta, no máximo (ponto 6 do plano: 10%) e no mínimo (o que vem para o plano da tela)
+  // o quanto uma peça comprida encurta, no máximo (ponto 6 do plano: 10%) e no mínimo (o que vem para o plano da tela);
+  // shorten= no bone muda os dois para um osso (shorten=off: [1, 1], a peça só gira)
   const MINLEN = 0.1, MAXLEN = 1.4;
+  const fit = (b, k) => (b.shorten ? Math.max(b.shorten[0], Math.min(b.shorten[1], k)) : Math.max(MINLEN, Math.min(MAXLEN, k)));
 
   // ---------- 3D: matrizes 3x3 (X para o lado, Y para baixo, Z para a frente) ----------
   const mm = (A, B) => A.map((r) => [0, 1, 2].map((j) => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
@@ -418,7 +420,7 @@
         const q = xy.get(b.name), u = DIR.get(b.name).u, a = pm.vec0(u), c = pr.vec0(u), la = Math.hypot(a[0], a[1]), lc = Math.hypot(c[0], c[1]);
         let R = [1, 0, 0, 1, 0, 0];
         if (la > 0.25 && lc > 0.25) {
-          const g = (Math.atan2(c[1], c[0]) - Math.atan2(a[1], a[0])) * R2D, k = Math.max(MINLEN, Math.min(MAXLEN, lc / la)), n = [a[0] / la, a[1] / la], e = k - 1;
+          const g = (Math.atan2(c[1], c[0]) - Math.atan2(a[1], a[0])) * R2D, k = fit(b, lc / la), n = [a[0] / la, a[1] / la], e = k - 1;
           if (Math.abs(near(g, 0)) > 1e-9 || Math.abs(e) > 1e-9) R = M.mul(M.rotate(g), [1 + e * n[0] * n[0], e * n[0] * n[1], e * n[0] * n[1], 1 + e * n[1] * n[1], 0, 0]);
         }
         const [px, py] = b.pivot;
@@ -570,7 +572,7 @@
           let g = l1 > 0.15 ? (Math.atan2(p1[1], p1[0]) - Math.atan2(d2[1], d2[0])) * R2D : prev || 0;
           g = near(g, prev === undefined ? 0 : prev);
           last.set('g|' + b.name, g);
-          const k = Math.max(MINLEN, Math.min(MAXLEN, l1 / l0));
+          const k = fit(b, l1 / l0);
           if (Math.abs(g) > 1e-9 || Math.abs(k - 1) > 1e-9) {
             // encurta ao longo do osso como ele está desenhado agora, depois gira
             const bp = [base[0] * p0[0] + base[2] * p0[1], base[1] * p0[0] + base[3] * p0[1]], bl = Math.hypot(bp[0], bp[1]);

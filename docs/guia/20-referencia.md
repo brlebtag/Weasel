@@ -2130,6 +2130,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 | `side=` | com as [vistas](#views), o x do osso na vista de lado (`view=right`): o quanto ele fica na frente da raiz | qualquer número, em pixels | o centro das peças do osso na vista de lado (cada uma pesa pela área) | não |
 | `lat=` | com as [vistas](#views), num jogo de plataforma (sem a frente), o x que o osso teria de frente: de que lado do corpo ele fica | qualquer número, em pixels | adivinhado pela ordem do desenho (8 pixels para um lado ou para o outro) | não |
 | `tip=x,y[,z]` | com as [vistas](#views), para onde o osso aponta: o ponto na vista principal e quantos pixels ele vai para a frente (positivo) ou para trás. É ao longo dessa direção que o giro em 3D (`osso.pitch=`, `osso.yaw=`) encurta as peças | dois ou três números, em pixels (o terceiro vale 0 sem ele) | o filho, se o osso tiver um só; senão, o centro das peças do osso, de frente e de lado | não |
+| `shorten=` | com as [vistas](#views), o quanto as peças do osso podem encurtar (e esticar) quando ele gira para a câmera ou para longe dela. `shorten=off`: elas só giram, com o tamanho do desenho (um pé, uma mão, uma cabeça) | `off`; um número de 0.01 a 1 (o menor tamanho, 1 não encurta); ou dois, o segundo de 1 a 4 (o maior, 1 não estica). Fora disso, um aviso | `0.1,1.4`: até 10%, e até 1,4 vez | não |
 | `turns` | com as [vistas](#views), as peças do osso trocam pelas de outra vista quando ele gira mais da metade do caminho até ela (a cabeça que olha para o lado aparece de perfil) | palavra solta | não troca | não |
 
 **Os movimentos automáticos** (`sway=`, `bob=`, `jitter=`) só aparecem numa animação ou num filme; no desenho parado, não. Numa animação em loop, o tempo do `sway=` e do `bob=` é ajustado para caber um número inteiro de vezes, e o loop fecha sem pulo. Num filme, eles andam mesmo sem `anim`, e o `jitter=` muda 12 vezes por segundo.
@@ -2139,7 +2140,7 @@ key 24 braco=0,0,0 antebraco=0,0,0
 - Os números da `key` são medidos a partir do desenho: `key 12 braco=0,0,-25` gira o braço 25 graus para cima, a partir de onde ele foi desenhado. O filho soma o giro do pai.
 - `spring=0` não desliga a mola. Para tirar a mola, apague o `spring=`.
 - O `ik` muda a pose também no desenho parado: veja o [`ik`](#ik).
-- `side=`, `lat=`, `tip=` e `turns` sem camadas com `view=` não fazem nada.
+- `side=`, `lat=`, `tip=`, `shorten=` e `turns` sem camadas com `view=` não fazem nada.
 
 **Para aprender:** [O primeiro osso](07-movimento.md#a-primeira-animação), [Pai e filho](08-ossos.md#pai-e-filho-parent), [Movimentos automáticos](08-ossos.md#movimentos-automáticos-sway-bob-e-jitter), [Molas](08-ossos.md#molas-spring), [Andar por um caminho](09-animacao.md#andar-por-um-caminho-path) e [Uma cabeça que olha para os lados](14-profundidade.md#uma-cabeça-que-olha-para-os-lados-round).
 
@@ -2810,7 +2811,7 @@ key 4 pe=0,-4 pe.z=12
 **O que vem junto com as vistas** (nas outras fichas):
 
 - [`layer`](#layer): `view=` diz a vista da camada, e `angle=` o ângulo de uma diagonal.
-- [`bone`](#bone): `side=` diz o x do osso de lado, `lat=` o x de frente num jogo de plataforma, `tip=` para onde o osso aponta, e `turns` troca as peças dele pelas de outra vista quando ele gira.
+- [`bone`](#bone): `side=` diz o x do osso de lado, `lat=` o x de frente num jogo de plataforma, `tip=` para onde o osso aponta, `shorten=` o quanto as peças dele encurtam, e `turns` troca as peças dele pelas de outra vista quando ele gira.
 - [`key`](#key): `osso.z=` anda o osso para a frente ou para trás, e `osso.pitch=` e `osso.yaw=` giram o osso em 3D.
 
 **Como o Weasel faz:**

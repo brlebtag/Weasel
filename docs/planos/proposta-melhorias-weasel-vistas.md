@@ -473,3 +473,21 @@ grossura e a caixa, a conferência de altura pelo alto e pelo baixo, sem `--verb
   desenhos, 1 a 2 px. No golpe do guarda, a mão fica na frente da haste também nos quadros 1 e 6, como nos quadros 2
   a 5. A régua do capítulo 17 (`17_regua.png`) e as amostras do `--info` foram refeitas.
 
+**Etapa B (itens 4 e 6): feita em 23/11/2026**, com as recomendações acima (`shorten=` só, sem `hide=`; os nomes
+com prefixo; o `-s` como está).
+
+- **`shorten=` no `bone`:** `shorten=off` (a peça só gira), `shorten=0.6` (encurta até 60%) e `shorten=0.6,1.2`
+  (também estica só até 1,2 vez). Sem ele, de 10% a 1,4 vez, como antes. Fora da faixa, um aviso. Na espada do furão,
+  a lâmina vai de 49% a 139% sem `shorten=`, fica em 100% com `off`, para em 62% com `0.6` e em 119% com `0.6,1.2`.
+- **No soldado:** com o `tip=` de hoje (a 45°) e `shorten=off`, as botas ficam inteiras em todos os quadros do
+  `teste_andar_down` e do `teste_correr_down`. Com o `tip=` na ponta da bota (o "Para conferir" da proposta), a bota
+  ainda vira de ponta-cabeça nos quadros 0 e 4, mesmo com `shorten=off`: o osso aponta quase para a câmera, e um giro
+  pequeno muda muito a direção dele na tela. Isso ficou nos limites do capítulo 17. Recomendação para o soldado: manter
+  o `tip=` a 45° e pôr `shorten=off` nos dois pés.
+- **O traçado:** `--out-scale`, `--prefix`, `--bone` e `--bones`. O `--out-scale 0.5` dá o mesmo desenho que o
+  `_metade` do `rig_lado.py` (14 de 265 mil pixels diferem, quase transparentes, no tronco de costas). Com `--bone` ou
+  `--bones`, o arquivo leva ossos de mentira, com um comentário, para abrir sozinho: um `bone=` de um osso que não
+  existe é erro. O `rig_vistas.py` copia só a `palette`, os `gradient` e os `shape`, então eles não atrapalham.
+- **Uma ideia para depois (não feita):** em vez do corte seco no 0,25 (abaixo disso o osso não gira nem encurta),
+  diminuir o giro e o encurtamento aos poucos quando o osso aponta quase para a câmera. Isso acabaria com a virada da
+  bota, mas muda os exemplos, então espera uma decisão.

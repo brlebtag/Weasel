@@ -71,6 +71,12 @@ Traçado de imagem (a entrada é uma imagem .png, .jpg ou .webp):
       --no-bg             tira o fundo chapado: a cor que ocupa a maior parte da borda da imagem
                           (um fundo dentro da figura, entre o braço e o corpo, fica)
   -s, --scale <n>         reduz (ou aumenta) a imagem antes de traçar
+      --out-scale <n>     traça no tamanho da imagem e grava o desenho nessa escala (os pontos, as
+                          pontas dos degradês, o canvas e a ref): 0.5 = metade, sem perder detalhe
+      --prefix <nome>     o prefixo nos nomes: nome_color1, nome_gradient1, _nome_hole1 (para colar o
+                          traçado num desenho que já tem color1)
+      --bone <osso>       bone=osso em todas as formas (--bones a,b: bones=a,b); o arquivo leva um
+                          bone de mentira para abrir sozinho, que não vai para o personagem
 
 Godot:
   -o personagem.tscn     pacote pronto: folha, normal map, SpriteFrames (.tres), cena (.tscn)
@@ -148,6 +154,7 @@ Exemplos:
   weasel rascunho.png                               -> rascunho.weasel
   weasel foto.jpg -o arte.weasel --colors 24 -s 0.5
   weasel personagem.png --no-bg                     -> personagem.weasel, sem o fundo branco
+  weasel manga.png --no-bg --out-scale 0.5 --prefix manga_e --bone bracoE
 `;
 
 const tty = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -160,7 +167,7 @@ function parseArgs(argv) {
   const o = {
     input: null, code: null, out: null, format: null, anim: null, frame: 0, frameSet: false, frames: false, variant: null, scale: 1, transparent: false, trim: false, margin: 8, quality: 92,
     layout: 'grid', cols: 0, padding: 2, speed: 1, dither: false, guides: false, watch: false, check: false, info: false, force: false, quiet: false,
-    simplify: null, colors: null, tol: null, blur: null, noBg: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
+    simplify: null, colors: null, tol: null, blur: null, noBg: null, outScale: null, prefix: null, bone: null, bones: null, time: null, shot: null, shots: false, from: null, to: null, jobs: null, crf: null, small: false, ffmpeg: null, minLength: null, sticker: false,
     normal: null, mirror: true, audio: true, subs: 'srt', burnSubs: false, lang: null, edl: false, fcpxml: false, ext: 'mp4',
   };
   const num = (name, v, min, max) => {
@@ -232,6 +239,17 @@ function parseArgs(argv) {
       case '--tol': o.tol = num('--tol', val(), 0.05, 20); break;
       case '--blur': o.blur = num('--blur', val(), 0, 50); break;
       case '--no-bg': o.noBg = true; break;
+      case '--out-scale': o.outScale = num('--out-scale', val(), 0.01, 16); break;
+      case '--prefix': o.prefix = val(); if (!/^[A-Za-z_][\w-]*$/.test(o.prefix)) usage(`--prefix "${o.prefix}": o prefixo vira o começo de um nome (letras sem acento, números, _ e -; não começa com número)`); break;
+      case '--bone': o.bone = val(); if (!/^[A-Za-z_][\w-]*$/.test(o.bone)) usage(`--bone "${o.bone}" não é um nome de osso (letras sem acento, números, _ e -)`); break;
+      case '--bones': {
+        const v = val(), ns = v.split(',').filter(Boolean);
+        if (ns.length < 2) usage('--bones precisa de dois ossos ou mais, separados por vírgula (para um osso só, --bone)');
+        const bad = ns.find((n) => !/^[A-Za-z_][\w-]*$/.test(n));
+        if (bad) usage(`--bones: "${bad}" não é um nome de osso (letras sem acento, números, _ e -)`);
+        o.bones = ns;
+        break;
+      }
       case '-w': case '--watch': o.watch = true; break;
       case '--check': o.check = true; break;
       case '--info': o.info = true; break;
@@ -683,7 +701,7 @@ async function exportModel(model, o, format, base, sfx) {
 // Uma rodada completa: lê, confere e exporta. Devolve o código de saída e os arquivos lidos.
 async function run(o) {
   if (o.input && TRACE_EXT.includes(path.extname(o.input).toLowerCase())) return traceImage(o);
-  for (const [k, flag] of [['colors', '--colors'], ['tol', '--tol'], ['blur', '--blur'], ['noBg', '--no-bg']]) if (o[k] !== null) usage(`${flag} vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)`);
+  for (const [k, flag] of [['colors', '--colors'], ['tol', '--tol'], ['blur', '--blur'], ['noBg', '--no-bg'], ['outScale', '--out-scale'], ['prefix', '--prefix'], ['bone', '--bone'], ['bones', '--bones']]) if (o[k] !== null) usage(`${flag} vale para o traçado de uma imagem (a entrada .png, .jpg ou .webp)`);
   const watched = new Set();
   const source = readSource(o);
   if (o.input && o.input !== '-') watched.add(path.resolve(o.input));
@@ -791,6 +809,7 @@ async function traceImage(o) {
   if (!/\.weasel$/i.test(out)) usage(`o traçado de uma imagem grava código: use -o ${path.basename(out, path.extname(out))}.weasel`);
   // não grava em cima de um arquivo que já existe (pode ser um desenho feito à mão); no --watch, o seu mesmo pode
   if (fs.existsSync(out) && !o.force && o.tracedOut !== path.resolve(out)) usage(`${out} já existe: use outro nome no -o (ou --force para gravar por cima)`);
+  if (o.bone && o.bones) usage('use --bone (um osso) OU --bones (vários), não os dois');
   if (!fs.existsSync(src)) throw new Fail(`não achei a imagem "${src}"`, 1);
   let img;
   try { img = await loadImage(fs.readFileSync(src)); } catch (e) { throw new Fail(`não consegui ler a imagem "${src}"`, 1); }
@@ -808,19 +827,43 @@ async function traceImage(o) {
   if (o.noBg) opts.noBg = true;
   let res;
   try { res = W.trace.trace(cx.getImageData(0, 0, w, h), opts); } catch (e) { throw new Fail(e.message, 1); }
-  const used = [o.colors !== null && `--colors ${o.colors}`, o.tol !== null && `--tol ${o.tol}`, o.blur && `--blur ${o.blur}`, o.noBg && '--no-bg', o.scale !== 1 && `-s ${o.scale}`].filter(Boolean);
+  const used = [o.colors !== null && `--colors ${o.colors}`, o.tol !== null && `--tol ${o.tol}`, o.blur && `--blur ${o.blur}`, o.noBg && '--no-bg', o.scale !== 1 && `-s ${o.scale}`,
+    o.outScale !== null && `--out-scale ${o.outScale}`, o.prefix && `--prefix ${o.prefix}`, o.bone && `--bone ${o.bone}`, o.bones && `--bones ${o.bones.join(',')}`].filter(Boolean);
   const rel = path.relative(path.dirname(path.resolve(out)), path.resolve(src)).split(path.sep).join('/');
   const st = res.stats, pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  // --out-scale: traça no tamanho da imagem e grava os pontos (e o canvas, a ref e o blur) na escala pedida; --prefix:
+  // os nomes da palette, dos degradês e dos buracos com o prefixo; --bone/--bones: o osso em todas as formas
+  const k = o.outScale || 1, p = o.prefix, n2 = (v) => +(v * k).toFixed(2);
+  const how = {
+    map: k !== 1 ? (x, y) => [x * k, y * k] : null,
+    color: p ? (j) => `${p}_color${j + 1}` : undefined,
+    gradient: p ? (n) => `${p}_gradient${n}` : undefined,
+    hole: p ? (n) => `_${p}_hole${n}` : undefined,
+    attrs: o.bone ? ` bone=${o.bone}` : o.bones ? ` bones=${o.bones.join(',')}` : '',
+  };
+  const W2 = Math.max(1, Math.round(w * k)), H2 = Math.max(1, Math.round(h * k)), sc = +(o.scale * k).toFixed(4);
+  // o osso só existe no personagem: aqui vão ossos de mentira, para o arquivo abrir sozinho (um bone= de um osso que
+  // não existe é erro)
+  const fake = o.bone ? [o.bone] : o.bones || [];
+  const before = fake.length ? [
+    `# ${fake.length === 1 ? 'osso de mentira' : 'ossos de mentira'}, só para este arquivo abrir sozinho: no personagem, copie as formas e não ${fake.length === 1 ? 'este bone' : 'estes bone'}`,
+    ...fake.map((b, i) => `bone ${b}${i ? ` parent=${fake[i - 1]}` : ''} pivot=${n2(w / 2)},${n2(h * (i + 1) / (fake.length + 1))}`),
+  ] : [];
   const text = W.trace.file(res, {
     header: [
       `${path.basename(src)}: traçado de imagem do Weasel ${VERSION}.`,
-      `${pl(st.regions, 'região', 'regiões')}, da maior para a menor; 1 unidade = 1 px da imagem (${w}×${h}${o.scale === 1 ? '' : `, com -s ${o.scale}`}).`,
+      k === 1
+        ? `${pl(st.regions, 'região', 'regiões')}, da maior para a menor; 1 unidade = 1 px da imagem (${w}×${h}${o.scale === 1 ? '' : `, com -s ${o.scale}`}).`
+        : `${pl(st.regions, 'região', 'regiões')}, da maior para a menor; 1 px da imagem (${w}×${h}${o.scale === 1 ? '' : `, com -s ${o.scale}`}) = ${String(k).replace('.', ',')} unidade, com --out-scale ${o.outScale}.`,
       `opções: ${used.length ? used.join(' ') : 'as padrão'}`,
       ...(res.bg ? [`sem fundo: ${res.bg}`] : []),
       'a imagem original está na linha ref: tire o hidden para comparar.',
     ],
-    ref: `ref original "${rel}"${o.scale !== 1 ? ` scale=${o.scale}` : ''} hidden`,
-    blur: o.blur || 0,
+    ref: `ref original "${rel}"${sc !== 1 ? ` scale=${sc}` : ''} hidden`,
+    blur: o.blur ? n2(o.blur) : 0,
+    size: [W2, H2],
+    how: k !== 1 || p || how.attrs ? how : null,
+    before,
   });
   log(`${pl(st.regions, 'região', 'regiões')} (${pl(st.gradients, 'degradê', 'degradês')}, ${pl(st.translucent, 'semitransparente', 'semitransparentes')}), ${pl(st.shapes, 'forma', 'formas')}, ${pl(st.points, 'ponto', 'pontos')}, ${pl(st.colors, 'cor', 'cores')}${res.bg ? `, fundo ${res.bg} tirado` : ''} · ${(st.ms / 1000).toFixed(1).replace('.', ',')} s`);
   if (o.noBg && !res.bg) log(paint('33', '--no-bg: não achei um fundo chapado (uma cor só, opaca, em pelo menos metade da borda da imagem): o traçado ficou com tudo'));

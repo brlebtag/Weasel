@@ -29,7 +29,7 @@
     art: ['size', 'palette', 'dither', 'chars', 'steps', 'shadow', 'gap', 'angle', 'tones', 'c', 'w', 'inks', 'shift', 'lead', 'grout', 'levels', 'paper', 'boil', 'seed', 'actor'],
     unity: ['unit', 'root', 'collider'],
     layer: ['clip', 'cut', 'only', 'view', 'angle', 'opacity', 'blend', 'blur', 'glow', 'shadow', 'tint', 'brightness', 'saturate', 'contrast', 'hue', 'trail', 'cast', 'from', 'rim', 'shade', 'depth', 'yaw', 'pitch', 'persp', 'pivot', 'horizon', 'iso'],
-    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat', 'tip'],
+    bone: ['parent', 'pivot', 'sway', 'bob', 'jitter', 'spring', 'path', 'turn', 'yaw', 'pitch', 'persp', 'round', 'side', 'lat', 'tip', 'shorten'],
     // três vistas (docs/planos/tres-vistas.md): tilt= é o ângulo da câmera do jogo, em graus
     views: ['tilt'],
     cloth: ['pivot', 'tension', 'bone', 'swing', 'drag'],
@@ -1280,6 +1280,19 @@
           // tip=x,y[,z]: para onde o osso aponta (a ponta, desenhada na vista principal; z, o quanto ela vai para a
           // frente); turns: nas vistas, o osso mostra o desenho da vista para onde a frente dele aponta
           if (A.has('tip')) { const v = list(st, A.get('tip'), 2, 3, null); if (v) b.vtip = v; }
+          // shorten=: o quanto as peças do osso encurtam (e esticam) nas vistas quando ele gira para a câmera ou para
+          // longe dela. shorten=0.6 encurta até 60%; shorten=0.6,1.2 também estica só até 1,2 vez; shorten=off não muda
+          // o tamanho (a peça só gira: um pé, uma mão, uma cabeça). Sem ele, de 10% a 1,4 vez (js/views.js)
+          if (A.has('shorten')) {
+            const a = A.get('shorten');
+            if (a.text === 'off') b.shorten = [1, 1];
+            else {
+              const v = list(st, a, 1, 2, null);
+              if (v && !(v[0] >= 0.01 && v[0] <= 1)) bad(st, a, 'shorten=: o primeiro número é o quanto a peça pode encurtar, de 0.01 a 1 (1 não encurta); shorten=off não muda o tamanho', 'warn');
+              else if (v && v.length === 2 && !(v[1] >= 1 && v[1] <= 4)) bad(st, a, 'shorten=: o segundo número é o quanto a peça pode esticar, de 1 a 4 (1 não estica)', 'warn');
+              else if (v) b.shorten = [v[0], v.length === 2 ? v[1] : 1.4];
+            }
+          }
           for (const f of st.pos.slice(1)) {
             if (FLAGS.bone.includes(f.text)) b[f.text] = true;
             else err(st.line, `valor solto "${f.text}" (use turns, ou nome=valor)`, f.from, f.to, 'warn');

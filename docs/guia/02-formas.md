@@ -644,7 +644,7 @@ node cli/weasel.js personagem.png --no-bg
 
 O traçado tem limites:
 
-- Sai **uma figura parada, numa camada só**, sem ossos. Para animar, o desenho precisa ser cortado em peças, uma por osso ([capítulo 8](08-ossos.md)), à mão.
+- Sai **uma figura parada, numa camada só**, sem ossos. Para animar, o desenho precisa ser cortado em peças, uma por osso ([capítulo 8](08-ossos.md)), à mão. Uma imagem que já é uma peça (só a manga, só a bota) traça com o osso em cada forma, na escala do personagem e com nomes que não colidem: `--bone`, `--out-scale` e `--prefix` ([capítulo 22](22-linha-de-comando.md#uma-peça-para-um-personagem)).
 - Uma **foto**, um JPEG com muitos artefatos ou uma imagem cheia de detalhes vira milhares de formas e um arquivo grande (um retrato de 1633×2000 deu 3.665 formas e 833 KB). Reduza a imagem com `-s 0.5`, ou use `--colors` menor e `--tol` maior.
 - Um **traço mais fino que um pixel** sai um pouco mais claro e mais largo. E uma linha fina que cruza uma sombra semitransparente sai quebrada.
 - O `--no-bg` não separa **branco de branco**: uma parte da figura da mesma cor do fundo e encostada nele, sem uma linha entre os dois, sai junto com o fundo. E o fundo precisa ocupar, num pedaço só, pelo menos **metade da borda**: se a figura encosta na beirada e corta o fundo em pedaços menores, nada sai, e o comando avisa.

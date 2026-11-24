@@ -1185,34 +1185,39 @@
   }
 
   // As linhas do traçado. how: { map(x, y) → [x, y] (da imagem para o desenho), color(j) (o nome da cor j da
-  // palette), gradient(n), hole(n) }; sem how, color1…, gradient1…, _hole1… nas coordenadas da imagem.
+  // palette), gradient(n), hole(n), attrs (o que vai no fim de cada shape, antes dos pontos: ' bone=braco') }; sem
+  // how, color1…, gradient1…, _hole1… nas coordenadas da imagem.
   function lines(res, how) {
     how = how || {};
-    const map = how.map || null, cn = how.color || ((j) => `color${j + 1}`), gn = how.gradient || ((k) => `gradient${k}`), hn = how.hole || ((k) => `_hole${k}`);
+    const map = how.map || null, cn = how.color || ((j) => `color${j + 1}`), gn = how.gradient || ((k) => `gradient${k}`), hn = how.hole || ((k) => `_hole${k}`), ex = how.attrs || '';
     const at = map ? (p) => { const q = map(p[0], p[1]); return [q[0], q[1], p[2]]; } : (p) => p;
     const xy = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
     const out = [];
     for (const it of res.items) {
       if (it.t === 'g') out.push(`gradient ${gn(it.n)} linear ${xy(at(it.p1))} ${xy(at(it.p2))} : ${it.stops.join(' ')}`);
-      else if (it.t === 'h') out.push(`shape ${hn(it.hole)} hidden : ${fmt(it.pts.map(at))}`);
-      else out.push(`shape c=${it.g ? gn(it.g) : cn(it.c)}${it.hole ? ` cut=${hn(it.hole)}` : ''} : ${fmt(it.pts.map(at))}`);
+      else if (it.t === 'h') out.push(`shape ${hn(it.hole)} hidden${ex} : ${fmt(it.pts.map(at))}`);
+      else out.push(`shape c=${it.g ? gn(it.g) : cn(it.c)}${it.hole ? ` cut=${hn(it.hole)}` : ''}${ex} : ${fmt(it.pts.map(at))}`);
     }
     return out;
   }
 
-  // O arquivo .weasel inteiro. info: { header: [linhas de comentário], ref: 'linha ref' ou null, blur }.
+  // O arquivo .weasel inteiro. info: { header: [linhas de comentário], ref: 'linha ref' ou null, blur, size: [w, h]
+  // (o canvas, quando os pontos mudam de escala), how (os nomes e a escala das linhas, como em lines()), before:
+  // [linhas logo antes das formas] }.
   function file(res, info) {
-    const out = [];
-    for (const l of (info && info.header) || []) out.push('# ' + l);
+    info = info || {};
+    const out = [], cn = (info.how && info.how.color) || ((j) => `color${j + 1}`), size = info.size || [res.width, res.height];
+    for (const l of info.header || []) out.push('# ' + l);
     if (out.length) out.push('');
-    out.push(`canvas ${res.width} ${res.height} bg=none`);
-    if (info && info.ref) out.push(info.ref);
-    if (info && info.blur > 0) out.push(`layer arte blur=${info.blur}`);
+    out.push(`canvas ${size[0]} ${size[1]} bg=none`);
+    if (info.ref) out.push(info.ref);
+    if (info.blur > 0) out.push(`layer arte blur=${info.blur}`);
     for (let s = 0; s < res.palette.length; s += 8) {
-      out.push('palette ' + res.palette.slice(s, s + 8).map((hx, j) => `color${s + j + 1}=${hx}`).join(' '));
+      out.push('palette ' + res.palette.slice(s, s + 8).map((hx, j) => `${cn(s + j)}=${hx}`).join(' '));
     }
     out.push('');
-    return out.concat(res.body).join('\n') + '\n';
+    if (info.before && info.before.length) out.push(...info.before, '');
+    return out.concat(info.how ? lines(res, info.how) : res.body).join('\n') + '\n';
   }
 
   W.trace = { trace, lines, file, DEFAULTS };
